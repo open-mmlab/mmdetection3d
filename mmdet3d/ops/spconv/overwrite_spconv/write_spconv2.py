@@ -82,7 +82,7 @@ def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
             input_param = state_dict[key]
 
             #change dimension due to size mismatch error
-            input_param = np.transpose(input_param, (1,2,3,4,0))
+            input_param = np.transpose(input_param.cpu(), (1,2,3,4,0))
 
             # Backward compatibility: loading 1-dim tensor from
             # 0.3.* to version 0.4+
