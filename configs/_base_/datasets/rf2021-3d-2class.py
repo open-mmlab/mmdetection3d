@@ -17,9 +17,9 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Pedestrian=5)),
-    classes=['Pedestrian'],
-    sample_groups=dict(Pedestrian=15))
+        filter_by_min_points=dict(Car=10, Pedestrian=10)),
+    classes=['Car', 'Pedestrian'],
+    sample_groups=dict(Car=10, Pedestrian=15))
 
 
 train_pipeline = [
@@ -112,7 +112,7 @@ data = dict(
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
-            load_interval=5)),
+            load_interval=2000)),
     val=dict(
         type=dataset_type,
         data_root=data_root,

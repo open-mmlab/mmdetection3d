@@ -45,7 +45,7 @@ model = dict(
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[[-60, -103.84, -1.78, 62.88, 60, -1.78],
-                    [-60, -103.84, -0.6, 62.88, 60, -0.6]],
+                    [-60, -63.84, -0.6, 62.88, 60, -0.6]],
             sizes=[
                 [4.73, 2.08, 1.77],  # car
                 [0.91, 0.84, 1.74]  # pedestrian
@@ -90,7 +90,7 @@ model = dict(
     test_cfg=dict(
         pts=dict(
             use_rotate_nms=True,
-            nms_across_levels=False,
+            nms_across_levels=True,
             nms_pre=4096,
             nms_thr=0.01,
             score_thr=0.1,
