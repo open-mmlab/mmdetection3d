@@ -381,9 +381,11 @@ def show_det_result_meshlab_multiclass(data,
     if 'pts_bbox' in result[0].keys():
         pred_bboxes = result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
         pred_scores = result[0]['pts_bbox']['scores_3d'].numpy()
+        pred_labels = result[0]['pts_bbox']['labels_3d'].numpy()
     else:
         pred_bboxes = result[0]['boxes_3d'].tensor.numpy()
         pred_scores = result[0]['scores_3d'].numpy()
+        pred_labels = result[0]['labels_3d'].numpy()
 
     # filter out low score bboxes for visualization
     if score_thr > 0:
@@ -396,9 +398,7 @@ def show_det_result_meshlab_multiclass(data,
         points = Coord3DMode.convert(points, box_mode, Coord3DMode.DEPTH)
         show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
     else:
-        show_bboxes = deepcopy(pred_bboxes)
-
-    pred_labels=result[0]['pts_bbox']['labels_3d'].numpy()
+        show_bboxes = deepcopy(pred_bboxes)    
 
     show_result(
         points,
@@ -559,7 +559,7 @@ def show_result_meshlab(data,
     if task in ['det', 'multi_modality-det']:
         file_name = show_det_result_meshlab_multiclass(data, result, out_dir, score_thr,
                                             show, snapshot)
-        # file_name = show_det_result_meshlab_multiclass(data, result, out_dir, score_thr,
+        # file_name = show_det_result_meshlab(data, result, out_dir, score_thr,
         #                                    show, snapshot)                        
 
     if task in ['seg']:

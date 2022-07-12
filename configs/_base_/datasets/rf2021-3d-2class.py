@@ -1,9 +1,8 @@
 # dataset settings
 dataset_type = 'Custom3DDataset'
 data_root = 'data/rf2021/'
-class_names = ['Car', 'ped']
-point_cloud_range=[0, -40, -3, 70.4, 40, 1]
-#[-60, -60, -3, 62.88, 103.84, 1]
+class_names = ['Car', 'Pedestrian']
+point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -11,6 +10,17 @@ file_client_args = dict(backend='disk')
 # for more details.
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+
+db_sampler = dict(
+    data_root=data_root,
+    info_path=data_root + 'kitti_dbinfos_train.pkl',
+    rate=1.0,
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Pedestrian=5)),
+    classes=['Pedestrian'],
+    sample_groups=dict(Pedestrian=15))
+
 
 train_pipeline = [
     dict(
@@ -24,6 +34,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         file_client_args=file_client_args),
+    dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=False),
     dict(
         type='ObjectNoise',
         num_try=100,
@@ -100,7 +111,8 @@ data = dict(
             test_mode=False,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
+            box_type_3d='LiDAR',
+            load_interval=5)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
