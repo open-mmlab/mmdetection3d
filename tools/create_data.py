@@ -128,9 +128,6 @@ def rf2021_data_prep(root_path,
     import math
 
     root_path = Path(root_path)
-    info_train_path = osp.join(root_path, f'{info_prefix}_info_train.pkl')
-    info_val_path = osp.join(root_path, f'{info_prefix}_info_val.pkl')
-    info_test_path = osp.join(root_path, f'{info_prefix}_info_test.pkl')
 
     pcd_dir = osp.join(root_path, "NIA_tracking_data", "data")
     label_dir = osp.join(root_path, "NIA_2021_label", "label")
@@ -151,6 +148,7 @@ def rf2021_data_prep(root_path,
                     annot = np.loadtxt(veh_label_file_path, dtype=np.unicode_).reshape(-1, 8)
                     annot[:, [1,2,3,4,5,6]] = annot[:, [4,5,6,2,1,3]]
                     annot[:, 7] = math.pi/2 - annot[:, 7].astype(np.float32)
+                    annot[annot == 'nan'] = '-1.00'
                 if osp.exists(ped_label_file_path):
                     annot_ped = np.loadtxt(ped_label_file_path, dtype=np.unicode_).reshape(-1, 6)
                     if len(annot_ped) > 0:
@@ -201,6 +199,9 @@ def rf2021_data_prep(root_path,
     filename = root_path / f'{info_prefix}_infos_test.pkl'
     print(f'RF2021 info test file is saved to {filename}')
     mmcv.dump(rf_infos_test, filename)
+
+    create_groundtruth_database('Custom3DDataset', root_path, info_prefix,
+                            root_path / f'{info_prefix}_infos_train.pkl')
 
 
 def kitti_data_prep(root_path,
