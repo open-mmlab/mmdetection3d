@@ -45,7 +45,7 @@ model = dict(
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[[-60, -103.84, -1.78, 62.88, 60, -1.78],
-                    [-60, -63.84, -0.6, 62.88, 60, -0.6]],
+                    [-60, -103.84, -0.6, 62.88, 60, -0.6]],
             sizes=[
                 [4.73, 2.08, 1.77],  # car
                 [0.91, 0.84, 1.74]  # pedestrian
