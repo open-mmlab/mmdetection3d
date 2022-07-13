@@ -6,8 +6,7 @@ from .mask_heads import PointwiseSemanticHead, PrimitiveHead
 from .part_aggregation_roi_head import PartAggregationROIHead
 from .point_rcnn_roi_head import PointRCNNRoIHead
 from .roi_extractors import (Single3DRoIAwareExtractor,
-                             Single3DRoIPointExtractor,
-                             SingleRoIExtractor)
+                             Single3DRoIPointExtractor, SingleRoIExtractor)
 
 __all__ = [
     'Base3DRoIHead', 'PartAggregationROIHead', 'PointwiseSemanticHead',
