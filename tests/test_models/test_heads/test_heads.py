@@ -1562,3 +1562,88 @@ def test_monoflex_head():
 
     assert cls_score[0].shape == torch.Size([2, 3, 32, 32])
     assert out_reg[0].shape == torch.Size([2, 50, 32, 32])
+
+
+def test_centerpoint_roi_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    from math import pi
+
+    head_cfg = dict(
+        type='CenterPointRoIHead',
+        bev_feature_extractor_cfg=dict(
+            type='BEVFeatureExtractor',
+            pc_start=[-61.2, -61.2],
+            voxel_size=[0.2, 0.2],
+            downsample_stride=1,
+        ),
+        bbox_head=dict(
+            type='CenterPointBBoxHead',
+            input_channels=128 * 3 * 5,
+            shared_fc=[256, 256],
+            cls_fc=[256, 256],
+            reg_fc=[256, 256],
+            dp_ratio=0.3,
+            code_size=7,
+            num_classes=1,
+            loss_reg=dict(type='L1Loss', reduction='none', loss_weight=1.0),
+            loss_cls=dict(
+                type='CrossEntropyLoss',
+                reduction='none',
+                use_sigmoid=True,
+                loss_weight=1.0)),
+        train_cfg=dict(
+            assigner=dict(
+                type='MaxIoUAssigner',
+                iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
+                pos_iou_thr=0.55,
+                neg_iou_thr=0.55,
+                min_pos_iou=0.55,
+                ignore_iof_thr=-1,
+                match_low_quality=False),
+            sampler=dict(
+                type='IoUNegPiecewiseSampler',
+                num=128,
+                pos_fraction=0.5,
+                neg_piece_fractions=[0.8, 0.2],
+                neg_iou_piece_thrs=[0.55, 0.1],
+                neg_pos_ub=-1,
+                add_gt_as_proposals=False,
+                return_iou=True),
+            cls_pos_thr=0.75,
+            cls_neg_thr=0.25,
+            reg_pos_thr=0.55),
+        test_cfg=None,
+        pretrained=None,
+        init_cfg=None)
+    # head_cfg = mmcv.Config(head_cfg)
+    head_cfg.update(train_cfg=mmcv.Config(head_cfg['train_cfg']))
+    self = build_head(head_cfg)
+
+    # assert simple_test()
+    C = head_cfg['bbox_head']['input_channels'] // 5
+    H, W = 612, 612
+    bev_feats = torch.rand((1, C, H, W))
+    bev_feats = [bev_feats]
+
+    img_metas = [{'box_type_3d': LiDARInstance3DBoxes}]
+
+    bboxes = torch.tensor([[0, 0, 0, 3.2, 1.6, 1.5, 0],
+                           [0, 0, 0, 3.2, 1.6, 1.5, pi / 2],
+                           [0, 0, 0, 3.2, 1.6, 1.5, pi / 4]])
+    scores = torch.ones(bboxes.shape[0], dtype=torch.float32)
+    labels = torch.ones(bboxes.shape[0], dtype=torch.long)
+
+    rois = [[LiDARInstance3DBoxes(bboxes), scores, labels]]
+    bbox_results = self.simple_test(bev_feats, img_metas, rois)
+    assert len(bbox_results) == 1
+    assert bbox_results[0]['boxes_3d'].tensor.shape == torch.Size([3, 7])
+    assert bbox_results[0]['scores_3d'].shape == torch.Size([3])
+    assert bbox_results[0]['labels_3d'].shape == torch.Size([3])
+
+    gt_bboxes_3d = [LiDARInstance3DBoxes(bboxes)]
+    gt_labels_3d = [labels]
+    loss = self.forward_train(bev_feats, img_metas, rois, gt_bboxes_3d,
+                              gt_labels_3d)
+    assert loss['loss_cls'].shape == torch.Size([3])
+    assert loss['loss_reg'].shape == torch.Size([3, 7])
