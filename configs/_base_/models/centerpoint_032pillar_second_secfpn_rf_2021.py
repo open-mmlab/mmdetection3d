@@ -13,19 +13,20 @@ model = dict(
         in_channels=4,
         feat_channels=[64],
         with_distance=False,
-        voxel_size=(0.32, 0.32, 0.1),
+        voxel_size = [0.32, 0.32, 0.1],
+        point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
         legacy=False),
 
     pts_middle_encoder=dict(
-        type='PointPillarsScatter', in_channels=64, output_shape=[512, 384]),
+        type='PointPillarsScatter', in_channels=64, output_shape=[512, 384]),     #output_shape = 512 , 384
 
     pts_backbone=dict(
         type='SECOND',
         in_channels=64,
         out_channels=[64, 128, 256],
         layer_nums=[3, 5, 5],
-        layer_strides=[8, 2, 2],
+        layer_strides=[2, 2, 2],
         norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
         conv_cfg=dict(type='Conv2d', bias=False)),
     pts_neck=dict(
@@ -50,7 +51,7 @@ model = dict(
             post_center_range=[-60, -103.84, -3, 62.88, 60, 1],
             max_num=100,
             score_threshold=0.1,
-            out_size_factor=8,
+            out_size_factor=2,
             voxel_size=voxel_size[:2],
             code_size=7,
             pc_range=[-60, -103.84]
@@ -66,7 +67,7 @@ model = dict(
             point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
             grid_size=[384, 512, 40],
             voxel_size=voxel_size,
-            out_size_factor=8,
+            out_size_factor=2,
             dense_reg=1,
             gaussian_overlap=0.1,
             max_objs=500,
@@ -80,7 +81,7 @@ model = dict(
             max_pool_nms=False,
             min_radius=[4, 12, 10, 1, 0.85, 0.175],
             score_threshold=0.1,
-            out_size_factor=4,
+            out_size_factor=2,
             voxel_size=voxel_size[:2],
             nms_type='rotate',
             pre_max_size=4096,
