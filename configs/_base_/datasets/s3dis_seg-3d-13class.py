@@ -1,8 +1,15 @@
-# dataset settings
-dataset_type = 'S3DISSegDataset'
-data_root = './data/s3dis/'
+# For S3DIS seg we usually do 13-class segmentation
 class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
                'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
+metainfo = dict(CLASSES=class_names)
+dataset_type = 'S3DISSegDataset'
+data_root = 'data/s3dis/'
+input_modality = dict(use_lidar=True, use_camera=False)
+data_prefix = dict(
+    pts='points',
+    pts_instance_mask='instance_mask',
+    pts_semantic_mask='semantic_mask')
+
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
@@ -15,29 +22,27 @@ file_client_args = dict(backend='disk')
 #         'data/s3dis/':
 #         's3://openmmlab/datasets/detection3d/s3dis_processed/'
 #     }))
+
 num_points = 4096
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
-        file_client_args=file_client_args,
         coord_type='DEPTH',
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
-        file_client_args=file_client_args,
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names))),
-        max_cat_id=13),
+        with_seg_3d=True,
+        file_client_args=file_client_args),
+    dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,
@@ -47,18 +52,17 @@ train_pipeline = [
         enlarge_size=0.2,
         min_unique_num=None),
     dict(type='NormalizePointsColor', color_mean=None),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 test_pipeline = [
     dict(
         type='LoadPointsFromFile',
-        file_client_args=file_client_args,
         coord_type='DEPTH',
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         # a wrapper in order to successfully call test function
@@ -78,12 +82,8 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.0,
                 flip_ratio_bev_vertical=0.0),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -91,69 +91,58 @@ test_pipeline = [
 eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
-        file_client_args=file_client_args,
         coord_type='DEPTH',
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
-    dict(
-        type='LoadAnnotations3D',
-        file_client_args=file_client_args,
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=False,
-        with_seg_3d=True),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names))),
-        max_cat_id=13),
-    dict(
-        type='DefaultFormatBundle3D',
-        with_label=False,
-        class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=4,
-    # train on area 1, 2, 3, 4, 6
-    # test on area 5
-    train=dict(
+# train on area 1, 2, 3, 4, 6
+# test on area 5
+train_dataloader = dict(
+    batch_size=8,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
         ann_files=[
             data_root + f's3dis_infos_Area_{i}.pkl' for i in train_area
         ],
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=train_pipeline,
-        classes=class_names,
-        test_mode=False,
+        modality=input_modality,
         ignore_index=len(class_names),
         scene_idxs=[
             data_root + f'seg_info/Area_{i}_resampled_scene_idxs.npy'
             for i in train_area
         ],
-        file_client_args=file_client_args),
-    val=dict(
+        test_mode=False))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
         ann_files=data_root + f's3dis_infos_Area_{test_area}.pkl',
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
+        modality=input_modality,
         ignore_index=len(class_names),
         scene_idxs=data_root +
         f'seg_info/Area_{test_area}_resampled_scene_idxs.npy',
-        file_client_args=file_client_args),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_files=data_root + f's3dis_infos_Area_{test_area}.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        ignore_index=len(class_names),
-        file_client_args=file_client_args))
+        test_mode=True))
+val_dataloader = test_dataloader
 
-evaluation = dict(pipeline=eval_pipeline)
+val_evaluator = dict(type='SegMetric')
+test_evaluator = val_evaluator

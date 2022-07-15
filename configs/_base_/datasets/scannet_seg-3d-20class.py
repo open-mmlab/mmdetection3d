@@ -1,10 +1,30 @@
-# dataset settings
-dataset_type = 'ScanNetSegDataset'
-data_root = './data/scannet/'
+# For ScanNet seg we usually do 20-class segmentation
 class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
                'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
                'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
                'bathtub', 'otherfurniture')
+metainfo = dict(CLASSES=class_names)
+dataset_type = 'ScanNetSegDataset'
+data_root = 'data/scannet/'
+input_modality = dict(use_lidar=True, use_camera=False)
+data_prefix = dict(
+    pts='points',
+    pts_instance_mask='instance_mask',
+    pts_semantic_mask='semantic_mask')
+
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/scannet/':
+#         's3://openmmlab/datasets/detection3d/scannet_processed/',
+#         'data/scannet/':
+#         's3://openmmlab/datasets/detection3d/scannet_processed/'
+#     }))
+
 num_points = 8192
 train_pipeline = [
     dict(
@@ -13,18 +33,16 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
-                       33, 34, 36, 39),
-        max_cat_id=40),
+        with_seg_3d=True,
+        file_client_args=file_client_args),
+    dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,
@@ -34,8 +52,7 @@ train_pipeline = [
         enlarge_size=0.2,
         min_unique_num=None),
     dict(type='NormalizePointsColor', color_mean=None),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 test_pipeline = [
     dict(
@@ -44,7 +61,8 @@ test_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         # a wrapper in order to successfully call test function
@@ -64,12 +82,8 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.0,
                 flip_ratio_bev_vertical=0.0),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -81,52 +95,45 @@ eval_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=False,
-        with_seg_3d=True),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
-                       33, 34, 36, 39),
-        max_cat_id=40),
-    dict(
-        type='DefaultFormatBundle3D',
-        with_label=False,
-        class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=4,
-    train=dict(
+train_dataloader = dict(
+    batch_size=8,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'scannet_infos_train.pkl',
+        ann_file='scannet_infos_train.pkl',
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=train_pipeline,
-        classes=class_names,
-        test_mode=False,
+        modality=input_modality,
         ignore_index=len(class_names),
-        scene_idxs=data_root + 'seg_info/train_resampled_scene_idxs.npy'),
-    val=dict(
+        scene_idxs=data_root + 'seg_info/train_resampled_scene_idxs.npy',
+        test_mode=False))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'scannet_infos_val.pkl',
+        ann_file='scannet_infos_val.pkl',
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        ignore_index=len(class_names)),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'scannet_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        ignore_index=len(class_names)))
+        modality=input_modality,
+        ignore_index=len(class_names),
+        test_mode=True))
+val_dataloader = test_dataloader
 
-evaluation = dict(pipeline=eval_pipeline)
+val_evaluator = dict(type='SegMetric')
+test_evaluator = val_evaluator

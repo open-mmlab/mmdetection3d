@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 
-from mmdet3d.core import show_seg_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
-from .custom_3d_seg import Custom3DSegDataset
 from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
+from .seg3d_dataset import Seg3DDataset
 
 
 @DATASETS.register_module()
@@ -153,7 +153,7 @@ class S3DISDataset(Det3DDataset):
         return Compose(pipeline)
 
 
-class _S3DISSegDataset(Custom3DSegDataset):
+class _S3DISSegDataset(Seg3DDataset):
     r"""S3DIS Dataset for Semantic Segmentation Task.
 
     This class is the inner dataset for S3DIS. Since S3DIS has 6 areas, we
@@ -185,113 +185,43 @@ class _S3DISSegDataset(Custom3DSegDataset):
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
     """
-    CLASSES = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
-               'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
-
-    VALID_CLASS_IDS = tuple(range(13))
-
-    ALL_CLASS_IDS = tuple(range(14))  # possibly with 'stair' class
-
-    PALETTE = [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
-               [255, 0, 255], [100, 100, 255], [200, 200, 100],
-               [170, 120, 200], [255, 0, 0], [200, 100, 100], [10, 200, 100],
-               [200, 200, 200], [50, 50, 50]]
+    METAINFO = {
+        'CLASSES':
+        ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
+         'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter'),
+        'PALETTE': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
+                    [255, 0, 255], [100, 100, 255], [200, 200, 100],
+                    [170, 120, 200], [255, 0, 0], [200, 100, 100],
+                    [10, 200, 100], [200, 200, 200], [50, 50, 50]],
+        'valid_class_ids':
+        tuple(range(13)),
+        'all_class_ids':
+        tuple(range(14))  # possibly with 'stair' class
+    }
 
     def __init__(self,
-                 data_root,
-                 ann_file,
-                 pipeline=None,
-                 classes=None,
-                 palette=None,
-                 modality=None,
-                 test_mode=False,
+                 data_root: Optional[str] = None,
+                 ann_file: str = '',
+                 metainfo: Optional[dict] = None,
+                 data_prefix: dict = dict(
+                     pts='points', img='', instance_mask='', semantic_mask=''),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index=None,
                  scene_idxs=None,
-                 **kwargs):
-
+                 test_mode=False,
+                 **kwargs) -> None:
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
+            metainfo=metainfo,
+            data_prefix=data_prefix,
             pipeline=pipeline,
-            classes=classes,
-            palette=palette,
             modality=modality,
-            test_mode=test_mode,
             ignore_index=ignore_index,
             scene_idxs=scene_idxs,
+            test_mode=test_mode,
             **kwargs)
-
-    def get_ann_info(self, index):
-        """Get annotation info according to the given index.
-
-        Args:
-            index (int): Index of the annotation data to get.
-
-        Returns:
-            dict: annotation information consists of the following keys:
-
-                - pts_semantic_mask_path (str): Path of semantic masks.
-        """
-        # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-
-        pts_semantic_mask_path = osp.join(self.data_root,
-                                          info['pts_semantic_mask_path'])
-
-        anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
-        return anns_results
-
-    def _build_default_pipeline(self):
-        """Build the default pipeline for this dataset."""
-        pipeline = [
-            dict(
-                type='LoadPointsFromFile',
-                coord_type='DEPTH',
-                shift_height=False,
-                use_color=True,
-                load_dim=6,
-                use_dim=[0, 1, 2, 3, 4, 5]),
-            dict(
-                type='LoadAnnotations3D',
-                with_bbox_3d=False,
-                with_label_3d=False,
-                with_mask_3d=False,
-                with_seg_3d=True),
-            dict(
-                type='PointSegClassMapping',
-                valid_cat_ids=self.VALID_CLASS_IDS,
-                max_cat_id=np.max(self.ALL_CLASS_IDS)),
-            dict(
-                type='DefaultFormatBundle3D',
-                with_label=False,
-                class_names=self.CLASSES),
-            dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
-        ]
-        return Compose(pipeline)
-
-    def show(self, results, out_dir, show=True, pipeline=None):
-        """Results visualization.
-
-        Args:
-            results (list[dict]): List of bounding boxes results.
-            out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
-        """
-        assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = self._get_pipeline(pipeline)
-        for i, result in enumerate(results):
-            data_info = self.data_infos[i]
-            pts_path = data_info['pts_path']
-            file_name = osp.split(pts_path)[-1].split('.')[0]
-            points, gt_sem_mask = self._extract_data(
-                i, pipeline, ['points', 'pts_semantic_mask'], load_annos=True)
-            points = points.numpy()
-            pred_sem_mask = result['semantic_mask'].numpy()
-            show_seg_result(points, gt_sem_mask,
-                            pred_sem_mask, out_dir, file_name,
-                            np.array(self.PALETTE), self.ignore_index, show)
 
     def get_scene_idxs(self, scene_idxs):
         """Compute scene_idxs for data sampling.
@@ -341,16 +271,17 @@ class S3DISSegDataset(_S3DISSegDataset):
     """
 
     def __init__(self,
-                 data_root,
-                 ann_files,
-                 pipeline=None,
-                 classes=None,
-                 palette=None,
-                 modality=None,
-                 test_mode=False,
+                 data_root: Optional[str] = None,
+                 ann_files: str = '',
+                 metainfo: Optional[dict] = None,
+                 data_prefix: dict = dict(
+                     pts='points', img='', instance_mask='', semantic_mask=''),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index=None,
                  scene_idxs=None,
-                 **kwargs):
+                 test_mode=False,
+                 **kwargs) -> None:
 
         # make sure that ann_files and scene_idxs have same length
         ann_files = self._check_ann_files(ann_files)
@@ -360,45 +291,45 @@ class S3DISSegDataset(_S3DISSegDataset):
         super().__init__(
             data_root=data_root,
             ann_file=ann_files[0],
+            metainfo=metainfo,
+            data_prefix=data_prefix,
             pipeline=pipeline,
-            classes=classes,
-            palette=palette,
             modality=modality,
-            test_mode=test_mode,
             ignore_index=ignore_index,
             scene_idxs=scene_idxs[0],
+            test_mode=test_mode,
             **kwargs)
 
         datasets = [
             _S3DISSegDataset(
                 data_root=data_root,
                 ann_file=ann_files[i],
+                metainfo=metainfo,
+                data_prefix=data_prefix,
                 pipeline=pipeline,
-                classes=classes,
-                palette=palette,
                 modality=modality,
-                test_mode=test_mode,
                 ignore_index=ignore_index,
                 scene_idxs=scene_idxs[i],
+                test_mode=test_mode,
                 **kwargs) for i in range(len(ann_files))
         ]
 
-        # data_infos and scene_idxs need to be concat
-        self.concat_data_infos([dst.data_infos for dst in datasets])
+        # data_list and scene_idxs need to be concat
+        self.concat_data_list([dst.data_list for dst in datasets])
         self.concat_scene_idxs([dst.scene_idxs for dst in datasets])
 
         # set group flag for the sampler
         if not self.test_mode:
             self._set_group_flag()
 
-    def concat_data_infos(self, data_infos):
-        """Concat data_infos from several datasets to form self.data_infos.
+    def concat_data_list(self, data_lists):
+        """Concat data_list from several datasets to form self.data_list.
 
         Args:
-            data_infos (list[list[dict]])
+            data_lists (list[list[dict]])
         """
-        self.data_infos = [
-            info for one_data_infos in data_infos for info in one_data_infos
+        self.data_list = [
+            data for data_list in data_lists for data in data_list
         ]
 
     def concat_scene_idxs(self, scene_idxs):

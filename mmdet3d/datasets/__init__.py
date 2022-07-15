@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .builder import DATASETS, PIPELINES, build_dataset
-from .custom_3d_seg import Custom3DSegDataset
 from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
 from .kitti_mono_dataset import KittiMonoDataset
@@ -22,6 +21,7 @@ from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
 from .scannet_dataset import (ScanNetDataset, ScanNetInstanceSegDataset,
                               ScanNetSegDataset)
+from .seg3d_dataset import Seg3DDataset
 from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 from .utils import get_loading_pipeline
@@ -36,7 +36,7 @@ __all__ = [
     'IndoorPatchPointSample', 'IndoorPointSample', 'PointSample',
     'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset', 'ScanNetDataset',
     'ScanNetSegDataset', 'ScanNetInstanceSegDataset', 'SemanticKITTIDataset',
-    'Det3DDataset', 'Custom3DSegDataset', 'LoadPointsFromMultiSweeps',
+    'Det3DDataset', 'Seg3DDataset', 'LoadPointsFromMultiSweeps',
     'WaymoDataset', 'BackgroundPointsFilter', 'VoxelBasedPointSampler',
     'get_loading_pipeline', 'RandomDropPointsColor', 'RandomJitterPoints',
     'ObjectNameFilter', 'AffineResize', 'RandomShiftScale',

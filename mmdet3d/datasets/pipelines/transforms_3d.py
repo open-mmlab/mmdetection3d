@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
 import warnings
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -18,7 +18,7 @@ from .data_augment_utils import noise_per_object_v3_
 
 
 @TRANSFORMS.register_module()
-class RandomDropPointsColor(object):
+class RandomDropPointsColor(BaseTransform):
     r"""Randomly set the color of points to all zeros.
 
     Once this transform is executed, all the points' color will be dropped.
@@ -30,12 +30,12 @@ class RandomDropPointsColor(object):
             Defaults to 0.2.
     """
 
-    def __init__(self, drop_ratio=0.2):
+    def __init__(self, drop_ratio: float = 0.2) -> None:
         assert isinstance(drop_ratio, (int, float)) and 0 <= drop_ratio <= 1, \
             f'invalid drop_ratio value {drop_ratio}'
         self.drop_ratio = drop_ratio
 
-    def __call__(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to drop point colors.
 
         Args:
@@ -224,7 +224,7 @@ class RandomFlip3D(RandomFlip):
 
 
 @TRANSFORMS.register_module()
-class RandomJitterPoints(object):
+class RandomJitterPoints(BaseTransform):
     """Randomly jitter point coordinates.
 
     Different from the global translation in ``GlobalRotScaleTrans``, here we
@@ -246,8 +246,8 @@ class RandomJitterPoints(object):
     """
 
     def __init__(self,
-                 jitter_std=[0.01, 0.01, 0.01],
-                 clip_range=[-0.05, 0.05]):
+                 jitter_std: List[float] = [0.01, 0.01, 0.01],
+                 clip_range: List[float] = [-0.05, 0.05]) -> None:
         seq_types = (list, tuple, np.ndarray)
         if not isinstance(jitter_std, seq_types):
             assert isinstance(jitter_std, (int, float)), \
@@ -262,7 +262,7 @@ class RandomJitterPoints(object):
                 clip_range = [-clip_range, clip_range]
         self.clip_range = clip_range
 
-    def __call__(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to jitter all the points in the scene.
 
         Args:
@@ -780,10 +780,10 @@ class GlobalRotScaleTrans(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PointShuffle(object):
+class PointShuffle(BaseTransform):
     """Shuffle input points."""
 
-    def __call__(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to shuffle points.
 
         Args:
@@ -1113,7 +1113,7 @@ class IndoorPointSample(PointSample):
 
 
 @TRANSFORMS.register_module()
-class IndoorPatchPointSample(object):
+class IndoorPatchPointSample(BaseTransform):
     r"""Indoor point sample within a patch. Modified from `PointNet++ <https://
     github.com/charlesq34/pointnet2/blob/master/scannet/scannet_dataset.py>`_.
 
@@ -1152,15 +1152,15 @@ class IndoorPatchPointSample(object):
     """
 
     def __init__(self,
-                 num_points,
-                 block_size=1.5,
-                 sample_rate=None,
-                 ignore_index=None,
-                 use_normalized_coord=False,
-                 num_try=10,
-                 enlarge_size=0.2,
-                 min_unique_num=None,
-                 eps=1e-2):
+                 num_points: int,
+                 block_size: float = 1.5,
+                 sample_rate: Optional[float] = None,
+                 ignore_index: Optional[int] = None,
+                 use_normalized_coord: bool = False,
+                 num_try: int = 10,
+                 enlarge_size: float = 0.2,
+                 min_unique_num: Optional[int] = None,
+                 eps: float = 1e-2) -> None:
         self.num_points = num_points
         self.block_size = block_size
         self.ignore_index = ignore_index
@@ -1175,8 +1175,10 @@ class IndoorPatchPointSample(object):
                 "'sample_rate' has been deprecated and will be removed in "
                 'the future. Please remove them from your code.')
 
-    def _input_generation(self, coords, patch_center, coord_max, attributes,
-                          attribute_dims, point_type):
+    def _input_generation(self, coords: np.ndarray, patch_center: np.ndarray,
+                          coord_max: np.ndarray, attributes: np.ndarray,
+                          attribute_dims: dict,
+                          point_type: type) -> BasePoints:
         """Generating model input.
 
         Generate input by subtracting patch center and adding additional
@@ -1216,7 +1218,8 @@ class IndoorPatchPointSample(object):
 
         return points
 
-    def _patch_points_sampling(self, points, sem_mask):
+    def _patch_points_sampling(self, points: BasePoints,
+                               sem_mask: np.ndarray) -> BasePoints:
         """Patch points sampling.
 
         First sample a valid patch.
@@ -1316,7 +1319,7 @@ class IndoorPatchPointSample(object):
 
         return points, choices
 
-    def __call__(self, results):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to sample points to in indoor scenes.
 
         Args:
@@ -1326,22 +1329,33 @@ class IndoorPatchPointSample(object):
             dict: Results after sampling, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
         """
-        points = results['points']
+        points = input_dict['points']
 
-        assert 'pts_semantic_mask' in results.keys(), \
+        assert 'pts_semantic_mask' in input_dict.keys(), \
             'semantic mask should be provided in training and evaluation'
-        pts_semantic_mask = results['pts_semantic_mask']
+        pts_semantic_mask = input_dict['pts_semantic_mask']
 
         points, choices = self._patch_points_sampling(points,
                                                       pts_semantic_mask)
 
-        results['points'] = points
-        results['pts_semantic_mask'] = pts_semantic_mask[choices]
-        pts_instance_mask = results.get('pts_instance_mask', None)
-        if pts_instance_mask is not None:
-            results['pts_instance_mask'] = pts_instance_mask[choices]
+        input_dict['points'] = points
+        input_dict['pts_semantic_mask'] = pts_semantic_mask[choices]
 
-        return results
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in input_dict:
+            input_dict['eval_ann_info']['pts_semantic_mask'] = \
+                pts_semantic_mask[choices]
+
+        pts_instance_mask = input_dict.get('pts_instance_mask', None)
+
+        if pts_instance_mask is not None:
+            input_dict['pts_instance_mask'] = pts_instance_mask[choices]
+            # 'eval_ann_info' will be passed to evaluator
+            if 'eval_ann_info' in input_dict:
+                input_dict['eval_ann_info']['pts_instance_mask'] = \
+                    pts_instance_mask[choices]
+
+        return input_dict
 
     def __repr__(self):
         """str: Return a string that describes the module."""
@@ -1358,14 +1372,14 @@ class IndoorPatchPointSample(object):
 
 
 @TRANSFORMS.register_module()
-class BackgroundPointsFilter(object):
+class BackgroundPointsFilter(BaseTransform):
     """Filter background points near the bounding box.
 
     Args:
         bbox_enlarge_range (tuple[float], float): Bbox enlarge range.
     """
 
-    def __init__(self, bbox_enlarge_range):
+    def __init__(self, bbox_enlarge_range: Union[Tuple[float], float]) -> None:
         assert (is_tuple_of(bbox_enlarge_range, float)
                 and len(bbox_enlarge_range) == 3) \
             or isinstance(bbox_enlarge_range, float), \
@@ -1376,7 +1390,7 @@ class BackgroundPointsFilter(object):
         self.bbox_enlarge_range = np.array(
             bbox_enlarge_range, dtype=np.float32)[np.newaxis, :]
 
-    def __call__(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to filter points by the range.
 
         Args:

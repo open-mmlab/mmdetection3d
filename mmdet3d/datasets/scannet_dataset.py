@@ -1,17 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import tempfile
 import warnings
 from os import path as osp
-from typing import Callable, List, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 
-from mmdet3d.core import instance_seg_eval, show_result, show_seg_result
+from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
-from .custom_3d_seg import Custom3DSegDataset
 from .det3d_dataset import Det3DDataset
 from .pipelines import Compose
+from .seg3d_dataset import Seg3DDataset
 
 
 @DATASETS.register_module()
@@ -193,7 +192,7 @@ class ScanNetDataset(Det3DDataset):
 
 
 @DATASETS.register_module()
-class ScanNetSegDataset(Custom3DSegDataset):
+class ScanNetSegDataset(Seg3DDataset):
     r"""ScanNet Dataset for Semantic Segmentation Task.
 
     This class serves as the API for experiments on the ScanNet Dataset.
@@ -221,134 +220,63 @@ class ScanNetSegDataset(Custom3DSegDataset):
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
     """
-    CLASSES = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
-               'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
-               'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
-               'bathtub', 'otherfurniture')
-
-    VALID_CLASS_IDS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
-                       33, 34, 36, 39)
-
-    ALL_CLASS_IDS = tuple(range(41))
-
-    PALETTE = [
-        [174, 199, 232],
-        [152, 223, 138],
-        [31, 119, 180],
-        [255, 187, 120],
-        [188, 189, 34],
-        [140, 86, 75],
-        [255, 152, 150],
-        [214, 39, 40],
-        [197, 176, 213],
-        [148, 103, 189],
-        [196, 156, 148],
-        [23, 190, 207],
-        [247, 182, 210],
-        [219, 219, 141],
-        [255, 127, 14],
-        [158, 218, 229],
-        [44, 160, 44],
-        [112, 128, 144],
-        [227, 119, 194],
-        [82, 84, 163],
-    ]
+    METAINFO = {
+        'CLASSES':
+        ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+         'window', 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+         'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+         'otherfurniture'),
+        'PALETTE': [
+            [174, 199, 232],
+            [152, 223, 138],
+            [31, 119, 180],
+            [255, 187, 120],
+            [188, 189, 34],
+            [140, 86, 75],
+            [255, 152, 150],
+            [214, 39, 40],
+            [197, 176, 213],
+            [148, 103, 189],
+            [196, 156, 148],
+            [23, 190, 207],
+            [247, 182, 210],
+            [219, 219, 141],
+            [255, 127, 14],
+            [158, 218, 229],
+            [44, 160, 44],
+            [112, 128, 144],
+            [227, 119, 194],
+            [82, 84, 163],
+        ],
+        'valid_class_ids': (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
+                            28, 33, 34, 36, 39),
+        'all_class_ids':
+        tuple(range(41)),
+    }
 
     def __init__(self,
-                 data_root,
-                 ann_file,
-                 pipeline=None,
-                 classes=None,
-                 palette=None,
-                 modality=None,
-                 test_mode=False,
+                 data_root: Optional[str] = None,
+                 ann_file: str = '',
+                 metainfo: Optional[dict] = None,
+                 data_prefix: dict = dict(
+                     pts='points', img='', instance_mask='', semantic_mask=''),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index=None,
                  scene_idxs=None,
-                 **kwargs):
-
+                 test_mode=False,
+                 **kwargs) -> None:
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
+            metainfo=metainfo,
+            data_prefix=data_prefix,
             pipeline=pipeline,
-            classes=classes,
-            palette=palette,
             modality=modality,
-            test_mode=test_mode,
             ignore_index=ignore_index,
             scene_idxs=scene_idxs,
+            test_mode=test_mode,
             **kwargs)
-
-    def get_ann_info(self, index):
-        """Get annotation info according to the given index.
-
-        Args:
-            index (int): Index of the annotation data to get.
-
-        Returns:
-            dict: annotation information consists of the following keys:
-
-                - pts_semantic_mask_path (str): Path of semantic masks.
-        """
-        # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-
-        pts_semantic_mask_path = osp.join(self.data_root,
-                                          info['pts_semantic_mask_path'])
-
-        anns_results = dict(pts_semantic_mask_path=pts_semantic_mask_path)
-        return anns_results
-
-    def _build_default_pipeline(self):
-        """Build the default pipeline for this dataset."""
-        pipeline = [
-            dict(
-                type='LoadPointsFromFile',
-                coord_type='DEPTH',
-                shift_height=False,
-                use_color=True,
-                load_dim=6,
-                use_dim=[0, 1, 2, 3, 4, 5]),
-            dict(
-                type='LoadAnnotations3D',
-                with_bbox_3d=False,
-                with_label_3d=False,
-                with_mask_3d=False,
-                with_seg_3d=True),
-            dict(
-                type='PointSegClassMapping',
-                valid_cat_ids=self.VALID_CLASS_IDS,
-                max_cat_id=np.max(self.ALL_CLASS_IDS)),
-            dict(
-                type='DefaultFormatBundle3D',
-                with_label=False,
-                class_names=self.CLASSES),
-            dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
-        ]
-        return Compose(pipeline)
-
-    def show(self, results, out_dir, show=True, pipeline=None):
-        """Results visualization.
-
-        Args:
-            results (list[dict]): List of bounding boxes results.
-            out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
-        """
-        assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = self._get_pipeline(pipeline)
-        for i, result in enumerate(results):
-            data_info = self.data_infos[i]
-            pts_path = data_info['pts_path']
-            file_name = osp.split(pts_path)[-1].split('.')[0]
-            points, gt_sem_mask = self._extract_data(
-                i, pipeline, ['points', 'pts_semantic_mask'], load_annos=True)
-            points = points.numpy()
-            pred_sem_mask = result['semantic_mask'].numpy()
-            show_seg_result(points, gt_sem_mask,
-                            pred_sem_mask, out_dir, file_name,
-                            np.array(self.PALETTE), self.ignore_index, show)
 
     def get_scene_idxs(self, scene_idxs):
         """Compute scene_idxs for data sampling.
@@ -362,191 +290,65 @@ class ScanNetSegDataset(Custom3DSegDataset):
 
         return super().get_scene_idxs(scene_idxs)
 
-    def format_results(self, results, txtfile_prefix=None):
-        r"""Format the results to txt file. Refer to `ScanNet documentation
-        <http://kaldir.vc.in.tum.de/scannet_benchmark/documentation>`_.
-
-        Args:
-            outputs (list[dict]): Testing results of the dataset.
-            txtfile_prefix (str): The prefix of saved files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-
-        Returns:
-            tuple: (outputs, tmp_dir), outputs is the detection results,
-                tmp_dir is the temporal directory created for saving submission
-                files when ``submission_prefix`` is not specified.
-        """
-        import mmcv
-
-        if txtfile_prefix is None:
-            tmp_dir = tempfile.TemporaryDirectory()
-            txtfile_prefix = osp.join(tmp_dir.name, 'results')
-        else:
-            tmp_dir = None
-        mmcv.mkdir_or_exist(txtfile_prefix)
-
-        # need to map network output to original label idx
-        pred2label = np.zeros(len(self.VALID_CLASS_IDS)).astype(np.int)
-        for original_label, output_idx in self.label_map.items():
-            if output_idx != self.ignore_index:
-                pred2label[output_idx] = original_label
-
-        outputs = []
-        for i, result in enumerate(results):
-            info = self.data_infos[i]
-            sample_idx = info['point_cloud']['lidar_idx']
-            pred_sem_mask = result['semantic_mask'].numpy().astype(np.int)
-            pred_label = pred2label[pred_sem_mask]
-            curr_file = f'{txtfile_prefix}/{sample_idx}.txt'
-            np.savetxt(curr_file, pred_label, fmt='%d')
-            outputs.append(dict(seg_mask=pred_label))
-
-        return outputs, tmp_dir
-
 
 @DATASETS.register_module()
-class ScanNetInstanceSegDataset(Custom3DSegDataset):
-    CLASSES = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-               'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-               'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-               'garbagebin')
+class ScanNetInstanceSegDataset(Seg3DDataset):
 
-    VALID_CLASS_IDS = (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39)
+    METAINFO = {
+        'CLASSES':
+        ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+         'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
+         'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
+        'PLATTE': [
+            [174, 199, 232],
+            [152, 223, 138],
+            [31, 119, 180],
+            [255, 187, 120],
+            [188, 189, 34],
+            [140, 86, 75],
+            [255, 152, 150],
+            [214, 39, 40],
+            [197, 176, 213],
+            [148, 103, 189],
+            [196, 156, 148],
+            [23, 190, 207],
+            [247, 182, 210],
+            [219, 219, 141],
+            [255, 127, 14],
+            [158, 218, 229],
+            [44, 160, 44],
+            [112, 128, 144],
+            [227, 119, 194],
+            [82, 84, 163],
+        ],
+        'valid_class_ids':
+        (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39),
+        'all_class_ids':
+        tuple(range(41))
+    }
 
-    ALL_CLASS_IDS = tuple(range(41))
-
-    def get_ann_info(self, index):
-        """Get annotation info according to the given index.
-
-        Args:
-            index (int): Index of the annotation data to get.
-
-        Returns:
-            dict: annotation information consists of the following keys:
-                - pts_semantic_mask_path (str): Path of semantic masks.
-                - pts_instance_mask_path (str): Path of instance masks.
-        """
-        # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-
-        pts_instance_mask_path = osp.join(self.data_root,
-                                          info['pts_instance_mask_path'])
-        pts_semantic_mask_path = osp.join(self.data_root,
-                                          info['pts_semantic_mask_path'])
-
-        anns_results = dict(
-            pts_instance_mask_path=pts_instance_mask_path,
-            pts_semantic_mask_path=pts_semantic_mask_path)
-        return anns_results
-
-    def get_classes_and_palette(self, classes=None, palette=None):
-        """Get class names of current dataset. Palette is simply ignored for
-        instance segmentation.
-
-        Args:
-            classes (Sequence[str] | str | None): If classes is None, use
-                default CLASSES defined by builtin dataset. If classes is a
-                string, take it as a file name. The file contains the name of
-                classes where each line contains one class name. If classes is
-                a tuple or list, override the CLASSES defined by the dataset.
-                Defaults to None.
-            palette (Sequence[Sequence[int]]] | np.ndarray | None):
-                The palette of segmentation map. If None is given, random
-                palette will be generated. Defaults to None.
-        """
-        if classes is not None:
-            return classes, None
-        return self.CLASSES, None
-
-    def _build_default_pipeline(self):
-        """Build the default pipeline for this dataset."""
-        pipeline = [
-            dict(
-                type='LoadPointsFromFile',
-                coord_type='DEPTH',
-                shift_height=False,
-                use_color=True,
-                load_dim=6,
-                use_dim=[0, 1, 2, 3, 4, 5]),
-            dict(
-                type='LoadAnnotations3D',
-                with_bbox_3d=False,
-                with_label_3d=False,
-                with_mask_3d=True,
-                with_seg_3d=True),
-            dict(
-                type='PointSegClassMapping',
-                valid_cat_ids=self.VALID_CLASS_IDS,
-                max_cat_id=40),
-            dict(
-                type='DefaultFormatBundle3D',
-                with_label=False,
-                class_names=self.CLASSES),
-            dict(
-                type='Collect3D',
-                keys=['points', 'pts_semantic_mask', 'pts_instance_mask'])
-        ]
-        return Compose(pipeline)
-
-    def evaluate(self,
-                 results,
-                 metric=None,
-                 options=None,
-                 logger=None,
-                 show=False,
-                 out_dir=None,
-                 pipeline=None):
-        """Evaluation in instance segmentation protocol.
-
-        Args:
-            results (list[dict]): List of results.
-            metric (str | list[str]): Metrics to be evaluated.
-            options (dict, optional): options for instance_seg_eval.
-            logger (logging.Logger | None | str): Logger used for printing
-                related information during evaluation. Defaults to None.
-            show (bool, optional): Whether to visualize.
-                Defaults to False.
-            out_dir (str, optional): Path to save the visualization results.
-                Defaults to None.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
-
-        Returns:
-            dict: Evaluation results.
-        """
-        assert isinstance(
-            results, list), f'Expect results to be list, got {type(results)}.'
-        assert len(results) > 0, 'Expect length of results > 0.'
-        assert len(results) == len(self.data_infos)
-        assert isinstance(
-            results[0], dict
-        ), f'Expect elements in results to be dict, got {type(results[0])}.'
-
-        load_pipeline = self._get_pipeline(pipeline)
-        pred_instance_masks = [result['instance_mask'] for result in results]
-        pred_instance_labels = [result['instance_label'] for result in results]
-        pred_instance_scores = [result['instance_score'] for result in results]
-        gt_semantic_masks, gt_instance_masks = zip(*[
-            self._extract_data(
-                index=i,
-                pipeline=load_pipeline,
-                key=['pts_semantic_mask', 'pts_instance_mask'],
-                load_annos=True) for i in range(len(self.data_infos))
-        ])
-        ret_dict = instance_seg_eval(
-            gt_semantic_masks,
-            gt_instance_masks,
-            pred_instance_masks,
-            pred_instance_labels,
-            pred_instance_scores,
-            valid_class_ids=self.VALID_CLASS_IDS,
-            class_labels=self.CLASSES,
-            options=options,
-            logger=logger)
-
-        if show:
-            raise NotImplementedError('show is not implemented for now')
-
-        return ret_dict
+    def __init__(self,
+                 data_root: Optional[str] = None,
+                 ann_file: str = '',
+                 metainfo: Optional[dict] = None,
+                 data_prefix: dict = dict(
+                     pts='points', img='', instance_mask='', semantic_mask=''),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: dict = dict(use_lidar=True, use_camera=False),
+                 test_mode=False,
+                 ignore_index=None,
+                 scene_idxs=None,
+                 file_client_args=dict(backend='disk'),
+                 **kwargs) -> None:
+        super().__init__(
+            data_root=data_root,
+            ann_file=ann_file,
+            metainfo=metainfo,
+            pipeline=pipeline,
+            data_prefix=data_prefix,
+            modality=modality,
+            test_mode=test_mode,
+            ignore_index=ignore_index,
+            scene_idxs=scene_idxs,
+            file_client_args=file_client_args,
+            **kwargs)

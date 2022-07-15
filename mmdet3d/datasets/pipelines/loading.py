@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence
+from typing import List
 
 import mmcv
 import numpy as np
@@ -270,22 +270,6 @@ class PointSegClassMapping(BaseTransform):
             segmentation mask. Defaults to 40.
     """
 
-    def __init__(self,
-                 valid_cat_ids: Sequence[int],
-                 max_cat_id: int = 40) -> None:
-        assert max_cat_id >= np.max(valid_cat_ids), \
-            'max_cat_id should be greater than maximum id in valid_cat_ids'
-
-        self.valid_cat_ids = valid_cat_ids
-        self.max_cat_id = int(max_cat_id)
-
-        # build cat_id to class index mapping
-        neg_cls = len(valid_cat_ids)
-        self.cat_id2class = np.ones(
-            self.max_cat_id + 1, dtype=np.int) * neg_cls
-        for cls_idx, cat_id in enumerate(valid_cat_ids):
-            self.cat_id2class[cat_id] = cls_idx
-
     def transform(self, results: dict) -> None:
         """Call function to map original semantic class to valid category ids.
 
@@ -301,9 +285,19 @@ class PointSegClassMapping(BaseTransform):
         assert 'pts_semantic_mask' in results
         pts_semantic_mask = results['pts_semantic_mask']
 
-        converted_pts_sem_mask = self.cat_id2class[pts_semantic_mask]
+        assert 'label_mapping' in results
+        label_mapping = results['label_mapping']
+        converted_pts_sem_mask = \
+            np.array([label_mapping[mask] for mask in pts_semantic_mask])
 
         results['pts_semantic_mask'] = converted_pts_sem_mask
+
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            assert 'pts_semantic_mask' in results['eval_ann_info']
+            results['eval_ann_info']['pts_semantic_mask'] = \
+                converted_pts_sem_mask
+
         return results
 
     def __repr__(self):
@@ -315,17 +309,17 @@ class PointSegClassMapping(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class NormalizePointsColor(object):
+class NormalizePointsColor(BaseTransform):
     """Normalize color of points.
 
     Args:
         color_mean (list[float]): Mean color of the point cloud.
     """
 
-    def __init__(self, color_mean):
+    def __init__(self, color_mean: List[float]) -> None:
         self.color_mean = color_mean
 
-    def __call__(self, results):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to normalize color of points.
 
         Args:
@@ -337,7 +331,7 @@ class NormalizePointsColor(object):
 
                 - points (:obj:`BasePoints`): Points after color normalization.
         """
-        points = results['points']
+        points = input_dict['points']
         assert points.attribute_dims is not None and \
                'color' in points.attribute_dims.keys(), \
                'Expect points have color attribute'
@@ -345,8 +339,8 @@ class NormalizePointsColor(object):
             points.color = points.color - \
                            points.color.new_tensor(self.color_mean)
         points.color = points.color / 255.0
-        results['points'] = points
-        return results
+        input_dict['points'] = points
+        return input_dict
 
     def __repr__(self):
         """str: Return a string that describes the module."""

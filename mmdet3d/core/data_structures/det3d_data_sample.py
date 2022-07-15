@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmengine.data import InstanceData, PixelData
+from mmengine.data import InstanceData
 
 from mmdet.core.data_structures import DetDataSample
+from .point_data import PointData
 
 
 class Det3DDataSample(DetDataSample):
@@ -43,19 +44,15 @@ class Det3DDataSample(DetDataSample):
             `use_lidar=True, use_camera=True`, the 3D predictions based on
             image are saved in `img_pred_instances_3d` to distinguish with
             `pts_pred_instances_3d` which based on point cloud.
-        - ``gt_pts_sem_seg``(PixelData): Ground truth of point cloud
-            semantic segmentation.
-        - ``pred_pts_sem_seg``(PixelData): Prediction of point cloud
-            semantic segmentation.
-        - ``gt_pts_panoptic_seg``(PixelData): Ground truth of point cloud
-            panoptic segmentation.
-        - ``pred_pts_panoptic_seg``(PixelData): Predicted of point cloud
-            panoptic segmentation.
+        - ``gt_pts_seg``(PointData): Ground truth of point cloud
+            segmentation.
+        - ``pred_pts_seg``(PointData): Prediction of point cloud
+            segmentation.
         - ``eval_ann_info``(dict): Raw annotation, which will be passed to
             evaluator and do the online evaluation.
 
     Examples:
-    >>> from mmengine.data import InstanceData, PixelData
+    >>> from mmengine.data import InstanceData
 
     >>> from mmdet3d.core import Det3DDataSample
     >>> from mmdet3d.core.bbox import BaseInstance3DBoxes
@@ -128,38 +125,33 @@ class Det3DDataSample(DetDataSample):
     >>> assert 'bboxes' in data_sample.gt_instances_3d
 
     >>> data_sample = Det3DDataSample()
-    >>> gt_pts_panoptic_seg_data = dict(panoptic_seg=torch.rand(1, 2, 4))
-    >>> gt_pts_panoptic_seg = PixelData(**gt_pts_panoptic_seg_data)
-    >>> data_sample.gt_pts_panoptic_seg = gt_pts_panoptic_seg
+    ... gt_pts_seg_data = dict(
+    ...    pts_instance_mask=torch.rand(2),
+    ...    pts_semantic_mask=torch.rand(2))
+    >>> data_sample.gt_pts_seg = PointData(**gt_pts_seg_data)
     >>> print(data_sample)
     <Det3DDataSample(
 
         META INFORMATION
 
         DATA FIELDS
-        _gt_pts_panoptic_seg: <PixelData(
+        gt_pts_seg: <PointData(
 
                 META INFORMATION
 
                 DATA FIELDS
-                panoptic_seg: tensor([[[0.9875, 0.3012, 0.5534, 0.9593],
-                             [0.1251, 0.1911, 0.8058, 0.2566]]])
-            ) at 0x7fb0d93543d0>
-        gt_pts_panoptic_seg: <PixelData(
+                pts_instance_mask: tensor([0.0576, 0.3067])
+                pts_semantic_mask: tensor([0.9267, 0.7455])
+            ) at 0x7f654a9c1590>
+        _gt_pts_seg: <PointData(
 
                 META INFORMATION
 
                 DATA FIELDS
-                panoptic_seg: tensor([[[0.9875, 0.3012, 0.5534, 0.9593],
-                             [0.1251, 0.1911, 0.8058, 0.2566]]])
-            ) at 0x7fb0d93543d0>
-    ) at 0x7fb0d9354280>
-    >>> data_sample = Det3DDataSample()
-    >>> gt_pts_sem_seg_data = dict(segm_seg=torch.rand(2, 2, 2))
-    >>> gt_pts_sem_seg = PixelData(**gt_pts_sem_seg_data)
-    >>> data_sample.gt_pts_sem_seg = gt_pts_sem_seg
-    >>> assert 'gt_pts_sem_seg' in data_sample
-    >>> assert 'segm_seg' in data_sample.gt_pts_sem_seg
+                pts_instance_mask: tensor([0.0576, 0.3067])
+                pts_semantic_mask: tensor([0.9267, 0.7455])
+            ) at 0x7f654a9c1590>
+    ) at 0x7f654a9c1550>
     """
 
     @property
@@ -211,49 +203,25 @@ class Det3DDataSample(DetDataSample):
         del self._img_pred_instances_3d
 
     @property
-    def gt_pts_sem_seg(self) -> PixelData:
-        return self._gt_pts_sem_seg
+    def gt_pts_seg(self) -> PointData:
+        return self._gt_pts_seg
 
-    @gt_pts_sem_seg.setter
-    def gt_pts_sem_seg(self, value: PixelData):
-        self.set_field(value, '_gt_pts_sem_seg', dtype=PixelData)
+    @gt_pts_seg.setter
+    def gt_pts_seg(self, value: PointData):
+        self.set_field(value, '_gt_pts_seg', dtype=PointData)
 
-    @gt_pts_sem_seg.deleter
-    def gt_pts_sem_seg(self):
-        del self._gt_pts_sem_seg
-
-    @property
-    def pred_pts_sem_seg(self) -> PixelData:
-        return self._pred_pts_sem_seg
-
-    @pred_pts_sem_seg.setter
-    def pred_pts_sem_seg(self, value: PixelData):
-        self.set_field(value, '_pred_pts_sem_seg', dtype=PixelData)
-
-    @pred_pts_sem_seg.deleter
-    def pred_pts_sem_seg(self):
-        del self._pred_pts_sem_seg
+    @gt_pts_seg.deleter
+    def gt_pts_seg(self):
+        del self._gt_pts_seg
 
     @property
-    def gt_pts_panoptic_seg(self) -> PixelData:
-        return self._gt_pts_panoptic_seg
+    def pred_pts_seg(self) -> PointData:
+        return self._pred_pts_seg
 
-    @gt_pts_panoptic_seg.setter
-    def gt_pts_panoptic_seg(self, value: PixelData):
-        self.set_field(value, '_gt_pts_panoptic_seg', dtype=PixelData)
+    @pred_pts_seg.setter
+    def pred_pts_seg(self, value: PointData):
+        self.set_field(value, '_pred_pts_seg', dtype=PointData)
 
-    @gt_pts_panoptic_seg.deleter
-    def gt_pts_panoptic_seg(self):
-        del self._gt_pts_panoptic_seg
-
-    @property
-    def pred_pts_panoptic_seg(self) -> PixelData:
-        return self._pred_pts_panoptic_seg
-
-    @pred_pts_panoptic_seg.setter
-    def pred_pts_panoptic_seg(self, value: PixelData):
-        self.set_field(value, '_pred_pts_panoptic_seg', dtype=PixelData)
-
-    @pred_pts_panoptic_seg.deleter
-    def pred_pts_panoptic_seg(self):
-        del self._pred_pts_panoptic_seg
+    @pred_pts_seg.deleter
+    def pred_pts_seg(self):
+        del self._pred_pts_seg

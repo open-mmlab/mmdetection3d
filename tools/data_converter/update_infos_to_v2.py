@@ -433,6 +433,66 @@ def update_kitti_infos(pkl_path, out_dir):
     mmcv.dump(converted_data_info, out_path, 'pkl')
 
 
+def update_s3dis_infos(pkl_path, out_dir):
+    print(f'{pkl_path} will be modified.')
+    if out_dir in pkl_path:
+        print(f'Warning, you may overwriting '
+              f'the original data {pkl_path}.')
+        time.sleep(5)
+    METAINFO = {'CLASSES': ('table', 'chair', 'sofa', 'bookcase', 'board')}
+    print(f'Reading from input file: {pkl_path}.')
+    data_list = mmcv.load(pkl_path)
+    print('Start updating:')
+    converted_list = []
+    for ori_info_dict in mmcv.track_iter_progress(data_list):
+        temp_data_info = get_empty_standard_data_info()
+        temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
+            'point_cloud']['num_features']
+        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
+            'pts_path'].split('/')[-1]
+        temp_data_info['pts_semantic_mask_path'] = ori_info_dict[
+            'pts_semantic_mask_path'].split('/')[-1]
+        temp_data_info['pts_instance_mask_path'] = ori_info_dict[
+            'pts_instance_mask_path'].split('/')[-1]
+
+        # TODO support camera
+        # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
+        anns = ori_info_dict.get('annos', None)
+        ignore_class_name = set()
+        if anns is not None:
+            if anns['gt_num'] == 0:
+                instance_list = []
+            else:
+                num_instances = len(anns['class'])
+                instance_list = []
+                for instance_id in range(num_instances):
+                    empty_instance = get_empty_instance()
+                    empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
+                        instance_id].tolist()
+
+                    if anns['class'][instance_id] < len(METAINFO['CLASSES']):
+                        empty_instance['bbox_label_3d'] = anns['class'][
+                            instance_id]
+                    else:
+                        ignore_class_name.add(
+                            METAINFO['CLASSES'][anns['class'][instance_id]])
+                        empty_instance['bbox_label_3d'] = -1
+
+                    empty_instance = clear_instance_unused_keys(empty_instance)
+                    instance_list.append(empty_instance)
+            temp_data_info['instances'] = instance_list
+        temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
+        converted_list.append(temp_data_info)
+    pkl_name = pkl_path.split('/')[-1]
+    out_path = osp.join(out_dir, pkl_name)
+    print(f'Writing to output file: {out_path}.')
+    print(f'ignore classes: {ignore_class_name}')
+    converted_data_info = dict(
+        metainfo={'DATASET': 'S3DIS'}, data_list=converted_list)
+
+    mmcv.dump(converted_data_info, out_path, 'pkl')
+
+
 def update_scannet_infos(pkl_path, out_dir):
     print(f'{pkl_path} will be modified.')
     if out_dir in pkl_path:
@@ -699,6 +759,8 @@ def main():
         update_lyft_infos(pkl_path=args.pkl, out_dir=args.out_dir)
     elif args.dataset.lower() == 'nuscenes':
         update_nuscenes_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+    elif args.dataset.lower() == 's3dis':
+        update_s3dis_infos(pkl_path=args.pkl, out_dir=args.out_dir)
     else:
         raise NotImplementedError(
             f'Do not support convert {args.dataset} to v2.')

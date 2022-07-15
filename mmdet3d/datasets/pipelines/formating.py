@@ -6,7 +6,7 @@ from mmcv import BaseTransform
 from mmcv.transforms import to_tensor
 from mmengine import InstanceData
 
-from mmdet3d.core import Det3DDataSample
+from mmdet3d.core import Det3DDataSample, PointData
 from mmdet3d.core.bbox import BaseInstance3DBoxes
 from mmdet3d.core.points import BasePoints
 from mmdet3d.registry import TRANSFORMS
@@ -143,7 +143,7 @@ class Pack3DDetInputs(BaseTransform):
         data_sample = Det3DDataSample()
         gt_instances_3d = InstanceData()
         gt_instances = InstanceData()
-        seg_data = dict()
+        gt_pts_seg = PointData()
 
         img_metas = {}
         for key in self.meta_keys:
@@ -161,7 +161,7 @@ class Pack3DDetInputs(BaseTransform):
                 elif key in self.INSTANCEDATA_2D_KEYS:
                     gt_instances[self._remove_prefix(key)] = results[key]
                 elif key in self.SEG_KEYS:
-                    seg_data[self._remove_prefix(key)] = results[key]
+                    gt_pts_seg[self._remove_prefix(key)] = results[key]
                 else:
                     raise NotImplementedError(f'Please modified '
                                               f'`Pack3DDetInputs` '
@@ -170,7 +170,7 @@ class Pack3DDetInputs(BaseTransform):
 
         data_sample.gt_instances_3d = gt_instances_3d
         data_sample.gt_instances = gt_instances
-        data_sample.seg_data = seg_data
+        data_sample.gt_pts_seg = gt_pts_seg
         if 'eval_ann_info' in results:
             data_sample.eval_ann_info = results['eval_ann_info']
         else:
