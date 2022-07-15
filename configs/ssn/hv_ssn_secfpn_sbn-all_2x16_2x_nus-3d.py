@@ -29,8 +29,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
@@ -48,20 +49,18 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=4,
-    train=dict(pipeline=train_pipeline, classes=class_names),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=4,
+    dataset=dict(pipeline=train_pipeline, metainfo=dict(CLASSES=class_names)))
+test_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+val_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
 
 # model settings
 model = dict(
@@ -148,84 +147,86 @@ model = dict(
         dir_limit_offset=0,
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder', code_size=9),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False,
+            loss_weight=0.2)),
     # model training and testing settings
     train_cfg=dict(
         _delete_=True,
         pts=dict(
             assigner=[
                 dict(  # bicycle
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.35,
                     min_pos_iou=0.35,
                     ignore_iof_thr=-1),
                 dict(  # motorcycle
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.3,
                     min_pos_iou=0.3,
                     ignore_iof_thr=-1),
                 dict(  # pedestrian
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.6,
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
                 dict(  # traffic cone
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.6,
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
                 dict(  # barrier
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
                 dict(  # car
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.6,
                     neg_iou_thr=0.45,
                     min_pos_iou=0.45,
                     ignore_iof_thr=-1),
                 dict(  # truck
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
                 dict(  # trailer
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.35,
                     min_pos_iou=0.35,
                     ignore_iof_thr=-1),
                 dict(  # bus
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
                 dict(  # construction vehicle
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.35,

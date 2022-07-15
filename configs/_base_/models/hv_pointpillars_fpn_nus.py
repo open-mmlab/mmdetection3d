@@ -32,7 +32,7 @@ model = dict(
         layer_strides=[2, 2, 2],
         out_channels=[64, 128, 256]),
     pts_neck=dict(
-        type='FPN',
+        type='mmdet.FPN',
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         act_cfg=dict(type='ReLU'),
         in_channels=[64, 128, 256],

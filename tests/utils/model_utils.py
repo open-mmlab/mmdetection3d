@@ -76,6 +76,7 @@ def _create_detector_inputs(seed=0,
                             with_img=False,
                             num_gt_instance=20,
                             points_feat_dim=4,
+                            gt_bboxes_dim=7,
                             num_classes=3):
     _setup_seed(seed)
     inputs_dict = dict()
@@ -88,7 +89,7 @@ def _create_detector_inputs(seed=0,
 
     gt_instance_3d = InstanceData()
     gt_instance_3d.bboxes_3d = LiDARInstance3DBoxes(
-        torch.rand([num_gt_instance, 7]))
+        torch.rand([num_gt_instance, gt_bboxes_dim]), box_dim=gt_bboxes_dim)
     gt_instance_3d.labels_3d = torch.randint(0, num_classes, [num_gt_instance])
     data_sample = Det3DDataSample(
         metainfo=dict(box_type_3d=LiDARInstance3DBoxes))

@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List
+
 import torch
-from mmcv.runner import force_fp32
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.core.bbox import bbox_overlaps_nearest_3d
+from mmdet3d.core.utils import InstanceList, OptInstanceList
 from mmdet3d.registry import MODELS
 from .anchor3d_head import Anchor3DHead
 from .train_mixins import get_direction_target
@@ -29,27 +32,26 @@ class FreeAnchor3DHead(Anchor3DHead):
     """  # noqa: E501
 
     def __init__(self,
-                 pre_anchor_topk=50,
-                 bbox_thr=0.6,
-                 gamma=2.0,
-                 alpha=0.5,
-                 init_cfg=None,
-                 **kwargs):
+                 pre_anchor_topk: int = 50,
+                 bbox_thr: float = 0.6,
+                 gamma: float = 2.0,
+                 alpha: float = 0.5,
+                 init_cfg: dict = None,
+                 **kwargs) -> None:
         super().__init__(init_cfg=init_cfg, **kwargs)
         self.pre_anchor_topk = pre_anchor_topk
         self.bbox_thr = bbox_thr
         self.gamma = gamma
         self.alpha = alpha
 
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             dir_cls_preds,
-             gt_bboxes,
-             gt_labels,
-             input_metas,
-             gt_bboxes_ignore=None):
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            dir_cls_preds: List[Tensor],
+            batch_gt_instances_3d: InstanceList,
+            batch_input_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> Dict:
         """Calculate loss of FreeAnchor head.
 
         Args:
@@ -59,11 +61,14 @@ class FreeAnchor3DHead(Anchor3DHead):
                 different samples
             dir_cls_preds (list[torch.Tensor]): Direction predictions of
                 different samples
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth boxes.
-            gt_labels (list[torch.Tensor]): Ground truth labels.
-            input_metas (list[dict]): List of input meta information.
-            gt_bboxes_ignore (list[:obj:`BaseInstance3DBoxes`], optional):
-                Ground truth boxes that should be ignored. Defaults to None.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
+            batch_input_metas (list[dict]): Contain pcd and img's meta info.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
 
         Returns:
             dict[str, torch.Tensor]: Loss items.
@@ -72,10 +77,10 @@ class FreeAnchor3DHead(Anchor3DHead):
                 - negative_bag_loss (torch.Tensor): Loss of negative samples.
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
-        assert len(featmap_sizes) == self.anchor_generator.num_levels
+        assert len(featmap_sizes) == self.prior_generator.num_levels
 
-        anchor_list = self.get_anchors(featmap_sizes, input_metas)
-        anchors = [torch.cat(anchor) for anchor in anchor_list]
+        anchor_list = self.get_anchors(featmap_sizes, batch_input_metas)
+        mlvl_anchors = [torch.cat(anchor) for anchor in anchor_list]
 
         # concatenate each level
         cls_scores = [
@@ -98,24 +103,24 @@ class FreeAnchor3DHead(Anchor3DHead):
         bbox_preds = torch.cat(bbox_preds, dim=1)
         dir_cls_preds = torch.cat(dir_cls_preds, dim=1)
 
-        cls_prob = torch.sigmoid(cls_scores)
+        cls_probs = torch.sigmoid(cls_scores)
         box_prob = []
         num_pos = 0
         positive_losses = []
-        for _, (anchors_, gt_labels_, gt_bboxes_, cls_prob_, bbox_preds_,
-                dir_cls_preds_) in enumerate(
-                    zip(anchors, gt_labels, gt_bboxes, cls_prob, bbox_preds,
-                        dir_cls_preds)):
+        for _, (anchors, gt_instance_3d, cls_prob, bbox_pred,
+                dir_cls_pred) in enumerate(
+                    zip(mlvl_anchors, batch_gt_instances_3d, cls_probs,
+                        bbox_preds, dir_cls_preds)):
 
-            gt_bboxes_ = gt_bboxes_.tensor.to(anchors_.device)
-
+            gt_bboxes = gt_instance_3d.bboxes_3d.tensor.to(anchors.device)
+            gt_labels = gt_instance_3d.labels_3d.to(anchors.device)
             with torch.no_grad():
                 # box_localization: a_{j}^{loc}, shape: [j, 4]
-                pred_boxes = self.bbox_coder.decode(anchors_, bbox_preds_)
+                pred_boxes = self.bbox_coder.decode(anchors, bbox_pred)
 
                 # object_box_iou: IoU_{ij}^{loc}, shape: [i, j]
                 object_box_iou = bbox_overlaps_nearest_3d(
-                    gt_bboxes_, pred_boxes)
+                    gt_bboxes, pred_boxes)
 
                 # object_box_prob: P{a_{j} -> b_{i}}, shape: [i, j]
                 t1 = self.bbox_thr
@@ -125,9 +130,9 @@ class FreeAnchor3DHead(Anchor3DHead):
                     min=0, max=1)
 
                 # object_cls_box_prob: P{a_{j} -> b_{i}}, shape: [i, c, j]
-                num_obj = gt_labels_.size(0)
+                num_obj = gt_labels.size(0)
                 indices = torch.stack(
-                    [torch.arange(num_obj).type_as(gt_labels_), gt_labels_],
+                    [torch.arange(num_obj).type_as(gt_labels), gt_labels],
                     dim=0)
 
                 object_cls_box_prob = torch.sparse_coo_tensor(
@@ -147,11 +152,11 @@ class FreeAnchor3DHead(Anchor3DHead):
                 indices = torch.nonzero(box_cls_prob, as_tuple=False).t_()
                 if indices.numel() == 0:
                     image_box_prob = torch.zeros(
-                        anchors_.size(0),
+                        anchors.size(0),
                         self.num_classes).type_as(object_box_prob)
                 else:
                     nonzero_box_prob = torch.where(
-                        (gt_labels_.unsqueeze(dim=-1) == indices[0]),
+                        (gt_labels.unsqueeze(dim=-1) == indices[0]),
                         object_box_prob[:, indices[1]],
                         torch.tensor(
                             [0]).type_as(object_box_prob)).max(dim=0).values
@@ -160,14 +165,13 @@ class FreeAnchor3DHead(Anchor3DHead):
                     image_box_prob = torch.sparse_coo_tensor(
                         indices.flip([0]),
                         nonzero_box_prob,
-                        size=(anchors_.size(0), self.num_classes)).to_dense()
+                        size=(anchors.size(0), self.num_classes)).to_dense()
                 # end
 
                 box_prob.append(image_box_prob)
 
             # construct bags for objects
-            match_quality_matrix = bbox_overlaps_nearest_3d(
-                gt_bboxes_, anchors_)
+            match_quality_matrix = bbox_overlaps_nearest_3d(gt_bboxes, anchors)
             _, matched = torch.topk(
                 match_quality_matrix,
                 self.pre_anchor_topk,
@@ -177,15 +181,15 @@ class FreeAnchor3DHead(Anchor3DHead):
 
             # matched_cls_prob: P_{ij}^{cls}
             matched_cls_prob = torch.gather(
-                cls_prob_[matched], 2,
-                gt_labels_.view(-1, 1, 1).repeat(1, self.pre_anchor_topk,
-                                                 1)).squeeze(2)
+                cls_prob[matched], 2,
+                gt_labels.view(-1, 1, 1).repeat(1, self.pre_anchor_topk,
+                                                1)).squeeze(2)
 
             # matched_box_prob: P_{ij}^{loc}
-            matched_anchors = anchors_[matched]
+            matched_anchors = anchors[matched]
             matched_object_targets = self.bbox_coder.encode(
                 matched_anchors,
-                gt_bboxes_.unsqueeze(dim=1).expand_as(matched_anchors))
+                gt_bboxes.unsqueeze(dim=1).expand_as(matched_anchors))
 
             # direction classification loss
             loss_dir = None
@@ -198,15 +202,16 @@ class FreeAnchor3DHead(Anchor3DHead):
                     self.dir_limit_offset,
                     one_hot=False)
                 loss_dir = self.loss_dir(
-                    dir_cls_preds_[matched].transpose(-2, -1),
+                    dir_cls_pred[matched].transpose(-2, -1),
                     matched_dir_targets,
                     reduction_override='none')
 
             # generate bbox weights
             if self.diff_rad_by_sin:
-                bbox_preds_[matched], matched_object_targets = \
+                bbox_preds_clone = bbox_pred.clone()
+                bbox_preds_clone[matched], matched_object_targets = \
                     self.add_sin_difference(
-                        bbox_preds_[matched], matched_object_targets)
+                        bbox_preds_clone[matched], matched_object_targets)
             bbox_weights = matched_anchors.new_ones(matched_anchors.size())
             # Use pop is not right, check performance
             code_weight = self.train_cfg.get('code_weight', None)
@@ -214,7 +219,7 @@ class FreeAnchor3DHead(Anchor3DHead):
                 bbox_weights = bbox_weights * bbox_weights.new_tensor(
                     code_weight)
             loss_bbox = self.loss_bbox(
-                bbox_preds_[matched],
+                bbox_preds_clone[matched],
                 matched_object_targets,
                 bbox_weights,
                 reduction_override='none').sum(-1)
@@ -224,7 +229,7 @@ class FreeAnchor3DHead(Anchor3DHead):
             matched_box_prob = torch.exp(-loss_bbox)
 
             # positive_losses: {-log( Mean-max(P_{ij}^{cls} * P_{ij}^{loc}) )}
-            num_pos += len(gt_bboxes_)
+            num_pos += len(gt_bboxes)
             positive_losses.append(
                 self.positive_bag_loss(matched_cls_prob, matched_box_prob))
 
@@ -244,7 +249,8 @@ class FreeAnchor3DHead(Anchor3DHead):
         }
         return losses
 
-    def positive_bag_loss(self, matched_cls_prob, matched_box_prob):
+    def positive_bag_loss(self, matched_cls_prob: Tensor,
+                          matched_box_prob: Tensor) -> Tensor:
         """Generate positive bag loss.
 
         Args:
@@ -266,7 +272,7 @@ class FreeAnchor3DHead(Anchor3DHead):
         return self.alpha * F.binary_cross_entropy(
             bag_prob, torch.ones_like(bag_prob), reduction='none')
 
-    def negative_bag_loss(self, cls_prob, box_prob):
+    def negative_bag_loss(self, cls_prob: Tensor, box_prob: Tensor) -> Tensor:
         """Generate negative bag loss.
 
         Args:

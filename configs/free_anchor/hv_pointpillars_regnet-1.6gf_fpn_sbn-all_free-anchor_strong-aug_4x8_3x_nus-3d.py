@@ -60,11 +60,25 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
-data = dict(train=dict(pipeline=train_pipeline))
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 
-lr_config = dict(step=[28, 34])
-runner = dict(max_epochs=36)
-evaluation = dict(interval=36)
+train_cfg = dict(max_epochs=36, val_interval=36)
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=1.0 / 1000,
+        by_epoch=False,
+        begin=0,
+        end=1000),
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=24,
+        by_epoch=True,
+        milestones=[28, 34],
+        gamma=0.1)
+]

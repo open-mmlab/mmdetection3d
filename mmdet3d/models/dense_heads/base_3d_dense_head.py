@@ -264,8 +264,8 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
                                 cfg: ConfigDict,
                                 rescale: bool = False,
                                 **kwargs) -> InstanceData:
-        """Transform a single image's features extracted from the head into
-        bbox results.
+        """Transform a single points sample's features extracted from the head
+        into bbox results.
 
         Args:
             cls_score_list (list[Tensor]): Box scores from all scale
