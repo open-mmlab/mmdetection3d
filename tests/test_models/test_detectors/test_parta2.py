@@ -9,18 +9,18 @@ from tests.utils.model_utils import (_create_detector_inputs,
                                      _get_detector_cfg, _setup_seed)
 
 
-class TestVotenet(unittest.TestCase):
+class TestPartA2(unittest.TestCase):
 
-    def test_voxel_net(self):
+    def test_parta2(self):
         import mmdet3d.models
 
-        assert hasattr(mmdet3d.models, 'VoteNet')
-        DefaultScope.get_instance('test_vote_net', scope_name='mmdet3d')
+        assert hasattr(mmdet3d.models, 'PartA2')
+        DefaultScope.get_instance('test_parta2', scope_name='mmdet3d')
         _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg(
-            'votenet/votenet_16x8_sunrgbd-3d-10class.py')
-        model = MODELS.build(voxel_net_cfg)
-        num_gt_instance = 50
+        parta2_cfg = _get_detector_cfg(
+            'parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py')
+        model = MODELS.build(parta2_cfg)
+        num_gt_instance = 2
         data = [_create_detector_inputs(num_gt_instance=num_gt_instance)]
         aug_data = [
             _create_detector_inputs(num_gt_instance=num_gt_instance),
@@ -51,19 +51,20 @@ class TestVotenet(unittest.TestCase):
                 aug_data, True)
             aug_results = model.forward(
                 batch_inputs, data_samples, mode='predict')
-
+            self.assertEqual(len(results), len(data))
             self.assertIn('bboxes_3d', aug_results[0].pred_instances_3d)
             self.assertIn('scores_3d', aug_results[0].pred_instances_3d)
             self.assertIn('labels_3d', aug_results[0].pred_instances_3d)
+            self.assertIn('bboxes_3d', aug_results[1].pred_instances_3d)
+            self.assertIn('scores_3d', aug_results[1].pred_instances_3d)
+            self.assertIn('labels_3d', aug_results[1].pred_instances_3d)
+            # save the memory
 
-            losses = model.forward(batch_inputs, data_samples, mode='loss')
-
-            self.assertGreater(losses['vote_loss'], 0)
-            self.assertGreater(losses['objectness_loss'], 0)
-            self.assertGreater(losses['semantic_loss'], 0)
-            self.assertGreater(losses['dir_res_loss'], 0)
-            self.assertGreater(losses['size_class_loss'], 0)
-            self.assertGreater(losses['size_res_loss'], 0)
-            self.assertGreater(losses['size_res_loss'], 0)
-
-        # TODO test_aug_test
+            with torch.no_grad():
+                losses = model.forward(batch_inputs, data_samples, mode='loss')
+                torch.cuda.empty_cache()
+            self.assertGreater(losses['loss_rpn_cls'][0], 0)
+            self.assertGreater(losses['loss_rpn_bbox'][0], 0)
+            self.assertGreater(losses['loss_seg'], 0)
+            self.assertGreater(losses['loss_part'], 0)
+            self.assertGreater(losses['loss_cls'], 0)

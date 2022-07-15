@@ -1,19 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
 from mmcv.runner import BaseModule, force_fp32
-from torch import nn
+from mmengine import InstanceData
+from torch import Tensor, nn
 
-from mmdet3d.core import (circle_nms, draw_heatmap_gaussian, gaussian_radius,
-                          xywhr2xyxyr)
+from mmdet3d.core import (Det3DDataSample, circle_nms, draw_heatmap_gaussian,
+                          gaussian_radius, xywhr2xyxyr)
 from mmdet3d.core.post_processing import nms_bev
 from mmdet3d.models import builder
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.utils import clip_sigmoid
-from mmdet3d.registry import MODELS
-from mmdet.core import build_bbox_coder, multi_apply
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet.core import multi_apply
 
 
 @MODELS.register_module()
@@ -53,7 +54,6 @@ class SeparateHead(BaseModule):
         self.init_bias = init_bias
         for head in self.heads:
             classes, num_conv = self.heads[head]
-
             conv_layers = []
             c_in = in_channels
             for i in range(num_conv - 1):
@@ -250,8 +250,6 @@ class CenterHead(BaseModule):
             feature map. Default: [128].
         tasks (list[dict], optional): Task information including class number
             and class names. Default: None.
-        train_cfg (dict, optional): Train-time configs. Default: None.
-        test_cfg (dict, optional): Test-time configs. Default: None.
         bbox_coder (dict, optional): Bbox coder configs. Default: None.
         common_heads (dict, optional): Conv information for common heads.
             Default: dict().
@@ -269,32 +267,45 @@ class CenterHead(BaseModule):
             Default: dict(type='Conv2d')
         norm_cfg (dict, optional): Config of norm layer.
             Default: dict(type='BN2d').
-        bias (str, optional): Type of bias. Default: 'auto'.
+        bias (str): Type of bias. Default: 'auto'.
+        norm_bbox (bool): Whether normalize the bbox predictions.
+            Defaults to True.
+        train_cfg (dict, optional): Train-time configs. Default: None.
+        test_cfg (dict, optional): Test-time configs. Default: None.
+        init_cfg (dict, optional): Config for initialization.
     """
 
     def __init__(self,
-                 in_channels=[128],
-                 tasks=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 bbox_coder=None,
-                 common_heads=dict(),
-                 loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-                 loss_bbox=dict(
-                     type='L1Loss', reduction='none', loss_weight=0.25),
-                 separate_head=dict(
-                     type='SeparateHead', init_bias=-2.19, final_kernel=3),
-                 share_conv_channel=64,
-                 num_heatmap_convs=2,
-                 conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='BN2d'),
-                 bias='auto',
-                 norm_bbox=True,
-                 init_cfg=None):
+                 in_channels: Union[List[int], int] = [128],
+                 tasks: Optional[List[dict]] = None,
+                 bbox_coder: Optional[dict] = None,
+                 common_heads: dict = dict(),
+                 loss_cls: dict = dict(
+                     type='mmdet.GaussianFocalLoss', reduction='mean'),
+                 loss_bbox: dict = dict(
+                     type='mmdet.L1Loss', reduction='none', loss_weight=0.25),
+                 separate_head: dict = dict(
+                     type='mmdet.SeparateHead',
+                     init_bias=-2.19,
+                     final_kernel=3),
+                 share_conv_channel: int = 64,
+                 num_heatmap_convs: int = 2,
+                 conv_cfg: dict = dict(type='Conv2d'),
+                 norm_cfg: dict = dict(type='BN2d'),
+                 bias: str = 'auto',
+                 norm_bbox: bool = True,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None,
+                 **kwargs):
         assert init_cfg is None, 'To prevent abnormal initialization ' \
             'behavior, init_cfg is not allowed to be set'
-        super(CenterHead, self).__init__(init_cfg=init_cfg)
+        super(CenterHead, self).__init__(init_cfg=init_cfg, **kwargs)
 
+        # TODO we should rename this variable,
+        # for example num_classes_per_task ?
+        # {'num_class': 2, 'class_names': ['pedestrian', 'traffic_cone']}]
+        # TODO seems num_classes is useless
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
         self.train_cfg = train_cfg
@@ -303,9 +314,9 @@ class CenterHead(BaseModule):
         self.num_classes = num_classes
         self.norm_bbox = norm_bbox
 
-        self.loss_cls = build_loss(loss_cls)
-        self.loss_bbox = build_loss(loss_bbox)
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.loss_cls = MODELS.build(loss_cls)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.num_anchor_per_locs = [n for n in num_classes]
         self.fp16_enabled = False
 
@@ -328,7 +339,7 @@ class CenterHead(BaseModule):
                 in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
             self.task_heads.append(builder.build_head(separate_head))
 
-    def forward_single(self, x):
+    def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.
 
         Args:
@@ -347,7 +358,7 @@ class CenterHead(BaseModule):
 
         return ret_dicts
 
-    def forward(self, feats):
+    def forward(self, feats: List[Tensor]) -> Tuple[List[Tensor]]:
         """Forward pass.
 
         Args:
@@ -384,7 +395,10 @@ class CenterHead(BaseModule):
             feat = feat.view(-1, dim)
         return feat
 
-    def get_targets(self, gt_bboxes_3d, gt_labels_3d):
+    def get_targets(
+        self,
+        batch_gt_instances_3d: List[InstanceData],
+    ) -> Tuple[List[Tensor]]:
         """Generate targets.
 
         How each output is transformed:
@@ -399,24 +413,24 @@ class CenterHead(BaseModule):
                 [ tensor0, tensor1, tensor2, ... ]
 
         Args:
-            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
-                truth gt boxes.
-            gt_labels_3d (list[torch.Tensor]): Labels of boxes.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and\
+                ``labels_3d`` attributes.
 
         Returns:
             Returns:
                 tuple[list[torch.Tensor]]: Tuple of target including
                     the following results in order.
 
-                    - list[torch.Tensor]: Heatmap scores.
-                    - list[torch.Tensor]: Ground truth boxes.
-                    - list[torch.Tensor]: Indexes indicating the
-                        position of the valid boxes.
-                    - list[torch.Tensor]: Masks indicating which
-                        boxes are valid.
+                - list[torch.Tensor]: Heatmap scores.
+                - list[torch.Tensor]: Ground truth boxes.
+                - list[torch.Tensor]: Indexes indicating the
+                    position of the valid boxes.
+                - list[torch.Tensor]: Masks indicating which
+                    boxes are valid.
         """
         heatmaps, anno_boxes, inds, masks = multi_apply(
-            self.get_targets_single, gt_bboxes_3d, gt_labels_3d)
+            self.get_targets_single, batch_gt_instances_3d)
         # Transpose heatmaps
         heatmaps = list(map(list, zip(*heatmaps)))
         heatmaps = [torch.stack(hms_) for hms_ in heatmaps]
@@ -431,12 +445,14 @@ class CenterHead(BaseModule):
         masks = [torch.stack(masks_) for masks_ in masks]
         return heatmaps, anno_boxes, inds, masks
 
-    def get_targets_single(self, gt_bboxes_3d, gt_labels_3d):
+    def get_targets_single(self,
+                           gt_instances_3d: InstanceData) -> Tuple[Tensor]:
         """Generate training targets for a single sample.
 
         Args:
-            gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): Ground truth gt boxes.
-            gt_labels_3d (torch.Tensor): Labels of boxes.
+            gt_instances_3d (:obj:`InstanceData`): Gt_instances of
+                single data sample. It usually includes
+                ``bboxes_3d`` and ``labels_3d`` attributes.
 
         Returns:
             tuple[list[torch.Tensor]]: Tuple of target including
@@ -449,6 +465,8 @@ class CenterHead(BaseModule):
                 - list[torch.Tensor]: Masks indicating which boxes
                     are valid.
         """
+        gt_labels_3d = gt_instances_3d.labels_3d
+        gt_bboxes_3d = gt_instances_3d.bboxes_3d
         device = gt_labels_3d.device
         gt_bboxes_3d = torch.cat(
             (gt_bboxes_3d.gravity_center, gt_bboxes_3d.tensor[:, 3:]),
@@ -569,21 +587,48 @@ class CenterHead(BaseModule):
             inds.append(ind)
         return heatmaps, anno_boxes, inds, masks
 
+    def loss(self, pts_feats: List[Tensor],
+             batch_data_samples: List[Det3DDataSample], *args,
+             **kwargs) -> Dict[str, Tensor]:
+        """Forward function for point cloud branch.
+
+        Args:
+            pts_feats (list[torch.Tensor]): Features of point cloud branch
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, .
+
+        Returns:
+            dict: Losses of each branch.
+        """
+        outs = self(pts_feats)
+        batch_gt_instance_3d = []
+        for data_sample in batch_data_samples:
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+        losses = self.loss_by_feat(outs, batch_gt_instance_3d)
+        return losses
+
     @force_fp32(apply_to=('preds_dicts'))
-    def loss(self, gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs):
+    def loss_by_feat(self, preds_dicts: Tuple[List[dict]],
+                     batch_gt_instances_3d: List[InstanceData], *args,
+                     **kwargs):
         """Loss function for CenterHead.
 
         Args:
-            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
-                truth gt boxes.
-            gt_labels_3d (list[torch.Tensor]): Labels of boxes.
-            preds_dicts (dict): Output of forward function.
+            preds_dicts (tuple[list[dict]]): Prediction results of
+                multiple tasks. The outer tuple indicate  different
+                tasks head, and the internal list indicate different
+                FPN level.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and\
+                ``labels_3d`` attributes.
 
         Returns:
-            dict[str:torch.Tensor]: Loss of heatmap and bbox of each task.
+            dict[str,torch.Tensor]: Loss of heatmap and bbox of each task.
         """
+
         heatmaps, anno_boxes, inds, masks = self.get_targets(
-            gt_bboxes_3d, gt_labels_3d)
+            batch_gt_instances_3d)
         loss_dict = dict()
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
@@ -619,15 +664,62 @@ class CenterHead(BaseModule):
             loss_dict[f'task{task_id}.loss_bbox'] = loss_bbox
         return loss_dict
 
-    def get_bboxes(self, preds_dicts, img_metas, img=None, rescale=False):
+    def predict(self,
+                pts_feats: Dict[str, torch.Tensor],
+                batch_data_samples: List[Det3DDataSample],
+                rescale=True,
+                **kwargs) -> List[InstanceData]:
+        """
+        Args:
+            pts_feats (dict): Point features..
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes meta information of data.
+            rescale (bool): Whether rescale the resutls to
+                the original scale.
+
+        Returns:
+            list[:obj:`InstanceData`]: List of processed predictions. Each
+            InstanceData contains 3d Bounding boxes and corresponding
+            scores and labels.
+        """
+        preds_dict = self(pts_feats)
+        batch_size = len(batch_data_samples)
+        batch_input_metas = []
+        for batch_index in range(batch_size):
+            metainfo = batch_data_samples[batch_index].metainfo
+            batch_input_metas.append(metainfo)
+
+        results_list = self.predict_by_feat(
+            preds_dict, batch_input_metas, rescale=rescale, **kwargs)
+        return results_list
+
+    def predict_by_feat(self, preds_dicts: Tuple[List[dict]],
+                        batch_input_metas: List[dict], *args,
+                        **kwargs) -> List[InstanceData]:
         """Generate bboxes from bbox head predictions.
 
         Args:
-            preds_dicts (tuple[list[dict]]): Prediction results.
-            img_metas (list[dict]): Point cloud and image's meta info.
+            preds_dicts (tuple[list[dict]]): Prediction results of
+                multiple tasks. The outer tuple indicate  different
+                tasks head, and the internal list indicate different
+                FPN level.
+            batch_input_metas (list[dict]): Meta info of multiple
+                inputs.
 
         Returns:
-            list[dict]: Decoded bbox, scores and labels after nms.
+            list[:obj:`InstanceData`]: Instance prediction
+            results of each sample after the post process.
+            Each item usually contains following keys.
+
+                - scores_3d (Tensor): Classification scores, has a shape
+                  (num_instance, )
+                - labels_3d (Tensor): Labels of bboxes, has a shape
+                  (num_instances, ).
+                - bboxes_3d (:obj:`LiDARInstance3DBoxes`): Prediction
+                  of bboxes, contains a tensor with shape
+                  (num_instances, 7) or (num_instances, 9), and
+                  the last 2 dimensions of 9 is
+                  velocity.
         """
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
@@ -689,18 +781,20 @@ class CenterHead(BaseModule):
                 rets.append(
                     self.get_task_detections(num_class_with_bg,
                                              batch_cls_preds, batch_reg_preds,
-                                             batch_cls_labels, img_metas))
+                                             batch_cls_labels,
+                                             batch_input_metas))
 
         # Merge branches results
         num_samples = len(rets[0])
 
         ret_list = []
         for i in range(num_samples):
+            temp_instances = InstanceData()
             for k in rets[0][i].keys():
                 if k == 'bboxes':
                     bboxes = torch.cat([ret[i][k] for ret in rets])
                     bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 5] * 0.5
-                    bboxes = img_metas[i]['box_type_3d'](
+                    bboxes = batch_input_metas[i]['box_type_3d'](
                         bboxes, self.bbox_coder.code_size)
                 elif k == 'scores':
                     scores = torch.cat([ret[i][k] for ret in rets])
@@ -710,7 +804,10 @@ class CenterHead(BaseModule):
                         rets[j][i][k] += flag
                         flag += num_class
                     labels = torch.cat([ret[i][k].int() for ret in rets])
-            ret_list.append([bboxes, scores, labels])
+            temp_instances.bboxes_3d = bboxes
+            temp_instances.scores_3d = scores
+            temp_instances.labels_3d = labels
+            ret_list.append(temp_instances)
         return ret_list
 
     def get_task_detections(self, num_class_with_bg, batch_cls_preds,

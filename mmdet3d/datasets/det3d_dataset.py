@@ -35,6 +35,8 @@ class Det3DDataset(BaseDataset):
                 - use_camera: bool
                 - use_lidar: bool
             Defaults to `dict(use_lidar=True, use_camera=False)`
+        default_cam_key (str, optional): The default camera name adopted.
+            Defaults to None.
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -65,6 +67,7 @@ class Det3DDataset(BaseDataset):
                  data_prefix: dict = dict(pts='velodyne', img=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
+                 default_cam_key: str = None,
                  box_type_3d: dict = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -84,6 +87,7 @@ class Det3DDataset(BaseDataset):
             if key not in modality:
                 modality[key] = False
         self.modality = modality
+        self.default_cam_key = default_cam_key
         assert self.modality['use_lidar'] or self.modality['use_camera'], (
             'Please specify the `modality` (`use_lidar` '
             f', `use_camera`) for {self.__class__.__name__}')
@@ -233,6 +237,20 @@ class Det3DDataset(BaseDataset):
                         cam_prefix = self.data_prefix.get('img', '')
                     img_info['img_path'] = osp.join(cam_prefix,
                                                     img_info['img_path'])
+            if self.default_cam_key is not None:
+                info['img_path'] = info['images'][
+                    self.default_cam_key]['img_path']
+                if 'lidar2cam' in info['images'][self.default_cam_key]:
+                    info['lidar2cam'] = np.array(
+                        info['images'][self.default_cam_key]['lidar2cam'])
+                if 'cam2img' in info['images'][self.default_cam_key]:
+                    info['cam2img'] = np.array(
+                        info['images'][self.default_cam_key]['cam2img'])
+                if 'lidar2img' in info['images'][self.default_cam_key]:
+                    info['lidar2img'] = np.array(
+                        info['images'][self.default_cam_key]['lidar2img'])
+                else:
+                    info['lidar2img'] = info['cam2img'] @ info['lidar2cam']
 
         if not self.test_mode:
             # used in traing

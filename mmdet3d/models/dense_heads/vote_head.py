@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import torch
 from mmcv.ops import furthest_point_sample
-from mmcv.runner import BaseModule, force_fp32
+from mmcv.runner import BaseModule
 from mmengine import ConfigDict, InstanceData
 from torch.nn import functional as F
 
@@ -308,7 +308,6 @@ class VoteHead(BaseModule):
         results.update(decode_res)
         return results
 
-    @force_fp32(apply_to=('bbox_preds', ))
     def loss_by_feat(
             self,
             points: List[torch.Tensor],

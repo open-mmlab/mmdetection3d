@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional, Sequence
+
 import torch
-from mmcv.runner import force_fp32
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
@@ -23,7 +25,6 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
         super(DynamicMVXFasterRCNN, self).__init__(**kwargs)
 
     @torch.no_grad()
-    @force_fp32()
     def voxelize(self, points):
         """Apply dynamic voxelization to points.
 
@@ -46,13 +47,30 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
         coors_batch = torch.cat(coors_batch, dim=0)
         return points, coors_batch
 
-    def extract_pts_feat(self, points, img_feats, img_metas):
-        """Extract point features."""
+    def extract_pts_feat(
+            self,
+            points: List[Tensor],
+            img_feats: Optional[Sequence[Tensor]] = None,
+            batch_input_metas: Optional[List[dict]] = None
+    ) -> Sequence[Tensor]:
+        """Extract features of points.
+
+        Args:
+            points (List[tensor]):  Point cloud of multiple inputs.
+            img_feats (list[Tensor], tuple[tensor], optional): Features from
+                image backbone.
+            batch_input_metas (list[dict], optional): The meta information
+                of multiple samples. Defaults to True.
+
+        Returns:
+            Sequence[tensor]: points features of multiple inputs
+            from backbone or neck.
+        """
         if not self.with_pts_bbox:
             return None
         voxels, coors = self.voxelize(points)
         voxel_features, feature_coors = self.pts_voxel_encoder(
-            voxels, coors, points, img_feats, img_metas)
+            voxels, coors, points, img_feats, batch_input_metas)
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, feature_coors, batch_size)
         x = self.pts_backbone(x)

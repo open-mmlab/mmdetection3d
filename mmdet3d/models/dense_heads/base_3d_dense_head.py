@@ -111,9 +111,9 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
 
         Args:
             x (tuple[Tensor]): Features from FPN.
-            batch_data_samples (list[:obj:`DetDataSample`]): Each item contains
-                the meta information of each image and corresponding
-                annotations.
+            batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
+                contains the meta information of each image and
+                corresponding annotations.
             proposal_cfg (ConfigDict, optional): Test / postprocessing
                 configuration, if None, test_cfg would be used.
                 Defaults to None.

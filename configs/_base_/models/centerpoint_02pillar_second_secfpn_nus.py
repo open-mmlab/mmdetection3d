@@ -1,6 +1,7 @@
 voxel_size = [0.2, 0.2, 8]
 model = dict(
     type='CenterPoint',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     pts_voxel_layer=dict(
         max_num_points=20, voxel_size=voxel_size, max_voxels=(30000, 40000)),
     pts_voxel_encoder=dict(
@@ -53,8 +54,9 @@ model = dict(
             code_size=9),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
-        loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),
+        loss_cls=dict(type='mmdet.GaussianFocalLoss', reduction='mean'),
+        loss_bbox=dict(
+            type='mmdet.L1Loss', reduction='mean', loss_weight=0.25),
         norm_bbox=True),
     # model training and testing settings
     train_cfg=dict(

@@ -3,7 +3,7 @@ import torch
 from mmcv.cnn import build_norm_layer
 from mmcv.ops import DynamicScatter
 from mmcv.runner import force_fp32
-from torch import nn
+from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
 from .. import builder
@@ -20,13 +20,14 @@ class HardSimpleVFE(nn.Module):
         num_features (int, optional): Number of features to use. Default: 4.
     """
 
-    def __init__(self, num_features=4):
+    def __init__(self, num_features: int = 4) -> None:
         super(HardSimpleVFE, self).__init__()
         self.num_features = num_features
         self.fp16_enabled = False
 
     @force_fp32(out_fp16=True)
-    def forward(self, features, num_points, coors):
+    def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
+                *args, **kwargs) -> Tensor:
         """Forward function.
 
         Args:
@@ -66,7 +67,7 @@ class DynamicSimpleVFE(nn.Module):
 
     @torch.no_grad()
     @force_fp32(out_fp16=True)
-    def forward(self, features, coors):
+    def forward(self, features, coors, *args, **kwargs):
         """Forward function.
 
         Args:
@@ -218,13 +219,14 @@ class DynamicVFE(nn.Module):
         center_per_point = voxel_mean[voxel_inds, ...]
         return center_per_point
 
-    @force_fp32(out_fp16=True)
     def forward(self,
                 features,
                 coors,
                 points=None,
                 img_feats=None,
-                img_metas=None):
+                img_metas=None,
+                *args,
+                **kwargs):
         """Forward functions.
 
         Args:
@@ -390,7 +392,9 @@ class HardVFE(nn.Module):
                 num_points,
                 coors,
                 img_feats=None,
-                img_metas=None):
+                img_metas=None,
+                *args,
+                **kwargs):
         """Forward functions.
 
         Args:

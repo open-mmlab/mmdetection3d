@@ -1,15 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
+from mmengine import InstanceData
 
-from mmdet3d.core.bbox.assigners import MaxIoUAssigner
+from mmdet3d.core.bbox.assigners import Max3DIoUAssigner
 from mmdet3d.core.bbox.samplers import IoUNegPiecewiseSampler
 
 
 def test_iou_piecewise_sampler():
     if not torch.cuda.is_available():
         pytest.skip()
-    assigner = MaxIoUAssigner(
+    assigner = Max3DIoUAssigner(
         pos_iou_thr=0.55,
         neg_iou_thr=0.55,
         min_pos_iou=0.55,
@@ -27,7 +28,13 @@ def test_iou_piecewise_sampler():
         [[0, 0, 0, 10, 10, 9, 0.2], [5, 10, 10, 20, 20, 15, 0.6]],
         dtype=torch.float32).cuda()
     gt_labels = torch.tensor([1, 1], dtype=torch.int64).cuda()
-    assign_result = assigner.assign(bboxes, gt_bboxes, gt_labels=gt_labels)
+    gt_instanses = InstanceData()
+    gt_instanses.bboxes_3d = gt_bboxes
+    gt_instanses.labels_3d = gt_labels
+    pred_instaces = InstanceData()
+    pred_instaces.priors = bboxes
+
+    assign_result = assigner.assign(pred_instaces, gt_instanses)
 
     sampler = IoUNegPiecewiseSampler(
         num=10,

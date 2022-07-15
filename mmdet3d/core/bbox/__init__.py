@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .assigners import AssignResult, BaseAssigner, MaxIoUAssigner
+from .assigners import AssignResult, BaseAssigner, Max3DIoUAssigner
 # from .bbox_target import bbox_target
 from .builder import build_assigner, build_bbox_coder, build_sampler
 from .coders import DeltaXYZWLHRBBoxCoder
@@ -18,7 +18,7 @@ from .structures import (BaseInstance3DBoxes, Box3DMode, CameraInstance3DBoxes,
 from .transforms import bbox3d2result, bbox3d2roi, bbox3d_mapping_back
 
 __all__ = [
-    'BaseSampler', 'AssignResult', 'BaseAssigner', 'MaxIoUAssigner',
+    'BaseSampler', 'AssignResult', 'BaseAssigner', 'Max3DIoUAssigner',
     'PseudoSampler', 'RandomSampler', 'InstanceBalancedPosSampler',
     'IoUBalancedNegSampler', 'CombinedSampler', 'SamplingResult',
     'DeltaXYZWLHRBBoxCoder', 'BboxOverlapsNearest3D', 'BboxOverlaps3D',

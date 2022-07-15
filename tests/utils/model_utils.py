@@ -72,11 +72,20 @@ def _get_detector_cfg(fname):
 
 
 def _create_detector_inputs(seed=0,
+                            with_points=True,
+                            with_img=False,
                             num_gt_instance=20,
                             points_feat_dim=4,
                             num_classes=3):
     _setup_seed(seed)
-    inputs_dict = dict(points=torch.rand([10, points_feat_dim]))
+    inputs_dict = dict()
+    if with_points:
+        points = torch.rand([3, points_feat_dim])
+        inputs_dict['points'] = points
+    if with_img:
+        img = torch.rand(3, 10, 10)
+        inputs_dict['img'] = img
+
     gt_instance_3d = InstanceData()
     gt_instance_3d.bboxes_3d = LiDARInstance3DBoxes(
         torch.rand([num_gt_instance, 7]))

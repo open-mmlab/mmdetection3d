@@ -12,7 +12,7 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-
+data_prefix = dict(pts='samples/LIDAR_TOP', img='')
 model = dict(
     pts_voxel_layer=dict(point_cloud_range=point_cloud_range),
     pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])),
@@ -90,8 +90,9 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -120,13 +121,9 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -144,28 +141,31 @@ eval_pipeline = [
         file_client_args=file_client_args,
         pad_empty_sweeps=True,
         remove_close=True),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-
-data = dict(
-    train=dict(
+train_dataloader = dict(
+    _delete_=True,
+    batch_size=4,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type='CBGSDataset',
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'nuscenes_infos_train.pkl',
+            ann_file='nuscenes_infos_train.pkl',
             pipeline=train_pipeline,
-            classes=class_names,
+            metainfo=dict(CLASSES=class_names),
             test_mode=False,
+            data_prefix=data_prefix,
             use_valid_flag=True,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
+            box_type_3d='LiDAR')))
+test_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+val_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
 
-evaluation = dict(interval=20, pipeline=eval_pipeline)
+train_cfg = dict(val_interval=20)

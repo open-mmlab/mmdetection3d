@@ -9,7 +9,7 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-
+data_prefix = dict(pts='samples/LIDAR_TOP', img='')
 model = dict(
     pts_voxel_layer=dict(
         voxel_size=voxel_size, point_cloud_range=point_cloud_range),
@@ -96,7 +96,9 @@ train_pipeline = [
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -125,16 +127,15 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-
-data = dict(
-    train=dict(dataset=dict(pipeline=train_pipeline)),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
+train_dataloader = dict(
+    dataset=dict(
+        dataset=dict(
+            pipeline=train_pipeline, metainfo=dict(CLASSES=class_names))))
+test_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+val_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))

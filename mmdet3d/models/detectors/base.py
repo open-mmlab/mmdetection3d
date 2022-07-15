@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Union
 
+from mmengine import InstanceData
+
 from mmdet3d.core import Det3DDataSample
 from mmdet3d.core.utils import (ForwardResults, InstanceList, OptConfigType,
                                 OptMultiConfig, OptSampleList, SampleList)
@@ -38,7 +40,7 @@ class Base3DDetector(BaseDetector):
         - "tensor": Forward the whole network and return tensor or tuple of
         tensor without any post-processing, same as a common nn.Module.
         - "predict": Forward and return the predictions, which are fully
-        processed to a list of :obj:`DetDataSample`.
+        processed to a list of :obj:`Det3DDataSample`.
         - "loss": Forward and return a dict of losses according to the given
         inputs and data samples.
 
@@ -53,8 +55,8 @@ class Base3DDetector(BaseDetector):
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
                 - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
-            data_samples (list[:obj:`DetDataSample`],
-                list[list[:obj:`DetDataSample`]], optional): The
+            data_samples (list[:obj:`Det3DDataSample`],
+                list[list[:obj:`Det3DDataSample`]], optional): The
                 annotation data of every samples. When it is a list[list], the
                 outer list indicate the test time augmentation, and the
                 inter list indicate the batch. Otherwise, the list simply
@@ -65,7 +67,7 @@ class Base3DDetector(BaseDetector):
             The return type depends on ``mode``.
 
             - If ``mode="tensor"``, return a tensor or a tuple of tensor.
-            - If ``mode="predict"``, return a list of :obj:`DetDataSample`.
+            - If ``mode="predict"``, return a list of :obj:`Det3DDataSample`.
             - If ``mode="loss"``, return a dict of tensor.
         """
         if mode == 'loss':
@@ -87,7 +89,11 @@ class Base3DDetector(BaseDetector):
             raise RuntimeError(f'Invalid mode "{mode}". '
                                'Only supports loss, predict and tensor mode')
 
-    def convert_to_datasample(self, results_list: InstanceList) -> SampleList:
+    def convert_to_datasample(
+        self,
+        results_list_3d: InstanceList,
+        results_list_2d: InstanceList = None,
+    ) -> SampleList:
         """Convert results list to `Det3DDataSample`.
 
         Subclasses could override it to be compatible for some multi-modality
@@ -100,19 +106,35 @@ class Base3DDetector(BaseDetector):
         Returns:
             list[:obj:`Det3DDataSample`]: Detection results of the
             input. Each Det3DDataSample usually contains
-            'pred_instances_3d'. And the ``pred_instances_3d`` usually
+            'pred_instances_3d'. And the ``pred_instances_3d`` normally
             contains following keys.
 
-                - scores_3d (Tensor): Classification scores, has a shape
-                    (num_instance, )
-                - labels_3d (Tensor): Labels of 3D bboxes, has a shape
-                    (num_instances, ).
-                - bboxes_3d (Tensor): Contains a tensor with shape
-                    (num_instances, C) where C >=7.
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instance, )
+            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+              (num_instances, C) where C >=7.
+            When there are image prediction in some models, it should
+            contains  `pred_instances`, And the ``pred_instances`` normally
+            contains following keys.
+
+            - scores (Tensor): Classification scores of image, has a shape
+              (num_instance, )
+            - labels (Tensor): Predict Labels of 2D bboxes, has a shape
+              (num_instances, ).
+            - bboxes (Tensor): Contains a tensor with shape
+              (num_instances, 4).
         """
-        out_results_list = []
-        for i in range(len(results_list)):
+
+        data_sample_list = []
+        if results_list_2d is None:
+            results_list_2d = [
+                InstanceData() for _ in range(len(results_list_3d))
+            ]
+        for i in range(len(results_list_3d)):
             result = Det3DDataSample()
-            result.pred_instances_3d = results_list[i]
-            out_results_list.append(result)
-        return out_results_list
+            result.pred_instances_3d = results_list_3d[i]
+            result.pred_instances = results_list_2d[i]
+            data_sample_list.append(result)
+        return data_sample_list
