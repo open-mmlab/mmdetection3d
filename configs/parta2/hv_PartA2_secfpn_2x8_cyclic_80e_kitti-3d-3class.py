@@ -57,9 +57,9 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='Pack3DDetInputs', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)

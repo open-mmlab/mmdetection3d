@@ -53,8 +53,9 @@ train_pipeline = [
     # 3DSSD can get a higher performance without this transform
     # dict(type='BackgroundPointsFilter', bbox_enlarge_range=(0.5, 2.0, 0.5)),
     dict(type='PointSample', num_points=16384),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 
 test_pipeline = [
@@ -79,22 +80,14 @@ test_pipeline = [
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
             dict(type='PointSample', num_points=16384),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
-    train=dict(dataset=dict(pipeline=train_pipeline)),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
-
-evaluation = dict(interval=2)
+train_dataloader = dict(
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # model settings
 model = dict(
@@ -105,17 +98,24 @@ model = dict(
 
 # optimizer
 lr = 0.002  # max learning rate
-optimizer = dict(type='AdamW', lr=lr, weight_decay=0)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(policy='step', warmup=None, step=[45, 60])
-# runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=80)
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+    clip_grad=dict(max_norm=35, norm_type=2),
+)
 
-# yapf:disable
-log_config = dict(
-    interval=30,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
+# training schedule for 1x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=2)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+# learning rate
+param_scheduler = [
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=80,
+        by_epoch=True,
+        milestones=[45, 60],
+        gamma=0.1)
+]

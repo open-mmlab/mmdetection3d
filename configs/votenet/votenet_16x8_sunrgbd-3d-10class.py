@@ -1,3 +1,4 @@
+# TODO refactor the config of sunrgbd
 _base_ = [
     '../_base_/datasets/sunrgbd-3d-10class.py', '../_base_/models/votenet.py',
     '../_base_/schedules/schedule_3x.py', '../_base_/default_runtime.py'
