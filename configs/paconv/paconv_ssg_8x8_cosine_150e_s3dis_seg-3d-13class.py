@@ -4,9 +4,20 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
+# file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/s3dis/':
+        's3://openmmlab/datasets/detection3d/s3dis_processed/',
+        'data/s3dis/':
+        's3://openmmlab/datasets/detection3d/s3dis_processed/'
+    }))
+
 # data settings
-class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
-               'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
 num_points = 4096
 train_pipeline = [
     dict(
@@ -15,17 +26,16 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names))),
-        max_cat_id=13),
+        with_seg_3d=True,
+        file_client_args=file_client_args),
+    dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,
@@ -46,12 +56,8 @@ train_pipeline = [
         jitter_std=[0.01, 0.01, 0.01],
         clip_range=[-0.05, 0.05]),
     dict(type='RandomDropPointsColor', drop_ratio=0.2),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
-
-data = dict(samples_per_gpu=8, train=dict(pipeline=train_pipeline))
-evaluation = dict(interval=1)
 
 # model settings
 model = dict(
@@ -64,3 +70,6 @@ model = dict(
         sample_rate=0.5,
         use_normalized_coord=True,
         batch_size=12))
+
+train_dataloader = dict(batch_size=8, dataset=dict(pipeline=train_pipeline))
+val_cfg = dict(interval=1)

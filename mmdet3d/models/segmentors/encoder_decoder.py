@@ -1,11 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import numpy as np
 import torch
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
+from mmdet3d.core import add_prefix
+from mmdet3d.core.utils import (ConfigType, OptConfigType, OptMultiConfig,
+                                OptSampleList, SampleList)
 from mmdet3d.registry import MODELS
-from mmseg.core import add_prefix
 from .base import Base3DSegmentor
 
 
@@ -15,20 +20,69 @@ class EncoderDecoder3D(Base3DSegmentor):
 
     EncoderDecoder typically consists of backbone, decode_head, auxiliary_head.
     Note that auxiliary_head is only used for deep supervision during training,
-    which could be thrown during inference.
-    """
+    which could be dumped during inference.
+
+    1. The ``loss`` method is used to calculate the loss of model,
+    which includes two steps: (1) Extracts features to obtain the feature maps
+    (2) Call the decode head loss function to forward decode head model and
+    calculate losses.
+
+    .. code:: text
+
+     loss(): extract_feat() -> _decode_head_forward_train() -> _auxiliary_head_forward_train (optional)
+     _decode_head_forward_train(): decode_head.loss()
+     _auxiliary_head_forward_train(): auxiliary_head.loss (optional)
+
+    2. The ``predict`` method is used to predict segmentation results,
+    which includes two steps: (1) Run inference function to obtain the list of
+    seg_logits (2) Call post-processing function to obtain list of
+    ``SegDataSampel`` including ``pred_sem_seg`` and ``seg_logits``.
+
+    .. code:: text
+
+     predict(): inference() -> postprocess_result()
+     infercen(): whole_inference()/slide_inference()
+     whole_inference()/slide_inference(): encoder_decoder()
+     encoder_decoder(): extract_feat() -> decode_head.predict()
+
+    4 The ``_forward`` method is used to output the tensor by running the model,
+    which includes two steps: (1) Extracts features to obtain the feature maps
+    (2)Call the decode head forward function to forward decode head model.
+
+    .. code:: text
+
+     _forward(): extract_feat() -> _decode_head.forward()
+
+    Args:
+
+        backbone (ConfigType): The config for the backnone of segmentor.
+        decode_head (ConfigType): The config for the decode head of segmentor.
+        neck (OptConfigType): The config for the neck of segmentor.
+            Defaults to None.
+        auxiliary_head (OptConfigType): The config for the auxiliary head of
+            segmentor. Defaults to None.
+        loss_regularization (OptiConfigType): The config for the regularization
+            loass. Defaults to None.
+        train_cfg (OptConfigType): The config for training. Defaults to None.
+        test_cfg (OptConfigType): The config for testing. Defaults to None.
+        data_preprocessor (dict, optional): The pre-process config of
+            :class:`BaseDataPreprocessor`.
+        init_cfg (dict, optional): The weight initialized config for
+            :class:`BaseModule`.
+    """  # noqa: E501
 
     def __init__(self,
-                 backbone,
-                 decode_head,
-                 neck=None,
-                 auxiliary_head=None,
-                 loss_regularization=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
-        super(EncoderDecoder3D, self).__init__(init_cfg=init_cfg)
+                 backbone: ConfigType,
+                 decode_head: ConfigType,
+                 neck: OptConfigType = None,
+                 auxiliary_head: OptConfigType = None,
+                 loss_regularization: OptConfigType = None,
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None):
+        super(EncoderDecoder3D, self).__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
         self.backbone = MODELS.build(backbone)
         if neck is not None:
             self.neck = MODELS.build(neck)
@@ -38,15 +92,16 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+
         assert self.with_decode_head, \
             '3D EncoderDecoder Segmentor should have a decode_head'
 
-    def _init_decode_head(self, decode_head):
+    def _init_decode_head(self, decode_head: ConfigType) -> None:
         """Initialize ``decode_head``"""
         self.decode_head = MODELS.build(decode_head)
         self.num_classes = self.decode_head.num_classes
 
-    def _init_auxiliary_head(self, auxiliary_head):
+    def _init_auxiliary_head(self, auxiliary_head: ConfigType) -> None:
         """Initialize ``auxiliary_head``"""
         if auxiliary_head is not None:
             if isinstance(auxiliary_head, list):
@@ -56,7 +111,8 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.auxiliary_head = MODELS.build(auxiliary_head)
 
-    def _init_loss_regularization(self, loss_regularization):
+    def _init_loss_regularization(self,
+                                  loss_regularization: ConfigType) -> None:
         """Initialize ``loss_regularization``"""
         if loss_regularization is not None:
             if isinstance(loss_regularization, list):
@@ -66,58 +122,64 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.loss_regularization = MODELS.build(loss_regularization)
 
-    def extract_feat(self, points):
+    def extract_feat(self, batch_inputs_dict: dict) -> List[Tensor]:
         """Extract features from points."""
-        x = self.backbone(points)
+        points = batch_inputs_dict['points']
+        stack_points = torch.stack(points)
+        x = self.backbone(stack_points)
         if self.with_neck:
             x = self.neck(x)
         return x
 
-    def encode_decode(self, points, img_metas):
+    def encode_decode(self, batch_inputs_dict: dict,
+                      batch_input_metas: List[dict]) -> List[Tensor]:
         """Encode points with backbone and decode into a semantic segmentation
         map of the same size as input.
 
         Args:
-            points (torch.Tensor): Input points of shape [B, N, 3+C].
-            img_metas (list[dict]): Meta information of each sample.
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
+            batch_input_metas (list[dict]): Meta information of each sample.
 
         Returns:
             torch.Tensor: Segmentation logits of shape [B, num_classes, N].
         """
-        x = self.extract_feat(points)
-        out = self._decode_head_forward_test(x, img_metas)
-        return out
+        x = self.extract_feat(batch_inputs_dict)
+        seg_logits = self.decode_head.predict(x, batch_input_metas,
+                                              self.test_cfg)
+        return seg_logits
 
-    def _decode_head_forward_train(self, x, img_metas, pts_semantic_mask):
+    def _decode_head_forward_train(self, batch_inputs_dict: dict,
+                                   batch_data_samples: SampleList) -> dict:
         """Run forward function and calculate loss for decode head in
         training."""
         losses = dict()
-        loss_decode = self.decode_head.forward_train(x, img_metas,
-                                                     pts_semantic_mask,
-                                                     self.train_cfg)
+        loss_decode = self.decode_head.loss(batch_inputs_dict,
+                                            batch_data_samples, self.train_cfg)
 
         losses.update(add_prefix(loss_decode, 'decode'))
         return losses
 
-    def _decode_head_forward_test(self, x, img_metas):
-        """Run forward function and calculate loss for decode head in
-        inference."""
-        seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg)
-        return seg_logits
-
-    def _auxiliary_head_forward_train(self, x, img_metas, pts_semantic_mask):
+    def _auxiliary_head_forward_train(
+        self,
+        batch_inputs_dict: dict,
+        batch_data_samples: SampleList,
+    ) -> dict:
         """Run forward function and calculate loss for auxiliary head in
         training."""
         losses = dict()
         if isinstance(self.auxiliary_head, nn.ModuleList):
             for idx, aux_head in enumerate(self.auxiliary_head):
-                loss_aux = aux_head.forward_train(x, img_metas,
-                                                  pts_semantic_mask,
-                                                  self.train_cfg)
+                loss_aux = aux_head.loss(batch_inputs_dict, batch_data_samples,
+                                         self.train_cfg)
                 losses.update(add_prefix(loss_aux, f'aux_{idx}'))
         else:
-            loss_aux = self.auxiliary_head.forward_train(
-                x, img_metas, pts_semantic_mask, self.train_cfg)
+            loss_aux = self.auxiliary_head.loss(batch_inputs_dict,
+                                                batch_data_samples,
+                                                self.train_cfg)
             losses.update(add_prefix(loss_aux, 'aux'))
 
         return losses
@@ -137,39 +199,36 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return losses
 
-    def forward_dummy(self, points):
-        """Dummy forward function."""
-        seg_logit = self.encode_decode(points, None)
-
-        return seg_logit
-
-    def forward_train(self, points, img_metas, pts_semantic_mask):
-        """Forward function for training.
+    def loss(self, batch_inputs_dict: dict,
+             batch_data_samples: SampleList) -> dict:
+        """Calculate losses from a batch of inputs and data samples.
 
         Args:
-            points (list[torch.Tensor]): List of points of shape [N, C].
-            img_metas (list): Image metas.
-            pts_semantic_mask (list[torch.Tensor]): List of point-wise semantic
-                labels of shape [N].
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor, optional): Image tensor has shape
+                    (B, C, H, W).
+            batch_data_samples (list[:obj:`Det3DDataSample`]): The det3d
+                data samples. It usually includes information such
+                as `metainfo` and `gt_pts_sem_seg`.
 
         Returns:
-            dict[str, Tensor]: Losses.
+            dict[str, Tensor]: a dictionary of loss components.
         """
-        points_cat = torch.stack(points)
-        pts_semantic_mask_cat = torch.stack(pts_semantic_mask)
 
         # extract features using backbone
-        x = self.extract_feat(points_cat)
+        x = self.extract_feat(batch_inputs_dict)
 
         losses = dict()
 
-        loss_decode = self._decode_head_forward_train(x, img_metas,
-                                                      pts_semantic_mask_cat)
+        loss_decode = self._decode_head_forward_train(x, batch_data_samples)
         losses.update(loss_decode)
 
         if self.with_auxiliary_head:
             loss_aux = self._auxiliary_head_forward_train(
-                x, img_metas, pts_semantic_mask_cat)
+                x, batch_data_samples)
             losses.update(loss_aux)
 
         if self.with_regularization_loss:
@@ -180,10 +239,10 @@ class EncoderDecoder3D(Base3DSegmentor):
 
     @staticmethod
     def _input_generation(coords,
-                          patch_center,
-                          coord_max,
-                          feats,
-                          use_normalized_coord=False):
+                          patch_center: Tensor,
+                          coord_max: Tensor,
+                          feats: Tensor,
+                          use_normalized_coord: bool = False):
         """Generating model input.
 
         Generate input by subtracting patch center and adding additional
@@ -215,12 +274,12 @@ class EncoderDecoder3D(Base3DSegmentor):
         return points
 
     def _sliding_patch_generation(self,
-                                  points,
-                                  num_points,
-                                  block_size,
-                                  sample_rate=0.5,
-                                  use_normalized_coord=False,
-                                  eps=1e-3):
+                                  points: Tensor,
+                                  num_points: int,
+                                  block_size: float,
+                                  sample_rate: float = 0.5,
+                                  use_normalized_coord: bool = False,
+                                  eps: float = 1e-3):
         """Sampling points in a sliding window fashion.
 
         First sample patches to cover all the input points.
@@ -318,7 +377,8 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return patch_points, patch_idxs
 
-    def slide_inference(self, point, img_meta, rescale):
+    def slide_inference(self, point: Tensor, img_meta: List[dict],
+                        rescale: bool):
         """Inference by sliding-window with overlap.
 
         Args:
@@ -362,18 +422,20 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return preds.transpose(0, 1)  # to [num_classes, K*N]
 
-    def whole_inference(self, points, img_metas, rescale):
+    def whole_inference(self, points: Tensor, input_metas: List[dict],
+                        rescale: bool):
         """Inference with full scene (one forward pass without sliding)."""
-        seg_logit = self.encode_decode(points, img_metas)
+        seg_logit = self.encode_decode(points, input_metas)
         # TODO: if rescale and voxelization segmentor
         return seg_logit
 
-    def inference(self, points, img_metas, rescale):
+    def inference(self, points: Tensor, input_metas: List[dict],
+                  rescale: bool):
         """Inference with slide/whole style.
 
         Args:
             points (torch.Tensor): Input points of shape [B, N, 3+C].
-            img_metas (list[dict]): Meta information of each sample.
+            input_metas (list[dict]): Meta information of each sample.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
 
@@ -384,19 +446,29 @@ class EncoderDecoder3D(Base3DSegmentor):
         if self.test_cfg.mode == 'slide':
             seg_logit = torch.stack([
                 self.slide_inference(point, img_meta, rescale)
-                for point, img_meta in zip(points, img_metas)
+                for point, img_meta in zip(points, input_metas)
             ], 0)
         else:
-            seg_logit = self.whole_inference(points, img_metas, rescale)
+            seg_logit = self.whole_inference(points, input_metas, rescale)
         output = F.softmax(seg_logit, dim=1)
         return output
 
-    def simple_test(self, points, img_metas, rescale=True):
+    def predict(self,
+                batch_inputs_dict: dict,
+                batch_data_samples: SampleList,
+                rescale: bool = True) -> SampleList:
         """Simple test with single scene.
 
         Args:
-            points (list[torch.Tensor]): List of points of shape [N, 3+C].
-            img_metas (list[dict]): Meta information of each sample.
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor, optional): Image tensor has shape
+                    (B, C, H, W).
+            batch_data_samples (list[:obj:`Det3DDataSample`]): The det3d
+                data samples. It usually includes information such
+                as `metainfo` and `gt_pts_sem_seg`.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
                 Defaults to True.
@@ -410,9 +482,14 @@ class EncoderDecoder3D(Base3DSegmentor):
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
         seg_pred = []
-        for point, img_meta in zip(points, img_metas):
-            seg_prob = self.inference(point.unsqueeze(0), [img_meta],
-                                      rescale)[0]
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+
+        points = batch_inputs_dict['points']
+        for point, input_meta in zip(points, batch_input_metas):
+            seg_prob = self.inference(
+                point.unsqueeze(0), [input_meta], rescale)[0]
             seg_map = seg_prob.argmax(0)  # [N]
             # to cpu tensor for consistency with det3d
             seg_map = seg_map.cpu()
@@ -421,33 +498,24 @@ class EncoderDecoder3D(Base3DSegmentor):
         seg_pred = [dict(semantic_mask=seg_map) for seg_map in seg_pred]
         return seg_pred
 
-    def aug_test(self, points, img_metas, rescale=True):
-        """Test with augmentations.
+    def _forward(self,
+                 batch_inputs_dict: dict,
+                 batch_data_samples: OptSampleList = None) -> Tensor:
+        """Network forward process.
 
         Args:
-            points (list[torch.Tensor]): List of points of shape [B, N, 3+C].
-            img_metas (list[list[dict]]): Meta information of each sample.
-                Outer list are different samples while inner is different augs.
-            rescale (bool): Whether transform to original number of points.
-                Will be used for voxelization based segmentors.
-                Defaults to True.
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor, optional): Image tensor has shape
+                    (B, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
+                data samples. It usually includes information such
+                as `metainfo` and `gt_pts_sem_seg`.
 
         Returns:
-            list[dict]: The output prediction result with following keys:
-
-                - semantic_mask (Tensor): Segmentation mask of shape [N].
+            Tensor: Forward output of model without any post-processes.
         """
-        # in aug_test, one scene going through different augmentations could
-        # have the same number of points and are stacked as a batch
-        # to save memory, we get augmented seg logit inplace
-        seg_pred = []
-        for point, img_meta in zip(points, img_metas):
-            seg_prob = self.inference(point, img_meta, rescale)
-            seg_prob = seg_prob.mean(0)  # [num_classes, N]
-            seg_map = seg_prob.argmax(0)  # [N]
-            # to cpu tensor for consistency with det3d
-            seg_map = seg_map.cpu()
-            seg_pred.append(seg_map)
-        # warp in dict
-        seg_pred = [dict(semantic_mask=seg_map) for seg_map in seg_pred]
-        return seg_pred
+        x = self.extract_feat(batch_inputs_dict)
+        return self.decode_head.forward(x)

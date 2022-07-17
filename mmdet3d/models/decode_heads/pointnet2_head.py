@@ -1,7 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple
+
 from mmcv.cnn.bricks import ConvModule
+from torch import Tensor
 from torch import nn as nn
 
+from mmdet3d.core.utils.typing import ConfigType
 from mmdet3d.ops import PointFPModule
 from mmdet3d.registry import MODELS
 from .decode_head import Base3DDecodeHead
@@ -21,10 +25,12 @@ class PointNet2Head(Base3DDecodeHead):
     """
 
     def __init__(self,
-                 fp_channels=((768, 256, 256), (384, 256, 256),
-                              (320, 256, 128), (128, 128, 128, 128)),
-                 fp_norm_cfg=dict(type='BN2d'),
-                 **kwargs):
+                 fp_channels: Tuple[Tuple[int]] = ((768, 256, 256),
+                                                   (384, 256, 256), (320, 256,
+                                                                     128),
+                                                   (128, 128, 128, 128)),
+                 fp_norm_cfg: ConfigType = dict(type='BN2d'),
+                 **kwargs) -> None:
         super(PointNet2Head, self).__init__(**kwargs)
 
         self.num_fp = len(fp_channels)
@@ -43,7 +49,7 @@ class PointNet2Head(Base3DDecodeHead):
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
-    def _extract_input(self, feat_dict):
+    def _extract_input(self, feat_dict: dict) -> Tensor:
         """Extract inputs from features dictionary.
 
         Args:
@@ -59,7 +65,7 @@ class PointNet2Head(Base3DDecodeHead):
 
         return sa_xyz, sa_features
 
-    def forward(self, feat_dict):
+    def forward(self, feat_dict: dict) -> Tensor:
         """Forward pass.
 
         Args:

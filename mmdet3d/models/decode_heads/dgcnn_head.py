@@ -1,5 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple
+
 from mmcv.cnn.bricks import ConvModule
+from torch import Tensor
 
 from mmdet3d.ops import DGCNNFPModule
 from mmdet3d.registry import MODELS
@@ -19,7 +22,7 @@ class DGCNNHead(Base3DDecodeHead):
             propagation (FP) modules. Defaults to (1216, 512).
     """
 
-    def __init__(self, fp_channels=(1216, 512), **kwargs):
+    def __init__(self, fp_channels: Tuple = (1216, 512), **kwargs) -> None:
         super(DGCNNHead, self).__init__(**kwargs)
 
         self.FP_module = DGCNNFPModule(
@@ -35,7 +38,7 @@ class DGCNNHead(Base3DDecodeHead):
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
-    def _extract_input(self, feat_dict):
+    def _extract_input(self, feat_dict: dict) -> Tensor:
         """Extract inputs from features dictionary.
 
         Args:
@@ -48,7 +51,7 @@ class DGCNNHead(Base3DDecodeHead):
 
         return fa_points
 
-    def forward(self, feat_dict):
+    def forward(self, feat_dict: dict) -> Tensor:
         """Forward pass.
 
         Args:

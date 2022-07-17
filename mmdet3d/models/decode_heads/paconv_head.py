@@ -1,6 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmcv.cnn.bricks import ConvModule
+from typing import Tuple
 
+from mmcv.cnn.bricks import ConvModule
+from torch import Tensor
+
+from mmdet3d.core.utils import ConfigType
 from mmdet3d.registry import MODELS
 from .pointnet2_head import PointNet2Head
 
@@ -19,11 +23,14 @@ class PAConvHead(PointNet2Head):
     """
 
     def __init__(self,
-                 fp_channels=((768, 256, 256), (384, 256, 256),
-                              (320, 256, 128), (128 + 6, 128, 128, 128)),
-                 fp_norm_cfg=dict(type='BN2d'),
-                 **kwargs):
-        super(PAConvHead, self).__init__(fp_channels, fp_norm_cfg, **kwargs)
+                 fp_channels: Tuple[Tuple[int]] = ((768, 256, 256),
+                                                   (384, 256, 256), (320, 256,
+                                                                     128),
+                                                   (128 + 6, 128, 128, 128)),
+                 fp_norm_cfg: ConfigType = dict(type='BN2d'),
+                 **kwargs) -> None:
+        super(PAConvHead, self).__init__(
+            fp_channels=fp_channels, fp_norm_cfg=fp_norm_cfg, **kwargs)
 
         # https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg/model/pointnet2/pointnet2_paconv_seg.py#L53
         # PointNet++'s decoder conv has bias while PAConv's doesn't have
@@ -37,7 +44,7 @@ class PAConvHead(PointNet2Head):
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
-    def forward(self, feat_dict):
+    def forward(self, feat_dict: dict) -> Tensor:
         """Forward pass.
 
         Args:

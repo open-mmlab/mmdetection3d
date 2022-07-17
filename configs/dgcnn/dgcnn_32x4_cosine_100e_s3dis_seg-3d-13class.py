@@ -3,10 +3,6 @@ _base_ = [
     '../_base_/schedules/seg_cosine_100e.py', '../_base_/default_runtime.py'
 ]
 
-# data settings
-data = dict(samples_per_gpu=32)
-evaluation = dict(interval=2)
-
 # model settings
 model = dict(
     backbone=dict(in_channels=9),  # [xyz, rgb, normalized_xyz]
@@ -20,5 +16,6 @@ model = dict(
         use_normalized_coord=True,
         batch_size=24))
 
-# runtime settings
-checkpoint_config = dict(interval=2)
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=2), )
+train_dataloader = dict(batch_size=32)
+val_cfg = dict(interval=2)

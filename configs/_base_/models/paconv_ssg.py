@@ -1,6 +1,7 @@
 # model settings
 model = dict(
     type='EncoderDecoder3D',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(
         type='PointNet2SASSG',
         in_channels=9,  # [xyz, rgb, normalized_xyz]
@@ -37,7 +38,7 @@ model = dict(
         norm_cfg=dict(type='BN1d'),
         act_cfg=dict(type='ReLU'),
         loss_decode=dict(
-            type='CrossEntropyLoss',
+            type='mmdet.CrossEntropyLoss',
             use_sigmoid=False,
             class_weight=None,  # should be modified with dataset
             loss_weight=1.0)),

@@ -1,136 +1,167 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from os import path as osp
+from abc import ABCMeta, abstractmethod
+from typing import List, Tuple
 
-import mmcv
-import numpy as np
-import torch
-from mmcv.parallel import DataContainer as DC
-from mmcv.runner import auto_fp16
+from mmengine.data import PixelData
+from mmengine.model import BaseModel
+from torch import Tensor
 
-from mmdet3d.core import show_seg_result
-from mmseg.models.segmentors import BaseSegmentor
+from mmdet3d.core import Det3DDataSample
+from mmdet3d.core.utils import (ForwardResults, OptConfigType, OptMultiConfig,
+                                OptSampleList, SampleList)
 
 
-class Base3DSegmentor(BaseSegmentor):
+class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
     """Base class for 3D segmentors.
 
-    The main difference with `BaseSegmentor` is that we modify the keys in
-    data_dict and use a 3D seg specific visualization function.
+    Args:
+        data_preprocessor (dict, optional): Model preprocessing config
+            for processing the input data. it usually includes
+            ``to_rgb``, ``pad_size_divisor``, ``pad_val``,
+            ``mean`` and ``std``. Default to None.
+       init_cfg (dict, optional): the config to control the
+           initialization. Default to None.
     """
 
+    def __init__(self,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None):
+        super(Base3DSegmentor, self).__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
+
     @property
-    def with_regularization_loss(self):
+    def with_neck(self) -> bool:
+        """bool: whether the segmentor has neck"""
+        return hasattr(self, 'neck') and self.neck is not None
+
+    @property
+    def with_auxiliary_head(self) -> bool:
+        """bool: whether the segmentor has auxiliary head"""
+        return hasattr(self,
+                       'auxiliary_head') and self.auxiliary_head is not None
+
+    @property
+    def with_decode_head(self) -> bool:
+        """bool: whether the segmentor has decode head"""
+        return hasattr(self, 'decode_head') and self.decode_head is not None
+
+    @property
+    def with_regularization_loss(self) -> bool:
         """bool: whether the segmentor has regularization loss for weight"""
         return hasattr(self, 'loss_regularization') and \
             self.loss_regularization is not None
 
-    def forward_test(self, points, img_metas, **kwargs):
-        """Calls either simple_test or aug_test depending on the length of
-        outer list of points. If len(points) == 1, call simple_test. Otherwise
-        call aug_test to aggregate the test results by e.g. voting.
+    @abstractmethod
+    def extract_feat(self, batch_inputs: Tensor) -> bool:
+        """Placeholder for extract features from images."""
+        pass
+
+    @abstractmethod
+    def encode_decode(self, batch_inputs: Tensor,
+                      batch_data_samples: SampleList):
+        """Placeholder for encode images with backbone and decode into a
+        semantic segmentation map of the same size as input."""
+        pass
+
+    def forward(self,
+                batch_inputs_dict: Tensor,
+                batch_data_samples: OptSampleList = None,
+                mode: str = 'tensor') -> ForwardResults:
+        """The unified entry for a forward process in both training and test.
+
+        The method should accept three modes: "tensor", "predict" and "loss":
+
+        - "tensor": Forward the whole network and return tensor or tuple of
+        tensor without any post-processing, same as a common nn.Module.
+        - "predict": Forward and return the predictions, which are fully
+        processed to a list of :obj:`SegDataSample`.
+        - "loss": Forward and return a dict of losses according to the given
+        inputs and data samples.
+
+        Note that this method doesn't handle neither back propagation nor
+        optimizer updating, which are done in the :meth:`train_step`.
 
         Args:
-            points (list[list[torch.Tensor]]): the outer list indicates
-                test-time augmentations and inner torch.Tensor should have a
-                shape BXNxC, which contains all points in the batch.
-            img_metas (list[list[dict]]): the outer list indicates test-time
-                augs (multiscale, flip, etc.) and the inner list indicates
-                images in a batch.
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
+            batch_data_samples (list[:obj:`Det3DDataSample`], optional):
+                The annotation data of every samples. Defaults to None.
+            mode (str): Return what kind of value. Defaults to 'tensor'.
+
+        Returns:
+            The return type depends on ``mode``.
+
+            - If ``mode="tensor"``, return a tensor or a tuple of tensor.
+            - If ``mode="predict"``, return a list of :obj:`Det3DDataSample`.
+            - If ``mode="loss"``, return a dict of tensor.
         """
-        for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
-            if not isinstance(var, list):
-                raise TypeError(f'{name} must be a list, but got {type(var)}')
-
-        num_augs = len(points)
-        if num_augs != len(img_metas):
-            raise ValueError(f'num of augmentations ({len(points)}) != '
-                             f'num of image meta ({len(img_metas)})')
-
-        if num_augs == 1:
-            return self.simple_test(points[0], img_metas[0], **kwargs)
+        if mode == 'loss':
+            return self.loss(batch_inputs_dict, batch_data_samples)
+        elif mode == 'predict':
+            return self.predict(batch_inputs_dict, batch_data_samples)
+        elif mode == 'tensor':
+            return self._forward(batch_inputs_dict, batch_data_samples)
         else:
-            return self.aug_test(points, img_metas, **kwargs)
+            raise RuntimeError(f'Invalid mode "{mode}". '
+                               'Only supports loss, predict and tensor mode')
 
-    @auto_fp16(apply_to=('points'))
-    def forward(self, return_loss=True, **kwargs):
-        """Calls either forward_train or forward_test depending on whether
-        return_loss=True.
+    @abstractmethod
+    def loss(self, batch_inputs: Tensor,
+             batch_data_samples: SampleList) -> dict:
+        """Calculate losses from a batch of inputs and data samples."""
+        pass
 
-        Note this setting will change the expected inputs. When
-        `return_loss=True`, point and img_metas are single-nested (i.e.
-        torch.Tensor and list[dict]), and when `resturn_loss=False`, point and
-        img_metas should be double nested (i.e.  list[torch.Tensor],
-        list[list[dict]]), with the outer list indicating test time
-        augmentations.
+    @abstractmethod
+    def predict(self, batch_inputs: Tensor,
+                batch_data_samples: SampleList) -> SampleList:
+        """Predict results from a batch of inputs and data samples with post-
+        processing."""
+        pass
+
+    @abstractmethod
+    def _forward(
+            self,
+            batch_inputs: Tensor,
+            batch_data_samples: OptSampleList = None) -> Tuple[List[Tensor]]:
+        """Network forward process.
+
+        Usually includes backbone, neck and head forward without any post-
+        processing.
         """
-        if return_loss:
-            return self.forward_train(**kwargs)
-        else:
-            return self.forward_test(**kwargs)
+        pass
 
-    def show_results(self,
-                     data,
-                     result,
-                     palette=None,
-                     out_dir=None,
-                     ignore_index=None,
-                     show=False,
-                     score_thr=None):
-        """Results visualization.
+    @abstractmethod
+    def aug_test(self, batch_inputs, batch_img_metas):
+        """Placeholder for augmentation test."""
+        pass
 
+    def postprocess_result(self, seg_logits_list: List[dict],
+                           batch_img_metas: List[dict]) -> list:
+        """ Convert results list to `Det3DDataSample`.
         Args:
-            data (list[dict]): Input points and the information of the sample.
-            result (list[dict]): Prediction results.
-            palette (list[list[int]]] | np.ndarray): The palette of
-                segmentation map. If None is given, random palette will be
-                generated. Default: None
-            out_dir (str): Output directory of visualization result.
-            ignore_index (int, optional): The label index to be ignored, e.g.
-                unannotated points. If None is given, set to len(self.CLASSES).
-                Defaults to None.
-            show (bool, optional): Determines whether you are
-                going to show result by open3d.
-                Defaults to False.
-            TODO: implement score_thr of Base3DSegmentor.
-            score_thr (float, optional): Score threshold of bounding boxes.
-                Default to None.
-                Not implemented yet, but it is here for unification.
+            seg_logits_list (List[dict]): List of segmentation results,
+                seg_logits from model of each input point clouds sample.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Segmentation results of the
+            input images. Each Det3DDataSample usually contain:
+
+            - ``pred_pts_sem_seg``(PixelData): Prediction of 3D
+                semantic segmentation.
+            - ``seg_logits``(PixelData): Predicted logits of semantic
+                segmentation before normalization.
         """
-        assert out_dir is not None, 'Expect out_dir, got none.'
-        if palette is None:
-            if self.PALETTE is None:
-                palette = np.random.randint(
-                    0, 255, size=(len(self.CLASSES), 3))
-            else:
-                palette = self.PALETTE
-        palette = np.array(palette)
-        for batch_id in range(len(result)):
-            if isinstance(data['points'][0], DC):
-                points = data['points'][0]._data[0][batch_id].numpy()
-            elif mmcv.is_list_of(data['points'][0], torch.Tensor):
-                points = data['points'][0][batch_id]
-            else:
-                ValueError(f"Unsupported data type {type(data['points'][0])} "
-                           f'for visualization!')
-            if isinstance(data['img_metas'][0], DC):
-                pts_filename = data['img_metas'][0]._data[0][batch_id][
-                    'pts_filename']
-            elif mmcv.is_list_of(data['img_metas'][0], dict):
-                pts_filename = data['img_metas'][0][batch_id]['pts_filename']
-            else:
-                ValueError(
-                    f"Unsupported data type {type(data['img_metas'][0])} "
-                    f'for visualization!')
-            file_name = osp.split(pts_filename)[-1].split('.')[0]
+        predictions = []
 
-            pred_sem_mask = result[batch_id]['semantic_mask'].cpu().numpy()
-
-            show_seg_result(
-                points,
-                None,
-                pred_sem_mask,
-                out_dir,
-                file_name,
-                palette,
-                ignore_index,
-                show=show)
+        for i in range(len(seg_logits_list)):
+            img_meta = batch_img_metas[i]
+            seg_logits = seg_logits_list[i][None],
+            seg_pred = seg_logits.argmax(dim=0, keepdim=True)
+            prediction = Det3DDataSample(**{'metainfo': img_meta})
+            prediction.set_data(
+                {'pred_pts_sem_seg': PixelData(**{'data': seg_pred})})
+            predictions.append(prediction)
+        return predictions
