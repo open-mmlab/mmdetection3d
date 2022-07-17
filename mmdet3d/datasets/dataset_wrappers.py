@@ -17,8 +17,8 @@ class CBGSDataset(object):
     """
 
     def __init__(self, dataset):
-        self.dataset = dataset
-        self.CLASSES = dataset.CLASSES
+        self.dataset = DATASETS.build(dataset)
+        self.CLASSES = self.dataset.metainfo['CLASSES']
         self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
         self.sample_indices = self._get_sample_indices()
         # self.dataset.data_infos = self.data_infos
@@ -40,7 +40,10 @@ class CBGSDataset(object):
         for idx in range(len(self.dataset)):
             sample_cat_ids = self.dataset.get_cat_ids(idx)
             for cat_id in sample_cat_ids:
-                class_sample_idxs[cat_id].append(idx)
+                if cat_id != -1:
+                    # Filter categories that do not need to care.
+                    # -1 indicate dontcare in MMDet3d.
+                    class_sample_idxs[cat_id].append(idx)
         duplicated_samples = sum(
             [len(v) for _, v in class_sample_idxs.items()])
         class_distribution = {

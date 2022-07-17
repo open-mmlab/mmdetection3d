@@ -294,3 +294,20 @@ class Det3DDataset(BaseDataset):
                     example['data_sample'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
+
+    def get_cat_ids(self, idx: int) -> List[int]:
+        """Get category ids by index. Dataset wrapped by ClassBalancedDataset
+        must implement this method.
+
+        The ``CBGSDataset`` or ``ClassBalancedDataset``requires a subclass
+        which implements this method.
+
+        Args:
+            idx (int): The index of data.
+
+        Returns:
+            set[int]: All categories in the sample of specified index.
+        """
+        info = self.get_data_info(idx)
+        gt_labels = info['ann_info']['gt_labels_3d'].tolist()
+        return set(gt_labels)
