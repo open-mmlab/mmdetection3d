@@ -85,6 +85,10 @@ def test_getitem():
     assert isinstance(ann_info['gt_bboxes_3d'], LiDARInstance3DBoxes)
     assert torch.allclose(ann_info['gt_bboxes_3d'].tensor.sum(),
                           torch.tensor(7.2650))
+    assert 'centers_2d' in ann_info
+    assert ann_info['centers_2d'].dtype == np.float64
+    assert 'depths' in ann_info
+    assert ann_info['depths'].dtype == np.float64
     assert 'group_id' in ann_info
     assert ann_info['group_id'].dtype == np.int64
     assert 'occluded' in ann_info

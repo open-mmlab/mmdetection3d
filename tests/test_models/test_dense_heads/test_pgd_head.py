@@ -142,6 +142,7 @@ class TestFGDHead(TestCase):
         # When truth is non-empty then all losses
         # should be nonzero for random inputs
         gt_instances_3d = InstanceData()
+        gt_instances = InstanceData()
 
         gt_bboxes = torch.rand([3, 4], dtype=torch.float32)
         gt_bboxes_3d = CameraInstance3DBoxes(torch.rand([3, 7]), box_dim=7)
@@ -152,12 +153,13 @@ class TestFGDHead(TestCase):
 
         gt_instances_3d.bboxes_3d = gt_bboxes_3d
         gt_instances_3d.labels_3d = gt_labels_3d
-        gt_instances_3d.bboxes = gt_bboxes
-        gt_instances_3d.labels = gt_labels
+        gt_instances.bboxes = gt_bboxes
+        gt_instances.labels = gt_labels
         gt_instances_3d.centers_2d = centers_2d
         gt_instances_3d.depths = depths
 
-        gt_losses = pgd_head.loss(*ret_dict, [gt_instances_3d], img_metas)
+        gt_losses = pgd_head.loss_by_feat(*ret_dict, [gt_instances_3d],
+                                          [gt_instances], img_metas)
 
         gt_cls_loss = gt_losses['loss_cls'].item()
         gt_siz_loss = gt_losses['loss_size'].item()
@@ -184,15 +186,15 @@ class TestFGDHead(TestCase):
                            'consistency loss should be positive')
 
         # test get_results
-        results_list = pgd_head.get_results(*ret_dict, img_metas)
+        results_list = pgd_head.predict_by_feat(*ret_dict, img_metas)
         self.assertEqual(
             len(results_list), 1,
             'there should be no centerness loss when there are no true boxes')
-        results = results_list[0]
+        results, results_2d = results_list[0]
         pred_bboxes_3d = results.bboxes_3d
         pred_scores_3d = results.scores_3d
         pred_labels_3d = results.labels_3d
-        pred_bboxes_2d = results.bboxes
+        pred_bboxes_2d = results_2d.bboxes
         self.assertEqual(pred_bboxes_3d.tensor.shape, torch.Size([20, 7]),
                          'the shape of predicted 3d bboxes should be [20, 7]')
         self.assertEqual(
@@ -202,6 +204,6 @@ class TestFGDHead(TestCase):
             pred_labels_3d.shape, torch.Size([20]),
             'the shape of predicted 3d bbox labels should be [20]')
         self.assertEqual(
-            pred_bboxes_2d.shape, torch.Size([20, 5]),
-            'the shape of predicted 2d bbox attribute labels should be [20, 5]'
+            pred_bboxes_2d.shape, torch.Size([20, 4]),
+            'the shape of predicted 2d bbox attribute labels should be [20, 4]'
         )

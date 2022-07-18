@@ -197,6 +197,7 @@ class Det3DDataset(BaseDataset):
             ann_info = dict()
             for ann_name in keys:
                 temp_anns = [item[ann_name] for item in instances]
+                # map the original dataset label to training label
                 if 'label' in ann_name:
                     temp_anns = [
                         self.label_mapping[item] for item in temp_anns

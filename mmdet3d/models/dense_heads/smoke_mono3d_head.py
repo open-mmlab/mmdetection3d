@@ -1,13 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import torch
-from mmcv.runner import force_fp32
-from mmengine.config import ConfigDict
 from mmengine.data import InstanceData
 from torch import Tensor
 from torch.nn import functional as F
 
+from mmdet3d.core.utils import (ConfigType, InstanceList, OptConfigType,
+                                OptInstanceList, OptMultiConfig)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.core import multi_apply
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
@@ -35,19 +35,20 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             regression heatmap channels.
         ori_channel (list[int]): indices of orientation offset pred in
             regression heatmap channels.
-        bbox_coder (dict): Bbox coder for encoding and decoding boxes.
-        loss_cls (dict, optional): Config of classification loss.
+        bbox_coder (:obj:`ConfigDict` or dict): Bbox coder for encoding
+            and decoding boxes.
+        loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
             Default: loss_cls=dict(type='GaussionFocalLoss', loss_weight=1.0).
-        loss_bbox (dict, optional): Config of localization loss.
+        loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
             Default: loss_bbox=dict(type='L1Loss', loss_weight=10.0).
-        loss_dir (dict, optional): Config of direction classification loss.
-            In SMOKE, Default: None.
-        loss_attr (dict, optional): Config of attribute classification loss.
-            In SMOKE, Default: None.
-        loss_centerness (dict): Config of centerness loss.
-        norm_cfg (dict): Dictionary to construct and config norm layer.
+        loss_dir (:obj:`ConfigDict` or dict, Optional): Config of direction
+            classification loss. In SMOKE, Default: None.
+        loss_attr (:obj:`ConfigDict` or dict, Optional): Config of attribute
+            classification loss. In SMOKE, Default: None.
+        norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and config norm layer.
             Default: norm_cfg=dict(type='GN', num_groups=32, requires_grad=True).
-        init_cfg (dict): Initialization config dict. Default: None.
+        init_cfg (:obj:`ConfigDict` or dict or list[:obj:`ConfigDict` or \
+            dict]): Initialization config dict. Defaults to None.
     """  # noqa: E501
 
     def __init__(self,
@@ -55,15 +56,16 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                  in_channels: int,
                  dim_channel: List[int],
                  ori_channel: List[int],
-                 bbox_coder: dict,
-                 loss_cls: dict = dict(
-                     type='GaussionFocalLoss', loss_weight=1.0),
-                 loss_bbox: dict = dict(type='L1Loss', loss_weight=0.1),
-                 loss_dir: Optional[dict] = None,
-                 loss_attr: Optional[dict] = None,
-                 norm_cfg: dict = dict(
+                 bbox_coder: ConfigType,
+                 loss_cls: ConfigType = dict(
+                     type='mmdet.GaussionFocalLoss', loss_weight=1.0),
+                 loss_bbox: ConfigType = dict(
+                     type='mmdet.L1Loss', loss_weight=0.1),
+                 loss_dir: OptConfigType = None,
+                 loss_attr: OptConfigType = None,
+                 norm_cfg: OptConfigType = dict(
                      type='GN', num_groups=32, requires_grad=True),
-                 init_cfg: Optional[Union[ConfigDict, dict]] = None,
+                 init_cfg: OptMultiConfig = None,
                  **kwargs) -> None:
         super().__init__(
             num_classes,
@@ -79,11 +81,11 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         self.ori_channel = ori_channel
         self.bbox_coder = TASK_UTILS.build(bbox_coder)
 
-    def forward(self, feats: Tuple[Tensor]):
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List[Tensor]]:
         """Forward features from the upstream network.
 
         Args:
-            feats (tuple[Tensor]): Features from the upstream network, each is
+            x (tuple[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
 
         Returns:
@@ -95,9 +97,9 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                     level, each is a 4D-tensor, the channel number is
                     num_points * bbox_code_size.
         """
-        return multi_apply(self.forward_single, feats)
+        return multi_apply(self.forward_single, x)
 
-    def forward_single(self, x: Tensor) -> Union[Tensor, Tensor]:
+    def forward_single(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward features of a single scale level.
 
         Args:
@@ -118,12 +120,11 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         bbox_pred[:, self.ori_channel, ...] = F.normalize(vector_ori)
         return cls_score, bbox_pred
 
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds'))
-    def get_results(self,
-                    cls_scores,
-                    bbox_preds,
-                    batch_img_metas,
-                    rescale=None):
+    def predict_by_feat(self,
+                        cls_scores: List[Tensor],
+                        bbox_preds: List[Tensor],
+                        batch_img_metas: Optional[List[dict]] = None,
+                        rescale: bool = None) -> InstanceList:
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -134,8 +135,16 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             rescale (bool): If True, return boxes in original image space.
 
         Returns:
-            list[tuple[:obj:`CameraInstance3DBoxes`, Tensor, Tensor, None]]:
-                Each item in result_list is 4-tuple.
+            list[:obj:`InstanceData`]: 3D Detection results of each image
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+                (num_instance, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+                (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+                (num_instances, 7).
         """
         assert len(cls_scores) == len(bbox_preds) == 1
         cam2imgs = torch.stack([
@@ -146,7 +155,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             cls_scores[0].new_tensor(img_meta['trans_mat'])
             for img_meta in batch_img_metas
         ])
-        batch_bboxes, batch_scores, batch_topk_labels = self.decode_heatmap(
+        batch_bboxes, batch_scores, batch_topk_labels = self._decode_heatmap(
             cls_scores[0],
             bbox_preds[0],
             batch_img_metas,
@@ -183,14 +192,14 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         return result_list
 
-    def decode_heatmap(self,
-                       cls_score,
-                       reg_pred,
-                       batch_img_metas,
-                       cam2imgs,
-                       trans_mats,
-                       topk=100,
-                       kernel=3):
+    def _decode_heatmap(self,
+                        cls_score: Tensor,
+                        reg_pred: Tensor,
+                        batch_img_metas: List[dict],
+                        cam2imgs: Tensor,
+                        trans_mats: Tensor,
+                        topk: int = 100,
+                        kernel: int = 3) -> Tuple[Tensor, Tensor, Tensor]:
         """Transform outputs into detections raw bbox predictions.
 
         Args:
@@ -212,6 +221,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         Returns:
             tuple[torch.Tensor]: Decoded output of SMOKEHead, containing
                the following Tensors:
+
               - batch_bboxes (Tensor): Coords of each 3D box.
                     shape (B, k, 7)
               - batch_scores (Tensor): Scores of each 3D box.
@@ -241,9 +251,10 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         batch_bboxes = batch_bboxes.view(bs, -1, self.bbox_code_size)
         return batch_bboxes, batch_scores, batch_topk_labels
 
-    def get_predictions(self, labels_3d, centers_2d, gt_locations,
-                        gt_dimensions, gt_orientations, indices,
-                        batch_img_metas, pred_reg):
+    def get_predictions(self, labels_3d: Tensor, centers_2d: Tensor,
+                        gt_locations: Tensor, gt_dimensions: Tensor,
+                        gt_orientations: Tensor, indices: Tensor,
+                        batch_img_metas: List[dict], pred_reg: Tensor) -> dict:
         """Prepare predictions for computing loss.
 
         Args:
@@ -266,6 +277,7 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         Returns:
             dict: the dict has components below:
+
             - bbox3d_yaws (:obj:`CameraInstance3DBoxes`):
                 bbox calculated using pred orientations.
             - bbox3d_dims (:obj:`CameraInstance3DBoxes`):
@@ -312,22 +324,26 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         return pred_bboxes
 
-    def get_targets(self, batch_gt_instances_3d, feat_shape, batch_img_metas):
+    def get_targets(self, batch_gt_instances_3d: InstanceList,
+                    batch_gt_instances: InstanceList, feat_shape: Tuple[int],
+                    batch_img_metas: List[dict]) -> Tuple[Tensor, int, dict]:
         """Get training targets for batch images.
 
         Args:
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels_3d``、``depths``、``centers_2d`` and
-                attributes.
+                gt_instance_3d.  It usually includes ``bboxes_3d``、
+                ``labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
+                gt_instance.  It usually includes ``bboxes``、``labels``.
             feat_shape (tuple[int]): Feature map shape with value,
                 shape (B, _, H, W).
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
 
         Returns:
-            tuple[Tensor, dict]: The Tensor value is the targets of
+            tuple[Tensor, int, dict]: The Tensor value is the targets of
                 center heatmap, the dict has components below:
+
               - gt_centers_2d (Tensor): Coords of each projected 3D box
                     center on image. shape (B * max_objs, 2)
               - gt_labels_3d (Tensor): Labels of each 3D box.
@@ -347,10 +363,10 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
         """
 
         gt_bboxes = [
-            gt_instances_3d.bboxes for gt_instances_3d in batch_gt_instances_3d
+            gt_instances.bboxes for gt_instances in batch_gt_instances
         ]
         gt_labels = [
-            gt_instances_3d.labels for gt_instances_3d in batch_gt_instances_3d
+            gt_instances.labels for gt_instances in batch_gt_instances
         ]
         gt_bboxes_3d = [
             gt_instances_3d.bboxes_3d
@@ -459,12 +475,14 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
 
         return center_heatmap_target, avg_factor, target_labels
 
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             batch_gt_instances_3d,
-             batch_img_metas,
-             batch_gt_instances_ignore=None):
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            batch_gt_instances_3d: InstanceList,
+            batch_gt_instances: InstanceList,
+            batch_img_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Compute loss of the head.
 
         Args:
@@ -474,9 +492,10 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 number is bbox_code_size.
                 shape (B, 7, H, W).
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels_3d``、``depths``、``centers_2d`` and
-                attributes.
+                gt_instance_3d.  It usually includes ``bboxes_3d``、
+                ``labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
+                gt_instance.  It usually includes ``bboxes``、``labels``.
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
             batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
@@ -485,15 +504,19 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
                 Defaults to None.
 
         Returns:
-            dict[str, Tensor]: A dictionary of loss components.
+            dict[str, Tensor]: A dictionary of loss components, which has
+                components below:
+
+                - loss_cls (Tensor): loss of cls heatmap.
+                - loss_bbox (Tensor): loss of bbox heatmap.
         """
         assert len(cls_scores) == len(bbox_preds) == 1
-        assert batch_gt_instances_ignore is None
         center_2d_heatmap = cls_scores[0]
         pred_reg = bbox_preds[0]
 
         center_2d_heatmap_target, avg_factor, target_labels = \
             self.get_targets(batch_gt_instances_3d,
+                             batch_gt_instances,
                              center_2d_heatmap.shape,
                              batch_img_metas)
 

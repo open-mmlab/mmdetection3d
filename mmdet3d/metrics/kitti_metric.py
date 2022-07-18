@@ -45,6 +45,7 @@ class KittiMetric(BaseMetric):
     def __init__(self,
                  ann_file: str,
                  metric: Union[str, List[str]] = 'bbox',
+                 pred_box_type_3d: str = 'LiDAR',
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
@@ -57,6 +58,7 @@ class KittiMetric(BaseMetric):
         self.ann_file = ann_file
         self.pklfile_prefix = pklfile_prefix
         self.submission_prefix = submission_prefix
+        self.pred_box_type_3d = pred_box_type_3d
 
         allowed_metrics = ['bbox', 'img_bbox', 'mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]

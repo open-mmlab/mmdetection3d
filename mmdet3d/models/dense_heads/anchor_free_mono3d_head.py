@@ -1,14 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import abstractmethod
+from typing import Any, List, Sequence, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
-from mmcv.runner import force_fp32
+from torch import Tensor
 from torch import nn as nn
 
+from mmdet3d.core.utils import ConfigType, InstanceList, OptConfigType
 from mmdet3d.registry import MODELS
 from mmdet.core import multi_apply
-from ..builder import build_loss
 from .base_mono3d_dense_head import BaseMono3DDenseHead
 
 
@@ -20,39 +21,41 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
-        feat_channels (int, optional): Number of hidden channels.
+        feat_channels (int): Number of hidden channels.
             Used in child classes. Defaults to 256.
-        stacked_convs (int, optional): Number of stacking convs of the head.
-        strides (tuple, optional): Downsample factor of each feature map.
-        dcn_on_last_conv (bool, optional): If true, use dcn in the last
+        stacked_convs (int): Number of stacking convs of the head.
+        strides (Sequence[int] or Sequence[Tuple[int, int]]): Downsample
+            factor of each feature map.
+        dcn_on_last_conv (bool): If true, use dcn in the last
             layer of towers. Default: False.
-        conv_bias (bool | str, optional): If specified as `auto`, it will be
+        conv_bias (bool or str): If specified as `auto`, it will be
             decided by the norm_cfg. Bias of conv will be set as True
             if `norm_cfg` is None, otherwise False. Default: 'auto'.
-        background_label (int, optional): Label ID of background,
+        background_label (bool, Optional): Label ID of background,
             set as 0 for RPN and num_classes for other heads.
             It will automatically set as `num_classes` if None is given.
-        use_direction_classifier (bool, optional):
+        use_direction_classifier (bool):
             Whether to add a direction classifier.
-        diff_rad_by_sin (bool, optional): Whether to change the difference
+        diff_rad_by_sin (bool): Whether to change the difference
             into sin difference for box regression loss. Defaults to True.
-        dir_offset (float, optional): Parameter used in direction
+        dir_offset (float): Parameter used in direction
             classification. Defaults to 0.
-        dir_limit_offset (float, optional): Parameter used in direction
+        dir_limit_offset (float): Parameter used in direction
             classification. Defaults to 0.
-        loss_cls (dict, optional): Config of classification loss.
-        loss_bbox (dict, optional): Config of localization loss.
-        loss_dir (dict, optional): Config of direction classifier loss.
-        loss_attr (dict, optional): Config of attribute classifier loss,
-            which is only active when `pred_attrs=True`.
-        bbox_code_size (int, optional): Dimensions of predicted bounding boxes.
-        pred_attrs (bool, optional): Whether to predict attributes.
+        loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
+        loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
+        loss_dir (:obj:`ConfigDict` or dict): Config of direction classifier
+            loss.
+        loss_attr (:obj:`ConfigDict` or dict): Config of attribute classifier
+            loss, which is only active when `pred_attrs=True`.
+        bbox_code_size (int): Dimensions of predicted bounding boxes.
+        pred_attrs (bool): Whether to predict attributes.
             Defaults to False.
-        num_attrs (int, optional): The number of attributes to be predicted.
+        num_attrs (int): The number of attributes to be predicted.
             Default: 9.
-        pred_velo (bool, optional): Whether to predict velocity.
+        pred_velo (bool): Whether to predict velocity.
             Defaults to False.
-        pred_bbox2d (bool, optional): Whether to predict 2D boxes.
+        pred_bbox2d (bool): Whether to predict 2D boxes.
             Defaults to False.
         group_reg_dims (tuple[int], optional): The dimension of each regression
             target group. Default: (2, 1, 3, 1, 2).
@@ -66,68 +69,77 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 (64, ),  # rot
                 ()  # velo
             ),
-        dir_branch (tuple[int], optional): Channels for direction
+        dir_branch (Sequence[int]): Channels for direction
             classification branch. Default: (64, ).
-        attr_branch (tuple[int], optional): Channels for classification branch.
+        attr_branch (Sequence[int]): Channels for classification branch.
             Default: (64, ).
-        conv_cfg (dict, optional): Config dict for convolution layer.
-            Default: None.
-        norm_cfg (dict, optional): Config dict for normalization layer.
-            Default: None.
-        train_cfg (dict, optional): Training config of anchor head.
-        test_cfg (dict, optional): Testing config of anchor head.
+        conv_cfg (:obj:`ConfigDict` or dict, Optional): Config dict for
+            convolution layer. Default: None.
+        norm_cfg (:obj:`ConfigDict` or dict, Optional): Config dict for
+            normalization layer. Default: None.
+        train_cfg (:obj:`ConfigDict` or dict, Optional): Training config
+            of anchor head.
+        test_cfg (:obj:`ConfigDict` or dict, Optional): Testing config of
+            anchor head.
+        init_cfg (:obj:`ConfigDict` or dict or list[:obj:`ConfigDict` or \
+            dict]): Initialization config dict.
     """  # noqa: W605
 
     _version = 1
 
     def __init__(
             self,
-            num_classes,
-            in_channels,
-            feat_channels=256,
-            stacked_convs=4,
-            strides=(4, 8, 16, 32, 64),
-            dcn_on_last_conv=False,
-            conv_bias='auto',
-            background_label=None,
-            use_direction_classifier=True,
-            diff_rad_by_sin=True,
-            dir_offset=0,
-            dir_limit_offset=0,
-            loss_cls=dict(
-                type='FocalLoss',
+            num_classes: int,
+            in_channels: int,
+            feat_channels: int = 256,
+            stacked_convs: int = 4,
+            strides: Sequence[int] = (4, 8, 16, 32, 64),
+            dcn_on_last_conv: bool = False,
+            conv_bias: Union[bool, str] = 'auto',
+            background_label: bool = None,
+            use_direction_classifier: bool = True,
+            diff_rad_by_sin: bool = True,
+            dir_offset: int = 0,
+            dir_limit_offset: int = 0,
+            loss_cls: ConfigType = dict(
+                type='mmdet.FocalLoss',
                 use_sigmoid=True,
                 gamma=2.0,
                 alpha=0.25,
                 loss_weight=1.0),
-            loss_bbox=dict(
-                type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
-            loss_dir=dict(
-                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-            loss_attr=dict(
-                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-            bbox_code_size=9,  # For nuscenes
-            pred_attrs=False,
-            num_attrs=9,  # For nuscenes
-            pred_velo=False,
-            pred_bbox2d=False,
-            group_reg_dims=(2, 1, 3, 1, 2),  # offset, depth, size, rot, velo,
-            cls_branch=(128, 64),
-            reg_branch=(
+            loss_bbox: ConfigType = dict(
+                type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+            loss_dir: ConfigType = dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=False,
+                loss_weight=1.0),
+            loss_attr: ConfigType = dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=False,
+                loss_weight=1.0),
+            bbox_code_size: int = 9,  # For nuscenes
+            pred_attrs: bool = False,
+            num_attrs: int = 9,  # For nuscenes
+            pred_velo: bool = False,
+            pred_bbox2d: bool = False,
+            group_reg_dims: Sequence[int] = (
+                2, 1, 3, 1, 2),  # offset, depth, size, rot, velo,
+            cls_branch: Sequence[int] = (128, 64),
+            reg_branch: Sequence[Tuple[int, int]] = (
                 (128, 64),  # offset
                 (128, 64),  # depth
                 (64, ),  # size
                 (64, ),  # rot
                 ()  # velo
             ),
-            dir_branch=(64, ),
-            attr_branch=(64, ),
-            conv_cfg=None,
-            norm_cfg=None,
-            train_cfg=None,
-            test_cfg=None,
-            init_cfg=None):
-        super(AnchorFreeMono3DHead, self).__init__(init_cfg=init_cfg)
+            dir_branch: Sequence[int] = (64, ),
+            attr_branch: Sequence[int] = (64, ),
+            conv_cfg: OptConfigType = None,
+            norm_cfg: OptConfigType = None,
+            train_cfg: OptConfigType = None,
+            test_cfg: OptConfigType = None,
+            init_cfg: OptConfigType = None) -> None:
+        super().__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.cls_out_channels = num_classes
         self.in_channels = in_channels
@@ -141,9 +153,9 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         self.diff_rad_by_sin = diff_rad_by_sin
         self.dir_offset = dir_offset
         self.dir_limit_offset = dir_limit_offset
-        self.loss_cls = build_loss(loss_cls)
-        self.loss_bbox = build_loss(loss_bbox)
-        self.loss_dir = build_loss(loss_dir)
+        self.loss_cls = MODELS.build(loss_cls)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.loss_dir = MODELS.build(loss_dir)
         self.bbox_code_size = bbox_code_size
         self.group_reg_dims = list(group_reg_dims)
         self.cls_branch = cls_branch
@@ -174,7 +186,7 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         self.num_attrs = num_attrs
         if self.pred_attrs:
             self.attr_background_label = num_attrs
-            self.loss_attr = build_loss(loss_attr)
+            self.loss_attr = MODELS.build(loss_attr)
             self.attr_branch = attr_branch
 
         self._init_layers()
@@ -316,11 +328,13 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         if self.pred_attrs:
             normal_init(self.conv_attr, std=0.01, bias=bias_cls)
 
-    def forward(self, feats):
+    def forward(
+        self, x: Tuple[Tensor]
+    ) -> Tuple[List[Tensor], List[Tensor], List[Tensor], List[Tensor]]:
         """Forward features from the upstream network.
 
         Args:
-            feats (tuple[Tensor]): Features from the upstream network, each is
+            x (tuple[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
 
         Returns:
@@ -339,9 +353,9 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                     level, each is a 4D-tensor, the channel number is
                     num_points * num_attrs.
         """
-        return multi_apply(self.forward_single, feats)[:5]
+        return multi_apply(self.forward_single, x)[:5]
 
-    def forward_single(self, x):
+    def forward_single(self, x: Tensor) -> Tuple[Tensor, ...]:
         """Forward features of a single scale level.
 
         Args:
@@ -394,77 +408,8 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             reg_feat
 
     @abstractmethod
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             dir_cls_preds,
-             attr_preds,
-             batch_gt_instances_3d,
-             batch_img_metas,
-             batch_gt_instances_ignore=None):
-        """Compute loss of the head.
-
-        Args:
-            cls_scores (list[Tensor]): Box scores for each scale level,
-                each is a 4D-tensor, the channel number is
-                num_points * num_classes.
-            bbox_preds (list[Tensor]): Box energies / deltas for each scale
-                level, each is a 4D-tensor, the channel number is
-                num_points * bbox_code_size.
-            dir_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on each scale level, each is a 4D-tensor,
-                the channel number is num_points * 2. (bin = 2)
-            attr_preds (list[Tensor]): Box scores for each scale level,
-                each is a 4D-tensor, the channel number is
-                num_points * num_attrs.
-            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
-                attributes.
-            batch_img_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
-            batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
-                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
-                data that is ignored during training and testing.
-                Defaults to None.
-        """
-
-        raise NotImplementedError
-
-    @abstractmethod
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
-    def get_results(self,
-                    cls_scores,
-                    bbox_preds,
-                    dir_cls_preds,
-                    attr_preds,
-                    batch_img_metas,
-                    cfg=None,
-                    rescale=None):
-        """Transform network output for a batch into bbox predictions.
-
-        Args:
-            cls_scores (list[Tensor]): Box scores for each scale level
-                Has shape (N, num_points * num_classes, H, W)
-            bbox_preds (list[Tensor]): Box energies / deltas for each scale
-                level with shape (N, num_points * bbox_code_size, H, W)
-            dir_cls_preds (list[Tensor]): Box scores for direction class
-                predictions on each scale level, each is a 4D-tensor,
-                the channel number is num_points * 2. (bin = 2)
-            attr_preds (list[Tensor]): Attribute scores for each scale level
-                Has shape (N, num_points * num_attrs, H, W)
-            batch_img_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
-            cfg (mmcv.Config): Test / postprocessing configuration,
-                if None, test_cfg would be used
-            rescale (bool): If True, return boxes in original image space
-        """
-
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_targets(self, points, batch_gt_instances_3d):
+    def get_targets(self, points: List[Tensor],
+                    batch_gt_instances: InstanceList) -> Any:
         """Compute regression, classification and centerss targets for points
         in multiple images.
 
@@ -473,18 +418,32 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
                 (num_points, 2).
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
                 gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels3d``、``depths``、``centers2d`` and
-                attributes.
+                、``bboxes_3d``、``labels_3d``、``depths``、``centers_2d``
+                and attributes.
         """
         raise NotImplementedError
 
+    # TODO: Refactor using MlvlPointGenerator in MMDet.
     def _get_points_single(self,
-                           featmap_size,
-                           stride,
-                           dtype,
-                           device,
-                           flatten=False):
-        """Get points of a single scale level."""
+                           featmap_size: Tuple[int],
+                           stride: int,
+                           dtype: torch.dtype,
+                           device: torch.device,
+                           flatten: bool = False) -> Tuple[Tensor, Tensor]:
+        """Get points of a single scale level.
+
+        Args:
+            featmap_size (tuple[int]): Single scale level feature map
+                size.
+            stride (int): Downsample factor of the feature map.
+            dtype (torch.dtype): Type of points.
+            device (torch.device): Device of points.
+            flatten (bool): Whether to flatten the tensor.
+                Defaults to False.
+
+        Returns:
+            tuple: points of each image.
+        """
         h, w = featmap_size
         x_range = torch.arange(w, dtype=dtype, device=device)
         y_range = torch.arange(h, dtype=dtype, device=device)
@@ -494,16 +453,23 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
             x = x.flatten()
         return y, x
 
-    def get_points(self, featmap_sizes, dtype, device, flatten=False):
+    # TODO: Refactor using MlvlPointGenerator in MMDet.
+    def get_points(self,
+                   featmap_sizes: List[Tuple[int]],
+                   dtype: torch.dtype,
+                   device: torch.device,
+                   flatten: bool = False) -> List[Tuple[Tensor, Tensor]]:
         """Get points according to feature map sizes.
 
         Args:
             featmap_sizes (list[tuple]): Multi-level feature map sizes.
             dtype (torch.dtype): Type of points.
             device (torch.device): Device of points.
+            flatten (bool): Whether to flatten the tensor.
+                Defaults to False.
 
         Returns:
-            tuple: points of each image.
+            list[tuple]: points of each image.
         """
         mlvl_points = []
         for i in range(len(featmap_sizes)):

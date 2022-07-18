@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from mmcv.cnn import xavier_init
-from mmcv.runner import force_fp32
 from mmengine.config import ConfigDict
 from mmengine.data import InstanceData
 from torch import Tensor
@@ -197,39 +196,8 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         if self.use_edge_fusion:
             self._init_edge_module()
 
-    def forward_train(self,
-                      x: List[Tensor],
-                      batch_data_samples: List[Det3DDataSample],
-                      proposal_cfg: Optional[ConfigDict] = None,
-                      **kwargs):
-        """
-        Args:
-            x (list[Tensor]): Features from FPN.
-            batch_img_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
-            gt_bboxes (list[Tensor]): Ground truth bboxes of the image,
-                shape (num_gts, 4).
-            gt_labels (list[Tensor]): Ground truth labels of each box,
-                shape (num_gts,).
-            gt_bboxes_3d (list[Tensor]): 3D ground truth bboxes of the image,
-                shape (num_gts, self.bbox_code_size).
-            gt_labels_3d (list[Tensor]): 3D ground truth labels of each box,
-                shape (num_gts,).
-            centers_2d (list[Tensor]): Projected 3D center of each box,
-                shape (num_gts, 2).
-            depths (list[Tensor]): Depth of projected 3D center of each box,
-                shape (num_gts,).
-            attr_labels (list[Tensor]): Attribute labels of each box,
-                shape (num_gts,).
-            gt_bboxes_ignore (list[Tensor]): Ground truth bboxes to be
-                ignored, shape (num_ignored_gts, 4).
-            proposal_cfg (mmcv.Config): Test / postprocessing configuration,
-                if None, test_cfg would be used
-        Returns:
-            tuple:
-                losses: (dict[str, Tensor]): A dictionary of loss components.
-                proposal_list (list[Tensor]): Proposals of each image.
-        """
+    def loss(self, x: List[Tensor], batch_data_samples: List[Det3DDataSample],
+             **kwargs):
         """
         Args:
             x (list[Tensor]): Features from FPN.
@@ -266,15 +234,15 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         """
 
         batch_gt_instances_3d = []
+        batch_gt_instances = []
         batch_gt_instances_ignore = []
         batch_img_metas = []
         for data_sample in batch_data_samples:
             batch_img_metas.append(data_sample.metainfo)
             batch_gt_instances_3d.append(data_sample.gt_instances_3d)
-            if 'ignored_instances' in data_sample:
-                batch_gt_instances_ignore.append(data_sample.ignored_instances)
-            else:
-                batch_gt_instances_ignore.append(None)
+            batch_gt_instances.append(data_sample.gt_instances)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
 
         # monoflex head needs img_metas for feature extraction
         outs = self(x, batch_img_metas)
@@ -282,15 +250,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                               batch_gt_instances_ignore)
         losses = self.loss(*loss_inputs)
 
-        if proposal_cfg is None:
-            return losses
-        else:
-            batch_img_metas = [
-                data_sample.metainfo for data_sample in batch_data_samples
-            ]
-            results_list = self.get_results(
-                *outs, batch_img_metas=batch_img_metas, cfg=proposal_cfg)
-            return losses, results_list
+        return losses
 
     def forward(self, feats: List[Tensor], batch_img_metas: List[dict]):
         """Forward features from the upstream network.
@@ -373,9 +333,8 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         return cls_score, bbox_pred
 
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds'))
-    def get_results(self, cls_scores: List[Tensor], bbox_preds: List[Tensor],
-                    batch_img_metas: List[dict]):
+    def predict_by_feat(self, cls_scores: List[Tensor],
+                        bbox_preds: List[Tensor], batch_img_metas: List[dict]):
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -393,7 +352,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
             cls_scores[0].new_tensor(input_meta['cam2img'])
             for input_meta in batch_img_metas
         ])
-        batch_bboxes, batch_scores, batch_topk_labels = self.decode_heatmap(
+        batch_bboxes, batch_scores, batch_topk_labels = self._decode_heatmap(
             cls_scores[0],
             bbox_preds[0],
             batch_img_metas,
@@ -429,13 +388,13 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         return result_list
 
-    def decode_heatmap(self,
-                       cls_score: Tensor,
-                       reg_pred: Tensor,
-                       batch_img_metas: List[dict],
-                       cam2imgs: Tensor,
-                       topk: int = 100,
-                       kernel: int = 3):
+    def _decode_heatmap(self,
+                        cls_score: Tensor,
+                        reg_pred: Tensor,
+                        batch_img_metas: List[dict],
+                        cam2imgs: Tensor,
+                        topk: int = 100,
+                        kernel: int = 3):
         """Transform outputs into detections raw bbox predictions.
 
         Args:
@@ -530,14 +489,16 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         return preds
 
     def get_targets(self, batch_gt_instances_3d: List[InstanceData],
+                    batch_gt_instances: List[InstanceData],
                     feat_shape: Tuple[int], batch_img_metas: List[dict]):
         """Get training targets for batch images.
 ``
         Args:
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels_3d``、``depths``、``centers_2d`` and
-                attributes.
+                gt_instance_3d.  It usually includes ``bboxes_3d``、
+                ``labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
+                gt_instance.  It usually includes ``bboxes``、``labels``.
             feat_shape (tuple[int]): Feature map shape with value,
                 shape (B, _, H, W).
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
@@ -574,10 +535,10 @@ class MonoFlexHead(AnchorFreeMono3DHead):
         """
 
         gt_bboxes_list = [
-            gt_instances_3d.bboxes for gt_instances_3d in batch_gt_instances_3d
+            gt_instances.bboxes for gt_instances in batch_gt_instances
         ]
         gt_labels_list = [
-            gt_instances_3d.labels for gt_instances_3d in batch_gt_instances_3d
+            gt_instances.labels for gt_instances in batch_gt_instances
         ]
         gt_bboxes_3d_list = [
             gt_instances_3d.bboxes_3d
@@ -721,12 +682,14 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         return center_heatmap_target, avg_factor, target_labels
 
-    def loss(self,
-             cls_scores: List[Tensor],
-             bbox_preds: List[Tensor],
-             batch_gt_instances_3d: List[InstanceData],
-             batch_img_metas: List[dict],
-             batch_gt_instances_ignore: Optional[List[InstanceData]] = None):
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            batch_gt_instances_3d: List[InstanceData],
+            batch_gt_instances: List[InstanceData],
+            batch_img_metas: List[dict],
+            batch_gt_instances_ignore: Optional[List[InstanceData]] = None):
         """Compute loss of the head.
 
         Args:
@@ -736,9 +699,10 @@ class MonoFlexHead(AnchorFreeMono3DHead):
                 number is bbox_code_size.
                 shape (B, 7, H, W).
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels_3d``、``depths``、``centers_2d`` and
-                attributes.
+                gt_instance_3d.  It usually includes ``bboxes_3d``、
+                ``labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
+                gt_instance.  It usually includes ``bboxes``、``labels``.
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
             batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
@@ -756,6 +720,7 @@ class MonoFlexHead(AnchorFreeMono3DHead):
 
         center2d_heatmap_target, avg_factor, target_labels = \
             self.get_targets(batch_gt_instances_3d,
+                             batch_gt_instances,
                              center2d_heatmap.shape,
                              batch_img_metas)
 

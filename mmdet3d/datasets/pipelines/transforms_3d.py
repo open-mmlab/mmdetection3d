@@ -1579,7 +1579,7 @@ class VoxelBasedPointSampler(object):
 
 
 @TRANSFORMS.register_module()
-class AffineResize(object):
+class AffineResize(BaseTransform):
     """Get the affine transform matrices to the target size.
 
     Different from :class:`RandomAffine` in MMDetection, this class can
@@ -1596,13 +1596,16 @@ class AffineResize(object):
             outside the border of the image. Defaults to True.
     """
 
-    def __init__(self, img_scale, down_ratio, bbox_clip_border=True):
+    def __init__(self,
+                 img_scale: Tuple,
+                 down_ratio: int,
+                 bbox_clip_border: bool = True) -> None:
 
         self.img_scale = img_scale
         self.down_ratio = down_ratio
         self.bbox_clip_border = bbox_clip_border
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> dict:
         """Call function to do affine transform to input image and labels.
 
         Args:
@@ -1647,39 +1650,38 @@ class AffineResize(object):
         results['pad_shape'] = img.shape
         results['trans_mat'] = trans_mat
 
-        self._affine_bboxes(results, trans_affine)
+        if 'gt_bboxes' in results:
+            self._affine_bboxes(results, trans_affine)
 
-        if 'centers2d' in results:
-            centers2d = self._affine_transform(results['centers2d'],
+        if 'centers_2d' in results:
+            centers2d = self._affine_transform(results['centers_2d'],
                                                trans_affine)
             valid_index = (centers2d[:, 0] >
                            0) & (centers2d[:, 0] <
                                  self.img_scale[0]) & (centers2d[:, 1] > 0) & (
                                      centers2d[:, 1] < self.img_scale[1])
-            results['centers2d'] = centers2d[valid_index]
+            results['centers_2d'] = centers2d[valid_index]
 
-            for key in results.get('bbox_fields', []):
-                if key in ['gt_bboxes']:
-                    results[key] = results[key][valid_index]
-                    if 'gt_labels' in results:
-                        results['gt_labels'] = results['gt_labels'][
-                            valid_index]
-                    if 'gt_masks' in results:
-                        raise NotImplementedError(
-                            'AffineResize only supports bbox.')
+            if 'gt_bboxes' in results:
+                results['gt_bboxes'] = results['gt_bboxes'][valid_index]
+                if 'gt_labels' in results:
+                    results['gt_labels'] = results['gt_labels'][valid_index]
+                if 'gt_masks' in results:
+                    raise NotImplementedError(
+                        'AffineResize only supports bbox.')
 
-            for key in results.get('bbox3d_fields', []):
-                if key in ['gt_bboxes_3d']:
-                    results[key].tensor = results[key].tensor[valid_index]
-                    if 'gt_labels_3d' in results:
-                        results['gt_labels_3d'] = results['gt_labels_3d'][
-                            valid_index]
+            if 'gt_bboxes_3d' in results:
+                results['gt_bboxes_3d'].tensor = results[
+                    'gt_bboxes_3d'].tensor[valid_index]
+                if 'gt_labels_3d' in results:
+                    results['gt_labels_3d'] = results['gt_labels_3d'][
+                        valid_index]
 
             results['depths'] = results['depths'][valid_index]
 
         return results
 
-    def _affine_bboxes(self, results, matrix):
+    def _affine_bboxes(self, results: dict, matrix: np.ndarray) -> None:
         """Affine transform bboxes to input image.
 
         Args:
@@ -1689,20 +1691,18 @@ class AffineResize(object):
                 shape: (3, 3)
         """
 
-        for key in results.get('bbox_fields', []):
-            bboxes = results[key]
-            bboxes[:, :2] = self._affine_transform(bboxes[:, :2], matrix)
-            bboxes[:, 2:] = self._affine_transform(bboxes[:, 2:], matrix)
-            if self.bbox_clip_border:
-                bboxes[:,
-                       [0, 2]] = bboxes[:,
-                                        [0, 2]].clip(0, self.img_scale[0] - 1)
-                bboxes[:,
-                       [1, 3]] = bboxes[:,
-                                        [1, 3]].clip(0, self.img_scale[1] - 1)
-            results[key] = bboxes
+        bboxes = results['gt_bboxes']
+        bboxes[:, :2] = self._affine_transform(bboxes[:, :2], matrix)
+        bboxes[:, 2:] = self._affine_transform(bboxes[:, 2:], matrix)
+        if self.bbox_clip_border:
+            bboxes[:, [0, 2]] = bboxes[:, [0, 2]].clip(0,
+                                                       self.img_scale[0] - 1)
+            bboxes[:, [1, 3]] = bboxes[:, [1, 3]].clip(0,
+                                                       self.img_scale[1] - 1)
+        results['gt_bboxes'] = bboxes
 
-    def _affine_transform(self, points, matrix):
+    def _affine_transform(self, points: np.ndarray,
+                          matrix: np.ndarray) -> np.ndarray:
         """Affine transform bbox points to input image.
 
         Args:
@@ -1721,7 +1721,8 @@ class AffineResize(object):
         affined_points = np.matmul(matrix, hom_points_2d).T
         return affined_points[:, :2]
 
-    def _get_transform_matrix(self, center, scale, output_scale):
+    def _get_transform_matrix(self, center: Tuple, scale: Tuple,
+                              output_scale: Tuple[float]) -> np.ndarray:
         """Get affine transform matrix.
 
         Args:
@@ -1756,7 +1757,8 @@ class AffineResize(object):
 
         return matrix.astype(np.float32)
 
-    def _get_ref_point(self, ref_point1, ref_point2):
+    def _get_ref_point(self, ref_point1: np.ndarray,
+                       ref_point2: np.ndarray) -> np.ndarray:
         """Get reference point to calculate affine transform matrix.
 
         While using opencv to calculate the affine matrix, we need at least
@@ -1775,7 +1777,7 @@ class AffineResize(object):
 
 
 @TRANSFORMS.register_module()
-class RandomShiftScale(object):
+class RandomShiftScale(BaseTransform):
     """Random shift scale.
 
     Different from the normal shift and scale function, it doesn't
@@ -1788,12 +1790,12 @@ class RandomShiftScale(object):
         aug_prob (float): The shifting and scaling probability.
     """
 
-    def __init__(self, shift_scale, aug_prob):
+    def __init__(self, shift_scale: Tuple[float], aug_prob: float):
 
         self.shift_scale = shift_scale
         self.aug_prob = aug_prob
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> dict:
         """Call function to record random shift and scale infos.
 
         Args:

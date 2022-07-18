@@ -117,6 +117,7 @@ class TestFCOSMono3DHead(TestCase):
         # When truth is non-empty then all losses
         # should be nonzero for random inputs
         gt_instances_3d = InstanceData()
+        gt_instances = InstanceData()
 
         gt_bboxes = torch.rand([3, 4], dtype=torch.float32)
         gt_bboxes_3d = CameraInstance3DBoxes(torch.rand([3, 9]), box_dim=9)
@@ -129,14 +130,14 @@ class TestFCOSMono3DHead(TestCase):
 
         gt_instances_3d.bboxes_3d = gt_bboxes_3d
         gt_instances_3d.labels_3d = gt_labels_3d
-        gt_instances_3d.bboxes = gt_bboxes
-        gt_instances_3d.labels = gt_labels
+        gt_instances.bboxes = gt_bboxes
+        gt_instances.labels = gt_labels
         gt_instances_3d.centers_2d = centers_2d
         gt_instances_3d.depths = depths
         gt_instances_3d.attr_labels = attr_labels
 
-        gt_losses = fcos_mono3d_head.loss(*ret_dict, [gt_instances_3d],
-                                          img_metas)
+        gt_losses = fcos_mono3d_head.loss_by_feat(*ret_dict, [gt_instances_3d],
+                                                  [gt_instances], img_metas)
 
         gt_cls_loss = gt_losses['loss_cls'].item()
         gt_siz_loss = gt_losses['loss_size'].item()
@@ -160,7 +161,7 @@ class TestFCOSMono3DHead(TestCase):
         self.assertGreater(gt_atr_loss, 0, 'attribue loss should be positive')
 
         # test get_results
-        results_list = fcos_mono3d_head.get_results(*ret_dict, img_metas)
+        results_list = fcos_mono3d_head.predict_by_feat(*ret_dict, img_metas)
         self.assertEqual(
             len(results_list), 1,
             'there should be no centerness loss when there are no true boxes')

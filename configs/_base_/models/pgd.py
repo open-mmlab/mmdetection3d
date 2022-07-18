@@ -28,18 +28,19 @@ model = dict(
         dir_branch=(256, ),
         attr_branch=(256, ),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_attr=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_centerness=dict(
-            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         norm_on_bbox=True,
         centerness_on_reg=True,
         center_sampling=True,

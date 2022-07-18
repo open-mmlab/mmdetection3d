@@ -1,16 +1,18 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
 from mmcv.cnn import Scale, bias_init_with_prob, normal_init
-from mmcv.runner import force_fp32
 from mmengine.data import InstanceData
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core import box3d_multiclass_nms, xywhr2xyxyr
 from mmdet3d.core.bbox import points_cam2img, points_img2cam
+from mmdet3d.core.utils import (ConfigType, InstanceList, OptConfigType,
+                                OptInstanceList)
 from mmdet3d.registry import MODELS
 from mmdet.core import distance2bbox, multi_apply
 from .fcos_mono3d_head import FCOSMono3DHead
@@ -86,7 +88,7 @@ class PGDHead(FCOSMono3DHead):
                      base_dims=((0.8, 1.73, 0.6), (1.76, 1.73, 0.6),
                                 (3.9, 1.56, 1.6)),
                      code_size=7),
-                 **kwargs):
+                 **kwargs) -> None:
         self.use_depth_classifier = use_depth_classifier
         self.use_onlyreg_proj = use_onlyreg_proj
         self.depth_branch = depth_branch
@@ -190,11 +192,11 @@ class PGDHead(FCOSMono3DHead):
             for conv_weight in self.conv_weights:
                 normal_init(conv_weight, std=0.01)
 
-    def forward(self, feats):
+    def forward(self, x: Tuple[Tensor]) -> Tuple[Tensor, ...]:
         """Forward features from the upstream network.
 
         Args:
-            feats (tuple[Tensor]): Features from the upstream network, each is
+            x (tuple[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
 
         Returns:
@@ -220,10 +222,10 @@ class PGDHead(FCOSMono3DHead):
                 centernesses (list[Tensor]): Centerness for each scale level,
                     each is a 4D-tensor, the channel number is num_points * 1.
         """
-        return multi_apply(self.forward_single, feats, self.scales,
-                           self.strides)
+        return multi_apply(self.forward_single, x, self.scales, self.strides)
 
-    def forward_single(self, x, scale, stride):
+    def forward_single(self, x: Tensor, scale: Scale,
+                       stride: int) -> Tuple[Tensor, ...]:
         """Forward features of a single scale level.
 
         Args:
@@ -271,17 +273,17 @@ class PGDHead(FCOSMono3DHead):
             attr_pred, centerness
 
     def get_proj_bbox2d(self,
-                        bbox_preds,
-                        pos_dir_cls_preds,
-                        labels_3d,
-                        bbox_targets_3d,
-                        pos_points,
-                        pos_inds,
-                        batch_img_metas,
-                        pos_depth_cls_preds=None,
-                        pos_weights=None,
-                        pos_cls_scores=None,
-                        with_kpts=False):
+                        bbox_preds: List[Tensor],
+                        pos_dir_cls_preds: List[Tensor],
+                        labels_3d: List[Tensor],
+                        bbox_targets_3d: List[Tensor],
+                        pos_points: Tensor,
+                        pos_inds: Tensor,
+                        batch_img_metas: List[dict],
+                        pos_depth_cls_preds: Optional[Tensor] = None,
+                        pos_weights: Optional[Tensor] = None,
+                        pos_cls_scores: Optional[Tensor] = None,
+                        with_kpts: bool = False) -> Tuple[Tensor]:
         """Decode box predictions and get projected 2D attributes.
 
         Args:
@@ -448,9 +450,12 @@ class PGDHead(FCOSMono3DHead):
 
         return outputs
 
-    def get_pos_predictions(self, bbox_preds, dir_cls_preds, depth_cls_preds,
-                            weights, attr_preds, centernesses, pos_inds,
-                            batch_img_metas):
+    def get_pos_predictions(self, bbox_preds: List[Tensor],
+                            dir_cls_preds: List[Tensor],
+                            depth_cls_preds: List[Tensor],
+                            weights: List[Tensor], attr_preds: List[Tensor],
+                            centernesses: List[Tensor], pos_inds: Tensor,
+                            batch_img_metas: List[dict]) -> Tuple[Tensor]:
         """Flatten predictions and get positive ones.
 
         Args:
@@ -528,20 +533,19 @@ class PGDHead(FCOSMono3DHead):
         return pos_bbox_preds, pos_dir_cls_preds, pos_depth_cls_preds, \
             pos_weights, pos_attr_preds, pos_centerness
 
-    @force_fp32(
-        apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds',
-                  'depth_cls_preds', 'weights', 'attr_preds', 'centernesses'))
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             dir_cls_preds,
-             depth_cls_preds,
-             weights,
-             attr_preds,
-             centernesses,
-             batch_gt_instances_3d,
-             batch_img_metas,
-             batch_gt_instances_ignore=None):
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            dir_cls_preds: List[Tensor],
+            depth_cls_preds: List[Tensor],
+            weights: List[Tensor],
+            attr_preds: List[Tensor],
+            centernesses: List[Tensor],
+            batch_gt_instances_3d: InstanceList,
+            batch_gt_instances: InstanceList,
+            batch_img_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Compute loss of the head.
 
         Args:
@@ -591,7 +595,7 @@ class PGDHead(FCOSMono3DHead):
                                            bbox_preds[0].device)
         labels_3d, bbox_targets_3d, centerness_targets, attr_targets = \
             self.get_targets(
-                all_level_points, batch_gt_instances_3d)
+                all_level_points, batch_gt_instances_3d, batch_gt_instances)
 
         num_imgs = cls_scores[0].size(0)
         # flatten cls_scores and targets
@@ -785,20 +789,17 @@ class PGDHead(FCOSMono3DHead):
 
         return loss_dict
 
-    @force_fp32(
-        apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds',
-                  'depth_cls_preds', 'weights', 'attr_preds', 'centernesses'))
-    def get_results(self,
-                    cls_scores,
-                    bbox_preds,
-                    dir_cls_preds,
-                    depth_cls_preds,
-                    weights,
-                    attr_preds,
-                    centernesses,
-                    batch_img_metas,
-                    cfg=None,
-                    rescale=None):
+    def predict_by_feat(self,
+                        cls_scores: List[Tensor],
+                        bbox_preds: List[Tensor],
+                        dir_cls_preds: List[Tensor],
+                        depth_cls_preds: List[Tensor],
+                        weights: List[Tensor],
+                        attr_preds: List[Tensor],
+                        centernesses: List[Tensor],
+                        batch_img_metas: Optional[List[dict]] = None,
+                        cfg: OptConfigType = None,
+                        rescale: bool = False) -> InstanceList:
         """Transform network output for a batch into bbox predictions.
 
         Args:
@@ -824,7 +825,7 @@ class PGDHead(FCOSMono3DHead):
             cfg (mmcv.Config, optional): Test / postprocessing configuration,
                 if None, test_cfg would be used. Defaults to None.
             rescale (bool, optional): If True, return boxes in original image
-                space. Defaults to None.
+                space. Defaults to False.
 
         Returns:
             list[tuple[Tensor]]: Each item in result_list is a tuple, which
@@ -898,25 +899,33 @@ class PGDHead(FCOSMono3DHead):
                 centernesses[i][img_id].detach() for i in range(num_levels)
             ]
             img_meta = batch_img_metas[img_id]
-            results = self._get_results_single(
-                cls_score_list, bbox_pred_list, dir_cls_pred_list,
-                depth_cls_pred_list, weight_list, attr_pred_list,
-                centerness_pred_list, mlvl_points, img_meta, cfg, rescale)
+            results = self._predict_by_feat_single(
+                cls_score_list=cls_score_list,
+                bbox_pred_list=bbox_pred_list,
+                dir_cls_pred_list=dir_cls_pred_list,
+                depth_cls_pred_list=depth_cls_pred_list,
+                weight_list=weight_list,
+                attr_pred_list=attr_pred_list,
+                centerness_pred_list=centerness_pred_list,
+                mlvl_points=mlvl_points,
+                img_meta=img_meta,
+                cfg=cfg,
+                rescale=rescale)
             result_list.append(results)
         return result_list
 
-    def _get_results_single(self,
-                            cls_scores,
-                            bbox_preds,
-                            dir_cls_preds,
-                            depth_cls_preds,
-                            weights,
-                            attr_preds,
-                            centernesses,
-                            mlvl_points,
-                            img_meta,
-                            cfg,
-                            rescale=False):
+    def _predict_by_feat_single(self,
+                                cls_score_list: List[Tensor],
+                                bbox_pred_list: List[Tensor],
+                                dir_cls_pred_list: List[Tensor],
+                                depth_cls_pred_list: List[Tensor],
+                                weight_list: List[Tensor],
+                                attr_pred_list: List[Tensor],
+                                centerness_pred_list: List[Tensor],
+                                mlvl_points: Tensor,
+                                img_meta: dict,
+                                cfg: ConfigType,
+                                rescale: bool = False) -> InstanceData:
         """Transform outputs for a single batch item into bbox predictions.
 
         Args:
@@ -951,7 +960,7 @@ class PGDHead(FCOSMono3DHead):
         view = np.array(img_meta['cam2img'])
         scale_factor = img_meta['scale_factor']
         cfg = self.test_cfg if cfg is None else cfg
-        assert len(cls_scores) == len(bbox_preds) == len(mlvl_points)
+        assert len(cls_score_list) == len(bbox_pred_list) == len(mlvl_points)
         mlvl_centers2d = []
         mlvl_bboxes = []
         mlvl_scores = []
@@ -966,8 +975,9 @@ class PGDHead(FCOSMono3DHead):
 
         for cls_score, bbox_pred, dir_cls_pred, depth_cls_pred, weight, \
                 attr_pred, centerness, points in zip(
-                    cls_scores, bbox_preds, dir_cls_preds, depth_cls_preds,
-                    weights, attr_preds, centernesses, mlvl_points):
+                    cls_score_list, bbox_pred_list, dir_cls_pred_list,
+                    depth_cls_pred_list, weight_list, attr_pred_list,
+                    centerness_pred_list, mlvl_points):
             assert cls_score.size()[-2:] == bbox_pred.size()[-2:]
             scores = cls_score.permute(1, 2, 0).reshape(
                 -1, self.cls_out_channels).sigmoid()
@@ -1018,9 +1028,9 @@ class PGDHead(FCOSMono3DHead):
             bbox_pred3d[:, :2] = points - bbox_pred3d[:, :2]
             if rescale:
                 bbox_pred3d[:, :2] /= bbox_pred3d[:, :2].new_tensor(
-                    scale_factor)
+                    scale_factor[0])
                 if self.pred_bbox2d:
-                    bbox_pred2d /= bbox_pred2d.new_tensor(scale_factor)
+                    bbox_pred2d /= bbox_pred2d.new_tensor(scale_factor[0])
             if self.use_depth_classifier:
                 prob_depth_pred = self.bbox_coder.decode_prob_depth(
                     depth_cls_pred, self.depth_range, self.depth_unit,
@@ -1106,13 +1116,21 @@ class PGDHead(FCOSMono3DHead):
             results.attr_labels = attrs
 
         if self.pred_bbox2d:
+            results_2d = InstanceData()
             bboxes2d = nms_results[-1]
-            bboxes2d = torch.cat([bboxes2d, scores[:, None]], dim=1)
-            results.bboxes = bboxes2d
+            results_2d.bboxes = bboxes2d
+            results_2d.scores = scores
+            results_2d.labels = labels
+            return results, results_2d
+        else:
+            return results
 
-        return results
-
-    def get_targets(self, points, batch_gt_instances_3d):
+    def get_targets(
+        self,
+        points: List[Tensor],
+        batch_gt_instances_3d: InstanceList,
+        batch_gt_instances: InstanceList,
+    ) -> Tuple[List[Tensor], List[Tensor], List[Tensor], List[Tensor]]:
         """Compute regression, classification and centerss targets for points
         in multiple images.
 
@@ -1120,9 +1138,10 @@ class PGDHead(FCOSMono3DHead):
             points (list[Tensor]): Points of each fpn level, each has shape
                 (num_points, 2).
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bboxes``、``labels``
-                、``bboxes_3d``、``labels_3d``、``depths``、``centers_2d`` and
-                attributes.
+                gt_instance_3d.  It usually includes ``bboxes_3d``、
+                ``labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
+                gt_instance.  It usually includes ``bboxes``、``labels``.
 
         Returns:
             tuple:
@@ -1146,14 +1165,17 @@ class PGDHead(FCOSMono3DHead):
 
         if 'attr_labels' not in batch_gt_instances_3d[0]:
             for gt_instances_3d in batch_gt_instances_3d:
-                gt_instances_3d.attr_labels = gt_instances_3d.labels.new_full(
-                    gt_instances_3d.labels.shape, self.attr_background_label)
+                gt_instances_3d.attr_labels = \
+                    gt_instances_3d.labels_3d.new_full(
+                        gt_instances_3d.labels_3d.shape,
+                        self.attr_background_label)
 
         # get labels and bbox_targets of each image
         _, bbox_targets_list, labels_3d_list, bbox_targets_3d_list, \
             centerness_targets_list, attr_targets_list = multi_apply(
                 self._get_target_single,
                 batch_gt_instances_3d,
+                batch_gt_instances,
                 points=concat_points,
                 regress_ranges=concat_regress_ranges,
                 num_points_per_lvl=num_points)

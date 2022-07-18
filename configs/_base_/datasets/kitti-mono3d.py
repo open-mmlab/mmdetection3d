@@ -1,11 +1,24 @@
-dataset_type = 'KittiMonoDataset'
+dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+metainfo = dict(CLASSES=class_names)
+
+# file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        'data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/'
+    }))
+
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -14,79 +27,60 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', img_scale=(1242, 375), keep_ratio=True),
+    dict(type='Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
+        type='Pack3DDetInputs',
         keys=[
             'img', 'gt_bboxes', 'gt_labels', 'gt_bboxes_3d', 'gt_labels_3d',
-            'centers2d', 'depths'
+            'centers_2d', 'depths'
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1242, 375),
-        flip=False,
-        transforms=[
-            dict(type='RandomFlip3D'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['img']),
-        ])
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='Resize', scale=(1242, 375), keep_ratio=True),
+    dict(type='Pack3DDetInputs', keys=['img'])
 ]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['img'])
-]
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
-    train=dict(
+
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'kitti_infos_train_mono3d.coco.json',
-        info_file=data_root + 'kitti_infos_train.pkl',
-        img_prefix=data_root,
-        classes=class_names,
+        ann_file='kitti_infos_train.pkl',
+        data_prefix=dict(img='training/image_2'),
         pipeline=train_pipeline,
         modality=input_modality,
         test_mode=False,
-        box_type_3d='Camera'),
-    val=dict(
+        metainfo=metainfo,
+        # we use box_type_3d='Camera' in monocular 3d
+        # detection task
+        box_type_3d='Camera'))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=2,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val_mono3d.coco.json',
-        info_file=data_root + 'kitti_infos_val.pkl',
-        img_prefix=data_root,
-        classes=class_names,
+        data_prefix=dict(img='training/image_2'),
+        ann_file='kitti_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
-        test_mode=True,
-        box_type_3d='Camera'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val_mono3d.coco.json',
-        info_file=data_root + 'kitti_infos_val.pkl',
-        img_prefix=data_root,
-        classes=class_names,
-        pipeline=test_pipeline,
-        modality=input_modality,
+        metainfo=metainfo,
         test_mode=True,
         box_type_3d='Camera'))
-evaluation = dict(interval=2)
+test_dataloader = val_dataloader
+
+val_evaluator = dict(
+    type='KittiMetric',
+    ann_file=data_root + 'kitti_infos_val.pkl',
+    metric='bbox',
+    pred_box_type_3d='Camera')
+
+test_evaluator = val_evaluator

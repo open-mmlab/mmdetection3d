@@ -4,6 +4,12 @@ _base_ = [
 ]
 # model settings
 model = dict(
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        mean=[103.530, 116.280, 123.675],
+        std=[1.0, 1.0, 1.0],
+        bgr_to_rgb=False,
+        pad_size_divisor=32),
     backbone=dict(frozen_stages=0),
     neck=dict(start_level=0, num_outs=4),
     bbox_head=dict(
@@ -27,16 +33,17 @@ model = dict(
         ),
         centerness_branch=(256, ),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_centerness=dict(
-            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         use_depth_classifier=True,
         depth_branch=(256, ),
         depth_range=(0, 70),
@@ -61,11 +68,21 @@ model = dict(
     ]),
     test_cfg=dict(nms_pre=100, nms_thr=0.05, score_thr=0.001, max_per_img=20))
 
-class_names = ['Pedestrian', 'Cyclist', 'Car']
-img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
+# file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        'data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/'
+    }))
+
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -74,54 +91,47 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', img_scale=(1242, 375), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
+        type='Pack3DDetInputs',
         keys=[
             'img', 'gt_bboxes', 'gt_labels', 'gt_bboxes_3d', 'gt_labels_3d',
-            'centers2d', 'depths'
+            'centers_2d', 'depths'
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
-    dict(
-        type='MultiScaleFlipAug',
-        scale_factor=1.0,
-        flip=False,
-        transforms=[
-            dict(type='RandomFlip3D'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['img']),
-        ])
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='mmdet.Resize', scale_factor=1.0),
+    dict(type='Pack3DDetInputs', keys=['img'])
 ]
-data = dict(
-    samples_per_gpu=3,
-    workers_per_gpu=3,
-    train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
+
+train_dataloader = dict(
+    batch_size=3, num_workers=3, dataset=dict(pipeline=train_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
 # optimizer
-optimizer = dict(
-    lr=0.001, paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.))
-optimizer_config = dict(
-    _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
-# learning policy
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=1.0 / 3,
-    step=[32, 44])
-total_epochs = 48
-runner = dict(type='EpochBasedRunner', max_epochs=48)
-evaluation = dict(interval=2)
-checkpoint_config = dict(interval=8)
+optim_wrapper = dict(
+    optimizer=dict(lr=0.01),
+    paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.),
+    clip_grad=dict(max_norm=35, norm_type=2))
+
+# learning rate
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=1.0 / 3,
+        by_epoch=False,
+        begin=0,
+        end=500),
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=48,
+        by_epoch=True,
+        milestones=[32, 44],
+        gamma=0.1)
+]
+
+train_cfg = dict(max_epochs=48)

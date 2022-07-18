@@ -106,8 +106,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         if 'points' in inputs_dict[0].keys():
             points = [input['points'] for input in inputs_dict]
         else:
-            raise KeyError(
-                "Model input dict needs to include the 'points' key.")
+            points = None
 
         if 'img' in inputs_dict[0].keys():
 

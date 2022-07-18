@@ -4,6 +4,7 @@ import numpy as np
 from mmdet3d.core import LiDARInstance3DBoxes
 # create a dummy `results` to test the pipeline
 from mmdet3d.datasets import LoadAnnotations3D, LoadPointsFromFile
+from mmdet3d.datasets.pipelines.loading import LoadImageFromFileMono3D
 
 
 def create_dummy_data_info(with_ann=True):
@@ -20,6 +21,10 @@ def create_dummy_data_info(with_ann=True):
                   -1.5808]])),
         'gt_labels_3d':
         np.array([1]),
+        'centers_2d':
+        np.array([[765.04, 214.56]]),
+        'depths':
+        np.array([8.410]),
         'num_lidar_pts':
         np.array([377]),
         'difficulty':
@@ -134,6 +139,9 @@ def create_dummy_data_info(with_ann=True):
             ],
             'bbox_label_3d':
             -1,
+            'center_2d': [765.04, 214.56],
+            'depth':
+            8.410,
             'num_lidar_pts':
             377,
             'difficulty':
@@ -166,5 +174,19 @@ def create_data_info_after_loading():
         coord_type='LIDAR', load_dim=4, use_dim=3)
     data_info = create_dummy_data_info()
     data_info = load_points_transform(data_info)
+    data_info_after_loading = load_anns_transform(data_info)
+    return data_info_after_loading
+
+
+def create_mono3d_data_info_after_loading():
+    load_anns_transform = LoadAnnotations3D(
+        with_bbox=True,
+        with_label=True,
+        with_bbox_3d=True,
+        with_label_3d=True,
+        with_bbox_depth=True)
+    load_img_transform = LoadImageFromFileMono3D()
+    data_info = create_dummy_data_info()
+    data_info = load_img_transform(data_info)
     data_info_after_loading = load_anns_transform(data_info)
     return data_info_after_loading

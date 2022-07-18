@@ -7,12 +7,15 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import mmcv
 import numpy as np
 import pyquaternion
+import torch
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 from nuscenes.eval.detection.config import config_factory
 from nuscenes.eval.detection.data_classes import DetectionConfig
 from nuscenes.utils.data_classes import Box as NuScenesBox
 
+from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
+from mmdet3d.core.bbox import CameraInstance3DBoxes, LiDARInstance3DBoxes
 from mmdet3d.registry import METRICS
 
 
@@ -288,21 +291,144 @@ class NuScenesMetric(BaseMetric):
 
         for name in results[0]:
             if 'pred' in name and '3d' in name and name[0] != '_':
-                # format result of model output in Det3dDataSample,
-                # include 'pred_instances_3d','pts_pred_instances_3d',
-                # 'img_pred_instances_3d'
                 print(f'\nFormating bboxes of {name}')
                 results_ = [out[name] for out in results]
                 tmp_file_ = osp.join(jsonfile_prefix, name)
-                result_dict[name] = self._format_bbox(results_, sample_id_list,
-                                                      classes, tmp_file_)
+                box_type_3d = type(results_[0]['bboxes_3d'])
+                if box_type_3d == LiDARInstance3DBoxes:
+                    result_dict[name] = self._format_lidar_bbox(
+                        results_, sample_id_list, classes, tmp_file_)
+                elif box_type_3d == CameraInstance3DBoxes:
+                    result_dict[name] = self._format_camera_bbox(
+                        results_, sample_id_list, classes, tmp_file_)
+
         return result_dict, tmp_dir
 
-    def _format_bbox(self,
-                     results: List[dict],
-                     sample_id_list: List[int],
-                     classes: List[str] = None,
-                     jsonfile_prefix: str = None) -> str:
+    def _format_camera_bbox(self,
+                            results: List[dict],
+                            sample_id_list: List[int],
+                            classes: List[str] = None,
+                            jsonfile_prefix: str = None) -> str:
+        """Convert the results to the standard format.
+
+        Args:
+            results (list[dict]): Testing results of the dataset.
+            jsonfile_prefix (str): The prefix of the output jsonfile.
+                You can specify the output directory/filename by
+                modifying the jsonfile_prefix. Default: None.
+
+        Returns:
+            str: Path of the output json file.
+        """
+        nusc_annos = {}
+
+        print('Start to convert detection format...')
+
+        # Camera types in Nuscenes datasets
+        camera_types = [
+            'CAM_FRONT',
+            'CAM_FRONT_RIGHT',
+            'CAM_FRONT_LEFT',
+            'CAM_BACK',
+            'CAM_BACK_LEFT',
+            'CAM_BACK_RIGHT',
+        ]
+
+        CAM_NUM = 6
+
+        for i, det in enumerate(mmcv.track_iter_progress(results)):
+
+            sample_id = sample_id_list[i]
+
+            camera_type_id = sample_id % CAM_NUM
+
+            if camera_type_id == 0:
+                boxes_per_frame = []
+                attrs_per_frame = []
+
+            # need to merge results from images of the same sample
+            annos = []
+            boxes, attrs = output_to_nusc_box(det)
+            sample_token = self.data_infos[sample_id]['token']
+            camera_type = camera_types[camera_type_id]
+            boxes, attrs = cam_nusc_box_to_global(
+                self.data_infos[sample_id - camera_type_id], boxes, attrs,
+                camera_type, classes, self.eval_detection_configs)
+            boxes_per_frame.extend(boxes)
+            attrs_per_frame.extend(attrs)
+            # Remove redundant predictions caused by overlap of images
+            if (sample_id + 1) % CAM_NUM != 0:
+                continue
+            boxes = global_nusc_box_to_cam(
+                self.data_infos[sample_id + 1 - CAM_NUM], boxes_per_frame,
+                classes, self.eval_detection_configs)
+            cam_boxes3d, scores, labels = nusc_box_to_cam_box3d(boxes)
+            # box nms 3d over 6 images in a frame
+            # TODO: move this global setting into config
+            nms_cfg = dict(
+                use_rotate_nms=True,
+                nms_across_levels=False,
+                nms_pre=4096,
+                nms_thr=0.05,
+                score_thr=0.01,
+                min_bbox_size=0,
+                max_per_frame=500)
+            from mmcv import Config
+            nms_cfg = Config(nms_cfg)
+            cam_boxes3d_for_nms = xywhr2xyxyr(cam_boxes3d.bev)
+            boxes3d = cam_boxes3d.tensor
+            # generate attr scores from attr labels
+            attrs = labels.new_tensor([attr for attr in attrs_per_frame])
+            boxes3d, scores, labels, attrs = box3d_multiclass_nms(
+                boxes3d,
+                cam_boxes3d_for_nms,
+                scores,
+                nms_cfg.score_thr,
+                nms_cfg.max_per_frame,
+                nms_cfg,
+                mlvl_attr_scores=attrs)
+            cam_boxes3d = CameraInstance3DBoxes(boxes3d, box_dim=9)
+            det = bbox3d2result(cam_boxes3d, scores, labels, attrs)
+            boxes, attrs = output_to_nusc_box(det)
+            boxes, attrs = cam_nusc_box_to_global(
+                self.data_infos[sample_id + 1 - CAM_NUM], boxes, attrs,
+                classes, self.eval_detection_configs)
+
+            for i, box in enumerate(boxes):
+                name = classes[box.label]
+                attr = self.get_attr_name(attrs[i], name)
+                nusc_anno = dict(
+                    sample_token=sample_token,
+                    translation=box.center.tolist(),
+                    size=box.wlh.tolist(),
+                    rotation=box.orientation.elements.tolist(),
+                    velocity=box.velocity[:2].tolist(),
+                    detection_name=name,
+                    detection_score=box.score,
+                    attribute_name=attr)
+                annos.append(nusc_anno)
+            # other views results of the same frame should be concatenated
+            if sample_token in nusc_annos:
+                nusc_annos[sample_token].extend(annos)
+            else:
+                nusc_annos[sample_token] = annos
+
+        nusc_submissions = {
+            'meta': self.modality,
+            'results': nusc_annos,
+        }
+
+        mmcv.mkdir_or_exist(jsonfile_prefix)
+        res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
+        print('Results writes to', res_path)
+        mmcv.dump(nusc_submissions, res_path)
+        return res_path
+
+    def _format_lidar_bbox(self,
+                           results: List[dict],
+                           sample_id_list: List[int],
+                           classes: List[str] = None,
+                           jsonfile_prefix: str = None) -> str:
         """Convert the results to the standard format.
 
         Args:
@@ -389,27 +515,59 @@ def output_to_nusc_box(detection: dict) -> List[NuScenesBox]:
     bbox3d = detection['bboxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
+    attrs = None
+    if 'attr_labels' in detection:
+        attrs = detection['attr_labels'].numpy()
 
     box_gravity_center = bbox3d.gravity_center.numpy()
     box_dims = bbox3d.dims.numpy()
     box_yaw = bbox3d.yaw.numpy()
 
-    # our LiDAR coordinate system -> nuScenes box coordinate system
-    nus_box_dims = box_dims[:, [1, 0, 2]]
-
     box_list = []
-    for i in range(len(bbox3d)):
-        quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
-        velocity = (*bbox3d.tensor[i, 7:9], 0.0)
-        box = NuScenesBox(
-            box_gravity_center[i],
-            nus_box_dims[i],
-            quat,
-            label=labels[i],
-            score=scores[i],
-            velocity=velocity)
-        box_list.append(box)
-    return box_list
+
+    if type(bbox3d) == LiDARInstance3DBoxes:
+        # our LiDAR coordinate system -> nuScenes box coordinate system
+        nus_box_dims = box_dims[:, [1, 0, 2]]
+        for i in range(len(bbox3d)):
+            quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
+            velocity = (*bbox3d.tensor[i, 7:9], 0.0)
+            # velo_val = np.linalg.norm(box3d[i, 7:9])
+            # velo_ori = box3d[i, 6]
+            # velocity = (
+            # velo_val * np.cos(velo_ori), velo_val * np.sin(velo_ori), 0.0)
+            box = NuScenesBox(
+                box_gravity_center[i],
+                nus_box_dims[i],
+                quat,
+                label=labels[i],
+                score=scores[i],
+                velocity=velocity)
+            box_list.append(box)
+    elif type(bbox3d) == CameraInstance3DBoxes:
+        # our Camera coordinate system -> nuScenes box coordinate system
+        # convert the dim/rot to nuscbox convention
+        nus_box_dims = box_dims[:, [2, 0, 1]]
+        nus_box_yaw = -box_yaw
+        for i in range(len(bbox3d)):
+            q1 = pyquaternion.Quaternion(
+                axis=[0, 0, 1], radians=nus_box_yaw[i])
+            q2 = pyquaternion.Quaternion(axis=[1, 0, 0], radians=np.pi / 2)
+            quat = q2 * q1
+            velocity = (bbox3d.tensor[i, 7], 0.0, bbox3d.tensor[i, 8])
+            box = NuScenesBox(
+                box_gravity_center[i],
+                nus_box_dims[i],
+                quat,
+                label=labels[i],
+                score=scores[i],
+                velocity=velocity)
+            box_list.append(box)
+    else:
+        raise NotImplementedError(
+            f'Do not support convert {type(bbox3d)} bboxes'
+            'to standard NuScenesBoxes.')
+
+    return box_list, attrs
 
 
 def lidar_nusc_box_to_global(
@@ -448,3 +606,117 @@ def lidar_nusc_box_to_global(
         box.translate(ego2global[:3, 3])
         box_list.append(box)
     return box_list
+
+
+def cam_nusc_box_to_global(info: dict, boxes: List[NuScenesBox],
+                           attrs: List[str], camera_type: str,
+                           classes: List[str],
+                           eval_configs: DetectionConfig) -> List[NuScenesBox]:
+    """Convert the box from camera to global coordinate.
+
+    Args:
+        info (dict): Info for a specific sample data, including the
+            calibration information.
+        boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
+        attrs (list[str]): List of attributes.
+        camera_type (str): Type of camera.
+        classes (list[str]): Mapped classes in the evaluation.
+        eval_configs (object): Evaluation configuration object.
+
+    Returns:
+        list: List of standard NuScenesBoxes in the global
+            coordinate.
+    """
+    box_list = []
+    attr_list = []
+    for (box, attr) in zip(boxes, attrs):
+        # Move box to ego vehicle coord system
+        cam2ego = np.array(info['images'][camera_type]['cam2ego'])
+        box.rotate(
+            pyquaternion.Quaternion(matrix=cam2ego, rtol=1e-05, atol=1e-07))
+        box.translate(cam2ego[:3, 3])
+        # filter det in ego.
+        cls_range_map = eval_configs.class_range
+        radius = np.linalg.norm(box.center[:2], 2)
+        det_range = cls_range_map[classes[box.label]]
+        if radius > det_range:
+            continue
+        # Move box to global coord system
+        ego2global = np.array(info['ego2global'])
+        box.rotate(
+            pyquaternion.Quaternion(matrix=ego2global, rtol=1e-05, atol=1e-07))
+        box.translate(ego2global[:3, 3])
+        box_list.append(box)
+        attr_list.append(attr)
+    return box_list, attr_list
+
+
+def global_nusc_box_to_cam(info: dict, boxes: List[NuScenesBox],
+                           classes: List[str],
+                           eval_configs: DetectionConfig) -> List[NuScenesBox]:
+    """Convert the box from global to camera coordinate.
+
+    Args:
+        info (dict): Info for a specific sample data, including the
+            calibration information.
+        boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
+        classes (list[str]): Mapped classes in the evaluation.
+        eval_configs (object): Evaluation configuration object.
+
+    Returns:
+        list: List of standard NuScenesBoxes in the global
+            coordinate.
+    """
+    box_list = []
+    for box in boxes:
+        # Move box to ego vehicle coord system
+        ego2global = np.array(info['ego2global'])
+        box.translate(-ego2global[:3, 3])
+        box.rotate(
+            pyquaternion.Quaternion(matrix=ego2global, rtol=1e-05,
+                                    atol=1e-07).inverse)
+        # filter det in ego.
+        cls_range_map = eval_configs.class_range
+        radius = np.linalg.norm(box.center[:2], 2)
+        det_range = cls_range_map[classes[box.label]]
+        if radius > det_range:
+            continue
+        # Move box to camera coord system
+        cam2ego = np.array(info['images']['CAM_FRONT']['cam2ego'])
+        box.translate(-cam2ego[:3, :3])
+        box.rotate(
+            pyquaternion.Quaternion(matrix=cam2ego, rtol=1e-05,
+                                    atol=1e-07).inverse)
+        box_list.append(box)
+    return box_list
+
+
+def nusc_box_to_cam_box3d(boxes: List[NuScenesBox]):
+    """Convert boxes from :obj:`NuScenesBox` to :obj:`CameraInstance3DBoxes`.
+
+    Args:
+        boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
+
+    Returns:
+        tuple (:obj:`CameraInstance3DBoxes` | torch.Tensor | torch.Tensor):
+            Converted 3D bounding boxes, scores and labels.
+    """
+    locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)
+    dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
+    rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
+                         for b in boxes]).view(-1, 1)
+    velocity = torch.Tensor([b.velocity[0::2] for b in boxes]).view(-1, 2)
+
+    # convert nusbox to cambox convention
+    dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
+    rots = -rots
+
+    boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
+    cam_boxes3d = CameraInstance3DBoxes(
+        boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
+    scores = torch.Tensor([b.score for b in boxes]).cuda()
+    labels = torch.LongTensor([b.label for b in boxes]).cuda()
+    nms_scores = scores.new_zeros(scores.shape[0], 10 + 1)
+    indices = labels.new_tensor(list(range(scores.shape[0])))
+    nms_scores[indices, labels] = scores
+    return cam_boxes3d, nms_scores, labels

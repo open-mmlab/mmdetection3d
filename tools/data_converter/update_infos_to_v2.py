@@ -14,7 +14,10 @@ from os import path as osp
 
 import mmcv
 import numpy as np
+from nuscenes.nuscenes import NuScenes
 
+from mmdet3d.core.bbox import points_cam2img
+from mmdet3d.datasets.convert_utils import get_2d_boxes
 from mmdet3d.datasets.utils import convert_quaternion_to_matrix
 
 
@@ -58,6 +61,19 @@ def get_empty_instance():
         difficulty=None,
         unaligned_bbox_3d=None)
     return instance
+
+
+def get_empty_multicamera_instances():
+
+    cam_instance = dict(
+        CAM_FONT=None,
+        CAM_FRONT_RIGHT=None,
+        CAM_FRONT_LEFT=None,
+        CAM_BACK=None,
+        CAM_BACK_RIGHT=None,
+        CAM_BACK_LEFT=None)
+
+    return cam_instance
 
 
 def get_empty_lidar_points():
@@ -206,6 +222,32 @@ def clear_data_info_unused_keys(data_info):
     return data_info, empty_flag
 
 
+def generate_camera_instances(info, nusc):
+
+    # get bbox annotations for camera
+    camera_types = [
+        'CAM_FRONT',
+        'CAM_FRONT_RIGHT',
+        'CAM_FRONT_LEFT',
+        'CAM_BACK',
+        'CAM_BACK_LEFT',
+        'CAM_BACK_RIGHT',
+    ]
+
+    empty_multicamera_instance = get_empty_multicamera_instances()
+
+    for cam in camera_types:
+        cam_info = info['cams'][cam]
+        # list[dict]
+        ann_infos = get_2d_boxes(
+            nusc,
+            cam_info['sample_data_token'],
+            visibilities=['', '1', '2', '3', '4'])
+        empty_multicamera_instance[cam] = ann_infos
+
+    return empty_multicamera_instance
+
+
 def update_nuscenes_infos(pkl_path, out_dir):
     print(f'{pkl_path} will be modified.')
     if out_dir in pkl_path:
@@ -222,6 +264,11 @@ def update_nuscenes_infos(pkl_path, out_dir):
         'version':
         data_list['metadata']['version']
     }
+    nusc = NuScenes(
+        version=data_list['metadata']['version'],
+        dataroot='./data/nuscenes',
+        verbose=True)
+
     print('Start updating:')
     converted_list = []
     for i, ori_info_dict in enumerate(
@@ -304,6 +351,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
             empty_instance['bbox_3d_isvalid'] = ori_info_dict['valid_flag'][i]
             empty_instance = clear_instance_unused_keys(empty_instance)
             temp_data_info['instances'].append(empty_instance)
+        temp_data_info['cam_instances'] = generate_camera_instances(
+            ori_info_dict, nusc)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = pkl_path.split('/')[-1]
@@ -313,7 +362,6 @@ def update_nuscenes_infos(pkl_path, out_dir):
     converted_data_info = dict(metainfo=METAINFO, data_list=converted_list)
 
     mmcv.dump(converted_data_info, out_path, 'pkl')
-    return temp_lidar_sweep
 
 
 def update_kitti_infos(pkl_path, out_dir):
@@ -382,6 +430,7 @@ def update_kitti_infos(pkl_path, out_dir):
 
         anns = ori_info_dict['annos']
         num_instances = len(anns['name'])
+        cam2img = ori_info_dict['calib']['P2']
 
         ignore_class_name = set()
         instance_list = []
@@ -401,6 +450,17 @@ def update_kitti_infos(pkl_path, out_dir):
             loc = anns['location'][instance_id]
             dims = anns['dimensions'][instance_id]
             rots = anns['rotation_y'][:, None][instance_id]
+
+            dst = np.array([0.5, 0.5, 0.5])
+            src = np.array([0.5, 1.0, 0.5])
+
+            center_3d = loc + dims * (dst - src)
+            center_2d = points_cam2img(
+                center_3d.reshape([1, 3]), cam2img, with_depth=True)
+            center_2d = center_2d.squeeze().tolist()
+            empty_instance['center_2d'] = center_2d[:2]
+            empty_instance['depth'] = center_2d[2]
+
             gt_bboxes_3d = np.concatenate([loc, dims, rots]).tolist()
             empty_instance['bbox_3d'] = gt_bboxes_3d
             empty_instance['bbox_label_3d'] = copy.deepcopy(
@@ -734,7 +794,6 @@ def parse_args():
         type=str,
         default='./data/kitti/kitti_infos_train.pkl ',
         help='specify the root dir of dataset')
-
     parser.add_argument(
         '--out-dir',
         type=str,

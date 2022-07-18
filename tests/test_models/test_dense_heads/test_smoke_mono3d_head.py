@@ -82,6 +82,7 @@ class TestSMOKEMono3DHead(TestCase):
         # When truth is non-empty then all losses
         # should be nonzero for random inputs
         gt_instances_3d = InstanceData()
+        gt_instances = InstanceData()
 
         gt_bboxes = torch.Tensor([[1.0, 2.0, 20.0, 40.0],
                                   [45.0, 50.0, 80.0, 70.1],
@@ -94,13 +95,14 @@ class TestSMOKEMono3DHead(TestCase):
 
         gt_instances_3d.bboxes_3d = gt_bboxes_3d
         gt_instances_3d.labels_3d = gt_labels_3d
-        gt_instances_3d.bboxes = gt_bboxes
-        gt_instances_3d.labels = gt_labels
+        gt_instances.bboxes = gt_bboxes
+        gt_instances.labels = gt_labels
         gt_instances_3d.centers_2d = centers_2d
         gt_instances_3d.depths = depths
 
-        gt_losses = smoke_mono3d_head.loss(*ret_dict, [gt_instances_3d],
-                                           img_metas)
+        gt_losses = smoke_mono3d_head.loss_by_feat(*ret_dict,
+                                                   [gt_instances_3d],
+                                                   [gt_instances], img_metas)
 
         gt_cls_loss = gt_losses['loss_cls'].item()
         gt_box_loss = gt_losses['loss_bbox'].item()
@@ -109,7 +111,7 @@ class TestSMOKEMono3DHead(TestCase):
         self.assertGreater(gt_box_loss, 0, 'bbox loss should be positive')
 
         # test get_results
-        results_list = smoke_mono3d_head.get_results(*ret_dict, img_metas)
+        results_list = smoke_mono3d_head.predict_by_feat(*ret_dict, img_metas)
         self.assertEqual(
             len(results_list), 1, 'there should be one image results')
         results = results_list[0]

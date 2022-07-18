@@ -122,7 +122,7 @@ class Pack3DDetInputs(BaseTransform):
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
                 'gt_labels_3d', 'attr_labels', 'pts_instance_mask',
-                'pts_semantic_mask', 'centers2d', 'depths'
+                'pts_semantic_mask', 'centers_2d', 'depths'
         ]:
             if key not in results:
                 continue

@@ -45,8 +45,8 @@ def test_getitem():
         _generate_nus_dataset_config()
 
     nus_dataset = NuScenesDataset(
-        data_root,
-        ann_file,
+        data_root=data_root,
+        ann_file=ann_file,
         data_prefix=data_prefix,
         pipeline=pipeline,
         metainfo=dict(CLASSES=classes),

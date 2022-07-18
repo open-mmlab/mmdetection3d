@@ -86,7 +86,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             :class:`LoadImageFromFile`.
     """
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> dict:
         """Call functions to load image and get image meta information.
 
         Args:
@@ -95,8 +95,32 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
         Returns:
             dict: The dict contains loaded image and meta information.
         """
-        super().__call__(results)
-        results['cam2img'] = results['img_info']['cam_intrinsic']
+        # TODO: load different camera image from data info,
+        # for kitti dataset, we load 'CAM2' image.
+        # for nuscenes dataset, we load 'CAM_FRONT' image.
+
+        if 'CAM2' in results['images']:
+            filename = results['images']['CAM2']['img_path']
+            results['cam2img'] = results['images']['CAM2']['cam2img']
+        elif len(list(results['images'].keys())) == 1:
+            camera_type = list(results['images'].keys())[0]
+            filename = results['images'][camera_type]['img_path']
+            results['cam2img'] = results['images'][camera_type]['cam2img']
+        else:
+            raise NotImplementedError(
+                'Currently we only support load image from kitti and'
+                'nuscenes datasets')
+
+        img_bytes = self.file_client.get(filename)
+        img = mmcv.imfrombytes(
+            img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        if self.to_float32:
+            img = img.astype(np.float32)
+
+        results['img'] = img
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
+
         return results
 
 
@@ -607,6 +631,34 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
+
+    def _load_bboxes(self, results: dict) -> None:
+        """Private function to load bounding box annotations.
+
+        Rewrite '_load_bboxes` since mmdet3d uses 'parse_anno_info' in
+        datasets.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict contains loaded bounding box annotations.
+        """
+        results['gt_bboxes'] = results['ann_info']['gt_bboxes']
+
+    def _load_labels(self, results: dict) -> None:
+        """Private function to load label annotations.
+
+        Rewrite '_load_bboxes` since mmdet3d uses 'parse_anno_info' in
+        datasets.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict contains loaded label annotations.
+        """
+        results['gt_labels'] = results['ann_info']['gt_labels']
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from

@@ -3,21 +3,21 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
-# optimizer
-optimizer = dict(type='Adam', lr=2.5e-4)
-optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='step', warmup=None, step=[50])
+# file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        'data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/'
+    }))
 
-# runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=72)
-log_config = dict(interval=10)
-
-find_unused_parameters = True
-class_names = ['Pedestrian', 'Cyclist', 'Car']
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -29,36 +29,42 @@ train_pipeline = [
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(type='RandomShiftScale', shift_scale=(0.2, 0.4), aug_prob=0.3),
     dict(type='AffineResize', img_scale=(1280, 384), down_ratio=4),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
+        type='Pack3DDetInputs',
         keys=[
             'img', 'gt_bboxes', 'gt_labels', 'gt_bboxes_3d', 'gt_labels_3d',
-            'centers2d', 'depths'
+            'centers_2d', 'depths'
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1280, 384),
-        flip=False,
-        transforms=[
-            dict(type='AffineResize', img_scale=(1280, 384), down_ratio=4),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['img']),
-        ])
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='AffineResize', img_scale=(1280, 384), down_ratio=4),
+    dict(type='Pack3DDetInputs', keys=['img'])
 ]
-data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=4,
-    train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
+
+train_dataloader = dict(
+    batch_size=8, num_workers=4, dataset=dict(pipeline=train_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
+# training schedule for 1x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+# learning rate
+param_scheduler = [
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=12,
+        by_epoch=True,
+        milestones=[8, 11],
+        gamma=0.1)
+]
+
+# optimizer
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='Adam', lr=2.5e-4),
+    clip_grad=None)
