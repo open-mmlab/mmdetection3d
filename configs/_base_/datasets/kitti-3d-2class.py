@@ -1,8 +1,18 @@
 # dataset settings
-dataset_type = 'Custom3DDataset'
-data_root = 'data/rf2021/'
-class_names = ['Car', 'Pedestrian']
-point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]
+dataset_type = 'KittiDataset'
+data_root = 'data/kitti/'
+class_names = ['Pedestrian', 'Car']
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
+input_modality = dict(use_lidar=True, use_camera=False)
+db_sampler = dict(
+    data_root=data_root,
+    info_path=data_root + 'kitti_dbinfos_train.pkl',
+    rate=1.0,
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Car=5, Pedestrian=10)),
+    classes=class_names,
+    sample_groups=dict(Car=12, Pedestrian=6))
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -10,17 +20,6 @@ file_client_args = dict(backend='disk')
 # for more details.
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
-
-db_sampler = dict(
-    data_root=data_root,
-    info_path=data_root + 'rf2021_dbinfos_train.pkl',
-    rate=1.0,
-    prepare=dict(
-        filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Pedestrian=5)),
-    classes=['Pedestrian'],
-    sample_groups=dict(Pedestrian=15))
-
 
 train_pipeline = [
     dict(
@@ -34,7 +33,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         file_client_args=file_client_args),
-    dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=False),
+    dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
         num_try=100,
@@ -105,27 +104,35 @@ data = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'rf2021_infos_train.pkl',
+            ann_file=data_root + 'kitti_infos_train.pkl',
+            split='training',
+            pts_prefix='velodyne_reduced',
             pipeline=train_pipeline,
+            modality=input_modality,
             classes=class_names,
             test_mode=False,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR',
-            load_interval=5)),
+            box_type_3d='LiDAR')),
     val=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'rf2021_infos_val.pkl',
+        ann_file=data_root + 'kitti_infos_val.pkl',
+        split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
+        modality=input_modality,
         classes=class_names,
         test_mode=True,
         box_type_3d='LiDAR'),
     test=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'rf2021_infos_test.pkl',
+        ann_file=data_root + 'kitti_infos_val.pkl',
+        split='training',
+        pts_prefix='velodyne_reduced',
         pipeline=test_pipeline,
+        modality=input_modality,
         classes=class_names,
         test_mode=True,
         box_type_3d='LiDAR'))
