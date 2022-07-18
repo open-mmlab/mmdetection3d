@@ -117,9 +117,10 @@ class RandomFlip3D(RandomFlip):
         """
         assert direction in ['horizontal', 'vertical']
         # for semantic segmentation task, only points will be flipped.
-        if 'bbox3d_fields' not in input_dict:
+        if 'bbox3d_fields' not in input_dict or len(input_dict['bbox3d_fields']) == 0:
             input_dict['points'].flip(direction)
             return
+
         if len(input_dict['bbox3d_fields']) == 0:  # test mode
             input_dict['bbox3d_fields'].append('empty_box3d')
             input_dict['empty_box3d'] = input_dict['box_type_3d'](
@@ -1154,7 +1155,7 @@ class IndoorPatchPointSample(object):
     Sampling data to a certain number for semantic segmentation.
 
     Args:
-        num_points (int): Number of points to be sampled.
+        num_points (int): Number of points to be sampled. -1 to use all points.
         block_size (float, optional): Size of a block to sample points from.
             Defaults to 1.5.
         sample_rate (float, optional): Stride used in sliding patch generation.
@@ -1328,9 +1329,11 @@ class IndoorPatchPointSample(object):
 
             if flag1 and flag2:
                 break
-
+        
+        if self.num_points == -1:
+            choices = point_idxs
         # sample idx to `self.num_points`
-        if point_idxs.size >= self.num_points:
+        elif point_idxs.size >= self.num_points:
             # no duplicate in sub-sampling
             choices = np.random.choice(
                 point_idxs, self.num_points, replace=False)
@@ -1342,6 +1345,7 @@ class IndoorPatchPointSample(object):
                 [np.arange(point_idxs.size),
                  np.array(dup)], 0)
             choices = point_idxs[idx_dup]
+        
 
         # construct model input
         points = self._input_generation(coords[choices], cur_center, coord_max,

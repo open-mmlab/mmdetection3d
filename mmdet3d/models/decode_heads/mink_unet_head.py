@@ -7,16 +7,16 @@ except ImportError:
     warnings.warn(
         'Please follow `getting_started.md` to install MinkowskiEngine.`')
 
-from mmcv.cnn.bricks import ConvModule
 from torch import nn as nn
+from mmcv.runner import force_fp32
 
-from mmdet3d.ops import PointFPModule
 from ..builder import HEADS
 from .decode_head import Base3DDecodeHead
 
 
+
 @HEADS.register_module()
-class UNetHead(Base3DDecodeHead):
+class MinkUNetHead(Base3DDecodeHead):
     r"""UNet head. See `4D Spatio-Temporal ConvNets
     <https://arxiv.org/abs/1904.08755>`_ for more details.
 
@@ -27,16 +27,15 @@ class UNetHead(Base3DDecodeHead):
     """
 
     def __init__(self,
-                 in_channels: int=96*4,
-                 out_channels: int=18,
-                 kernel_size: int=1,
+                 channels: int=96*4,
+                 num_classes: int=18,
                  D: int=3,
                  **kwargs):
-        super(Base3DDecodeHead, self).__init__(**kwargs)
+        super(MinkUNetHead, self).__init__(channels, num_classes, **kwargs)
 
         self.final = ME.MinkowskiConvolution(
-            in_channels,
-            out_channels,
+            channels,
+            num_classes,
             kernel_size=1,
             bias=True,
             dimension=D,
@@ -70,3 +69,38 @@ class UNetHead(Base3DDecodeHead):
         output = self.final(features)
         
         return output
+
+    def forward_test(self, inputs, field, img_metas, test_cfg):
+        """Forward function for testing.
+
+        Args:
+            inputs (list[Tensor]): List of multi-level point features.
+            img_metas (list[dict]): Meta information of each sample.
+            test_cfg (dict): The testing config.
+
+        Returns:
+            Tensor: Output segmentation map.
+        """
+        x = self.forward(inputs)
+        x = x.slice(field)
+        out = [
+            x.features[permutation]
+            for permutation in x.decomposition_permutations
+        ]
+        return out
+
+    @force_fp32(apply_to=('seg_logit', ))
+    def losses(self, seg_logit, seg_label):
+        """Compute semantic segmentation loss.
+
+        Args:
+            seg_logit (torch.Tensor): Predicted per-point segmentation logits
+                of shape [B, num_classes, N].
+            seg_label (torch.Tensor): Ground-truth segmentation label of
+                shape [B, N].
+        """
+
+        loss = dict()
+        loss['loss_sem_seg'] = self.loss_decode(
+            seg_logit.features, seg_label, ignore_index=self.ignore_index)
+        return loss

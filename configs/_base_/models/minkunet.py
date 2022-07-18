@@ -1,6 +1,7 @@
 # model settings
 model = dict(
-    type='EncoderDecoder3D',
+    type='SparseEncoderDecoder3D',
+    voxel_size=1,
     backbone=dict(
         type='MinkUNetBase',
         depth=18,
@@ -8,18 +9,14 @@ model = dict(
         D=3,
     ),
     decode_head=dict(
-        type='UNetHead',
-        in_channels=96*1,
-        out_channels=18,
-        dropout_ratio=0.5,
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
-        act_cfg=dict(type='ReLU'),
+        type='MinkUNetHead',
+        channels=96*1,
+        num_classes=20,
         loss_decode=dict(
             type='CrossEntropyLoss',
-            use_sigmoid=False,
             class_weight=None,  # should be modified with dataset
-            loss_weight=1.0)),
+            loss_weight=1.0,
+        )),
     # model training and testing settings
     train_cfg=dict(),
     test_cfg=dict(mode='slide'))

@@ -60,12 +60,12 @@ RUN pip install \
         mmsegmentation==${MMSEG}
 
 # Install MMDetection3D
-RUN conda clean --all
-COPY . /mmdetection3d
-WORKDIR /mmdetection3d
-ENV FORCE_CUDA="1"
-RUN pip install \
-    --requirement requirements/build.txt
-RUN pip install \
-    --no-cache-dir \
-    --editable .
+# RUN conda clean --all
+# COPY . /mmdetection3d
+# WORKDIR /mmdetection3d
+# ENV FORCE_CUDA="1"
+# RUN pip install \
+#     --requirement requirements/build.txt
+# RUN pip install \
+#     --no-cache-dir \
+#     --editable .
