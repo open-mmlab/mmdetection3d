@@ -119,7 +119,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_x101_32x4d_fpn_1x_nuim/mask_rcnn_x101_32x4d_fpn_1x_nuim_20201024_135741-b699ab37.pth
 
   - Name: cascade_mask_rcnn_r50_fpn_1x_nuim
-    In Collection: Mask R-CNN
+    In Collection: Cascade R-CNN
     Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 8.9
@@ -136,7 +136,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_1x_nuim/cascade_mask_rcnn_r50_fpn_1x_nuim_20201008_195342-1147c036.pth
 
   - Name: cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim
-    In Collection: Mask R-CNN
+    In Collection: Cascade R-CNN
     Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim.py
     Metadata:
       Training Memory (GB): 8.9
@@ -153,7 +153,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim_20201009_124158-ad0540e3.pth
 
   - Name: cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim
-    In Collection: Mask R-CNN
+    In Collection: Cascade R-CNN
     Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim.py
     Metadata:
       Training Memory (GB): 8.9
@@ -170,7 +170,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth
 
   - Name: cascade_mask_rcnn_r101_fpn_1x_nuim
-    In Collection: Mask R-CNN
+    In Collection: Cascade R-CNN
     Config: configs/nuimages/cascade_mask_rcnn_r101_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 12.5
@@ -187,7 +187,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r101_fpn_1x_nuim/cascade_mask_rcnn_r101_fpn_1x_nuim_20201024_134804-45215b1e.pth
 
   - Name: cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim
-    In Collection: Mask R-CNN
+    In Collection: Cascade R-CNN
     Config: configs/nuimages/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 14.9
@@ -204,7 +204,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim_20201024_135753-e0e49778.pth
 
   - Name: htc_r50_fpn_coco-20e_1x_nuim
-    In Collection: Mask R-CNN
+    In Collection: HTC
     Config: configs/nuimages/htc_r50_fpn_coco-20e_1x_nuim.py
     Metadata:
       Training Memory (GB): 11.6
@@ -221,7 +221,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/htc_r50_fpn_coco-20e_1x_nuim/htc_r50_fpn_coco-20e_1x_nuim_20201010_070203-0b53a65e.pth
 
   - Name: htc_r50_fpn_coco-20e_20e_nuim
-    In Collection: Mask R-CNN
+    In Collection: HTC
     Config: configs/nuimages/htc_r50_fpn_coco-20e_20e_nuim.py
     Metadata:
       Training Memory (GB): 11.6
@@ -238,7 +238,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/htc_r50_fpn_coco-20e_20e_nuim/htc_r50_fpn_coco-20e_20e_nuim_20201008_211415-d6c60a2c.pth
 
   - Name: htc_x101_64x4d_fpn_dconv_c3-c5_coco-20e_16x1_20e_nuim
-    In Collection: Mask R-CNN
+    In Collection: HTC
     Config: configs/nuimages/htc_x101_64x4d_fpn_dconv_c3-c5_coco-20e_16x1_20e_nuim.py
     Metadata:
       Training Memory (GB): 13.3

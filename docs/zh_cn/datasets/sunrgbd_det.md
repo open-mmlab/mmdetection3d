@@ -139,10 +139,9 @@ bash tools/create_data.sh <job_name> sunrgbd
 def process_single_scene(sample_idx):
     print(f'{self.split} sample_idx: {sample_idx}')
     # 将深度图转换为点云并降采样点云
-    SAMPLE_NUM = 50000
     pc_upright_depth = self.get_depth(sample_idx)
     pc_upright_depth_subsampled = random_sampling(
-        pc_upright_depth, SAMPLE_NUM)
+        pc_upright_depth, self.num_points)
 
     info = dict()
     pc_info = {'num_features': 6, 'lidar_idx': sample_idx}

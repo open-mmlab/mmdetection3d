@@ -27,9 +27,7 @@ NOTE: SUNRGBDtoolbox.zip should have MD5 hash `18d22e1761d36352f37232cba102f91f`
 
 NOTE: If you would like to play around with [ImVoteNet](../../configs/imvotenet/README.md), the image data (`./data/sunrgbd/sunrgbd_trainval/image`) are required. If you pre-processed the data before mmdet3d version 0.12.0, please pre-process the data again due to some updates in data pre-processing
 
-```bash
-python tools/create_data.py sunrgbd --root-path ./data/sunrgbd  --out-dir ./data/sunrgbd --extra-tag sunrgbd
-```
+NOTE: Before mmdet3d version 1.0.0 we sampled 50000 points following VoteNet preprocessing. On training and evaluation we use `PointSample` to sample the amount of points needed for each detector e.g. 20000 for VoteNet and GroupFree. However, modern voxel-based detectors (e.g. FCAF3D) utilize 100000 points and are able to utilize all of them. So since 1.0.0 version we do not limit the maximum number of points during preprocessing, giving the users more flexibility with `PointSample`. If you have some reasons to keep only 50000 points here please set `--num-points=50000` for `create_data.py`.
 
 The directory structure after pre-processing should be as below
 

@@ -151,6 +151,7 @@ Models:
           mAPH@L1: 71.5
           mAP@L2: 63.6
           mAPH@L2: 63.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth
 
   - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class
     In Collection: PointPillars
@@ -167,6 +168,7 @@ Models:
           mAPH@L1: 63.3
           mAP@L2: 62.6
           mAPH@L2: 57.6
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class_20200831_204144-d1a706b1.pth
 
   - Name: hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d
     In Collection: PointPillars
