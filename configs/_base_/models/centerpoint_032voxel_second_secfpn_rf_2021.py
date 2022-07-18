@@ -6,7 +6,7 @@ model = dict(
         max_num_points=5,
         point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
         voxel_size=voxel_size,
-        max_voxels=(32000, 40000)),
+        max_voxels=(40000, 40000)),
 
     pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=4),
 
@@ -56,7 +56,8 @@ model = dict(
         share_conv_channel=64,
         bbox_coder=dict(
             type='CenterPointBBoxCoder',
-            post_center_range=[-60, -103.84, -3, 62.88, 60, 1],
+            # post_center_range=[-60, -103.84, -3, 62.88, 60, 1],
+            post_center_range=[-60, -60, -3, 60, 60, 1],
             max_num=100,
             score_threshold=0.1,
             out_size_factor=8,
@@ -70,12 +71,48 @@ model = dict(
         loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),
         norm_bbox=True),
 
+
+    # img_roi_head=dict(
+    #     type='StandardRoIHead',
+    #     bbox_roi_extractor=dict(
+    #         type='SingleRoIExtractor',
+    #         roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=0),
+    #         out_channels=256,
+    #         featmap_strides=[4, 8, 16, 32]),
+    #     bbox_head=dict(
+    #         type='Shared2FCBBoxHead',
+    #         in_channels=256,
+    #         fc_out_channels=1024,
+    #         roi_feat_size=7,
+    #         num_classes=80,
+    #         bbox_coder=dict(
+    #             type='DeltaXYWHBBoxCoder',
+    #             target_means=[0., 0., 0., 0.],
+    #             target_stds=[0.1, 0.1, 0.2, 0.2]),
+    #         reg_class_agnostic=True,
+    #         loss_cls=dict(
+    #             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+    #         loss_bbox=dict(type='L1Loss', loss_weight=1.0)),
+    #     mask_roi_extractor=dict(
+    #         type='SingleRoIExtractor',
+    #         roi_layer=dict(type='RoIAlign', output_size=14, sampling_ratio=0),
+    #         out_channels=256,
+    #         featmap_strides=[4, 8, 16, 32]),
+    #     mask_head=dict(
+    #         type='FCNMaskHead',
+    #         num_convs=4,
+    #         in_channels=256,
+    #         conv_out_channels=256,
+    #         num_classes=80,
+    #         loss_mask=dict(
+    #             type='CrossEntropyLoss', use_mask=True, loss_weight=1.0))),
+
     # model training and testing settings
     train_cfg=dict(
 	
         pts=dict(
             point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
-            grid_size=[384, 512, 40],
+            grid_size=[384, 512, 41],
             voxel_size=voxel_size,
             out_size_factor=8,
             dense_reg=1,
@@ -86,17 +123,17 @@ model = dict(
     test_cfg=dict(
         pts=dict(
             point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
-            post_center_limit_range=[-60, -103.84, -3, 62.88, 60, 1],
+            post_center_limit_range=[-60, -60, -3, 60, 60, 1],
             max_per_img=500,
             max_pool_nms=False,
             min_radius=[4, 12, 10, 1, 0.85, 0.175],
             score_threshold=0.1,
-            out_size_factor=4,
+            out_size_factor=8,
             voxel_size=voxel_size[:2],
             nms_type='rotate',
             pre_max_size=4096,
             post_max_size=512,
-            nms_thr=0.2)))
+            nms_thr=0)))
 
 
 
