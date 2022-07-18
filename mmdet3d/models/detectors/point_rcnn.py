@@ -56,12 +56,12 @@ class PointRCNN(TwoStage3DDetector):
             x = self.neck(x)
         return x
 
-    def forward_train(self, points, img_metas, gt_bboxes_3d, gt_labels_3d):
+    def forward_train(self, points, input_metas, gt_bboxes_3d, gt_labels_3d):
         """Forward of training.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            img_metas (list[dict]): Meta information of each sample.
+            input_metas (list[dict]): Meta information of each sample.
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
             gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
 
@@ -69,8 +69,8 @@ class PointRCNN(TwoStage3DDetector):
             dict: Losses.
         """
         losses = dict()
-        points_cat = torch.stack(points)
-        x = self.extract_feat(points_cat)
+        stack_points = torch.stack(points)
+        x = self.extract_feat(stack_points)
 
         # features for rcnn
         backbone_feats = x['fp_features'].clone()
@@ -85,11 +85,11 @@ class PointRCNN(TwoStage3DDetector):
             points=points,
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
-            img_metas=img_metas)
+            input_metas=input_metas)
         losses.update(rpn_loss)
 
-        bbox_list = self.rpn_head.get_bboxes(points_cat, bbox_preds, cls_preds,
-                                             img_metas)
+        bbox_list = self.rpn_head.get_bboxes(stack_points, bbox_preds,
+                                             cls_preds, input_metas)
         proposal_list = [
             dict(
                 boxes_3d=bboxes,
@@ -100,7 +100,7 @@ class PointRCNN(TwoStage3DDetector):
         ]
         rcnn_feats.update({'points_cls_preds': cls_preds})
 
-        roi_losses = self.roi_head.forward_train(rcnn_feats, img_metas,
+        roi_losses = self.roi_head.forward_train(rcnn_feats, input_metas,
                                                  proposal_list, gt_bboxes_3d,
                                                  gt_labels_3d)
         losses.update(roi_losses)
@@ -121,9 +121,9 @@ class PointRCNN(TwoStage3DDetector):
         Returns:
             list: Predicted 3d boxes.
         """
-        points_cat = torch.stack(points)
+        stack_points = torch.stack(points)
 
-        x = self.extract_feat(points_cat)
+        x = self.extract_feat(stack_points)
         # features for rcnn
         backbone_feats = x['fp_features'].clone()
         backbone_xyz = x['fp_xyz'].clone()
@@ -132,7 +132,7 @@ class PointRCNN(TwoStage3DDetector):
         rcnn_feats.update({'points_cls_preds': cls_preds})
 
         bbox_list = self.rpn_head.get_bboxes(
-            points_cat, bbox_preds, cls_preds, img_metas, rescale=rescale)
+            stack_points, bbox_preds, cls_preds, img_metas, rescale=rescale)
 
         proposal_list = [
             dict(

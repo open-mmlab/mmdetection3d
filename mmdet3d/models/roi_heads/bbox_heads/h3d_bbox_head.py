@@ -1,17 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple
+
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule
+from mmengine import InstanceData
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import build_bbox_coder
+from mmdet3d.core import BaseInstance3DBoxes, Det3DDataSample
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.core.post_processing import aligned_3d_nms
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.ops import build_sa_module
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.core import multi_apply
 
 
@@ -25,66 +28,73 @@ class H3DBboxHead(BaseModule):
         line_matching_cfg (dict): Config for line primitive matching.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
-        train_cfg (dict): Config for training.
-        test_cfg (dict): Config for testing.
+        train_cfg (dict): Config for training. Defaults to None.
+        test_cfg (dict): Config for testing. Defaults to None.
         gt_per_seed (int): Number of ground truth votes generated
-            from each seed point.
+            from each seed point. Defaults to 1.
         num_proposal (int): Number of proposal votes generated.
-        feat_channels (tuple[int]): Convolution channels of
-            prediction layer.
+            Defaults to 256.
         primitive_feat_refine_streams (int): The number of mlps to
-            refine primitive feature.
+            refine primitive feature. Defaults to 2.
         primitive_refine_channels (tuple[int]): Convolution channels of
-            prediction layer.
-        upper_thresh (float): Threshold for line matching.
+            prediction layer. Defaults to [128, 128, 128].
+        upper_thresh (float): Threshold for line matching. Defaults to 100.
         surface_thresh (float): Threshold for surface matching.
-        line_thresh (float): Threshold for line matching.
+            Defaults to 0.5.
+        line_thresh (float): Threshold for line matching.  Defaults to 0.5.
         conv_cfg (dict): Config of convolution in prediction layer.
-        norm_cfg (dict): Config of BN in prediction layer.
-        objectness_loss (dict): Config of objectness loss.
-        center_loss (dict): Config of center loss.
+            Defaults to None.
+        norm_cfg (dict): Config of BN in prediction layer.  Defaults to None.
+        objectness_loss (dict): Config of objectness loss.  Defaults to None.
+        center_loss (dict): Config of center loss.  Defaults to None.
         dir_class_loss (dict): Config of direction classification loss.
+            Defaults to None.
         dir_res_loss (dict): Config of direction residual regression loss.
+            Defaults to None.
         size_class_loss (dict): Config of size classification loss.
+            Defaults to None.
         size_res_loss (dict): Config of size residual regression loss.
+            Defaults to None.
         semantic_loss (dict): Config of point-wise semantic segmentation loss.
+             Defaults to None.
         cues_objectness_loss (dict): Config of cues objectness loss.
+             Defaults to None.
         cues_semantic_loss (dict): Config of cues semantic loss.
+             Defaults to None.
         proposal_objectness_loss (dict): Config of proposal objectness
-            loss.
+            loss.  Defaults to None.
         primitive_center_loss (dict): Config of primitive center regression
-            loss.
+            loss.  Defaults to None.
     """
 
     def __init__(self,
-                 num_classes,
-                 suface_matching_cfg,
-                 line_matching_cfg,
-                 bbox_coder,
-                 train_cfg=None,
-                 test_cfg=None,
-                 gt_per_seed=1,
-                 num_proposal=256,
-                 feat_channels=(128, 128),
-                 primitive_feat_refine_streams=2,
-                 primitive_refine_channels=[128, 128, 128],
-                 upper_thresh=100.0,
-                 surface_thresh=0.5,
-                 line_thresh=0.5,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 objectness_loss=None,
-                 center_loss=None,
-                 dir_class_loss=None,
-                 dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 semantic_loss=None,
-                 cues_objectness_loss=None,
-                 cues_semantic_loss=None,
-                 proposal_objectness_loss=None,
-                 primitive_center_loss=None,
-                 init_cfg=None):
+                 num_classes: int,
+                 suface_matching_cfg: dict,
+                 line_matching_cfg: dict,
+                 bbox_coder: dict,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 gt_per_seed: int = 1,
+                 num_proposal: int = 256,
+                 primitive_feat_refine_streams: int = 2,
+                 primitive_refine_channels: List[int] = [128, 128, 128],
+                 upper_thresh: float = 100.0,
+                 surface_thresh: float = 0.5,
+                 line_thresh: float = 0.5,
+                 conv_cfg: dict = dict(type='Conv1d'),
+                 norm_cfg: dict = dict(type='BN1d'),
+                 objectness_loss: Optional[dict] = None,
+                 center_loss: Optional[dict] = None,
+                 dir_class_loss: Optional[dict] = None,
+                 dir_res_loss: Optional[dict] = None,
+                 size_class_loss: Optional[dict] = None,
+                 size_res_loss: Optional[dict] = None,
+                 semantic_loss: Optional[dict] = None,
+                 cues_objectness_loss: Optional[dict] = None,
+                 cues_semantic_loss: Optional[dict] = None,
+                 proposal_objectness_loss: Optional[dict] = None,
+                 primitive_center_loss: Optional[dict] = None,
+                 init_cfg: dict = None):
         super(H3DBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -96,22 +106,22 @@ class H3DBboxHead(BaseModule):
         self.surface_thresh = surface_thresh
         self.line_thresh = line_thresh
 
-        self.objectness_loss = build_loss(objectness_loss)
-        self.center_loss = build_loss(center_loss)
-        self.dir_class_loss = build_loss(dir_class_loss)
-        self.dir_res_loss = build_loss(dir_res_loss)
-        self.size_class_loss = build_loss(size_class_loss)
-        self.size_res_loss = build_loss(size_res_loss)
-        self.semantic_loss = build_loss(semantic_loss)
+        self.loss_objectness = MODELS.build(objectness_loss)
+        self.loss_center = MODELS.build(center_loss)
+        self.loss_dir_class = MODELS.build(dir_class_loss)
+        self.loss_dir_res = MODELS.build(dir_res_loss)
+        self.loss_size_class = MODELS.build(size_class_loss)
+        self.loss_size_res = MODELS.build(size_res_loss)
+        self.loss_semantic = MODELS.build(semantic_loss)
 
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
-        self.cues_objectness_loss = build_loss(cues_objectness_loss)
-        self.cues_semantic_loss = build_loss(cues_semantic_loss)
-        self.proposal_objectness_loss = build_loss(proposal_objectness_loss)
-        self.primitive_center_loss = build_loss(primitive_center_loss)
+        self.loss_cues_objectness = MODELS.build(cues_objectness_loss)
+        self.loss_cues_semantic = MODELS.build(cues_semantic_loss)
+        self.loss_proposal_objectness = MODELS.build(proposal_objectness_loss)
+        self.loss_primitive_center = MODELS.build(primitive_center_loss)
 
         assert suface_matching_cfg['mlp_channels'][-1] == \
             line_matching_cfg['mlp_channels'][-1]
@@ -202,16 +212,14 @@ class H3DBboxHead(BaseModule):
                             bbox_coder['num_sizes'] * 4 + self.num_classes)
         self.bbox_pred.append(nn.Conv1d(prev_channel, conv_out_channel, 1))
 
-    def forward(self, feats_dict, sample_mod):
+    def forward(self, feats_dict: dict):
         """Forward pass.
 
         Args:
             feats_dict (dict): Feature dict from backbone.
-            sample_mod (str): Sample mode for vote aggregation layer.
-                valid modes are "vote", "seed" and "random".
 
         Returns:
-            dict: Predictions of vote head.
+            dict: Predictions of head.
         """
         ret_dict = {}
         aggregated_points = feats_dict['aggregated_points']
@@ -236,7 +244,7 @@ class H3DBboxHead(BaseModule):
                                                  dim=1)
 
         # Extract the surface and line centers of rpn proposals
-        rpn_proposals = feats_dict['proposal_list']
+        rpn_proposals = feats_dict['rpn_proposals']
         rpn_proposals_bbox = DepthInstance3DBoxes(
             rpn_proposals.reshape(-1, 7).clone(),
             box_dim=rpn_proposals.shape[-1],
@@ -310,36 +318,29 @@ class H3DBboxHead(BaseModule):
             ret_dict[key + '_optimized'] = refine_decode_res[key]
         return ret_dict
 
-    def loss(self,
-             bbox_preds,
-             points,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             pts_semantic_mask=None,
-             pts_instance_mask=None,
-             img_metas=None,
-             rpn_targets=None,
-             gt_bboxes_ignore=None):
-        """Compute loss.
-
+    def loss(
+        self,
+        points: List[Tensor],
+        feats_dict: dict,
+        rpn_targets: Tuple = None,
+        batch_data_samples: List[Det3DDataSample] = None,
+    ):
+        """
         Args:
-            bbox_preds (dict): Predictions from forward of h3d bbox head.
-            points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each sample.
-            gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise
-                semantic mask.
-            pts_instance_mask (list[torch.Tensor]): Point-wise
-                instance mask.
-            img_metas (list[dict]): Contain pcd and img's meta info.
-            rpn_targets (Tuple) : Targets generated by rpn head.
-            gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding.
+            points (list[tensor]): Points cloud of multiple samples.
+            feats_dict (dict): Predictions from backbone or FPN.
+            rpn_targets (Tuple, Optional): The target of sample from RPN.
+                Defaults to None.
+            batch_data_samples (list[:obj:`Det3DDataSample`], Optional):
+                Each item contains the meta information of each sample
+                and corresponding annotations. Defaults to None.
 
         Returns:
-            dict: Losses of H3dnet.
+            dict:  A dictionary of loss components.
         """
+        preds = self(feats_dict)
+        feats_dict.update(preds)
+
         (vote_targets, vote_target_masks, size_class_targets, size_res_targets,
          dir_class_targets, dir_res_targets, center_targets, _, mask_targets,
          valid_gt_masks, objectness_targets, objectness_weights,
@@ -349,7 +350,7 @@ class H3DBboxHead(BaseModule):
 
         # calculate refined proposal loss
         refined_proposal_loss = self.get_proposal_stage_loss(
-            bbox_preds,
+            feats_dict,
             size_class_targets,
             size_res_targets,
             dir_class_targets,
@@ -364,36 +365,60 @@ class H3DBboxHead(BaseModule):
         for key in refined_proposal_loss.keys():
             losses[key + '_optimized'] = refined_proposal_loss[key]
 
-        bbox3d_optimized = self.bbox_coder.decode(
-            bbox_preds, suffix='_optimized')
+        batch_gt_instance_3d = []
+        batch_input_metas = []
 
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   pts_semantic_mask, pts_instance_mask,
-                                   bbox_preds)
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+
+        temp_loss = self.loss_by_feat(points, feats_dict, batch_gt_instance_3d)
+        losses.update(temp_loss)
+        return losses
+
+    def loss_by_feat(self, points: List[torch.Tensor], feats_dict: dict,
+                     batch_gt_instances_3d: List[InstanceData],
+                     **kwargs) -> dict:
+        """Compute loss.
+
+        Args:
+            points (list[torch.Tensor]): Input points.
+            feats_dict (dict): Predictions from forward of vote head.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes`` and ``labels``
+                attributes.
+
+        Returns:
+            dict: Losses of H3DNet.
+        """
+        bbox3d_optimized = self.bbox_coder.decode(
+            feats_dict, suffix='_optimized')
+
+        targets = self.get_targets(points, feats_dict, batch_gt_instances_3d)
 
         (cues_objectness_label, cues_sem_label, proposal_objectness_label,
          cues_mask, cues_match_mask, proposal_objectness_mask,
          cues_matching_label, obj_surface_line_center) = targets
 
         # match scores for each geometric primitive
-        objectness_scores = bbox_preds['matching_score']
+        objectness_scores = feats_dict['matching_score']
         # match scores for the semantics of primitives
-        objectness_scores_sem = bbox_preds['semantic_matching_score']
+        objectness_scores_sem = feats_dict['semantic_matching_score']
 
-        primitive_objectness_loss = self.cues_objectness_loss(
+        primitive_objectness_loss = self.loss_cues_objectness(
             objectness_scores.transpose(2, 1),
             cues_objectness_label,
             weight=cues_mask,
             avg_factor=cues_mask.sum() + 1e-6)
 
-        primitive_sem_loss = self.cues_semantic_loss(
+        primitive_sem_loss = self.loss_cues_semantic(
             objectness_scores_sem.transpose(2, 1),
             cues_sem_label,
             weight=cues_mask,
             avg_factor=cues_mask.sum() + 1e-6)
 
-        objectness_scores = bbox_preds['obj_scores_optimized']
-        objectness_loss_refine = self.proposal_objectness_loss(
+        objectness_scores = feats_dict['obj_scores_optimized']
+        objectness_loss_refine = self.loss_proposal_objectness(
             objectness_scores.transpose(2, 1), proposal_objectness_label)
         primitive_matching_loss = (objectness_loss_refine *
                                    cues_match_mask).sum() / (
@@ -419,7 +444,7 @@ class H3DBboxHead(BaseModule):
         pred_surface_line_center = torch.cat(
             (pred_obj_surface_center, pred_obj_line_center), 1)
 
-        square_dist = self.primitive_center_loss(pred_surface_line_center,
+        square_dist = self.loss_primitive_center(pred_surface_line_center,
                                                  obj_surface_line_center)
 
         match_dist = torch.sqrt(square_dist.sum(dim=-1) + 1e-6)
@@ -434,58 +459,102 @@ class H3DBboxHead(BaseModule):
             primitive_sem_matching_loss=primitive_sem_matching_loss,
             primitive_centroid_reg_loss=primitive_centroid_reg_loss)
 
-        losses.update(refined_loss)
+        return refined_loss
 
-        return losses
+    def predict(self,
+                points: List[torch.Tensor],
+                feats_dict: Dict[str, torch.Tensor],
+                batch_data_samples: List[Det3DDataSample],
+                suffix='_optimized',
+                **kwargs) -> List[InstanceData]:
+        """
+        Args:
+            points (list[tensor]): Point clouds of multiple samples.
+            feats_dict (dict): Features from FPN or backbone..
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes meta information of data.
+            suffix (str): suffix for tensor in feats_dict.
+                Defaults to '_optimized'.
 
-    def get_bboxes(self,
-                   points,
-                   bbox_preds,
-                   input_metas,
-                   rescale=False,
-                   suffix=''):
+        Returns:
+            list[:obj:`InstanceData`]: List of processed predictions. Each
+            InstanceData contains 3d Bounding boxes and corresponding
+            scores and labels.
+        """
+        preds_dict = self(feats_dict)
+        # `preds_dict` can be used in H3DNET
+        feats_dict.update(preds_dict)
+
+        batch_size = len(batch_data_samples)
+        batch_input_metas = []
+        for batch_index in range(batch_size):
+            metainfo = batch_data_samples[batch_index].metainfo
+            batch_input_metas.append(metainfo)
+
+        results_list = self.predict_by_feat(
+            points, feats_dict, batch_input_metas, suffix=suffix, **kwargs)
+        return results_list
+
+    def predict_by_feat(self,
+                        points: List[torch.Tensor],
+                        feats_dict: dict,
+                        batch_input_metas: List[dict],
+                        suffix='_optimized',
+                        **kwargs) -> List[InstanceData]:
         """Generate bboxes from vote head predictions.
 
         Args:
-            points (torch.Tensor): Input points.
-            bbox_preds (dict): Predictions from vote head.
-            input_metas (list[dict]): Point cloud and image's meta info.
-            rescale (bool): Whether to rescale bboxes.
+            points (List[torch.Tensor]): Input points of multiple samples.
+            feats_dict (dict): Predictions from previous components.
+            batch_input_metas (list[dict]): Each item
+                contains the meta information of each sample.
+            suffix (str): suffix for tensor in feats_dict.
+                Defaults to '_optimized'.
 
         Returns:
-            list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
+            list[:obj:`InstanceData`]: Return list of processed
+            predictions. Each InstanceData cantains
+            3d Bounding boxes and corresponding scores and labels.
         """
+
         # decode boxes
         obj_scores = F.softmax(
-            bbox_preds['obj_scores' + suffix], dim=-1)[..., -1]
+            feats_dict['obj_scores' + suffix], dim=-1)[..., -1]
 
-        sem_scores = F.softmax(bbox_preds['sem_scores'], dim=-1)
+        sem_scores = F.softmax(feats_dict['sem_scores'], dim=-1)
 
         prediction_collection = {}
-        prediction_collection['center'] = bbox_preds['center' + suffix]
-        prediction_collection['dir_class'] = bbox_preds['dir_class']
-        prediction_collection['dir_res'] = bbox_preds['dir_res' + suffix]
-        prediction_collection['size_class'] = bbox_preds['size_class']
-        prediction_collection['size_res'] = bbox_preds['size_res' + suffix]
+        prediction_collection['center'] = feats_dict['center' + suffix]
+        prediction_collection['dir_class'] = feats_dict['dir_class']
+        prediction_collection['dir_res'] = feats_dict['dir_res' + suffix]
+        prediction_collection['size_class'] = feats_dict['size_class']
+        prediction_collection['size_res'] = feats_dict['size_res' + suffix]
 
         bbox3d = self.bbox_coder.decode(prediction_collection)
 
         batch_size = bbox3d.shape[0]
-        results = list()
+        results_list = list()
+        points = torch.stack(points)
         for b in range(batch_size):
+            temp_results = InstanceData()
             bbox_selected, score_selected, labels = self.multiclass_nms_single(
                 obj_scores[b], sem_scores[b], bbox3d[b], points[b, ..., :3],
-                input_metas[b])
-            bbox = input_metas[b]['box_type_3d'](
+                batch_input_metas[b])
+            bbox = batch_input_metas[b]['box_type_3d'](
                 bbox_selected,
                 box_dim=bbox_selected.shape[-1],
                 with_yaw=self.bbox_coder.with_rot)
-            results.append((bbox, score_selected, labels))
 
-        return results
+            temp_results.bboxes_3d = bbox
+            temp_results.scores_3d = score_selected
+            temp_results.labels_3d = labels
+            results_list.append(temp_results)
 
-    def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
-                              input_meta):
+        return results_list
+
+    def multiclass_nms_single(self, obj_scores: Tensor, sem_scores: Tensor,
+                              bbox: Tensor, points: Tensor,
+                              input_meta: dict) -> Tuple:
         """Multi-class nms in single batch.
 
         Args:
@@ -586,13 +655,13 @@ class H3DBboxHead(BaseModule):
             dict: Losses of aggregation module.
         """
         # calculate objectness loss
-        objectness_loss = self.objectness_loss(
+        objectness_loss = self.loss_objectness(
             bbox_preds['obj_scores' + suffix].transpose(2, 1),
             objectness_targets,
             weight=objectness_weights)
 
         # calculate center loss
-        source2target_loss, target2source_loss = self.center_loss(
+        source2target_loss, target2source_loss = self.loss_center(
             bbox_preds['center' + suffix],
             center_targets,
             src_weight=box_loss_weights,
@@ -600,7 +669,7 @@ class H3DBboxHead(BaseModule):
         center_loss = source2target_loss + target2source_loss
 
         # calculate direction class loss
-        dir_class_loss = self.dir_class_loss(
+        dir_class_loss = self.loss_dir_class(
             bbox_preds['dir_class' + suffix].transpose(2, 1),
             dir_class_targets,
             weight=box_loss_weights)
@@ -612,11 +681,11 @@ class H3DBboxHead(BaseModule):
         heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1), 1)
         dir_res_norm = (bbox_preds['dir_res_norm' + suffix] *
                         heading_label_one_hot).sum(dim=-1)
-        dir_res_loss = self.dir_res_loss(
+        dir_res_loss = self.loss_dir_res(
             dir_res_norm, dir_res_targets, weight=box_loss_weights)
 
         # calculate size class loss
-        size_class_loss = self.size_class_loss(
+        size_class_loss = self.loss_size_class(
             bbox_preds['size_class' + suffix].transpose(2, 1),
             size_class_targets,
             weight=box_loss_weights)
@@ -631,13 +700,13 @@ class H3DBboxHead(BaseModule):
                               one_hot_size_targets_expand).sum(dim=2)
         box_loss_weights_expand = box_loss_weights.unsqueeze(-1).repeat(
             1, 1, 3)
-        size_res_loss = self.size_res_loss(
+        size_res_loss = self.loss_size_res(
             size_residual_norm,
             size_res_targets,
             weight=box_loss_weights_expand)
 
         # calculate semantic loss
-        semantic_loss = self.semantic_loss(
+        semantic_loss = self.loss_semantic(
             bbox_preds['sem_scores' + suffix].transpose(2, 1),
             mask_targets,
             weight=box_loss_weights)
@@ -653,91 +722,93 @@ class H3DBboxHead(BaseModule):
 
         return losses
 
-    def get_targets(self,
-                    points,
-                    gt_bboxes_3d,
-                    gt_labels_3d,
-                    pts_semantic_mask=None,
-                    pts_instance_mask=None,
-                    bbox_preds=None):
-        """Generate targets of proposal module.
+    def get_targets(
+        self,
+        points,
+        feats_dict: Optional[dict] = None,
+        batch_gt_instances_3d: Optional[List[InstanceData]] = None,
+    ):
+        """Generate targets of vote head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (list[torch.Tensor]): Point-wise instance
-                label of each batch.
-            bbox_preds (torch.Tensor): Bounding box predictions of vote head.
+            feats_dict (dict, optional): Predictions of previous
+                components. Defaults to None.
+            batch_gt_instances_3d (list[:obj:`InstanceData`], optional):
+                Batch of gt_instances. It usually includes
+                ``bboxes_3d`` and ``labels_3d`` attributes.
 
         Returns:
-            tuple[torch.Tensor]: Targets of proposal module.
+            tuple[torch.Tensor]: Targets of vote head.
         """
         # find empty example
         valid_gt_masks = list()
         gt_num = list()
-        for index in range(len(gt_labels_3d)):
-            if len(gt_labels_3d[index]) == 0:
-                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
-                    1, gt_bboxes_3d[index].tensor.shape[-1])
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
-                gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
-                valid_gt_masks.append(gt_labels_3d[index].new_zeros(1))
+        batch_gt_labels_3d = [
+            gt_instances_3d.labels_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        batch_gt_bboxes_3d = [
+            gt_instances_3d.bboxes_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        for index in range(len(batch_gt_labels_3d)):
+            if len(batch_gt_labels_3d[index]) == 0:
+                fake_box = batch_gt_bboxes_3d[index].tensor.new_zeros(
+                    1, batch_gt_bboxes_3d[index].tensor.shape[-1])
+                batch_gt_bboxes_3d[index] = batch_gt_bboxes_3d[index].new_box(
+                    fake_box)
+                batch_gt_labels_3d[index] = batch_gt_labels_3d[
+                    index].new_zeros(1)
+                valid_gt_masks.append(batch_gt_labels_3d[index].new_zeros(1))
                 gt_num.append(1)
             else:
-                valid_gt_masks.append(gt_labels_3d[index].new_ones(
-                    gt_labels_3d[index].shape))
-                gt_num.append(gt_labels_3d[index].shape[0])
-
-        if pts_semantic_mask is None:
-            pts_semantic_mask = [None for i in range(len(gt_labels_3d))]
-            pts_instance_mask = [None for i in range(len(gt_labels_3d))]
+                valid_gt_masks.append(batch_gt_labels_3d[index].new_ones(
+                    batch_gt_labels_3d[index].shape))
+                gt_num.append(batch_gt_labels_3d[index].shape[0])
 
         aggregated_points = [
-            bbox_preds['aggregated_points'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['aggregated_points'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         surface_center_pred = [
-            bbox_preds['surface_center_pred'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['surface_center_pred'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         line_center_pred = [
-            bbox_preds['pred_line_center'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['pred_line_center'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         surface_center_object = [
-            bbox_preds['surface_center_object'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['surface_center_object'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         line_center_object = [
-            bbox_preds['line_center_object'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['line_center_object'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         surface_sem_pred = [
-            bbox_preds['surface_sem_pred'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['surface_sem_pred'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         line_sem_pred = [
-            bbox_preds['sem_cls_scores_line'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['sem_cls_scores_line'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         (cues_objectness_label, cues_sem_label, proposal_objectness_label,
          cues_mask, cues_match_mask, proposal_objectness_mask,
          cues_matching_label, obj_surface_line_center) = multi_apply(
-             self.get_targets_single, points, gt_bboxes_3d, gt_labels_3d,
-             pts_semantic_mask, pts_instance_mask, aggregated_points,
-             surface_center_pred, line_center_pred, surface_center_object,
-             line_center_object, surface_sem_pred, line_sem_pred)
+             self._get_targets_single, points, batch_gt_bboxes_3d,
+             batch_gt_labels_3d, aggregated_points, surface_center_pred,
+             line_center_pred, surface_center_object, line_center_object,
+             surface_sem_pred, line_sem_pred)
 
         cues_objectness_label = torch.stack(cues_objectness_label)
         cues_sem_label = torch.stack(cues_sem_label)
@@ -753,19 +824,17 @@ class H3DBboxHead(BaseModule):
                 proposal_objectness_mask, cues_matching_label,
                 obj_surface_line_center)
 
-    def get_targets_single(self,
-                           points,
-                           gt_bboxes_3d,
-                           gt_labels_3d,
-                           pts_semantic_mask=None,
-                           pts_instance_mask=None,
-                           aggregated_points=None,
-                           pred_surface_center=None,
-                           pred_line_center=None,
-                           pred_obj_surface_center=None,
-                           pred_obj_line_center=None,
-                           pred_surface_sem=None,
-                           pred_line_sem=None):
+    def _get_targets_single(self,
+                            points: Tensor,
+                            gt_bboxes_3d: BaseInstance3DBoxes,
+                            gt_labels_3d: Tensor,
+                            aggregated_points: Optional[Tensor] = None,
+                            pred_surface_center: Optional[Tensor] = None,
+                            pred_line_center: Optional[Tensor] = None,
+                            pred_obj_surface_center: Optional[Tensor] = None,
+                            pred_obj_line_center: Optional[Tensor] = None,
+                            pred_surface_sem: Optional[Tensor] = None,
+                            pred_line_sem: Optional[Tensor] = None):
         """Generate targets for primitive cues for single batch.
 
         Args:
@@ -773,10 +842,6 @@ class H3DBboxHead(BaseModule):
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (torch.Tensor): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (torch.Tensor): Point-wise instance
-                label of each batch.
             aggregated_points (torch.Tensor): Aggregated points from
                 vote aggregation layer.
             pred_surface_center (torch.Tensor): Prediction of surface center.
@@ -847,12 +912,10 @@ class H3DBboxHead(BaseModule):
         euclidean_dist_line = torch.sqrt(dist_line.squeeze(0) + 1e-6)
         objectness_label_surface = euclidean_dist_line.new_zeros(
             num_proposals * 6, dtype=torch.long)
-        objectness_mask_surface = euclidean_dist_line.new_zeros(num_proposals *
-                                                                6)
+
         objectness_label_line = euclidean_dist_line.new_zeros(
             num_proposals * 12, dtype=torch.long)
-        objectness_mask_line = euclidean_dist_line.new_zeros(num_proposals *
-                                                             12)
+
         objectness_label_surface_sem = euclidean_dist_line.new_zeros(
             num_proposals * 6, dtype=torch.long)
         objectness_label_line_sem = euclidean_dist_line.new_zeros(

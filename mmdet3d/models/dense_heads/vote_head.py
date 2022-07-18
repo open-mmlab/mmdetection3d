@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 from mmcv.ops import furthest_point_sample
 from mmcv.runner import BaseModule
 from mmengine import ConfigDict, InstanceData
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
@@ -161,7 +162,7 @@ class VoteHead(BaseModule):
                 points: List[torch.Tensor],
                 feats_dict: Dict[str, torch.Tensor],
                 batch_data_samples: List[Det3DDataSample],
-                rescale=True,
+                use_nms: bool = True,
                 **kwargs) -> List[InstanceData]:
         """
         Args:
@@ -169,8 +170,8 @@ class VoteHead(BaseModule):
             feats_dict (dict): Features from FPN or backbone..
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 Samples. It usually includes meta information of data.
-            rescale (bool): Whether rescale the resutls to
-                the original scale.
+            use_nms (bool): Whether do the nms for predictions.
+                Defaults to True.
 
         Returns:
             list[:obj:`InstanceData`]: List of processed predictions. Each
@@ -178,6 +179,9 @@ class VoteHead(BaseModule):
             scores and labels.
         """
         preds_dict = self(feats_dict)
+        # `preds_dict` can be used in H3DNET
+        feats_dict.update(preds_dict)
+
         batch_size = len(batch_data_samples)
         batch_input_metas = []
         for batch_index in range(batch_size):
@@ -185,12 +189,16 @@ class VoteHead(BaseModule):
             batch_input_metas.append(metainfo)
 
         results_list = self.predict_by_feat(
-            points, preds_dict, batch_input_metas, rescale=rescale, **kwargs)
+            points, preds_dict, batch_input_metas, use_nms=use_nms, **kwargs)
         return results_list
 
-    def loss(self, points: List[torch.Tensor], feats_dict: Dict[str,
-                                                                torch.Tensor],
-             batch_data_samples: List[Det3DDataSample], **kwargs) -> dict:
+    def loss_and_predict(self,
+                         points: List[torch.Tensor],
+                         feats_dict: Dict[str, torch.Tensor],
+                         batch_data_samples: List[Det3DDataSample],
+                         ret_target: bool = False,
+                         proposal_cfg: dict = None,
+                         **kwargs) -> Tuple:
         """
         Args:
             points (list[tensor]): Points cloud of multiple samples.
@@ -198,6 +206,65 @@ class VoteHead(BaseModule):
             batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
                 contains the meta information of each sample and
                 corresponding annotations.
+            ret_target (bool): Whether return the assigned target.
+                Defaults to False.
+            proposal_cfg (dict): Configure for proposal process.
+                Defaults to True.
+
+        Returns:
+            tuple:  Contains loss and predictions after post-process.
+        """
+        preds_dict = self.forward(feats_dict)
+        feats_dict.update(preds_dict)
+        batch_gt_instance_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        batch_pts_semantic_mask = []
+        batch_pts_instance_mask = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+            batch_pts_semantic_mask.append(
+                data_sample.gt_pts_seg.get('pts_semantic_mask', None))
+            batch_pts_instance_mask.append(
+                data_sample.gt_pts_seg.get('pts_instance_mask', None))
+
+        loss_inputs = (points, preds_dict, batch_gt_instance_3d)
+        losses = self.loss_by_feat(
+            *loss_inputs,
+            batch_pts_semantic_mask=batch_pts_semantic_mask,
+            batch_pts_instance_mask=batch_pts_instance_mask,
+            batch_input_metas=batch_input_metas,
+            batch_gt_instances_ignore=batch_gt_instances_ignore,
+            ret_target=ret_target,
+            **kwargs)
+
+        results_list = self.predict_by_feat(
+            points,
+            preds_dict,
+            batch_input_metas,
+            use_nms=proposal_cfg.use_nms,
+            **kwargs)
+
+        return losses, results_list
+
+    def loss(self,
+             points: List[torch.Tensor],
+             feats_dict: Dict[str, torch.Tensor],
+             batch_data_samples: List[Det3DDataSample],
+             ret_target: bool = False,
+             **kwargs) -> dict:
+        """
+        Args:
+            points (list[tensor]): Points cloud of multiple samples.
+            feats_dict (dict): Predictions from backbone or FPN.
+            batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
+                contains the meta information of each sample and
+                corresponding annotations.
+            ret_target (bool): Whether return the assigned target.
+                Defaults to False.
 
         Returns:
             dict:  A dictionary of loss components.
@@ -224,7 +291,9 @@ class VoteHead(BaseModule):
             batch_pts_semantic_mask=batch_pts_semantic_mask,
             batch_pts_instance_mask=batch_pts_instance_mask,
             batch_input_metas=batch_input_metas,
-            batch_gt_instances_ignore=batch_gt_instances_ignore)
+            batch_gt_instances_ignore=batch_gt_instances_ignore,
+            ret_target=ret_target,
+            **kwargs)
         return losses
 
     def forward(self, feat_dict: dict) -> dict:
@@ -330,7 +399,7 @@ class VoteHead(BaseModule):
             batch_pts_semantic_mask (list[tensor]): Instance mask
                 of points cloud. Defaults to None.
             batch_input_metas (list[dict]): Contain pcd and img's meta info.
-            ret_target (bool): Return targets or not.
+            ret_target (bool): Return targets or not. Defaults to False.
 
         Returns:
             dict: Losses of Votenet.
@@ -671,9 +740,10 @@ class VoteHead(BaseModule):
                 while using vote head in rpn stage.
 
         Returns:
-            list[:obj:`InstanceData`]: List of processed predictions. Each
-            InstanceData cantains 3d Bounding boxes and corresponding
-            scores and labels.
+            list[:obj:`InstanceData`] or Tensor: Return list of processed
+            predictions when `use_nms` is True. Each InstanceData cantains
+            3d Bounding boxes and corresponding scores and labels.
+            Return raw bboxes when `use_nms` is False.
         """
         # decode boxes
         stack_points = torch.stack(points)
@@ -683,9 +753,9 @@ class VoteHead(BaseModule):
 
         batch_size = bbox3d.shape[0]
         results_list = list()
-        for b in range(batch_size):
-            temp_results = InstanceData()
-            if use_nms:
+        if use_nms:
+            for b in range(batch_size):
+                temp_results = InstanceData()
                 bbox_selected, score_selected, labels = \
                     self.multiclass_nms_single(obj_scores[b],
                                                sem_scores[b],
@@ -700,20 +770,15 @@ class VoteHead(BaseModule):
                 temp_results.scores_3d = score_selected
                 temp_results.labels_3d = labels
                 results_list.append(temp_results)
-            else:
-                bbox = batch_input_metas[b]['box_type_3d'](
-                    bbox_selected,
-                    box_dim=bbox_selected.shape[-1],
-                    with_yaw=self.bbox_coder.with_rot)
-                temp_results.bboxes_3d = bbox
-                temp_results.obj_scores_3d = obj_scores[b]
-                temp_results.sem_scores_3d = obj_scores[b]
-                results_list.append(temp_results)
 
-        return results_list
+            return results_list
+        else:
+            # TODO unify it when refactor the Augtest
+            return bbox3d
 
-    def multiclass_nms_single(self, obj_scores, sem_scores, bbox, points,
-                              input_meta):
+    def multiclass_nms_single(self, obj_scores: Tensor, sem_scores: Tensor,
+                              bbox: Tensor, points: Tensor,
+                              input_meta: dict) -> Tuple:
         """Multi-class nms in single batch.
 
         Args:

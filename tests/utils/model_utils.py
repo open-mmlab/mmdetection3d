@@ -7,7 +7,8 @@ import numpy as np
 import torch
 from mmengine import InstanceData
 
-from mmdet3d.core import Det3DDataSample, LiDARInstance3DBoxes, PointData
+from mmdet3d.core import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                          Det3DDataSample, LiDARInstance3DBoxes, PointData)
 
 
 def _setup_seed(seed):
@@ -71,19 +72,24 @@ def _get_detector_cfg(fname):
     return model
 
 
-def _create_detector_inputs(
-    seed=0,
-    with_points=True,
-    with_img=False,
-    num_gt_instance=20,
-    num_points=10,
-    points_feat_dim=4,
-    num_classes=3,
-    gt_bboxes_dim=7,
-    with_pts_semantic_mask=False,
-    with_pts_instance_mask=False,
-):
+def _create_detector_inputs(seed=0,
+                            with_points=True,
+                            with_img=False,
+                            num_gt_instance=20,
+                            num_points=10,
+                            points_feat_dim=4,
+                            num_classes=3,
+                            gt_bboxes_dim=7,
+                            with_pts_semantic_mask=False,
+                            with_pts_instance_mask=False,
+                            bboxes_3d_type='lidar'):
     _setup_seed(seed)
+    assert bboxes_3d_type in ('lidar', 'depth', 'cam')
+    bbox_3d_class = {
+        'lidar': LiDARInstance3DBoxes,
+        'depth': DepthInstance3DBoxes,
+        'cam': CameraInstance3DBoxes
+    }
     if with_points:
         points = torch.rand([num_points, points_feat_dim])
     else:
@@ -93,12 +99,13 @@ def _create_detector_inputs(
     else:
         img = None
     inputs_dict = dict(img=img, points=points)
+
     gt_instance_3d = InstanceData()
-    gt_instance_3d.bboxes_3d = LiDARInstance3DBoxes(
+    gt_instance_3d.bboxes_3d = bbox_3d_class[bboxes_3d_type](
         torch.rand([num_gt_instance, gt_bboxes_dim]), box_dim=gt_bboxes_dim)
     gt_instance_3d.labels_3d = torch.randint(0, num_classes, [num_gt_instance])
     data_sample = Det3DDataSample(
-        metainfo=dict(box_type_3d=LiDARInstance3DBoxes))
+        metainfo=dict(box_type_3d=bbox_3d_class[bboxes_3d_type]))
     data_sample.gt_instances_3d = gt_instance_3d
     data_sample.gt_pts_seg = PointData()
     if with_pts_instance_mask:

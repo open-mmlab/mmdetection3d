@@ -5,11 +5,9 @@ from typing import Callable, List, Optional, Union
 
 import numpy as np
 
-from mmdet3d.core import show_result
 from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
 from .det3d_dataset import Det3DDataset
-from .pipelines import Compose
 from .seg3d_dataset import Seg3DDataset
 
 
@@ -150,46 +148,6 @@ class ScanNetDataset(Det3DDataset):
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
         return ann_info
-
-    def _build_default_pipeline(self):
-        """Build the default pipeline for this dataset."""
-        pipeline = [
-            dict(
-                type='LoadPointsFromFile',
-                coord_type='DEPTH',
-                shift_height=False,
-                load_dim=6,
-                use_dim=[0, 1, 2]),
-            dict(type='GlobalAlignment', rotation_axis=2),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=self.CLASSES,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ]
-        return Compose(pipeline)
-
-    def show(self, results, out_dir, show=True, pipeline=None):
-        """Results visualization.
-
-        Args:
-            results (list[dict]): List of bounding boxes results.
-            out_dir (str): Output directory of visualization result.
-            show (bool): Visualize the results online.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
-        """
-        assert out_dir is not None, 'Expect out_dir, got none.'
-        pipeline = self._get_pipeline(pipeline)
-        for i, result in enumerate(results):
-            data_info = self.get_data_info[i]
-            pts_path = data_info['lidar_points']['lidar_path']
-            file_name = osp.split(pts_path)[-1].split('.')[0]
-            points = self._extract_data(i, pipeline, 'points').numpy()
-            gt_bboxes = self.get_ann_info(i)['gt_bboxes_3d'].tensor.numpy()
-            pred_bboxes = result['boxes_3d'].tensor.numpy()
-            show_result(points, gt_bboxes, pred_bboxes, out_dir, file_name,
-                        show)
 
 
 @DATASETS.register_module()
