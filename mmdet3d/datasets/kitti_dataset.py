@@ -128,6 +128,7 @@ class KittiDataset(Det3DDataset):
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:
+            ann_info = dict()
             # empty instance
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)

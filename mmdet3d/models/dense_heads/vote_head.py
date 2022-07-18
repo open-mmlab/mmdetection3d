@@ -214,9 +214,9 @@ class VoteHead(BaseModule):
             batch_gt_instances_ignore.append(
                 data_sample.get('ignored_instances', None))
             batch_pts_semantic_mask.append(
-                data_sample.seg_data.get('pts_semantic_mask', None))
+                data_sample.gt_pts_seg.get('pts_semantic_mask', None))
             batch_pts_instance_mask.append(
-                data_sample.seg_data.get('pts_instance_mask', None))
+                data_sample.gt_pts_seg.get('pts_instance_mask', None))
 
         loss_inputs = (points, preds_dict, batch_gt_instance_3d)
         losses = self.loss_by_feat(
@@ -452,9 +452,9 @@ class VoteHead(BaseModule):
                 gt_instances. It usually includes ``bboxes`` and ``labels``
                 attributes.
             batch_pts_semantic_mask (list[tensor]): Semantic gt mask for
-                multiple images.
+                point clouds. Defaults to None.
             batch_pts_instance_mask (list[tensor]): Instance gt mask for
-                multiple images.
+                point clouds. Defaults to None.
 
         Returns:
             tuple[torch.Tensor]: Targets of vote head.

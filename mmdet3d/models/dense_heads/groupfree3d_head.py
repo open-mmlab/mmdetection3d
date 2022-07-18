@@ -1,22 +1,24 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-from mmcv import ConfigDict
 from mmcv.cnn import ConvModule, xavier_init
 from mmcv.cnn.bricks.transformer import (build_positional_encoding,
                                          build_transformer_layer)
 from mmcv.ops import PointsSampler as Points_Sampler
 from mmcv.ops import gather_points
-from mmcv.runner import BaseModule, force_fp32
+from mmcv.runner import BaseModule
+from mmengine import InstanceData
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.core.post_processing import aligned_3d_nms
 from mmdet3d.registry import MODELS
 from mmdet.core import build_bbox_coder, multi_apply
-from ..builder import build_loss
+from ...core import BaseInstance3DBoxes, Det3DDataSample, SampleList
 from .base_conv_bbox_head import BaseConvBboxHead
 
 EPS = 1e-6
@@ -38,12 +40,12 @@ class PointsObjClsModule(BaseModule):
     """
 
     def __init__(self,
-                 in_channel,
-                 num_convs=3,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
+                 in_channel: int,
+                 num_convs: int = 3,
+                 conv_cfg: dict = dict(type='Conv1d'),
+                 norm_cfg: dict = dict(type='BN1d'),
+                 act_cfg: dict = dict(type='ReLU'),
+                 init_cfg: Optional[dict] = None):
         super().__init__(init_cfg=init_cfg)
         conv_channels = [in_channel for _ in range(num_convs - 1)]
         conv_channels.append(1)
@@ -85,11 +87,12 @@ class GeneralSamplingModule(nn.Module):
     Sampling points with given index.
     """
 
-    def forward(self, xyz, features, sample_inds):
+    def forward(self, xyz: Tensor, features: Tensor,
+                sample_inds: Tensor) -> Tuple[Tensor]:
         """Forward pass.
 
         Args:
-            xyz： (B, N, 3) the coordinates of the features.
+            xyz (Tensor)： (B, N, 3) the coordinates of the features.
             features (Tensor): (B, C, N) features to sample.
             sample_inds (Tensor): (B, M) the given index,
                 where M is the number of points.
@@ -118,56 +121,61 @@ class GroupFree3DHead(BaseModule):
             decoding boxes.
         num_decoder_layers (int): The number of transformer decoder layers.
         transformerlayers (dict): Config for transformer decoder.
-        train_cfg (dict): Config for training.
-        test_cfg (dict): Config for testing.
+        train_cfg (dict, optional): Config for training.
+        test_cfg (dict, optional): Config for testing.
         num_proposal (int): The number of initial sampling candidates.
-        pred_layer_cfg (dict): Config of classfication and regression
+        pred_layer_cfg (dict, optional): Config of classfication and regression
             prediction layers.
         size_cls_agnostic (bool): Whether the predicted size is class-agnostic.
         gt_per_seed (int): the number of candidate instance each point belongs
             to.
-        sampling_objectness_loss (dict): Config of initial sampling
+        sampling_objectness_loss (dict, optional): Config of initial sampling
             objectness loss.
-        objectness_loss (dict): Config of objectness loss.
-        center_loss (dict): Config of center loss.
-        dir_class_loss (dict): Config of direction classification loss.
-        dir_res_loss (dict): Config of direction residual regression loss.
-        size_class_loss (dict): Config of size classification loss.
-        size_res_loss (dict): Config of size residual regression loss.
-        size_reg_loss (dict): Config of class-agnostic size regression loss.
-        semantic_loss (dict): Config of point-wise semantic segmentation loss.
+        objectness_loss (dict, optional): Config of objectness loss.
+        center_loss (dict, optional): Config of center loss.
+        dir_class_loss (dict, optional): Config of direction classification
+            loss.
+        dir_res_loss (dict, optional): Config of direction residual
+            regression loss.
+        size_class_loss (dict, optional): Config of size classification loss.
+        size_res_loss (dict, optional): Config of size residual
+            regression loss.
+        size_reg_loss (dict, optional): Config of class-agnostic size
+            regression loss.
+        semantic_loss (dict, optional): Config of point-wise semantic
+            segmentation loss.
     """
 
     def __init__(self,
-                 num_classes,
-                 in_channels,
-                 bbox_coder,
-                 num_decoder_layers,
-                 transformerlayers,
-                 decoder_self_posembeds=dict(
+                 num_classes: int,
+                 in_channels: int,
+                 bbox_coder: dict,
+                 num_decoder_layers: int,
+                 transformerlayers: dict,
+                 decoder_self_posembeds: dict = dict(
                      type='ConvBNPositionalEncoding',
                      input_channel=6,
                      num_pos_feats=288),
-                 decoder_cross_posembeds=dict(
+                 decoder_cross_posembeds: dict = dict(
                      type='ConvBNPositionalEncoding',
                      input_channel=3,
                      num_pos_feats=288),
-                 train_cfg=None,
-                 test_cfg=None,
-                 num_proposal=128,
-                 pred_layer_cfg=None,
-                 size_cls_agnostic=True,
-                 gt_per_seed=3,
-                 sampling_objectness_loss=None,
-                 objectness_loss=None,
-                 center_loss=None,
-                 dir_class_loss=None,
-                 dir_res_loss=None,
-                 size_class_loss=None,
-                 size_res_loss=None,
-                 size_reg_loss=None,
-                 semantic_loss=None,
-                 init_cfg=None):
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 num_proposal: int = 128,
+                 pred_layer_cfg: Optional[dict] = None,
+                 size_cls_agnostic: bool = True,
+                 gt_per_seed: int = 3,
+                 sampling_objectness_loss: Optional[dict] = None,
+                 objectness_loss: Optional[dict] = None,
+                 center_loss: Optional[dict] = None,
+                 dir_class_loss: Optional[dict] = None,
+                 dir_res_loss: Optional[dict] = None,
+                 size_class_loss: Optional[dict] = None,
+                 size_res_loss: Optional[dict] = None,
+                 size_reg_loss: Optional[dict] = None,
+                 semantic_loss: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(GroupFree3DHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -179,7 +187,7 @@ class GroupFree3DHead(BaseModule):
         self.gt_per_seed = gt_per_seed
 
         # Transformer decoder layers
-        if isinstance(transformerlayers, ConfigDict):
+        if isinstance(transformerlayers, dict):
             transformerlayers = [
                 copy.deepcopy(transformerlayers)
                 for _ in range(num_decoder_layers)
@@ -239,17 +247,17 @@ class GroupFree3DHead(BaseModule):
                     num_cls_out_channels=self._get_cls_out_channels(),
                     num_reg_out_channels=self._get_reg_out_channels()))
 
-        self.sampling_objectness_loss = build_loss(sampling_objectness_loss)
-        self.objectness_loss = build_loss(objectness_loss)
-        self.center_loss = build_loss(center_loss)
-        self.dir_res_loss = build_loss(dir_res_loss)
-        self.dir_class_loss = build_loss(dir_class_loss)
-        self.semantic_loss = build_loss(semantic_loss)
+        self.loss_sampling_objectness = MODELS.build(sampling_objectness_loss)
+        self.loss_objectness = MODELS.build(objectness_loss)
+        self.loss_center = MODELS.build(center_loss)
+        self.loss_dir_res = MODELS.build(dir_res_loss)
+        self.loss_dir_class = MODELS.build(dir_class_loss)
+        self.loss_semantic = MODELS.build(semantic_loss)
         if self.size_cls_agnostic:
-            self.size_reg_loss = build_loss(size_reg_loss)
+            self.loss_size_reg = MODELS.build(size_reg_loss)
         else:
-            self.size_res_loss = build_loss(size_res_loss)
-            self.size_class_loss = build_loss(size_class_loss)
+            self.loss_size_res = MODELS.build(size_res_loss)
+            self.loss_size_class = MODELS.build(size_class_loss)
 
     def init_weights(self):
         """Initialize weights of transformer decoder in GroupFree3DHead."""
@@ -279,16 +287,18 @@ class GroupFree3DHead(BaseModule):
         else:
             return 3 + self.num_dir_bins * 2 + self.num_sizes * 4
 
-    def _extract_input(self, feat_dict):
+    def _extract_input(self, feat_dict: dict) -> Tuple[Tensor]:
         """Extract inputs from features dictionary.
 
         Args:
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: Coordinates of input points.
-            torch.Tensor: Features of input points.
-            torch.Tensor: Indices of input points.
+            Tuple[Tensor]:
+
+            - seed_points (Tensor): Coordinates of input points.
+            - seed_features (Tensor): Features of input points.
+            - seed_indices (Tensor): Indices of input points.
         """
 
         seed_points = feat_dict['fp_xyz'][-1]
@@ -297,7 +307,20 @@ class GroupFree3DHead(BaseModule):
 
         return seed_points, seed_features, seed_indices
 
-    def forward(self, feat_dict, sample_mod):
+    @property
+    def sample_mode(self):
+        """
+        Returns:
+            str: Sample mode for initial candidates sampling.
+        """
+        if self.training:
+            sample_mode = self.train_cfg.sample_mode
+        else:
+            sample_mode = self.test_cfg.sample_mode
+        assert sample_mode in ['fps', 'kps']
+        return sample_mode
+
+    def forward(self, feat_dict: dict) -> dict:
         """Forward pass.
 
         Note:
@@ -308,12 +331,12 @@ class GroupFree3DHead(BaseModule):
 
         Args:
             feat_dict (dict): Feature dict from backbone.
-            sample_mod (str): sample mode for initial candidates sampling.
+
 
         Returns:
             results (dict): Predictions of GroupFree3D head.
         """
-        assert sample_mod in ['fps', 'kps']
+        sample_mode = self.sample_mode
 
         seed_xyz, seed_features, seed_indices = self._extract_input(feat_dict)
 
@@ -323,9 +346,9 @@ class GroupFree3DHead(BaseModule):
             seed_indices=seed_indices)
 
         # 1. Initial object candidates sampling.
-        if sample_mod == 'fps':
+        if sample_mode == 'fps':
             sample_inds = self.fps_module(seed_xyz, seed_features)
-        elif sample_mod == 'kps':
+        elif sample_mode == 'kps':
             points_obj_cls_logits = self.points_obj_cls(
                 seed_features)  # (batch_size, 1, num_seed)
             points_obj_cls_scores = points_obj_cls_logits.sigmoid().squeeze(1)
@@ -334,7 +357,7 @@ class GroupFree3DHead(BaseModule):
             results['seeds_obj_cls_logits'] = points_obj_cls_logits
         else:
             raise NotImplementedError(
-                f'Sample mode {sample_mod} is not supported!')
+                f'Sample mode {sample_mode} is not supported!')
 
         candidate_xyz, candidate_features, sample_inds = self.gsample_module(
             seed_xyz, seed_features, sample_inds)
@@ -391,40 +414,74 @@ class GroupFree3DHead(BaseModule):
 
         return results
 
-    @force_fp32(apply_to=('bbox_preds', ))
-    def loss(self,
-             bbox_preds,
-             points,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             pts_semantic_mask=None,
-             pts_instance_mask=None,
-             img_metas=None,
-             gt_bboxes_ignore=None,
-             ret_target=False):
+    def loss(self, points: List[torch.Tensor], feats_dict: Dict[str,
+                                                                torch.Tensor],
+             batch_data_samples: SampleList, **kwargs) -> dict:
+        """
+        Args:
+            points (list[tensor]): Points cloud of multiple samples.
+            feats_dict (dict): Predictions from backbone or FPN.
+            batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
+                contains the meta information of each sample and
+                corresponding annotations.
+
+        Returns:
+            dict:  A dictionary of loss components.
+        """
+        preds_dict = self.forward(feats_dict)
+        batch_gt_instance_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        batch_pts_semantic_mask = []
+        batch_pts_instance_mask = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+            batch_pts_semantic_mask.append(
+                data_sample.gt_pts_seg.get('pts_semantic_mask', None))
+            batch_pts_instance_mask.append(
+                data_sample.gt_pts_seg.get('pts_instance_mask', None))
+
+        loss_inputs = (points, preds_dict, batch_gt_instance_3d)
+        losses = self.loss_by_feat(
+            *loss_inputs,
+            batch_pts_semantic_mask=batch_pts_semantic_mask,
+            batch_pts_instance_mask=batch_pts_instance_mask,
+            batch_input_metas=batch_input_metas,
+            batch_gt_instances_ignore=batch_gt_instances_ignore)
+        return losses
+
+    def loss_by_feat(
+            self,
+            points: List[torch.Tensor],
+            feats_dict: dict,
+            batch_gt_instances_3d: List[InstanceData],
+            batch_pts_semantic_mask: Optional[List[torch.Tensor]] = None,
+            batch_pts_instance_mask: Optional[List[torch.Tensor]] = None,
+            ret_target: bool = False,
+            **kwargs) -> dict:
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of vote head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each sample.
-            gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise
-                semantic mask.
-            pts_instance_mask (list[torch.Tensor]): Point-wise
-                instance mask.
-            img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding.
-            ret_target (Bool): Return targets or not.
+            feats_dict (dict): Predictions from previous component.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
+            batch_pts_semantic_mask (list[tensor]): Semantic mask
+                of points cloud. Defaults to None.
+            batch_pts_semantic_mask (list[tensor]): Instance mask
+                of points cloud. Defaults to None.
+            ret_target (bool): Return targets or not. Defaults to False.
 
         Returns:
-            dict: Losses of GroupFree3D.
+            dict: Losses of `GroupFree3D`.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   pts_semantic_mask, pts_instance_mask,
-                                   bbox_preds)
+        targets = self.get_targets(points, feats_dict, batch_gt_instances_3d,
+                                   batch_pts_semantic_mask,
+                                   batch_pts_instance_mask)
         (sampling_targets, sampling_weights, assigned_size_targets,
          size_class_targets, size_res_targets, dir_class_targets,
          dir_res_targets, center_targets, assigned_center_targets,
@@ -436,8 +493,8 @@ class GroupFree3DHead(BaseModule):
         losses = dict()
 
         # calculate objectness classification loss
-        sampling_obj_score = bbox_preds['seeds_obj_cls_logits'].reshape(-1, 1)
-        sampling_objectness_loss = self.sampling_objectness_loss(
+        sampling_obj_score = feats_dict['seeds_obj_cls_logits'].reshape(-1, 1)
+        sampling_objectness_loss = self.loss_sampling_objectness(
             sampling_obj_score,
             1 - sampling_targets.reshape(-1),
             sampling_weights.reshape(-1),
@@ -445,14 +502,14 @@ class GroupFree3DHead(BaseModule):
         losses['sampling_objectness_loss'] = sampling_objectness_loss
 
         prefixes = ['proposal.'] + [
-            f's{i}.' for i in range(bbox_preds['num_decoder_layers'])
+            f's{i}.' for i in range(feats_dict['num_decoder_layers'])
         ]
         num_stages = len(prefixes)
         for prefix in prefixes:
 
             # calculate objectness loss
-            obj_score = bbox_preds[f'{prefix}obj_scores'].transpose(2, 1)
-            objectness_loss = self.objectness_loss(
+            obj_score = feats_dict[f'{prefix}obj_scores'].transpose(2, 1)
+            objectness_loss = self.loss_objectness(
                 obj_score.reshape(-1, 1),
                 1 - objectness_targets.reshape(-1),
                 objectness_weights.reshape(-1),
@@ -462,15 +519,15 @@ class GroupFree3DHead(BaseModule):
             # calculate center loss
             box_loss_weights_expand = box_loss_weights.unsqueeze(-1).expand(
                 -1, -1, 3)
-            center_loss = self.center_loss(
-                bbox_preds[f'{prefix}center'],
+            center_loss = self.loss_center(
+                feats_dict[f'{prefix}center'],
                 assigned_center_targets,
                 weight=box_loss_weights_expand)
             losses[f'{prefix}center_loss'] = center_loss / num_stages
 
             # calculate direction class loss
-            dir_class_loss = self.dir_class_loss(
-                bbox_preds[f'{prefix}dir_class'].transpose(2, 1),
+            dir_class_loss = self.loss_dir_class(
+                feats_dict[f'{prefix}dir_class'].transpose(2, 1),
                 dir_class_targets,
                 weight=box_loss_weights)
             losses[f'{prefix}dir_class_loss'] = dir_class_loss / num_stages
@@ -481,24 +538,24 @@ class GroupFree3DHead(BaseModule):
             heading_label_one_hot.scatter_(2, dir_class_targets.unsqueeze(-1),
                                            1)
             dir_res_norm = torch.sum(
-                bbox_preds[f'{prefix}dir_res_norm'] * heading_label_one_hot,
+                feats_dict[f'{prefix}dir_res_norm'] * heading_label_one_hot,
                 -1)
-            dir_res_loss = self.dir_res_loss(
+            dir_res_loss = self.loss_dir_res(
                 dir_res_norm, dir_res_targets, weight=box_loss_weights)
             losses[f'{prefix}dir_res_loss'] = dir_res_loss / num_stages
 
             if self.size_cls_agnostic:
                 # calculate class-agnostic size loss
-                size_reg_loss = self.size_reg_loss(
-                    bbox_preds[f'{prefix}size'],
+                size_reg_loss = self.loss_size_reg(
+                    feats_dict[f'{prefix}size'],
                     assigned_size_targets,
                     weight=box_loss_weights_expand)
                 losses[f'{prefix}size_reg_loss'] = size_reg_loss / num_stages
 
             else:
                 # calculate size class loss
-                size_class_loss = self.size_class_loss(
-                    bbox_preds[f'{prefix}size_class'].transpose(2, 1),
+                size_class_loss = self.loss_size_class(
+                    feats_dict[f'{prefix}size_class'].transpose(2, 1),
                     size_class_targets,
                     weight=box_loss_weights)
                 losses[
@@ -513,19 +570,19 @@ class GroupFree3DHead(BaseModule):
                 one_hot_size_targets_expand = one_hot_size_targets.unsqueeze(
                     -1).expand(-1, -1, -1, 3).contiguous()
                 size_residual_norm = torch.sum(
-                    bbox_preds[f'{prefix}size_res_norm'] *
+                    feats_dict[f'{prefix}size_res_norm'] *
                     one_hot_size_targets_expand, 2)
                 box_loss_weights_expand = box_loss_weights.unsqueeze(
                     -1).expand(-1, -1, 3)
-                size_res_loss = self.size_res_loss(
+                size_res_loss = self.loss_size_res(
                     size_residual_norm,
                     size_res_targets,
                     weight=box_loss_weights_expand)
                 losses[f'{prefix}size_res_loss'] = size_res_loss / num_stages
 
             # calculate semantic loss
-            semantic_loss = self.semantic_loss(
-                bbox_preds[f'{prefix}sem_scores'].transpose(2, 1),
+            semantic_loss = self.loss_semantic(
+                feats_dict[f'{prefix}sem_scores'].transpose(2, 1),
                 mask_targets,
                 weight=box_loss_weights)
             losses[f'{prefix}semantic_loss'] = semantic_loss / num_stages
@@ -535,27 +592,29 @@ class GroupFree3DHead(BaseModule):
 
         return losses
 
-    def get_targets(self,
-                    points,
-                    gt_bboxes_3d,
-                    gt_labels_3d,
-                    pts_semantic_mask=None,
-                    pts_instance_mask=None,
-                    bbox_preds=None,
-                    max_gt_num=64):
+    def get_targets(
+        self,
+        points: List[Tensor],
+        feats_dict: dict = None,
+        batch_gt_instances_3d: List[InstanceData] = None,
+        batch_pts_semantic_mask: List[torch.Tensor] = None,
+        batch_pts_instance_mask: List[torch.Tensor] = None,
+        max_gt_num: int = 64,
+    ):
         """Generate targets of GroupFree3D head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (list[torch.Tensor]): Point-wise instance
-                label of each batch.
-            bbox_preds (torch.Tensor): Bounding box predictions of vote head.
-            max_gt_num (int): Max number of GTs for single batch.
+            feats_dict (torch.Tensor): Predictions of previous component.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
+            batch_pts_semantic_mask (list[tensor]): Semantic gt mask for
+                 point clouds. Defaults to None.
+            batch_pts_instance_mask (list[tensor]): Instance gt mask for
+                 point clouds. Defaults to None.
+            max_gt_num (int): Max number of GTs for single batch. Defaults
+                to 64.
 
         Returns:
             tuple[torch.Tensor]: Targets of GroupFree3D head.
@@ -563,51 +622,67 @@ class GroupFree3DHead(BaseModule):
         # find empty example
         valid_gt_masks = list()
         gt_num = list()
-        for index in range(len(gt_labels_3d)):
-            if len(gt_labels_3d[index]) == 0:
-                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
-                    1, gt_bboxes_3d[index].tensor.shape[-1])
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
-                gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
-                valid_gt_masks.append(gt_labels_3d[index].new_zeros(1))
+        batch_gt_labels_3d = [
+            gt_instances_3d.labels_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        batch_gt_bboxes_3d = [
+            gt_instances_3d.bboxes_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+
+        for index in range(len(batch_gt_labels_3d)):
+            if len(batch_gt_labels_3d[index]) == 0:
+                fake_box = batch_gt_bboxes_3d[index].tensor.new_zeros(
+                    1, batch_gt_bboxes_3d[index].tensor.shape[-1])
+                batch_gt_bboxes_3d[index] = batch_gt_bboxes_3d[index].new_box(
+                    fake_box)
+                batch_gt_labels_3d[index] = batch_gt_labels_3d[
+                    index].new_zeros(1)
+                valid_gt_masks.append(batch_gt_labels_3d[index].new_zeros(1))
                 gt_num.append(1)
             else:
-                valid_gt_masks.append(gt_labels_3d[index].new_ones(
-                    gt_labels_3d[index].shape))
-                gt_num.append(gt_labels_3d[index].shape[0])
-        # max_gt_num = max(gt_num)
+                valid_gt_masks.append(batch_gt_labels_3d[index].new_ones(
+                    batch_gt_labels_3d[index].shape))
+                gt_num.append(batch_gt_labels_3d[index].shape[0])
 
-        max_gt_nums = [max_gt_num for _ in range(len(gt_labels_3d))]
+        max_gt_nums = [max_gt_num for _ in range(len(batch_gt_labels_3d))]
 
-        if pts_semantic_mask is None:
-            pts_semantic_mask = [None for i in range(len(gt_labels_3d))]
-            pts_instance_mask = [None for i in range(len(gt_labels_3d))]
+        if batch_pts_semantic_mask is None:
+            batch_pts_semantic_mask = [
+                None for i in range(len(batch_gt_labels_3d))
+            ]
+            batch_pts_instance_mask = [
+                None for i in range(len(batch_gt_labels_3d))
+            ]
 
         seed_points = [
-            bbox_preds['seed_points'][i] for i in range(len(gt_labels_3d))
+            feats_dict['seed_points'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         seed_indices = [
-            bbox_preds['seed_indices'][i] for i in range(len(gt_labels_3d))
+            feats_dict['seed_indices'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         candidate_indices = [
-            bbox_preds['query_points_sample_inds'][i]
-            for i in range(len(gt_labels_3d))
+            feats_dict['query_points_sample_inds'][i]
+            for i in range(len(batch_gt_labels_3d))
         ]
 
         (sampling_targets, assigned_size_targets, size_class_targets,
          size_res_targets, dir_class_targets, dir_res_targets, center_targets,
-         assigned_center_targets, mask_targets, objectness_targets,
-         objectness_masks) = multi_apply(self.get_targets_single, points,
-                                         gt_bboxes_3d, gt_labels_3d,
-                                         pts_semantic_mask, pts_instance_mask,
-                                         max_gt_nums, seed_points,
-                                         seed_indices, candidate_indices)
+         assigned_center_targets, mask_targets,
+         objectness_targets, objectness_masks) = multi_apply(
+             self._get_targets_single, points, batch_gt_bboxes_3d,
+             batch_gt_labels_3d, batch_pts_semantic_mask,
+             batch_pts_instance_mask, max_gt_nums, seed_points, seed_indices,
+             candidate_indices)
 
         # pad targets as original code of GroupFree3D.
-        for index in range(len(gt_labels_3d)):
-            pad_num = max_gt_num - gt_labels_3d[index].shape[0]
+        for index in range(len(batch_gt_labels_3d)):
+            pad_num = max_gt_num - batch_gt_labels_3d[index].shape[0]
             valid_gt_masks[index] = F.pad(valid_gt_masks[index], (0, pad_num))
 
         sampling_targets = torch.stack(sampling_targets)
@@ -644,17 +719,17 @@ class GroupFree3DHead(BaseModule):
                 mask_targets, valid_gt_masks, objectness_targets,
                 objectness_weights, box_loss_weights, valid_gt_weights)
 
-    def get_targets_single(self,
-                           points,
-                           gt_bboxes_3d,
-                           gt_labels_3d,
-                           pts_semantic_mask=None,
-                           pts_instance_mask=None,
-                           max_gt_nums=None,
-                           seed_points=None,
-                           seed_indices=None,
-                           candidate_indices=None,
-                           seed_points_obj_topk=4):
+    def _get_targets_single(self,
+                            points: Tensor,
+                            gt_bboxes_3d: BaseInstance3DBoxes,
+                            gt_labels_3d: Tensor,
+                            pts_semantic_mask: Optional[Tensor] = None,
+                            pts_instance_mask: Optional[Tensor] = None,
+                            max_gt_nums: Optional[int] = None,
+                            seed_points: Optional[Tensor] = None,
+                            seed_indices: Optional[Tensor] = None,
+                            candidate_indices: Optional[Tensor] = None,
+                            seed_points_obj_topk: int = 4):
         """Generate targets of GroupFree3D head for single batch.
 
         Args:
@@ -662,15 +737,20 @@ class GroupFree3DHead(BaseModule):
             gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): Ground truth
                 boxes of each batch.
             gt_labels_3d (torch.Tensor): Labels of each batch.
-            pts_semantic_mask (torch.Tensor): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (torch.Tensor): Point-wise instance
-                label of each batch.
-            max_gt_nums (int): Max number of GTs for single batch.
-            seed_points (torch.Tensor): Coordinates of seed points.
-            seed_indices (torch.Tensor): Indices of seed points.
-            candidate_indices (torch.Tensor): Indices of object candidates.
+            pts_semantic_mask (torch.Tensor, optional): Point-wise semantic
+                label of each batch. Defaults to None.
+            pts_instance_mask (torch.Tensor, optional): Point-wise instance
+                label of each batch. Defaults to None.
+            max_gt_nums (int, optional): Max number of GTs for single batch.
+                Defaults to None.
+            seed_points (torch.Tensor,optional): Coordinates of seed points.
+                Defaults to None.
+            seed_indices (torch.Tensor,optional): Indices of seed points.
+                Defaults to None.
+            candidate_indices (torch.Tensor,optional): Indices of object
+                candidates. Defaults to None.
             seed_points_obj_topk (int): k value of k-Closest Points Sampling.
+                Defaults to 4.
 
         Returns:
             tuple[torch.Tensor]: Targets of GroupFree3D head.
@@ -755,7 +835,7 @@ class GroupFree3DHead(BaseModule):
             pts_instance_label = instance_lable.long()
             pts_instance_label[pts_obj_mask == 0] = -1
 
-        elif pts_semantic_mask is not None:
+        elif pts_instance_mask is not None and pts_semantic_mask is not None:
             for i in torch.unique(pts_instance_mask):
                 indices = torch.nonzero(
                     pts_instance_mask == i, as_tuple=False).squeeze(-1)
@@ -863,30 +943,58 @@ class GroupFree3DHead(BaseModule):
                 center_targets, assigned_center_targets, mask_targets,
                 objectness_targets, objectness_masks)
 
-    def get_bboxes(self,
-                   points,
-                   bbox_preds,
-                   input_metas,
-                   rescale=False,
-                   use_nms=True):
-        """Generate bboxes from GroupFree3D head predictions.
-
+    def predict(self, points: List[torch.Tensor],
+                feats_dict: Dict[str, torch.Tensor],
+                batch_data_samples: List[Det3DDataSample],
+                **kwargs) -> List[InstanceData]:
+        """
         Args:
-            points (torch.Tensor): Input points.
-            bbox_preds (dict): Predictions from GroupFree3D head.
-            input_metas (list[dict]): Point cloud and image's meta info.
-            rescale (bool): Whether to rescale bboxes.
-            use_nms (bool): Whether to apply NMS, skip nms postprocessing
-                while using GroupFree3D head in rpn stage.
+            points (list[tensor]): Point clouds of multiple samples.
+            feats_dict (dict): Features from FPN or backbone.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes meta information of data.
 
         Returns:
-            list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
+            list[:obj:`InstanceData`]: List of processed predictions. Each
+            InstanceData contains 3d Bounding boxes and corresponding
+            scores and labels.
+        """
+        preds_dict = self(feats_dict)
+        batch_size = len(batch_data_samples)
+        batch_input_metas = []
+        for batch_index in range(batch_size):
+            metainfo = batch_data_samples[batch_index].metainfo
+            batch_input_metas.append(metainfo)
+
+        results_list = self.predict_by_feat(points, preds_dict,
+                                            batch_input_metas, **kwargs)
+        return results_list
+
+    def predict_by_feat(self,
+                        points: List[torch.Tensor],
+                        bbox_preds_dict: dict,
+                        batch_input_metas: List[dict],
+                        use_nms: bool = True,
+                        **kwargs) -> List[InstanceData]:
+        """Generate bboxes from vote head predictions.
+
+        Args:
+            points (List[torch.Tensor]): Input points of multiple samples.
+            bbox_preds_dict (dict): Predictions from groupfree3d head.
+            batch_input_metas (list[dict]): Each item
+                contains the meta information of each sample.
+            use_nms (bool): Whether to apply NMS, skip nms postprocessing
+                while using vote head in rpn stage.
+
+        Returns:
+            list[:obj:`InstanceData`]: List of processed predictions. Each
+            InstanceData cantains 3d Bounding boxes and corresponding
+            scores and labels.
         """
         # support multi-stage predictions
         assert self.test_cfg['prediction_stages'] in \
             ['last', 'all', 'last_three']
 
-        prefixes = list()
         if self.test_cfg['prediction_stages'] == 'last':
             prefixes = [f's{self.num_decoder_layers - 1}.']
         elif self.test_cfg['prediction_stages'] == 'all':
@@ -905,9 +1013,10 @@ class GroupFree3DHead(BaseModule):
         bbox3d = list()
         for prefix in prefixes:
             # decode boxes
-            obj_score = bbox_preds[f'{prefix}obj_scores'][..., -1].sigmoid()
-            sem_score = bbox_preds[f'{prefix}sem_scores'].softmax(-1)
-            bbox = self.bbox_coder.decode(bbox_preds, prefix)
+            obj_score = bbox_preds_dict[f'{prefix}obj_scores'][...,
+                                                               -1].sigmoid()
+            sem_score = bbox_preds_dict[f'{prefix}sem_scores'].softmax(-1)
+            bbox = self.bbox_coder.decode(bbox_preds_dict, prefix)
             obj_scores.append(obj_score)
             sem_scores.append(sem_score)
             bbox3d.append(bbox)
@@ -915,22 +1024,27 @@ class GroupFree3DHead(BaseModule):
         obj_scores = torch.cat(obj_scores, dim=1)
         sem_scores = torch.cat(sem_scores, dim=1)
         bbox3d = torch.cat(bbox3d, dim=1)
-
+        stack_points = torch.stack(points)
+        results_list = list()
         if use_nms:
             batch_size = bbox3d.shape[0]
-            results = list()
+            temp_results = InstanceData()
             for b in range(batch_size):
                 bbox_selected, score_selected, labels = \
-                    self.multiclass_nms_single(obj_scores[b], sem_scores[b],
-                                               bbox3d[b], points[b, ..., :3],
-                                               input_metas[b])
-                bbox = input_metas[b]['box_type_3d'](
+                    self.multiclass_nms_single(obj_scores[b],
+                                               sem_scores[b],
+                                               bbox3d[b],
+                                               stack_points[b, ..., :3],
+                                               batch_input_metas[b])
+                bbox = batch_input_metas[b]['box_type_3d'](
                     bbox_selected,
                     box_dim=bbox_selected.shape[-1],
                     with_yaw=self.bbox_coder.with_rot)
-                results.append((bbox, score_selected, labels))
-
-            return results
+                temp_results.bboxes_3d = bbox
+                temp_results.scores_3d = score_selected
+                temp_results.labels_3d = labels
+                results_list.append(temp_results)
+            return results_list
         else:
             return bbox3d
 

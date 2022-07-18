@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from mmengine import InstanceData
 
-from mmdet3d.core import Det3DDataSample, LiDARInstance3DBoxes
+from mmdet3d.core import Det3DDataSample, LiDARInstance3DBoxes, PointData
 
 
 def _setup_seed(seed):
@@ -71,22 +71,28 @@ def _get_detector_cfg(fname):
     return model
 
 
-def _create_detector_inputs(seed=0,
-                            with_points=True,
-                            with_img=False,
-                            num_gt_instance=20,
-                            points_feat_dim=4,
-                            gt_bboxes_dim=7,
-                            num_classes=3):
+def _create_detector_inputs(
+    seed=0,
+    with_points=True,
+    with_img=False,
+    num_gt_instance=20,
+    num_points=10,
+    points_feat_dim=4,
+    num_classes=3,
+    gt_bboxes_dim=7,
+    with_pts_semantic_mask=False,
+    with_pts_instance_mask=False,
+):
     _setup_seed(seed)
-    inputs_dict = dict()
     if with_points:
-        points = torch.rand([3, points_feat_dim])
-        inputs_dict['points'] = points
+        points = torch.rand([num_points, points_feat_dim])
+    else:
+        points = None
     if with_img:
         img = torch.rand(3, 10, 10)
-        inputs_dict['img'] = img
-
+    else:
+        img = None
+    inputs_dict = dict(img=img, points=points)
     gt_instance_3d = InstanceData()
     gt_instance_3d.bboxes_3d = LiDARInstance3DBoxes(
         torch.rand([num_gt_instance, gt_bboxes_dim]), box_dim=gt_bboxes_dim)
@@ -94,5 +100,12 @@ def _create_detector_inputs(seed=0,
     data_sample = Det3DDataSample(
         metainfo=dict(box_type_3d=LiDARInstance3DBoxes))
     data_sample.gt_instances_3d = gt_instance_3d
-    data_sample.seg_data = dict()
+    data_sample.gt_pts_seg = PointData()
+    if with_pts_instance_mask:
+        pts_instance_mask = torch.randint(0, num_gt_instance, [num_points])
+        data_sample.gt_pts_seg['pts_instance_mask'] = pts_instance_mask
+    if with_pts_semantic_mask:
+        pts_semantic_mask = torch.randint(0, num_classes, [num_points])
+        data_sample.gt_pts_seg['pts_semantic_mask'] = pts_semantic_mask
+
     return dict(inputs=inputs_dict, data_sample=data_sample)

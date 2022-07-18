@@ -31,14 +31,14 @@ class Pack3DDetInputs(BaseTransform):
     def __init__(
         self,
         keys: dict,
-        meta_keys: dict = ('filename', 'ori_shape', 'img_shape', 'lidar2img',
+        meta_keys: dict = ('img_path', 'ori_shape', 'img_shape', 'lidar2img',
                            'depth2img', 'cam2img', 'pad_shape', 'scale_factor',
                            'flip', 'pcd_horizontal_flip', 'pcd_vertical_flip',
                            'box_mode_3d', 'box_type_3d', 'img_norm_cfg',
                            'pcd_trans', 'sample_idx', 'pcd_scale_factor',
-                           'pcd_rotation', 'pcd_rotation_angle',
-                           'pts_filename', 'transformation_3d_flow',
-                           'trans_mat', 'affine_aug')):
+                           'pcd_rotation', 'pcd_rotation_angle', 'lidar_path',
+                           'transformation_3d_flow', 'trans_mat',
+                           'affine_aug')):
         self.keys = keys
         self.meta_keys = meta_keys
 

@@ -172,7 +172,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         # image tensor.
         inputs_dict = [{
             k: v.to(self._device)
-            for k, v in _data['inputs'].items()
+            for k, v in _data['inputs'].items() if v is not None
         } for _data in data]
 
         batch_data_samples: List[BaseDataElement] = []

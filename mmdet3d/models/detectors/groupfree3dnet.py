@@ -1,8 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import torch
 
-from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from mmdet3d.registry import MODELS
+from ...core import SampleList
 from .single_stage import SingleStage3DDetector
 
 
@@ -15,91 +14,73 @@ class GroupFree3DNet(SingleStage3DDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
+                 init_cfg=None,
+                 **kwargs):
         super(GroupFree3DNet, self).__init__(
             backbone=backbone,
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained)
+            init_cfg=init_cfg,
+            **kwargs)
 
-    def forward_train(self,
-                      points,
-                      img_metas,
-                      gt_bboxes_3d,
-                      gt_labels_3d,
-                      pts_semantic_mask=None,
-                      pts_instance_mask=None,
-                      gt_bboxes_ignore=None):
-        """Forward of training.
+    def loss(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
+             **kwargs) -> dict:
+        """Calculate losses from a batch of inputs dict and data samples.
 
         Args:
-            points (list[torch.Tensor]): Points of each batch.
-            img_metas (list): Image metas.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
-            pts_semantic_mask (list[torch.Tensor]): point-wise semantic
-                label of each batch.
-            pts_instance_mask (list[torch.Tensor]): point-wise instance
-                label of each batch.
-            gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding.
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'imgs' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_pts_seg`.
 
         Returns:
-            dict[str: torch.Tensor]: Losses.
+            dict: A dictionary of loss components.
         """
-        # TODO: refactor votenet series to reduce redundant codes.
-        points_cat = torch.stack(points)
-
-        x = self.extract_feat(points_cat)
-        bbox_preds = self.bbox_head(x, self.train_cfg.sample_mod)
-        loss_inputs = (points, gt_bboxes_3d, gt_labels_3d, pts_semantic_mask,
-                       pts_instance_mask, img_metas)
-        losses = self.bbox_head.loss(
-            bbox_preds, *loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
+        x = self.extract_feat(batch_inputs_dict)
+        points = batch_inputs_dict['points']
+        losses = self.bbox_head.loss(points, x, batch_data_samples, **kwargs)
         return losses
 
-    def simple_test(self, points, img_metas, imgs=None, rescale=False):
-        """Forward of testing.
+    def predict(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
+                **kwargs) -> SampleList:
+        """Predict results from a batch of inputs and data samples with post-
+        processing.
 
         Args:
-            points (list[torch.Tensor]): Points of each sample.
-            img_metas (list): Image metas.
-            rescale (bool): Whether to rescale results.
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'imgs' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_pts_seg`.
+            rescale (bool): Whether to rescale the results.
+                Defaults to True.
+
         Returns:
-            list: Predicted 3d boxes.
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input images. Each Det3DDataSample usually contain
+            'pred_instances_3d'. And the ``pred_instances_3d`` usually
+            contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+                (num_instance, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+                (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+                (num_instances, C) where C >=7.
         """
-        points_cat = torch.stack(points)
-
-        x = self.extract_feat(points_cat)
-        bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
-        bbox_list = self.bbox_head.get_bboxes(
-            points_cat, bbox_preds, img_metas, rescale=rescale)
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
-        return bbox_results
-
-    def aug_test(self, points, img_metas, imgs=None, rescale=False):
-        """Test with augmentation."""
-        points_cat = [torch.stack(pts) for pts in points]
-        feats = self.extract_feats(points_cat, img_metas)
-
-        # only support aug_test for one sample
-        aug_bboxes = []
-        for x, pts_cat, img_meta in zip(feats, points_cat, img_metas):
-            bbox_preds = self.bbox_head(x, self.test_cfg.sample_mod)
-            bbox_list = self.bbox_head.get_bboxes(
-                pts_cat, bbox_preds, img_meta, rescale=rescale)
-            bbox_list = [
-                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
-                for bboxes, scores, labels in bbox_list
-            ]
-            aug_bboxes.append(bbox_list[0])
-
-        # after merging, bboxes will be rescaled to the original image size
-        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
-                                            self.bbox_head.test_cfg)
-
-        return [merged_bboxes]
+        x = self.extract_feat(batch_inputs_dict)
+        points = batch_inputs_dict['points']
+        results_list = self.bbox_head.predict(points, x, batch_data_samples,
+                                              **kwargs)
+        predictions = self.convert_to_datasample(results_list)
+        return predictions
