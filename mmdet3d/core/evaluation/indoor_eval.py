@@ -228,6 +228,7 @@ def indoor_eval(gt_annos,
     Return:
         dict[str, float]: Dict of results.
     """
+    class_names = ['Pedestrian', 'Dont care']
     assert len(dt_annos) == len(gt_annos)
     pred = {}  # map {class_id: pred}
     gt = {}  # map {class_id: gt}
@@ -265,7 +266,7 @@ def indoor_eval(gt_annos,
 
 
         for i in range(len(labels_3d)):
-            label = 0 if labels_3d[i]=='Car' else 1
+            label = 0 if labels_3d[i]==class_names[0] else 1
             bbox = gt_boxes[i]
             if label not in gt:
                 gt[label] = {}
@@ -279,7 +280,7 @@ def indoor_eval(gt_annos,
         rec, prec, ap = eval_map_recall(pred, gt, metric, ioumode)
         ret_dict = dict()
         header = ['classes /'+ioumode]
-        table_columns = [['Car' if label == 0 else 'Pedestrian'
+        table_columns = [[class_names[0] if label == 0 else class_names[1]
                         for label in ap[0].keys()] + ['Overall']]
 
         for i, iou_thresh in enumerate(metric):
@@ -287,7 +288,7 @@ def indoor_eval(gt_annos,
             header.append(f'AR_{iou_thresh:.2f}')
             rec_list = []
             for label in ap[i].keys():
-                label_cls = 'Car' if label == 0 else 'Pedestrian'
+                label_cls = class_names[0] if label == 0 else class_names[1]
                 ret_dict[f'{label_cls}_AP_{iou_thresh:.2f}'] = float(
                     ap[i][label][0])
             ret_dict[f'mAP_{iou_thresh:.2f}'] = float(
@@ -298,7 +299,7 @@ def indoor_eval(gt_annos,
             table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
             
             for label in rec[i].keys():
-                label_cls = 'Car' if label == 0 else 'Pedestrian'
+                label_cls = class_names[0] if label == 0 else class_names[1]
                 ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
                     rec[i][label][-1])
                 rec_list.append(rec[i][label][-1])
