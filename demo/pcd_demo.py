@@ -1,10 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from argparse import ArgumentParser
 
-from mmdet3d.apis import inference_detector, init_model, show_result_meshlab
+import numpy as np
+
+from mmdet3d.apis import inference_detector, init_model
+from mmdet3d.registry import VISUALIZERS
+from mmdet3d.utils import register_all_modules
 
 
-def main():
+def parse_args():
     parser = ArgumentParser()
     parser.add_argument('pcd', help='Point cloud file')
     parser.add_argument('config', help='Config file')
@@ -24,21 +28,41 @@ def main():
         action='store_true',
         help='whether to save online visualization results')
     args = parser.parse_args()
+    return args
 
+
+def main(args):
+    # register all modules in mmdet into the registries
+    register_all_modules()
+
+    # TODO: Support inference of point cloud numpy file.
     # build the model from a config file and a checkpoint file
     model = init_model(args.config, args.checkpoint, device=args.device)
-    # test a single image
+
+    # init visualizer
+    visualizer = VISUALIZERS.build(model.cfg.visualizer)
+    visualizer.dataset_meta = {
+        'CLASSES': model.CLASSES,
+        'PALETTE': model.palette
+    }
+
+    # test a single point cloud sample
     result, data = inference_detector(model, args.pcd)
+
+    points = np.fromfile(args.pcd, dtype=np.float32)
+    data_input = dict(points=points)
     # show the results
-    show_result_meshlab(
-        data,
-        result,
-        args.out_dir,
-        args.score_thr,
-        show=args.show,
-        snapshot=args.snapshot,
-        task='det')
+    visualizer.add_datasample(
+        'result',
+        data_input,
+        pred_sample=result,
+        show=True,
+        wait_time=0,
+        out_file=args.out_file,
+        pred_score_thr=args.score_thr,
+        vis_task='det')
 
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args)

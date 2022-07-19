@@ -1,18 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import warnings
 from os import path as osp
-from pathlib import Path
 
 import mmcv
-import numpy as np
 from mmcv import Config, DictAction, mkdir_or_exist
 
-from mmdet3d.core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
-                               DepthInstance3DBoxes, LiDARInstance3DBoxes)
-from mmdet3d.core.visualizer import (show_multi_modality_result, show_result,
-                                     show_seg_result)
 from mmdet3d.datasets import build_dataset
+from mmdet3d.registry import VISUALIZERS
+from mmdet3d.utils import register_all_modules
 
 
 def parse_args():
@@ -80,8 +75,8 @@ def build_data_cfg(config_path, skip_type, aug, cfg_options):
             if cfg.train_pipeline[i]['type'] == 'LoadAnnotations3D':
                 show_pipeline.insert(i, cfg.train_pipeline[i])
             # Collect points as well as labels
-            if cfg.train_pipeline[i]['type'] == 'Collect3D':
-                if show_pipeline[-1]['type'] == 'Collect3D':
+            if cfg.train_pipeline[i]['type'] == 'Pack3DInputs':
+                if show_pipeline[-1]['type'] == 'Pack3DInputs':
                     show_pipeline[-1] = cfg.train_pipeline[i]
                 else:
                     show_pipeline.append(cfg.train_pipeline[i])
@@ -93,105 +88,6 @@ def build_data_cfg(config_path, skip_type, aug, cfg_options):
     return cfg
 
 
-def to_depth_mode(points, bboxes):
-    """Convert points and bboxes to Depth Coord and Depth Box mode."""
-    if points is not None:
-        points = Coord3DMode.convert_point(points.copy(), Coord3DMode.LIDAR,
-                                           Coord3DMode.DEPTH)
-    if bboxes is not None:
-        bboxes = Box3DMode.convert(bboxes.clone(), Box3DMode.LIDAR,
-                                   Box3DMode.DEPTH)
-    return points, bboxes
-
-
-def show_det_data(input, out_dir, show=False):
-    """Visualize 3D point cloud and 3D bboxes."""
-    img_metas = input['img_metas']._data
-    points = input['points']._data.numpy()
-    gt_bboxes = input['gt_bboxes_3d']._data.tensor
-    if img_metas['box_mode_3d'] != Box3DMode.DEPTH:
-        points, gt_bboxes = to_depth_mode(points, gt_bboxes)
-    filename = osp.splitext(osp.basename(img_metas['pts_filename']))[0]
-    show_result(
-        points,
-        gt_bboxes.clone(),
-        None,
-        out_dir,
-        filename,
-        show=show,
-        snapshot=True)
-
-
-def show_seg_data(input, out_dir, show=False):
-    """Visualize 3D point cloud and segmentation mask."""
-    img_metas = input['img_metas']._data
-    points = input['points']._data.numpy()
-    gt_seg = input['pts_semantic_mask']._data.numpy()
-    filename = osp.splitext(osp.basename(img_metas['pts_filename']))[0]
-    show_seg_result(
-        points,
-        gt_seg.copy(),
-        None,
-        out_dir,
-        filename,
-        np.array(img_metas['PALETTE']),
-        img_metas['ignore_index'],
-        show=show,
-        snapshot=True)
-
-
-def show_proj_bbox_img(input, out_dir, show=False, is_nus_mono=False):
-    """Visualize 3D bboxes on 2D image by projection."""
-    gt_bboxes = input['gt_bboxes_3d']._data
-    img_metas = input['img_metas']._data
-    img = input['img']._data.numpy()
-    # need to transpose channel to first dim
-    img = img.transpose(1, 2, 0)
-    # no 3D gt bboxes, just show img
-    if gt_bboxes.tensor.shape[0] == 0:
-        gt_bboxes = None
-    filename = Path(img_metas['filename']).name
-    if isinstance(gt_bboxes, DepthInstance3DBoxes):
-        show_multi_modality_result(
-            img,
-            gt_bboxes,
-            None,
-            None,
-            out_dir,
-            filename,
-            box_mode='depth',
-            img_metas=img_metas,
-            show=show)
-    elif isinstance(gt_bboxes, LiDARInstance3DBoxes):
-        show_multi_modality_result(
-            img,
-            gt_bboxes,
-            None,
-            img_metas['lidar2img'],
-            out_dir,
-            filename,
-            box_mode='lidar',
-            img_metas=img_metas,
-            show=show)
-    elif isinstance(gt_bboxes, CameraInstance3DBoxes):
-        show_multi_modality_result(
-            img,
-            gt_bboxes,
-            None,
-            img_metas['cam2img'],
-            out_dir,
-            filename,
-            box_mode='camera',
-            img_metas=img_metas,
-            show=show)
-    else:
-        # can't project, just show img
-        warnings.warn(
-            f'unrecognized gt box type {type(gt_bboxes)}, only show image')
-        show_multi_modality_result(
-            img, None, None, None, out_dir, filename, show=show)
-
-
 def main():
     args = parse_args()
 
@@ -200,31 +96,42 @@ def main():
 
     cfg = build_data_cfg(args.config, args.skip_type, args.aug,
                          args.cfg_options)
+
+    # register all modules in mmdet3d into the registries
+    register_all_modules()
+
     try:
         dataset = build_dataset(
-            cfg.data.train, default_args=dict(filter_empty_gt=False))
+            cfg.train_dataloader.dataset,
+            default_args=dict(filter_empty_gt=False))
     except TypeError:  # seg dataset doesn't have `filter_empty_gt` key
-        dataset = build_dataset(cfg.data.train)
+        dataset = build_dataset(cfg.train_dataloader.dataset)
 
-    dataset_type = cfg.dataset_type
     # configure visualization mode
     vis_task = args.task  # 'det', 'seg', 'multi_modality-det', 'mono-det'
+
+    visualizer = VISUALIZERS.build(cfg.visualizer)
+    visualizer.dataset_meta = dataset.metainfo
+
     progress_bar = mmcv.ProgressBar(len(dataset))
 
-    for input in dataset:
-        if vis_task in ['det', 'multi_modality-det']:
-            # show 3D bboxes on 3D point clouds
-            show_det_data(input, args.output_dir, show=args.online)
-        if vis_task in ['multi_modality-det', 'mono-det']:
-            # project 3D bboxes to 2D image
-            show_proj_bbox_img(
-                input,
-                args.output_dir,
-                show=args.online,
-                is_nus_mono=(dataset_type == 'NuScenesMonoDataset'))
-        elif vis_task in ['seg']:
-            # show 3D segmentation mask on 3D point clouds
-            show_seg_data(input, args.output_dir, show=args.online)
+    for item in dataset:
+        # the 3D Boxes in input could be in any of three coordinates
+        data_input = item['inputs']
+        data_sample = item['data_sample'].numpy()
+
+        out_file = osp.join(
+            args.output_dir) if args.output_dir is not None else None
+
+        visualizer.add_datasample(
+            '3d visualzier',
+            data_input,
+            data_sample,
+            show=not args.not_show,
+            wait_time=args.show_interval,
+            out_file=out_file,
+            vis_task=vis_task)
+
         progress_bar.update()
 
 
