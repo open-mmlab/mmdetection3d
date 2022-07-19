@@ -104,10 +104,16 @@ def _create_detector_inputs(seed=0,
         points = torch.rand([num_points, points_feat_dim])
     else:
         points = None
+
     if with_img:
-        img = torch.rand(3, img_size, img_size)
-        meta_info['img_shape'] = (img_size, img_size)
-        meta_info['ori_shape'] = (img_size, img_size)
+        if isinstance(img_size, tuple):
+            img = torch.rand(3, img_size[0], img_size[1])
+            meta_info['img_shape'] = img_size
+            meta_info['ori_shape'] = img_size
+        else:
+            img = torch.rand(3, img_size, img_size)
+            meta_info['img_shape'] = (img_size, img_size)
+            meta_info['ori_shape'] = (img_size, img_size)
         meta_info['scale_factor'] = np.array([1., 1.])
 
     else:
@@ -126,9 +132,8 @@ def _create_detector_inputs(seed=0,
     gt_instance = InstanceData()
     gt_instance.labels = torch.randint(0, num_classes, [num_gt_instance])
     gt_instance.bboxes = torch.rand(num_gt_instance, 4)
-    gt_instance.bboxes[:,
-                       2:] = gt_instance.bboxes[:, :2] + gt_instance.bboxes[:,
-                                                                            2:]
+    gt_instance.bboxes[:, 2:] = \
+        gt_instance.bboxes[:, :2] + gt_instance.bboxes[:, 2:]
 
     data_sample.gt_instances = gt_instance
     data_sample.gt_pts_seg = PointData()

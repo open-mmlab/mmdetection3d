@@ -507,8 +507,8 @@ class SMOKEMono3DHead(AnchorFreeMono3DHead):
             dict[str, Tensor]: A dictionary of loss components, which has
                 components below:
 
-                - loss_cls (Tensor): loss of cls heatmap.
-                - loss_bbox (Tensor): loss of bbox heatmap.
+            - loss_cls (Tensor): loss of cls heatmap.
+            - loss_bbox (Tensor): loss of bbox heatmap.
         """
         assert len(cls_scores) == len(bbox_preds) == 1
         center_2d_heatmap = cls_scores[0]

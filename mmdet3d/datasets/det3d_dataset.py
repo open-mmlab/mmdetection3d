@@ -259,7 +259,7 @@ class Det3DDataset(BaseDataset):
                     info['lidar2img'] = info['cam2img'] @ info['lidar2cam']
 
         if not self.test_mode:
-            # used in traing
+            # used in training
             info['ann_info'] = self.parse_ann_info(info)
         if self.test_mode and self.load_eval_anns:
             info['eval_ann_info'] = self.parse_ann_info(info)

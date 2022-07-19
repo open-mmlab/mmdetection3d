@@ -1,7 +1,13 @@
 model = dict(
     type='ImVoxelNet',
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=True,
+        pad_size_divisor=32),
     backbone=dict(
-        type='ResNet',
+        type='mmdet.ResNet',
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
@@ -11,7 +17,7 @@ model = dict(
         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50'),
         style='pytorch'),
     neck=dict(
-        type='FPN',
+        type='mmdet.FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=64,
         num_outs=4),
@@ -31,14 +37,16 @@ model = dict(
         diff_rad_by_sin=True,
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False,
+            loss_weight=0.2)),
     n_voxels=[216, 248, 12],
     anchor_generator=dict(
         type='AlignedAnchor3DRangeGenerator',
@@ -46,8 +54,8 @@ model = dict(
         rotations=[.0]),
     train_cfg=dict(
         assigner=dict(
-            type='MaxIoUAssigner',
-            iou_calculator=dict(type='BboxOverlapsNearest3D'),
+            type='Max3DIoUAssigner',
+            iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
             pos_iou_thr=0.6,
             neg_iou_thr=0.45,
             min_pos_iou=0.45,
@@ -69,92 +77,119 @@ data_root = 'data/kitti/'
 class_names = ['Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+metainfo = dict(CLASSES=class_names)
+
+# file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/',
+        'data/kitti/':
+        's3://openmmlab/datasets/detection3d/kitti/'
+    }))
 
 train_pipeline = [
     dict(type='LoadAnnotations3D'),
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
-        type='Resize',
-        img_scale=[(1173, 352), (1387, 416)],
-        keep_ratio=True,
-        multiscale_mode='range'),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
+        type='RandomResize', scale=[(1173, 352), (1387, 416)],
+        keep_ratio=True),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(type='Resize', img_scale=(1280, 384), keep_ratio=True),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['img'])
+    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='Resize', scale=(1280, 384), keep_ratio=True),
+    dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
-data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
-    train=dict(
+train_dataloader = dict(
+    batch_size=4,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type='RepeatDataset',
         times=3,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'kitti_infos_train.pkl',
-            split='training',
-            pts_prefix='velodyne_reduced',
+            ann_file='kitti_infos_train.pkl',
+            data_prefix=dict(img='training/image_2'),
             pipeline=train_pipeline,
             modality=input_modality,
-            classes=class_names,
-            test_mode=False)),
-    val=dict(
+            test_mode=False,
+            metainfo=metainfo)))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
+        ann_file='kitti_infos_val.pkl',
+        data_prefix=dict(img='training/image_2'),
         pipeline=test_pipeline,
         modality=input_modality,
-        classes=class_names,
-        test_mode=True),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=True))
+        test_mode=True,
+        metainfo=metainfo))
+test_dataloader = val_dataloader
 
-optimizer = dict(
-    type='AdamW',
-    lr=0.0001,
-    weight_decay=0.0001,
+val_evaluator = dict(
+    type='KittiMetric',
+    ann_file=data_root + 'kitti_infos_val.pkl',
+    metric='bbox')
+test_evaluator = val_evaluator
+
+# optimizer
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=0.0001, weight_decay=0.0001),
     paramwise_cfg=dict(
-        custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}))
-optimizer_config = dict(grad_clip=dict(max_norm=35., norm_type=2))
-lr_config = dict(policy='step', step=[8, 11])
-total_epochs = 12
+        custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
+    clip_grad=dict(max_norm=35., norm_type=2))
+param_scheduler = [
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=12,
+        by_epoch=True,
+        milestones=[8, 11],
+        gamma=0.1)
+]
 
-checkpoint_config = dict(interval=1, max_keep_ckpts=1)
-log_config = dict(
-    interval=50,
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])
-evaluation = dict(interval=1)
-dist_params = dict(backend='nccl')
-find_unused_parameters = True  # only 1 of 4 FPN outputs is used
+# hooks
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=50),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+)
+
+# training schedule for 2x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+# runtime
+default_scope = 'mmdet3d'
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
+
 log_level = 'INFO'
 load_from = None
-resume_from = None
-workflow = [('train', 1)]
+resume = False
+dist_params = dict(backend='nccl')
+find_unused_parameters = True  # only 1 of 4 FPN outputs is used
