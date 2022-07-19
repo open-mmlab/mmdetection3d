@@ -9,6 +9,10 @@ _base_ = [
 # model settings
 model = dict(
     type='MVXFasterRCNN',
+    pts_voxel_layer=dict(
+        point_cloud_range=[-60, -63.84, -3, 62.88, 60, 1]),
+    pts_voxel_encoder=dict(
+        point_cloud_range=[-60, -63.84, -3, 62.88, 60, 1]),
     pts_backbone=dict(
         type='SECOND',
         in_channels=64,
@@ -29,6 +33,7 @@ model = dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[[-60, -63.84, -0.0345, 62.88, 60, -0.0345]],
             sizes=[[0.7, 0.7, 1.7]],
+            rotations=[0, 1.57],
             reshape_out=True)),
     # model training and testing settings
     train_cfg=dict(

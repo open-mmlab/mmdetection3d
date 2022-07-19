@@ -18,7 +18,7 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Pedestrian=10)),
     classes=['Pedestrian'],
-    sample_groups=dict(Pedestrian=10))
+    sample_groups=dict(Pedestrian=15))
 
 train_pipeline = [
     dict(
