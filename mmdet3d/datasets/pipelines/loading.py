@@ -357,6 +357,46 @@ class YOLOXHSVPointsRandomAug:
         repr_str += f'saturation_delta={self.saturation_delta}, '
         repr_str += f'value_delta={self.value_delta})'
         return repr_str
+    
+class ChromaticJitter(object):
+    """Gaussian on color
+
+    Args:
+        std (float): std of noize
+    """
+
+    def __init__(self, std=0.01):
+        self.std = std
+
+    def __call__(self, results):
+        
+        points = results['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims.keys(), \
+            'Expect points have color attribute'
+
+        img = points.color
+
+        was_torch = False
+        if isinstance(img, torch.Tensor):
+            was_torch = True
+            img = img.numpy()
+
+        prev_dtype = img.dtype
+        img = img.astype(np.uint8)
+        if random.random() < 0.95:
+            noise = np.random.randn(img.shape[0], 3)
+            noise *= self.std * 255
+            img = np.clip(noise + img, 0, 255)
+        
+        img = img.astype(prev_dtype)
+        if was_torch:
+            img = torch.tensor(img)
+        
+        points.color = img
+        results['points'] = points
+
+        return results
 
 @PIPELINES.register_module()
 class NormalizePointsColor(object):
