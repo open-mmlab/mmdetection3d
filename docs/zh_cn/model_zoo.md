@@ -78,27 +78,27 @@
 
 ### PAConv
 
-请参考 [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果.
+请参考 [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果。
 
 ### DGCNN
 
-请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果.
+请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果。
 
 ### SMOKE
 
-请参考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.
+请参考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### PGD
 
-请参考 [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd) 获取更多细节，我们在 KITTI 和 nuScenes 数据集上给出了相应的结果.
+请参考 [PGD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pgd) 获取更多细节，我们在 KITTI 和 nuScenes 数据集上给出了相应的结果。
 
 ### PointRCNN
 
-请参考 [PointRCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/point_rcnn) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.
+请参考 [PointRCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/point_rcnn) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### MonoFlex
 
-请参考 [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/monoflex) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果.
+请参考 [MonoFlex](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/monoflex) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### SA-SSD
 
@@ -106,4 +106,4 @@
 
 ### Mixed Precision (FP16) Training
 
-细节请参考 [Mixed Precision (FP16) Training 在 PointPillars 训练的样例](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py).
+细节请参考 [Mixed Precision (FP16) Training 在 PointPillars 训练的样例](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py)。

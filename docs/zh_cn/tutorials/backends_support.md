@@ -111,7 +111,7 @@ model = dict(
 
 ```python
 # replace the path with your checkpoint path on Ceph
-load_from = 's3://openmmlab/checkpoints/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20200620_230614-77663cd6.pth.pth'
+load_from = 's3://openmmlab/checkpoints/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20200620_230614-77663cd6.pth'
 resume_from = None
 workflow = [('train', 1)]
 ```
@@ -149,6 +149,6 @@ log_config = dict(
 log_config = dict(
     interval=50,
     hooks=[
-        dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d'', keep_local=False),
+        dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d', keep_local=False),
     ])
 ```
