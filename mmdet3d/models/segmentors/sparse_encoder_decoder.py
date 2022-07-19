@@ -194,15 +194,16 @@ class SparseEncoderDecoder3D(Base3DSegmentor):
 
         field = self._collate(points)
         x = field.sparse()
+        
 
         targets = ME.SparseTensor(
-            x.features[:, 6:7],
+            x.features[:, -1, None],
             coordinate_map_key=x.coordinate_map_key,
             coordinate_manager=x.coordinate_manager,
         ).features[:, 0].round().long()
 
         x = ME.SparseTensor(
-            x.features[:, :3],
+            x.features[:, :self.backbone.in_channels],
             coordinate_map_key=x.coordinate_map_key,
             coordinate_manager=x.coordinate_manager,
         )

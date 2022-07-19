@@ -36,25 +36,63 @@ class MinkUNetBase(nn.Module):
     OUT_TENSOR_STRIDE = 1
 
     arch_settings = {
-        14: (BasicBlock, (1, 1, 1, 1, 1, 1, 1, 1), ),
-        18: (BasicBlock, (2, 2, 2, 2, 2, 2, 2, 2), ),
-        34: (BasicBlock, (2, 3, 4, 6, 2, 2, 2, 2), ),
-        50: (Bottleneck, (2, 3, 4, 6, 2, 2, 2, 2), ),
-        101: (Bottleneck, (2, 3, 4, 23, 2, 2, 2, 2), ),
+        14: {
+            'block': BasicBlock,
+            'layers': (1, 1, 1, 1, 1, 1, 1, 1),
+            'planes': {
+                'A': (32, 64, 128, 256, 128, 128, 96, 96),
+                'B': (32, 64, 128, 256, 128, 128, 128, 128),
+                'C': (32, 64, 128, 256, 192, 192, 128, 128),
+                'D': (32, 64, 128, 256, 384, 384, 384, 384),
+            },
+        },
+        18: {
+            'block': BasicBlock,
+            'layers': (2, 2, 2, 2, 2, 2, 2, 2),
+            'planes': {
+                'A': (32, 64, 128, 256, 128, 128, 96, 96),
+                'B': (32, 64, 128, 256, 128, 128, 128, 128),
+                'D': (32, 64, 128, 256, 384, 384, 384, 384),
+            },
+        },
+        34: {
+            'block': BasicBlock,
+            'layers': (2, 3, 4, 6, 2, 2, 2, 2),
+            'planes': {
+                'A': (32, 64, 128, 256, 256, 128, 64, 64),
+                'B': (32, 64, 128, 256, 256, 128, 64, 32),
+                'C': (32, 64, 128, 256, 256, 128, 96, 96),
+            },
+        },
+        50: {
+            'block': Bottleneck,
+            'layers': (2, 3, 4, 6, 2, 2, 2, 2),
+        },
+        101: {
+            'block': Bottleneck,
+            'layers': (2, 3, 4, 23, 2, 2, 2, 2),
+        },
     }
 
     # To use the model, must call initialize_coords before forward pass.
     # Once data is processed, call clear to reset the model before calling
     # initialize_coords
-    def __init__(self, depth, in_channels, D=3):
+    def __init__(self, depth, planes, in_channels, D=3):
         super(MinkUNetBase, self).__init__()
+        self.in_channels = in_channels
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for unet.')
-
-        self.block, self.layers = self.arch_settings[depth]
+            
+        if 'planes' not in self.arch_settings[depth] or planes not in self.arch_settings[depth]['planes']:
+            self.planes = self.PLANES
+        else:
+            self.planes = self.arch_settings[depth]['planes'][planes]
+            
+        self.block = self.arch_settings[depth]['block']
+        self.layers = self.arch_settings[depth]['layers']
         self.D = D
 
-        self.network_initialization(in_channels, D)
+        self.network_initialization(self.in_channels, D)
         self.weight_initialization()
 
     def weight_initialization(self):
@@ -82,56 +120,56 @@ class MinkUNetBase(nn.Module):
             self.inplanes, self.inplanes, kernel_size=2, stride=2, dimension=D)
         self.bn1 = ME.MinkowskiBatchNorm(self.inplanes)
 
-        self.block1 = self._make_layer(self.block, self.PLANES[0],
+        self.block1 = self._make_layer(self.block, self.planes[0],
                                        self.layers[0])
 
         self.conv2p2s2 = ME.MinkowskiConvolution(
             self.inplanes, self.inplanes, kernel_size=2, stride=2, dimension=D)
         self.bn2 = ME.MinkowskiBatchNorm(self.inplanes)
 
-        self.block2 = self._make_layer(self.block, self.PLANES[1],
+        self.block2 = self._make_layer(self.block, self.planes[1],
                                        self.layers[1])
 
         self.conv3p4s2 = ME.MinkowskiConvolution(
             self.inplanes, self.inplanes, kernel_size=2, stride=2, dimension=D)
 
         self.bn3 = ME.MinkowskiBatchNorm(self.inplanes)
-        self.block3 = self._make_layer(self.block, self.PLANES[2],
+        self.block3 = self._make_layer(self.block, self.planes[2],
                                        self.layers[2])
 
         self.conv4p8s2 = ME.MinkowskiConvolution(
             self.inplanes, self.inplanes, kernel_size=2, stride=2, dimension=D)
         self.bn4 = ME.MinkowskiBatchNorm(self.inplanes)
-        self.block4 = self._make_layer(self.block, self.PLANES[3],
+        self.block4 = self._make_layer(self.block, self.planes[3],
                                        self.layers[3])
 
         self.convtr4p16s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.PLANES[4], kernel_size=2, stride=2, dimension=D)
-        self.bntr4 = ME.MinkowskiBatchNorm(self.PLANES[4])
+            self.inplanes, self.planes[4], kernel_size=2, stride=2, dimension=D)
+        self.bntr4 = ME.MinkowskiBatchNorm(self.planes[4])
 
-        self.inplanes = self.PLANES[4] + self.PLANES[2] * self.block.expansion
-        self.block5 = self._make_layer(self.block, self.PLANES[4],
+        self.inplanes = self.planes[4] + self.planes[2] * self.block.expansion
+        self.block5 = self._make_layer(self.block, self.planes[4],
                                        self.layers[4])
         self.convtr5p8s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.PLANES[5], kernel_size=2, stride=2, dimension=D)
-        self.bntr5 = ME.MinkowskiBatchNorm(self.PLANES[5])
+            self.inplanes, self.planes[5], kernel_size=2, stride=2, dimension=D)
+        self.bntr5 = ME.MinkowskiBatchNorm(self.planes[5])
 
-        self.inplanes = self.PLANES[5] + self.PLANES[1] * self.block.expansion
-        self.block6 = self._make_layer(self.block, self.PLANES[5],
+        self.inplanes = self.planes[5] + self.planes[1] * self.block.expansion
+        self.block6 = self._make_layer(self.block, self.planes[5],
                                        self.layers[5])
         self.convtr6p4s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.PLANES[6], kernel_size=2, stride=2, dimension=D)
-        self.bntr6 = ME.MinkowskiBatchNorm(self.PLANES[6])
+            self.inplanes, self.planes[6], kernel_size=2, stride=2, dimension=D)
+        self.bntr6 = ME.MinkowskiBatchNorm(self.planes[6])
 
-        self.inplanes = self.PLANES[6] + self.PLANES[0] * self.block.expansion
-        self.block7 = self._make_layer(self.block, self.PLANES[6],
+        self.inplanes = self.planes[6] + self.planes[0] * self.block.expansion
+        self.block7 = self._make_layer(self.block, self.planes[6],
                                        self.layers[6])
         self.convtr7p2s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.PLANES[7], kernel_size=2, stride=2, dimension=D)
-        self.bntr7 = ME.MinkowskiBatchNorm(self.PLANES[7])
+            self.inplanes, self.planes[7], kernel_size=2, stride=2, dimension=D)
+        self.bntr7 = ME.MinkowskiBatchNorm(self.planes[7])
 
-        self.inplanes = self.PLANES[7] + self.INIT_DIM
-        self.block8 = self._make_layer(self.block, self.PLANES[7],
+        self.inplanes = self.planes[7] + self.INIT_DIM
+        self.block8 = self._make_layer(self.block, self.planes[7],
                                        self.layers[7])
 
         self.relu = ME.MinkowskiReLU(inplace=True)
