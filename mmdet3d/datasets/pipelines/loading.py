@@ -513,7 +513,7 @@ class LoadPointsFromFile(BaseTransform):
 class LoadPointsFromDict(LoadPointsFromFile):
     """Load Points From Dict."""
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> dict:
         assert 'points' in results
         return results
 
