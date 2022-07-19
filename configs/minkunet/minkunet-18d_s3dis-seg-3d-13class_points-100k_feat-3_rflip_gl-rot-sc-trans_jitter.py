@@ -147,7 +147,7 @@ optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 lr_config = dict(
     policy='step',
     warmup='linear',
-    warmup_iters=500,
+    warmup_iters=800,
     warmup_ratio=1.0 / 1000,
     step=[8, 11])
 momentum_config = None
@@ -183,7 +183,7 @@ train_area = [1, 2, 3, 4, 6]
 test_area = 5
 
 data = dict(
-    samples_per_gpu=32,
+    samples_per_gpu=110,
     workers_per_gpu=8,
     # train on area 1, 2, 3, 4, 6
     # test on area 5

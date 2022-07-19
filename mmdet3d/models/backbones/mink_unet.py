@@ -77,7 +77,7 @@ class MinkUNetBase(nn.Module):
     # To use the model, must call initialize_coords before forward pass.
     # Once data is processed, call clear to reset the model before calling
     # initialize_coords
-    def __init__(self, depth, planes, in_channels, D=3):
+    def __init__(self, depth, in_channels, planes=None, D=3):
         super(MinkUNetBase, self).__init__()
         self.in_channels = in_channels
         if depth not in self.arch_settings:
