@@ -178,10 +178,11 @@ class Det3DDataset(BaseDataset):
             dict | None: Processed `ann_info`
         """
         # add s or gt prefix for most keys after concat
+        # we only process 3d annotations here, the corresponding
+        # 2d annotation process is in the `LoadAnnotations3D`
+        # in `pipelines`
         name_mapping = {
-            'bbox_label': 'gt_labels',
             'bbox_label_3d': 'gt_labels_3d',
-            'bbox': 'gt_bboxes',
             'bbox_3d': 'gt_bboxes_3d',
             'depth': 'depths',
             'center_2d': 'centers_2d',
@@ -196,16 +197,18 @@ class Det3DDataset(BaseDataset):
             keys = list(instances[0].keys())
             ann_info = dict()
             for ann_name in keys:
-                temp_anns = [item[ann_name] for item in instances]
-                # map the original dataset label to training label
-                if 'label' in ann_name:
-                    temp_anns = [
-                        self.label_mapping[item] for item in temp_anns
-                    ]
-                temp_anns = np.array(temp_anns)
                 if ann_name in name_mapping:
+                    temp_anns = [item[ann_name] for item in instances]
+                    # map the original dataset label to training label
+                    if 'label' in ann_name:
+                        temp_anns = [
+                            self.label_mapping[item] for item in temp_anns
+                        ]
+                    temp_anns = np.array(temp_anns)
+
                     ann_name = name_mapping[ann_name]
-                ann_info[ann_name] = temp_anns
+                    ann_info[ann_name] = temp_anns
+            ann_info['instances'] = info['instances']
         return ann_info
 
     def parse_data_info(self, info: dict) -> dict:

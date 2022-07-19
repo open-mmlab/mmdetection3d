@@ -75,6 +75,7 @@ def _get_detector_cfg(fname):
 def _create_detector_inputs(seed=0,
                             with_points=True,
                             with_img=False,
+                            img_size=10,
                             num_gt_instance=20,
                             num_points=10,
                             points_feat_dim=4,
@@ -90,23 +91,46 @@ def _create_detector_inputs(seed=0,
         'depth': DepthInstance3DBoxes,
         'cam': CameraInstance3DBoxes
     }
+    meta_info = dict()
+    meta_info['depth2img'] = np.array(
+        [[5.23289349e+02, 3.68831943e+02, 6.10469439e+01],
+         [1.09560138e+02, 1.97404735e+02, -5.47377738e+02],
+         [1.25930002e-02, 9.92229998e-01, -1.23769999e-01]])
+    meta_info['lidar2img'] = np.array(
+        [[5.23289349e+02, 3.68831943e+02, 6.10469439e+01],
+         [1.09560138e+02, 1.97404735e+02, -5.47377738e+02],
+         [1.25930002e-02, 9.92229998e-01, -1.23769999e-01]])
     if with_points:
         points = torch.rand([num_points, points_feat_dim])
     else:
         points = None
     if with_img:
-        img = torch.rand(3, 10, 10)
+        img = torch.rand(3, img_size, img_size)
+        meta_info['img_shape'] = (img_size, img_size)
+        meta_info['ori_shape'] = (img_size, img_size)
+        meta_info['scale_factor'] = np.array([1., 1.])
+
     else:
         img = None
     inputs_dict = dict(img=img, points=points)
-
     gt_instance_3d = InstanceData()
+
     gt_instance_3d.bboxes_3d = bbox_3d_class[bboxes_3d_type](
         torch.rand([num_gt_instance, gt_bboxes_dim]), box_dim=gt_bboxes_dim)
     gt_instance_3d.labels_3d = torch.randint(0, num_classes, [num_gt_instance])
     data_sample = Det3DDataSample(
         metainfo=dict(box_type_3d=bbox_3d_class[bboxes_3d_type]))
+    data_sample.set_metainfo(meta_info)
     data_sample.gt_instances_3d = gt_instance_3d
+
+    gt_instance = InstanceData()
+    gt_instance.labels = torch.randint(0, num_classes, [num_gt_instance])
+    gt_instance.bboxes = torch.rand(num_gt_instance, 4)
+    gt_instance.bboxes[:,
+                       2:] = gt_instance.bboxes[:, :2] + gt_instance.bboxes[:,
+                                                                            2:]
+
+    data_sample.gt_instances = gt_instance
     data_sample.gt_pts_seg = PointData()
     if with_pts_instance_mask:
         pts_instance_mask = torch.randint(0, num_gt_instance, [num_points])

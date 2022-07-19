@@ -652,21 +652,28 @@ def update_sunrgbd_infos(pkl_path, out_dir):
         temp_data_info['images']['CAM0']['width'] = w
 
         anns = ori_info_dict['annos']
-        num_instances = len(anns['name'])
-        ignore_class_name = set()
-        instance_list = []
-        for instance_id in range(num_instances):
-            empty_instance = get_empty_instance()
-            empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
-                instance_id].tolist()
-            if anns['name'][instance_id] in METAINFO['CLASSES']:
-                empty_instance['bbox_label_3d'] = METAINFO['CLASSES'].index(
-                    anns['name'][instance_id])
-            else:
-                ignore_class_name.add(anns['name'][instance_id])
-                empty_instance['bbox_label_3d'] = -1
-            empty_instance = clear_instance_unused_keys(empty_instance)
-            instance_list.append(empty_instance)
+        if anns['gt_num'] == 0:
+            instance_list = []
+        else:
+            num_instances = len(anns['name'])
+            ignore_class_name = set()
+            instance_list = []
+            for instance_id in range(num_instances):
+                empty_instance = get_empty_instance()
+                empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
+                    instance_id].tolist()
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                if anns['name'][instance_id] in METAINFO['CLASSES']:
+                    empty_instance['bbox_label_3d'] = METAINFO[
+                        'CLASSES'].index(anns['name'][instance_id])
+                    empty_instance['bbox_label'] = empty_instance[
+                        'bbox_label_3d']
+                else:
+                    ignore_class_name.add(anns['name'][instance_id])
+                    empty_instance['bbox_label_3d'] = -1
+                    empty_instance['bbox_label'] = -1
+                empty_instance = clear_instance_unused_keys(empty_instance)
+                instance_list.append(empty_instance)
         temp_data_info['instances'] = instance_list
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)

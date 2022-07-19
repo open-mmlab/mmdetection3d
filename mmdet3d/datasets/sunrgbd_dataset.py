@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+
+import os.path as osp
 from typing import Callable, List, Optional, Union
 
 import numpy as np
@@ -22,13 +24,15 @@ class SUNRGBDDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for data. Defaults to
+        data_prefix (dict): Prefix for data. Defaults to
             `dict(pts='points',img='sunrgbd_trainval')`.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to `dict(use_camera=True, use_lidar=True)`.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        default_cam_key (str): The default camera name adopted.
+            Defaults to "CAM0".
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'Depth' in this dataset. Available options includes
@@ -36,9 +40,9 @@ class SUNRGBDDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
+        filter_empty_gt (bool): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
@@ -51,8 +55,9 @@ class SUNRGBDDataset(Det3DDataset):
                  ann_file: str,
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='sunrgbd_trainval'),
+                     pts='points', img='sunrgbd_trainval/image'),
                  pipeline: List[Union[dict, Callable]] = [],
+                 default_cam_key: str = 'CAM0',
                  modality=dict(use_camera=True, use_lidar=True),
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
@@ -64,6 +69,7 @@ class SUNRGBDDataset(Det3DDataset):
             metainfo=metainfo,
             data_prefix=data_prefix,
             pipeline=pipeline,
+            default_cam_key=default_cam_key,
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
@@ -72,6 +78,47 @@ class SUNRGBDDataset(Det3DDataset):
         assert 'use_camera' in self.modality and \
             'use_lidar' in self.modality
         assert self.modality['use_camera'] or self.modality['use_lidar']
+
+    def parse_data_info(self, info: dict) -> dict:
+        """Process the raw data info.
+
+        Convert all relative path of needed modality data file to
+        the absolute path. And process
+        the `instances` field to `ann_info` in training stage.
+
+        Args:
+            info (dict): Raw info dict.
+
+        Returns:
+            dict: Has `ann_info` in training stage. And
+            all path has been converted to absolute path.
+        """
+
+        if self.modality['use_lidar']:
+            info['lidar_points']['lidar_path'] = \
+                osp.join(
+                    self.data_prefix.get('pts', ''),
+                    info['lidar_points']['lidar_path'])
+
+        if self.modality['use_camera']:
+            for cam_id, img_info in info['images'].items():
+                if 'img_path' in img_info:
+                    img_info['img_path'] = osp.join(
+                        self.data_prefix.get('img', ''), img_info['img_path'])
+            if self.default_cam_key is not None:
+                info['img_path'] = info['images'][
+                    self.default_cam_key]['img_path']
+                info['depth2img'] = np.array(
+                    info['images'][self.default_cam_key]['depth2img'],
+                    dtype=np.float32)
+
+        if not self.test_mode:
+            # used in traing
+            info['ann_info'] = self.parse_ann_info(info)
+        if self.test_mode and self.load_eval_anns:
+            info['eval_ann_info'] = self.parse_ann_info(info)
+
+        return info
 
     def parse_ann_info(self, info: dict) -> dict:
         """Process the `instances` in data info to `ann_info`
@@ -83,12 +130,11 @@ class SUNRGBDDataset(Det3DDataset):
             dict: Processed `ann_info`
         """
         ann_info = super().parse_ann_info(info)
-        # empty gt
+        # process data without any annotations
         if ann_info is None:
             ann_info = dict()
             ann_info['gt_bboxes_3d'] = np.zeros((0, 6), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros((0, ), dtype=np.int64)
-
         # to target box structure
         ann_info['gt_bboxes_3d'] = DepthInstance3DBoxes(
             ann_info['gt_bboxes_3d'],

@@ -105,8 +105,8 @@ def extract_2d_info(img_meta, tensor):
     """
     img_shape = img_meta['img_shape']
     ori_shape = img_meta['ori_shape']
-    img_h, img_w, _ = img_shape
-    ori_h, ori_w, _ = ori_shape
+    img_h, img_w = img_shape
+    ori_h, ori_w = ori_shape
 
     img_scale_factor = (
         tensor.new_tensor(img_meta['scale_factor'][:2])

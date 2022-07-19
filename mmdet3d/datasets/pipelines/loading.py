@@ -632,34 +632,6 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
 
-    def _load_bboxes(self, results: dict) -> None:
-        """Private function to load bounding box annotations.
-
-        Rewrite '_load_bboxes` since mmdet3d uses 'parse_anno_info' in
-        datasets.
-
-        Args:
-            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
-
-        Returns:
-            dict: The dict contains loaded bounding box annotations.
-        """
-        results['gt_bboxes'] = results['ann_info']['gt_bboxes']
-
-    def _load_labels(self, results: dict) -> None:
-        """Private function to load label annotations.
-
-        Rewrite '_load_bboxes` since mmdet3d uses 'parse_anno_info' in
-        datasets.
-
-        Args:
-            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
-
-        Returns:
-            dict: The dict contains loaded label annotations.
-        """
-        results['gt_labels'] = results['ann_info']['gt_labels']
-
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from
         `ann_info` field to the root of `results`.
@@ -768,6 +740,56 @@ class LoadAnnotations3D(LoadAnnotations):
         if 'eval_ann_info' in results:
             results['eval_ann_info']['pts_semantic_mask'] = pts_semantic_mask
         return results
+
+    def _load_bboxes(self, results: dict) -> None:
+        """Private function to load bounding box annotations.
+
+        The only difference is it remove the proceess for
+        `ignore_flag`
+
+        Args:
+            results (dict): Result dict from :obj:``mmcv.BaseDataset``.
+        Returns:
+            dict: The dict contains loaded bounding box annotations.
+        """
+        gt_bboxes = []
+        for instance in results['instances']:
+            gt_bboxes.append(instance['bbox'])
+        if len(gt_bboxes) == 0:
+            results['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+        else:
+            results['gt_bboxes'] = np.array(
+                gt_bboxes, dtype=np.float32).reshape((-1, 4))
+        if self.denorm_bbox:
+            bbox_num = results['gt_bboxes'].shape[0]
+            if bbox_num != 0:
+                h, w = results['img_shape']
+                results['gt_bboxes'][:, 0::2] *= w
+                results['gt_bboxes'][:, 1::2] *= h
+
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['gt_bboxes'] = results['gt_bboxes']
+
+    def _load_labels(self, results: dict) -> None:
+        """Private function to load label annotations.
+
+        Args:
+            results (dict): Result dict from :obj :obj:``mmcv.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded label annotations.
+        """
+        gt_bboxes_labels = []
+        for instance in results['instances']:
+            gt_bboxes_labels.append(instance['bbox_label'])
+        if len(gt_bboxes_labels) == 0:
+            results['gt_bboxes_labels'] = np.zeros((0, ), dtype=np.int64)
+        else:
+            results['gt_bboxes_labels'] = np.array(
+                gt_bboxes_labels, dtype=np.int64)
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['gt_bboxes_labels'] = results[
+                'gt_bboxes_labels']
 
     def transform(self, results: dict) -> dict:
         """Function to load multiple types annotations.

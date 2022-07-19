@@ -1,15 +1,49 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Union
+from typing import List, Sequence, Union
 
+import mmcv
 import numpy as np
+import torch
 from mmcv import BaseTransform
-from mmcv.transforms import to_tensor
 from mmengine import InstanceData
+from numpy import dtype
 
 from mmdet3d.core import Det3DDataSample, PointData
 from mmdet3d.core.bbox import BaseInstance3DBoxes
 from mmdet3d.core.points import BasePoints
 from mmdet3d.registry import TRANSFORMS
+
+
+def to_tensor(
+    data: Union[torch.Tensor, np.ndarray, Sequence, int,
+                float]) -> torch.Tensor:
+    """Convert objects of various python types to :obj:`torch.Tensor`.
+
+    Supported types are: :class:`numpy.ndarray`, :class:`torch.Tensor`,
+    :class:`Sequence`, :class:`int` and :class:`float`.
+
+    Args:
+        data (torch.Tensor | numpy.ndarray | Sequence | int | float): Data to
+            be converted.
+
+    Returns:
+        torch.Tensor: the converted data.
+    """
+
+    if isinstance(data, torch.Tensor):
+        return data
+    elif isinstance(data, np.ndarray):
+        if data.dtype is dtype('float64'):
+            data = data.astype(np.float32)
+        return torch.from_numpy(data)
+    elif isinstance(data, Sequence) and not mmcv.is_str(data):
+        return torch.tensor(data)
+    elif isinstance(data, int):
+        return torch.LongTensor([data])
+    elif isinstance(data, float):
+        return torch.FloatTensor([data])
+    else:
+        raise TypeError(f'type {type(data)} cannot be converted to tensor.')
 
 
 @TRANSFORMS.register_module()
@@ -20,7 +54,7 @@ class Pack3DDetInputs(BaseTransform):
     ]
     INSTANCEDATA_2D_KEYS = [
         'gt_bboxes',
-        'gt_labels',
+        'gt_bboxes_labels',
     ]
 
     SEG_KEYS = [
@@ -121,8 +155,8 @@ class Pack3DDetInputs(BaseTransform):
 
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
-                'gt_labels_3d', 'attr_labels', 'pts_instance_mask',
-                'pts_semantic_mask', 'centers_2d', 'depths'
+                'gt_bboxes_labels', 'attr_labels', 'pts_instance_mask',
+                'pts_semantic_mask', 'centers_2d', 'depths', 'gt_labels_3d'
         ]:
             if key not in results:
                 continue
@@ -159,7 +193,10 @@ class Pack3DDetInputs(BaseTransform):
                 elif key in self.INSTANCEDATA_3D_KEYS:
                     gt_instances_3d[self._remove_prefix(key)] = results[key]
                 elif key in self.INSTANCEDATA_2D_KEYS:
-                    gt_instances[self._remove_prefix(key)] = results[key]
+                    if key == 'gt_bboxes_labels':
+                        gt_instances['labels'] = results[key]
+                    else:
+                        gt_instances[self._remove_prefix(key)] = results[key]
                 elif key in self.SEG_KEYS:
                     gt_pts_seg[self._remove_prefix(key)] = results[key]
                 else:

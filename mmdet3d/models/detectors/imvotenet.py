@@ -1,16 +1,18 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import warnings
+import copy
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-import numpy as np
 import torch
+from mmengine import InstanceData
+from torch import Tensor
 
-from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
+from mmdet3d.core import Det3DDataSample
 from mmdet3d.models.utils import MLP
 from mmdet3d.registry import MODELS
 from .base import Base3DDetector
 
 
-def sample_valid_seeds(mask, num_sampled_seed=1024):
+def sample_valid_seeds(mask: Tensor, num_sampled_seed: int = 1024) -> Tensor:
     r"""Randomly sample seeds from all imvotes.
 
     Modified from `<https://github.com/facebookresearch/imvotenet/blob/a8856345146bacf29a57266a2f0b874406fd8823/models/imvotenet.py#L26>`_
@@ -54,26 +56,34 @@ def sample_valid_seeds(mask, num_sampled_seed=1024):
 
 @MODELS.register_module()
 class ImVoteNet(Base3DDetector):
-    r"""`ImVoteNet <https://arxiv.org/abs/2001.10692>`_ for 3D detection."""
+    r"""`ImVoteNet <https://arxiv.org/abs/2001.10692>`_ for 3D detection.
+
+    ImVoteNet is based on fusing 2D votes in images and 3D votes in point
+    clouds, which explicitly extract both geometric and semantic features
+    from the 2D images. It leverage camera parameters to lift these
+    features to 3D. A multi-tower training scheme also improve the synergy
+    of 2D-3D feature fusion.
+
+    """
 
     def __init__(self,
-                 pts_backbone=None,
-                 pts_bbox_heads=None,
-                 pts_neck=None,
-                 img_backbone=None,
-                 img_neck=None,
-                 img_roi_head=None,
-                 img_rpn_head=None,
-                 img_mlp=None,
-                 freeze_img_branch=False,
-                 fusion_layer=None,
-                 num_sampled_seed=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
+                 pts_backbone: Optional[dict] = None,
+                 pts_bbox_heads: Optional[dict] = None,
+                 pts_neck: Optional[dict] = None,
+                 img_backbone: Optional[dict] = None,
+                 img_neck: Optional[dict] = None,
+                 img_roi_head: Optional[dict] = None,
+                 img_rpn_head: Optional[dict] = None,
+                 img_mlp: Optional[dict] = None,
+                 freeze_img_branch: bool = False,
+                 fusion_layer: Optional[dict] = None,
+                 num_sampled_seed: Optional[dict] = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None,
+                 **kwargs) -> None:
 
-        super(ImVoteNet, self).__init__(init_cfg=init_cfg)
+        super(ImVoteNet, self).__init__(init_cfg=init_cfg, **kwargs)
 
         # point branch
         if pts_backbone is not None:
@@ -137,35 +147,8 @@ class ImVoteNet(Base3DDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-        if pretrained is None:
-            img_pretrained = None
-            pts_pretrained = None
-        elif isinstance(pretrained, dict):
-            img_pretrained = pretrained.get('img', None)
-            pts_pretrained = pretrained.get('pts', None)
-        else:
-            raise ValueError(
-                f'pretrained should be a dict, got {type(pretrained)}')
-
-        if self.with_img_backbone:
-            if img_pretrained is not None:
-                warnings.warn('DeprecationWarning: pretrained is a deprecated '
-                              'key, please consider using init_cfg.')
-                self.img_backbone.init_cfg = dict(
-                    type='Pretrained', checkpoint=img_pretrained)
-        if self.with_img_roi_head:
-            if img_pretrained is not None:
-                warnings.warn('DeprecationWarning: pretrained is a deprecated '
-                              'key, please consider using init_cfg.')
-                self.img_roi_head.init_cfg = dict(
-                    type='Pretrained', checkpoint=img_pretrained)
-
-        if self.with_pts_backbone:
-            if img_pretrained is not None:
-                warnings.warn('DeprecationWarning: pretrained is a deprecated '
-                              'key, please consider using init_cfg.')
-                self.pts_backbone.init_cfg = dict(
-                    type='Pretrained', checkpoint=pts_pretrained)
+    def _forward(self):
+        raise NotImplementedError
 
     def freeze_img_branch_params(self):
         """Freeze all image branch parameters."""
@@ -267,28 +250,14 @@ class ImVoteNet(Base3DDetector):
         """Just to inherit from abstract method."""
         pass
 
-    def extract_img_feat(self, img):
+    def extract_img_feat(self, img: Tensor) -> Sequence[Tensor]:
         """Directly extract features from the img backbone+neck."""
         x = self.img_backbone(img)
         if self.with_img_neck:
             x = self.img_neck(x)
         return x
 
-    def extract_img_feats(self, imgs):
-        """Extract features from multiple images.
-
-        Args:
-            imgs (list[torch.Tensor]): A list of images. The images are
-                augmented from the same image but in different ways.
-
-        Returns:
-            list[torch.Tensor]: Features of different images
-        """
-
-        assert isinstance(imgs, list)
-        return [self.extract_img_feat(img) for img in imgs]
-
-    def extract_pts_feat(self, pts):
+    def extract_pts_feat(self, pts: Tensor) -> Tuple[Tensor]:
         """Extract features of points."""
         x = self.pts_backbone(pts)
         if self.with_pts_neck:
@@ -300,151 +269,93 @@ class ImVoteNet(Base3DDetector):
 
         return (seed_points, seed_features, seed_indices)
 
-    def extract_pts_feats(self, pts):
-        """Extract features of points from multiple samples."""
-        assert isinstance(pts, list)
-        return [self.extract_pts_feat(pt) for pt in pts]
-
-    @torch.no_grad()
-    def extract_bboxes_2d(self,
-                          img,
-                          img_metas,
-                          train=True,
-                          bboxes_2d=None,
-                          **kwargs):
-        """Extract bounding boxes from 2d detector.
-
-        Args:
-            img (torch.Tensor): of shape (N, C, H, W) encoding input images.
-                Typically these should be mean centered and std scaled.
-            img_metas (list[dict]): Image meta info.
-            train (bool): train-time or not.
-            bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
-                not supported yet.
-
-        Return:
-            list[torch.Tensor]: a list of processed 2d bounding boxes.
+    def loss(self, batch_inputs_dict: Dict[str, Union[List, Tensor]],
+             batch_data_samples: List[Det3DDataSample],
+             **kwargs) -> List[Det3DDataSample]:
         """
-        if bboxes_2d is None:
-            x = self.extract_img_feat(img)
-            proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
-            rets = self.img_roi_head.simple_test(
-                x, proposal_list, img_metas, rescale=False)
-
-            rets_processed = []
-            for ret in rets:
-                tmp = np.concatenate(ret, axis=0)
-                sem_class = img.new_zeros((len(tmp)))
-                start = 0
-                for i, bboxes in enumerate(ret):
-                    sem_class[start:start + len(bboxes)] = i
-                    start += len(bboxes)
-                ret = img.new_tensor(tmp)
-
-                # append class index
-                ret = torch.cat([ret, sem_class[:, None]], dim=-1)
-                inds = torch.argsort(ret[:, 4], descending=True)
-                ret = ret.index_select(0, inds)
-
-                # drop half bboxes during training for better generalization
-                if train:
-                    rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
-                    rand_drop = torch.sort(rand_drop)[0]
-                    ret = ret[rand_drop]
-
-                rets_processed.append(ret.float())
-            return rets_processed
-        else:
-            rets_processed = []
-            for ret in bboxes_2d:
-                if len(ret) > 0 and train:
-                    rand_drop = torch.randperm(len(ret))[:(len(ret) + 1) // 2]
-                    rand_drop = torch.sort(rand_drop)[0]
-                    ret = ret[rand_drop]
-                rets_processed.append(ret.float())
-            return rets_processed
-
-    def forward_train(self,
-                      points=None,
-                      img=None,
-                      img_metas=None,
-                      gt_bboxes=None,
-                      gt_labels=None,
-                      gt_bboxes_ignore=None,
-                      gt_masks=None,
-                      proposals=None,
-                      bboxes_2d=None,
-                      gt_bboxes_3d=None,
-                      gt_labels_3d=None,
-                      pts_semantic_mask=None,
-                      pts_instance_mask=None,
-                      **kwargs):
-        """Forwarding of train for image branch pretrain or stage 2 train.
-
         Args:
-            points (list[torch.Tensor]): Points of each batch.
-            img (torch.Tensor): of shape (N, C, H, W) encoding input images.
-                Typically these should be mean centered and std scaled.
-            img_metas (list[dict]): list of image and point cloud meta info
-                dict. For example, keys include 'ori_shape', 'img_norm_cfg',
-                and 'transformation_3d_flow'. For details on the values of
-                the keys see `mmdet/datasets/pipelines/formatting.py:Collect`.
-            gt_bboxes (list[torch.Tensor]): Ground truth bboxes for each image
-                with shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
-            gt_labels (list[torch.Tensor]): class indices for each
-                2d bounding box.
-            gt_bboxes_ignore (list[torch.Tensor]): specify which
-                2d bounding boxes can be ignored when computing the loss.
-            gt_masks (torch.Tensor): true segmentation masks for each
-                2d bbox, used if the architecture supports a segmentation task.
-            proposals: override rpn proposals (2d) with custom proposals.
-                Use when `with_rpn` is False.
-            bboxes_2d (list[torch.Tensor]): provided 2d bboxes,
-                not supported yet.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): 3d gt bboxes.
-            gt_labels_3d (list[torch.Tensor]): gt class labels for 3d bboxes.
-            pts_semantic_mask (list[torch.Tensor]): point-wise semantic
-                label of each batch.
-            pts_instance_mask (list[torch.Tensor]): point-wise instance
-                label of each batch.
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'imgs` keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (list[torch.Tensor]): Image tensor with shape
+                  (N, C, H ,W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`.
 
         Returns:
-            dict[str, torch.Tensor]: a dictionary of loss components.
+            dict[str, Tensor]: A dictionary of loss components.
         """
+        imgs = batch_inputs_dict.get('imgs', None)
+        points = batch_inputs_dict.get('points', None)
         if points is None:
-            x = self.extract_img_feat(img)
+            x = self.extract_img_feat(imgs)
             losses = dict()
-
             # RPN forward and loss
             if self.with_img_rpn:
                 proposal_cfg = self.train_cfg.get('img_rpn_proposal',
                                                   self.test_cfg.img_rpn)
-                rpn_losses, proposal_list = self.img_rpn_head.forward_train(
-                    x,
-                    img_metas,
-                    gt_bboxes,
-                    gt_labels=None,
-                    gt_bboxes_ignore=gt_bboxes_ignore,
-                    proposal_cfg=proposal_cfg)
+                rpn_data_samples = copy.deepcopy(batch_data_samples)
+                # set cat_id of gt_labels to 0 in RPN
+                for data_sample in rpn_data_samples:
+                    data_sample.gt_instances.labels = \
+                        torch.zeros_like(data_sample.gt_instances.labels)
+
+                rpn_losses, rpn_results_list = \
+                    self.img_rpn_head.loss_and_predict(
+                        x, rpn_data_samples,
+                        proposal_cfg=proposal_cfg, **kwargs)
+                # avoid get same name with roi_head loss
+                keys = rpn_losses.keys()
+                for key in keys:
+                    if 'loss' in key and 'rpn' not in key:
+                        rpn_losses[f'rpn_{key}'] = rpn_losses.pop(key)
                 losses.update(rpn_losses)
             else:
-                proposal_list = proposals
+                assert batch_data_samples[0].get('proposals', None) is not None
+                # use pre-defined proposals in InstanceData for
+                # the second stage
+                # to extract ROI features.
+                rpn_results_list = [
+                    data_sample.proposals for data_sample in batch_data_samples
+                ]
 
-            roi_losses = self.img_roi_head.forward_train(
-                x, img_metas, proposal_list, gt_bboxes, gt_labels,
-                gt_bboxes_ignore, gt_masks, **kwargs)
+            roi_losses = self.img_roi_head.loss(x, rpn_results_list,
+                                                batch_data_samples, **kwargs)
             losses.update(roi_losses)
             return losses
         else:
-            bboxes_2d = self.extract_bboxes_2d(
-                img, img_metas, bboxes_2d=bboxes_2d, **kwargs)
+            with torch.no_grad():
+                results_2d = self.predict_img_only(
+                    batch_inputs_dict['imgs'],
+                    batch_data_samples,
+                    rescale=False)
+            # tensor with shape (n, 6), the 6 arrange
+            # as [x1, x2, y1, y2, score, label]
+            pred_bboxes_with_label_list = []
+            for single_results in results_2d:
+                cat_preds = torch.cat(
+                    (single_results.bboxes, single_results.scores[:, None],
+                     single_results.labels[:, None]),
+                    dim=-1)
+                cat_preds = cat_preds[torch.argsort(
+                    cat_preds[:, 4], descending=True)]
+                # drop half bboxes during training for better generalization
+                if self.training:
+                    rand_drop = torch.randperm(
+                        len(cat_preds))[:(len(cat_preds) + 1) // 2]
+                    rand_drop = torch.sort(rand_drop)[0]
+                    cat_preds = cat_preds[rand_drop]
 
-            points = torch.stack(points)
+                pred_bboxes_with_label_list.append(cat_preds)
+
+            stack_points = torch.stack(points)
             seeds_3d, seed_3d_features, seed_indices = \
-                self.extract_pts_feat(points)
-
-            img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                    img_metas)
+                self.extract_pts_feat(stack_points)
+            img_metas = [item.metainfo for item in batch_data_samples]
+            img_features, masks = self.fusion_layer(
+                imgs, pred_bboxes_with_label_list, seeds_3d, img_metas)
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
@@ -476,27 +387,13 @@ class ImVoteNet(Base3DDetector):
                 seed_features=img_features,
                 seed_indices=seed_indices)
 
-            loss_inputs = (points, gt_bboxes_3d, gt_labels_3d,
-                           pts_semantic_mask, pts_instance_mask, img_metas)
-            bbox_preds_joints = self.pts_bbox_head_joint(
-                feat_dict_joint, self.train_cfg.pts.sample_mod)
-            bbox_preds_pts = self.pts_bbox_head_pts(
-                feat_dict_pts, self.train_cfg.pts.sample_mod)
-            bbox_preds_img = self.pts_bbox_head_img(
-                feat_dict_img, self.train_cfg.pts.sample_mod)
             losses_towers = []
             losses_joint = self.pts_bbox_head_joint.loss(
-                bbox_preds_joints,
-                *loss_inputs,
-                gt_bboxes_ignore=gt_bboxes_ignore)
-            losses_pts = self.pts_bbox_head_pts.loss(
-                bbox_preds_pts,
-                *loss_inputs,
-                gt_bboxes_ignore=gt_bboxes_ignore)
-            losses_img = self.pts_bbox_head_img.loss(
-                bbox_preds_img,
-                *loss_inputs,
-                gt_bboxes_ignore=gt_bboxes_ignore)
+                points, feat_dict_joint, batch_data_samples)
+            losses_pts = self.pts_bbox_head_pts.loss(points, feat_dict_pts,
+                                                     batch_data_samples)
+            losses_img = self.pts_bbox_head_img.loss(points, feat_dict_img,
+                                                     batch_data_samples)
             losses_towers.append(losses_joint)
             losses_towers.append(losses_pts)
             losses_towers.append(losses_img)
@@ -516,267 +413,50 @@ class ImVoteNet(Base3DDetector):
 
             return combined_losses
 
-    def forward_test(self,
-                     points=None,
-                     img_metas=None,
-                     img=None,
-                     bboxes_2d=None,
-                     **kwargs):
-        """Forwarding of test for image branch pretrain or stage 2 train.
+    def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
+                batch_data_samples: List[Det3DDataSample],
+                **kwargs) -> List[Det3DDataSample]:
+        """Forward of testing.
 
         Args:
-            points (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and the inner
-                list contains all points in the batch, where each Tensor
-                should have a shape NxC. Defaults to None.
-            img_metas (list[list[dict]], optional): the outer list
-                indicates test-time augs (multiscale, flip, etc.)
-                and the inner list indicates images in a batch.
-                Defaults to None.
-            img (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and inner Tensor
-                should have a shape NxCxHxW, which contains all images
-                in the batch. Defaults to None. Defaults to None.
-            bboxes_2d (list[list[torch.Tensor]], optional):
-                Provided 2d bboxes, not supported yet. Defaults to None.
+            batch_inputs_dict (dict): The model input dict which include
+                'points' and 'imgs keys.
 
-        Returns:
-            list[list[torch.Tensor]]|list[dict]: Predicted 2d or 3d boxes.
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (list[torch.Tensor]): Tensor of Images.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`.
         """
+        points = batch_inputs_dict.get('points', None)
+        imgs = batch_inputs_dict.get('imgs', None)
         if points is None:
-            for var, name in [(img, 'img'), (img_metas, 'img_metas')]:
-                if not isinstance(var, list):
-                    raise TypeError(
-                        f'{name} must be a list, but got {type(var)}')
-
-            num_augs = len(img)
-            if num_augs != len(img_metas):
-                raise ValueError(f'num of augmentations ({len(img)}) '
-                                 f'!= num of image meta ({len(img_metas)})')
-
-            if num_augs == 1:
-                # proposals (List[List[Tensor]]): the outer list indicates
-                # test-time augs (multiscale, flip, etc.) and the inner list
-                # indicates images in a batch.
-                # The Tensor should have a shape Px4, where P is the number of
-                # proposals.
-                if 'proposals' in kwargs:
-                    kwargs['proposals'] = kwargs['proposals'][0]
-                return self.simple_test_img_only(
-                    img=img[0], img_metas=img_metas[0], **kwargs)
-            else:
-                assert img[0].size(0) == 1, 'aug test does not support ' \
-                                         'inference with batch size ' \
-                                         f'{img[0].size(0)}'
-                # TODO: support test augmentation for predefined proposals
-                assert 'proposals' not in kwargs
-                return self.aug_test_img_only(
-                    img=img, img_metas=img_metas, **kwargs)
+            assert imgs is not None
+            results_2d = self.predict_img_only(imgs, batch_data_samples)
+            return self.convert_to_datasample(results_list_2d=results_2d)
 
         else:
-            for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
-                if not isinstance(var, list):
-                    raise TypeError('{} must be a list, but got {}'.format(
-                        name, type(var)))
+            results_2d = self.predict_img_only(
+                batch_inputs_dict['imgs'], batch_data_samples, rescale=False)
+            # tensor with shape (n, 6), the 6 arrange
+            # as [x1, x2, y1, y2, score, label]
+            pred_bboxes_with_label_list = []
+            for single_results in results_2d:
+                cat_preds = torch.cat(
+                    (single_results.bboxes, single_results.scores[:, None],
+                     single_results.labels[:, None]),
+                    dim=-1)
+                cat_preds = cat_preds[torch.argsort(
+                    cat_preds[:, 4], descending=True)]
+                pred_bboxes_with_label_list.append(cat_preds)
 
-            num_augs = len(points)
-            if num_augs != len(img_metas):
-                raise ValueError(
-                    'num of augmentations ({}) != num of image meta ({})'.
-                    format(len(points), len(img_metas)))
+            stack_points = torch.stack(points)
+            seeds_3d, seed_3d_features, seed_indices = \
+                self.extract_pts_feat(stack_points)
 
-            if num_augs == 1:
-                return self.simple_test(
-                    points[0],
-                    img_metas[0],
-                    img[0],
-                    bboxes_2d=bboxes_2d[0] if bboxes_2d is not None else None,
-                    **kwargs)
-            else:
-                return self.aug_test(points, img_metas, img, bboxes_2d,
-                                     **kwargs)
-
-    def simple_test_img_only(self,
-                             img,
-                             img_metas,
-                             proposals=None,
-                             rescale=False):
-        r"""Test without augmentation, image network pretrain. May refer to
-        `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.
-
-        Args:
-            img (torch.Tensor): Should have a shape NxCxHxW, which contains
-                all images in the batch.
-            img_metas (list[dict]):
-            proposals (list[Tensor], optional): override rpn proposals
-                with custom proposals. Defaults to None.
-            rescale (bool, optional): Whether or not rescale bboxes to the
-                original shape of input image. Defaults to False.
-
-        Returns:
-            list[list[torch.Tensor]]: Predicted 2d boxes.
-        """  # noqa: E501
-        assert self.with_img_bbox, 'Img bbox head must be implemented.'
-        assert self.with_img_backbone, 'Img backbone must be implemented.'
-        assert self.with_img_rpn, 'Img rpn must be implemented.'
-        assert self.with_img_roi_head, 'Img roi head must be implemented.'
-
-        x = self.extract_img_feat(img)
-
-        if proposals is None:
-            proposal_list = self.img_rpn_head.simple_test_rpn(x, img_metas)
-        else:
-            proposal_list = proposals
-
-        ret = self.img_roi_head.simple_test(
-            x, proposal_list, img_metas, rescale=rescale)
-
-        return ret
-
-    def simple_test(self,
-                    points=None,
-                    img_metas=None,
-                    img=None,
-                    bboxes_2d=None,
-                    rescale=False,
-                    **kwargs):
-        """Test without augmentation, stage 2.
-
-        Args:
-            points (list[torch.Tensor], optional): Elements in the list
-                should have a shape NxC, the list indicates all point-clouds
-                in the batch. Defaults to None.
-            img_metas (list[dict], optional): List indicates
-                images in a batch. Defaults to None.
-            img (torch.Tensor, optional): Should have a shape NxCxHxW,
-                which contains all images in the batch. Defaults to None.
-            bboxes_2d (list[torch.Tensor], optional):
-                Provided 2d bboxes, not supported yet. Defaults to None.
-            rescale (bool, optional): Whether or not rescale bboxes.
-                Defaults to False.
-
-        Returns:
-            list[dict]: Predicted 3d boxes.
-        """
-        bboxes_2d = self.extract_bboxes_2d(
-            img, img_metas, train=False, bboxes_2d=bboxes_2d, **kwargs)
-
-        points = torch.stack(points)
-        seeds_3d, seed_3d_features, seed_indices = \
-            self.extract_pts_feat(points)
-
-        img_features, masks = self.fusion_layer(img, bboxes_2d, seeds_3d,
-                                                img_metas)
-
-        inds = sample_valid_seeds(masks, self.num_sampled_seed)
-        batch_size, img_feat_size = img_features.shape[:2]
-        pts_feat_size = seed_3d_features.shape[1]
-        inds_img = inds.view(batch_size, 1, -1).expand(-1, img_feat_size, -1)
-        img_features = img_features.gather(-1, inds_img)
-        inds = inds % inds.shape[1]
-        inds_seed_xyz = inds.view(batch_size, -1, 1).expand(-1, -1, 3)
-        seeds_3d = seeds_3d.gather(1, inds_seed_xyz)
-        inds_seed_feats = inds.view(batch_size, 1,
-                                    -1).expand(-1, pts_feat_size, -1)
-        seed_3d_features = seed_3d_features.gather(-1, inds_seed_feats)
-        seed_indices = seed_indices.gather(1, inds)
-
-        img_features = self.img_mlp(img_features)
-
-        fused_features = torch.cat([seed_3d_features, img_features], dim=1)
-
-        feat_dict = dict(
-            seed_points=seeds_3d,
-            seed_features=fused_features,
-            seed_indices=seed_indices)
-        bbox_preds = self.pts_bbox_head_joint(feat_dict,
-                                              self.test_cfg.pts.sample_mod)
-        bbox_list = self.pts_bbox_head_joint.get_bboxes(
-            points, bbox_preds, img_metas, rescale=rescale)
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
-        return bbox_results
-
-    def aug_test_img_only(self, img, img_metas, rescale=False):
-        r"""Test function with augmentation, image network pretrain. May refer
-        to `<https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py>`_.
-
-        Args:
-            img (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and inner Tensor
-                should have a shape NxCxHxW, which contains all images
-                in the batch. Defaults to None. Defaults to None.
-            img_metas (list[list[dict]], optional): the outer list
-                indicates test-time augs (multiscale, flip, etc.)
-                and the inner list indicates images in a batch.
-                Defaults to None.
-            rescale (bool, optional): Whether or not rescale bboxes to the
-                original shape of input image. If rescale is False, then
-                returned bboxes and masks will fit the scale of imgs[0].
-                Defaults to None.
-
-        Returns:
-            list[list[torch.Tensor]]: Predicted 2d boxes.
-        """  # noqa: E501
-        assert self.with_img_bbox, 'Img bbox head must be implemented.'
-        assert self.with_img_backbone, 'Img backbone must be implemented.'
-        assert self.with_img_rpn, 'Img rpn must be implemented.'
-        assert self.with_img_roi_head, 'Img roi head must be implemented.'
-
-        x = self.extract_img_feats(img)
-        proposal_list = self.img_rpn_head.aug_test_rpn(x, img_metas)
-
-        return self.img_roi_head.aug_test(
-            x, proposal_list, img_metas, rescale=rescale)
-
-    def aug_test(self,
-                 points=None,
-                 img_metas=None,
-                 imgs=None,
-                 bboxes_2d=None,
-                 rescale=False,
-                 **kwargs):
-        """Test function with augmentation, stage 2.
-
-        Args:
-            points (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and the inner
-                list contains all points in the batch, where each Tensor
-                should have a shape NxC. Defaults to None.
-            img_metas (list[list[dict]], optional): the outer list
-                indicates test-time augs (multiscale, flip, etc.)
-                and the inner list indicates images in a batch.
-                Defaults to None.
-            imgs (list[list[torch.Tensor]], optional): the outer
-                list indicates test-time augmentations and inner Tensor
-                should have a shape NxCxHxW, which contains all images
-                in the batch. Defaults to None. Defaults to None.
-            bboxes_2d (list[list[torch.Tensor]], optional):
-                Provided 2d bboxes, not supported yet. Defaults to None.
-            rescale (bool, optional): Whether or not rescale bboxes.
-                Defaults to False.
-
-        Returns:
-            list[dict]: Predicted 3d boxes.
-        """
-        points_cat = [torch.stack(pts) for pts in points]
-        feats = self.extract_pts_feats(points_cat, img_metas)
-
-        # only support aug_test for one sample
-        aug_bboxes = []
-        for x, pts_cat, img_meta, bbox_2d, img in zip(feats, points_cat,
-                                                      img_metas, bboxes_2d,
-                                                      imgs):
-
-            bbox_2d = self.extract_bboxes_2d(
-                img, img_metas, train=False, bboxes_2d=bbox_2d, **kwargs)
-
-            seeds_3d, seed_3d_features, seed_indices = x
-
-            img_features, masks = self.fusion_layer(img, bbox_2d, seeds_3d,
-                                                    img_metas)
+            img_features, masks = self.fusion_layer(
+                imgs, pred_bboxes_with_label_list, seeds_3d,
+                [item.metainfo for item in batch_data_samples])
 
             inds = sample_valid_seeds(masks, self.num_sampled_seed)
             batch_size, img_feat_size = img_features.shape[:2]
@@ -800,19 +480,57 @@ class ImVoteNet(Base3DDetector):
                 seed_points=seeds_3d,
                 seed_features=fused_features,
                 seed_indices=seed_indices)
-            bbox_preds = self.pts_bbox_head_joint(feat_dict,
-                                                  self.test_cfg.pts.sample_mod)
-            bbox_list = self.pts_bbox_head_joint.get_bboxes(
-                pts_cat, bbox_preds, img_metas, rescale=rescale)
 
-            bbox_list = [
-                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
-                for bboxes, scores, labels in bbox_list
+            results_3d = self.pts_bbox_head_joint.predict(
+                batch_inputs_dict['points'],
+                feat_dict,
+                batch_data_samples,
+                rescale=True)
+
+            return self.convert_to_datasample(results_3d)
+
+    def predict_img_only(self,
+                         imgs: Tensor,
+                         batch_data_samples: List[Det3DDataSample],
+                         rescale: bool = True) -> List[InstanceData]:
+        """Predict results from a batch of imgs with post- processing.
+
+        Args:
+            imgs (Tensor): Inputs images with shape (N, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance`, `gt_panoptic_seg` and `gt_sem_seg`.
+            rescale (bool): Whether to rescale the results.
+                Defaults to True.
+
+        Returns:
+            list[:obj:`InstanceData`]: Return the list of detection
+            results of the input images, usually contains following keys.
+
+            - scores (Tensor): Classification scores, has a shape
+                (num_instance, )
+            - labels (Tensor): Labels of bboxes, has a shape
+                (num_instances, ).
+            - bboxes (Tensor): Has a shape (num_instances, 4),
+                the last dimension 4 arrange as (x1, y1, x2, y2).
+        """
+
+        assert self.with_img_bbox, 'Img bbox head must be implemented.'
+        assert self.with_img_backbone, 'Img backbone must be implemented.'
+        assert self.with_img_rpn, 'Img rpn must be implemented.'
+        assert self.with_img_roi_head, 'Img roi head must be implemented.'
+        x = self.extract_img_feat(imgs)
+
+        # If there are no pre-defined proposals, use RPN to get proposals
+        if batch_data_samples[0].get('proposals', None) is None:
+            rpn_results_list = self.img_rpn_head.predict(
+                x, batch_data_samples, rescale=False)
+        else:
+            rpn_results_list = [
+                data_sample.proposals for data_sample in batch_data_samples
             ]
-            aug_bboxes.append(bbox_list[0])
 
-        # after merging, bboxes will be rescaled to the original image size
-        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
-                                            self.bbox_head.test_cfg)
+        results_list = self.img_roi_head.predict(
+            x, rpn_results_list, batch_data_samples, rescale=rescale)
 
-        return [merged_bboxes]
+        return results_list

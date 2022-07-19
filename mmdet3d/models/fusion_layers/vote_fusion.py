@@ -45,8 +45,6 @@ class VoteFusion(nn.Module):
             seed_num = seed_3d_depth.shape[0]
 
             img_shape = img_meta['img_shape']
-            img_h, img_w, _ = img_shape
-
             # first reverse the data transformations
             xyz_depth = apply_3d_transformation(
                 seed_3d_depth, 'DEPTH', img_meta, reverse=True)

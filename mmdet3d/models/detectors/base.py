@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Union
+from typing import List, Optional, Union
 
 from mmengine import InstanceData
 
@@ -91,8 +91,8 @@ class Base3DDetector(BaseDetector):
 
     def convert_to_datasample(
         self,
-        results_list_3d: InstanceList,
-        results_list_2d: InstanceList = None,
+        results_list_3d: Optional[InstanceList] = None,
+        results_list_2d: Optional[InstanceList] = None,
     ) -> SampleList:
         """Convert results list to `Det3DDataSample`.
 
@@ -128,9 +128,17 @@ class Base3DDetector(BaseDetector):
         """
 
         data_sample_list = []
+        assert (results_list_2d is not None) or \
+               (results_list_3d is not None),\
+               'please pass at least one type of results_list'
+
         if results_list_2d is None:
             results_list_2d = [
                 InstanceData() for _ in range(len(results_list_3d))
+            ]
+        if results_list_3d is None:
+            results_list_3d = [
+                InstanceData() for _ in range(len(results_list_2d))
             ]
         for i in range(len(results_list_3d)):
             result = Det3DDataSample()

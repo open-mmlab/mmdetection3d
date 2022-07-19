@@ -87,7 +87,8 @@ class KittiDataset(Det3DDataset):
             if 'plane' in info:
                 # convert ground plane to velodyne coordinates
                 plane = np.array(info['plane'])
-                lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
+                lidar2cam = np.array(
+                    info['images']['CAM2']['lidar2cam'], dtype=np.float32)
                 reverse = np.linalg.inv(lidar2cam)
 
                 (plane_norm_cam, plane_off_cam) = (plane[:3],

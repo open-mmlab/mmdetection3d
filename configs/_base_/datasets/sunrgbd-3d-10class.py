@@ -2,6 +2,9 @@ dataset_type = 'SUNRGBDDataset'
 data_root = 'data/sunrgbd/'
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
+
+metainfo = dict(CLASSES=class_names)
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -21,8 +24,9 @@ train_pipeline = [
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
     dict(type='PointSample', num_points=20000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -47,61 +51,52 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.5,
             ),
-            dict(type='PointSample', num_points=20000),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
-]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='DEPTH',
-        shift_height=False,
-        load_dim=6,
-        use_dim=[0, 1, 2]),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+            dict(type='PointSample', num_points=20000)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-data = dict(
-    samples_per_gpu=16,
-    workers_per_gpu=4,
-    train=dict(
+train_dataloader = dict(
+    batch_size=16,
+    num_workers=4,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type='RepeatDataset',
         times=5,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'sunrgbd_infos_train.pkl',
+            ann_file='sunrgbd_infos_train.pkl',
             pipeline=train_pipeline,
-            classes=class_names,
             filter_empty_gt=False,
+            metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')),
-    val=dict(
+            box_type_3d='Depth')))
+
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
+        ann_file='sunrgbd_infos_val.pkl',
         pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='Depth'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
+        metainfo=metainfo,
         test_mode=True,
         box_type_3d='Depth'))
-
-evaluation = dict(pipeline=eval_pipeline)
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='sunrgbd_infos_val.pkl',
+        pipeline=test_pipeline,
+        metainfo=metainfo,
+        test_mode=True,
+        box_type_3d='Depth'))
+val_evaluator = dict(type='IndoorMetric')
+test_evaluator = val_evaluator

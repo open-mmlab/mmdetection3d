@@ -754,15 +754,16 @@ class VoteHead(BaseModule):
         batch_size = bbox3d.shape[0]
         results_list = list()
         if use_nms:
-            for b in range(batch_size):
+            for batch_index in range(batch_size):
                 temp_results = InstanceData()
                 bbox_selected, score_selected, labels = \
-                    self.multiclass_nms_single(obj_scores[b],
-                                               sem_scores[b],
-                                               bbox3d[b],
-                                               stack_points[b, ..., :3],
-                                               batch_input_metas[b])
-                bbox = batch_input_metas[b]['box_type_3d'](
+                    self.multiclass_nms_single(
+                        obj_scores[batch_index],
+                        sem_scores[batch_index],
+                        bbox3d[batch_index],
+                        stack_points[batch_index, ..., :3],
+                        batch_input_metas[batch_index])
+                bbox = batch_input_metas[batch_index]['box_type_3d'](
                     bbox_selected,
                     box_dim=bbox_selected.shape[-1],
                     with_yaw=self.bbox_coder.with_rot)

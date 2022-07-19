@@ -7,10 +7,6 @@ _base_ = [
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
-# use caffe img_norm
-img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
-
 model = dict(
     pts_backbone=dict(
         type='PointNet2SASSG',
@@ -48,10 +44,8 @@ model = dict(
                             [0.76584, 1.398258, 0.472728]]),
             pred_layer_cfg=dict(
                 in_channels=128, shared_conv_channels=(128, 128), bias=True),
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d'),
             objectness_loss=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 class_weight=[0.2, 0.8],
                 reduction='sum',
                 loss_weight=5.0),
@@ -62,15 +56,23 @@ model = dict(
                 loss_src_weight=10.0,
                 loss_dst_weight=10.0),
             dir_class_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+                type='mmdet.CrossEntropyLoss',
+                reduction='sum',
+                loss_weight=1.0),
             dir_res_loss=dict(
-                type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+                type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),
             size_class_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+                type='mmdet.CrossEntropyLoss',
+                reduction='sum',
+                loss_weight=1.0),
             size_res_loss=dict(
-                type='SmoothL1Loss', reduction='sum', loss_weight=10.0 / 3.0),
+                type='mmdet.SmoothL1Loss',
+                reduction='sum',
+                loss_weight=10.0 / 3.0),
             semantic_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+                type='mmdet.CrossEntropyLoss',
+                reduction='sum',
+                loss_weight=1.0)),
         joint=dict(
             vote_module_cfg=dict(
                 in_channels=512,
@@ -154,11 +156,11 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(
         pts=dict(
-            pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote')),
+            pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mode='vote')),
     test_cfg=dict(
         img_rcnn=dict(score_thr=0.1),
         pts=dict(
-            sample_mod='seed',
+            sample_mode='seed',
             nms_thr=0.25,
             score_thr=0.05,
             per_class_proposal=True)))
@@ -171,12 +173,13 @@ train_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2]),
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations3D'),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.0),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox=True,
+        with_label=True,
+        with_bbox_3d=True,
+        with_label_3d=True),
+    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -188,15 +191,13 @@ train_pipeline = [
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
     dict(type='PointSample', num_points=20000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
-        keys=[
-            'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
+        type='Pack3DDetInputs',
+        keys=([
+            'img', 'gt_bboxes', 'gt_bboxes_labels', 'points', 'gt_bboxes_3d',
             'gt_labels_3d'
-        ])
+        ]))
 ]
-
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
@@ -205,56 +206,15 @@ test_pipeline = [
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 600),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip', flip_ratio=0.0),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.5,
-            ),
-            dict(type='PointSample', num_points=20000),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['img', 'points'])
-        ]),
-]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='DEPTH',
-        shift_height=False,
-        load_dim=6,
-        use_dim=[0, 1, 2]),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['img', 'points'])
+    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
+    dict(type='PointSample', num_points=20000),
+    dict(type='Pack3DDetInputs', keys=['img', 'points'])
 ]
 
-data = dict(
-    train=dict(dataset=dict(pipeline=train_pipeline)),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
-evaluation = dict(pipeline=eval_pipeline)
+train_dataloader = dict(dataset=dict(dataset=dict(pipeline=train_pipeline)))
+
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # may also use your own pre-trained image branch
 load_from = 'https://download.openmmlab.com/mmdetection3d/v0.1.0_models/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class_20210323_173222-cad62aeb.pth'  # noqa
