@@ -2,7 +2,7 @@
 dataset_type = 'Custom3DDataset'
 data_root = 'data/rf2021/'
 class_names = ['Pedestrian']
-point_cloud_range = [-60, -63.84, -3, 62.88, 60, 1]
+point_cloud_range = [-60, -62.88, -3, 62.88, 60, 1]
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -95,7 +95,7 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=3,
+    samples_per_gpu=6,
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',

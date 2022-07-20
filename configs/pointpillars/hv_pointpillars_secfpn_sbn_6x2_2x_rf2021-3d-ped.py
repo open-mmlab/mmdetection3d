@@ -10,28 +10,17 @@ _base_ = [
 model = dict(
     type='MVXFasterRCNN',
     pts_voxel_layer=dict(
-        point_cloud_range=[-60, -63.84, -3, 62.88, 60, 1]),
+        point_cloud_range=[-60, -62.88, -3, 62.88, 60, 1]),
     pts_voxel_encoder=dict(
-        point_cloud_range=[-60, -63.84, -3, 62.88, 60, 1]),
-    pts_backbone=dict(
-        type='SECOND',
-        in_channels=64,
-        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
-        layer_nums=[3, 5, 5],
-        layer_strides=[1, 1, 1],
-        out_channels=[64, 128, 256]),
-    pts_neck=dict(
-        type='SECONDFPN',
-        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
-        in_channels=[64, 128, 256],
-        upsample_strides=[1, 1, 1],
-        out_channels=[128, 128, 128]),
+        point_cloud_range=[-60, -62.88, -3, 62.88, 60, 1]),
+    pts_middle_encoder=dict(
+        type='PointPillarsScatter', in_channels=64, output_shape=[384, 384]),
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=1,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
-            ranges=[[-60, -63.84, -0.0345, 62.88, 60, -0.0345]],
+            ranges=[[-60, -62.88, -0.0345, 62.88, 60, -0.0345]],
             sizes=[[0.7, 0.7, 1.7]],
             rotations=[0, 1.57],
             reshape_out=True)),
