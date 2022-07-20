@@ -460,40 +460,48 @@ class CenterHead(BaseModule):
         voxel_size = torch.tensor(self.train_cfg['voxel_size'])
 
         feature_map_size = grid_size[:2] // self.train_cfg['out_size_factor']
-
+        
         # reorganize the gt_dict by tasks
-        # task_masks = []
-        # flag = 0
-        # for class_name in self.class_names:
-        #     task_masks.append([
-        #         torch.where(gt_labels_3d == class_name.index(i) + flag)
-        #         for i in class_name
-        #     ])
-        #     flag += len(class_name)
+        task_masks = []
+        flag = 0
+        for class_name in self.class_names:
+            task_masks.append([
+                torch.where(gt_labels_3d == class_name.index(i) + flag)
+                for i in class_name
+            ])
+            flag += len(class_name)
 
-        # task_boxes = []
-        # task_classes = []
-        # flag2 = 0
-        # for idx, mask in enumerate(task_masks):
-        #     task_box = []
-        #     task_class = []
-        #     for m in mask:
-        #         task_box.append(gt_bboxes_3d[m])
-        #         # 0 is background for each task, so we need to add 1 here.
-        #         task_class.append(gt_labels_3d[m] + 1 - flag2)
-        #     task_boxes.append(torch.cat(task_box, axis=0).to(device))
-        #     task_classes.append(torch.cat(task_class).long().to(device))
-        #     flag2 += len(mask)
-        task_boxes = [gt_bboxes_3d]
-        task_classes = [gt_labels_3d]
+        task_boxes = []
+        task_classes = []
+        flag2 = 0
+        for idx, mask in enumerate(task_masks):
+            task_box = []
+            task_class = []
+            for m in mask:
+                task_box.append(gt_bboxes_3d[m])
+                # 0 is background for each task, so we need to add 1 here.
+                task_class.append(gt_labels_3d[m] + 1 - flag2)
+            task_boxes.append(torch.cat(task_box, axis=0).to(device))
+            task_classes.append(torch.cat(task_class).long().to(device))
+            flag2 += len(mask)
+        
+        
+        # task_boxes = [gt_bboxes_3d]
+        # task_classes = [gt_labels_3d]
+
+
         draw_gaussian = draw_heatmap_gaussian
         heatmaps, anno_boxes, inds, masks = [], [], [], []
-        
+        # print("heatmaps")
+        # print("task classes")
+        # print(task_classes)
+        # print("self class names")
+        # print(self.class_names)
+
         for idx, task_head in enumerate(self.task_heads):
             heatmap = gt_bboxes_3d.new_zeros(
                 (len(self.class_names[idx]), feature_map_size[1],
                  feature_map_size[0]))
-
             anno_box = gt_bboxes_3d.new_zeros((max_objs, 8),
                                               dtype=torch.float32)
 
@@ -541,7 +549,6 @@ class CenterHead(BaseModule):
                     if not (0 <= center_int[0] < feature_map_size[0]
                             and 0 <= center_int[1] < feature_map_size[1]):
                         continue
-
                     draw_gaussian(heatmap[cls_id], center_int, radius)
 
                     new_idx = k
@@ -559,14 +566,14 @@ class CenterHead(BaseModule):
                     if self.norm_bbox:
                         box_dim = box_dim.log()
 
-                    fixed_z = torch.ones_like(z)
-                    fixed_rot = torch.zeros_like(rot)
+                    # fixed_z = torch.ones_like(z)
+                    # fixed_rot = torch.zeros_like(rot)
 
                     anno_box[new_idx] = torch.cat([
                         center - torch.tensor([x, y], device=device),
                         z.unsqueeze(0), box_dim,
-                        torch.sin(fixed_rot).unsqueeze(0),
-                        torch.cos(fixed_rot).unsqueeze(0),
+                        torch.sin(rot).unsqueeze(0),
+                        torch.cos(rot).unsqueeze(0),
                         # vx.unsqueeze(0),
                         # vy.unsqueeze(0)
                     ])
@@ -575,7 +582,7 @@ class CenterHead(BaseModule):
             anno_boxes.append(anno_box)
             masks.append(mask)
             inds.append(ind)
-        
+            # print(heatmaps)
         
         return heatmaps, anno_boxes, inds, masks
 

@@ -11,6 +11,19 @@ file_client_args = dict(backend='disk')
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
 
+db_sampler = dict(
+    data_root=data_root,
+    # info_path=data_root + 'rf2021_dbinfos_train.pkl',
+    info_path=data_root + 'rf2021_dbinfos_train.pkl',
+
+    rate=1.0,
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Pedestrian=5)),
+    classes=['Pedestrian'],
+    sample_groups=dict(Pedestrian=15))
+
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -23,6 +36,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         file_client_args=file_client_args),
+    dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=False),
     dict(
         type='ObjectNoise',
         num_try=100,
@@ -93,7 +107,7 @@ data = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'rf2021_infos_train_ped_50.pkl',
+            ann_file=data_root + 'rf2021_infos_train_range_limit_-60to50_30.pkl',
             pipeline=train_pipeline,
             classes=class_names,
             test_mode=False,
@@ -103,7 +117,7 @@ data = dict(
     val=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'rf2021_infos_train_ped_50.pkl',
+        ann_file=data_root + 'rf2021_infos_val_range_limit_-60to50_30.pkl',
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
@@ -112,7 +126,7 @@ data = dict(
         type=dataset_type,
         data_root=data_root,
         # ann_file=data_root + 'rf2021_infos_train_ped_50.pkl',
-        ann_file=data_root + 'rf2021_infos_test.pkl',
+        ann_file=data_root + 'rf2021_infos_test_range_limit_-60to50_30.pkl',
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
