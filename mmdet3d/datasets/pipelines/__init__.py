@@ -6,8 +6,7 @@ from .formating import (Collect3D, DefaultFormatBundle,
 from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
                       LoadMultiViewImageFromFiles, LoadPointsFromDict,
                       LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                      NormalizePointsColor, PointSegClassMapping,
-                      YOLOXHSVPointsRandomAug, ChromaticJitter, )
+                      NormalizePointsColor, PointSegClassMapping,)
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,
@@ -18,7 +17,8 @@ from .transforms_3d import (AffineResize, BackgroundPointsFilter,
                             PointShuffle, PointsRangeFilter,
                             RandomDropPointsColor, RandomFlip3D,
                             RandomJitterPoints, RandomRotate, RandomShiftScale,
-                            RangeLimitedRandomCrop, VoxelBasedPointSampler)
+                            RangeLimitedRandomCrop, VoxelBasedPointSampler,
+                            YOLOXHSVPointsRandomAug, ChromaticJitter,)
 
 __all__ = [
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',

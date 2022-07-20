@@ -1,9 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
-import torch
-from torch import nn as nn
-from torch.nn import functional as F
-
 try:
     import MinkowskiEngine as ME
 except ImportError:
@@ -11,73 +6,41 @@ except ImportError:
     warnings.warn(
         'Please follow `getting_started.md` to install MinkowskiEngine.`')
 
-from mmseg.core import add_prefix
-from ..builder import (
-    SEGMENTORS, build_backbone,
-    build_head, build_loss, build_neck)
-from .base import Base3DSegmentor
+import torch
+from torch import nn as nn
+
+from ..builder import SEGMENTORS
+from .encoder_decoder import EncoderDecoder3D
 
 
 @SEGMENTORS.register_module()
-class SparseEncoderDecoder3D(Base3DSegmentor):
+class SparseEncoderDecoder3D(EncoderDecoder3D):
     r"""3D Sparse Encoder Decoder segmentors.
+    Sparse version of `EncoderDecoder3D` class.
 
-    EncoderDecoder typically consists of backbone, decode_head, auxiliary_head.
-    Note that auxiliary_head is only used for deep supervision during training,
-    which could be thrown during inference.
+    Args:
+        voxel_size (float): voxel size for point cloud processing
+            Defaults to 0.05 (cm).
     """
 
     def __init__(self,
-                 backbone,
-                 decode_head,
                  voxel_size,
-                 neck=None,
-                 auxiliary_head=None,
-                 loss_regularization=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
-        super(SparseEncoderDecoder3D, self).__init__(init_cfg=init_cfg)
-        self.backbone = build_backbone(backbone)
-        if neck is not None:
-            self.neck = build_neck(neck)
-        self._init_decode_head(decode_head)
-        self._init_auxiliary_head(auxiliary_head)
-        self._init_loss_regularization(loss_regularization)
+                 *args,
+                 **kwargs):
+        super(SparseEncoderDecoder3D, self).__init__(
+            *args, **kwargs)
 
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
         self.voxel_size = voxel_size
-        assert self.with_decode_head, \
-            '3D Sparse EncoderDecoder Segmentor should have a decode_head'
-
-    def _init_decode_head(self, decode_head):
-        """Initialize ``decode_head``"""
-        self.decode_head = build_head(decode_head)
-        self.num_classes = self.decode_head.num_classes
-
-    def _init_auxiliary_head(self, auxiliary_head):
-        """Initialize ``auxiliary_head``"""
-        if auxiliary_head is not None:
-            if isinstance(auxiliary_head, list):
-                self.auxiliary_head = nn.ModuleList()
-                for head_cfg in auxiliary_head:
-                    self.auxiliary_head.append(build_head(head_cfg))
-            else:
-                self.auxiliary_head = build_head(auxiliary_head)
-
-    def _init_loss_regularization(self, loss_regularization):
-        """Initialize ``loss_regularization``"""
-        if loss_regularization is not None:
-            if isinstance(loss_regularization, list):
-                self.loss_regularization = nn.ModuleList()
-                for loss_cfg in loss_regularization:
-                    self.loss_regularization.append(build_loss(loss_cfg))
-            else:
-                self.loss_regularization = build_loss(loss_regularization)
 
     def _collate(self, points):
+        """Transform data from PyTorch-based to MinkowskiEngine-based.
+        
+        Args:
+            points (list[torch.Tensor]): Input points of shape [B, N, 3+C].
+
+        Returns:
+            MinkowskiEngine.TensorField: TensorField data container.
+        """
         
         coordinates, features = ME.utils.batch_sparse_collate(
             data=[
@@ -97,83 +60,6 @@ class SparseEncoderDecoder3D(Base3DSegmentor):
         )
 
         return field
-
-    def extract_feat(self, x, img_metas):
-        """Extract features from points."""
-        x = self.backbone(x)
-        if self.with_neck:
-            x = self.neck(x)
-        return x
-
-    def encode_decode(self, points, img_metas):
-        """Encode points with backbone and decode into a semantic segmentation
-        map of the same size as input.
-
-        Args:
-            points (torch.Tensor): Input points of shape [B, N, 3+C].
-            img_metas (list[dict]): Meta information of each sample.
-
-        Returns:
-            torch.Tensor: Segmentation logits of shape [B, num_classes, N].
-        """
-        x = self.extract_feat(points)
-        out = self._decode_head_forward_test(x, img_metas)
-        return out
-
-    def _decode_head_forward_train(self, x, img_metas, pts_semantic_mask):
-        """Run forward function and calculate loss for decode head in
-        training."""
-        losses = dict()
-        loss_decode = self.decode_head.forward_train(x, img_metas,
-                                                     pts_semantic_mask,
-                                                     self.train_cfg)
-
-        losses.update(add_prefix(loss_decode, 'decode'))
-        return losses
-
-    def _decode_head_forward_test(self, x, img_metas):
-        """Run forward function and calculate loss for decode head in
-        inference."""
-        seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg)
-        return seg_logits
-
-    def _auxiliary_head_forward_train(self, x, img_metas, pts_semantic_mask):
-        """Run forward function and calculate loss for auxiliary head in
-        training."""
-        losses = dict()
-        if isinstance(self.auxiliary_head, nn.ModuleList):
-            for idx, aux_head in enumerate(self.auxiliary_head):
-                loss_aux = aux_head.forward_train(x, img_metas,
-                                                  pts_semantic_mask,
-                                                  self.train_cfg)
-                losses.update(add_prefix(loss_aux, f'aux_{idx}'))
-        else:
-            loss_aux = self.auxiliary_head.forward_train(
-                x, img_metas, pts_semantic_mask, self.train_cfg)
-            losses.update(add_prefix(loss_aux, 'aux'))
-
-        return losses
-
-    def _loss_regularization_forward_train(self):
-        """Calculate regularization loss for model weight in training."""
-        losses = dict()
-        if isinstance(self.loss_regularization, nn.ModuleList):
-            for idx, regularize_loss in enumerate(self.loss_regularization):
-                loss_regularize = dict(
-                    loss_regularize=regularize_loss(self.modules()))
-                losses.update(add_prefix(loss_regularize, f'regularize_{idx}'))
-        else:
-            loss_regularize = dict(
-                loss_regularize=self.loss_regularization(self.modules()))
-            losses.update(add_prefix(loss_regularize, 'regularize'))
-
-        return losses
-
-    def forward_dummy(self, points):
-        """Dummy forward function."""
-        seg_logit = self.encode_decode(points, None)
-
-        return seg_logit
 
     def forward_train(self, points, img_metas, pts_semantic_mask):
         """Forward function for training.
@@ -195,7 +81,6 @@ class SparseEncoderDecoder3D(Base3DSegmentor):
         field = self._collate(points)
         x = field.sparse()
         
-
         targets = ME.SparseTensor(
             x.features[:, -1, None],
             coordinate_map_key=x.coordinate_map_key,
@@ -209,7 +94,7 @@ class SparseEncoderDecoder3D(Base3DSegmentor):
         )
 
         # extract features using backbone
-        x = self.extract_feat(x, img_metas)
+        x = self.extract_feat(x)
 
         losses = dict()
 
@@ -249,9 +134,9 @@ class SparseEncoderDecoder3D(Base3DSegmentor):
 
                 - semantic_mask (Tensor): Segmentation mask of shape [N].
         """
-        field = self._collate(points=points)
+        field = self._collate(points)
         x = field.sparse()
-        x = self.extract_feat(x, img_metas)
+        x = self.extract_feat(x)
         masks = self.decode_head.forward_test(x, field, img_metas, self.test_cfg)
          
         out = [dict(semantic_mask=masks[0].argmax(1).cpu())]

@@ -3,6 +3,7 @@ import random
 import warnings
 
 import cv2
+import torch
 import numpy as np
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
@@ -11,7 +12,8 @@ from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
 from mmdet3d.datasets.pipelines.compose import Compose
-from mmdet.datasets.pipelines import RandomCrop, RandomFlip, Rotate
+from mmdet.datasets.pipelines import (RandomCrop, RandomFlip, Rotate,
+                                      YOLOXHSVRandomAug)
 from ..builder import OBJECTSAMPLERS, PIPELINES
 from .data_augment_utils import noise_per_object_v3_
 
@@ -63,6 +65,141 @@ class RandomDropPointsColor(object):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(drop_ratio={self.drop_ratio})'
+        return repr_str
+
+@PIPELINES.register_module()
+class YOLOXHSVPointsRandomAug(YOLOXHSVRandomAug):
+    r"""Apply HSV augmentation to colors of points sequentially. It is referenced from
+    https://github.com/Megvii-
+    BaseDetection/YOLOX/blob/main/yolox/data/data_augment.py#L21.
+
+    Args:
+        hue_delta (int): delta of hue.
+            Defaults to 5.
+        saturation_delta (int): delta of saturation.
+           Defaults to 30.
+        value_delta (int): delat of value.
+            Defaults to 30.
+    """
+
+    def __init__(self,
+                 hue_delta=5,
+                 saturation_delta=30,
+                 value_delta=30):
+        super(YOLOXHSVPointsRandomAug, self).__init__(
+            hue_delta=hue_delta,
+            saturation_delta=saturation_delta,
+            value_delta=value_delta)
+
+    def __call__(self, results):
+        """Call function to YOLO HSV random augmentation.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+
+        Returns:
+            dict: The result dict containing the augmented colors of points.
+                Updated key and value are described below.
+
+                - points (:obj:`BasePoints`): Points after color augmentation.
+        """
+
+        points = results['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims.keys(), \
+            'Expect points have color attribute'
+
+        # colors of points as image
+        img = points.color
+
+        was_torch = False
+        if isinstance(img, torch.Tensor):
+            was_torch = True
+            img = img.numpy()
+
+        prev_dtype = img.dtype
+        img = img[:, None, :].astype(np.uint8)
+
+        inputs = dict(img=img)
+
+        # augment 2D image
+        super(YOLOXHSVPointsRandomAug, self).__call__(inputs)
+
+        img = inputs['img']
+        img = img.astype(prev_dtype)
+        if was_torch:
+            img = torch.tensor(img)
+        
+        points.color = img[:, 0, :]
+        results['points'] = points
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_delta={self.hue_delta}, '
+        repr_str += f'saturation_delta={self.saturation_delta}, '
+        repr_str += f'value_delta={self.value_delta})'
+        return repr_str
+    
+class ChromaticJitter(object):
+    r"""Gaussian on colors of points. It is referenced from
+    https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/transforms.py#L61
+
+    Args:
+        std (float): std of a Gauss noize.
+            Defaults to 0.01.
+    """
+
+    def __init__(self, std=0.01):
+        self.std = std
+
+    def __call__(self, results):
+        """Call function to chromatic jitter points.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+
+        Returns:
+            dict: The result dict containing the jitted colors of points.
+                Updated key and value are described below.
+
+                - points (:obj:`BasePoints`): Points after color augmentation.
+        """
+        
+        points = results['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims.keys(), \
+            'Expect points have color attribute'
+
+        img = points.color
+
+        was_torch = False
+        if isinstance(img, torch.Tensor):
+            was_torch = True
+            img = img.numpy()
+
+        prev_dtype = img.dtype
+        img = img.astype(np.uint8)
+        if random.random() < 0.95:
+            noise = np.random.randn(img.shape[0], 3)
+            noise *= self.std * 255
+            img = np.clip(noise + img, 0, 255)
+        
+        img = img.astype(prev_dtype)
+        if was_torch:
+            img = torch.tensor(img)
+        
+        points.color = img
+        results['points'] = points
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(std={self.std})'
         return repr_str
 
 

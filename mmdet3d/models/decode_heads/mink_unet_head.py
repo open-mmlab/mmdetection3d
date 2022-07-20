@@ -14,24 +14,28 @@ from ..builder import HEADS
 from .decode_head import Base3DDecodeHead
 
 
-
 @HEADS.register_module()
 class MinkUNetHead(Base3DDecodeHead):
-    r"""UNet head. See `4D Spatio-Temporal ConvNets
+    r"""Sparse UNet head. See `4D Spatio-Temporal ConvNets
     <https://arxiv.org/abs/1904.08755>`_ for more details.
 
     Args:
-        fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
-        fp_norm_cfg (dict): Config of norm layers used in FP modules.
-            Default: dict(type='BN2d').
+        channels (int): dimension of features from a backbone.
+            Defaults to 96.
+        num_classes (int): number of classes (channels of final conv module).
+            Defaults to 13.
+        D (int): the spatial dimension of the space where all the inputs and the network are defined.
+            For example, images are in a 2D space, meshes and 3D shapes are in a 3D space.
+            Defaults to 3.
     """
 
     def __init__(self,
-                 channels: int=96*4,
-                 num_classes: int=18,
+                 channels=96,
+                 num_classes=13,
                  D: int=3,
                  **kwargs):
-        super(MinkUNetHead, self).__init__(channels, num_classes, **kwargs)
+        super(MinkUNetHead, self).__init__(
+            channels, num_classes, **kwargs)
 
         self.final = ME.MinkowskiConvolution(
             channels,
@@ -48,10 +52,9 @@ class MinkUNetHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            list[torch.Tensor]: Features of multiple levels of points.
+            list[MinkowskiEngine.SparseTensor]: Features of multiple levels of points.
         """
         features = feat_dict['features']
-        #assert len(sa_xyz) == len(sa_features)
 
         return features
 
@@ -62,7 +65,7 @@ class MinkUNetHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: Segmentation map of shape [B, num_classes, N].
+            MinkowskiEngine.SparseTensor: Segmentation map of shape [B, num_classes, N].
         """
         features = self._extract_input(feat_dict)
 
@@ -74,7 +77,9 @@ class MinkUNetHead(Base3DDecodeHead):
         """Forward function for testing.
 
         Args:
-            inputs (list[Tensor]): List of multi-level point features.
+            inputs (dict[MinkowskiEngine.SparseTensor]): Dict of multi-level point features.
+            field (MinkowskiEngine.TensorField): TensorField to sample points
+                equal to the output dimension (semantic segmentation mask).
             img_metas (list[dict]): Meta information of each sample.
             test_cfg (dict): The testing config.
 
@@ -99,7 +104,6 @@ class MinkUNetHead(Base3DDecodeHead):
             seg_label (torch.Tensor): Ground-truth segmentation label of
                 shape [B, N].
         """
-
         loss = dict()
         loss['loss_sem_seg'] = self.loss_decode(
             seg_logit.features, seg_label, ignore_index=self.ignore_index)
