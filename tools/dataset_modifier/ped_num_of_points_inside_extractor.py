@@ -1,7 +1,6 @@
 import pickle
 import numpy as np
 import open3d as o3d
-from pypcd import pypcd
 
 def extract_ped(datas,ped_cnt,pcd_cnt):
 	result=[]
@@ -35,7 +34,7 @@ def extract_ped_pointless(datas,point_cnt):
             center[2] += dim[2] / 2
             box3d = o3d.geometry.OrientedBoundingBox(center, rot_mat, dim)
 
-            pcd = o3d.io.read_point_cloud(cur_data['lidar_points']['lidar_path'])
+            pcd = o3d.io.read_point_cloud('../../data/rf2021/'+cur_data['lidar_points']['lidar_path'])
             
             indices = box3d.get_point_indices_within_bounding_box(pcd.points)
             if len(indices)<point_cnt:
