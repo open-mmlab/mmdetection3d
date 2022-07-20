@@ -372,7 +372,8 @@ def show_det_result_meshlab_multiclass(data,
                             out_dir,
                             score_thr=0.0,
                             show=False,
-                            snapshot=False):
+                            snapshot=False,
+                            target=None):
     """Show 3D detection result by meshlab."""
     points = data['points'][0][0].cpu().numpy()
     pts_filename = data['img_metas'][0][0]['pts_filename']
@@ -397,12 +398,14 @@ def show_det_result_meshlab_multiclass(data,
     if box_mode != Box3DMode.DEPTH:
         points = Coord3DMode.convert(points, box_mode, Coord3DMode.DEPTH)
         show_bboxes = Box3DMode.convert(pred_bboxes, box_mode, Box3DMode.DEPTH)
+        gt_bboxes = Box3DMode.convert(target, box_mode, Box3DMode.DEPTH)
     else:
         show_bboxes = deepcopy(pred_bboxes)
+        gt_bboxes = deepcopy(target)
 
     show_result(
         points,
-        None,
+        gt_bboxes,
         show_bboxes,
         out_dir,
         file_name,
@@ -533,7 +536,8 @@ def show_result_meshlab(data,
                         show=False,
                         snapshot=False,
                         task='det',
-                        palette=None):
+                        palette=None,
+                        target=None):
     """Show result by meshlab.
 
     Args:
@@ -558,7 +562,7 @@ def show_result_meshlab(data,
 
     if task in ['det', 'multi_modality-det']:
         file_name = show_det_result_meshlab_multiclass(data, result, out_dir, score_thr,
-                                            show, snapshot)
+                                            show, snapshot, target)
         # file_name = show_det_result_meshlab(data, result, out_dir, score_thr,
         #                                    show, snapshot)                        
 

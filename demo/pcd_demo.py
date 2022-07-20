@@ -2,7 +2,7 @@
 from argparse import ArgumentParser
 
 from mmdet3d.apis import inference_detector, init_model, show_result_meshlab
-
+import pickle
 
 def main():
     parser = ArgumentParser()
@@ -29,6 +29,16 @@ def main():
     model = init_model(args.config, args.checkpoint, device=args.device)
     # test a single image
     result, data = inference_detector(model, args.pcd)
+
+    target=None
+    with open('./data/rf2021/rf2021_infos_train.pkl','rb') as f:
+	    gt_datas=pickle.load(f)
+
+    for gt_data in gt_datas:
+        if gt_data['lidar_points']['lidar_path']==args.pcd[12:]:
+            target=gt_data['annos']['gt_bboxes_3d']
+            break
+
     # show the results
     show_result_meshlab(
         data,
@@ -37,7 +47,8 @@ def main():
         args.score_thr,
         show=args.show,
         snapshot=args.snapshot,
-        task='det')
+        task='det',
+        target=target)
 
 
 if __name__ == '__main__':
