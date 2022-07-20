@@ -1,8 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import cv2
 import mmcv
-import torch
-from numpy import random
 import numpy as np
 
 from mmdet3d.core.points import BasePoints, get_points_type
@@ -294,7 +291,7 @@ class PointSegClassMapping(object):
         repr_str += f'(valid_cat_ids={self.valid_cat_ids}, '
         repr_str += f'max_cat_id={self.max_cat_id})'
         return repr_str
-        
+
 
 @PIPELINES.register_module()
 class NormalizePointsColor(object):

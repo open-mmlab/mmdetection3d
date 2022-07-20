@@ -17,7 +17,8 @@ train_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5],
     ),
-    dict(type='LoadAnnotations3D',
+    dict(
+        type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,

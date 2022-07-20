@@ -3,8 +3,8 @@ import random
 import warnings
 
 import cv2
-import torch
 import numpy as np
+import torch
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
@@ -67,10 +67,11 @@ class RandomDropPointsColor(object):
         repr_str += f'(drop_ratio={self.drop_ratio})'
         return repr_str
 
+
 @PIPELINES.register_module()
 class YOLOXHSVPointsRandomAug(YOLOXHSVRandomAug):
-    r"""Apply HSV augmentation to colors of points sequentially. It is referenced from
-    https://github.com/Megvii-
+    r"""Apply HSV augmentation to colors of points sequentially.
+    It is referenced from https://github.com/Megvii-
     BaseDetection/YOLOX/blob/main/yolox/data/data_augment.py#L21.
 
     Args:
@@ -82,10 +83,7 @@ class YOLOXHSVPointsRandomAug(YOLOXHSVRandomAug):
             Defaults to 30.
     """
 
-    def __init__(self,
-                 hue_delta=5,
-                 saturation_delta=30,
-                 value_delta=30):
+    def __init__(self, hue_delta=5, saturation_delta=30, value_delta=30):
         super(YOLOXHSVPointsRandomAug, self).__init__(
             hue_delta=hue_delta,
             saturation_delta=saturation_delta,
@@ -129,7 +127,7 @@ class YOLOXHSVPointsRandomAug(YOLOXHSVRandomAug):
         img = img.astype(prev_dtype)
         if was_torch:
             img = torch.tensor(img)
-        
+
         points.color = img[:, 0, :]
         results['points'] = points
 
@@ -142,7 +140,8 @@ class YOLOXHSVPointsRandomAug(YOLOXHSVRandomAug):
         repr_str += f'saturation_delta={self.saturation_delta}, '
         repr_str += f'value_delta={self.value_delta})'
         return repr_str
-    
+
+
 class ChromaticJitter(object):
     r"""Gaussian on colors of points. It is referenced from
     https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/transforms.py#L61
@@ -167,7 +166,7 @@ class ChromaticJitter(object):
 
                 - points (:obj:`BasePoints`): Points after color augmentation.
         """
-        
+
         points = results['points']
         assert points.attribute_dims is not None and \
             'color' in points.attribute_dims.keys(), \
@@ -186,11 +185,11 @@ class ChromaticJitter(object):
             noise = np.random.randn(img.shape[0], 3)
             noise *= self.std * 255
             img = np.clip(noise + img, 0, 255)
-        
+
         img = img.astype(prev_dtype)
         if was_torch:
             img = torch.tensor(img)
-        
+
         points.color = img
         results['points'] = points
 
@@ -254,7 +253,8 @@ class RandomFlip3D(RandomFlip):
         """
         assert direction in ['horizontal', 'vertical']
         # for semantic segmentation task, only points will be flipped.
-        if 'bbox3d_fields' not in input_dict or len(input_dict['bbox3d_fields']) == 0:
+        if 'bbox3d_fields' not in input_dict or len(
+                input_dict['bbox3d_fields']) == 0:
             input_dict['points'].flip(direction)
             return
 
@@ -1466,7 +1466,7 @@ class IndoorPatchPointSample(object):
 
             if flag1 and flag2:
                 break
-        
+
         if self.num_points == -1:
             choices = point_idxs
         # sample idx to `self.num_points`
@@ -1482,7 +1482,6 @@ class IndoorPatchPointSample(object):
                 [np.arange(point_idxs.size),
                  np.array(dup)], 0)
             choices = point_idxs[idx_dup]
-        
 
         # construct model input
         points = self._input_generation(coords[choices], cur_center, coord_max,

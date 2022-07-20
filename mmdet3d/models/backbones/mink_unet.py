@@ -2,10 +2,7 @@
 # Follow https://github.com/NVIDIA/MinkowskiEngine/blob/master/examples/minkunet.py # noqa
 try:
     import MinkowskiEngine as ME
-    from MinkowskiEngine.modules.resnet_block import (
-        BasicBlock,
-        Bottleneck,
-    )
+    from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
     import warnings
     warnings.warn(
@@ -17,17 +14,24 @@ import torch.nn as nn
 
 from mmdet3d.models.builder import BACKBONES
 
+
 @BACKBONES.register_module()
 class MinkUNetBase(nn.Module):
-    r"""Minkowski UNet backbone. See `4D Spatio-Temporal ConvNets
-    <https://arxiv.org/abs/1904.08755>`_ for more details.
+    r"""Minkowski UNet backbone. See paper `4D Spatio-Temporal ConvNets
+    <https://arxiv.org/abs/1904.08755>`_ and official
+    `code <https://github.com/NVIDIA/MinkowskiEngine/
+    blob/master/examples/minkunet.py>`_  for more details.
 
     This backbone is the reimplementation of `U-Net: Convolutional Networks
     for Biomedical Image Segmentation <https://arxiv.org/abs/1505.04597>`_.
+
     Args:
         in_channels (int): Number of input feature channels.
         out_channels (int): Number of output feature channels.
-        D (int): dimension which will be applyed in.
+        planes (str, optional): Planes unet config.
+            Defaults to None.
+        D (int): Dimension which will be applied in.
+            Defaults to 3.
     """
 
     DILATIONS = (1, 1, 1, 1, 1, 1, 1, 1)
@@ -82,12 +86,13 @@ class MinkUNetBase(nn.Module):
         self.in_channels = in_channels
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for unet.')
-            
-        if 'planes' not in self.arch_settings[depth] or planes not in self.arch_settings[depth]['planes']:
+
+        if 'planes' not in self.arch_settings[
+                depth] or planes not in self.arch_settings[depth]['planes']:
             self.planes = self.PLANES
         else:
             self.planes = self.arch_settings[depth]['planes'][planes]
-            
+
         self.block = self.arch_settings[depth]['block']
         self.layers = self.arch_settings[depth]['layers']
         self.D = D
@@ -100,8 +105,8 @@ class MinkUNetBase(nn.Module):
             if isinstance(m, ME.MinkowskiConvolution):
                 ME.utils.kaiming_normal_(
                     m.kernel,
-                    mode="fan_out",
-                    nonlinearity="relu",
+                    mode='fan_out',
+                    nonlinearity='relu',
                 )
 
             if isinstance(m, ME.MinkowskiBatchNorm):
@@ -144,28 +149,44 @@ class MinkUNetBase(nn.Module):
                                        self.layers[3])
 
         self.convtr4p16s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.planes[4], kernel_size=2, stride=2, dimension=D)
+            self.inplanes,
+            self.planes[4],
+            kernel_size=2,
+            stride=2,
+            dimension=D)
         self.bntr4 = ME.MinkowskiBatchNorm(self.planes[4])
 
         self.inplanes = self.planes[4] + self.planes[2] * self.block.expansion
         self.block5 = self._make_layer(self.block, self.planes[4],
                                        self.layers[4])
         self.convtr5p8s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.planes[5], kernel_size=2, stride=2, dimension=D)
+            self.inplanes,
+            self.planes[5],
+            kernel_size=2,
+            stride=2,
+            dimension=D)
         self.bntr5 = ME.MinkowskiBatchNorm(self.planes[5])
 
         self.inplanes = self.planes[5] + self.planes[1] * self.block.expansion
         self.block6 = self._make_layer(self.block, self.planes[5],
                                        self.layers[5])
         self.convtr6p4s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.planes[6], kernel_size=2, stride=2, dimension=D)
+            self.inplanes,
+            self.planes[6],
+            kernel_size=2,
+            stride=2,
+            dimension=D)
         self.bntr6 = ME.MinkowskiBatchNorm(self.planes[6])
 
         self.inplanes = self.planes[6] + self.planes[0] * self.block.expansion
         self.block7 = self._make_layer(self.block, self.planes[6],
                                        self.layers[6])
         self.convtr7p2s2 = ME.MinkowskiConvolutionTranspose(
-            self.inplanes, self.planes[7], kernel_size=2, stride=2, dimension=D)
+            self.inplanes,
+            self.planes[7],
+            kernel_size=2,
+            stride=2,
+            dimension=D)
         self.bntr7 = ME.MinkowskiBatchNorm(self.planes[7])
 
         self.inplanes = self.planes[7] + self.INIT_DIM
@@ -174,7 +195,14 @@ class MinkUNetBase(nn.Module):
 
         self.relu = ME.MinkowskiReLU(inplace=True)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilation=1, ):
+    def _make_layer(
+        self,
+        block,
+        planes,
+        blocks,
+        stride=1,
+        dilation=1,
+    ):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -196,15 +224,16 @@ class MinkUNetBase(nn.Module):
                 dilation=dilation,
                 downsample=downsample,
                 dimension=self.D,
-            )
-        )
+            ))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(
                 block(
-                    self.inplanes, planes, stride=1, dilation=dilation, dimension=self.D
-                )
-            )
+                    self.inplanes,
+                    planes,
+                    stride=1,
+                    dilation=dilation,
+                    dimension=self.D))
 
         return nn.Sequential(*layers)
 
@@ -266,8 +295,6 @@ class MinkUNetBase(nn.Module):
         out = ME.cat(out, out_p1)
         out = self.block8(out)
 
-        ret = dict(
-            features=out
-        )
+        ret = dict(features=out)
 
         return ret

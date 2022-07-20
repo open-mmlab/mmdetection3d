@@ -7,7 +7,6 @@ except ImportError:
         'Please follow `getting_started.md` to install MinkowskiEngine.`')
 
 import torch
-from torch import nn as nn
 
 from ..builder import SEGMENTORS
 from .encoder_decoder import EncoderDecoder3D
@@ -23,30 +22,23 @@ class SparseEncoderDecoder3D(EncoderDecoder3D):
             Defaults to 0.05 (cm).
     """
 
-    def __init__(self,
-                 voxel_size,
-                 *args,
-                 **kwargs):
-        super(SparseEncoderDecoder3D, self).__init__(
-            *args, **kwargs)
+    def __init__(self, voxel_size, *args, **kwargs):
+        super(SparseEncoderDecoder3D, self).__init__(*args, **kwargs)
 
         self.voxel_size = voxel_size
 
     def _collate(self, points):
         """Transform data from PyTorch-based to MinkowskiEngine-based.
-        
+
         Args:
             points (list[torch.Tensor]): Input points of shape [B, N, 3+C].
 
         Returns:
             MinkowskiEngine.TensorField: TensorField data container.
         """
-        
+
         coordinates, features = ME.utils.batch_sparse_collate(
-            data=[
-                (p[:, :3] / self.voxel_size, p[:, 3:])
-                for p in points
-            ],
+            data=[(p[:, :3] / self.voxel_size, p[:, 3:]) for p in points],
             dtype=points[0].dtype,
             device=points[0].device,
         )
@@ -80,7 +72,7 @@ class SparseEncoderDecoder3D(EncoderDecoder3D):
 
         field = self._collate(points)
         x = field.sparse()
-        
+
         targets = ME.SparseTensor(
             x.features[:, -1, None],
             coordinate_map_key=x.coordinate_map_key,
@@ -137,8 +129,9 @@ class SparseEncoderDecoder3D(EncoderDecoder3D):
         field = self._collate(points)
         x = field.sparse()
         x = self.extract_feat(x)
-        masks = self.decode_head.forward_test(x, field, img_metas, self.test_cfg)
-         
+        masks = self.decode_head.forward_test(x, field, img_metas,
+                                              self.test_cfg)
+
         out = [dict(semantic_mask=masks[0].argmax(1).cpu())]
 
         return out

@@ -10,7 +10,7 @@ model = dict(
     ),
     decode_head=dict(
         type='MinkUNetHead',
-        channels=96*1,
+        channels=96 * 1,
         num_classes=20,
         loss_decode=dict(
             type='CrossEntropyLoss',

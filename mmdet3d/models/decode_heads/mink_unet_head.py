@@ -7,7 +7,6 @@ except ImportError:
     warnings.warn(
         'Please follow `getting_started.md` to install MinkowskiEngine.`')
 
-from torch import nn as nn
 from mmcv.runner import force_fp32
 
 from ..builder import HEADS
@@ -24,18 +23,13 @@ class MinkUNetHead(Base3DDecodeHead):
             Defaults to 96.
         num_classes (int): number of classes (channels of final conv module).
             Defaults to 13.
-        D (int): the spatial dimension of the space where all the inputs and the network are defined.
-            For example, images are in a 2D space, meshes and 3D shapes are in a 3D space.
-            Defaults to 3.
+        D (int): the spatial dimension of the space where all the inputs and
+            the network are defined. For example, images are in a 2D space,
+            meshes and 3D shapes are in a 3D space. Defaults to 3.
     """
 
-    def __init__(self,
-                 channels=96,
-                 num_classes=13,
-                 D: int=3,
-                 **kwargs):
-        super(MinkUNetHead, self).__init__(
-            channels, num_classes, **kwargs)
+    def __init__(self, channels=96, num_classes=13, D: int = 3, **kwargs):
+        super(MinkUNetHead, self).__init__(channels, num_classes, **kwargs)
 
         self.final = ME.MinkowskiConvolution(
             channels,
@@ -52,7 +46,8 @@ class MinkUNetHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            list[MinkowskiEngine.SparseTensor]: Features of multiple levels of points.
+            list[MinkowskiEngine.SparseTensor]: Features of multiple
+            levels of points.
         """
         features = feat_dict['features']
 
@@ -65,21 +60,24 @@ class MinkUNetHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            MinkowskiEngine.SparseTensor: Segmentation map of shape [B, num_classes, N].
+            MinkowskiEngine.SparseTensor: Segmentation map of
+                shape [B, num_classes, N].
         """
         features = self._extract_input(feat_dict)
 
         output = self.final(features)
-        
+
         return output
 
     def forward_test(self, inputs, field, img_metas, test_cfg):
         """Forward function for testing.
 
         Args:
-            inputs (dict[MinkowskiEngine.SparseTensor]): Dict of multi-level point features.
-            field (MinkowskiEngine.TensorField): TensorField to sample points
-                equal to the output dimension (semantic segmentation mask).
+            inputs (dict[MinkowskiEngine.SparseTensor]): Dict of multi-level
+                point features.
+            field (MinkowskiEngine.TensorField): TensorField is to sample
+                points. Output dimension should will be equal dimension of
+                input semantic segmentation mask.
             img_metas (list[dict]): Meta information of each sample.
             test_cfg (dict): The testing config.
 
