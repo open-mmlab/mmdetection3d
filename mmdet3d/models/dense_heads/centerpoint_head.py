@@ -464,6 +464,7 @@ class CenterHead(BaseModule):
         # reorganize the gt_dict by tasks
         task_masks = []
         flag = 0
+
         for class_name in self.class_names:
             task_masks.append([
                 torch.where(gt_labels_3d == class_name.index(i) + flag)
@@ -474,6 +475,7 @@ class CenterHead(BaseModule):
         task_boxes = []
         task_classes = []
         flag2 = 0
+
         for idx, mask in enumerate(task_masks):
             task_box = []
             task_class = []
