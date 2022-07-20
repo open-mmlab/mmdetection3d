@@ -10,18 +10,18 @@ data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 # PointPillars adopted a different sampling strategies among classes
 
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/',
-        'data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/'
-    }))
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/kitti/':
+#         's3://openmmlab/datasets/detection3d/kitti/',
+#         'data/kitti/':
+#         's3://openmmlab/datasets/detection3d/kitti/'
+#     }))
 
 db_sampler = dict(
     data_root=data_root,

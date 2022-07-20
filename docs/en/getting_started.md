@@ -105,13 +105,13 @@ Note:
 1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
 It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
 
-    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
+   > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
 
-    ```shell
-    pip uninstall mmdet3d
-    rm -rf ./build
-    find . -name "*.so" | xargs rm
-    ```
+   ```shell
+   pip uninstall mmdet3d
+   rm -rf ./build
+   find . -name "*.so" | xargs rm
+   ```
 
 2. Following the above instructions, MMDetection3D is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
 
@@ -141,7 +141,6 @@ you can install it before installing MMCV.
     ```
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
-
 
 ## Verification
 
@@ -206,6 +205,7 @@ More demos about single/multi-modality and indoor/outdoor 3D detection can be fo
 ## Customize Installation
 
 ### CUDA Versions
+
 When installing PyTorch, you need to specify the version of CUDA. If you are not clear on which to choose, follow our recommendations:
 
 - For Ampere-based NVIDIA GPUs, such as GeForce 30 series and NVIDIA A100, CUDA 11 is a must.
@@ -228,8 +228,6 @@ For example, the following command install mmcv-full built for PyTorch 1.10.x an
 ```shell
 pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
 ```
-
-
 
 ### Using MMDetection3D with Docker
 
