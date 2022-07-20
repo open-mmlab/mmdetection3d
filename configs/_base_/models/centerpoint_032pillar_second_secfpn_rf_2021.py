@@ -1,9 +1,9 @@
-voxel_size = [0.32, 0.32, 0.1]
+voxel_size = [0.32, 0.32, 4]
 
 model = dict(
     type='CenterPoint',
     pts_voxel_layer=dict(
-        max_num_points=5,
+        max_num_points=20,
         point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
         voxel_size=voxel_size,
         max_voxels=(32000, 40000)),
@@ -13,7 +13,7 @@ model = dict(
         in_channels=4,
         feat_channels=[64],
         with_distance=False,
-        voxel_size = [0.32, 0.32, 0.1],
+        voxel_size = voxel_size,
         point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
         legacy=False),
@@ -33,7 +33,7 @@ model = dict(
         type='SECONDFPN',
         in_channels=[64, 128, 256],
         out_channels=[128, 128, 128],
-        upsample_strides=[1, 2, 4],
+        upsample_strides=[0.5, 1, 2],
         norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
         upsample_cfg=dict(type='deconv', bias=False),
         use_conv_for_no_stride=True),
@@ -41,7 +41,8 @@ model = dict(
         type='CenterHead',
         in_channels=sum([128, 128, 128]),
         tasks=[
-            dict(num_class=2, class_names=['Car', 'Pedestrian'])
+            dict(num_class=1, class_names=['Car']),
+            dict(num_class=1, class_names=['Pedestrian'])
         ],
         common_heads=dict(
             reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2)),
@@ -49,13 +50,11 @@ model = dict(
         bbox_coder=dict(
             type='CenterPointBBoxCoder',
             post_center_range=[-60, -103.84, -3, 62.88, 60, 1],
-            max_num=100,
+            max_num=500,
             score_threshold=0.1,
-            out_size_factor=2,
+            out_size_factor=4,
             voxel_size=voxel_size[:2],
-            code_size=7,
-            pc_range=[-60, -103.84]
-            ),
+            code_size=9),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
@@ -64,10 +63,10 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(
         pts=dict(
-            point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
-            grid_size=[384, 512, 40],
+            # point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
+            grid_size=[512, 384, 1],
             voxel_size=voxel_size,
-            out_size_factor=2,
+            out_size_factor=4,
             dense_reg=1,
             gaussian_overlap=0.1,
             max_objs=500,
@@ -75,7 +74,7 @@ model = dict(
             code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])),
     test_cfg=dict(
         pts=dict(
-            point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
+            # point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
             post_center_limit_range=[-60, -103.84, -3, 62.88, 60, 1],
             max_per_img=500,
             max_pool_nms=False,
@@ -86,4 +85,4 @@ model = dict(
             nms_type='rotate',
             pre_max_size=4096,
             post_max_size=512,
-            nms_thr=0.2)))
+            nms_thr=0.1)))
