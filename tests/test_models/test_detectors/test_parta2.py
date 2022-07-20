@@ -3,8 +3,8 @@ import unittest
 import torch
 from mmengine import DefaultScope
 
-from mmdet3d.core import LiDARInstance3DBoxes
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import LiDARInstance3DBoxes
 from tests.utils.model_utils import (_create_detector_inputs,
                                      _get_detector_cfg, _setup_seed)
 
@@ -41,6 +41,7 @@ class TestPartA2(unittest.TestCase):
             with torch.no_grad():
                 batch_inputs, data_samples = model.data_preprocessor(
                     data, True)
+                torch.cuda.empty_cache()
                 results = model.forward(
                     batch_inputs, data_samples, mode='predict')
             self.assertEqual(len(results), len(data))

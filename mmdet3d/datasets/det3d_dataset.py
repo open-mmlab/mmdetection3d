@@ -8,7 +8,7 @@ import numpy as np
 from mmengine.dataset import BaseDataset
 
 from mmdet3d.datasets import DATASETS
-from ..core.bbox import get_box_type
+from mmdet3d.structures import get_box_type
 
 
 @DATASETS.register_module()
@@ -139,7 +139,10 @@ class Det3DDataset(BaseDataset):
         img_filtered_annotations = {}
         filter_mask = ann_info['gt_labels_3d'] > -1
         for key in ann_info.keys():
-            img_filtered_annotations[key] = (ann_info[key][filter_mask])
+            if key != 'instances':
+                img_filtered_annotations[key] = (ann_info[key][filter_mask])
+            else:
+                img_filtered_annotations[key] = ann_info[key]
         return img_filtered_annotations
 
     def get_ann_info(self, index: int) -> dict:
@@ -180,7 +183,7 @@ class Det3DDataset(BaseDataset):
         # add s or gt prefix for most keys after concat
         # we only process 3d annotations here, the corresponding
         # 2d annotation process is in the `LoadAnnotations3D`
-        # in `pipelines`
+        # in `transforms`
         name_mapping = {
             'bbox_label_3d': 'gt_labels_3d',
             'bbox_3d': 'gt_bboxes_3d',
@@ -197,17 +200,16 @@ class Det3DDataset(BaseDataset):
             keys = list(instances[0].keys())
             ann_info = dict()
             for ann_name in keys:
+                temp_anns = [item[ann_name] for item in instances]
+                # map the original dataset label to training label
+                if 'label' in ann_name:
+                    temp_anns = [
+                        self.label_mapping[item] for item in temp_anns
+                    ]
                 if ann_name in name_mapping:
-                    temp_anns = [item[ann_name] for item in instances]
-                    # map the original dataset label to training label
-                    if 'label' in ann_name:
-                        temp_anns = [
-                            self.label_mapping[item] for item in temp_anns
-                        ]
-                    temp_anns = np.array(temp_anns)
-
                     ann_name = name_mapping[ann_name]
-                    ann_info[ann_name] = temp_anns
+                temp_anns = np.array(temp_anns)
+                ann_info[ann_name] = temp_anns
             ann_info['instances'] = info['instances']
         return ann_info
 

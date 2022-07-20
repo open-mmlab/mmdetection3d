@@ -98,8 +98,8 @@ def test_chamfer_disrance():
 
 
 def test_paconv_regularization_loss():
+    from mmdet3d.models.layers import PAConv, PAConvCUDA
     from mmdet3d.models.losses import PAConvRegularizationLoss
-    from mmdet3d.ops import PAConv, PAConvCUDA
 
     class ToyModel(nn.Module):
 

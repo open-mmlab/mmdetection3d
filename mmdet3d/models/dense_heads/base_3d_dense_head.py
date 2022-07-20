@@ -10,9 +10,11 @@ from mmengine.data import InstanceData
 from mmengine.model import BaseModule
 from torch import Tensor
 
-from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
-from mmdet3d.core.utils import InstanceList, OptMultiConfig, SampleList
-from mmdet.core.utils import select_single_mlvl
+from mmdet3d.models.layers import box3d_multiclass_nms
+from mmdet3d.structures import limit_period, xywhr2xyxyr
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils.typing import InstanceList, OptMultiConfig
+from mmdet.models.utils import select_single_mlvl
 
 
 class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
@@ -170,7 +172,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
               (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+            - bbox_3d (BaseInstance3DBoxes): Prediction of bboxes,
               contains a tensor with shape (num_instances, C), where
               C >= 7.
         """
@@ -220,7 +222,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
               (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+            - bbox_3d (BaseInstance3DBoxes): Prediction of bboxes,
               contains a tensor with shape (num_instances, C), where
               C >= 7.
         """

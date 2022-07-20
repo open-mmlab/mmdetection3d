@@ -2,10 +2,10 @@
 import numpy as np
 import torch
 
-from mmdet3d.core.bbox import (CameraInstance3DBoxes, Coord3DMode,
-                               DepthInstance3DBoxes, LiDARInstance3DBoxes,
-                               limit_period)
-from mmdet3d.core.points import CameraPoints, DepthPoints, LiDARPoints
+from mmdet3d.structures import (CameraInstance3DBoxes, Coord3DMode,
+                                DepthInstance3DBoxes, LiDARInstance3DBoxes,
+                                limit_period)
+from mmdet3d.structures.points import CameraPoints, DepthPoints, LiDARPoints
 
 
 def test_points_conversion():

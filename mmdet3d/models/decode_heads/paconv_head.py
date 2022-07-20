@@ -4,8 +4,8 @@ from typing import Tuple
 from mmcv.cnn.bricks import ConvModule
 from torch import Tensor
 
-from mmdet3d.core.utils import ConfigType
 from mmdet3d.registry import MODELS
+from mmdet3d.utils.typing import ConfigType
 from .pointnet2_head import PointNet2Head
 
 

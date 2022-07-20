@@ -15,10 +15,11 @@ from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core.post_processing import aligned_3d_nms
-from mmdet3d.registry import MODELS
-from mmdet.core import build_bbox_coder, multi_apply
-from ...core import BaseInstance3DBoxes, Det3DDataSample, SampleList
+from mmdet3d.models.layers import aligned_3d_nms
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures import BaseInstance3DBoxes, Det3DDataSample
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet.models.utils import multi_apply
 from .base_conv_bbox_head import BaseConvBboxHead
 
 EPS = 1e-6
@@ -204,7 +205,7 @@ class GroupFree3DHead(BaseModule):
         assert self.embed_dims == decoder_cross_posembeds['num_pos_feats']
 
         # bbox_coder
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 

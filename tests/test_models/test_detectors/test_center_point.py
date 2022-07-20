@@ -41,8 +41,9 @@ class TestCenterPoint(unittest.TestCase):
             # test simple_test
 
             batch_inputs, data_samples = model.data_preprocessor(data, True)
-
-            losses = model.forward(batch_inputs, data_samples, mode='loss')
+            with torch.no_grad():
+                torch.cuda.empty_cache()
+                losses = model.forward(batch_inputs, data_samples, mode='loss')
             assert losses['task0.loss_heatmap'] >= 0
             assert losses['task0.loss_bbox'] >= 0
             assert losses['task1.loss_heatmap'] >= 0

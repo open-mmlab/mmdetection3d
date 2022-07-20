@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from mmengine.data import InstanceData
 
-from mmdet3d.core.bbox import CameraInstance3DBoxes
 from mmdet3d.models.dense_heads import PGDHead
+from mmdet3d.structures import CameraInstance3DBoxes
 
 
 class TestFGDHead(TestCase):

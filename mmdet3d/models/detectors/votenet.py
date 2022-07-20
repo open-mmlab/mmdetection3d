@@ -4,8 +4,9 @@ from typing import Dict, List, Optional, Union
 from mmengine import InstanceData
 from torch import Tensor
 
-from mmdet3d.core import Det3DDataSample, merge_aug_bboxes_3d
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
+from ..test_time_augs import merge_aug_bboxes_3d
 from .single_stage import SingleStage3DDetector
 
 

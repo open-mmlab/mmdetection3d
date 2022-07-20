@@ -9,7 +9,7 @@ import torch
 from mmcv.utils import print_log
 
 from mmdet3d.registry import DATASETS
-from ..core.bbox import Box3DMode, points_cam2img
+from mmdet3d.structures import Box3DMode, points_cam2img
 from .kitti_dataset import KittiDataset
 
 
@@ -188,7 +188,7 @@ class WaymoDataset(KittiDataset):
                                                   pklfile_prefix,
                                                   submission_prefix)
         if 'waymo' in data_format:
-            from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import \
+            from mmdet3d.evaluation.functional.waymo_utils import \
                 KITTI2Waymo  # noqa
             waymo_root = osp.join(
                 self.data_root.split('kitti_format')[0], 'waymo_format')
@@ -257,7 +257,7 @@ class WaymoDataset(KittiDataset):
                 pklfile_prefix,
                 submission_prefix,
                 data_format='kitti')
-            from mmdet3d.core.evaluation import kitti_eval
+            from mmdet3d.evaluation import kitti_eval
             gt_annos = [info['annos'] for info in self.data_infos]
 
             if isinstance(result_files, dict):

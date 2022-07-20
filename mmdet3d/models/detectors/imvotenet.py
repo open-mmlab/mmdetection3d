@@ -6,9 +6,9 @@ import torch
 from mmengine import InstanceData
 from torch import Tensor
 
-from mmdet3d.core import Det3DDataSample
-from mmdet3d.models.utils import MLP
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
+from ..layers import MLP
 from .base import Base3DDetector
 
 

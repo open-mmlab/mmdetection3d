@@ -1,4 +1,5 @@
 # dataset settings
+# TODO refactor S3DISDataset
 dataset_type = 'S3DISDataset'
 data_root = './data/s3dis/'
 class_names = ('table', 'chair', 'sofa', 'bookcase', 'board')

@@ -7,7 +7,7 @@ import torch
 def test_dgcnn_gf_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import DGCNNGFModule
+    from mmdet3d.models.layers import DGCNNGFModule
 
     self = DGCNNGFModule(
         mlp_channels=[18, 64, 64],
@@ -60,7 +60,7 @@ def test_dgcnn_gf_module():
 def test_dgcnn_fa_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import DGCNNFAModule
+    from mmdet3d.models.layers import DGCNNFAModule
 
     self = DGCNNFAModule(mlp_channels=[24, 16]).cuda()
     assert self.mlps.layer0.conv.in_channels == 24
@@ -75,7 +75,7 @@ def test_dgcnn_fa_module():
 def test_dgcnn_fp_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import DGCNNFPModule
+    from mmdet3d.models.layers import DGCNNFPModule
 
     self = DGCNNFPModule(mlp_channels=[24, 16]).cuda()
     assert self.mlps.layer0.conv.in_channels == 24

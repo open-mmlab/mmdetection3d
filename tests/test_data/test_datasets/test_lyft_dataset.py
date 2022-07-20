@@ -4,9 +4,8 @@ from mmcv.transforms.base import BaseTransform
 from mmengine.data import InstanceData
 from mmengine.registry import TRANSFORMS
 
-from mmdet3d.core.bbox import LiDARInstance3DBoxes
-from mmdet3d.core.data_structures import Det3DDataSample
 from mmdet3d.datasets import LyftDataset
+from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes
 
 
 def _generate_nus_dataset_config():

@@ -7,7 +7,7 @@ CommandLine:
 
 import torch
 
-from mmdet3d.models.fusion_layers import VoteFusion
+from mmdet3d.models.layers.fusion_layers import VoteFusion
 
 
 def test_vote_fusion():

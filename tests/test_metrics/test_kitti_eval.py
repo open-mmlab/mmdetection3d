@@ -3,8 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core.evaluation.kitti_utils.eval import (do_eval, eval_class,
-                                                      kitti_eval)
+from mmdet3d.evaluation import do_eval, eval_class, kitti_eval
 
 
 def test_do_eval():

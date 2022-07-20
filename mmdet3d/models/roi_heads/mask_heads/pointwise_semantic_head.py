@@ -4,11 +4,11 @@ from mmcv.runner import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core.bbox.structures import rotation_3d_in_axis
-from mmdet3d.core.utils import InstanceList
 from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
-from mmdet.core import multi_apply
+from mmdet3d.structures.bbox_3d import rotation_3d_in_axis
+from mmdet3d.utils import InstanceList
+from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

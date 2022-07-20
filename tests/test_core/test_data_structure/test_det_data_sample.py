@@ -6,7 +6,7 @@ import pytest
 import torch
 from mmengine.data import InstanceData
 
-from mmdet3d.core.data_structures import Det3DDataSample, PointData
+from mmdet3d.structures import Det3DDataSample, PointData
 
 
 def _equal(a, b):

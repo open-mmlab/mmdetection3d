@@ -3,7 +3,7 @@ import torch
 
 
 def test_vote_module():
-    from mmdet3d.models.model_utils import VoteModule
+    from mmdet3d.models.layers import VoteModule
 
     vote_loss = dict(
         type='ChamferDistance',

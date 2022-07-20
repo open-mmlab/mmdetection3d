@@ -5,15 +5,14 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core.bbox import (BaseInstance3DBoxes, Box3DMode,
-                               CameraInstance3DBoxes, Coord3DMode,
-                               DepthInstance3DBoxes, LiDARInstance3DBoxes,
-                               bbox3d2roi, bbox3d_mapping_back)
-from mmdet3d.core.bbox.structures.utils import (get_box_type, limit_period,
-                                                points_cam2img,
-                                                rotation_3d_in_axis,
-                                                xywhr2xyxyr)
-from mmdet3d.core.points import CameraPoints, DepthPoints, LiDARPoints
+from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
+                                CameraInstance3DBoxes, Coord3DMode,
+                                DepthInstance3DBoxes, LiDARInstance3DBoxes,
+                                bbox3d2roi, bbox3d_mapping_back)
+from mmdet3d.structures.bbox_3d.utils import (get_box_type, limit_period,
+                                              points_cam2img,
+                                              rotation_3d_in_axis, xywhr2xyxyr)
+from mmdet3d.structures.points import CameraPoints, DepthPoints, LiDARPoints
 
 
 def test_bbox3d_mapping_back():

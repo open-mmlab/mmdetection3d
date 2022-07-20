@@ -3,7 +3,7 @@ import torch
 from mmcv.runner import auto_fp16
 from torch import nn as nn
 
-from mmdet3d.ops import PointFPModule, build_sa_module
+from mmdet3d.models.layers import PointFPModule, build_sa_module
 from mmdet3d.registry import MODELS
 from .base_pointnet import BasePointNet
 

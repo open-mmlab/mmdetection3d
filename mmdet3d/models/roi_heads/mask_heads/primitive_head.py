@@ -9,11 +9,10 @@ from mmengine import InstanceData
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import Det3DDataSample
-from mmdet3d.models.model_utils import VoteModule
-from mmdet3d.ops import build_sa_module
+from mmdet3d.models.layers import VoteModule, build_sa_module
 from mmdet3d.registry import MODELS
-from mmdet.core import multi_apply
+from mmdet3d.structures import Det3DDataSample
+from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

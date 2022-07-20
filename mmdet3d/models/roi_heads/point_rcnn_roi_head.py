@@ -2,9 +2,9 @@
 import torch
 from torch.nn import functional as F
 
-from mmdet3d.core import AssignResult, build_assigner, build_sampler
-from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures import bbox3d2result, bbox3d2roi
+from mmdet.models.task_modules import AssignResult
 from .base_3droi_head import Base3DRoIHead
 
 
@@ -61,12 +61,12 @@ class PointRCNNRoIHead(Base3DRoIHead):
         self.bbox_sampler = None
         if self.train_cfg:
             if isinstance(self.train_cfg.assigner, dict):
-                self.bbox_assigner = build_assigner(self.train_cfg.assigner)
+                self.bbox_assigner = TASK_UTILS.build(self.train_cfg.assigner)
             elif isinstance(self.train_cfg.assigner, list):
                 self.bbox_assigner = [
-                    build_assigner(res) for res in self.train_cfg.assigner
+                    TASK_UTILS.build(res) for res in self.train_cfg.assigner
                 ]
-            self.bbox_sampler = build_sampler(self.train_cfg.sampler)
+            self.bbox_sampler = TASK_UTILS.build(self.train_cfg.sampler)
 
     def forward_train(self, feats_dict, input_metas, proposal_list,
                       gt_bboxes_3d, gt_labels_3d):
@@ -82,7 +82,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
                 - labels_3d (torch.Tensor): Labels of proposals
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]):
                 GT bboxes of each sample. The bboxes are encapsulated
-                by 3D box structures.
+                by 3D box bboxes_3d.
             gt_labels_3d (list[LongTensor]): GT labels of each sample.
 
         Returns:

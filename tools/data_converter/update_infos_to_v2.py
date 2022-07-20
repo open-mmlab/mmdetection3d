@@ -16,9 +16,9 @@ import mmcv
 import numpy as np
 from nuscenes.nuscenes import NuScenes
 
-from mmdet3d.core.bbox import points_cam2img
 from mmdet3d.datasets.convert_utils import get_2d_boxes
 from mmdet3d.datasets.utils import convert_quaternion_to_matrix
+from mmdet3d.structures import points_cam2img
 
 
 def get_empty_instance():

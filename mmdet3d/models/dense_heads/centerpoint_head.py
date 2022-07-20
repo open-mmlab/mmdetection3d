@@ -8,13 +8,13 @@ from mmcv.runner import BaseModule, force_fp32
 from mmengine import InstanceData
 from torch import Tensor, nn
 
-from mmdet3d.core import (Det3DDataSample, circle_nms, draw_heatmap_gaussian,
-                          gaussian_radius, xywhr2xyxyr)
-from mmdet3d.core.post_processing import nms_bev
-from mmdet3d.models import builder
-from mmdet3d.models.utils import clip_sigmoid
+from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
+                                  gaussian_radius)
 from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet.core import multi_apply
+from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
+from mmdet.models.utils import multi_apply
+from .. import builder
+from ..layers import circle_nms, nms_bev
 
 
 @MODELS.register_module()

@@ -10,7 +10,7 @@ from tests.utils.model_utils import (_create_detector_inputs,
 
 class TestImVoxelNet(unittest.TestCase):
 
-    def test_h3dnet(self):
+    def test_imvoxelnet(self):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'ImVoxelNet')
@@ -24,7 +24,7 @@ class TestImVoxelNet(unittest.TestCase):
             _create_detector_inputs(
                 with_points=False,
                 with_img=True,
-                img_size=(384, 1280),
+                img_size=(128, 128),
                 num_gt_instance=num_gt_instance,
                 with_pts_semantic_mask=False,
                 with_pts_instance_mask=False)
@@ -36,6 +36,7 @@ class TestImVoxelNet(unittest.TestCase):
             with torch.no_grad():
                 batch_inputs, data_samples = model.data_preprocessor(
                     data, True)
+                torch.cuda.empty_cache()
                 results = model.forward(
                     batch_inputs, data_samples, mode='predict')
             self.assertEqual(len(results), len(data))

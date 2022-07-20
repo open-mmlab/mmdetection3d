@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch
 
-from mmdet3d.core import merge_aug_bboxes_3d
+from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
 from mmdet3d.registry import MODELS
 from .mvx_two_stage import MVXTwoStageDetector
 

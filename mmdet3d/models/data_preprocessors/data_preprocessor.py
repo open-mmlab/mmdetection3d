@@ -117,7 +117,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 imgs = [_img[[2, 1, 0], ...] for _img in imgs]
             # Normalization.
             if self._enable_normalize:
-                imgs = [(_img - self.mean) / self.std for _img in imgs]
+                imgs = [(_img.float() - self.mean) / self.std for _img in imgs]
             # Pad and stack Tensor.
             batch_imgs = stack_batch(imgs, self.pad_size_divisor,
                                      self.pad_value)

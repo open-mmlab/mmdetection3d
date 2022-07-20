@@ -3,8 +3,8 @@ from unittest import TestCase
 
 import torch
 
-from mmdet3d.core import Det3DDataSample
 from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
+from mmdet3d.structures import Det3DDataSample
 
 
 class TestDet3DDataPreprocessor(TestCase):
@@ -33,7 +33,7 @@ class TestDet3DDataPreprocessor(TestCase):
         processor = Det3DDataPreprocessor(mean=[0, 0, 0], std=[1, 1, 1])
 
         points = torch.randn((5000, 3))
-        image = torch.randint(0, 256, (3, 11, 10))
+        image = torch.randint(0, 256, (3, 11, 10)).float()
         inputs_dict = dict(points=points, img=image)
 
         data = [{'inputs': inputs_dict, 'data_sample': Det3DDataSample()}]

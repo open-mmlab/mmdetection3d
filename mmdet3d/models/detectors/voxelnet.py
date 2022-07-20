@@ -7,8 +7,8 @@ from mmcv.runner import force_fp32
 from torch import Tensor
 from torch.nn import functional as F
 
-from mmdet3d.core.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
 from .single_stage import SingleStage3DDetector
 
 

@@ -6,8 +6,8 @@ from mmengine import Config
 from mmengine.data import InstanceData
 
 from mmdet3d import *  # noqa
-from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
 from mmdet3d.models.dense_heads import Anchor3DHead
+from mmdet3d.structures import Box3DMode, LiDARInstance3DBoxes
 
 
 class TestAnchor3DHead(TestCase):

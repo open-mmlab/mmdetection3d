@@ -7,7 +7,7 @@ CommandLine:
 
 import torch
 
-from mmdet3d.models.fusion_layers import apply_3d_transformation
+from mmdet3d.models.layers.fusion_layers import apply_3d_transformation
 
 
 def test_coords_transformation():

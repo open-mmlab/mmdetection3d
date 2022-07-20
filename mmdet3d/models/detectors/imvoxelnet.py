@@ -3,10 +3,11 @@ from typing import List, Tuple, Union
 
 import torch
 
-from mmdet3d.core import Det3DDataSample, InstanceList, build_prior_generator
-from mmdet3d.core.utils import ConfigType, OptConfigType, SampleList
-from mmdet3d.models.fusion_layers.point_fusion import point_sample
-from mmdet3d.registry import MODELS
+from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils import ConfigType, InstanceList, OptConfigType
 from mmdet.models.detectors import BaseDetector
 
 
@@ -53,7 +54,7 @@ class ImVoxelNet(BaseDetector):
         bbox_head.update(test_cfg=test_cfg)
         self.bbox_head = MODELS.build(bbox_head)
         self.n_voxels = n_voxels
-        self.anchor_generator = build_prior_generator(anchor_generator)
+        self.anchor_generator = TASK_UTILS.build(anchor_generator)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 

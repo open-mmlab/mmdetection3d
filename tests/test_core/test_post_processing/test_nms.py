@@ -5,7 +5,7 @@ import torch
 
 
 def test_aligned_3d_nms():
-    from mmdet3d.core.post_processing import aligned_3d_nms
+    from mmdet3d.models.layers import aligned_3d_nms
 
     boxes = torch.tensor([[1.2261, 0.6679, -1.2678, 2.6547, 1.0428, 0.1000],
                           [5.0919, 0.6512, 0.7238, 5.4821, 1.2451, 2.1095],
@@ -61,7 +61,7 @@ def test_aligned_3d_nms():
 
 
 def test_circle_nms():
-    from mmdet3d.core.post_processing import circle_nms
+    from mmdet3d.models.layers import circle_nms
     boxes = torch.tensor([[-11.1100, 2.1300, 0.8823],
                           [-11.2810, 2.2422, 0.8914],
                           [-10.3966, -0.3198, 0.8643],
@@ -80,7 +80,7 @@ def test_circle_nms():
 @pytest.mark.skipif(
     not torch.cuda.is_available(), reason='requires CUDA support')
 def test_nms_bev():
-    from mmdet3d.core.post_processing import nms_bev
+    from mmdet3d.models.layers import nms_bev
 
     np_boxes = np.array(
         [[6.0, 3.0, 8.0, 7.0, 2.0], [3.0, 6.0, 9.0, 11.0, 1.0],
@@ -99,7 +99,7 @@ def test_nms_bev():
 @pytest.mark.skipif(
     not torch.cuda.is_available(), reason='requires CUDA support')
 def test_nms_normal_bev():
-    from mmdet3d.core.post_processing import nms_normal_bev
+    from mmdet3d.models.layers import nms_normal_bev
 
     np_boxes = np.array(
         [[6.0, 3.0, 8.0, 7.0, 2.0], [3.0, 6.0, 9.0, 11.0, 1.0],

@@ -3,13 +3,13 @@ import torch
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn as nn
 
-from mmdet3d.core import xywhr2xyxyr
-from mmdet3d.core.bbox.structures import (DepthInstance3DBoxes,
-                                          LiDARInstance3DBoxes)
-from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
 from mmdet3d.models.builder import build_loss
-from mmdet3d.registry import MODELS
-from mmdet.core import build_bbox_coder, multi_apply
+from mmdet3d.models.layers import nms_bev, nms_normal_bev
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures import xywhr2xyxyr
+from mmdet3d.structures.bbox_3d import (DepthInstance3DBoxes,
+                                        LiDARInstance3DBoxes)
+from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()
@@ -54,7 +54,7 @@ class PointRPNHead(BaseModule):
         self.cls_loss = build_loss(cls_loss)
 
         # build box coder
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
 
         # build pred conv
         self.cls_layers = self._make_fc_layers(

@@ -5,9 +5,9 @@ from mmcv.cnn.bricks import ConvModule
 from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.core.utils.typing import ConfigType
-from mmdet3d.ops import PointFPModule
+from mmdet3d.models.layers import PointFPModule
 from mmdet3d.registry import MODELS
+from mmdet3d.utils.typing import ConfigType
 from .decode_head import Base3DDecodeHead
 
 

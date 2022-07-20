@@ -30,6 +30,7 @@ class Test3DSSD(unittest.TestCase):
             with torch.no_grad():
                 batch_inputs, data_samples = model.data_preprocessor(
                     data, True)
+                torch.cuda.empty_cache()
                 results = model.forward(
                     batch_inputs, data_samples, mode='predict')
             self.assertEqual(len(results), len(data))

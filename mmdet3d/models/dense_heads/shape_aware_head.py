@@ -10,10 +10,11 @@ from mmengine.model import BaseModule
 from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.core import box3d_multiclass_nms, limit_period, xywhr2xyxyr
-from mmdet3d.core.utils import InstanceList, OptInstanceList
+from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import MODELS
-from mmdet.core import multi_apply
+from mmdet3d.structures import limit_period, xywhr2xyxyr
+from mmdet3d.utils import InstanceList, OptInstanceList
+from mmdet.models.utils import multi_apply
 from ..builder import build_head
 from .anchor3d_head import Anchor3DHead
 

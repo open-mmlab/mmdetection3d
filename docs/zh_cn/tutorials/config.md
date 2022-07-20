@@ -117,7 +117,7 @@ model = dict(
                         [0.50867593, 0.50656086, 0.30136237],
                         [1.1511526, 1.0546296, 0.49706793],
                         [0.47535285, 0.49249494, 0.5802117]]),  # 每一类的平均尺寸，其顺序与类名顺序相同
-        vote_moudule_cfg=dict(  # 投票 (vote) 模块的配置，更多细节请参考 mmdet3d.models.model_utils
+        vote_moudule_cfg=dict(  # 投票 (vote) 模块的配置，更多细节请参考 mmdet3d.models.layers
             in_channels=256,  # 投票模块的输入通道数
             vote_per_seed=1,  # 对于每个种子点生成的投票数
             gt_per_seed=3,  # 每个种子点的真实标签个数
@@ -187,77 +187,77 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')  # 类的名称
-train_pipeline = [  # 训练流水线，更多细节请参考 mmdet3d.datasets.pipelines
+train_pipeline = [  # 训练流水线，更多细节请参考 mmdet3d.datasets.transforms
     dict(
-        type='LoadPointsFromFile',  # 第一个流程，用于读取点，更多细节请参考 mmdet3d.datasets.pipelines.indoor_loading
+        type='LoadPointsFromFile',  # 第一个流程，用于读取点，更多细节请参考 mmdet3d.datasets.transforms.indoor_loading
         shift_height=True,  # 是否使用变换高度
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
     dict(
-        type='LoadAnnotations3D',  # 第二个流程，用于读取标注，更多细节请参考 mmdet3d.datasets.pipelines.indoor_loading
+        type='LoadAnnotations3D',  # 第二个流程，用于读取标注，更多细节请参考 mmdet3d.datasets.transforms.indoor_loading
         with_bbox_3d=True,  # 是否读取 3D 框
         with_label_3d=True,  # 是否读取 3D 框对应的类别标签
         with_mask_3d=True,  # 是否读取 3D 实例分割掩码
         with_seg_3d=True),  # 是否读取 3D 语义分割掩码
     dict(
-        type='PointSegClassMapping',  # 选取有效的类别，更多细节请参考 mmdet3d.datasets.pipelines.point_seg_class_mapping
+        type='PointSegClassMapping',  # 选取有效的类别，更多细节请参考 mmdet3d.datasets.transforms.point_seg_class_mapping
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),  # 所有有效类别的编号
         max_cat_id=40),  # 输入语义分割掩码中可能存在的最大类别编号
-    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
+    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.transforms.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(type='IndoorFlipData',  # 数据增广流程，随机翻转点和 3D 框
         flip_ratio_yz=0.5,  # 沿着 yz 平面被翻转的概率
         flip_ratio_xz=0.5),  # 沿着 xz 平面被翻转的概率
     dict(
-        type='IndoorGlobalRotScale',  # 数据增广流程，旋转并放缩点和 3D 框，更多细节请参考 mmdet3d.datasets.pipelines.indoor_augment
+        type='IndoorGlobalRotScale',  # 数据增广流程，旋转并放缩点和 3D 框，更多细节请参考 mmdet3d.datasets.transforms.indoor_augment
         shift_height=True,  # 读取的点是否有高度这一属性
         rot_range=[-0.027777777777777776, 0.027777777777777776],  # 旋转角范围
         scale_range=None),  # 缩放尺寸范围
     dict(
-        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.transforms.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
     dict(
-        type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+        type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.transforms.formatting
         keys=[
             'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
             'pts_instance_mask'
         ])
 ]
-test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.pipelines
+test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.transforms
     dict(
-        type='LoadPointsFromFile',  # 第一个流程，用于读取点，更多细节请参考 mmdet3d.datasets.pipelines.indoor_loading
+        type='LoadPointsFromFile',  # 第一个流程，用于读取点，更多细节请参考 mmdet3d.datasets.transforms.indoor_loading
         shift_height=True,  # 是否使用变换高度
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
-    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
+    dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.transforms.indoor_sample
             num_points=40000),  # 采样的点的数量
     dict(
-        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.transforms.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
-    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.transforms.formatting
         keys=['points'])
 ]
-eval_pipeline = [  # 模型验证或可视化所使用的流水线，更多细节请参考 mmdet3d.datasets.pipelines
+eval_pipeline = [  # 模型验证或可视化所使用的流水线，更多细节请参考 mmdet3d.datasets.transforms
     dict(
-        type='LoadPointsFromFile',  # 第一个流程，用于读取点，更多细节请参考 mmdet3d.datasets.pipelines.indoor_loading
+        type='LoadPointsFromFile',  # 第一个流程，用于读取点，更多细节请参考 mmdet3d.datasets.transforms.indoor_loading
         shift_height=True,  # 是否使用变换高度
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
     dict(
-        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+        type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.transforms.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
         with_label=False),
-    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.transforms.formatting
         keys=['points'])
 ]
 data = dict(

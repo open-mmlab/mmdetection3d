@@ -3,9 +3,8 @@ import pytest
 import torch
 from mmengine.data import InstanceData
 
-from mmdet3d.core import Det3DDataSample
-from mmdet3d.core.bbox import LiDARInstance3DBoxes
-from mmdet3d.metrics import KittiMetric
+from mmdet3d.evaluation.metrics import KittiMetric
+from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes
 
 data_root = 'tests/data/kitti'
 

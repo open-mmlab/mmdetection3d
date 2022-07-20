@@ -9,13 +9,13 @@ from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import BaseInstance3DBoxes, Det3DDataSample
-from mmdet3d.core.bbox import DepthInstance3DBoxes
-from mmdet3d.core.post_processing import aligned_3d_nms
+from mmdet3d.models import aligned_3d_nms
+from mmdet3d.models.layers.pointnet_modules import build_sa_module
 from mmdet3d.models.losses import chamfer_distance
-from mmdet3d.ops import build_sa_module
 from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet.core import multi_apply
+from mmdet3d.structures import (BaseInstance3DBoxes, DepthInstance3DBoxes,
+                                Det3DDataSample)
+from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

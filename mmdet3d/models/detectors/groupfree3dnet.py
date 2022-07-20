@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 
 from mmdet3d.registry import MODELS
-from ...core import SampleList
+from ...structures.det3d_data_sample import SampleList
 from .single_stage import SingleStage3DDetector
 
 
@@ -75,7 +75,7 @@ class GroupFree3DNet(SingleStage3DDetector):
                 (num_instance, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
                 (num_instances, ).
-            - bboxes_3d (Tensor): Contains a tensor with shape
+            - bbox_3d (Tensor): Contains a tensor with shape
                 (num_instances, C) where C >=7.
         """
         x = self.extract_feat(batch_inputs_dict)

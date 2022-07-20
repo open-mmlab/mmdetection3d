@@ -8,8 +8,9 @@ from mmcv.runner import BaseModule, auto_fp16
 from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.core.utils.typing import ConfigType, SampleList
 from mmdet3d.registry import MODELS
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils.typing import ConfigType
 
 
 class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):

@@ -6,9 +6,8 @@ from mmcv.transforms.base import BaseTransform
 from mmengine.data import InstanceData
 from mmengine.registry import TRANSFORMS
 
-from mmdet3d.core import LiDARInstance3DBoxes
-from mmdet3d.core.data_structures import Det3DDataSample
 from mmdet3d.datasets import KittiDataset
+from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes
 
 
 def _generate_kitti_dataset_config():
@@ -72,15 +71,12 @@ def test_getitem():
     ann_info = kitti_dataset.parse_ann_info(input_dict)
 
     # assert the keys in ann_info and the type
-    assert 'gt_labels' in ann_info
-    assert ann_info['gt_labels'].dtype == np.int64
+    assert 'instances' in ann_info
+
     # only one instance
-    assert len(ann_info['gt_labels']) == 1
-    assert (ann_info['gt_labels'] == 0).all()
     assert 'gt_labels_3d' in ann_info
     assert ann_info['gt_labels_3d'].dtype == np.int64
-    assert 'gt_bboxes' in ann_info
-    assert ann_info['gt_bboxes'].dtype == np.float64
+
     assert 'gt_bboxes_3d' in ann_info
     assert isinstance(ann_info['gt_bboxes_3d'], LiDARInstance3DBoxes)
     assert torch.allclose(ann_info['gt_bboxes_3d'].tensor.sum(),
@@ -89,16 +85,6 @@ def test_getitem():
     assert ann_info['centers_2d'].dtype == np.float64
     assert 'depths' in ann_info
     assert ann_info['depths'].dtype == np.float64
-    assert 'group_id' in ann_info
-    assert ann_info['group_id'].dtype == np.int64
-    assert 'occluded' in ann_info
-    assert ann_info['occluded'].dtype == np.int64
-    assert 'difficulty' in ann_info
-    assert ann_info['difficulty'].dtype == np.int64
-    assert 'num_lidar_pts' in ann_info
-    assert ann_info['num_lidar_pts'].dtype == np.int64
-    assert 'truncated' in ann_info
-    assert ann_info['truncated'].dtype == np.int64
 
     car_kitti_dataset = KittiDataset(
         data_root,
@@ -115,8 +101,8 @@ def test_getitem():
     ann_info = car_kitti_dataset.parse_ann_info(input_dict)
 
     # assert the keys in ann_info and the type
-    assert 'gt_labels' in ann_info
-    assert ann_info['gt_labels'].dtype == np.int64
+    assert 'instances' in ann_info
+    assert ann_info['gt_labels_3d'].dtype == np.int64
     # all instance have been filtered by classes
-    assert len(ann_info['gt_labels']) == 0
+    assert len(ann_info['gt_labels_3d']) == 0
     assert len(car_kitti_dataset.metainfo['CLASSES']) == 1

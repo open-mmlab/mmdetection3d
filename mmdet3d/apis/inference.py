@@ -12,9 +12,9 @@ import torch.nn as nn
 from mmengine.dataset import Compose
 from mmengine.runner import load_checkpoint
 
-from mmdet3d.core import Box3DMode, Det3DDataSample, SampleList
-from mmdet3d.core.bbox import get_box_type
-from mmdet3d.models import build_model
+from mmdet3d.registry import MODELS
+from mmdet3d.structures import Box3DMode, Det3DDataSample, get_box_type
+from mmdet3d.structures.det3d_data_sample import SampleList
 
 
 def convert_SyncBN(config):
@@ -55,7 +55,7 @@ def init_model(config, checkpoint=None, device='cuda:0'):
     config.model.pretrained = None
     convert_SyncBN(config.model)
     config.model.train_cfg = None
-    model = build_model(config.model)
+    model = MODELS.build(config.model)
     if checkpoint is not None:
         checkpoint = load_checkpoint(model, checkpoint, map_location='cpu')
         if 'CLASSES' in checkpoint['meta']:

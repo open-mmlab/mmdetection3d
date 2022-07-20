@@ -242,7 +242,7 @@ class Seg3DDataset(BaseDataset):
         # use it in PointSegClassMapping pipeline
         info['label_mapping'] = self.label_mapping
 
-        # 'eval_ann_info' will be updated in loading pipelines
+        # 'eval_ann_info' will be updated in loading transforms
         if self.test_mode and self.load_eval_anns:
             info['eval_ann_info'] = dict()
 

@@ -3,10 +3,11 @@ from typing import List, Optional, Union
 
 from mmengine import InstanceData
 
-from mmdet3d.core import Det3DDataSample
-from mmdet3d.core.utils import (ForwardResults, InstanceList, OptConfigType,
-                                OptMultiConfig, OptSampleList, SampleList)
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.det3d_data_sample import (ForwardResults,
+                                                  OptSampleList, SampleList)
+from mmdet3d.utils.typing import InstanceList, OptConfigType, OptMultiConfig
 from mmdet.models import BaseDetector
 
 
@@ -113,7 +114,7 @@ class Base3DDetector(BaseDetector):
               (num_instance, )
             - labels_3d (Tensor): Labels of 3D bboxes, has a shape
               (num_instances, ).
-            - bboxes_3d (Tensor): Contains a tensor with shape
+            - bbox_3d (Tensor): Contains a tensor with shape
               (num_instances, C) where C >=7.
             When there are image prediction in some models, it should
             contains  `pred_instances`, And the ``pred_instances`` normally

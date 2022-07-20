@@ -5,7 +5,7 @@ from mmengine import InstanceData
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
-from ...core import Det3DDataSample
+from mmdet3d.structures import Det3DDataSample
 from .base_3droi_head import Base3DRoIHead
 
 

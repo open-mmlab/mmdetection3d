@@ -4,9 +4,9 @@ import torch
 from mmcv.cnn import Scale
 from torch import nn as nn
 
-from mmdet3d.core import build_bbox_coder
-from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
-                               LiDARInstance3DBoxes)
+from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                                LiDARInstance3DBoxes)
 
 
 def test_partial_bin_based_box_coder():
@@ -25,7 +25,7 @@ def test_partial_bin_based_box_coder():
                     [0.500618, 0.632163, 0.683424],
                     [0.404671, 1.071108, 1.688889],
                     [0.76584, 1.398258, 0.472728]])
-    box_coder = build_bbox_coder(box_coder_cfg)
+    box_coder = TASK_UTILS.build(box_coder_cfg)
 
     # test eocode
     gt_bboxes = DepthInstance3DBoxes(
@@ -226,7 +226,7 @@ def test_partial_bin_based_box_coder():
 def test_anchor_free_box_coder():
     box_coder_cfg = dict(
         type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)
-    box_coder = build_bbox_coder(box_coder_cfg)
+    box_coder = TASK_UTILS.build(box_coder_cfg)
 
     # test encode
     gt_bboxes = LiDARInstance3DBoxes([[
@@ -340,7 +340,7 @@ def test_centerpoint_bbox_coder():
         out_size_factor=4,
         voxel_size=[0.2, 0.2])
 
-    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    bbox_coder = TASK_UTILS.build(bbox_coder_cfg)
 
     batch_dim = torch.rand([2, 3, 128, 128])
     batch_hei = torch.rand([2, 1, 128, 128])
@@ -363,7 +363,7 @@ def test_point_xyzwhlr_bbox_coder():
         type='PointXYZWHLRBBoxCoder',
         use_mean_size=True,
         mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6, 1.73]])
-    boxcoder = build_bbox_coder(bbox_coder_cfg)
+    boxcoder = TASK_UTILS.build(bbox_coder_cfg)
 
     # test encode
     gt_bboxes_3d = torch.tensor(
@@ -396,7 +396,7 @@ def test_fcos3d_bbox_coder():
         base_dims=None,
         code_size=7,
         norm_on_bbox=True)
-    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    bbox_coder = TASK_UTILS.build(bbox_coder_cfg)
 
     # test decode
     # [2, 7, 1, 1]
@@ -426,7 +426,7 @@ def test_fcos3d_bbox_coder():
         base_dims=((2., 3., 1.), (1., 2., 3.)),
         code_size=7,
         norm_on_bbox=True)
-    prior_bbox_coder = build_bbox_coder(prior_bbox_coder_cfg)
+    prior_bbox_coder = TASK_UTILS.build(prior_bbox_coder_cfg)
 
     # test decode
     batch_bbox = torch.tensor([[[[0.3130]], [[0.7094]], [[0.8743]], [[0.0570]],
@@ -472,7 +472,7 @@ def test_pgd_bbox_coder():
         base_dims=None,
         code_size=7,
         norm_on_bbox=True)
-    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    bbox_coder = TASK_UTILS.build(bbox_coder_cfg)
 
     # test decode_2d
     # [2, 27, 1, 1]
@@ -575,7 +575,7 @@ def test_smoke_bbox_coder():
         base_dims=((3.88, 1.63, 1.53), (1.78, 1.70, 0.58), (0.88, 1.73, 0.67)),
         code_size=7)
 
-    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    bbox_coder = TASK_UTILS.build(bbox_coder_cfg)
     regression = torch.rand([200, 8])
     points = torch.rand([200, 2])
     labels = torch.ones([2, 100])
@@ -616,7 +616,7 @@ def test_monoflex_bbox_coder():
         bin_centers=[0, np.pi / 2, np.pi, -np.pi / 2],
         bin_margin=np.pi / 6,
         code_size=7)
-    bbox_coder = build_bbox_coder(bbox_coder_cfg)
+    bbox_coder = TASK_UTILS.build(bbox_coder_cfg)
     gt_bboxes_3d = CameraInstance3DBoxes(torch.rand([6, 7]))
     orientation_target = bbox_coder.encode(gt_bboxes_3d)
     assert orientation_target.shape == torch.Size([6, 8])

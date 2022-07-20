@@ -7,10 +7,11 @@ from mmcv import ConfigDict
 from mmengine.data import InstanceData
 from torch import Tensor
 
-from mmdet3d.core import limit_period, xywhr2xyxyr
-from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
-from mmdet3d.core.utils import InstanceList, SampleList
+from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import limit_period, xywhr2xyxyr
+from mmdet3d.utils.typing import InstanceList
+from ...structures.det3d_data_sample import SampleList
 from .anchor3d_head import Anchor3DHead
 
 

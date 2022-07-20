@@ -7,7 +7,7 @@ import torch
 def test_paconv_sa_module_msg():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PAConvSAModuleMSG
+    from mmdet3d.models.layers import PAConvSAModuleMSG
 
     # paconv_num_kernels should have same length as mlp_channels
     with pytest.raises(AssertionError):
@@ -105,7 +105,7 @@ def test_paconv_sa_module_msg():
 def test_paconv_sa_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import build_sa_module
+    from mmdet3d.models.layers import build_sa_module
     sa_cfg = dict(
         type='PAConvSAModule',
         num_point=16,
@@ -164,7 +164,7 @@ def test_paconv_sa_module():
 def test_paconv_cuda_sa_module_msg():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PAConvCUDASAModuleMSG
+    from mmdet3d.models.layers import PAConvCUDASAModuleMSG
 
     # paconv_num_kernels should have same length as mlp_channels
     with pytest.raises(AssertionError):
@@ -245,7 +245,7 @@ def test_paconv_cuda_sa_module_msg():
 def test_paconv_cuda_sa_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import build_sa_module
+    from mmdet3d.models.layers import build_sa_module
     sa_cfg = dict(
         type='PAConvCUDASAModule',
         num_point=16,

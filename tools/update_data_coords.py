@@ -5,7 +5,7 @@ from os import path as osp
 import mmcv
 import numpy as np
 
-from mmdet3d.core.bbox import limit_period
+from mmdet3d.structures import limit_period
 
 
 def update_sunrgbd_infos(root_dir, out_dir, pkl_files):

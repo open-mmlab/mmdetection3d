@@ -21,7 +21,7 @@ class TestMVXNet(unittest.TestCase):
             'mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py'  # noqa
         )
         model = MODELS.build(mvx_net_cfg)
-        num_gt_instance = 50
+        num_gt_instance = 1
         data = [
             _create_detector_inputs(
                 with_img=False,
@@ -36,6 +36,7 @@ class TestMVXNet(unittest.TestCase):
             batch_inputs, data_samples = model.data_preprocessor(data, True)
             # save the memory when do the unitest
             with torch.no_grad():
+                torch.cuda.empty_cache()
                 losses = model.forward(batch_inputs, data_samples, mode='loss')
             assert losses['loss_cls'][0] >= 0
             assert losses['loss_bbox'][0] >= 0

@@ -4,9 +4,9 @@ from typing import Dict, List, Tuple, Union
 import torch
 from torch import Tensor
 
-from mmdet3d.core.utils import (ConfigType, OptConfigType, OptMultiConfig,
-                                OptSampleList, SampleList)
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from ...structures.det3d_data_sample import OptSampleList, SampleList
 from .base import Base3DDetector
 
 
@@ -103,7 +103,7 @@ class SingleStage3DDetector(Base3DDetector):
                     (num_instance, )
                 - labels_3d (Tensor): Labels of bboxes, has a shape
                     (num_instances, ).
-                - bboxes_3d (Tensor): Contains a tensor with shape
+                - bbox_3d (Tensor): Contains a tensor with shape
                     (num_instances, C) where C >=7.
         """
         x = self.extract_feat(batch_inputs_dict)

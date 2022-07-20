@@ -2,7 +2,7 @@
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
-from mmdet3d.ops import PointFPModule
+from mmdet3d.models.layers.pointnet_modules import PointFPModule
 from mmdet3d.registry import MODELS
 
 

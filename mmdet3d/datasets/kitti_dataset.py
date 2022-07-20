@@ -4,7 +4,7 @@ from typing import Callable, List, Optional, Union
 import numpy as np
 
 from mmdet3d.datasets import DATASETS
-from ..core.bbox import CameraInstance3DBoxes
+from mmdet3d.structures import CameraInstance3DBoxes
 from .det3d_dataset import Det3DDataset
 
 
@@ -119,7 +119,7 @@ class KittiDataset(Det3DDataset):
         Returns:
             dict: annotation information consists of the following keys:
 
-                - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                     3D ground truth bboxes.
                 - bbox_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.

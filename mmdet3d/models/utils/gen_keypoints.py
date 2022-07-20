@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from mmdet3d.core.bbox import points_cam2img
+from mmdet3d.structures import points_cam2img
 
 
 def get_keypoints(gt_bboxes_3d_list,

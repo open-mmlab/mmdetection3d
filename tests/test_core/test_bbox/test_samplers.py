@@ -3,8 +3,8 @@ import pytest
 import torch
 from mmengine import InstanceData
 
-from mmdet3d.core.bbox.assigners import Max3DIoUAssigner
-from mmdet3d.core.bbox.samplers import IoUNegPiecewiseSampler
+from mmdet3d.models.task_modules import IoUNegPiecewiseSampler
+from mmdet3d.models.task_modules.assigners import Max3DIoUAssigner
 
 
 def test_iou_piecewise_sampler():

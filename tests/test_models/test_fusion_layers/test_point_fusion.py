@@ -7,7 +7,7 @@ CommandLine:
 
 import torch
 
-from mmdet3d.models.fusion_layers import PointFusion
+from mmdet3d.models.layers.fusion_layers import PointFusion
 
 
 def test_sample_single():

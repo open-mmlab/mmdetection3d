@@ -213,7 +213,7 @@ class Kitti2DDataset(Det3DDataset):
         Returns:
             list[dict]: A list of dictionaries with the kitti 2D format.
         """
-        from mmdet3d.core.bbox.transforms import bbox2result_kitti2d
+        from mmdet3d.structures.ops.transforms import bbox2result_kitti2d
         sample_idx = [info['image']['image_idx'] for info in self.data_infos]
         result_files = bbox2result_kitti2d(outputs, self.CLASSES, sample_idx,
                                            out)
@@ -231,7 +231,7 @@ class Kitti2DDataset(Det3DDataset):
             tuple (str, dict): Average precision results in str format
                 and average precision results in dict format.
         """
-        from mmdet3d.core.evaluation import kitti_eval
+        from mmdet3d.evaluation import kitti_eval
         eval_types = ['bbox'] if not eval_types else eval_types
         assert eval_types in ('bbox', ['bbox'
                                        ]), 'KITTI data set only evaluate bbox'

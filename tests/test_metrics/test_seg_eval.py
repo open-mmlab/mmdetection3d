@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.core.evaluation.seg_eval import seg_eval
+from mmdet3d.evaluation.functional.seg_eval import seg_eval
 
 
 def test_indoor_eval():

@@ -3,8 +3,8 @@ import unittest
 import torch
 from mmengine import DefaultScope
 
-from mmdet3d.core import LiDARInstance3DBoxes
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import LiDARInstance3DBoxes
 from tests.utils.model_utils import (_create_detector_inputs,
                                      _get_detector_cfg, _setup_seed)
 

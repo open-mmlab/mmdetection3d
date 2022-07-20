@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from mmdet3d.ops import PAConv, PAConvCUDA
+from mmdet3d.models.layers import PAConv, PAConvCUDA
 
 
 def test_paconv():

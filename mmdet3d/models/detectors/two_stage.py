@@ -2,9 +2,9 @@
 import copy
 from typing import Union
 
-from mmdet3d.core.utils import (ConfigType, OptConfigType, OptMultiConfig,
-                                SampleList)
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from ...structures.det3d_data_sample import SampleList
 from .base import Base3DDetector
 
 
@@ -143,7 +143,7 @@ class TwoStage3DDetector(Base3DDetector):
                 (num_instance, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
                 (num_instances, ).
-            - bboxes_3d (Tensor): Contains a tensor with shape
+            - bbox_3d (Tensor): Contains a tensor with shape
                 (num_instances, C) where C >=7.
         """
         feats_dict = self.extract_feat(batch_inputs_dict)

@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from mmengine.testing import assert_allclose
 
-from mmdet3d.core import DepthInstance3DBoxes
 from mmdet3d.datasets import SUNRGBDDataset
+from mmdet3d.structures import DepthInstance3DBoxes
 
 
 def _generate_scannet_dataset_config():

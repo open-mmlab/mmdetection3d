@@ -7,7 +7,7 @@ import torch
 def test_pointnet_sa_module_msg():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PointSAModuleMSG
+    from mmdet3d.models.layers import PointSAModuleMSG
 
     self = PointSAModuleMSG(
         num_point=16,
@@ -152,7 +152,7 @@ def test_pointnet_sa_module_msg():
 def test_pointnet_sa_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import build_sa_module
+    from mmdet3d.models.layers import build_sa_module
     sa_cfg = dict(
         type='PointSAModule',
         num_point=16,
@@ -211,7 +211,7 @@ def test_pointnet_sa_module():
 def test_pointnet_fp_module():
     if not torch.cuda.is_available():
         pytest.skip()
-    from mmdet3d.ops import PointFPModule
+    from mmdet3d.models.layers import PointFPModule
 
     self = PointFPModule(mlp_channels=[24, 16]).cuda()
     assert self.mlps.layer0.conv.in_channels == 24

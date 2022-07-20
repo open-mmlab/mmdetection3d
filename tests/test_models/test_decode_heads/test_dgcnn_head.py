@@ -3,8 +3,8 @@ from unittest import TestCase
 
 import torch
 
-from mmdet3d.core import Det3DDataSample, PointData
 from mmdet3d.models.decode_heads import DGCNNHead
+from mmdet3d.structures import Det3DDataSample, PointData
 
 
 class TestDGCNNHead(TestCase):

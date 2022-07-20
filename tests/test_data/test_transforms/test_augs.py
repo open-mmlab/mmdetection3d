@@ -8,7 +8,7 @@ from mmengine.testing import assert_allclose
 from utils import create_data_info_after_loading
 
 from mmdet3d.datasets import GlobalAlignment, RandomFlip3D
-from mmdet3d.datasets.pipelines import GlobalRotScaleTrans
+from mmdet3d.datasets.transforms import GlobalRotScaleTrans
 
 
 class TestGlobalRotScaleTrans(unittest.TestCase):

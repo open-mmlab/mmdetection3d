@@ -6,10 +6,10 @@ import torch
 from mmengine.testing import assert_allclose
 from utils import create_dummy_data_info
 
-from mmdet3d.core import DepthPoints, LiDARPoints
-from mmdet3d.datasets.pipelines import PointSegClassMapping
-from mmdet3d.datasets.pipelines.loading import (LoadAnnotations3D,
-                                                LoadPointsFromFile)
+from mmdet3d.datasets.transforms import PointSegClassMapping
+from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
+                                                 LoadPointsFromFile)
+from mmdet3d.structures import DepthPoints, LiDARPoints
 
 
 class TestLoadPointsFromFile(unittest.TestCase):

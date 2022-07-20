@@ -5,9 +5,9 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from mmdet3d.core.bbox import bbox_overlaps_nearest_3d
-from mmdet3d.core.utils import InstanceList, OptInstanceList
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import bbox_overlaps_nearest_3d
+from mmdet3d.utils import InstanceList, OptInstanceList
 from .anchor3d_head import Anchor3DHead
 from .train_mixins import get_direction_target
 

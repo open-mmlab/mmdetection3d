@@ -6,7 +6,8 @@ from mmcv.runner import BaseModule
 from mmengine.config import ConfigDict
 from torch import Tensor
 
-from mmdet3d.core.utils import InstanceList, OptMultiConfig, SampleList
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils import InstanceList, OptMultiConfig
 
 
 class BaseMono3DDenseHead(BaseModule, metaclass=ABCMeta):

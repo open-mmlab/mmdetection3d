@@ -3,8 +3,8 @@ import mmcv
 import pytest
 import torch
 
-from mmdet3d.core import merge_aug_bboxes_3d
-from mmdet3d.core.bbox import DepthInstance3DBoxes
+from mmdet3d.models import merge_aug_bboxes_3d
+from mmdet3d.structures import DepthInstance3DBoxes
 
 
 def test_merge_aug_bboxes_3d():

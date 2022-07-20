@@ -7,10 +7,10 @@ from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.core import add_prefix
-from mmdet3d.core.utils import (ConfigType, OptConfigType, OptMultiConfig,
-                                OptSampleList, SampleList)
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from ...structures.det3d_data_sample import OptSampleList, SampleList
+from ..utils import add_prefix
 from .base import Base3DSegmentor
 
 

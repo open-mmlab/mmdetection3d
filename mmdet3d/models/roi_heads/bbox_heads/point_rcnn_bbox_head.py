@@ -6,14 +6,12 @@ from mmcv.cnn.bricks import build_conv_layer
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
-from mmdet3d.core import build_bbox_coder
-from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
-                                          rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
-from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import build_sa_module
-from mmdet3d.registry import MODELS
-from mmdet.core import multi_apply
+from mmdet3d.models.layers import nms_bev, nms_normal_bev
+from mmdet3d.models.layers.pointnet_modules import build_sa_module
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
+                                        rotation_3d_in_axis, xywhr2xyxyr)
+from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()
@@ -100,9 +98,9 @@ class PointRCNNBboxHead(BaseModule):
         self.act_cfg = act_cfg
         self.bias = bias
 
-        self.loss_bbox = build_loss(loss_bbox)
-        self.loss_cls = build_loss(loss_cls)
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.loss_cls = MODELS.build(loss_cls)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
         self.in_channels = in_channels

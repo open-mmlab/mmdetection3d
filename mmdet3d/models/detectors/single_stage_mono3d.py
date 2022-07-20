@@ -3,9 +3,10 @@ from typing import Tuple
 
 from torch import Tensor
 
-from mmdet3d.core import Det3DDataSample, InstanceList
-from mmdet3d.core.utils import SampleList
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils import InstanceList
 from mmdet.models.detectors.single_stage import SingleStageDetector
 
 

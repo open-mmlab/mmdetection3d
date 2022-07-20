@@ -7,11 +7,12 @@ import torch
 from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.core import PseudoSampler, merge_aug_bboxes_3d
-from mmdet3d.core.utils import ConfigType, InstanceList, OptConfigType
-from mmdet3d.core.utils.typing import OptInstanceList
+from mmdet3d.models.task_modules import PseudoSampler
+from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
 from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet.core import multi_apply
+from mmdet3d.utils.typing import (ConfigType, InstanceList, OptConfigType,
+                                  OptInstanceList)
+from mmdet.models.utils import multi_apply
 from .base_3d_dense_head import Base3DDenseHead
 from .train_mixins import AnchorTrainMixin
 

@@ -5,11 +5,11 @@ from mmcv import ConfigDict
 from torch import Tensor
 from torch.nn import functional as F
 
-from mmdet3d.core import AssignResult
-from mmdet3d.core.bbox import bbox3d2roi
-from mmdet3d.core.utils import InstanceList, SampleList
 from mmdet3d.registry import MODELS
-from mmdet.core.bbox import SamplingResult
+from mmdet3d.structures import bbox3d2roi
+from mmdet3d.utils import InstanceList
+from mmdet.models.task_modules import AssignResult, SamplingResult
+from ...structures.det3d_data_sample import SampleList
 from .base_3droi_head import Base3DRoIHead
 
 
@@ -367,8 +367,7 @@ class PartAggregationROIHead(Base3DRoIHead):
         voxel_dict = feats_dict.pop('voxel_dict')
         semantic_results = self.semantic_head(feats_dict['seg_features'])
         feats_dict.update(semantic_results)
-        rois = bbox3d2roi(
-            [res['bboxes_3d'].tensor for res in rpn_results_list])
+        rois = bbox3d2roi([res['bbox_3d'].tensor for res in rpn_results_list])
         bbox_results = self._bbox_forward(feats_dict, voxel_dict, rois)
         cls_score = bbox_results['cls_score']
         bbox_pred = bbox_results['bbox_pred']

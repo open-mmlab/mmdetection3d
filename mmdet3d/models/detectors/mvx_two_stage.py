@@ -8,8 +8,8 @@ from mmengine import InstanceData
 from torch import Tensor
 from torch.nn import functional as F
 
-from mmdet3d.core import Det3DDataSample
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
 from .base import Base3DDetector
 
 
@@ -407,7 +407,7 @@ class MVXTwoStageDetector(Base3DDetector):
                 (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
                 (num_instances, ).
-            - bboxes_3d (:obj:`BaseInstance3DBoxes`): Prediction of bboxes,
+            - bbox_3d (:obj:`BaseInstance3DBoxes`): Prediction of bboxes,
                 contains a tensor with shape (num_instances, 7).
         """
         batch_input_metas = [item.metainfo for item in batch_data_samples]

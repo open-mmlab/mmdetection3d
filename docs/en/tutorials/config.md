@@ -116,7 +116,7 @@ model = dict(
                         [0.50867593, 0.50656086, 0.30136237],
                         [1.1511526, 1.0546296, 0.49706793],
                         [0.47535285, 0.49249494, 0.5802117]]),  # Mean sizes for each class, the order is consistent with class_names.
-        vote_moudule_cfg=dict(  # Config of vote module branch, refer to mmdet3d.models.model_utils for more details
+        vote_moudule_cfg=dict(  # Config of vote module branch, refer to mmdet3d.models.layers for more details
             in_channels=256,  # Input channels for vote_module
             vote_per_seed=1,  # Number of votes to generate for each seed
             gt_per_seed=3,  # Number of gts for each seed
@@ -186,77 +186,77 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')  # Names of classes
-train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for more details
+train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.transforms for more details
     dict(
-        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.pipelines.indoor_loading for more details
+        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.transforms.indoor_loading for more details
         shift_height=True,  # Whether to use shifted height
         load_dim=6,  # The dimension of the loaded points
         use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
     dict(
-        type='LoadAnnotations3D',  # Second pipeline to load annotations, refer to mmdet3d.datasets.pipelines.indoor_loading for more details
+        type='LoadAnnotations3D',  # Second pipeline to load annotations, refer to mmdet3d.datasets.transforms.indoor_loading for more details
         with_bbox_3d=True,  # Whether to load 3D boxes
         with_label_3d=True,  # Whether to load 3D labels corresponding to each 3D box
         with_mask_3d=True,  # Whether to load 3D instance masks
         with_seg_3d=True),  # Whether to load 3D semantic masks
     dict(
-        type='PointSegClassMapping',  # Declare valid categories, refer to mmdet3d.datasets.pipelines.point_seg_class_mapping for more details
+        type='PointSegClassMapping',  # Declare valid categories, refer to mmdet3d.datasets.transforms.point_seg_class_mapping for more details
         valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
                        36, 39),  # all valid categories ids
         max_cat_id=40),  # max possible category id in input segmentation mask
-    dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
+    dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.transforms.transforms_3d for more details
             num_points=40000),  # Number of points to be sampled
     dict(type='IndoorFlipData',  # Augmentation pipeline that flip points and 3d boxes
         flip_ratio_yz=0.5,  # Probability of being flipped along yz plane
         flip_ratio_xz=0.5),  # Probability of being flipped along xz plane
     dict(
-        type='IndoorGlobalRotScale',  # Augmentation pipeline that rotate and scale points and 3d boxes, refer to mmdet3d.datasets.pipelines.indoor_augment for more details
+        type='IndoorGlobalRotScale',  # Augmentation pipeline that rotate and scale points and 3d boxes, refer to mmdet3d.datasets.transforms.indoor_augment for more details
         shift_height=True,  # Whether the loaded points use `shift_height` attribute
         rot_range=[-0.027777777777777776, 0.027777777777777776],  # Range of rotation
         scale_range=None),  # Range of scale
     dict(
-        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.transforms.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
     dict(
-        type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
+        type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.transforms.formatting for more details
         keys=[
             'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
             'pts_instance_mask'
         ])
 ]
-test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for more details
+test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.transforms for more details
     dict(
-        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.pipelines.indoor_loading for more details
+        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.transforms.indoor_loading for more details
         shift_height=True,  # Whether to use shifted height
         load_dim=6,  # The dimension of the loaded points
         use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
-    dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
+    dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.transforms.transforms_3d for more details
         num_points=40000),  # Number of points to be sampled
     dict(
-        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.transforms.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
-    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
+    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.transforms.formatting for more details
         keys=['points'])
 ]
-eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmdet3d.datasets.pipelines for more details
+eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmdet3d.datasets.transforms for more details
     dict(
-        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.pipelines.indoor_loading for more details
+        type='LoadPointsFromFile',  # First pipeline to load points, refer to mmdet3d.datasets.transforms.indoor_loading for more details
         shift_height=True,  # Whether to use shifted height
         load_dim=6,  # The dimension of the loaded points
         use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
     dict(
-        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
+        type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.transforms.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
         with_label=False),
-    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
+    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.transforms.formatting for more details
         keys=['points'])
 ]
 data = dict(

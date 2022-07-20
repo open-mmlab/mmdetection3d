@@ -4,9 +4,10 @@ from mmcv.ops import Voxelization
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
-from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
+from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
+from mmdet3d.structures.ops import bbox3d2result
 from mmdet.models.builder import DETECTORS
-from .. import builder
+from mmdet.registry import MODELS
 from .single_stage import SingleStage3DDetector
 
 
@@ -35,8 +36,8 @@ class SASSD(SingleStage3DDetector):
             pretrained=pretrained)
 
         self.voxel_layer = Voxelization(**voxel_layer)
-        self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
-        self.middle_encoder = builder.build_middle_encoder(middle_encoder)
+        self.voxel_encoder = MODELS.build(voxel_encoder)
+        self.middle_encoder = MODELS.build(middle_encoder)
 
     def extract_feat(self, points, img_metas=None, test_mode=False):
         """Extract features from points."""

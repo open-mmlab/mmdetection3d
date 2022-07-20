@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 
-from mmdet3d.core import instance_seg_eval
+from mmdet3d.evaluation import instance_seg_eval
 
 
 def test_instance_seg_eval():

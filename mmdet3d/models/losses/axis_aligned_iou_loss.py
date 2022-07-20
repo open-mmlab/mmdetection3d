@@ -3,8 +3,8 @@ import torch
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import AxisAlignedBboxOverlaps3D
 from mmdet.models.losses.utils import weighted_loss
-from ...core.bbox import AxisAlignedBboxOverlaps3D
 
 
 @weighted_loss

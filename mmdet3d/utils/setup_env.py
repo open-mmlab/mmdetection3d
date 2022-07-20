@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+
 import datetime
 import os
 import platform
@@ -66,12 +67,11 @@ def register_all_modules(init_default_scope: bool = True) -> None:
             to https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/registry.md
             Defaults to True.
     """  # noqa
-    import mmdet3d.core  # noqa: F401,F403
     import mmdet3d.datasets  # noqa: F401,F403
-    import mmdet3d.metrics  # noqa: F401,F403
-    import mmdet3d.models  # noqa: F401,F403
-    import mmdet3d.ops  # noqa: F401,F403
-    import mmdet3d.scheduler  # noqa: F401,F403
+    import mmdet3d.engine.scheduler  # noqa: F401,F403
+    import mmdet3d.evaluation.metrics  # noqa: F401,F403
+    import mmdet3d.structures  # noqa: F401,F403
+    import mmdet3d.visualization  # noqa: F401,F403
     if init_default_scope:
         never_created = DefaultScope.get_current_instance() is None \
                         or not DefaultScope.check_instance_created('mmdet3d')

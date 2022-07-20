@@ -3,8 +3,8 @@ import unittest
 import torch
 from mmengine import DefaultScope
 
-from mmdet3d.core import LiDARInstance3DBoxes
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import LiDARInstance3DBoxes
 from tests.utils.model_utils import (_create_detector_inputs,
                                      _get_detector_cfg, _setup_seed)
 
@@ -21,7 +21,7 @@ class TestFreeAnchor(unittest.TestCase):
             'free_anchor/hv_pointpillars_fpn_sbn-all_free-'
             'anchor_4x8_2x_nus-3d.py')
         model = MODELS.build(freeanchor_cfg)
-        num_gt_instance = 50
+        num_gt_instance = 3
         data = [
             _create_detector_inputs(
                 num_gt_instance=num_gt_instance, gt_bboxes_dim=9)
@@ -47,6 +47,7 @@ class TestFreeAnchor(unittest.TestCase):
             with torch.no_grad():
                 batch_inputs, data_samples = model.data_preprocessor(
                     data, True)
+                torch.cuda.empty_cache()
                 results = model.forward(
                     batch_inputs, data_samples, mode='predict')
             self.assertEqual(len(results), len(data))

@@ -7,7 +7,9 @@ from mmcv.cnn import ConvModule, normal_init
 from mmengine.data import InstanceData
 from torch import Tensor
 
-from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+from mmdet3d.models import make_sparse_convmodule
+from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
+from mmdet.models.utils import multi_apply
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import (SparseConvTensor, SparseMaxPool3d,
@@ -18,14 +20,11 @@ else:
 from mmcv.runner import BaseModule
 from torch import nn as nn
 
-from mmdet3d.core import build_bbox_coder
-from mmdet3d.core.bbox.structures import (LiDARInstance3DBoxes,
-                                          rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.core.post_processing import nms_bev, nms_normal_bev
 from mmdet3d.models.builder import build_loss
-from mmdet3d.ops import make_sparse_convmodule
-from mmdet3d.registry import MODELS
-from mmdet.core import multi_apply
+from mmdet3d.models.layers import nms_bev, nms_normal_bev
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
+                                        rotation_3d_in_axis, xywhr2xyxyr)
 
 
 @MODELS.register_module()
@@ -87,7 +86,7 @@ class PartA2BboxHead(BaseModule):
         super(PartA2BboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.with_corner_loss = with_corner_loss
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_cls = build_loss(loss_cls)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)

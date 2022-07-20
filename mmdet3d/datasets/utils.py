@@ -5,16 +5,15 @@ from mmcv.transforms import LoadImageFromFile
 from pyquaternion import Quaternion
 
 # yapf: disable
-from mmdet3d.datasets.pipelines import (LoadAnnotations3D,
-                                        LoadImageFromFileMono3D,
-                                        LoadMultiViewImageFromFiles,
-                                        LoadPointsFromFile,
-                                        LoadPointsFromMultiSweeps,
-                                        MultiScaleFlipAug3D, Pack3DDetInputs,
-                                        PointSegClassMapping)
+from mmdet3d.datasets.transforms import (LoadAnnotations3D,
+                                         LoadImageFromFileMono3D,
+                                         LoadMultiViewImageFromFiles,
+                                         LoadPointsFromFile,
+                                         LoadPointsFromMultiSweeps,
+                                         MultiScaleFlipAug3D, Pack3DDetInputs,
+                                         PointSegClassMapping)
 # yapf: enable
 from mmdet3d.registry import TRANSFORMS
-from mmdet.datasets.pipelines import MultiScaleFlipAug
 
 
 def is_loading_function(transform):
@@ -41,12 +40,12 @@ def is_loading_function(transform):
             return False
         if obj_cls in loading_functions:
             return True
-        if obj_cls in (MultiScaleFlipAug3D, MultiScaleFlipAug):
+        if obj_cls in (MultiScaleFlipAug3D, ):
             return None
     elif callable(transform):
         if isinstance(transform, loading_functions):
             return True
-        if isinstance(transform, (MultiScaleFlipAug3D, MultiScaleFlipAug)):
+        if isinstance(transform, (MultiScaleFlipAug3D)):
             return None
     return False
 
@@ -63,7 +62,7 @@ def get_loading_pipeline(pipeline):
             keep loading image, points and annotations related configuration.
 
     Examples:
-        >>> pipelines = [
+        >>> transforms = [
         ...    dict(type='LoadPointsFromFile',
         ...         coord_type='LIDAR', load_dim=4, use_dim=4),
         ...    dict(type='LoadImageFromFile'),
@@ -94,7 +93,7 @@ def get_loading_pipeline(pipeline):
         ...         keys=['points', 'img', 'gt_bboxes_3d', 'gt_labels_3d'])
         ...    ]
         >>> assert expected_pipelines == \
-        ...        get_loading_pipeline(pipelines)
+        ...        get_loading_pipeline(transforms)
     """
     loading_pipeline = []
     for transform in pipeline:

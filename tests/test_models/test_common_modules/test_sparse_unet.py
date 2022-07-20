@@ -2,8 +2,8 @@
 import pytest
 import torch
 
-from mmdet3d.ops import SparseBasicBlock
-from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+from mmdet3d.models.layers import SparseBasicBlock
+from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import (SparseConv3d, SparseConvTensor,
@@ -97,7 +97,7 @@ def test_SparseBasicBlock():
 def test_make_sparse_convmodule():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
-    from mmdet3d.ops import make_sparse_convmodule
+    from mmdet3d.models.layers import make_sparse_convmodule
 
     voxel_features = torch.tensor(
         [[6.56126, 0.9648336, -1.7339306, 0.315],

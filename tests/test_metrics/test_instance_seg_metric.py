@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from mmengine.data import BaseDataElement
 
-from mmdet3d.core.data_structures import Det3DDataSample, PointData
-from mmdet3d.metrics import InstanceSegMetric
+from mmdet3d.evaluation.metrics import InstanceSegMetric
+from mmdet3d.structures import Det3DDataSample, PointData
 
 
 class TestInstanceSegMetric(unittest.TestCase):

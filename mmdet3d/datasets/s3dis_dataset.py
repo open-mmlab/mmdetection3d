@@ -4,11 +4,11 @@ from typing import Callable, List, Optional, Union
 
 import numpy as np
 
-from mmdet3d.core.bbox import DepthInstance3DBoxes
 from mmdet3d.registry import DATASETS
+from mmdet3d.structures import DepthInstance3DBoxes
 from .det3d_dataset import Det3DDataset
-from .pipelines import Compose
 from .seg3d_dataset import Seg3DDataset
+from .transforms import Compose
 
 
 @DATASETS.register_module()
@@ -118,7 +118,7 @@ class S3DISDataset(Det3DDataset):
 
         Returns:
             dict: Data information that will be passed to the data
-                preprocessing pipelines. It includes the following keys:
+                preprocessing transforms. It includes the following keys:
 
                 - pts_filename (str): Filename of point clouds.
                 - file_name (str): Filename of point clouds.

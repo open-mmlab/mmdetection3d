@@ -41,6 +41,7 @@ class TestImvoteNet(unittest.TestCase):
 
             # save the memory
             with torch.no_grad():
+                torch.cuda.empty_cache()
                 losses = model.forward(batch_inputs, data_samples, mode='loss')
 
             self.assertGreater(sum(losses['loss_rpn_cls']), 0)

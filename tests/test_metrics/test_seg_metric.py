@@ -4,8 +4,8 @@ import unittest
 import torch
 from mmengine.data import BaseDataElement
 
-from mmdet3d.core.data_structures import Det3DDataSample, PointData
-from mmdet3d.metrics import SegMetric
+from mmdet3d.evaluation.metrics import SegMetric
+from mmdet3d.structures import Det3DDataSample, PointData
 
 
 class TestSegMetric(unittest.TestCase):

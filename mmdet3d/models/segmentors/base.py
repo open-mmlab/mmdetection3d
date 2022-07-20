@@ -6,9 +6,10 @@ from mmengine.data import PixelData
 from mmengine.model import BaseModel
 from torch import Tensor
 
-from mmdet3d.core import Det3DDataSample
-from mmdet3d.core.utils import (ForwardResults, OptConfigType, OptMultiConfig,
-                                OptSampleList, SampleList)
+from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.det3d_data_sample import (ForwardResults,
+                                                  OptSampleList, SampleList)
+from mmdet3d.utils import OptConfigType, OptMultiConfig
 
 
 class Base3DSegmentor(BaseModel, metaclass=ABCMeta):

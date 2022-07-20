@@ -8,15 +8,15 @@ from mmengine.data import InstanceData
 from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.core import Det3DDataSample
-from mmdet3d.core.bbox.builder import build_bbox_coder
-from mmdet3d.core.utils import get_ellip_gaussian_2D
-from mmdet3d.models.model_utils import EdgeFusionModule
+from mmdet3d.models.layers import EdgeFusionModule
+from mmdet3d.models.task_modules.builder import build_bbox_coder
 from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
-                                  get_keypoints, handle_proj_objs)
+                                  get_ellip_gaussian_2D, get_keypoints,
+                                  handle_proj_objs)
 from mmdet3d.registry import MODELS
-from mmdet.core import multi_apply
-from mmdet.models.utils import gaussian_radius, gen_gaussian_target
+from mmdet3d.structures import Det3DDataSample
+from mmdet.models.utils import (gaussian_radius, gen_gaussian_target,
+                                multi_apply)
 from mmdet.models.utils.gaussian_target import (get_local_maximum,
                                                 get_topk_from_heatmap,
                                                 transpose_and_gather_feat)
