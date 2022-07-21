@@ -46,8 +46,7 @@ class MinkUNetHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            list[MinkowskiEngine.SparseTensor]: Features of multiple
-            levels of points.
+            MinkowskiEngine.SparseTensor: Extracted features.
         """
         features = feat_dict['features']
 
@@ -97,8 +96,8 @@ class MinkUNetHead(Base3DDecodeHead):
         """Compute semantic segmentation loss.
 
         Args:
-            seg_logit (torch.Tensor): Predicted per-point segmentation logits
-                of shape [B, num_classes, N].
+            seg_logit (MinkowskiEngine.SparseTensor): Predicted per-point
+            segmentation logits of shape [B, num_classes, N].
             seg_label (torch.Tensor): Ground-truth segmentation label of
                 shape [B, N].
         """
