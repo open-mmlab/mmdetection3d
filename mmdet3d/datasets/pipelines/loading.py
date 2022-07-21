@@ -20,9 +20,13 @@ class LoadMultiViewImageFromFiles(object):
             Defaults to 'unchanged'.
     """
 
-    def __init__(self, to_float32=False, color_type='unchanged'):
+    def __init__(self,
+                 to_float32=False,
+                 color_type='unchanged',
+                 file_client_args=dict(backend='disk')):
         self.to_float32 = to_float32
         self.color_type = color_type
+        self.file_client_args = file_client_args.copy()
 
     def __call__(self, results):
         """Call function to load multi-view image from files.
@@ -45,7 +49,7 @@ class LoadMultiViewImageFromFiles(object):
         filename = results['img_filename']
         # img is of shape (h, w, c, num_views)
         img = np.stack(
-            [mmcv.imread(name, self.color_type) for name in filename], axis=-1)
+            [mmcv.imread(name, self.color_type, file_client_args=self.file_client_args) for name in filename], axis=-1)
         if self.to_float32:
             img = img.astype(np.float32)
         results['filename'] = filename
