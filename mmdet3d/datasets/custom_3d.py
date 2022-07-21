@@ -306,7 +306,7 @@ class Custom3DDataset(Dataset):
     def evaluate(self,
                  results,
                  metric=None,
-                 iou_thr=(0.25, 0.5, 0.7),
+                 iou_thr=(0.15,0.7),
                  logger=None,
                  show=False,
                  out_dir=None,
