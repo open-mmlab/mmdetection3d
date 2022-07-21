@@ -1,128 +1,47 @@
 PARTITION=$1
 CHECKPOINT_DIR=$2
+WORK_DIR=$3
+CPUS_PER_TASK=${4:-2}
 
 echo 'configs/3dssd/3dssd_4x4_kitti-3d-car.py' &
-mkdir -p $CHECKPOINT_DIR/configs/3dssd/3dssd_4x4_kitti-3d-car.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION 3dssd_4x4_kitti-3d-car configs/3dssd/3dssd_4x4_kitti-3d-car.py \
-$CHECKPOINT_DIR/configs/3dssd/3dssd_4x4_kitti-3d-car.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/3dssd/3dssd_4x4_kitti-3d-car.py/FULL_LOG.txt &
-
-echo 'configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py' &
-mkdir -p $CHECKPOINT_DIR/configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py \
-$CHECKPOINT_DIR/configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION 3dssd_4x4_kitti-3d-car configs/3dssd/3dssd_4x4_kitti-3d-car.py $CHECKPOINT_DIR/3dssd_4x4_kitti-3d-car_20210818_203828-b89c8fc4.pth --work-dir $WORK_DIR/3dssd_4x4_kitti-3d-car --cfg-option env_cfg.dist_cfg.port=29666  &
+echo 'configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py $CHECKPOINT_DIR/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210816_064624-0f3299c0.pth --work-dir $WORK_DIR/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus --cfg-option env_cfg.dist_cfg.port=29667  &
+echo 'configs/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class configs/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py $CHECKPOINT_DIR/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class_20210731_000734-39658f14.pth --work-dir $WORK_DIR/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class --cfg-option env_cfg.dist_cfg.port=29668  &
 echo 'configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py $CHECKPOINT_DIR/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class_20210831_054106-e742d163.pth --work-dir $WORK_DIR/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class --cfg-option env_cfg.dist_cfg.port=29669  &
 echo 'configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py \
-$CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py/FULL_LOG.txt &
-
-echo 'configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
-
-echo 'configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py \
-$CHECKPOINT_DIR/configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py $CHECKPOINT_DIR/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_20210715_235813-4bed5239.pth --work-dir $WORK_DIR/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d --cfg-option env_cfg.dist_cfg.port=29670  &
+echo 'configs/centernet/centernet_resnet18_dcnv2_140e_coco.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION centernet_resnet18_dcnv2_140e_coco configs/centernet/centernet_resnet18_dcnv2_140e_coco.py $CHECKPOINT_DIR/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210828_025608-bfbd506e.pth --work-dir $WORK_DIR/centernet_resnet18_dcnv2_140e_coco --cfg-option env_cfg.dist_cfg.port=29671  &
 echo 'configs/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py' &
-mkdir -p $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION groupfree3d_8x4_scannet-3d-18class-L6-O256 configs/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py \
-$CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION groupfree3d_8x4_scannet-3d-18class-L6-O256 configs/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py $CHECKPOINT_DIR/groupfree3d_8x4_scannet-3d-18class-L6-O256_20210702_145347-3499eb55.pth --work-dir $WORK_DIR/groupfree3d_8x4_scannet-3d-18class-L6-O256 --cfg-option env_cfg.dist_cfg.port=29672  &
 echo 'configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION h3dnet_3x8_scannet-3d-18class configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py \
-$CHECKPOINT_DIR/configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION h3dnet_3x8_scannet-3d-18class configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py $CHECKPOINT_DIR/h3dnet_3x8_scannet-3d-18class_20210824_003149-414bd304.pth --work-dir $WORK_DIR/h3dnet_3x8_scannet-3d-18class --cfg-option env_cfg.dist_cfg.port=29673  &
 echo 'configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py \
-$CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py/FULL_LOG.txt &
-
-echo 'configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION imvotenet_stage2_16x8_sunrgbd-3d-10class configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py \
-$CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py $CHECKPOINT_DIR/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class_20210819_225618-62eba6ce.pth --work-dir $WORK_DIR/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class --cfg-option env_cfg.dist_cfg.port=29674  &
 echo 'configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py' &
-mkdir -p $CHECKPOINT_DIR/configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION imvoxelnet_4x8_kitti-3d-car configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py \
-$CHECKPOINT_DIR/configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION imvoxelnet_4x8_kitti-3d-car configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py $CHECKPOINT_DIR/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth --work-dir $WORK_DIR/imvoxelnet_4x8_kitti-3d-car --cfg-option env_cfg.dist_cfg.port=29675  &
 echo 'configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py $CHECKPOINT_DIR/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805-83442923.pth --work-dir $WORK_DIR/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class --cfg-option env_cfg.dist_cfg.port=29676  &
+echo 'configs/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class configs/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py $CHECKPOINT_DIR/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class_20210729_200615-2147b2d1.pth --work-dir $WORK_DIR/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class --cfg-option env_cfg.dist_cfg.port=29677  &
 echo 'configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py/FULL_LOG.txt &
-
-echo 'configs/pointnet2/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class configs/pointnet2/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py \
-$CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py/latest.pth --eval mIoU \
-2>&1|tee $CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py/FULL_LOG.txt &
-
-echo 'configs/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class configs/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py \
-$CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py/FULL_LOG.txt &
-
-echo 'configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py \
-$CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py/latest.pth --format-only --eval-options jsonfile_prefix=$CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py/results_challenge csv_savepath=$CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py/results_challenge.csv \
-2>&1|tee $CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py/FULL_LOG.txt &
-
-echo 'configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py \
-$CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py/latest.pth --eval waymo --eval-options pklfile_prefix=$CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py/kitti_results submission_prefix=$CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py/kitti_results \
-2>&1|tee $CHECKPOINT_DIR/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py/FULL_LOG.txt &
-
-echo 'configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py \
-$CHECKPOINT_DIR/configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class configs/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py $CHECKPOINT_DIR/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class_20210831_022017-454a5344.pth --work-dir $WORK_DIR/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class --cfg-option env_cfg.dist_cfg.port=29678  &
+echo 'configs/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d configs/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py $CHECKPOINT_DIR/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_20211022_102608-8a97533b.pth --work-dir $WORK_DIR/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d --cfg-option env_cfg.dist_cfg.port=29679  &
+echo 'configs/point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION point_rcnn_2x8_kitti-3d-3classes configs/point_rcnn/point_rcnn_2x8_kitti-3d-3classes.py $CHECKPOINT_DIR/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth --work-dir $WORK_DIR/point_rcnn_2x8_kitti-3d-3classes --cfg-option env_cfg.dist_cfg.port=29680  &
+echo 'configs/pointnet2/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class configs/pointnet2/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py $CHECKPOINT_DIR/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class_20210514_143628-4e341a48.pth --work-dir $WORK_DIR/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class --cfg-option env_cfg.dist_cfg.port=29681  &
+echo 'configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION hv_pointpillars_secfpn_6x8_160e_kitti-3d-car configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py $CHECKPOINT_DIR/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20220331_134606-d42d15ed.pth --work-dir $WORK_DIR/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car --cfg-option env_cfg.dist_cfg.port=29682  &
 echo 'configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_second_secfpn_6x8_80e_kitti-3d-3class configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
-
-echo 'configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py \
-$CHECKPOINT_DIR/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py/latest.pth --format-only --eval-options jsonfile_prefix=$CHECKPOINT_DIR/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py/results_challenge csv_savepath=$CHECKPOINT_DIR/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py/results_challenge.csv \
-2>&1|tee $CHECKPOINT_DIR/configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py/FULL_LOG.txt &
-
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION hv_second_secfpn_6x8_80e_kitti-3d-3class configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py $CHECKPOINT_DIR/hv_second_secfpn_6x8_80e_kitti-3d-3class_20210831_022017-ae782e87.pth --work-dir $WORK_DIR/hv_second_secfpn_6x8_80e_kitti-3d-3class --cfg-option env_cfg.dist_cfg.port=29683  &
+echo 'configs/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d configs/smoke/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d.py $CHECKPOINT_DIR/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d_20210929_015553-d46d9bb0.pth --work-dir $WORK_DIR/smoke_dla34_pytorch_dlaneck_gn-all_8x4_6x_kitti-mono3d --cfg-option env_cfg.dist_cfg.port=29684  &
+echo 'configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py' &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py $CHECKPOINT_DIR/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d_20210830_101351-51915986.pth --work-dir $WORK_DIR/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d --cfg-option env_cfg.dist_cfg.port=29685  &
 echo 'configs/votenet/votenet_8x8_scannet-3d-18class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/votenet/votenet_8x8_scannet-3d-18class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION votenet_8x8_scannet-3d-18class configs/votenet/votenet_8x8_scannet-3d-18class.py \
-$CHECKPOINT_DIR/configs/votenet/votenet_8x8_scannet-3d-18class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/votenet/votenet_8x8_scannet-3d-18class.py/FULL_LOG.txt &
+GPUS=8  GPUS_PER_NODE=8  CPUS_PER_TASK=$CPUS_PRE_TASK tools/slurm_test.sh $PARTITION votenet_8x8_scannet-3d-18class configs/votenet/votenet_8x8_scannet-3d-18class.py $CHECKPOINT_DIR/votenet_8x8_scannet-3d-18class_20210823_234503-cf8134fa.pth --work-dir $WORK_DIR/votenet_8x8_scannet-3d-18class --cfg-option env_cfg.dist_cfg.port=29686  &
