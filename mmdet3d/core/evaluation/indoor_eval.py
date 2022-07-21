@@ -277,7 +277,7 @@ def indoor_eval(gt_annos,
 
 
         for i in range(len(labels_3d)):
-            label = 1 if labels_3d[i]=='Car' else 0
+            label = 0 if labels_3d[i]=='Car' else 1
             bbox = gt_boxes[i]
             if label not in gt:
                 gt[label] = {}

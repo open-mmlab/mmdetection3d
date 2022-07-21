@@ -54,7 +54,7 @@ model = dict(
             score_threshold=0.1,
             out_size_factor=4,
             voxel_size=voxel_size[:2],
-            code_size=9),
+            code_size=7),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
@@ -79,10 +79,10 @@ model = dict(
             max_per_img=500,
             max_pool_nms=False,
             min_radius=[4, 12, 10, 1, 0.85, 0.175],
-            score_threshold=0.1,
+            score_threshold=0.3,
             out_size_factor=2,
             voxel_size=voxel_size[:2],
             nms_type='rotate',
             pre_max_size=4096,
             post_max_size=512,
-            nms_thr=0.1)))
+            nms_thr=0)))
