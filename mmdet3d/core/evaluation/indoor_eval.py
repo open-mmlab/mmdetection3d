@@ -153,6 +153,7 @@ def eval_det_cls(classname, pred, gt, iou_thr=None, ioumode='3d'):
                 fp_thr[iou_idx][d] = 1.
 
     ret = []
+    # print("class:",classname)
     for iou_idx, thresh in enumerate(iou_thr):
         # compute precision recall
         fp = np.cumsum(fp_thr[iou_idx])
@@ -161,9 +162,11 @@ def eval_det_cls(classname, pred, gt, iou_thr=None, ioumode='3d'):
         # avoid divide by zero in case the first detection matches a difficult
         # ground truth
         precision = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
+        # print("thresh:",thresh)
+        # print(fp[-1], tp[-1], npos, nd)
         ap = average_precision(recall, precision)
         ret.append((recall, precision, ap, tp, fp))
-
+    # print("----------------------------")
     return ret
 
 
@@ -194,22 +197,27 @@ def eval_map_recall(pred, gt, ovthresh=None, ioumode='3d'):
     ap = [{} for i in ovthresh]
     tp = [{} for i in ovthresh]
     fp = [{} for i in ovthresh]
-
+    prec_num = [{} for i in ovthresh]
 
     for label in gt.keys():
         for iou_idx, thresh in enumerate(ovthresh):
             if label in pred:
                 recall[iou_idx][label], precision[iou_idx][label], ap[iou_idx][
                     label], tp[iou_idx][label], fp[iou_idx][label] = ret_values[label][iou_idx]
+                gt_num = sum([len(gt[label][i]) for i in pred[label].keys()])
+                tp_num = int(tp[iou_idx][label][-1])
+                fp_num = int(fp[iou_idx][label][-1])
+                prec_num[iou_idx][label] = tp_num/float(tp_num + fp_num)
             else:
                 recall[iou_idx][label] = np.zeros(1)
                 precision[iou_idx][label] = np.zeros(1)
                 ap[iou_idx][label] = np.zeros(1)
                 tp[iou_idx][label] = np.zeros(1)
                 fp[iou_idx][label] = np.zeros(1)
+                prec_num[iou_idx][label] = np.zeros(1)
 
 
-    return recall, precision, ap, tp, fp
+    return recall, precision, ap, prec_num
 
 
 def indoor_eval(gt_annos,
@@ -288,22 +296,20 @@ def indoor_eval(gt_annos,
     ioumodes = ['3d', '2d']
     ret_dict_ioumodes = dict()
     for ioumode in ioumodes:
-        rec, prec, ap, tp, fp = eval_map_recall(pred, gt, metric, ioumode)
+        rec, prec, ap, prec_num = eval_map_recall(pred, gt, metric, ioumode)
         ret_dict = dict()
         header = ['classes /'+ioumode]
         table_columns = [['Car' if label == 0 else 'Pedestrian'
                         for label in ap[0].keys()] + ['Overall']]
-
         # print(tp)
         # print(fp)
         for i, iou_thresh in enumerate(metric):
             header.append(f'AP_{iou_thresh:.2f}')
-            header.append(f'AR_{iou_thresh:.2f}')
-            # header.append(f'TP_{iou_thresh:.2f}')
-            # header.append(f'FP_{iou_thresh:.2f}')
+            header.append(f'Recall_{iou_thresh:.2f}')
+            header.append(f'Precision_{iou_thresh:.2f}')
 
-            
             rec_list = []
+            prec_list = []
             for label in ap[i].keys():
                 label_cls = 'Car' if label == 0 else 'Pedestrian'
                 ret_dict[f'{label_cls}_AP_{iou_thresh:.2f}'] = float(
@@ -320,33 +326,21 @@ def indoor_eval(gt_annos,
                 ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
                     rec[i][label][-1])
                 rec_list.append(rec[i][label][-1])
-            ret_dict[f'mAR_{iou_thresh:.2f}'] = float(np.mean(rec_list))
+            ret_dict[f'mRecall_{iou_thresh:.2f}'] = float(np.mean(rec_list))
 
             table_columns.append(list(map(float, rec_list)))
-            table_columns[-1] += [ret_dict[f'mAR_{iou_thresh:.2f}']]
+            table_columns[-1] += [ret_dict[f'mRecall_{iou_thresh:.2f}']]
+            table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
+            
+            for label in prec_num[i].keys():
+                label_cls = 'Car' if label == 0 else 'Pedestrian'
+                ret_dict[f'{label_cls}_prec_{iou_thresh:.2f}'] = prec_num[i][label]
+                prec_list.append(prec_num[i][label])
+            ret_dict[f'mPrecision_{iou_thresh:.2f}'] = float(np.mean(prec_list))
+            table_columns.append(list(map(float, prec_list)))
+            table_columns[-1] += [ret_dict[f'mPrecision_{iou_thresh:.2f}']]
             table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
 
-            # for label in tp[i].keys():
-            #     label_cls = 'Car' if label == 0 else 'Pedestrian'
-            #     ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
-            #         tp[i][label][-1])
-            #     rec_list.append(tp[i][label][-1])
-            # ret_dict[f'mTP_{iou_thresh:.2f}'] = float(np.mean(rec_list))
-
-            # table_columns.append(list(map(float, rec_list)))
-            # table_columns[-1] += [ret_dict[f'mTP_{iou_thresh:.2f}']]
-            # table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
-
-            # for label in fp[i].keys():
-            #     label_cls = 'Car' if label == 0 else 'Pedestrian'
-            #     ret_dict[f'{label_cls}_rec_{iou_thresh:.2f}'] = float(
-            #         fp[i][label][-1])
-            #     rec_list.append(fp[i][label][-1])
-            # ret_dict[f'mFP_{iou_thresh:.2f}'] = float(np.mean(rec_list))
-
-            # table_columns.append(list(map(float, rec_list)))
-            # table_columns[-1] += [ret_dict[f'mFP_{iou_thresh:.2f}']]
-            # table_columns[-1] = [f'{x:.4f}' for x in table_columns[-1]]
 
         table_data = [header]
         table_rows = list(zip(*table_columns))
