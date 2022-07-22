@@ -75,6 +75,7 @@ jobs:
             python -m coverage run --branch --source mmocr -m pytest tests/
             python -m coverage xml
             python -m coverage report -m
+
   build_cuda:
     parameters:
       torch:
