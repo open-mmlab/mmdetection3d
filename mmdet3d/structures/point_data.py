@@ -20,6 +20,11 @@ class PointData(BaseDataElement):
     - They are all one dimension.
     - They should have the same length.
 
+    `PointData` is used to save point-level semantic and instance mask,
+    it also can save `instances_labels` and `instances_scores` temporarily.
+    In the future, we would consider to move the instance-level info into
+    `gt_instances_3d` and `pred_instances_3d`.
+
     Examples:
         >>> metainfo = dict(
         ...     sample_id=random.randint(0, 100))

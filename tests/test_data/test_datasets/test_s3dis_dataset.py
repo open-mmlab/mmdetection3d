@@ -66,6 +66,7 @@ class TestS3DISDataset(unittest.TestCase):
 
         register_all_modules()
         np.random.seed(0)
+
         s3dis_seg_dataset = S3DISSegDataset(
             data_root,
             ann_file,
@@ -75,7 +76,6 @@ class TestS3DISDataset(unittest.TestCase):
             modality=modality,
             scene_idxs=scene_idxs)
 
-        # np.random.seed(0)
         input_dict = s3dis_seg_dataset.prepare_data(0)
 
         points = input_dict['inputs']['points']
