@@ -457,6 +457,16 @@ class BaseInstance3DBoxes(object):
 
         rows = len(boxes1)
         cols = len(boxes2)
+
+        if ioumode=='dis':
+            disThr=0.4
+            dis = torch.zeros(rows,cols)
+            for i in range(rows):
+                a=(boxes1.tensor[i][0]-boxes2.tensor[:,0])**2+(boxes1.tensor[i][1]-boxes2.tensor[:,1])**2
+                min_dis_idx=torch.argmin(a)
+                dis[i][min_dis_idx]= 1 if a[min_dis_idx]<disThr**2 else 0
+            return dis
+        
         if rows * cols == 0:
             return boxes1.tensor.new(rows, cols)
 
