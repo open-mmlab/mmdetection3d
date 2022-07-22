@@ -234,7 +234,8 @@ def indoor_eval(gt_annos,
                 label2cat,
                 logger=None,
                 box_type_3d=None,
-                box_mode_3d=None):
+                box_mode_3d=None,
+                classes=None):
     """Indoor Evaluation.
 
     Evaluate the result of the detection.
@@ -257,8 +258,9 @@ def indoor_eval(gt_annos,
         dict[str, float]: Dict of results.
     """
 
-    class_names = ['Car','Pedestrian','Dont Care']
-    #class_names = ['Pedestrian','Dont Care','Dont Care']
+    class_names = classes
+    while len(class_names)<3:
+        class_names.append('Dont Care')
 
     assert len(dt_annos) == len(gt_annos)
     pred = {}  # map {class_id: pred}
