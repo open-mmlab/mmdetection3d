@@ -77,6 +77,8 @@ test_pipeline = [
 # please keep its loading function consistent with test_pipeline (e.g. client)
 
 data = dict(
+    samples_per_gpu=8,
+    workers_per_gpu=4,
     train=dict(dataset=dict(pipeline=train_pipeline, classes=class_names)),
     val=dict(pipeline=test_pipeline, classes=class_names),
     test=dict(pipeline=test_pipeline, classes=class_names))
