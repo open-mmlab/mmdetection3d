@@ -349,7 +349,8 @@ class Custom3DDataset(Dataset):
             label2cat,
             logger=logger,
             box_type_3d=self.box_type_3d,
-            box_mode_3d=self.box_mode_3d)
+            box_mode_3d=self.box_mode_3d,
+            classes=self.CLASSES)
         if show:
             self.show(results, out_dir, pipeline=pipeline)
 
