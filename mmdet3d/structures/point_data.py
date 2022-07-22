@@ -20,8 +20,6 @@ class PointData(BaseDataElement):
     - They are all one dimension.
     - They should have the same length.
 
-    Notice: ``PointData`` behaves like `InstanceData`.
-
     Examples:
         >>> metainfo = dict(
         ...     sample_id=random.randint(0, 100))
@@ -59,14 +57,6 @@ class PointData(BaseDataElement):
         else:
             assert isinstance(value,
                               Sized), 'value must contain `_len__` attribute'
-
-            if len(self) > 0:
-                assert len(value) == len(self), f'the length of ' \
-                                                f'values {len(value)} is ' \
-                                                f'not consistent with' \
-                                                f' the length of this ' \
-                                                f':obj:`PointData` ' \
-                                                f'{len(self)} '
             super().__setattr__(name, value)
 
     __setitem__ = __setattr__

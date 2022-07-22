@@ -80,8 +80,10 @@ class TestPointSegClassMapping(unittest.TestCase):
     def test_point_seg_class_mapping(self):
         results = dict()
         results['pts_semantic_mask'] = np.array([1, 2, 3, 4, 5])
-        results['label_mapping'] = {0: 3, 1: 0, 2: 1, 3: 2, 4: 3, 5: 3}
-        point_seg_mapping_transform = PointSegClassMapping()
+
+        point_seg_mapping_transform = PointSegClassMapping(
+            valid_cat_ids=[1, 2, 3],
+            max_cat_id=results['pts_semantic_mask'].max())
         results = point_seg_mapping_transform(results)
         assert_allclose(results['pts_semantic_mask'], np.array([0, 1, 2, 3,
                                                                 3]))
