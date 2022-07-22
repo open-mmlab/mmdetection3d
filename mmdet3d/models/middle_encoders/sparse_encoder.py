@@ -7,6 +7,7 @@ from torch import nn as nn
 from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 from mmdet3d.registry import MODELS
+from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
@@ -213,7 +214,7 @@ class SparseEncoder(nn.Module):
         return out_channels
 
 
-@MIDDLE_ENCODERS.register_module()
+@MODELS.register_module()
 class SparseEncoderSASSD(SparseEncoder):
     r"""Sparse encoder for `SASSD <https://github.com/skyhehe123/SA-SSD>`_
 

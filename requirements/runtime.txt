@@ -3,6 +3,7 @@ networkx>=2.2,<2.3
 numba==0.53.0
 numpy
 nuscenes-devkit
+open3d
 plyfile
 scikit-image
 # by default we also use tensorboard to log results
