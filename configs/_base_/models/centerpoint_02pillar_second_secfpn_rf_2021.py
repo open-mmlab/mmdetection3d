@@ -41,8 +41,9 @@ model = dict(
         type='CenterHead',
         in_channels=sum([128, 128, 128]),
         tasks=[
-            dict(num_class=2, class_names=['Car','Pedestrian'])
-            # dict(num_class=1, class_names=['Pedestrian'])
+            # dict(num_class=2, class_names=['Car','Pedestrian'])
+            dict(num_class=1, class_names=['Car']),
+            dict(num_class=1, class_names=['Pedestrian'])
         ],
         common_heads=dict(
             reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2)),
@@ -79,10 +80,10 @@ model = dict(
             max_per_img=500,
             max_pool_nms=False,
             min_radius=[4, 12, 10, 1, 0.85, 0.175],
-            score_threshold=0.3,
-            out_size_factor=2,
+            score_threshold=0.01,
+            out_size_factor=4,
             voxel_size=voxel_size[:2],
             nms_type='rotate',
             pre_max_size=4096,
             post_max_size=512,
-            nms_thr=0)))
+            nms_thr=0.01)))
