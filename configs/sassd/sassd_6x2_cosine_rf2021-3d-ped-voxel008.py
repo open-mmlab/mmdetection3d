@@ -1,22 +1,23 @@
 _base_ = [
-    '../_base_/datasets/rf2021-3d-2class.py',
-    '../_base_/schedules/cyclic_40e.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/rf2021-3d-ped.py',
+    '../_base_/schedules/cosine.py', 
+    '../_base_/default_runtime.py'
 ]
 
-voxel_size = [0.16, 0.16, 0.1]
+voxel_size = [0.08, 0.08, 0.1]
 
 model = dict(
     type='SASSD',
     voxel_layer=dict(
         max_num_points=5,
-        point_cloud_range=[-60, -103.84, -3, 62.88, 60, 1],
+        point_cloud_range=[-60, -63.84, -3, 62.88, 60, 1],
         voxel_size=voxel_size,
-        max_voxels=(16000, 80000)),
+        max_voxels=(20000, 250000)),
     voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseEncoderSASSD',
         in_channels=4,
-        sparse_shape=[41, 1024, 768],
+        sparse_shape=[41, 1548, 1536],
         order=('conv', 'norm', 'act')),
     backbone=dict(
         type='SECOND',
@@ -38,9 +39,9 @@ model = dict(
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
             ranges=[
-                [-60, -103.84, -1.78, 62.88, 60, -1.78]    
+                [-60, -63.84, -0.6, 62.88, 60, -0.6]
             ],
-            sizes=[[2.08, 4.73, 1.77]],
+            sizes=[[0.6, 0.8, 1.73]],
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,
@@ -57,12 +58,12 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(
         assigner=[
-            dict(  # for Car
+            dict(  # for Pedestrian
                 type='MaxIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
+                pos_iou_thr=0.2,
+                neg_iou_thr=0.1,
+                min_pos_iou=0.1,
                 ignore_iof_thr=-1)
         ],
         allowed_border=0,
@@ -71,8 +72,8 @@ model = dict(
     test_cfg=dict(
         use_rotate_nms=True,
         nms_across_levels=False,
-        nms_thr=0.01,
-        score_thr=0.1,
+        nms_thr=0.1,
+        score_thr=0.3,
         min_bbox_size=0,
         nms_pre=100,
         max_num=50))

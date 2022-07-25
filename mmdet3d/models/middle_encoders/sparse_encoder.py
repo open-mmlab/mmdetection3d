@@ -413,7 +413,7 @@ class SparseEncoderSASSDBackbone(nn.Module):
         return out_channels
 
 @MIDDLE_ENCODERS.register_module()
-class SparseEncoderSASSD(SparseEncoderSASSDBackbone):
+class SparseEncoderSASSD(SparseEncoder):
     r"""Sparse encoder for `SASSD <https://github.com/skyhehe123/SA-SSD>`_
 
     Args:
@@ -448,9 +448,9 @@ class SparseEncoderSASSD(SparseEncoderSASSDBackbone):
                                                                         64)),
                  encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1,
                                                                  1)),
-                 block_type='conv_module',
-                 conv_out_features=((3, 1, 1),(2, 1, 1)),
-                 pointwise_size=112):
+                 block_type='conv_module'):
+                 #conv_out_features=((3, 1, 1),(2, 1, 1)),
+                 #pointwise_size=112):
         super(SparseEncoderSASSD, self).__init__(
             in_channels=in_channels,
             sparse_shape=sparse_shape,
@@ -460,10 +460,10 @@ class SparseEncoderSASSD(SparseEncoderSASSDBackbone):
             output_channels=output_channels,
             encoder_channels=encoder_channels,
             encoder_paddings=encoder_paddings,
-            block_type=block_type,
-            conv_out_features=conv_out_features)
+            block_type=block_type)
+            #conv_out_features=conv_out_features)
 
-        self.point_fc = nn.Linear(pointwise_size, 64, bias=False)
+        self.point_fc = nn.Linear(112, 64, bias=False)
         self.point_cls = nn.Linear(64, 1, bias=False)
         self.point_reg = nn.Linear(64, 3, bias=False)
 
@@ -512,22 +512,22 @@ class SparseEncoderSASSD(SparseEncoderSASSDBackbone):
 
         # auxiliary network
         p0 = self.make_auxiliary_points(
-            encode_features[1],
+            encode_features[0],
             points_mean,
-            offset=(-60., -60, -3.),
+            offset=(-60, -103.84, -3.),
             voxel_size=(.16, .16, .2))
 
         p1 = self.make_auxiliary_points(
-            encode_features[2],
+            encode_features[1],
             points_mean,
-            offset=(-60., -60, -3.),
+            offset=(-60, -103.84, -3.),
             voxel_size=(.32, .32, .4))
 
         p2 = self.make_auxiliary_points(
-            encode_features[3],
+            encode_features[2],
             points_mean,
-            offset=(-60., -60, -3.),
-            voxel_size=(0.64, 0.64, .8))
+            offset=(-60, -103.84, -3.),
+            voxel_size=(.64, .64, .8))
         pointwise = torch.cat([p0, p1, p2], dim=-1)
         pointwise = self.point_fc(pointwise)
         point_cls = self.point_cls(pointwise)

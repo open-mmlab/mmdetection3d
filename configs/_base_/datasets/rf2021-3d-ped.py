@@ -2,7 +2,7 @@
 dataset_type = 'Custom3DDataset'
 data_root = 'data/rf2021/'
 class_names = ['Pedestrian']
-point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]
+point_cloud_range = [-60, -63.84, -3, 62.88, 60, 1]
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -105,17 +105,18 @@ data = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'rf2021_infos_train_ped_50.pkl',
+            ann_file=data_root + 'rf2021_infos_train.pkl',
             pipeline=train_pipeline,
             classes=class_names,
             test_mode=False,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
+            box_type_3d='LiDAR',
+            load_interval=5)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'rf2021_infos_train_ped_50.pkl',
+        ann_file=data_root + 'rf2021_infos_val.pkl',
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
@@ -123,7 +124,8 @@ data = dict(
     test=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'rf2021_infos_train_ped_50.pkl',
+        #ann_file=data_root + 'rf2021_infos_test.pkl',
+        ann_file=data_root + 'rf2021_infos_train_ped_10_points_10_size2.pkl',
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,

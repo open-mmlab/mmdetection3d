@@ -3,6 +3,7 @@ dataset_type = 'Custom3DDataset'
 data_root = 'data/rf2021/'
 class_names = ['Car', 'Pedestrian']
 point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]
+#point_cloud_range = [-60, -63.84, -3, 62.88, 60, 1]
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -124,6 +125,7 @@ data = dict(
     test=dict(
         type=dataset_type,
         data_root=data_root,
+        #ann_file=data_root + 'rf2021_infos_train_ped_10_points_10_size2.pkl',
         ann_file=data_root + 'rf2021_infos_test.pkl',
         pipeline=test_pipeline,
         classes=class_names,
