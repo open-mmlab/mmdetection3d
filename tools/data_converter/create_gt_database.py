@@ -215,6 +215,20 @@ def create_groundtruth_database(dataset_class_name,
                     with_label_3d=True,
                     file_client_args=file_client_args)
             ])
+    elif dataset_class_name == 'Custom3DDataset':
+        dataset_cfg.update(
+            test_mode=False,
+            pipeline=[
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='LIDAR',
+                    load_dim=4,
+                    use_dim=4),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True)
+            ])
 
     dataset = build_dataset(dataset_cfg)
 

@@ -2,6 +2,7 @@
 import copy
 
 import torch
+import numpy as np
 from mmcv.cnn import ConvModule, build_conv_layer
 from mmcv.runner import BaseModule, force_fp32
 from torch import nn
@@ -448,6 +449,7 @@ class CenterHead(BaseModule):
                 - list[torch.Tensor]: Masks indicating which boxes
                     are valid.
         """
+
         device = gt_labels_3d.device
         gt_bboxes_3d = torch.cat(
             (gt_bboxes_3d.gravity_center, gt_bboxes_3d.tensor[:, 3:]),
@@ -458,10 +460,11 @@ class CenterHead(BaseModule):
         voxel_size = torch.tensor(self.train_cfg['voxel_size'])
 
         feature_map_size = grid_size[:2] // self.train_cfg['out_size_factor']
-
+        
         # reorganize the gt_dict by tasks
         task_masks = []
         flag = 0
+
         for class_name in self.class_names:
             task_masks.append([
                 torch.where(gt_labels_3d == class_name.index(i) + flag)
@@ -472,6 +475,7 @@ class CenterHead(BaseModule):
         task_boxes = []
         task_classes = []
         flag2 = 0
+
         for idx, mask in enumerate(task_masks):
             task_box = []
             task_class = []
@@ -482,15 +486,25 @@ class CenterHead(BaseModule):
             task_boxes.append(torch.cat(task_box, axis=0).to(device))
             task_classes.append(torch.cat(task_class).long().to(device))
             flag2 += len(mask)
+        
+        
+        # task_boxes = [gt_bboxes_3d]
+        # task_classes = [gt_labels_3d]
+
+
         draw_gaussian = draw_heatmap_gaussian
         heatmaps, anno_boxes, inds, masks = [], [], [], []
+        # print("heatmaps")
+        # print("task classes")
+        # print(task_classes)
+        # print("self class names")
+        # print(self.class_names)
 
         for idx, task_head in enumerate(self.task_heads):
             heatmap = gt_bboxes_3d.new_zeros(
                 (len(self.class_names[idx]), feature_map_size[1],
                  feature_map_size[0]))
-
-            anno_box = gt_bboxes_3d.new_zeros((max_objs, 10),
+            anno_box = gt_bboxes_3d.new_zeros((max_objs, 8),
                                               dtype=torch.float32)
 
             ind = gt_labels_3d.new_zeros((max_objs), dtype=torch.int64)
@@ -516,6 +530,7 @@ class CenterHead(BaseModule):
 
                     # be really careful for the coordinate system of
                     # your box annotation.
+
                     x, y, z = task_boxes[idx][k][0], task_boxes[idx][k][
                         1], task_boxes[idx][k][2]
 
@@ -536,7 +551,6 @@ class CenterHead(BaseModule):
                     if not (0 <= center_int[0] < feature_map_size[0]
                             and 0 <= center_int[1] < feature_map_size[1]):
                         continue
-
                     draw_gaussian(heatmap[cls_id], center_int, radius)
 
                     new_idx = k
@@ -548,24 +562,30 @@ class CenterHead(BaseModule):
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
                     # TODO: support other outdoor dataset
-                    vx, vy = task_boxes[idx][k][7:]
+                    # vx, vy = task_boxes[idx][k][7:]
                     rot = task_boxes[idx][k][6]
                     box_dim = task_boxes[idx][k][3:6]
                     if self.norm_bbox:
                         box_dim = box_dim.log()
+
+                    # fixed_z = torch.ones_like(z)
+                    # fixed_rot = torch.zeros_like(rot)
+
                     anno_box[new_idx] = torch.cat([
                         center - torch.tensor([x, y], device=device),
                         z.unsqueeze(0), box_dim,
                         torch.sin(rot).unsqueeze(0),
                         torch.cos(rot).unsqueeze(0),
-                        vx.unsqueeze(0),
-                        vy.unsqueeze(0)
+                        # vx.unsqueeze(0),
+                        # vy.unsqueeze(0)
                     ])
 
             heatmaps.append(heatmap)
             anno_boxes.append(anno_box)
             masks.append(mask)
             inds.append(ind)
+            # print(heatmaps)
+        
         return heatmaps, anno_boxes, inds, masks
 
     @force_fp32(apply_to=('preds_dicts'))
@@ -584,6 +604,8 @@ class CenterHead(BaseModule):
         heatmaps, anno_boxes, inds, masks = self.get_targets(
             gt_bboxes_3d, gt_labels_3d)
         loss_dict = dict()
+        
+
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
             preds_dict[0]['heatmap'] = clip_sigmoid(preds_dict[0]['heatmap'])
@@ -596,8 +618,9 @@ class CenterHead(BaseModule):
             # reconstruct the anno_box from multiple reg heads
             preds_dict[0]['anno_box'] = torch.cat(
                 (preds_dict[0]['reg'], preds_dict[0]['height'],
-                 preds_dict[0]['dim'], preds_dict[0]['rot'],
-                 preds_dict[0]['vel']),
+                 preds_dict[0]['dim'], preds_dict[0]['rot']
+                #  ,preds_dict[0]['vel']
+                 ),
                 dim=1)
 
             # Regression loss for dimension, offset, height, rotation

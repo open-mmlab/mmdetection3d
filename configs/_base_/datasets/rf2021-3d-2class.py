@@ -18,9 +18,9 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Pedestrian=5)),
-    classes=['Pedestrian'],
-    sample_groups=dict(Pedestrian=15))
+        filter_by_min_points=dict(Car=10, Pedestrian=10)),
+    classes=['Car', 'Pedestrian'],
+    sample_groups=dict(Car=10, Pedestrian=15))
 
 
 train_pipeline = [
@@ -127,6 +127,7 @@ data = dict(
         data_root=data_root,
         #ann_file=data_root + 'rf2021_infos_train_ped_10_points_10_size2.pkl',
         ann_file=data_root + 'rf2021_infos_test.pkl',
+
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,

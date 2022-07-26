@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import itertools
+import numpy as np
 
 from mmcv.cnn.bricks.registry import CONV_LAYERS
 from torch.nn.parameter import Parameter

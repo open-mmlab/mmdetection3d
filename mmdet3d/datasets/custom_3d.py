@@ -66,7 +66,7 @@ class Custom3DDataset(Dataset):
                  data_root,
                  ann_file,
                  pipeline=None,
-                 classes=None,
+                 classes=['Car', 'Pedestrian'],
                  modality=None,
                  box_type_3d='LiDAR',
                  filter_empty_gt=True,
@@ -80,7 +80,6 @@ class Custom3DDataset(Dataset):
         self.modality = modality
         self.filter_empty_gt = filter_empty_gt
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
-
         self.CLASSES = self.get_classes(classes)
         self.file_client = mmcv.FileClient(**file_client_args)
         self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
