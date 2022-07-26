@@ -218,12 +218,10 @@ def eval_map_recall(pred, gt, ovthresh=None, ioumode='3d', eval_aos=False):
                 recall[iou_idx][label] = np.zeros(1)
                 precision[iou_idx][label] = np.zeros(1)
                 ap[iou_idx][label] = np.zeros(1)
-
                 tp[iou_idx][label] = np.zeros(1)
                 fp[iou_idx][label] = np.zeros(1)
                 prec_num[iou_idx][label] = np.zeros(1)
                 aos[iou_idx][label] = np.zeros(1)
-
 
     return recall, precision, ap, prec_num, aos
 

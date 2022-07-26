@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import itertools
+import numpy as np
 
 from mmcv.cnn.bricks.registry import CONV_LAYERS
 from torch.nn.parameter import Parameter
@@ -78,6 +79,8 @@ def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
         key = prefix + name
         if key in state_dict:
             input_param = state_dict[key]
+
+            input_param = np.transpose(input_param, (1,2,3,4,0))
 
             # Backward compatibility: loading 1-dim tensor from
             # 0.3.* to version 0.4+

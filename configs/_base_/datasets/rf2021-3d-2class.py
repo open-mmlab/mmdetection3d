@@ -125,6 +125,7 @@ data = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file=data_root + 'rf2021_infos_test.pkl',
+
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
