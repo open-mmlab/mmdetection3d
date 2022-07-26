@@ -140,4 +140,3 @@ test_dataloader = dict(
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR'))
-train_cfg = dict(val_interval=24)

@@ -3,7 +3,7 @@
 # Usually voxel size is changed consistently with the point cloud range
 # If point cloud range is modified, do remember to change all related
 # keys in the config.
-voxel_size = [0.32, 0.32, 6]
+voxel_size = [0.08, 0.08, 0.1]
 model = dict(
     type='MVXFasterRCNN',
     data_preprocessor=dict(type='Det3DDataPreprocessor'),
@@ -20,7 +20,7 @@ model = dict(
         order=('conv', 'norm', 'act')),
     pts_backbone=dict(
         type='SECOND',
-        in_channels=64,
+        in_channels=384,
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         layer_nums=[5, 5],
         layer_strides=[1, 2],
@@ -34,8 +34,8 @@ model = dict(
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
-        in_channels=384,
-        feat_channels=384,
+        in_channels=512,
+        feat_channels=512,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
