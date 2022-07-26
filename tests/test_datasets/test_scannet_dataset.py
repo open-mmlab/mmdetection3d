@@ -55,7 +55,11 @@ def _generate_scannet_seg_dataset_config():
             with_label_3d=False,
             with_mask_3d=False,
             with_seg_3d=True),
-        dict(type='PointSegClassMapping'),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
+                           28, 33, 34, 36, 39),
+            max_cat_id=40),
         dict(
             type='IndoorPatchPointSample',
             num_points=5,
@@ -161,11 +165,11 @@ class TestScanNetDataset(unittest.TestCase):
         self.assertEqual(len(no_class_scannet_dataset.metainfo['CLASSES']), 1)
 
     def test_scannet_seg(self):
-        np.random.seed(0)
         data_root, ann_file, classes, palette, scene_idxs, data_prefix, \
             pipeline, modality, = _generate_scannet_seg_dataset_config()
 
         register_all_modules()
+        np.random.seed(0)
         scannet_seg_dataset = ScanNetSegDataset(
             data_root,
             ann_file,

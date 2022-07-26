@@ -80,9 +80,10 @@ class InstanceSegMetric(BaseMetric):
         for eval_ann, sinlge_pred_results in results:
             gt_semantic_masks.append(eval_ann['pts_semantic_mask'])
             gt_instance_masks.append(eval_ann['pts_instance_mask'])
-            pred_instance_masks.append(sinlge_pred_results['pts_intance_mask'])
-            pred_instance_labels.append(sinlge_pred_results['instance_label'])
-            pred_instance_scores.append(sinlge_pred_results['instance_score'])
+            pred_instance_masks.append(
+                sinlge_pred_results['pts_instance_mask'])
+            pred_instance_labels.append(sinlge_pred_results['instance_labels'])
+            pred_instance_scores.append(sinlge_pred_results['instance_scores'])
 
         ret_dict = instance_seg_eval(
             gt_semantic_masks,

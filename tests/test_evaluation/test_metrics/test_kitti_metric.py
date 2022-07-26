@@ -50,7 +50,7 @@ def test_multi_modal_kitti_metric():
         pytest.skip('test requires GPU and torch+cuda')
     kittimetric = KittiMetric(
         data_root + '/kitti_infos_train.pkl', metric=['mAP'])
-    kittimetric.dataset_meta = dict(CLASSES=['Car', 'Pedestrian', 'Cyclist'])
+    kittimetric.dataset_meta = dict(CLASSES=['Pedestrian', 'Cyclist', 'Car'])
     data_batch, predictions = _init_multi_modal_evaluate_input()
     kittimetric.process(data_batch, predictions)
     ap_dict = kittimetric.compute_metrics(kittimetric.results)
@@ -73,7 +73,7 @@ def test_kitti_metric_mAP():
         pytest.skip('test requires GPU and torch+cuda')
     kittimetric = KittiMetric(
         data_root + '/kitti_infos_train.pkl', metric=['mAP'])
-    kittimetric.dataset_meta = dict(CLASSES=['Car', 'Pedestrian', 'Cyclist'])
+    kittimetric.dataset_meta = dict(CLASSES=['Pedestrian', 'Cyclist', 'Car'])
     data_batch, predictions = _init_evaluate_input()
     kittimetric.process(data_batch, predictions)
     ap_dict = kittimetric.compute_metrics(kittimetric.results)

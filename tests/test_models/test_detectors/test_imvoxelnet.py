@@ -48,6 +48,6 @@ class TestImVoxelNet(unittest.TestCase):
             with torch.no_grad():
                 losses = model.forward(batch_inputs, data_samples, mode='loss')
 
-            self.assertGreater(losses['loss_cls'], 0)
-            self.assertGreater(losses['loss_bbox'], 0)
-            self.assertGreater(losses['loss_dir'], 0)
+            self.assertGreaterEqual(losses['loss_cls'][0], 0)
+            self.assertGreaterEqual(losses['loss_bbox'][0], 0)
+            self.assertGreaterEqual(losses['loss_dir'][0], 0)

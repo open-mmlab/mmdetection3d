@@ -14,27 +14,24 @@ class TestSegMetric(unittest.TestCase):
         """Create a superset of inputs needed to run test or train batches."""
         packed_inputs = []
         mm_inputs = dict()
-        data_sample = Det3DDataSample()
         pts_semantic_mask = torch.Tensor([
             0, 0, 0, 255, 0, 0, 1, 1, 1, 255, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3,
             3, 255
         ])
-        gt_pts_seg_data = dict(pts_semantic_mask=pts_semantic_mask)
-        data_sample.gt_pts_seg = PointData(**gt_pts_seg_data)
-        mm_inputs['data_sample'] = data_sample.to_dict()
+        ann_info_data = dict(pts_semantic_mask=pts_semantic_mask)
+        mm_inputs['data_sample'] = dict(eval_ann_info=ann_info_data)
         packed_inputs.append(mm_inputs)
 
         return packed_inputs
 
     def _demo_mm_model_output(self):
         """Create a superset of inputs needed to run test or train batches."""
-        results_dict = dict()
-        pts_seg_pred = torch.Tensor([
+        pts_semantic_mask = torch.Tensor([
             0, 0, 1, 0, 0, 2, 1, 3, 1, 2, 1, 0, 2, 2, 2, 2, 1, 3, 0, 3, 3, 3, 3
         ])
-        results_dict['pts_semantic_mask'] = pts_seg_pred
+        pred_pts_seg_data = dict(pts_semantic_mask=pts_semantic_mask)
         data_sample = Det3DDataSample()
-        data_sample['pred_pts_seg'] = results_dict
+        data_sample.pred_pts_seg = PointData(**pred_pts_seg_data)
         batch_data_samples = [data_sample]
 
         predictions = []
@@ -58,5 +55,5 @@ class TestSegMetric(unittest.TestCase):
         seg_metric = SegMetric()
         seg_metric.dataset_meta = dataset_meta
         seg_metric.process(data_batch, predictions)
-        res = seg_metric.evaluate(0)
+        res = seg_metric.evaluate(1)
         self.assertIsInstance(res, dict)
