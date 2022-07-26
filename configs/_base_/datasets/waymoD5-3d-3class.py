@@ -9,8 +9,18 @@ file_client_args = dict(backend='disk')
 # for more details.
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://waymo_data/'))
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/waymo/':
+        's3://openmmlab/datasets/detection3d/waymo/',
+        'data/waymo/':
+        's3://openmmlab/datasets/detection3d/waymo/'
+    }))
 
 class_names = ['Car', 'Pedestrian', 'Cyclist']
+metainfo = dict(CLASSES=class_names)
+
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
 input_modality = dict(use_lidar=True, use_camera=False)
 db_sampler = dict(
@@ -41,7 +51,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         file_client_args=file_client_args),
-    dict(type='ObjectSample', db_sampler=db_sampler),
+    # dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -54,8 +64,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -77,13 +88,9 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -94,52 +101,70 @@ eval_pipeline = [
         load_dim=6,
         use_dim=5,
         file_client_args=file_client_args),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points']),
 ]
 
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=4,
-    train=dict(
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type='RepeatDataset',
         times=2,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'waymo_infos_train.pkl',
-            split='training',
+            ann_file='waymo_infos_train.pkl',
+            data_prefix=dict(pts='training/velodyne'),
             pipeline=train_pipeline,
             modality=input_modality,
-            classes=class_names,
             test_mode=False,
+            metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
             # load one frame every five frames
-            load_interval=5)),
-    val=dict(
+            load_interval=5)))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'waymo_infos_val.pkl',
-        split='training',
-        pipeline=test_pipeline,
+        data_prefix=dict(pts='training/velodyne'),
+        ann_file='waymo_infos_val.pkl',
+        pipeline=eval_pipeline,
         modality=input_modality,
-        classes=class_names,
         test_mode=True,
-        box_type_3d='LiDAR'),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'waymo_infos_val.pkl',
-        split='training',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        classes=class_names,
-        test_mode=True,
+        metainfo=metainfo,
         box_type_3d='LiDAR'))
 
-evaluation = dict(interval=24, pipeline=eval_pipeline)
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(pts='training/velodyne'),
+        ann_file='waymo_infos_val.pkl',
+        pipeline=eval_pipeline,
+        modality=input_modality,
+        test_mode=True,
+        metainfo=metainfo,
+        box_type_3d='LiDAR'))
+
+val_evaluator = dict(
+    type='WaymoMetric',
+    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
+    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
+    data_root='./data/waymo/waymo_format',
+    metric='bbox',
+    file_client_args=file_client_args)
+test_evaluator = val_evaluator
