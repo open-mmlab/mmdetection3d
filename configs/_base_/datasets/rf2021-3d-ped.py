@@ -2,7 +2,7 @@
 dataset_type = 'Custom3DDataset'
 data_root = 'data/rf2021/'
 class_names = ['Pedestrian']
-point_cloud_range = [-60, -103.84, -3, 62.88, 60, 1]
+point_cloud_range = [-60, -62.88, -3, 62.88, 60, 1]
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -10,6 +10,15 @@ file_client_args = dict(backend='disk')
 # for more details.
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+db_sampler = dict(
+    data_root=data_root,
+    info_path=data_root + 'rf2021_dbinfos_train.pkl',
+    rate=1.0,
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Pedestrian=10)),
+    classes=['Pedestrian'],
+    sample_groups=dict(Pedestrian=15))
 
 db_sampler = dict(
     data_root=data_root,

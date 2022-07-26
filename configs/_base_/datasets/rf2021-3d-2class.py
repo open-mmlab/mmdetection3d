@@ -17,8 +17,8 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=10, Pedestrian=10)),	
-    classes=['Car', 'Pedestrian'],	
+        filter_by_min_points=dict(Car=10, Pedestrian=10)),
+    classes=['Car', 'Pedestrian'],
     sample_groups=dict(Car=10, Pedestrian=15))
 
 
