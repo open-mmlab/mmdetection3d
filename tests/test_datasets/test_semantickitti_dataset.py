@@ -64,11 +64,11 @@ def _generate_semantickitti_dataset_config():
 class TestSemanticKITTIDataset(unittest.TestCase):
 
     def test_semantickitti(self):
-        np.random.seed(0)
         data_root, ann_file, classes, palette, data_prefix, \
             pipeline, modality, = _generate_semantickitti_dataset_config()
 
         register_all_modules()
+        np.random.seed(0)
         semantickitti_dataset = SemanticKITTIDataset(
             data_root,
             ann_file,
