@@ -9,9 +9,10 @@ import torch
 from mmcv.utils import print_log
 from mmengine.logging import MMLogger
 
-from mmdet3d.core import bbox3d2result, box3d_multiclass_nms, xywhr2xyxyr
+from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import METRICS
-from ..core.bbox import Box3DMode, LiDARInstance3DBoxes
+from mmdet3d.structures import (Box3DMode, LiDARInstance3DBoxes, bbox3d2result,
+                                xywhr2xyxyr)
 from .kitti_metric import KittiMetric
 
 

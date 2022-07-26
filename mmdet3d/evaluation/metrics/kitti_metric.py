@@ -34,6 +34,8 @@ class KittiMetric(BaseMetric):
         pklfile_prefix (str, optional): The prefix of pkl files, including
             the file path and the prefix of filename, e.g., "a/b/prefix".
             If not specified, a temp file will be created. Default: None.
+        default_cam_key (str, optional): The default camera for lidar to
+            camear conversion. By default, KITTI: CAM2, Waymo: CAM_FRONT
         submission_prefix (str, optional): The prefix of submission data.
             If not specified, the submission data will not be generated.
             Default: None.
@@ -49,6 +51,7 @@ class KittiMetric(BaseMetric):
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
+                 default_cam_key: str = 'CAM2',
                  submission_prefix: str = None,
                  collect_device: str = 'cpu'):
         self.default_prefix = 'Kitti metric'
@@ -340,8 +343,8 @@ class KittiMetric(BaseMetric):
             info = self.data_infos[sample_idx]
             # Here default used 'CAM2' to compute metric. If you want to
             # use another camera, please modify it.
-            image_shape = (info['images']['CAM2']['height'],
-                           info['images']['CAM2']['width'])
+            image_shape = (info['images'][self.default_cam_key]['height'],
+                           info['images'][self.default_cam_key]['width'])
             box_dict = self.convert_valid_bboxes(pred_dicts, info)
             anno = {
                 'name': [],
@@ -590,11 +593,13 @@ class KittiMetric(BaseMetric):
                 sample_idx=sample_idx)
         # Here default used 'CAM2' to compute metric. If you want to
         # use another camera, please modify it.
-        lidar2cam = np.array(info['images']['CAM2']['lidar2cam']).astype(
+        lidar2cam = np.array(
+            info['images'][self.default_cam_key]['lidar2cam']).astype(
+                np.float32)
+        P2 = np.array(info['images'][self.default_cam_key]['cam2img']).astype(
             np.float32)
-        P2 = np.array(info['images']['CAM2']['cam2img']).astype(np.float32)
-        img_shape = (info['images']['CAM2']['height'],
-                     info['images']['CAM2']['width'])
+        img_shape = (info['images'][self.default_cam_key]['height'],
+                     info['images'][self.default_cam_key]['width'])
         P2 = box_preds.tensor.new_tensor(P2)
 
         if isinstance(box_preds, LiDARInstance3DBoxes):
