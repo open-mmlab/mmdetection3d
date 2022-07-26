@@ -13,13 +13,13 @@ file_client_args = dict(backend='disk')
 
 db_sampler = dict(
     data_root=data_root,
-    info_path=data_root + 'kitti_dbinfos_train.pkl',
+    info_path=data_root + 'rf2021_dbinfos_train.pkl',
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Pedestrian=5)),
-    classes=['Pedestrian'],
-    sample_groups=dict(Pedestrian=15))
+        filter_by_min_points=dict(Car=10, Pedestrian=10)),
+    classes=['Car', 'Pedestrian'],
+    sample_groups=dict(Car=10, Pedestrian=15))
 
 
 train_pipeline = [

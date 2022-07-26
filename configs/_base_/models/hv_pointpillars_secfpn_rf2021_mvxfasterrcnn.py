@@ -44,10 +44,12 @@ model = dict(
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
-            ranges=[[-60, -103.84, -0.0345, 62.88, 60, -0.0345],
-                    [-60, -60, 0, 60, 60, 0]],
+            ranges=[[-60, -103.84, -1.78, 62.88, 60, -1.78],
+                    [-60, -103.84, -0.7, 62.88, 60, -0.7], 
+                    [-60, -103.84, -0.6, 62.88, 60, -0.6]],
             sizes=[
                 [4.73, 2.08, 1.77],  # car
+                [9.73, 2.58, 2.77], # bus
                 [0.91, 0.84, 1.74]  # pedestrian
             ],
             rotations=[0, 1.57],
@@ -75,6 +77,13 @@ model = dict(
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
+                dict(  # bus
+                    type='MaxIoUAssigner',
+                    iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.4,
+                    min_pos_iou=0.4,
+                    ignore_iof_thr=-1),
                 dict(  # pedestrian
                     type='MaxIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
@@ -90,9 +99,9 @@ model = dict(
     test_cfg=dict(
         pts=dict(
             use_rotate_nms=True,
-            nms_across_levels=False,
+            nms_across_levels=True,
             nms_pre=4096,
-            nms_thr=0.01,
-            score_thr=0.1,
+            nms_thr=0.1,
+            score_thr=0.3,
             min_bbox_size=0,
             max_num=500)))

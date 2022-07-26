@@ -433,7 +433,7 @@ class BaseInstance3DBoxes(object):
         return overlaps_h
 
     @classmethod
-    def overlaps(cls, boxes1, boxes2, mode='iou'):
+    def overlaps(cls, boxes1, boxes2, mode='iou', ioumode='3d'):
         """Calculate 3D overlaps of two boxes.
 
         Note:
@@ -457,6 +457,16 @@ class BaseInstance3DBoxes(object):
 
         rows = len(boxes1)
         cols = len(boxes2)
+
+        if ioumode=='dis':
+            disThr=0.4
+            dis = torch.zeros(rows,cols)
+            for i in range(rows):
+                a=(boxes1.tensor[i][0]-boxes2.tensor[:,0])**2+(boxes1.tensor[i][1]-boxes2.tensor[:,1])**2
+                min_dis_idx=torch.argmin(a)
+                dis[i][min_dis_idx]= 1 if a[min_dis_idx]<disThr**2 else 0
+            return dis
+        
         if rows * cols == 0:
             return boxes1.tensor.new(rows, cols)
 
@@ -465,6 +475,10 @@ class BaseInstance3DBoxes(object):
 
         # bev overlap
         iou2d = box_iou_rotated(boxes1.bev, boxes2.bev)
+
+        if ioumode == '2d':
+            return iou2d
+
         areas1 = (boxes1.bev[:, 2] * boxes1.bev[:, 3]).unsqueeze(1).expand(
             rows, cols)
         areas2 = (boxes2.bev[:, 2] * boxes2.bev[:, 3]).unsqueeze(0).expand(
