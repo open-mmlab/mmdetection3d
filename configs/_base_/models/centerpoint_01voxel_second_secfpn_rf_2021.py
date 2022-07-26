@@ -59,7 +59,7 @@ model = dict(
             score_threshold=0.1,
             out_size_factor=8,
             voxel_size=voxel_size[:2],
-            code_size=9),
+            code_size=7),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
         loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
