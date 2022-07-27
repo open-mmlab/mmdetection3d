@@ -277,9 +277,9 @@ class PointSegClassMapping(BaseTransform):
 
     Required Keys:
 
-    - lidar_points (dict)
+    - seg_label_mapping (np.ndarray)
+    - pts_semantic_mask (np.ndarray)
 
-        - lidar_path (str)
 
     Added Keys:
 
@@ -287,11 +287,6 @@ class PointSegClassMapping(BaseTransform):
 
     Map valid classes as 0~len(valid_cat_ids)-1 and
     others as len(valid_cat_ids).
-
-    Args:
-        valid_cat_ids (tuple[int]): A tuple of valid category.
-        max_cat_id (int, optional): The max possible cat_id in input
-            segmentation mask. Defaults to 40.
     """
 
     def transform(self, results: dict) -> None:
@@ -309,8 +304,8 @@ class PointSegClassMapping(BaseTransform):
         assert 'pts_semantic_mask' in results
         pts_semantic_mask = results['pts_semantic_mask']
 
-        assert 'label_mapping' in results
-        label_mapping = results['label_mapping']
+        assert 'seg_label_mapping' in results
+        label_mapping = results['seg_label_mapping']
         converted_pts_sem_mask = \
             np.array([label_mapping[mask] for mask in pts_semantic_mask])
 

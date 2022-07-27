@@ -240,7 +240,7 @@ class Seg3DDataset(BaseDataset):
 
         # Add label_mapping to input dict for directly
         # use it in PointSegClassMapping pipeline
-        info['label_mapping'] = self.label_mapping
+        info['seg_label_mapping'] = self.label_mapping
 
         # 'eval_ann_info' will be updated in loading transforms
         if self.test_mode and self.load_eval_anns:
