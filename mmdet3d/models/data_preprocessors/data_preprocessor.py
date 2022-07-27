@@ -8,6 +8,7 @@ from mmengine.model import stack_batch
 
 from mmdet3d.registry import MODELS
 from mmdet.models import DetDataPreprocessor
+from .utils import multiview_img_stack_batch
 
 
 @MODELS.register_module()
@@ -113,14 +114,26 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             imgs = [input['img'] for input in inputs_dict]
 
             # channel transform
+            img_dim = imgs[0].dim()
             if self.channel_conversion:
-                imgs = [_img[[2, 1, 0], ...] for _img in imgs]
+                if img_dim == 3:  # standard one image
+                    imgs = [_img[[2, 1, 0], ...] for _img in imgs]
+                elif img_dim == 4:  # multiview images with N, C, H, W
+                    imgs = [_img[:, [2, 1, 0], ...] for _img in imgs]
             # Normalization.
             if self._enable_normalize:
-                imgs = [(_img.float() - self.mean) / self.std for _img in imgs]
-            # Pad and stack Tensor.
-            batch_imgs = stack_batch(imgs, self.pad_size_divisor,
-                                     self.pad_value)
+                if img_dim == 3:
+                    imgs = [(_img - self.mean) / self.std for _img in imgs]
+                else:
+                    imgs = [(_img - self.mean[None, :]) / self.std[None, :]
+                            for _img in imgs]  # Pad and stack Tensor.
+            if img_dim == 3:
+                batch_imgs = stack_batch(imgs, self.pad_size_divisor,
+                                         self.pad_value)
+            else:
+                batch_imgs = multiview_img_stack_batch(imgs,
+                                                       self.pad_size_divisor,
+                                                       self.pad_value)
 
             batch_pad_shape = self._get_pad_shape(data)
 

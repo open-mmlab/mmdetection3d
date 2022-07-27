@@ -139,9 +139,11 @@ class WaymoDataset(KittiDataset):
         if 'gt_bboxes' in ann_info:
             gt_bboxes = ann_info['gt_bboxes']
             gt_labels = ann_info['gt_labels']
+            print(gt_bboxes, gt_labels)
         else:
             gt_bboxes = np.zeros((0, 4), dtype=np.float32)
-            gt_labels = np.array([], dtype=np.int64)
+            gt_labels = np.array(0, dtype=np.int64)
+
         if 'centers_2d' in ann_info:
             centers_2d = ann_info['centers_2d']
             depths = ann_info['depths']
@@ -170,7 +172,6 @@ class WaymoDataset(KittiDataset):
             gt_labels=gt_labels,
             centers_2d=centers_2d,
             depths=depths)
-
         return anns_results
 
     def load_data_list(self) -> List[dict]:

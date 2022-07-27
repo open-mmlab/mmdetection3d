@@ -1,12 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import cv2
+import mmcv
 import numpy as np
 from mmcv import is_tuple_of
-from mmcv.transforms import BaseTransform
+from mmcv.transforms import BaseTransform, RandomResize
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
@@ -14,7 +15,7 @@ from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 LiDARInstance3DBoxes)
 from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
-from mmdet.datasets.transforms import RandomFlip
+from mmdet.datasets.transforms import RandomCrop, RandomFlip
 from .data_augment_utils import noise_per_object_v3_
 
 
@@ -1833,4 +1834,805 @@ class RandomShiftScale(BaseTransform):
         repr_str = self.__class__.__name__
         repr_str += f'(shift_scale={self.shift_scale}, '
         repr_str += f'aug_prob={self.aug_prob}) '
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class RandomResize3D(RandomResize):
+    """Resize 3D labels."""
+
+    def __init__(
+        self,
+        scale: Union[Tuple[int, int], Sequence[Tuple[int, int]]],
+        ratio_range: Tuple[float, float] = None,
+        resize_type: str = 'Resize',
+        **resize_kwargs,
+    ) -> None:
+        super().__init__(
+            scale=scale,
+            ratio_range=ratio_range,
+            resize_type=resize_type,
+            **resize_kwargs)
+
+    # TODO check if need to keep this part?
+    # def _random_scale(self, results):
+    #     """Randomly sample an img_scale according to ``ratio_range`` and
+    #     ``multiscale_mode``.
+
+    #     If ``ratio_range`` is specified, a ratio will be sampled and be
+    #     multiplied with ``ori_scale``.
+    #     If multiple scales are specified by ``img_scale``, a scale will be
+    #     sampled according to ``multiscale_mode``.
+    #     Otherwise, single scale will be used.
+
+    #     Args:
+    #         results (dict): Result dict from :obj:`dataset`.
+
+    #     Returns:
+    #         dict: Two new keys 'scale` and 'scale_idx` are added into \
+    #             ``results``, which would be used by subsequent pipelines.
+    #     """
+    #     # ori_scale = results['img'].shape[:2]
+    #     # consider the ori_scale can be specified by self.img_scale
+    #     if self.scale is not None:
+    #         ori_scale = self.img_scale[0]
+    #     else:
+    #         ori_scale = results['img'].shape[:2]
+    #     if self.ratio_range is not None:
+    #         scale, scale_idx = self.random_sample_ratio(
+    #             ori_scale, self.ratio_range)
+    #     elif len(self.img_scale) == 1:
+    #         scale, scale_idx = self.img_scale[0], 0
+    #     elif self.multiscale_mode == 'range':
+    #         scale, scale_idx = self.random_sample(self.img_scale)
+    #     elif self.multiscale_mode == 'value':
+    #         scale, scale_idx = self.random_select(self.img_scale)
+    #     else:
+    #         raise NotImplementedError
+
+    #     results['scale'] = scale
+    #     results['scale_idx'] = scale_idx
+
+    def _resize_3d(self, results):
+        """Resize centers_2d and modify camera intrinisc with
+        ``results['scale']``."""
+        if 'centers_2d' in results:
+            results['centers_2d'] *= results['scale_factor'][:2]
+        results['cam2img'][0] *= np.array(results['scale_factor'][0])
+        results['cam2img'][1] *= np.array(results['scale_factor'][1])
+
+    def __call__(self, results):
+        """Call function to resize images, bounding boxes, masks, semantic
+        segmentation map.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor', \
+                'keep_ratio' keys are added into result dict.
+        """
+        super(RandomResize3D, self).__call__(results)
+        self._resize_3d(results)
+
+        return results
+
+
+@TRANSFORMS.register_module()
+class RandomCrop3D(RandomCrop):
+    """3D version of RandomCrop.
+
+    RamdomCrop3D needs some customized settings and modifications for camera
+    intrinsic matrix.
+    """
+
+    def __init__(self,
+                 crop_size,
+                 crop_type='absolute',
+                 allow_negative_crop=False,
+                 recompute_bbox=False,
+                 bbox_clip_border=True,
+                 rel_offset_h=(0., 1.),
+                 rel_offset_w=(0., 1.)):
+        super().__init__(
+            crop_size=crop_size,
+            crop_type=crop_type,
+            allow_negative_crop=allow_negative_crop,
+            recompute_bbox=recompute_bbox,
+            bbox_clip_border=bbox_clip_border)
+        # rel_offset specifies the relative offset range of cropping origin
+        # [0., 1.] means starting from 0*margin to 1*margin + 1
+        self.rel_offset_h = rel_offset_h
+        self.rel_offset_w = rel_offset_w
+
+    def _crop_data(self, results, crop_size, allow_negative_crop):
+        """Function to randomly crop images, bounding boxes, masks, semantic
+        segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            crop_size (tuple): Expected absolute size after cropping, (h, w).
+            allow_negative_crop (bool): Whether to allow a crop that does not
+                contain any bbox area. Default to False.
+
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        assert crop_size[0] > 0 and crop_size[1] > 0
+        for key in results.get('img_fields', ['img']):
+            img = results[key]
+            margin_h = max(img.shape[0] - crop_size[0], 0)
+            margin_w = max(img.shape[1] - crop_size[1], 0)
+            # TOCHECK: a little different from LIGA implementation
+            offset_h = np.random.randint(self.rel_offset_h[0] * margin_h,
+                                         self.rel_offset_h[1] * margin_h + 1)
+            offset_w = np.random.randint(self.rel_offset_w[0] * margin_w,
+                                         self.rel_offset_w[1] * margin_w + 1)
+            crop_h = min(crop_size[0], img.shape[0])
+            crop_w = min(crop_size[1], img.shape[1])
+            crop_y1, crop_y2 = offset_h, offset_h + crop_h
+            crop_x1, crop_x2 = offset_w, offset_w + crop_w
+
+            # crop the image
+            img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+            img_shape = img.shape
+            results[key] = img
+        results['img_shape'] = img_shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        for key in results.get('bbox_fields', []):
+            # e.g. gt_bboxes and gt_bboxes_ignore
+            bbox_offset = np.array([offset_w, offset_h, offset_w, offset_h],
+                                   dtype=np.float32)
+            bboxes = results[key] - bbox_offset
+            if self.bbox_clip_border:
+                bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
+                bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
+            valid_inds = (bboxes[:, 2] > bboxes[:, 0]) & (
+                bboxes[:, 3] > bboxes[:, 1])
+            # If the crop does not contain any gt-bbox area and
+            # allow_negative_crop is False, skip this image.
+            if (key == 'gt_bboxes' and not valid_inds.any()
+                    and not allow_negative_crop):
+                return None
+            results[key] = bboxes[valid_inds, :]
+            # label fields. e.g. gt_labels and gt_labels_ignore
+            label_key = self.bbox2label.get(key)
+            if label_key in results:
+                results[label_key] = results[label_key][valid_inds]
+
+            # mask fields, e.g. gt_masks and gt_masks_ignore
+            mask_key = self.bbox2mask.get(key)
+            if mask_key in results:
+                results[mask_key] = results[mask_key][
+                    valid_inds.nonzero()[0]].crop(
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+                if self.recompute_bbox:
+                    results[key] = results[mask_key].get_bboxes()
+
+        # crop semantic seg
+        for key in results.get('seg_fields', []):
+            results[key] = results[key][crop_y1:crop_y2, crop_x1:crop_x2]
+
+        # manipulate camera intrinsic matrix
+        # needs to apply offset to K instead of P2 (on KITTI)
+        K = results['cam2img'][:3, :3].copy()
+        inv_K = np.linalg.inv(K)
+        T = np.matmul(inv_K, results['cam2img'][:3])
+        K[0, 2] -= crop_x1
+        K[1, 2] -= crop_y1
+        offset_cam2img = np.matmul(K, T)
+        results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
+                           shape[1]] = offset_cam2img
+        results['crop_offset'] = [crop_x1, crop_y1]
+
+        return results
+
+    def __call__(self, results):
+        """Call function to randomly crop images, bounding boxes, masks,
+        semantic segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        image_size = results['img'].shape[:2]
+        crop_size = self._get_crop_size(image_size)
+        results = self._crop_data(results, crop_size, self.allow_negative_crop)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(crop_size={self.crop_size}, '
+        repr_str += f'crop_type={self.crop_type}, '
+        repr_str += f'allow_negative_crop={self.allow_negative_crop}, '
+        repr_str += f'bbox_clip_border={self.bbox_clip_border}), '
+        repr_str += f'rel_offset_h={self.rel_offset_h}), '
+        repr_str += f'rel_offset_w={self.rel_offset_w})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class MultiViewImagePhotoMetricDistortion(object):
+    """Apply photometric distortion to image sequentially, every transformation
+    is applied with a probability of 0.5. The position of random contrast is in
+    second or second to last.
+
+    1. random brightness
+    2. random contrast (mode 0)
+    3. convert color from BGR to HSV
+    4. random saturation
+    5. random hue
+    6. convert color from HSV to BGR
+    7. random contrast (mode 1)
+    8. randomly swap channels
+
+    Args:
+        brightness_delta (int): delta of brightness.
+        contrast_range (tuple): range of contrast.
+        saturation_range (tuple): range of saturation.
+        hue_delta (int): delta of hue.
+    """
+
+    def __init__(self,
+                 brightness_delta=32,
+                 contrast_range=(0.5, 1.5),
+                 saturation_range=(0.5, 1.5),
+                 hue_delta=18):
+        self.brightness_delta = brightness_delta
+        self.contrast_lower, self.contrast_upper = contrast_range
+        self.saturation_lower, self.saturation_upper = saturation_range
+        self.hue_delta = hue_delta
+
+    def __call__(self, results):
+        """Call function to perform photometric distortion on images.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Result dict with images distorted.
+        """
+        imgs = results['img']
+        new_imgs = []
+        for img in imgs:
+            assert img.dtype == np.float32, \
+                'PhotoMetricDistortion needs the input image of dtype '\
+                "np.float32, please set 'to_float32=True' in "\
+                "'LoadImageFromFile' pipeline"
+            # random brightness
+            if np.random.randint(2):
+                delta = np.random.uniform(-self.brightness_delta,
+                                          self.brightness_delta)
+                img += delta
+
+            # mode == 0 --> do random contrast first
+            # mode == 1 --> do random contrast last
+            mode = np.random.randint(2)
+            if mode == 1:
+                if np.random.randint(2):
+                    alpha = np.random.uniform(self.contrast_lower,
+                                              self.contrast_upper)
+                    img *= alpha
+
+            # convert color from BGR to HSV
+            img = mmcv.bgr2hsv(img)
+
+            # random saturation
+            if np.random.randint(2):
+                img[..., 1] *= np.random.uniform(self.saturation_lower,
+                                                 self.saturation_upper)
+
+            # random hue
+            if np.random.randint(2):
+                img[..., 0] += np.random.uniform(-self.hue_delta,
+                                                 self.hue_delta)
+                img[..., 0][img[..., 0] > 360] -= 360
+                img[..., 0][img[..., 0] < 0] += 360
+
+            # convert color from HSV to BGR
+            img = mmcv.hsv2bgr(img)
+
+            # random contrast
+            if mode == 0:
+                if np.random.randint(2):
+                    alpha = np.random.uniform(self.contrast_lower,
+                                              self.contrast_upper)
+                    img *= alpha
+
+            # randomly swap channels
+            if np.random.randint(2):
+                img = img[..., np.random.permutation(3)]
+            new_imgs.append(img)
+        results['img'] = new_imgs
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(\nbrightness_delta={self.brightness_delta},\n'
+        repr_str += 'contrast_range='
+        repr_str += f'{(self.contrast_lower, self.contrast_upper)},\n'
+        repr_str += 'saturation_range='
+        repr_str += f'{(self.saturation_lower, self.saturation_upper)},\n'
+        repr_str += f'hue_delta={self.hue_delta})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class MultiViewImageRandomResize3D(RandomResize3D):
+    """Random scale the image with modifying camera intrinsic. This function is
+    still unstable, required further testing.
+
+    Args:
+        img_scale: resolution for the output image
+        keep_ratio: keep the ratio between w and h
+        resize_depth: consider simltaneously resize depth (for training aug)
+        ratio_range:
+        override: do the resize more than one time.
+    """
+
+    def __init__(
+        self,
+        scale: Union[Tuple[int, int], Sequence[Tuple[int, int]]],
+        ratio_range: Tuple[float, float] = None,
+        resize_type: str = 'Resize',
+        **resize_kwargs,
+    ) -> None:
+        super(MultiViewImageRandomResize3D, self).__init__(
+            scale=scale,
+            ratio_range=ratio_range,
+            resize_type=resize_type,
+            **resize_kwargs)
+        # temporarily do not need these params
+        # because resize_depth=False & resize_intrinsic=True
+        # is an optimal setting surveyed before
+        # self.resize_depth = resize_depth
+        # self.rescale_intrinsic = rescale_intrinsic
+        self.backend = resize_kwargs.get('backend', 'cv2')
+
+    def _resize_3d(self, results):
+        """Resize centers_2d and modify camera intrinisc with
+        ``results['scale']``."""
+        if 'centers_2d' in results:
+            results['centers_2d'] *= results['scale_factor'][:2]
+        # resize image equals to change focal length and
+        # camera intrinsic
+        if 'cam2img' in results:
+            for idx, cam2img in enumerate(results['cam2img']):
+                cam2img[0] *= results['scale_factor'][0].repeat(
+                    len(cam2img[0]))
+                cam2img[1] *= results['scale_factor'][1].repeat(
+                    len(cam2img[0]))
+                results['cam2img'][idx] = cam2img
+                results['lidar2img'][idx] = np.array(cam2img) @ np.array(
+                    results['lidar2cam'][idx])
+                results['lidar2img'][idx] = results['lidar2img'][idx].tolist()
+                # results['lidar2img'][idx] = [np.array]
+
+    def _resize_img(self, results):
+        """Resize images with list of inputs ``results['scale']``."""
+
+        # other with type of tensor
+        for idx, img in enumerate(results['img']):
+            if self.resize_cfg.get('keep_ratio', True):
+                resized_img, scale_factor = mmcv.imrescale(
+                    img,
+                    results['scale'],
+                    return_scale=True,
+                    backend=self.backend)
+                # the w_scale and h_scale has minor difference
+                # a real fix should be done in the mmcv.imrescale in the future
+                new_h, new_w = resized_img.shape[:2]
+                h, w = img.shape[:2]
+                w_scale = new_w / w
+                h_scale = new_h / h
+            else:
+                resized_img, w_scale, h_scale = mmcv.imresize(
+                    img,
+                    results['scale'],
+                    return_scale=True,
+                    backend=self.backend)
+            results['img'][idx] = resized_img
+
+            scale_factor = np.array([w_scale, h_scale], dtype=np.float32)
+
+        results['img_shape'] = results['img'][0].shape
+        # in case that there is no padding
+        results['pad_shape'] = results['img'][0].shape
+        results['scale_factor'] = scale_factor
+        results['keep_ratio'] = self.resize_cfg.get('keep_ratio', True)
+
+    def _resize_seg(self, results):
+        """Resize semantic segmentation map with ``results['scale']``."""
+        for key in results.get('seg_fields', []):
+            for idx, seg in enumerate(results[key]):
+                if self.resize_cfg.get('keep_ratio', True):
+                    gt_seg = mmcv.imrescale(
+                        seg,
+                        results['scale'],
+                        interpolation='nearest',
+                        backend=self.backend)
+                else:
+                    gt_seg = mmcv.imresize(
+                        seg,
+                        results['scale'],
+                        interpolation='nearest',
+                        backend=self.backend)
+                results[key][idx] = gt_seg
+
+    def _resize_bboxes(self, results: dict) -> None:
+        """Resize bounding boxes with ``results['scale_factor']``."""
+        if results.get('gt_bboxes', None) is not None:
+            bboxes = results['gt_bboxes'] * np.tile(
+                np.array(results['scale_factor']), 2)
+            if self.resize.clip_object_border:
+                bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0,
+                                          results['img_shape'][1])
+                bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0,
+                                          results['img_shape'][0])
+            results['gt_bboxes'] = bboxes
+
+    def transform(self, results):
+        # Assume the multiview image is in the same shape
+        # currently img is with the shape of [N, C, H, W, M]
+
+        # NOTE: remove the check scale_factor part due to multi-view imgs
+        results['scale'] = self._random_scale()
+        self.resize.scale = results['scale']
+        self._resize_img(results)
+        self._resize_bboxes(results)
+        self._resize_seg(results)
+        # self._resize_keypoints(results)
+        self._resize_3d(results)
+        return results
+
+
+@TRANSFORMS.register_module()
+class MultiViewImageCrop3D(RandomCrop3D):
+    """Random crop the image with recording the crop index.
+
+    This function is still unstable, required further testing.
+    """
+
+    def __init__(self,
+                 crop_size,
+                 crop_type='absolute',
+                 allow_negative_crop=False,
+                 recompute_bbox=False,
+                 bbox_clip_border=True,
+                 rel_offset_h=(0., 1.),
+                 rel_offset_w=(0., 1.)):
+        super().__init__(
+            crop_size=crop_size,
+            crop_type=crop_type,
+            allow_negative_crop=allow_negative_crop,
+            recompute_bbox=recompute_bbox,
+            bbox_clip_border=bbox_clip_border)
+        # rel_offset specifies the relative offset range of cropping origin
+        # [0., 1.] means starting from 0*margin to 1*margin + 1
+        self.rel_offset_h = rel_offset_h
+        self.rel_offset_w = rel_offset_w
+
+    def _crop_data(self, results, crop_size, allow_negative_crop):
+        """Function to randomly crop images, bounding boxes, masks, semantic
+        segmentation maps.
+
+        Currently I did not modify the cam intrinsic because ImVoxelNet use
+        the origin cam intrinsic; In the future,  if modify intrinsic, one
+        may consider the conflict with flip augmentation.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            crop_size (tuple): Expected absolute size after cropping, (h, w).
+            allow_negative_crop (bool): Whether to allow a crop that does not
+                contain any bbox area. Default to False.
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        assert crop_size[0] > 0 and crop_size[1] > 0
+        for idx, img in enumerate(results['img']):
+            if idx == 0:
+                margin_h = max(img.shape[0] - crop_size[0], 0)
+                margin_w = max(img.shape[1] - crop_size[1], 0)
+                # TOCHECK: a little different from LIGA implementation
+                offset_h = np.random.randint(
+                    self.rel_offset_h[0] * margin_h,
+                    self.rel_offset_h[1] * margin_h + 1)
+                offset_w = np.random.randint(
+                    self.rel_offset_w[0] * margin_w,
+                    self.rel_offset_w[1] * margin_w + 1)
+                crop_h = min(crop_size[0], img.shape[0])
+                crop_w = min(crop_size[1], img.shape[1])
+                crop_y1, crop_y2 = offset_h, offset_h + crop_h
+                crop_x1, crop_x2 = offset_w, offset_w + crop_w
+            # crop the image
+            img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+            img_shape = img.shape
+
+            results['img'][idx] = img
+        results['img_shape'] = img_shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        for key in results.get('bbox_fields', []):
+            # e.g. gt_bboxes and gt_bboxes_ignore
+            bbox_offset = np.array([offset_w, offset_h, offset_w, offset_h],
+                                   dtype=np.float32)
+            bboxes = results[key] - bbox_offset
+            if self.bbox_clip_border:
+                bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
+                bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
+            valid_inds = (bboxes[:, 2] > bboxes[:, 0]) & (
+                bboxes[:, 3] > bboxes[:, 1])
+            # If the crop does not contain any gt-bbox area and
+            # allow_negative_crop is False, skip this image.
+            if (key == 'gt_bboxes' and not valid_inds.any()
+                    and not allow_negative_crop):
+                return None
+            results[key] = bboxes[valid_inds, :]
+            # label fields. e.g. gt_labels and gt_labels_ignore
+            label_key = self.bbox2label.get(key)
+            if label_key in results:
+                results[label_key] = results[label_key][valid_inds]
+
+            # mask fields, e.g. gt_masks and gt_masks_ignore
+            mask_key = self.bbox2mask.get(key)
+            if mask_key in results:
+                results[mask_key] = results[mask_key][
+                    valid_inds.nonzero()[0]].crop(
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+                if self.recompute_bbox:
+                    results[key] = results[mask_key].get_bboxes()
+
+        # crop semantic seg
+        for key in results.get('seg_fields', []):
+            results[key] = results[key][crop_y1:crop_y2, crop_x1:crop_x2]
+
+        # manipulate camera intrinsic matrix
+        # needs to apply offset to K instead of P2 (on KITTI)
+        # K = results['cam2img'][:3, :3].copy()
+        # inv_K = np.linalg.inv(K)
+        # T = np.matmul(inv_K, results['cam2img'][:3])
+        # K[0, 2] -= crop_x1
+        # K[1, 2] -= crop_y1
+        # offset_cam2img = np.matmul(K, T)
+        # results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
+        #    shape[1]] = offset_cam2img
+        results['img_crop_offset'] = [crop_x1, crop_y1]
+
+        return results
+
+    def __call__(self, results):
+        """Call function to randomly crop images, bounding boxes, masks,
+        semantic segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        if isinstance(results['img'], list):
+            image_size = results['img'][0].shape[:2]
+        else:
+            image_size = results['img'].shape[:2]
+        crop_size = self._get_crop_size(image_size)
+        results = self._crop_data(results, crop_size, self.allow_negative_crop)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(crop_size={self.crop_size}, '
+        repr_str += f'crop_type={self.crop_type}, '
+        repr_str += f'allow_negative_crop={self.allow_negative_crop}, '
+        repr_str += f'bbox_clip_border={self.bbox_clip_border}), '
+        repr_str += f'rel_offset_h={self.rel_offset_h}), '
+        repr_str += f'rel_offset_w={self.rel_offset_w})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class MultiViewRandomFlip3D(RandomFlip):
+    """Multi-View version for RandomFlip3D.
+
+    Current only flip the image and add the flip flag; do not convert the 3D
+    bounding boxes and intrinsic;
+    """
+
+    def __init__(self, sync_2d=True, **kwargs):
+        super(MultiViewRandomFlip3D, self).__init__(**kwargs)
+        self.sync_2d = sync_2d
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to flip images, bounding boxes, semantic
+        segmentation map and keypoints.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Flipped results, 'img', 'gt_bboxes', 'gt_seg_map',
+            'gt_keypoints', 'flip', and 'flip_direction' keys are
+            updated in result dict.
+        """
+
+        cur_dir = self._choose_direction()
+        results['flip'] = cur_dir is not None
+
+        if 'flip_direction' not in results:
+            results['flip_direction'] = cur_dir
+
+        if results['flip']:
+            # flip image
+            results['img'] = [
+                mmcv.imflip(img, results['flip_direction'])
+                for img in results['img']
+            ]
+            # flip bboxes
+            for key in results.get('bbox_fields', []):
+                results[key] = self.bbox_flip(results[key],
+                                              results['img_shape'],
+                                              results['flip_direction'])
+            # flip masks
+            for key in results.get('mask_fields', []):
+                results[key] = results[key].flip(results['flip_direction'])
+
+            # flip segs
+            for key in results.get('seg_fields', []):
+                results[key] = mmcv.imflip(
+                    results[key], direction=results['flip_direction'])
+            self.random_flip_data_3d(
+                results, direction=results['flip_direction'])
+
+        return results
+
+    def random_flip_data_3d(self, input_dict, direction='horizontal'):
+        """Flip 3D data randomly.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            direction (str, optional): Flip direction.
+                Default: 'horizontal'.
+
+        Returns:
+            dict: Flipped results, 'points', 'bbox3d_fields' keys are
+                updated in the result dict.
+        """
+        assert direction in ['horizontal', 'vertical']
+        if 'centers_2d' in input_dict:
+            assert self.sync_2d is True and direction == 'horizontal', \
+                'Only support sync_2d=True and horizontal flip with images'
+            w = input_dict['img_shape'][1]
+            input_dict['centers_2d'][..., 0] = \
+                w - input_dict['centers_2d'][..., 0]
+            # need to modify the horizontal position of camera center
+            # along u-axis in the image (flip like centers_2d)
+            # ['cam2img'][0][2] = c_u
+            # see more details and examples at
+            # https://github.com/open-mmlab/mmdetection3d/pull/744
+            for cam2img in input_dict['cam2img']:
+                cam2img[0][2] = w - cam2img[0][2]
+
+
+@TRANSFORMS.register_module()
+class MultiViewImagePad(object):
+    """Pad the multi-view image.
+
+    There are two padding modes: (1) pad to a fixed size and (2) pad to the
+    minimum size that is divisible by some number.
+    Added keys are "pad_shape", "pad_fixed_size", "pad_size_divisor",
+
+    Args:
+        size (tuple, optional): Fixed padding size.
+        size_divisor (int, optional): The divisor of padded size.
+        pad_val (float, optional): Padding value, 0 by default.
+    """
+
+    def __init__(self, size=None, size_divisor=None, pad_val=0):
+        self.size = size
+        self.size_divisor = size_divisor
+        self.pad_val = pad_val
+        # only one of size and size_divisor should be valid
+        assert size is not None or size_divisor is not None
+        assert size is None or size_divisor is None
+
+    def _pad_img(self, results):
+        """Pad images according to ``self.size``."""
+
+        # should be the max shape of multi-view images
+        results['img_shape'] = [img.shape for img in results['img']]
+
+        if self.size is not None:
+            padded_img = [
+                mmcv.impad(img, shape=self.size, pad_val=self.pad_val)
+                for img in results['img']
+            ]
+        elif self.size_divisor is not None:
+            padded_img = [
+                mmcv.impad_to_multiple(
+                    img, self.size_divisor, pad_val=self.pad_val)
+                for img in results['img']
+            ]
+        results['img'] = padded_img
+
+        results['pad_shape'] = [img.shape for img in padded_img]
+        results['pad_fixed_size'] = self.size
+        results['pad_size_divisor'] = self.size_divisor
+
+    def _pad_seg_mask(self, results):
+        # TODO: set a custom value for seg_mask padding
+        # temporarily use pad_val=self.pad_val
+        for key in results.get('seg_fields', []):
+            padded_mask = [
+                mmcv.impad(
+                    mask,
+                    shape=results['pad_shape'][0][:2],
+                    pad_val=self.pad_val) for mask in results[key]
+            ]
+            results[key] = padded_mask
+
+    def __call__(self, results):
+        """Call function to pad images, masks, semantic segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Updated result dict.
+        """
+        self._pad_img(results)
+        self._pad_seg_mask(results)
+
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(size={self.size}, '
+        repr_str += f'size_divisor={self.size_divisor}, '
+        repr_str += f'pad_val={self.pad_val})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class MultiViewImageNormalize(object):
+    """Normalize the image.
+
+    Args:
+        mean (sequence): Mean values of 3 channels.
+        std (sequence): Std values of 3 channels.
+        to_rgb (bool): Whether to convert the image from BGR to RGB,
+            default is true.
+    """
+
+    def __init__(self, mean, std, to_rgb=True):
+        self.mean = np.array(mean, dtype=np.float32)
+        self.std = np.array(std, dtype=np.float32)
+        self.to_rgb = to_rgb
+
+    def __call__(self, results):
+        """Call function to normalize images.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Normalized results, 'img_norm_cfg' key is added into
+                result dict.
+        """
+        results['img'] = [
+            mmcv.imnormalize(img, self.mean, self.std, self.to_rgb)
+            for img in results['img']
+        ]
+        results['img_norm_cfg'] = dict(
+            mean=self.mean, std=self.std, to_rgb=self.to_rgb)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += \
+            f'(mean={self.mean}, std={self.std}, to_rgb={self.to_rgb})'
         return repr_str

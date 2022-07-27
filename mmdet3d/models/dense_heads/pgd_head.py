@@ -408,7 +408,8 @@ class PGDHead(FCOSMono3DHead):
 
             # depth fixed when computing re-project 3D bboxes
             pos_strided_bbox_preds[mask, 2] = \
-                pos_bbox_targets_3d.clone()[mask, 2]
+                pos_bbox_targets_3d.clone()[mask, 2].to(
+                                pos_strided_bbox_preds.dtype)
 
             # decode yaws
             if self.use_direction_classifier:
