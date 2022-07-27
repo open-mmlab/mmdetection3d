@@ -3,10 +3,14 @@ from numbers import Number
 from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import torch
+from mmcv.ops import Voxelization
 from mmengine.data import BaseDataElement
 from mmengine.model import stack_batch
+from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import OptConfigType
 from mmdet.models import DetDataPreprocessor
 
 
@@ -27,6 +31,9 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
     - Normalize images in inputs with defined std and mean.
 
     Args:
+        voxel (bool): Whether to apply voxelziation to points.
+        voxel_type (str): Voxelization type.
+        voxel_layer (OptConfigType): Voxelization layer config.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
             Defaults to None.
         std (Sequence[Number], optional): The pixel standard deviation of
@@ -41,6 +48,9 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
     """
 
     def __init__(self,
+                 voxel: bool = False,
+                 voxel_type: str = 'hard',
+                 voxel_layer: OptConfigType = None,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
                  pad_size_divisor: int = 1,
@@ -64,6 +74,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             bgr_to_rgb=bgr_to_rgb,
             rgb_to_bgr=rgb_to_bgr,
             batch_augments=batch_augments)
+        self.voxel = voxel
+        self.voxel_type = voxel_type
+        if voxel:
+            self.voxel_layer = Voxelization(**voxel_layer)
 
     def forward(self,
                 data: List[Union[dict, List[dict]]],
@@ -203,3 +217,38 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                                 self.pad_size_divisor)) * self.pad_size_divisor
             batch_pad_shape.append((pad_h, pad_w))
         return batch_pad_shape
+
+    def voxelize(self, points: List[torch.Tensor], voxel_type: str) -> tuple:
+        """Apply voxelization to points."""
+
+        if voxel_type == 'hard':
+            voxels, coors, num_points = [], [], []
+            for res in points:
+                res_voxels, res_coors, res_num_points = self.voxel_layer(res)
+                voxels.append(res_voxels)
+                coors.append(res_coors)
+                num_points.append(res_num_points)
+            voxels = torch.cat(voxels, dim=0)
+            num_points = torch.cat(num_points, dim=0)
+            coors_batch = []
+            for i, coor in enumerate(coors):
+                coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
+                coors_batch.append(coor_pad)
+            coors_batch = torch.cat(coors_batch, dim=0)
+
+            return voxels, num_points, coors_batch
+
+        elif voxel_type == 'dynamic':
+            coors = []
+            # dynamic voxelization only provide a coors mapping
+            for res in points:
+                res_coors = self.voxel_layer(res)
+                coors.append(res_coors)
+            points = torch.cat(points, dim=0)
+            coors_batch = []
+            for i, coor in enumerate(coors):
+                coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
+                coors_batch.append(coor_pad)
+            coors_batch = torch.cat(coors_batch, dim=0)
+
+            return points, coors_batch
