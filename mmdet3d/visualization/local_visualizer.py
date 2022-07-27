@@ -21,8 +21,10 @@ from mmengine.data import InstanceData
 from mmengine.visualization.utils import check_type, tensor2ndarray
 
 from mmdet3d.registry import VISUALIZERS
-from mmdet3d.structures import (BaseInstance3DBoxes, DepthInstance3DBoxes,
-                                Det3DDataSample, PointData)
+from mmdet3d.structures import (BaseInstance3DBoxes, CameraInstance3DBoxes,
+                                Coord3DMode, DepthInstance3DBoxes,
+                                Det3DDataSample, LiDARInstance3DBoxes,
+                                PointData)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode, write_obj,
                         write_oriented_bbox)
@@ -128,7 +130,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     @master_only
     def set_points(self,
                    points: np.ndarray,
-                   vis_task: str,
+                   pcd_mode: int = 0,
+                   vis_task: str = 'det',
                    points_color: Tuple = (0.5, 0.5, 0.5),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
@@ -149,7 +152,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         assert points is not None
         check_type('points', points, np.ndarray)
 
-        if self.pcd and vis_task != 'seg':
+        # for now we convert points into depth mode for visualization
+        if pcd_mode != Coord3DMode.DEPTH:
+            points = Coord3DMode.convert(points, pcd_mode, Coord3DMode.DEPTH)
+
+        if hasattr(self, 'pcd') and vis_task != 'seg':
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
@@ -173,7 +180,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pcd.colors = o3d.utility.Vector3dVector(points_colors)
         self.o3d_vis.add_geometry(pcd)
         self.pcd = pcd
-        self.points_color = points_color
+        self.points_colors = points_colors
 
     # TODO: assign 3D Box color according to pred / GT labels
     # We draw GT / pred bboxes on the same point cloud scenes
@@ -244,14 +251,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.pcd.colors = o3d.utility.Vector3dVector(self.points_colors)
             self.o3d_vis.update_geometry(self.pcd)
 
+    # TODO: set bbox color according to palette
     def draw_proj_bboxes_3d(self,
                             bboxes_3d: BaseInstance3DBoxes,
                             input_meta: dict,
-                            bbox_color: Tuple[float],
+                            bbox_color: Tuple[float] = 'b',
                             line_styles: Union[str, List[str]] = '-',
                             line_widths: Union[Union[int, float],
-                                               List[Union[int, float]]] = 2,
-                            box_mode: str = 'lidar'):
+                                               List[Union[int, float]]] = 1):
         """Draw projected 3D boxes on the image.
 
         Args:
@@ -269,19 +276,18 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 the same length with lines or just single value.
                 If ``line_widths`` is single value, all the lines will
                 have the same linewidth. Defaults to 2.
-            box_mode (str): Indicate the coordinates of bbox.
         """
 
         check_type('bboxes', bboxes_3d, BaseInstance3DBoxes)
 
-        if box_mode == 'depth':
+        if isinstance(bboxes_3d, DepthInstance3DBoxes):
             proj_bbox3d_to_img = proj_depth_bbox3d_to_img
-        elif box_mode == 'lidar':
+        elif isinstance(bboxes_3d, LiDARInstance3DBoxes):
             proj_bbox3d_to_img = proj_lidar_bbox3d_to_img
-        elif box_mode == 'camera':
+        elif isinstance(bboxes_3d, CameraInstance3DBoxes):
             proj_bbox3d_to_img = proj_camera_bbox3d_to_img
         else:
-            raise NotImplementedError(f'unsupported box mode {box_mode}')
+            raise NotImplementedError('unsupported box type!')
 
         # (num_bboxes_3d, 8, 2)
         proj_bboxes_3d = proj_bbox3d_to_img(bboxes_3d, input_meta)
@@ -359,7 +365,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             else:
                 bboxes_3d_depth = bboxes_3d.clone()
 
-            self.set_points(points, vis_task)
+            self.set_points(points, pcd_mode=2, vis_task=vis_task)
             self.draw_bboxes_3d(bboxes_3d_depth)
 
             drawn_bboxes_3d = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -367,8 +373,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if vis_task in ['mono-det', 'multi_modality-det']:
             assert 'img' in data_input
+            img = data_input['img']
             if isinstance(data_input['img'], Tensor):
-                img = data_input['img'].permute(1, 2, 0).numpy()
+                img = img.permute(1, 2, 0).numpy()
                 img = img[..., [2, 1, 0]]  # bgr to rgb
             self.set_image(img)
             self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
@@ -430,7 +437,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if vis_task in ['det', 'multi_modality-det']:
             self.o3d_vis.run()
             if out_file is not None:
-                self.o3d_vis.capture_screen_image(out_file)
+                self.o3d_vis.capture_screen_image(out_file + '.png')
             self.o3d_vis.destroy_window()
 
         if vis_task in ['mono-det', 'multi_modality-det']:
@@ -490,6 +497,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         palette = self.dataset_meta.get('PALETTE', None)
         ignore_index = self.dataset_meta.get('ignore_index', None)
 
+        gt_data_3d = None
+        pred_data_3d = None
+        gt_seg_data_3d = None
+        pred_seg_data_3d = None
+        gt_img_data = None
+        pred_img_data = None
+
         if draw_gt and gt_sample is not None:
             if 'gt_instances_3d' in gt_sample:
                 gt_data_3d = self._draw_instances_3d(data_input,
@@ -518,22 +532,24 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if draw_pred and pred_sample is not None:
             if 'pred_instances_3d' in pred_sample:
                 pred_instances_3d = pred_sample.pred_instances_3d
+                # .cpu can not be used for BaseInstancesBoxes3D
+                # so we need to use .to('cpu')
                 pred_instances_3d = pred_instances_3d[
-                    pred_instances_3d.scores_3d > pred_score_thr].cpu()
+                    pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
                 pred_data_3d = self._draw_instances_3d(data_input,
                                                        pred_instances_3d,
                                                        pred_sample.metainfo,
                                                        vis_task, palette)
             if 'pred_instances' in pred_sample:
-                assert 'img' in data_input
-                pred_instances = pred_sample.pred_instances
-                pred_instances = pred_instances_3d[
-                    pred_instances.scores > pred_score_thr].cpu()
-                if isinstance(data_input['img'], Tensor):
-                    img = data_input['img'].permute(1, 2, 0).numpy()
-                    img = img[..., [2, 1, 0]]  # bgr to rgb
-                pred_img_data = self._draw_instances(img, pred_instances,
-                                                     classes, palette)
+                if 'img' in data_input and len(pred_sample.pred_instances) > 0:
+                    pred_instances = pred_sample.pred_instances
+                    pred_instances = pred_instances_3d[
+                        pred_instances.scores > pred_score_thr].cpu()
+                    if isinstance(data_input['img'], Tensor):
+                        img = data_input['img'].permute(1, 2, 0).numpy()
+                        img = img[..., [2, 1, 0]]  # bgr to rgb
+                    pred_img_data = self._draw_instances(
+                        img, pred_instances, classes, palette)
             if 'pred_pts_sem_seg' in pred_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
@@ -578,9 +594,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if out_file is not None:
             if drawn_img_3d is not None:
-                mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
+                mmcv.imwrite(drawn_img_3d[..., ::-1], out_file + '.jpg')
             if drawn_img is not None:
-                mmcv.imwrite(drawn_img[..., ::-1], out_file)
+                mmcv.imwrite(drawn_img[..., ::-1], out_file + '.jpg')
             if gt_data_3d is not None:
                 write_obj(gt_data_3d['points'],
                           osp.join(out_file, 'points.obj'))
