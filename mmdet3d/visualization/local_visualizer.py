@@ -108,6 +108,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             line_width=line_width,
             alpha=alpha)
         self.o3d_vis = self._initialize_o3d_vis(vis_cfg)
+        self.seg_num = 0
 
     def _initialize_o3d_vis(self, vis_cfg) -> tuple:
         """Build open3d vis according to vis_cfg.
@@ -310,7 +311,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.draw_lines(x_datas, y_datas, bbox_color, line_styles,
                             line_widths)
 
-    def draw_seg_mask(self, seg_mask_colors: np.array, vis_task: str):
+    def draw_seg_mask(self, seg_mask_colors: np.array):
         """Add segmentation mask to visualizer via per-point colorization.
 
         Args:
@@ -329,7 +330,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         self.o3d_vis.add_geometry(mesh_frame)
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
-        self.set_points(seg_points, vis_task, self.points_size, mode='xyzrgb')
+        self.set_points(seg_points, vis_task='seg', pcd_mode=2, mode='xyzrgb')
 
     def _draw_instances_3d(self, data_input: dict, instances: InstanceData,
                            input_meta: dict, vis_task: str,
@@ -388,7 +389,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def _draw_pts_sem_seg(self,
                           points: Tensor,
                           pts_seg: PointData,
-                          vis_task: str,
                           palette: Optional[List[tuple]] = None,
                           ignore_index: Optional[int] = None):
 
@@ -396,6 +396,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         points = tensor2ndarray(points)
         pts_sem_seg = tensor2ndarray(pts_seg.pts_semantic_mask)
+        palette = np.array(palette)
 
         if ignore_index is not None:
             points = points[pts_sem_seg != ignore_index]
@@ -404,8 +405,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pts_color = palette[pts_sem_seg]
         seg_color = np.concatenate([points[:, :3], pts_color], axis=1)
 
-        self.set_points(points, vis_task)
-        self.draw_seg_mask(seg_color, vis_task)
+        self.set_points(points, pcd_mode=2, vis_task='seg')
+        self.draw_seg_mask(seg_color)
 
         seg_data_3d = dict(points=points, seg_color=seg_color)
         return seg_data_3d
@@ -434,7 +435,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             continue_key (str): The key for users to continue. Defaults to
                 the space key.
         """
-        if vis_task in ['det', 'multi_modality-det']:
+        if vis_task in ['det', 'multi_modality-det', 'seg']:
             self.o3d_vis.run()
             if out_file is not None:
                 self.o3d_vis.capture_screen_image(out_file + '.png')
@@ -517,7 +518,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     img = img[..., [2, 1, 0]]  # bgr to rgb
                 gt_img_data = self._draw_instances(img, gt_sample.gt_instances,
                                                    classes, palette)
-            if 'gt_pts_sem_seg' in gt_sample:
+            if 'gt_pts_seg' in gt_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -525,9 +526,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 gt_seg_data_3d = \
                     self._draw_pts_sem_seg(data_input['points'],
-                                           gt_sample.gt_pts_seg,
-                                           classes, vis_task, palette,
-                                           out_file, ignore_index)
+                                           pred_sample.pred_pts_seg,
+                                           palette, ignore_index)
 
         if draw_pred and pred_sample is not None:
             if 'pred_instances_3d' in pred_sample:
@@ -550,7 +550,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         img = img[..., [2, 1, 0]]  # bgr to rgb
                     pred_img_data = self._draw_instances(
                         img, pred_instances, classes, palette)
-            if 'pred_pts_sem_seg' in pred_sample:
+            if 'pred_pts_seg' in pred_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -559,8 +559,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 pred_seg_data_3d = \
                     self._draw_pts_sem_seg(data_input['points'],
                                            pred_sample.pred_pts_seg,
-                                           classes, palette, out_file,
-                                           ignore_index)
+                                           palette, ignore_index)
 
         # monocular 3d object detection image
         if gt_data_3d is not None and pred_data_3d is not None:

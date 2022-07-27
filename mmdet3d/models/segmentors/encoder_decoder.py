@@ -41,7 +41,7 @@ class EncoderDecoder3D(Base3DSegmentor):
     .. code:: text
 
      predict(): inference() -> postprocess_result()
-     infercen(): whole_inference()/slide_inference()
+     inference(): whole_inference()/slide_inference()
      whole_inference()/slide_inference(): encoder_decoder()
      encoder_decoder(): extract_feat() -> decode_head.predict()
 
@@ -122,32 +122,26 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.loss_regularization = MODELS.build(loss_regularization)
 
-    def extract_feat(self, batch_inputs_dict: dict) -> List[Tensor]:
+    def extract_feat(self, batch_inputs) -> List[Tensor]:
         """Extract features from points."""
-        points = batch_inputs_dict['points']
-        stack_points = torch.stack(points)
-        x = self.backbone(stack_points)
+        x = self.backbone(batch_inputs)
         if self.with_neck:
             x = self.neck(x)
         return x
 
-    def encode_decode(self, batch_inputs_dict: dict,
+    def encode_decode(self, batch_inputs: torch.Tensor,
                       batch_input_metas: List[dict]) -> List[Tensor]:
         """Encode points with backbone and decode into a semantic segmentation
         map of the same size as input.
 
         Args:
-            batch_inputs_dict (dict): Input sample dict which
-                includes 'points' and 'imgs' keys.
-
-                - points (list[torch.Tensor]): Point cloud of each sample.
-                - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
+            batch_input (torch.Tensor): Input point cloud sample
             batch_input_metas (list[dict]): Meta information of each sample.
 
         Returns:
             torch.Tensor: Segmentation logits of shape [B, num_classes, N].
         """
-        x = self.extract_feat(batch_inputs_dict)
+        x = self.extract_feat(batch_inputs)
         seg_logits = self.decode_head.predict(x, batch_input_metas,
                                               self.test_cfg)
         return seg_logits
@@ -481,7 +475,7 @@ class EncoderDecoder3D(Base3DSegmentor):
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
-        seg_pred = []
+        seg_pred_list = []
         batch_input_metas = []
         for data_sample in batch_data_samples:
             batch_input_metas.append(data_sample.metainfo)
@@ -493,10 +487,9 @@ class EncoderDecoder3D(Base3DSegmentor):
             seg_map = seg_prob.argmax(0)  # [N]
             # to cpu tensor for consistency with det3d
             seg_map = seg_map.cpu()
-            seg_pred.append(seg_map)
-        # warp in dict
-        seg_pred = [dict(semantic_mask=seg_map) for seg_map in seg_pred]
-        return seg_pred
+            seg_pred_list.append(seg_map)
+
+        return self.postprocess_result(seg_pred_list, batch_input_metas)
 
     def _forward(self,
                  batch_inputs_dict: dict,
@@ -519,3 +512,7 @@ class EncoderDecoder3D(Base3DSegmentor):
         """
         x = self.extract_feat(batch_inputs_dict)
         return self.decode_head.forward(x)
+
+    def aug_test(self, batch_inputs, batch_img_metas):
+        """Placeholder for augmentation test."""
+        pass

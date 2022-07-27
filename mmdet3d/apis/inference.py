@@ -333,6 +333,7 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
     test_pipeline = Compose(test_pipeline)
 
     data = []
+    # TODO: support load points array
     for pcd in pcds:
         data_ = dict(lidar_points=dict(lidar_path=pcd))
         data_ = test_pipeline(data_)
@@ -343,6 +344,6 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
         results = model.test_step(data)
 
     if not is_batch:
-        return results[0]
+        return results[0], data[0]
     else:
-        return results
+        return results, data
