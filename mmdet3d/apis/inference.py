@@ -185,12 +185,20 @@ def inference_multi_modality_detector(model: nn.Module,
     data_list = mmcv.load(ann_file)['data_list']
     assert len(imgs) == len(data_list)
 
+    # kitti
+    if 'CAM2' in data_list[0]['images']:
+        cam_type = 'CAM2'
+    # nuscenes
+    elif 'CAM_FRONT' in data_list[0]['images']:
+        cam_type = 'CAM_FRONT'
+
     data = []
     for index, pcd in enumerate(pcds):
         # get data info containing calib
         img = imgs[index]
         data_info = data_list[index]
-        img_path = data_info['images']['CAM2']['img_path']
+        img_path = data_info['images'][cam_type]['img_path']
+
         if osp.basename(img_path) != osp.basename(img):
             raise ValueError(f'the info file of {img_path} is not provided.')
 
@@ -205,11 +213,11 @@ def inference_multi_modality_detector(model: nn.Module,
         # LiDAR to image conversion for KITTI dataset
         if box_mode_3d == Box3DMode.LIDAR:
             data_['lidar2img'] = np.array(
-                data_info['images']['CAM2']['lidar2img'])
+                data_info['images'][cam_type]['lidar2img'])
         # Depth to image conversion for SUNRGBD dataset
         elif box_mode_3d == Box3DMode.DEPTH:
             data_['depth2img'] = np.array(
-                data_info['images']['CAM2']['depth2img'])
+                data_info['images'][cam_type]['depth2img'])
 
         data_ = test_pipeline(data_)
         data.append(data_)
@@ -260,16 +268,23 @@ def inference_mono_3d_detector(model: nn.Module, imgs: ImagesType,
     data_list = mmcv.load(ann_file)
     assert len(imgs) == len(data_list)
 
+    # kitti
+    if 'CAM2' in data_list[0]['images']:
+        cam_type = 'CAM2'
+    # nuscenes
+    elif 'CAM_FRONT' in data_list[0]['images']:
+        cam_type = 'CAM_FRONT'
+
     data = []
     for index, img in enumerate(imgs):
         # get data info containing calib
         data_info = data_list[index]
-        img_path = data_info['images']['CAM_FRONT']['img_path']
+        img_path = data_info['images'][cam_type]['img_path']
         if osp.basename(img_path) != osp.basename(img):
             raise ValueError(f'the info file of {img_path} is not provided.')
 
         # replace the img_path in data_info with img
-        data_info['images']['CAM_FRONT']['img_path'] = img
+        data_info['images'][cam_type]['img_path'] = img
         data_ = dict(
             images=data_info['images'],
             box_type_3d=box_type_3d,
