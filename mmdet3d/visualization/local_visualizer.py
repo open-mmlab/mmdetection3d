@@ -141,6 +141,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         Args:
             points (numpy.array, shape=[N, 3+C]):
                 points to visualize.
+            pcd_mode (int): The point cloud mode (coordinates):
+                0 represents LiDAR, 1 represents CAMERA, 2
+                represents Depth.
             vis_task (str): Visualiztion task, it includes:
                 'det', 'multi_modality-det', 'mono-det', 'seg'.
             point_color (tuple[float], optional): the color of points.
@@ -346,7 +349,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 'det', 'multi_modality-det', 'mono-det'.
 
         Returns:
-            np.ndarray: the drawn image which channel is RGB.
+            dict: the drawn point cloud and image which channel is RGB.
         """
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
@@ -387,11 +390,24 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         return data_3d
 
     def _draw_pts_sem_seg(self,
-                          points: Tensor,
+                          points: Union[Tensor, np.ndarray],
                           pts_seg: PointData,
                           palette: Optional[List[tuple]] = None,
                           ignore_index: Optional[int] = None):
+        """Draw 3D semantic mask of GT or prediction.
 
+        Args:
+            points (Tensor | np.ndarray): The input point
+                cloud to draw.
+            pts_seg (:obj:`PointData`): Data structure for
+                pixel-level annotations or predictions.
+            palette (List[tuple], optional): Palette information
+                corresponding to the category.
+            ignore_index (int): Ignore category.
+
+        Returns:
+            dict: the drawn points with color.
+        """
         check_type('points', points, (np.ndarray, Tensor))
 
         points = tensor2ndarray(points)
@@ -424,7 +440,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         Args:
             vis_task (str): Visualiztion task, it includes:
-                'det', 'multi_modality-det', 'mono-det'.
+                'det', 'multi_modality-det', 'mono-det', 'seg'.
             out_file (str): Output file path.
             drawn_img (np.ndarray, optional): The image to show. If drawn_img
                 is None, it will show the image got by Visualizer. Defaults
@@ -447,6 +463,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if drawn_img is not None:
             super().show(drawn_img, win_name, wait_time, continue_key)
 
+    # TODO: Support Visualize the 3D results from image and point cloud
+    # respectively
     @master_only
     def add_datasample(self,
                        name: str,
