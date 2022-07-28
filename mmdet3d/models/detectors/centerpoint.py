@@ -194,3 +194,42 @@ class CenterPoint(MVXTwoStageDetector):
             pts_bbox = self.aug_test_pts(pts_feats, img_metas, rescale)
             bbox_list.update(pts_bbox=pts_bbox)
         return [bbox_list]
+
+    def voxel_forward(self, voxels, num_points, coors):
+        """ Inference function for pre-processed voxels"""
+        voxel_features = self.pts_voxel_encoder(voxels, num_points, coors)
+        x = self.pts_middle_encoder(voxel_features, coors)
+        x = self.pts_backbone(x)
+        x = self.pts_neck(x)
+        return self.pts_bbox_head(x)
+
+    def get_sub_model_for_conversion(self):
+        """ Method return sub-model convertible  to ONNX format.
+            Sub-model is constructed from layers of original model """
+        class SubModel(torch.nn.Module):
+            def __init__(self,
+                         pts_voxel_encoder,
+                         pts_middle_encoder,
+                         pts_backbone,
+                         pts_neck,
+                             pts_bbox_head):
+                super(SubModel, self).__init__()
+                self.pts_voxel_encoder = pts_voxel_encoder
+                self.pts_middle_encoder = pts_middle_encoder
+                self.pts_backbone = pts_backbone
+                self.pts_neck = pts_neck
+                self.pts_bbox_head = pts_bbox_head
+
+            def forward(self, voxels, num_points, coors):
+                voxel_features = self.pts_voxel_encoder(voxels, num_points, coors)
+                x = self.pts_middle_encoder(voxel_features, coors)
+                x = self.pts_backbone(x)
+                x = self.pts_neck(x)
+                return self.pts_bbox_head(x)
+
+        sub_model = SubModel(self.pts_voxel_encoder,
+                             self.pts_middle_encoder,
+                             self.pts_backbone,
+                             self.pts_neck,
+                             self.pts_bbox_head)
+        return sub_model
