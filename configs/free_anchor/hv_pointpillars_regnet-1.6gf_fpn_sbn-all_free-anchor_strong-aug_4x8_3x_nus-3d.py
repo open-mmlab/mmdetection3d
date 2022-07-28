@@ -36,16 +36,8 @@ file_client_args = dict(backend='disk')
 #         'data/nuscenes/': 's3://nuscenes/nuscenes/'
 #     }))
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',

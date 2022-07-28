@@ -9,6 +9,7 @@ point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 metainfo = dict(CLASSES=class_names)
+
 # PointPillars adopted a different sampling strategies among classes
 db_sampler = dict(
     data_root=data_root,
@@ -18,7 +19,9 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
     classes=class_names,
-    sample_groups=dict(Car=15, Pedestrian=15, Cyclist=15))
+    sample_groups=dict(Car=15, Pedestrian=15, Cyclist=15),
+    points_loader=dict(
+        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
 
 # PointPillars uses different augmentation hyper parameters
 train_pipeline = [

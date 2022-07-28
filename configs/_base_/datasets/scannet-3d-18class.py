@@ -7,6 +7,18 @@ metainfo = dict(
              'bookshelf', 'picture', 'counter', 'desk', 'curtain',
              'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
              'garbagebin'))
+
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/scannet/':
+#         's3://scannet/',
+#     }))
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
