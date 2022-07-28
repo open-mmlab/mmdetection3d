@@ -405,3 +405,110 @@ def test_mink_resnet():
     assert y[0].tensor_stride[0] == 4
     assert y[1].F.shape == torch.Size([900, 128])
     assert y[1].tensor_stride[0] == 8
+
+
+def test_mink_unet():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    try:
+        import MinkowskiEngine as ME
+    except ImportError:
+        pytest.skip('test requires MinkowskiEngine installation')
+
+    coordinates, features = [], []
+    np.random.seed(42)
+    # batch of 2 point clouds
+    for i in range(2):
+        c = torch.from_numpy(np.random.rand(500, 3) * 100)
+        coordinates.append(c.float().cuda())
+        f = torch.from_numpy(np.random.rand(500, 3))
+        features.append(f.float().cuda())
+    tensor_coordinates, tensor_features = ME.utils.sparse_collate(
+        coordinates, features)
+    x = ME.SparseTensor(
+        features=tensor_features, coordinates=tensor_coordinates)
+
+    params = {
+        14:
+        dict(
+            planes=[
+                'A',
+                'B',
+                'C',
+                'D',
+                'default',
+            ],
+            output=[
+                96,
+                128,
+                128,
+                384,
+                96,
+            ]),
+        18:
+        dict(planes=[
+            'A',
+            'B',
+            'D',
+            'default',
+        ], output=[
+            96,
+            128,
+            384,
+            96,
+        ]),
+        34:
+        dict(planes=[
+            'A',
+            'B',
+            'C',
+            'default',
+        ], output=[
+            64,
+            32,
+            96,
+            96,
+        ]),
+        50:
+        dict(planes=[
+            'default',
+        ], output=[
+            96 * 4,
+        ]),
+        101:
+        dict(planes=[
+            'default',
+        ], output=[
+            96 * 4,
+        ]),
+    }
+
+    for depth in params:
+        for planes, output in zip(params[depth]['planes'],
+                                  params[depth]['output']):
+            # build model with default 3 input channels
+            cfg = dict(
+                type='MinkUNetBase',
+                depth=depth,
+                in_channels=3,
+                planes=planes,
+                D=3,
+            )
+            self = build_backbone(cfg).cuda()
+            self.weight_initialization()
+            y = self(x)['features']
+
+            expected = torch.Size([1000, output])
+            got = y.F.shape
+
+            assert got == expected, \
+                f'Expected output size {expected}, got {expected}'
+
+            expected = y.tensor_stride
+            got = [1, 1, 1]
+
+            assert got == expected, \
+                f'Expected tensor stride {expected}, got {expected}'
+
+            torch.cuda.empty_cache()

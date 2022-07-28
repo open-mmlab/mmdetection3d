@@ -4,13 +4,16 @@ import warnings
 
 import cv2
 import numpy as np
+import torch
 from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
-from mmdet.datasets.pipelines import RandomFlip
+from mmdet3d.datasets.pipelines.compose import Compose
+from mmdet.datasets.pipelines import (RandomCrop, RandomFlip, Rotate,
+                                      YOLOXHSVRandomAug)
 from ..builder import OBJECTSAMPLERS, PIPELINES
 from .data_augment_utils import noise_per_object_v3_
 
@@ -66,6 +69,140 @@ class RandomDropPointsColor(object):
 
 
 @PIPELINES.register_module()
+class YOLOXHSVPointsRandomAug(YOLOXHSVRandomAug):
+    r"""Apply HSV augmentation to colors of points sequentially.
+    It is referenced from https://github.com/Megvii-
+    BaseDetection/YOLOX/blob/main/yolox/data/data_augment.py#L21.
+
+    Args:
+        hue_delta (int): delta of hue.
+            Defaults to 5.
+        saturation_delta (int): delta of saturation.
+           Defaults to 30.
+        value_delta (int): delat of value.
+            Defaults to 30.
+    """
+
+    def __init__(self, hue_delta=5, saturation_delta=30, value_delta=30):
+        super(YOLOXHSVPointsRandomAug, self).__init__(
+            hue_delta=hue_delta,
+            saturation_delta=saturation_delta,
+            value_delta=value_delta)
+
+    def __call__(self, results):
+        """Call function to YOLO HSV random augmentation.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+
+        Returns:
+            dict: The result dict containing the augmented colors of points.
+                Updated key and value are described below.
+
+                - points (:obj:`BasePoints`): Points after color augmentation.
+        """
+
+        points = results['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims.keys(), \
+            'Expect points have color attribute'
+
+        # colors of points as image
+        img = points.color
+
+        was_torch = False
+        if isinstance(img, torch.Tensor):
+            was_torch = True
+            img = img.numpy()
+
+        prev_dtype = img.dtype
+        img = img[:, None, :].astype(np.uint8)
+
+        inputs = dict(img=img)
+
+        # augment 2D image
+        super(YOLOXHSVPointsRandomAug, self).__call__(inputs)
+
+        img = inputs['img']
+        img = img.astype(prev_dtype)
+        if was_torch:
+            img = torch.tensor(img)
+
+        points.color = img[:, 0, :]
+        results['points'] = points
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_delta={self.hue_delta}, '
+        repr_str += f'saturation_delta={self.saturation_delta}, '
+        repr_str += f'value_delta={self.value_delta})'
+        return repr_str
+
+
+class ChromaticJitter(object):
+    r"""Gaussian on colors of points. It is referenced from
+    https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/transforms.py#L61
+
+    Args:
+        std (float): std of a Gauss noize.
+            Defaults to 0.01.
+    """
+
+    def __init__(self, std=0.01):
+        self.std = std
+
+    def __call__(self, results):
+        """Call function to chromatic jitter points.
+
+        Args:
+            results (dict): Result dict containing point clouds data.
+
+        Returns:
+            dict: The result dict containing the jitted colors of points.
+                Updated key and value are described below.
+
+                - points (:obj:`BasePoints`): Points after color augmentation.
+        """
+
+        points = results['points']
+        assert points.attribute_dims is not None and \
+            'color' in points.attribute_dims.keys(), \
+            'Expect points have color attribute'
+
+        img = points.color
+
+        was_torch = False
+        if isinstance(img, torch.Tensor):
+            was_torch = True
+            img = img.numpy()
+
+        prev_dtype = img.dtype
+        img = img.astype(np.uint8)
+        if random.random() < 0.95:
+            noise = np.random.randn(img.shape[0], 3)
+            noise *= self.std * 255
+            img = np.clip(noise + img, 0, 255)
+
+        img = img.astype(prev_dtype)
+        if was_torch:
+            img = torch.tensor(img)
+
+        points.color = img
+        results['points'] = points
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(std={self.std})'
+        return repr_str
+
+
+@PIPELINES.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 
@@ -116,9 +253,11 @@ class RandomFlip3D(RandomFlip):
         """
         assert direction in ['horizontal', 'vertical']
         # for semantic segmentation task, only points will be flipped.
-        if 'bbox3d_fields' not in input_dict:
+        if 'bbox3d_fields' not in input_dict or len(
+                input_dict['bbox3d_fields']) == 0:
             input_dict['points'].flip(direction)
             return
+
         if len(input_dict['bbox3d_fields']) == 0:  # test mode
             input_dict['bbox3d_fields'].append('empty_box3d')
             input_dict['empty_box3d'] = input_dict['box_type_3d'](
@@ -188,6 +327,168 @@ class RandomFlip3D(RandomFlip):
         repr_str += f'(sync_2d={self.sync_2d},'
         repr_str += f' flip_ratio_bev_vertical={self.flip_ratio_bev_vertical})'
         return repr_str
+
+
+@PIPELINES.register_module()
+class MultiViewWrapper(object):
+    """Wrap transformation from single-view into multi-view.
+
+    The wrapper processes the images from multi-view one by one. For each
+    image, it constructs a pseudo dict according to the keys specified by the
+    'process_fields' parameter. After the transformation is finished, desired
+    information can be collected by specifying the keys in the 'collected_keys'
+    parameter. Multi-view images share the same transformation parameters
+    but do not share the same magnitude when a random transformation is
+    conducted.
+
+    Args:
+        transforms (list[dict]): A list of dict specifying the transformations
+            for the monocular situation.
+        process_fields (dict): Desired keys that the transformations should
+            be conducted on. Default to dict(img_fields=['img']).
+        collected_keys (list[str]): Collect information in transformation
+            like rotate angles, crop roi, and flip state.
+    """
+
+    def __init__(self,
+                 transforms,
+                 process_fields=dict(img_fields=['img']),
+                 collected_keys=[]):
+        self.transform = Compose(transforms)
+        self.collected_keys = collected_keys
+        self.process_fields = process_fields
+
+    def __call__(self, input_dict):
+        for key in self.collected_keys:
+            input_dict[key] = []
+        for img_id in range(len(input_dict['img'])):
+            process_dict = self.process_fields.copy()
+            for field in self.process_fields:
+                for key in self.process_fields[field]:
+                    process_dict[key] = input_dict[key][img_id]
+            process_dict = self.transform(process_dict)
+            for field in self.process_fields:
+                for key in self.process_fields[field]:
+                    input_dict[key][img_id] = process_dict[key]
+            for key in self.collected_keys:
+                input_dict[key].append(process_dict[key])
+        return input_dict
+
+
+@PIPELINES.register_module()
+class RangeLimitedRandomCrop(RandomCrop):
+    """Randomly crop image-view objects under a limitation of range.
+
+    Args:
+        relative_x_offset_range (tuple[float]): Relative range of random crop
+            in x direction. (x_min, x_max) in [0, 1.0]. Default to (0.0, 1.0).
+        relative_y_offset_range (tuple[float]): Relative range of random crop
+            in y direction. (y_min, y_max) in [0, 1.0]. Default to (0.0, 1.0).
+    """
+
+    def __init__(self,
+                 relative_x_offset_range=(0.0, 1.0),
+                 relative_y_offset_range=(0.0, 1.0),
+                 **kwargs):
+        super(RangeLimitedRandomCrop, self).__init__(**kwargs)
+        for range in [relative_x_offset_range, relative_y_offset_range]:
+            assert 0 <= range[0] <= range[1] <= 1
+        self.relative_x_offset_range = relative_x_offset_range
+        self.relative_y_offset_range = relative_y_offset_range
+
+    def _crop_data(self, results, crop_size, allow_negative_crop):
+        """Function to randomly crop images.
+
+        Modified from RandomCrop in mmdet==2.25.0
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            crop_size (tuple): Expected absolute size after cropping, (h, w).
+
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        assert crop_size[0] > 0 and crop_size[1] > 0
+        for key in results.get('img_fields', ['img']):
+            img = results[key]
+            margin_h = max(img.shape[0] - crop_size[0], 0)
+            margin_w = max(img.shape[1] - crop_size[1], 0)
+            offset_range_h = (margin_h * self.relative_y_offset_range[0],
+                              margin_h * self.relative_y_offset_range[1] + 1)
+            offset_h = np.random.randint(*offset_range_h)
+            offset_range_w = (margin_w * self.relative_x_offset_range[0],
+                              margin_w * self.relative_x_offset_range[1] + 1)
+            offset_w = np.random.randint(*offset_range_w)
+            crop_y1, crop_y2 = offset_h, offset_h + crop_size[0]
+            crop_x1, crop_x2 = offset_w, offset_w + crop_size[1]
+
+            # crop the image
+            img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+            img_shape = img.shape
+            results[key] = img
+            results['crop'] = (crop_x1, crop_y1, crop_x2, crop_y2)
+        results['img_shape'] = img_shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        for key in results.get('bbox_fields', []):
+            # e.g. gt_bboxes and gt_bboxes_ignore
+            bbox_offset = np.array([offset_w, offset_h, offset_w, offset_h],
+                                   dtype=np.float32)
+            bboxes = results[key] - bbox_offset
+            if self.bbox_clip_border:
+                bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
+                bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
+            valid_inds = (bboxes[:, 2] > bboxes[:, 0]) & (
+                bboxes[:, 3] > bboxes[:, 1])
+            # If the crop does not contain any gt-bbox area and
+            # allow_negative_crop is False, skip this image.
+            if (key == 'gt_bboxes' and not valid_inds.any()
+                    and not allow_negative_crop):
+                return None
+            results[key] = bboxes[valid_inds, :]
+            # label fields. e.g. gt_labels and gt_labels_ignore
+            label_key = self.bbox2label.get(key)
+            if label_key in results:
+                results[label_key] = results[label_key][valid_inds]
+
+            # mask fields, e.g. gt_masks and gt_masks_ignore
+            mask_key = self.bbox2mask.get(key)
+            if mask_key in results:
+                results[mask_key] = results[mask_key][
+                    valid_inds.nonzero()[0]].crop(
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+                if self.recompute_bbox:
+                    results[key] = results[mask_key].get_bboxes()
+
+        # crop semantic seg
+        for key in results.get('seg_fields', []):
+            results[key] = results[key][crop_y1:crop_y2, crop_x1:crop_x2]
+
+        return results
+
+
+@PIPELINES.register_module()
+class RandomRotate(Rotate):
+    """Randomly rotate images.
+
+    The ratation angle is selected uniformly within the interval specified by
+    the 'range'  parameter.
+
+    Args:
+        range (tuple[float]): Define the range of random rotation.
+            (angle_min, angle_max) in angle.
+    """
+
+    def __init__(self, range, **kwargs):
+        super(RandomRotate, self).__init__(**kwargs)
+        self.range = range
+
+    def __call__(self, results):
+        self.angle = np.random.uniform(self.range[0], self.range[1])
+        super(RandomRotate, self).__call__(results)
+        results['rotate'] = self.angle
+        return results
 
 
 @PIPELINES.register_module()
@@ -991,7 +1292,7 @@ class IndoorPatchPointSample(object):
     Sampling data to a certain number for semantic segmentation.
 
     Args:
-        num_points (int): Number of points to be sampled.
+        num_points (int): Number of points to be sampled. -1 to use all points.
         block_size (float, optional): Size of a block to sample points from.
             Defaults to 1.5.
         sample_rate (float, optional): Stride used in sliding patch generation.
@@ -1166,8 +1467,10 @@ class IndoorPatchPointSample(object):
             if flag1 and flag2:
                 break
 
+        if self.num_points == -1:
+            choices = point_idxs
         # sample idx to `self.num_points`
-        if point_idxs.size >= self.num_points:
+        elif point_idxs.size >= self.num_points:
             # no duplicate in sub-sampling
             choices = np.random.choice(
                 point_idxs, self.num_points, replace=False)

@@ -13,11 +13,12 @@ from .pipelines import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                         GlobalRotScaleTrans, IndoorPatchPointSample,
                         IndoorPointSample, LoadAnnotations3D,
                         LoadPointsFromDict, LoadPointsFromFile,
-                        LoadPointsFromMultiSweeps, NormalizePointsColor,
-                        ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
-                        ObjectSample, PointSample, PointShuffle,
-                        PointsRangeFilter, RandomDropPointsColor, RandomFlip3D,
-                        RandomJitterPoints, RandomShiftScale,
+                        LoadPointsFromMultiSweeps, MultiViewWrapper,
+                        NormalizePointsColor, ObjectNameFilter, ObjectNoise,
+                        ObjectRangeFilter, ObjectSample, PointSample,
+                        PointShuffle, PointsRangeFilter, RandomDropPointsColor,
+                        RandomFlip3D, RandomJitterPoints, RandomRotate,
+                        RandomShiftScale, RangeLimitedRandomCrop,
                         VoxelBasedPointSampler)
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
@@ -41,5 +42,6 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES'
+    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES',
+    'RangeLimitedRandomCrop', 'RandomRotate', 'MultiViewWrapper'
 ]
