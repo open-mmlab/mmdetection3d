@@ -8,7 +8,7 @@ from mmengine.config import Config, DictAction
 from mmengine.logging import print_log
 from mmengine.runner import Runner
 
-from mmdet3d.utils import register_all_modules
+from mmdet3d.utils import register_all_modules, replace_ceph_backend
 
 
 def parse_args():
@@ -50,6 +50,9 @@ def main():
 
     # load config
     cfg = Config.fromfile(args.config)
+
+    cfg = replace_ceph_backend(cfg)
+
     cfg.launcher = args.launcher
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
