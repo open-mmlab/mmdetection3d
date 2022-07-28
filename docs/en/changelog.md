@@ -1,5 +1,31 @@
 ## Changelog
 
+### v1.0.0rc4 (28/7/2022)
+
+#### Highlights
+
+#### New Features
+
+- Add the transformation to support multi-camera 3D object detection (#1580)
+
+#### Improvements
+
+- Remove limit the maximum number of points during SUN RGB-D preprocessing (#1555)
+- Support circle ci (#1647)
+- Add mim to extras_require in setup.py (#1560, #1574)
+
+#### Bug Fixes
+
+- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1548)
+- Fix DGCNN configs (#1587)
+- Fix bbox head not registered bug (#1625)
+
+#### Contributors
+
+A total of 7 developers contributed to this release.
+
+@filaPro, @lianqing11, @ZCMax, @HuangJunJie2017, @Xiangxu-0103, @ChonghaoSima, @VVsssssk
+
 ### v1.0.0rc3 (8/6/2022)
 
 #### Highlights
