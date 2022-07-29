@@ -4,8 +4,11 @@
 
 #### Highlights
 
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+
 #### New Features
 
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf) (#1547)
 - Add the transformation to support multi-camera 3D object detection (#1580)
 
 #### Improvements
@@ -16,7 +19,7 @@
 
 #### Bug Fixes
 
-- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1548)
+- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1556)
 - Fix DGCNN configs (#1587)
 - Fix bbox head not registered bug (#1625)
 
