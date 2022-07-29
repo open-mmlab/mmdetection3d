@@ -48,7 +48,9 @@ class WaymoDataset(KittiDataset):
         cam_sync_instances (bool, optional): If use the camera sync label
             supported from waymo version 1.3.1.
         load_interval (int, optional): load frame interval.
-        task (str, optional): task for 3D detection (lidar, mono3d, and etc).
+        task (str, optional): task for 3D detection (lidar, mono3d).
+            lidar: take all the ground trurh in the frame.
+            mono3d: take the groundtruth that can be seen in the cam.
         max_sweeps (int, optional): max sweep for each frame.
     """
 

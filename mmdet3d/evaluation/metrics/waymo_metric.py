@@ -21,8 +21,11 @@ class WaymoMetric(KittiMetric):
     """Waymo evaluation metric.
 
     Args:
+        ann_file (str): The path of the annotation file in kitti format.
+        waymo_bin_file (str): The path of the annotation file in waymo format.
         data_root (str): Path of dataset root.
                          Used for storing waymo evaluation programs.
+        split (str): The split of the evaluation set.
         metric (str | list[str]): Metrics to be evaluated.
             Default to 'bbox'.
         pcd_limit_range (list): The range of point cloud used to
@@ -77,7 +80,6 @@ class WaymoMetric(KittiMetric):
         super().__init__(
             ann_file=ann_file,
             metric=metric,
-            # pred_box_type_3d=pred_box_type_3d,
             pcd_limit_range=pcd_limit_range,
             prefix=prefix,
             pklfile_prefix=pklfile_prefix,

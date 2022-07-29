@@ -999,7 +999,6 @@ def generate_waymo_camera_instances(ori_info_dict, cam_keys):
     empty_multicamera_instances = get_empty_multicamera_instances(cam_keys)
 
     for cam_idx, cam_key in enumerate(cam_keys):
-        # cam_info = info['cams'][cam]
         annos = copy.deepcopy(ori_info_dict['cam_sync_annos'])
         if cam_idx != 0:
             annos = convert_annos(ori_info_dict, cam_idx)
