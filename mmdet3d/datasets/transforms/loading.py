@@ -306,8 +306,7 @@ class PointSegClassMapping(BaseTransform):
 
         assert 'seg_label_mapping' in results
         label_mapping = results['seg_label_mapping']
-        converted_pts_sem_mask = \
-            np.array([label_mapping[mask] for mask in pts_semantic_mask])
+        converted_pts_sem_mask = label_mapping[pts_semantic_mask]
 
         results['pts_semantic_mask'] = converted_pts_sem_mask
 
