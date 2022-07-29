@@ -172,7 +172,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
               (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bbox_3d (BaseInstance3DBoxes): Prediction of bboxes,
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
               contains a tensor with shape (num_instances, C), where
               C >= 7.
         """
@@ -222,7 +222,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
               (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bbox_3d (BaseInstance3DBoxes): Prediction of bboxes,
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
               contains a tensor with shape (num_instances, C), where
               C >= 7.
         """

@@ -42,32 +42,33 @@ def find_latest_checkpoint(path, suffix='pth'):
 def replace_ceph_backend(cfg):
     cfg_pretty_text = cfg.pretty_text
 
-    replace_strs = r'''file_client_args = dict(
-                    backend='petrel',
-                    path_mapping=dict({
-                        '.data/INPLACEHOLD/': 's3://openmmlab/datasets/detection3d/INPLACEHOLD/', # noqa
-                        'data/INPLACEHOLD/': 's3://openmmlab/datasets/detection3d/INPLACEHOLD/' # noqa
-                    }))
-                '''
+    replace_strs = \
+        r'''file_client_args = dict(
+            backend='petrel',
+            path_mapping=dict({
+                '.data/DATA/': 's3://openmmlab/datasets/detection3d/DATA/',
+                'data/DATA/': 's3://openmmlab/datasets/detection3d/DATA/'
+            }))
+        '''
 
     if 'nuscenes' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'nuscenes')
+        replace_strs = replace_strs.replace('DATA', 'nuscenes')
     elif 'lyft' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'lyft')
+        replace_strs = replace_strs.replace('DATA', 'lyft')
     elif 'kitti' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'kitti')
+        replace_strs = replace_strs.replace('DATA', 'kitti')
     elif 'waymo' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'waymo')
+        replace_strs = replace_strs.replace('DATA', 'waymo')
     elif 'scannet' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'scannet_processed')
+        replace_strs = replace_strs.replace('DATA', 'scannet_processed')
     elif 's3dis' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 's3dis_processed')
+        replace_strs = replace_strs.replace('DATA', 's3dis_processed')
     elif 'sunrgbd' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'sunrgbd')
+        replace_strs = replace_strs.replace('DATA', 'sunrgbd')
     elif 'semantickitti' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'semantickitti')
+        replace_strs = replace_strs.replace('DATA', 'semantickitti')
     elif 'nuimages' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('INPLACEHOLD', 'nuimages')
+        replace_strs = replace_strs.replace('DATA', 'nuimages')
     else:
         NotImplemented('Does not support global replacement')
 
@@ -78,7 +79,6 @@ def replace_ceph_backend(cfg):
     #   'ann_file', replace_strs + ', ann_file')
 
     # replace LoadImageFromFile
-    replace_strs = replace_strs.replace(' ', '').replace('\n', '')
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadImageFromFile\'', 'LoadImageFromFile\',' + replace_strs)
 
