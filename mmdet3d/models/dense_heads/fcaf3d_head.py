@@ -3,9 +3,8 @@
 try:
     import MinkowskiEngine as ME
 except ImportError:
-    import warnings
-    warnings.warn(
-        'Please follow `getting_started.md` to install MinkowskiEngine.`')
+    # Please follow getting_started.md to install MinkowskiEngine.
+    pass
 
 import torch
 from mmcv.cnn import Scale, bias_init_with_prob
