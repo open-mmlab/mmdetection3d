@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os
 from os import path as osp
 
 from tools.data_converter import indoor_converter as indoor
@@ -301,3 +302,14 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,
             workers=args.workers)
+    else:
+        raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')
+
+    for file_name in os.listdir(args.out_dir):
+        if '_infos_' in file_name and '.pkl' in file_name:
+            cmd = f'python tools/data_converter/update_infos_to_v2.py ' \
+                  f'--dataset {args.dataset} ' \
+                  f'--pkl {osp.join(args.out_dir,file_name)} ' \
+                  f'--out-dir {args.out_dir}'
+            print(cmd)
+            os.system(cmd)

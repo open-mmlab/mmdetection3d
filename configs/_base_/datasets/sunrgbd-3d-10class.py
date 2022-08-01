@@ -5,6 +5,17 @@ class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
 
 metainfo = dict(CLASSES=class_names)
 
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/sunrgbd/':
+#         's3://sunrgbd/',
+#     }))
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',

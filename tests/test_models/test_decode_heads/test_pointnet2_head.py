@@ -12,55 +12,58 @@ class TestPointNet2Head(TestCase):
     def test_paconv_head_loss(self):
         """Tests PAConv head loss."""
 
-        pointnet2_head = PointNet2Head(
-            fp_channels=((768, 256, 256), (384, 256, 256), (320, 256, 128),
-                         (128, 128, 128, 128)),
-            channels=128,
-            num_classes=20,
-            dropout_ratio=0.5,
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d'),
-            act_cfg=dict(type='ReLU'),
-            loss_decode=dict(
-                type='mmdet.CrossEntropyLoss',
-                use_sigmoid=False,
-                class_weight=None,
-                loss_weight=1.0),
-            ignore_index=20)
+        if torch.cuda.is_available():
+            pointnet2_head = PointNet2Head(
+                fp_channels=((768, 256, 256), (384, 256, 256), (320, 256, 128),
+                             (128, 128, 128, 128)),
+                channels=128,
+                num_classes=20,
+                dropout_ratio=0.5,
+                conv_cfg=dict(type='Conv1d'),
+                norm_cfg=dict(type='BN1d'),
+                act_cfg=dict(type='ReLU'),
+                loss_decode=dict(
+                    type='mmdet.CrossEntropyLoss',
+                    use_sigmoid=False,
+                    class_weight=None,
+                    loss_weight=1.0),
+                ignore_index=20)
 
-        # DGCNN head expects dict format features
-        sa_xyz = [
-            torch.rand(1, 4096, 3).float(),
-            torch.rand(1, 1024, 3).float(),
-            torch.rand(1, 256, 3).float(),
-            torch.rand(1, 64, 3).float(),
-            torch.rand(1, 16, 3).float(),
-        ]
-        sa_features = [
-            torch.rand(1, 6, 4096).float(),
-            torch.rand(1, 64, 1024).float(),
-            torch.rand(1, 128, 256).float(),
-            torch.rand(1, 256, 64).float(),
-            torch.rand(1, 512, 16).float(),
-        ]
-        feat_dict = dict(sa_xyz=sa_xyz, sa_features=sa_features)
+            pointnet2_head.cuda()
 
-        # Test forward
-        seg_logits = pointnet2_head.forward(feat_dict)
+            # DGCNN head expects dict format features
+            sa_xyz = [
+                torch.rand(1, 4096, 3).float().cuda(),
+                torch.rand(1, 1024, 3).float().cuda(),
+                torch.rand(1, 256, 3).float().cuda(),
+                torch.rand(1, 64, 3).float().cuda(),
+                torch.rand(1, 16, 3).float().cuda(),
+            ]
+            sa_features = [
+                torch.rand(1, 6, 4096).float().cuda(),
+                torch.rand(1, 64, 1024).float().cuda(),
+                torch.rand(1, 128, 256).float().cuda(),
+                torch.rand(1, 256, 64).float().cuda(),
+                torch.rand(1, 512, 16).float().cuda(),
+            ]
+            feat_dict = dict(sa_xyz=sa_xyz, sa_features=sa_features)
 
-        self.assertEqual(seg_logits, torch.Size([1, 20, 4096]))
+            # Test forward
+            seg_logits = pointnet2_head.forward(feat_dict)
 
-        # When truth is non-empty then losses
-        # should be nonzero for random inputs
-        pts_semantic_mask = torch.randint(0, 20, (4096)).long()
-        gt_pts_seg = PointData(pts_semantic_mask=pts_semantic_mask)
+            self.assertEqual(seg_logits.shape, torch.Size([1, 20, 4096]))
 
-        datasample = Det3DDataSample()
-        datasample.gt_pts_seg = gt_pts_seg
+            # When truth is non-empty then losses
+            # should be nonzero for random inputs
+            pts_semantic_mask = torch.randint(0, 20, (4096, )).long().cuda()
+            gt_pts_seg = PointData(pts_semantic_mask=pts_semantic_mask)
 
-        gt_losses = pointnet2_head.loss(seg_logits, [datasample])
+            datasample = Det3DDataSample()
+            datasample.gt_pts_seg = gt_pts_seg
 
-        gt_sem_seg_loss = gt_losses['loss_sem_seg'].item()
+            gt_losses = pointnet2_head.loss_by_feat(seg_logits, [datasample])
 
-        self.assertGreater(gt_sem_seg_loss, 0,
-                           'semantic seg loss should be positive')
+            gt_sem_seg_loss = gt_losses['loss_sem_seg'].item()
+
+            self.assertGreater(gt_sem_seg_loss, 0,
+                               'semantic seg loss should be positive')

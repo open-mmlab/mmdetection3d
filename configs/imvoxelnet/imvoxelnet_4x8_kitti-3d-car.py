@@ -94,7 +94,7 @@ file_client_args = dict(
 
 train_pipeline = [
     dict(type='LoadAnnotations3D'),
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='RandomResize', scale=[(1173, 352), (1387, 416)],
@@ -103,7 +103,7 @@ train_pipeline = [
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(type='Resize', scale=(1280, 384), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
