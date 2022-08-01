@@ -10,14 +10,14 @@ from mmdet3d.utils import register_all_modules
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('image', help='image file')
+    parser.add_argument('img', help='image file')
     parser.add_argument('ann', help='ann file')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--score-thr', type=float, default=0.15, help='bbox score threshold')
+        '--score-thr', type=float, default=0.30, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
@@ -47,7 +47,7 @@ def main(args):
     }
 
     # test a single image
-    result, data = inference_mono_3d_detector(model, args.image, args.ann)
+    result = inference_mono_3d_detector(model, args.img, args.ann)
 
     img = mmcv.imread(args.img)
     img = mmcv.imconvert(img, 'bgr', 'rgb')
@@ -60,9 +60,9 @@ def main(args):
         pred_sample=result,
         show=True,
         wait_time=0,
-        out_file=args.out_file,
+        out_file=args.out_dir,
         pred_score_thr=args.score_thr,
-        vis_task='multi_modality-det')
+        vis_task='mono-det')
 
 
 if __name__ == '__main__':
