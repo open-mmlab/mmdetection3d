@@ -228,9 +228,9 @@ class ScanNetSegDataset(Seg3DDataset):
             [227, 119, 194],
             [82, 84, 163],
         ],
-        'valid_class_ids': (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                            28, 33, 34, 36, 39),
-        'all_class_ids':
+        'seg_valid_class_ids': (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
+                                24, 28, 33, 34, 36, 39),
+        'seg_all_class_ids':
         tuple(range(41)),
     }
 
@@ -301,9 +301,9 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
             [227, 119, 194],
             [82, 84, 163],
         ],
-        'valid_class_ids':
+        'seg_valid_class_ids':
         (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39),
-        'all_class_ids':
+        'seg_all_class_ids':
         tuple(range(41))
     }
 
