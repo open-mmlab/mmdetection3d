@@ -22,10 +22,7 @@ train_pipeline = [
         with_label_3d=False,
         with_mask_3d=False,
         with_seg_3d=True),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names))),
-        max_cat_id=13),
+    dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,
