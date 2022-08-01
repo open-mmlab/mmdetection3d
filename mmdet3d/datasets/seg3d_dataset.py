@@ -135,7 +135,7 @@ class Seg3DDataset(BaseDataset):
             tuple: The mapping from old classes in cls.METAINFO to
                 new classes in metainfo
         """
-        old_classes = self.METAINFO.get('CLASSSES', None)
+        old_classes = self.METAINFO.get('CLASSES', None)
         if (new_classes is not None and old_classes is not None
                 and list(new_classes) != list(old_classes)):
             label_mapping = {}
