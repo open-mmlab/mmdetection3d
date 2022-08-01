@@ -47,6 +47,11 @@ def test_config_build_model():
         if 'pretrained' in config_mod.model:
             config_mod.model['pretrained'] = None
 
+        # We skip detectors based on MikowskiEngine as it is an external
+        # dependency and may be not installed by the user.
+        if config_fname.startswith('fcaf3d'):
+            continue
+
         detector = build_model(config_mod.model)
         assert detector is not None
 
