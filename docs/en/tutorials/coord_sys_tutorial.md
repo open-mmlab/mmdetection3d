@@ -7,6 +7,7 @@ MMDetection3D uses three different coordinate systems. The existence of differen
 Despite the variety of datasets and equipment, by summarizing the line of works on 3D object detection we can roughly categorize coordinate systems into three:
 
 - Camera coordinate system -- the coordinate system of most cameras, in which the positive direction of the y-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the z-axis points to the front.
+
   ```
              up  z front
               |    ^
@@ -22,7 +23,9 @@ Despite the variety of datasets and equipment, by summarizing the line of works 
               v
             y down
   ```
+
 - LiDAR coordinate system -- the coordinate system of many LiDARs, in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the front, and the positive direction of the y-axis points to the left.
+
   ```
                z up  x front
                  ^    ^
@@ -32,7 +35,9 @@ Despite the variety of datasets and equipment, by summarizing the line of works 
                  |/
   y left <------ 0 ------ right
   ```
+
 - Depth coordinate system -- the coordinate system used by VoteNet, H3DNet, etc., in which the negative direction of the z-axis points to the ground, the positive direction of the x-axis points to the right, and the positive direction of the y-axis points to the front.
+
   ```
             z up  y front
               ^    ^
@@ -215,7 +220,7 @@ See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmde
 
 #### Q1: Are the box related ops universal to all coordinate system types?
 
-No. For example, [RoI-Aware Pooling ops](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/roiaware_pool3d.py) is applicable to boxes under Depth or LiDAR coordinate system only. The evaluation functions for KITTI dataset [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/kitti_utils) are only applicable to boxes under Camera coordinate system since the rotation is clockwise if viewed from above.
+No. For example, [RoI-Aware Pooling ops](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/roiaware_pool3d.py) is applicable to boxes under Depth or LiDAR coordinate system only. The evaluation functions for KITTI dataset [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/kitti_utils.py) are only applicable to boxes under Camera coordinate system since the rotation is clockwise if viewed from above.
 
 For each box related op, we have marked the type of boxes to which we can apply the op.
 
