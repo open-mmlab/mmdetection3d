@@ -132,3 +132,64 @@ def test_dla_neck():
         ]
         outputs = neck(feats)
         assert outputs[0].shape == (4, 64, 8, 8)
+
+
+def test_lss_view_transformer():
+    feats_image_view = torch.rand(1, 2, 512, 44, 16)
+    rots = torch.tensor([[[1.0000, 0.0067, 0.0017], [-0.0019, 0.0194, 0.9998],
+                          [0.0067, -0.9998, 0.0194]],
+                         [[0.5480, -0.0104, 0.8364], [-0.8360, 0.0250, 0.5481],
+                          [-0.0266, -0.9996, 0.0050]]]).unsqueeze(0)
+    trans = torch.tensor([[-0.0097, 0.4028, -0.3244],
+                          [0.4984, 0.3233, -0.3376]]).unsqueeze(0)
+
+    intrins = torch.tensor([[[1.2664e+03, 0.0000e+00, 8.1627e+02],
+                             [0.0000e+00, 1.2664e+03, 4.9151e+02],
+                             [0.0000e+00, 0.0000e+00,
+                              1.0000e+00]]]).expand(1, 2, 3, 3)
+
+    post_rots = torch.tensor([[[0.4800, 0.0000, 0.0000],
+                               [0.0000, 0.4800, 0.0000],
+                               [0.0000, 0.0000, 1.0000]],
+                              [[0.4800, 0.0000, 0.0000],
+                               [0.0000, 0.4800, 0.0000],
+                               [0.0000, 0.0000, 1.0000]]]).unsqueeze(0)
+
+    post_trans = torch.tensor([[-32., -176., 0.], [-32., -176.,
+                                                   0.]]).unsqueeze(0)
+
+    inputs = (feats_image_view, rots, trans, intrins, post_rots, post_trans)
+
+    grid_config = {
+        'x': [-51.2, 51.2, 0.8],
+        'y': [-51.2, 51.2, 0.8],
+        'z': [-10.0, 10.0, 20.0],
+        'depth': [1.0, 60.0, 1.0],
+    }
+    neck_cfg = dict(
+        type='LSSViewTransformer',
+        grid_config=grid_config,
+        input_size=(256, 704),
+        downsample=16,
+        in_channels=512,
+        out_channels=64,
+        accelerate=False)
+    neck = build_neck(neck_cfg)
+    neck.init_weights()
+
+    if torch.cuda.is_available():
+        inputs = tuple([item.cuda() for item in inputs])
+        neck = neck.cuda()
+
+    # for naive lift-splat-shoot view transformer
+    feats_bev = neck(inputs)
+
+    # for accelerated lift-splat-shoot view transformer
+    neck.accelerate = True
+    neck.max_voxel_points = 300
+    feats_bev_acc = neck(inputs)
+    assert feats_bev.shape == (1, 64, 128, 128)
+    assert feats_bev_acc.shape == (1, 64, 128, 128)
+    assert torch.sum(
+        (feats_bev - feats_bev_acc).abs() < 0.0001).float() / (64 * 128 *
+                                                               128) > 0.99
