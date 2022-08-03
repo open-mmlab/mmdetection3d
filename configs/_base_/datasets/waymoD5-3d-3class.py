@@ -9,14 +9,6 @@ file_client_args = dict(backend='disk')
 # for more details.
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://waymo_data/'))
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/waymo/':
-        's3://openmmlab/datasets/detection3d/waymo/',
-        'data/waymo/':
-        's3://openmmlab/datasets/detection3d/waymo/'
-    }))
 
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 metainfo = dict(CLASSES=class_names)
