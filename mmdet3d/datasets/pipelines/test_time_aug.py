@@ -138,6 +138,7 @@ class MultiScaleFlipAug3D(object):
             augmentation to point cloud. Defaults to True.
             Note that it works only when 'flip' is turned on.
     """
+
     def __init__(self,
                  transforms,
                  img_scale,
