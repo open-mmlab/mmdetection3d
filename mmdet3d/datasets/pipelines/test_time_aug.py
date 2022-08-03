@@ -45,6 +45,7 @@ class MultiScaleFlipAug:
             applied. It has no effect when flip == False. Default:
             "horizontal".
     """
+
     def __init__(self,
                  transforms,
                  img_scale=None,
