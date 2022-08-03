@@ -236,8 +236,17 @@ class WaymoMetric(KittiMetric):
         waymo_save_tmp_dir.cleanup()
         return result_files, waymo_save_tmp_dir
 
-    def merge_multi_view_boxes(self, box_dict_per_frame, cam0_info):
-        """Merge bounding boxes predicted from multi-view images."""
+    def merge_multi_view_boxes(self, box_dict_per_frame: List[dict],
+                               cam0_info: dict):
+        """Merge bounding boxes predicted from multi-view images.
+        Args:
+            box_dict_per_frame (list[dict]): The results of prediction
+                for each camera.
+            cam2_info (dict): store the sample id for the given frame.
+
+        Returns:
+            merged_box_dict (dict), store the merge results
+        """
         box_dict = dict()
         # convert list[dict] to dict[list]
         for key in box_dict_per_frame[0].keys():
