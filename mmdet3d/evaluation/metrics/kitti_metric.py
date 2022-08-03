@@ -66,7 +66,7 @@ class KittiMetric(BaseMetric):
         self.pred_box_type_3d = pred_box_type_3d
         self.file_client_args = file_client_args
 
-        allowed_metrics = ['bbox', 'img_bbox', 'mAP']
+        allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'cam_only', 'lidar']
         self.metrics = metric if isinstance(metric, list) else [metric]
         for metric in self.metrics:
             if metric not in allowed_metrics:

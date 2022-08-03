@@ -21,13 +21,17 @@ class WaymoMetric(KittiMetric):
     """Waymo evaluation metric.
 
     Args:
+<<<<<<< HEAD
         ann_file (str): The path of the annotation file in kitti format.
         waymo_bin_file (str): The path of the annotation file in waymo format.
+=======
+        waymo_bin_file (str): Path of waymo ann in waymo format.
+>>>>>>> support multiview wrapper and cam only evaluation
         data_root (str): Path of dataset root.
                          Used for storing waymo evaluation programs.
         split (str): The split of the evaluation set.
         metric (str | list[str]): Metrics to be evaluated.
-            Default to 'bbox'.
+            Default to 'lidar'.
         pcd_limit_range (list): The range of point cloud used to
             filter invalid predicted boxes.
             Default to [0, -40, -3, 70.4, 40, 0.0].
@@ -60,7 +64,7 @@ class WaymoMetric(KittiMetric):
                  waymo_bin_file: str,
                  data_root: str,
                  split: str = 'training',
-                 metric: Union[str, List[str]] = 'bbox',
+                 metric: Union[str, List[str]] = 'lidar',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
@@ -119,60 +123,113 @@ class WaymoMetric(KittiMetric):
             pklfile_prefix=pklfile_prefix,
             submission_prefix=self.submission_prefix,
             classes=self.classes)
-
         import subprocess
-        eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
-            f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
-            f'{self.waymo_bin_file}'
-        print(eval_str)
-        ret_bytes = subprocess.check_output(eval_str, shell=True)
-        ret_texts = ret_bytes.decode('utf-8')
-        print_log(ret_texts, logger=logger)
 
-        ap_dict = {
-            'Vehicle/L1 mAP': 0,
-            'Vehicle/L1 mAPH': 0,
-            'Vehicle/L2 mAP': 0,
-            'Vehicle/L2 mAPH': 0,
-            'Pedestrian/L1 mAP': 0,
-            'Pedestrian/L1 mAPH': 0,
-            'Pedestrian/L2 mAP': 0,
-            'Pedestrian/L2 mAPH': 0,
-            'Sign/L1 mAP': 0,
-            'Sign/L1 mAPH': 0,
-            'Sign/L2 mAP': 0,
-            'Sign/L2 mAPH': 0,
-            'Cyclist/L1 mAP': 0,
-            'Cyclist/L1 mAPH': 0,
-            'Cyclist/L2 mAP': 0,
-            'Cyclist/L2 mAPH': 0,
-            'Overall/L1 mAP': 0,
-            'Overall/L1 mAPH': 0,
-            'Overall/L2 mAP': 0,
-            'Overall/L2 mAPH': 0
-        }
-        mAP_splits = ret_texts.split('mAP ')
-        mAPH_splits = ret_texts.split('mAPH ')
-        mAP_splits = ret_texts.split('mAP ')
-        mAPH_splits = ret_texts.split('mAPH ')
-        for idx, key in enumerate(ap_dict.keys()):
-            split_idx = int(idx / 2) + 1
-            if idx % 2 == 0:  # mAP
-                ap_dict[key] = float(mAP_splits[split_idx].split(']')[0])
-            else:  # mAPH
-                ap_dict[key] = float(mAPH_splits[split_idx].split(']')[0])
-        ap_dict['Overall/L1 mAP'] = \
-            (ap_dict['Vehicle/L1 mAP'] + ap_dict['Pedestrian/L1 mAP'] +
-                ap_dict['Cyclist/L1 mAP']) / 3
-        ap_dict['Overall/L1 mAPH'] = \
-            (ap_dict['Vehicle/L1 mAPH'] + ap_dict['Pedestrian/L1 mAPH'] +
-                ap_dict['Cyclist/L1 mAPH']) / 3
-        ap_dict['Overall/L2 mAP'] = \
-            (ap_dict['Vehicle/L2 mAP'] + ap_dict['Pedestrian/L2 mAP'] +
-                ap_dict['Cyclist/L2 mAP']) / 3
-        ap_dict['Overall/L2 mAPH'] = \
-            (ap_dict['Vehicle/L2 mAPH'] + ap_dict['Pedestrian/L2 mAPH'] +
-                ap_dict['Cyclist/L2 mAPH']) / 3
+        if self.metric == 'lidar':
+            eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
+                f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
+                f'{self.waymo_bin_file}'
+            print(eval_str)
+            ret_bytes = subprocess.check_output(
+                'mmdet3d/core/evaluation/functional/waymo_utils/' +
+                f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
+                f'{self.waymo_bin_file}',
+                shell=True)
+            ret_texts = ret_bytes.decode('utf-8')
+            print_log(ret_texts, logger=logger)
+
+            ap_dict = {
+                'Vehicle/L1 mAP': 0,
+                'Vehicle/L1 mAPH': 0,
+                'Vehicle/L2 mAP': 0,
+                'Vehicle/L2 mAPH': 0,
+                'Pedestrian/L1 mAP': 0,
+                'Pedestrian/L1 mAPH': 0,
+                'Pedestrian/L2 mAP': 0,
+                'Pedestrian/L2 mAPH': 0,
+                'Sign/L1 mAP': 0,
+                'Sign/L1 mAPH': 0,
+                'Sign/L2 mAP': 0,
+                'Sign/L2 mAPH': 0,
+                'Cyclist/L1 mAP': 0,
+                'Cyclist/L1 mAPH': 0,
+                'Cyclist/L2 mAP': 0,
+                'Cyclist/L2 mAPH': 0,
+                'Overall/L1 mAP': 0,
+                'Overall/L1 mAPH': 0,
+                'Overall/L2 mAP': 0,
+                'Overall/L2 mAPH': 0
+            }
+            mAP_splits = ret_texts.split('mAP ')
+            mAPH_splits = ret_texts.split('mAPH ')
+            mAP_splits = ret_texts.split('mAP ')
+            mAPH_splits = ret_texts.split('mAPH ')
+            for idx, key in enumerate(ap_dict.keys()):
+                split_idx = int(idx / 2) + 1
+                if idx % 2 == 0:  # mAP
+                    ap_dict[key] = float(mAP_splits[split_idx].split(']')[0])
+                else:  # mAPH
+                    ap_dict[key] = float(mAPH_splits[split_idx].split(']')[0])
+            ap_dict['Overall/L1 mAP'] = \
+                (ap_dict['Vehicle/L1 mAP'] + ap_dict['Pedestrian/L1 mAP'] +
+                    ap_dict['Cyclist/L1 mAP']) / 3
+            ap_dict['Overall/L1 mAPH'] = \
+                (ap_dict['Vehicle/L1 mAPH'] + ap_dict['Pedestrian/L1 mAPH'] +
+                    ap_dict['Cyclist/L1 mAPH']) / 3
+            ap_dict['Overall/L2 mAP'] = \
+                (ap_dict['Vehicle/L2 mAP'] + ap_dict['Pedestrian/L2 mAP'] +
+                    ap_dict['Cyclist/L2 mAP']) / 3
+            ap_dict['Overall/L2 mAPH'] = \
+                (ap_dict['Vehicle/L2 mAPH'] + ap_dict['Pedestrian/L2 mAPH'] +
+                    ap_dict['Cyclist/L2 mAPH']) / 3
+        elif self.metric == 'cam_only':
+            eval_str = 'mmdet3d/core/evaluation/waymo_utils/' + \
+                f'compute_detection_metrics_main_let {pklfile_prefix}.bin ' + \
+                f'{self.waymo_bin_file}'
+
+            print(eval_str)
+            ret_bytes = subprocess.check_output(eval_str)
+            ret_texts = ret_bytes.decode('utf-8')
+
+            print_log(ret_texts, logger=logger)
+            ap_dict = {
+                'Vehicle mAPL': 0,
+                'Vehicle mAP': 0,
+                'Vehicle mAPH': 0,
+                'Pedestrian mAPL': 0,
+                'Pedestrian mAP': 0,
+                'Pedestrian mAPH': 0,
+                'Sign mAPL': 0,
+                'Sign mAP': 0,
+                'Sign mAPH': 0,
+                'Cyclist mAPL': 0,
+                'Cyclist mAP': 0,
+                'Cyclist mAPH': 0,
+                'Overall mAPL': 0,
+                'Overall mAP': 0,
+                'Overall mAPH': 0
+            }
+            mAPL_splits = ret_texts.split('mAPL ')
+            mAP_splits = ret_texts.split('mAP ')
+            mAPH_splits = ret_texts.split('mAPH ')
+            for idx, key in enumerate(ap_dict.keys()):
+                split_idx = int(idx / 3) + 1
+                if idx % 3 == 0:  # mAPL
+                    ap_dict[key] = float(mAPL_splits[split_idx].split(']')[0])
+                elif idx % 3 == 1:  # mAP
+                    ap_dict[key] = float(mAP_splits[split_idx].split(']')[0])
+                else:  # mAPH
+                    ap_dict[key] = float(mAPH_splits[split_idx].split(']')[0])
+            ap_dict['Overall mAPL'] = \
+                (ap_dict['Vehicle mAPL'] + ap_dict['Pedestrian mAPL'] +
+                    ap_dict['Cyclist mAPL']) / 3
+            ap_dict['Overall mAP'] = \
+                (ap_dict['Vehicle mAP'] + ap_dict['Pedestrian mAP'] +
+                    ap_dict['Cyclist mAP']) / 3
+            ap_dict['Overall mAPH'] = \
+                (ap_dict['Vehicle mAPH'] + ap_dict['Pedestrian mAPH'] +
+                    ap_dict['Cyclist mAPH']) / 3
+
         if eval_tmp_dir is not None:
             eval_tmp_dir.cleanup()
 

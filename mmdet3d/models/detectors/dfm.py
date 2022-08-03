@@ -179,6 +179,8 @@ class DfM(BaseDetector):
 
     def simple_test(self, img, img_metas):
         """Simple inference forward without test time augmentation."""
+        import pdb
+        pdb.set_trace()
         bev_feat = self.extract_feat(img, img_metas)
         # bbox_head takes a list of feature from different levels as input
         # so need [bev_feat]
@@ -191,6 +193,8 @@ class DfM(BaseDetector):
         # add pseudo-lidar label to each pred_dict for post-processing
         for bbox_result in bbox_results:
             bbox_result['pseudo_lidar'] = True
+        import pdb
+        pdb.set_trace()
         return bbox_results
 
     def aug_test(self, imgs, img_metas, **kwargs):

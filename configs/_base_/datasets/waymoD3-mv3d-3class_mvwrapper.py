@@ -15,6 +15,17 @@ class_names = ['Car', 'Pedestrian', 'Cyclist']
 input_modality = dict(use_lidar=False, use_camera=True)
 point_cloud_range = [-35.0, -75.0, -2, 75.0, 75.0, 4]
 
+train_transforms = [
+    # dict(type='PhotoMetricDistortion'),
+    dict(
+        type='RandomResize3D',
+        scale=(1248, 832),
+        ratio_range=(0.95, 1.05),
+        keep_ratio=True),
+    dict(type='RandomCrop3D', crop_size=(720, 1080)),
+    dict(type='RandomFlip', prob=0.5, direction='horizontal')
+]
+
 train_pipeline = [
     dict(
         type='LoadMultiViewImageFromFiles',
@@ -28,15 +39,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='MultiViewImagePhotoMetricDistortion'),
-    dict(
-        type='MultiViewImageRandomResize3D',
-        scale=(1248, 832),
-        ratio_range=(0.95, 1.05),
-        keep_ratio=True,
-    ),
-    dict(type='MultiViewImageCrop3D', crop_size=(720, 1080)),
-    dict(type='MultiViewRandomFlip3D', prob=0.5, direction='horizontal'),
+    dict(type='MultiViewWrapper', transforms=train_transforms),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(
@@ -46,17 +49,19 @@ train_pipeline = [
             'gt_labels_3d',
         ]),
 ]
-
+test_transforms = [
+    dict(
+        type='RandomResize3D',
+        scale=(1248, 832),
+        ratio_range=(1., 1.),
+        keep_ratio=True)
+]
 test_pipeline = [
     dict(
         type='LoadMultiViewImageFromFiles',
         to_float32=True,
         file_client_args=file_client_args),
-    dict(
-        type='MultiViewImageRandomResize3D',
-        scale=(1248, 832),
-        ratio_range=(1., 1.),
-        keep_ratio=True),
+    dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 # construct a pipeline for data and gt loading in show function
@@ -66,11 +71,7 @@ eval_pipeline = [
         type='LoadMultiViewImageFromFiles',
         to_float32=True,
         file_client_args=file_client_args),
-    dict(
-        type='MultiViewImageRandomResize3D',
-        scale=(1248, 832),
-        ratio_range=(1., 1.),
-        keep_ratio=True),
+    dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 metainfo = dict(CLASSES=class_names)
@@ -83,7 +84,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_train.pkl',
+        ann_file='waymo_infos_mini_val.pkl',
         data_prefix=dict(
             pts='training/velodyne',
             CAM_FRONT='training/image_0',

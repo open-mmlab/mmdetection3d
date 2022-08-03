@@ -15,11 +15,11 @@ from .transforms_3d import (AffineResize, BackgroundPointsFilter,
                             MultiViewImagePad,
                             MultiViewImagePhotoMetricDistortion,
                             MultiViewImageRandomResize3D,
-                            MultiViewRandomFlip3D, ObjectNameFilter,
-                            ObjectNoise, ObjectRangeFilter, ObjectSample,
-                            PointSample, PointShuffle, PointsRangeFilter,
-                            RandomDropPointsColor, RandomFlip3D,
-                            RandomJitterPoints, RandomResize3D,
+                            MultiViewRandomFlip3D, MultiViewWrapper,
+                            ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
+                            ObjectSample, PointSample, PointShuffle,
+                            PointsRangeFilter, RandomDropPointsColor,
+                            RandomFlip3D, RandomJitterPoints, RandomResize3D,
                             RandomShiftScale, VoxelBasedPointSampler)
 
 __all__ = [
@@ -38,5 +38,5 @@ __all__ = [
     'MultiViewImageNormalize', 'MultiViewImagePad',
     'MultiViewImagePhotoMetricDistortion', 'MultiViewImageRandomResize3D',
     'LoadMultiViewDepthFromFiles', 'MultiViewRandomFlip3D',
-    'MultiViewImageCrop3D'
+    'MultiViewImageCrop3D', 'MultiViewWrapper'
 ]

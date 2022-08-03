@@ -16,6 +16,7 @@ from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
 from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
 from mmdet.datasets.transforms import RandomCrop, RandomFlip
+from .compose import Compose
 from .data_augment_utils import noise_per_object_v3_
 
 
@@ -1854,45 +1855,6 @@ class RandomResize3D(RandomResize):
             resize_type=resize_type,
             **resize_kwargs)
 
-    # TODO check if need to keep this part?
-    # def _random_scale(self, results):
-    #     """Randomly sample an img_scale according to ``ratio_range`` and
-    #     ``multiscale_mode``.
-
-    #     If ``ratio_range`` is specified, a ratio will be sampled and be
-    #     multiplied with ``ori_scale``.
-    #     If multiple scales are specified by ``img_scale``, a scale will be
-    #     sampled according to ``multiscale_mode``.
-    #     Otherwise, single scale will be used.
-
-    #     Args:
-    #         results (dict): Result dict from :obj:`dataset`.
-
-    #     Returns:
-    #         dict: Two new keys 'scale` and 'scale_idx` are added into \
-    #             ``results``, which would be used by subsequent pipelines.
-    #     """
-    #     # ori_scale = results['img'].shape[:2]
-    #     # consider the ori_scale can be specified by self.img_scale
-    #     if self.scale is not None:
-    #         ori_scale = self.img_scale[0]
-    #     else:
-    #         ori_scale = results['img'].shape[:2]
-    #     if self.ratio_range is not None:
-    #         scale, scale_idx = self.random_sample_ratio(
-    #             ori_scale, self.ratio_range)
-    #     elif len(self.img_scale) == 1:
-    #         scale, scale_idx = self.img_scale[0], 0
-    #     elif self.multiscale_mode == 'range':
-    #         scale, scale_idx = self.random_sample(self.img_scale)
-    #     elif self.multiscale_mode == 'value':
-    #         scale, scale_idx = self.random_select(self.img_scale)
-    #     else:
-    #         raise NotImplementedError
-
-    #     results['scale'] = scale
-    #     results['scale_idx'] = scale_idx
-
     def _resize_3d(self, results):
         """Resize centers_2d and modify camera intrinisc with
         ``results['scale']``."""
@@ -2017,14 +1979,27 @@ class RandomCrop3D(RandomCrop):
 
         # manipulate camera intrinsic matrix
         # needs to apply offset to K instead of P2 (on KITTI)
-        K = results['cam2img'][:3, :3].copy()
-        inv_K = np.linalg.inv(K)
-        T = np.matmul(inv_K, results['cam2img'][:3])
-        K[0, 2] -= crop_x1
-        K[1, 2] -= crop_y1
-        offset_cam2img = np.matmul(K, T)
-        results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
-                           shape[1]] = offset_cam2img
+        # K = results['cam2img'][:3, :3].copy()
+        # inv_K = np.linalg.inv(K)
+        # T = np.matmul(inv_K, results['cam2img'][:3])
+        # K[0, 2] -= crop_x1
+        # K[1, 2] -= crop_y1
+        # offset_cam2img = np.matmul(K, T)
+        # results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
+        #    shape[1]] = offset_cam2img
+        if isinstance(results['cam2img'], list):
+            # TODO ignore this, but should handle it in the future
+            pass
+        else:
+            K = results['cam2img'][:3, :3].copy()
+            inv_K = np.linalg.inv(K)
+            T = np.matmul(inv_K, results['cam2img'][:3])
+            K[0, 2] -= crop_x1
+            K[1, 2] -= crop_y1
+            offset_cam2img = np.matmul(K, T)
+            results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
+                               shape[1]] = offset_cam2img
+
         results['crop_offset'] = [crop_x1, crop_y1]
 
         return results
@@ -2636,3 +2611,65 @@ class MultiViewImageNormalize(object):
         repr_str += \
             f'(mean={self.mean}, std={self.std}, to_rgb={self.to_rgb})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class MultiViewWrapper(object):
+    """Wrap transformation from single-view into multi-view.
+
+    The wrapper processes the images from multi-view one by one. For each
+    image, it constructs a pseudo dict according to the keys specified by the
+    'process_fields' parameter. After the transformation is finished, desired
+    information can be collected by specifying the keys in the 'collected_keys'
+    parameter. Multi-view images share the same transformation parameters
+    but do not share the same magnitude when a random transformation is
+    conducted.
+    Args:
+        transforms (list[dict]): A list of dict specifying the transformations
+            for the monocular situation.
+        process_fields (dict): Desired keys that the transformations should
+            be conducted on. Default to dict(img_fields=['img']).
+        collected_keys (list[str]): Collect information in transformation
+            like rotate angles, crop roi, and flip state.
+    """
+
+    def __init__(self,
+                 transforms,
+                 process_fields=dict(
+                     img_fields=['img', 'lidar2img', 'cam2img', 'lidar2cam']),
+                 collected_keys=[
+                     'scale'
+                     'scale_factor', 'crop', 'crop_offset', 'ori_shape',
+                     'pad_shape', 'img_shape', 'pad_fixed_size',
+                     'pad_size_divisor', 'flip', 'flip_direction', 'rotate'
+                 ]):
+        self.transform = Compose(transforms)
+        self.collected_keys = collected_keys
+        self.process_fields = process_fields
+
+    def __call__(self, input_dict):
+        for key in self.collected_keys:
+            if key not in input_dict or \
+                    not isinstance(input_dict[key], list):
+                input_dict[key] = []
+        for img_id in range(len(input_dict['img'])):
+            process_dict = {}
+            for field in self.process_fields:
+                for key in self.process_fields[field]:
+                    process_dict[key] = input_dict[key][img_id]
+
+            process_dict = self.transform(process_dict)
+
+            for field in self.process_fields:
+                for key in self.process_fields[field]:
+                    input_dict[key][img_id] = process_dict[key]
+            for key in self.collected_keys:
+                if key in process_dict:
+                    if len(input_dict[key]) == img_id + 1:
+                        input_dict[key][img_id] = process_dict[key]
+                    else:
+                        input_dict[key].append(process_dict[key])
+        for key in self.collected_keys:
+            if len(input_dict[key]) == 0:
+                input_dict.pop(key)
+        return input_dict

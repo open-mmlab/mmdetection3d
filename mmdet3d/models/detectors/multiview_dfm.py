@@ -202,6 +202,12 @@ class MultiViewDfM(ImVoxelNet, DfM):
                 valid_flags = []
                 for view_idx in range(num_views):
                     sample_idx = frame_idx * num_views + view_idx
+
+                    if isinstance(img_scale_factor, list):
+                        img_scale_factor_idx = img_scale_factor[sample_idx]
+                    else:
+                        img_scale_factor_idx = img_scale_factor
+
                     sample_results = point_sample(
                         img_meta,
                         img_features=feature[sample_idx][None, ...],
@@ -209,7 +215,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
                         proj_mat=points.new_tensor(
                             img_meta['ori_lidar2img'][sample_idx]),
                         coord_type='LIDAR',
-                        img_scale_factor=img_scale_factor,
+                        img_scale_factor=img_scale_factor_idx,
                         img_crop_offset=img_crop_offset,
                         img_flip=img_flip,
                         img_pad_shape=img_meta['input_shape'],
