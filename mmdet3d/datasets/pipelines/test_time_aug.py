@@ -45,7 +45,6 @@ class MultiScaleFlipAug:
             applied. It has no effect when flip == False. Default:
             "horizontal".
     """
-
     def __init__(self,
                  transforms,
                  img_scale=None,
@@ -138,7 +137,6 @@ class MultiScaleFlipAug3D(object):
             augmentation to point cloud. Defaults to True.
             Note that it works only when 'flip' is turned on.
     """
-
     def __init__(self,
                  transforms,
                  img_scale,
@@ -151,7 +149,7 @@ class MultiScaleFlipAug3D(object):
         self.img_scale = img_scale if isinstance(img_scale,
                                                  list) else [img_scale]
         self.pts_scale_ratio = pts_scale_ratio \
-            if isinstance(pts_scale_ratio, list) else[float(pts_scale_ratio)]
+            if isinstance(pts_scale_ratio, list) else [float(pts_scale_ratio)]
 
         assert mmcv.is_list_of(self.img_scale, tuple)
         assert mmcv.is_list_of(self.pts_scale_ratio, float)
