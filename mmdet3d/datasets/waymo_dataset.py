@@ -23,8 +23,14 @@ class WaymoDataset(KittiDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        data_prefix (list[dict], optional): data prefix for point cloud and
-            camera data dict(pts='', img=dict())
+        data_prefix (list[dict]): data prefix for point cloud and
+            camera data dict, default to dict(
+                                    pts='velodyne',
+                                    CAM_FRONT='image_0',
+                                    CAM_FRONT_RIGHT='image_1',
+                                    CAM_FRONT_LEFT='image_2',
+                                    CAM_SIDE_RIGHT='image_3',
+                                    CAM_SIDE_LEFT='image_4')
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used

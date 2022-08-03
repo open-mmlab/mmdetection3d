@@ -114,7 +114,6 @@ class WaymoMetric(KittiMetric):
 
         # load annotations
 
-        waymo_bin_file = self.waymo_bin_file
         result_dict, tmp_dir = self.format_results(
             results,
             pklfile_prefix=pklfile_prefix,
@@ -122,15 +121,11 @@ class WaymoMetric(KittiMetric):
             classes=self.classes)
 
         import subprocess
-        eval_str = 'mmdet3d/core/evaluation/waymo_utils/' + \
+        eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
             f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
-            f'{waymo_bin_file}'
+            f'{self.waymo_bin_file}'
         print(eval_str)
-        ret_bytes = subprocess.check_output(
-            'mmdet3d/core/evaluation/waymo_utils/' +
-            f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
-            f'{waymo_bin_file}',
-            shell=True)
+        ret_bytes = subprocess.check_output(eval_str, shell=True)
         ret_texts = ret_bytes.decode('utf-8')
         print_log(ret_texts, logger=logger)
 
