@@ -508,8 +508,9 @@ def update_s3dis_infos(pkl_path, out_dir):
     data_list = mmcv.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for i, ori_info_dict in enumerate(mmcv.track_iter_progress(data_list)):
         temp_data_info = get_empty_standard_data_info()
+        temp_data_info['sample_id'] = i
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
