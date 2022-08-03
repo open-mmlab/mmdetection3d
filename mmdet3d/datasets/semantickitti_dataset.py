@@ -41,9 +41,9 @@ class SemanticKITTIDataset(Seg3DDataset):
                     'bus', 'person', 'bicyclist', 'motorcyclist', 'road',
                     'parking', 'sidewalk', 'other-ground', 'building', 'fence',
                     'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'),
-        'valid_class_ids':
+        'seg_valid_class_ids':
         tuple(range(20)),
-        'all_class_ids':
+        'seg_all_class_ids':
         tuple(range(20))
     }
 

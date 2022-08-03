@@ -45,8 +45,10 @@ def replace_ceph_backend(cfg):
     replace_strs = r'''file_client_args = dict(
                     backend='petrel',
                     path_mapping=dict({
-                        '.data/INPLACEHOLD/': 's3://openmmlab/datasets/detection3d/INPLACEHOLD/', # noqa
-                        'data/INPLACEHOLD/': 's3://openmmlab/datasets/detection3d/INPLACEHOLD/' # noqa
+                        '.data/INPLACEHOLD/':
+                        's3://openmmlab/datasets/detection3d/INPLACEHOLD/',
+                        'data/INPLACEHOLD/':
+                        's3://openmmlab/datasets/detection3d/INPLACEHOLD/'
                     }))
                 '''
 
