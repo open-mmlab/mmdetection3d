@@ -143,7 +143,7 @@ class Waymo2KITTI(object):
             img_path = f'{self.image_save_dir}{str(img.name - 1)}/' + \
                 f'{self.prefix}{str(file_idx).zfill(3)}' + \
                 f'{str(frame_idx).zfill(3)}.jpg'
-            with open(img_path, 'wb')as fp:
+            with open(img_path, 'wb') as fp:
                 fp.write(img.image)
 
     def save_calib(self, frame, file_idx, frame_idx):
