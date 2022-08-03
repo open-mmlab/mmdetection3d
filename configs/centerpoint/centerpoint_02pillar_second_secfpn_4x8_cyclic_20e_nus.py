@@ -111,18 +111,7 @@ test_pipeline = [
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=9,
-        use_dim=[0, 1, 2, 3, 4],
-        pad_empty_sweeps=True,
-        remove_close=True),
-    dict(type='Pack3DDetInputs', keys=['points'])
-]
+
 train_dataloader = dict(
     _delete_=True,
     batch_size=4,
