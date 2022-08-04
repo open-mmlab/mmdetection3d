@@ -290,10 +290,11 @@ class KittiMetric(BaseMetric):
                 result_dict[name] = result_list_
             elif name == 'pred_instances' and name[0] != '_':
                 net_outputs = [info[name] for info in results]
-                result_list_ = self.bbox2result_kitti2d(
-                    net_outputs, sample_id_list, classes, pklfile_prefix_,
-                    submission_prefix_)
-                result_dict[name] = result_list_
+                if net_outputs[0]:
+                    result_list_ = self.bbox2result_kitti2d(
+                        net_outputs, sample_id_list, classes, pklfile_prefix_,
+                        submission_prefix_)
+                    result_dict[name] = result_list_
         return result_dict, tmp_dir
 
     def bbox2result_kitti(self,
@@ -421,6 +422,7 @@ class KittiMetric(BaseMetric):
             else:
                 out = pklfile_prefix
             mmcv.dump(det_annos, out)
+            mmcv.dump(det_annos, 'results.pkl')
             print(f'Result is saved to {out}.')
 
         return det_annos
