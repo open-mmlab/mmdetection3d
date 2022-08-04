@@ -1,15 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os
-import tempfile
-from os import path as osp
+import os.path as osp
+from typing import Callable, List, Optional, Union
 
-import mmcv
 import numpy as np
-import torch
-from mmcv.utils import print_log
 
 from mmdet3d.registry import DATASETS
-from mmdet3d.structures import Box3DMode, points_cam2img
+from mmdet3d.structures import CameraInstance3DBoxes
+from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
 
 
@@ -26,524 +23,207 @@ class WaymoDataset(KittiDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        split (str): Split of input data.
-        pts_prefix (str, optional): Prefix of points files.
-            Defaults to 'velodyne'.
+        data_prefix (list[dict]): data prefix for point cloud and
+            camera data dict, default to dict(
+                                    pts='velodyne',
+                                    CAM_FRONT='image_0',
+                                    CAM_FRONT_RIGHT='image_1',
+                                    CAM_FRONT_LEFT='image_2',
+                                    CAM_SIDE_RIGHT='image_3',
+                                    CAM_SIDE_LEFT='image_4')
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
+            as input. Defaults to `dict(use_lidar=True)`.
+        default_cam_key (str, optional): Default camera key for lidar2img
+            association.
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes
-
-            - 'LiDAR': box in LiDAR coordinates
-            - 'Depth': box in depth coordinates, usually for indoor dataset
-            - 'Camera': box in camera coordinates
+            - 'LiDAR': Box in LiDAR coordinates.
+            - 'Depth': Box in depth coordinates, usually for indoor dataset.
+            - 'Camera': Box in camera coordinates.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list(float), optional): The range of point cloud used
-            to filter invalid predicted boxes.
+        pcd_limit_range (list, optional): The range of point cloud used to
+            filter invalid predicted boxes.
             Default: [-85, -85, -5, 85, 85, 5].
+        cam_sync_instances (bool, optional): If use the camera sync label
+            supported from waymo version 1.3.1.
+        load_interval (int, optional): load frame interval.
+        task (str, optional): task for 3D detection (lidar, mono3d).
+            lidar: take all the ground trurh in the frame.
+            mono3d: take the groundtruth that can be seen in the cam.
+        max_sweeps (int, optional): max sweep for each frame.
     """
 
-    CLASSES = ('Car', 'Cyclist', 'Pedestrian')
+    CLASSES = ('Car', 'Pedestrian', 'Cyclist')
 
     def __init__(self,
-                 data_root,
-                 ann_file,
-                 split,
-                 pts_prefix='velodyne',
-                 pipeline=None,
-                 classes=None,
-                 modality=None,
-                 box_type_3d='LiDAR',
-                 filter_empty_gt=True,
-                 test_mode=False,
+                 data_root: str,
+                 ann_file: str,
+                 data_prefix: dict = dict(
+                     pts='velodyne',
+                     CAM_FRONT='image_0',
+                     CAM_FRONT_RIGHT='image_1',
+                     CAM_FRONT_LEFT='image_2',
+                     CAM_SIDE_RIGHT='image_3',
+                     CAM_SIDE_LEFT='image_4'),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: Optional[dict] = dict(use_lidar=True),
+                 default_cam_key: str = 'CAM_FRONT',
+                 box_type_3d: str = 'LiDAR',
+                 filter_empty_gt: bool = True,
+                 test_mode: bool = False,
+                 pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
+                 cam_sync_instances=False,
                  load_interval=1,
-                 pcd_limit_range=[-85, -85, -5, 85, 85, 5],
+                 task='lidar',
+                 max_sweeps=0,
                  **kwargs):
+        self.load_interval = load_interval
+        # set loading mode for different task settings
+        self.cam_sync_instances = cam_sync_instances
+        # construct self.cat_ids for vision-only anns parsing
+        self.cat_ids = range(len(self.CLASSES))
+        self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
+        self.max_sweeps = max_sweeps
+        self.task = task
+        # we do not provide file_client_args to custom_3d init
+        # because we want disk loading for info
+        # while ceph loading for KITTI2Waymo
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
-            split=split,
-            pts_prefix=pts_prefix,
             pipeline=pipeline,
-            classes=classes,
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode,
             pcd_limit_range=pcd_limit_range,
+            default_cam_key=default_cam_key,
+            data_prefix=data_prefix,
+            test_mode=test_mode,
             **kwargs)
 
-        # to load a subset, just set the load_interval in the dataset config
-        self.data_infos = self.data_infos[::load_interval]
-        if hasattr(self, 'flag'):
-            self.flag = self.flag[::load_interval]
-
-    def _get_pts_filename(self, idx):
-        pts_filename = osp.join(self.root_split, self.pts_prefix,
-                                f'{idx:07d}.bin')
-        return pts_filename
-
-    def get_data_info(self, index):
-        """Get data info according to the given index.
+    def parse_ann_info(self, info: dict) -> dict:
+        """Get annotation info according to the given index.
 
         Args:
-            index (int): Index of the sample data to get.
+            info (dict): Data information of single data sample.
 
         Returns:
-            dict: Standard input_dict consists of the
-                data information.
+            dict: annotation information consists of the following keys:
 
-                - sample_idx (str): sample index
-                - pts_filename (str): filename of point clouds
-                - img_prefix (str): prefix of image files
-                - img_info (dict): image info
-                - lidar2img (list[np.ndarray], optional): transformations from
-                    lidar to different cameras
-                - ann_info (dict): annotation info
+                - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                    3D ground truth bboxes.
+                - bbox_labels_3d (np.ndarray): Labels of ground truths.
+                - gt_bboxes (np.ndarray): 2D ground truth bboxes.
+                - gt_labels (np.ndarray): Labels of ground truths.
+                - difficulty (int): Difficulty defined by KITTI.
+                    0, 1, 2 represent xxxxx respectively.
         """
-        info = self.data_infos[index]
-        sample_idx = info['image']['image_idx']
-        img_filename = os.path.join(self.data_root,
-                                    info['image']['image_path'])
+        ann_info = Det3DDataset.parse_ann_info(self, info)
+        if ann_info is None:
+            # empty instance
+            anns_results = {}
+            anns_results['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
+            anns_results['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
+            return anns_results
 
-        # TODO: consider use torch.Tensor only
-        rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-        P0 = info['calib']['P0'].astype(np.float32)
-        lidar2img = P0 @ rect @ Trv2c
-
-        pts_filename = self._get_pts_filename(sample_idx)
-        input_dict = dict(
-            sample_idx=sample_idx,
-            pts_filename=pts_filename,
-            img_prefix=None,
-            img_info=dict(filename=img_filename),
-            lidar2img=lidar2img)
-
-        if not self.test_mode:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
-
-        return input_dict
-
-    def format_results(self,
-                       outputs,
-                       pklfile_prefix=None,
-                       submission_prefix=None,
-                       data_format='waymo'):
-        """Format the results to pkl file.
-
-        Args:
-            outputs (list[dict]): Testing results of the dataset.
-            pklfile_prefix (str): The prefix of pkl files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-            submission_prefix (str): The prefix of submitted files. It
-                includes the file path and the prefix of filename, e.g.,
-                "a/b/prefix". If not specified, a temp file will be created.
-                Default: None.
-            data_format (str, optional): Output data format.
-                Default: 'waymo'. Another supported choice is 'kitti'.
-
-        Returns:
-            tuple: (result_files, tmp_dir), result_files is a dict containing
-                the json filepaths, tmp_dir is the temporal directory created
-                for saving json files when jsonfile_prefix is not specified.
-        """
-        if pklfile_prefix is None:
-            tmp_dir = tempfile.TemporaryDirectory()
-            pklfile_prefix = osp.join(tmp_dir.name, 'results')
+        ann_info = self._remove_dontcare(ann_info)
+        # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
+        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+        if 'gt_bboxes' in ann_info:
+            gt_bboxes = ann_info['gt_bboxes']
+            gt_labels = ann_info['gt_labels']
         else:
-            tmp_dir = None
+            gt_bboxes = np.zeros((0, 4), dtype=np.float32)
+            gt_labels = np.array([], dtype=np.int64)
+        if 'centers_2d' in ann_info:
+            centers_2d = ann_info['centers_2d']
+            depths = ann_info['depths']
+        else:
+            centers_2d = np.zeros((0, 2), dtype=np.float32)
+            depths = np.zeros((0), dtype=np.float32)
 
-        assert ('waymo' in data_format or 'kitti' in data_format), \
-            f'invalid data_format {data_format}'
+        if self.task == 'mono3d':
+            gt_bboxes_3d = CameraInstance3DBoxes(
+                ann_info['gt_bboxes_3d'],
+                box_dim=ann_info['gt_bboxes_3d'].shape[-1],
+                origin=(0.5, 0.5, 0.5))
 
-        if (not isinstance(outputs[0], dict)) or 'img_bbox' in outputs[0]:
-            raise TypeError('Not supported type for reformat results.')
-        elif 'pts_bbox' in outputs[0]:
-            result_files = dict()
-            for name in outputs[0]:
-                results_ = [out[name] for out in outputs]
-                pklfile_prefix_ = pklfile_prefix + name
-                if submission_prefix is not None:
-                    submission_prefix_ = f'{submission_prefix}_{name}'
+        else:
+            lidar2cam = np.array(
+                info['images'][self.default_cam_key]['lidar2cam'])
+
+            gt_bboxes_3d = CameraInstance3DBoxes(
+                ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
+                                                     np.linalg.inv(lidar2cam))
+
+        anns_results = dict(
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=ann_info['gt_labels_3d'],
+            gt_bboxes=gt_bboxes,
+            gt_labels=gt_labels,
+            centers_2d=centers_2d,
+            depths=depths)
+
+        return anns_results
+
+    def load_data_list(self) -> List[dict]:
+        """Add the load interval."""
+        data_list = super().load_data_list()
+        data_list = data_list[::self.load_interval]
+        return data_list
+
+    def parse_data_info(self, info: dict) -> dict:
+        """if task is lidar or multiview det, use super() method elif task is
+        mono3d, split the info from frame-wise to img-wise."""
+        if self.task != 'mono3d':
+            if self.cam_sync_instances:
+                # use the cam sync labels
+                info['instances'] = info['cam_sync_instances']
+            return super().parse_data_info(info)
+        else:
+            # in the mono3d, the instances is from cam sync.
+            data_list = []
+            if self.modality['use_lidar']:
+                info['lidar_points']['lidar_path'] =  \
+                    osp.join(
+                        self.data_prefix.get('pts', ''),
+                        info['lidar_points']['lidar_path'])
+
+            if self.modality['use_camera']:
+                for cam_key, img_info in info['images'].items():
+                    if 'img_path' in img_info:
+                        cam_prefix = self.data_prefix.get(cam_key, '')
+                        img_info['img_path'] = osp.join(
+                            cam_prefix, img_info['img_path'])
+
+            for (cam_key, img_info) in info['images'].items():
+                camera_info = dict()
+                camera_info['images'] = dict()
+                camera_info['images'][cam_key] = img_info
+                if 'cam_instances' in info \
+                        and cam_key in info['cam_instances']:
+                    camera_info['instances'] = info['cam_instances'][cam_key]
                 else:
-                    submission_prefix_ = None
-                result_files_ = self.bbox2result_kitti(results_, self.CLASSES,
-                                                       pklfile_prefix_,
-                                                       submission_prefix_)
-                result_files[name] = result_files_
-        else:
-            result_files = self.bbox2result_kitti(outputs, self.CLASSES,
-                                                  pklfile_prefix,
-                                                  submission_prefix)
-        if 'waymo' in data_format:
-            from mmdet3d.evaluation.functional.waymo_utils import \
-                KITTI2Waymo  # noqa
-            waymo_root = osp.join(
-                self.data_root.split('kitti_format')[0], 'waymo_format')
-            if self.split == 'training':
-                waymo_tfrecords_dir = osp.join(waymo_root, 'validation')
-                prefix = '1'
-            elif self.split == 'testing':
-                waymo_tfrecords_dir = osp.join(waymo_root, 'testing')
-                prefix = '2'
-            else:
-                raise ValueError('Not supported split value.')
-            save_tmp_dir = tempfile.TemporaryDirectory()
-            waymo_results_save_dir = save_tmp_dir.name
-            waymo_results_final_path = f'{pklfile_prefix}.bin'
-            if 'pts_bbox' in result_files:
-                converter = KITTI2Waymo(result_files['pts_bbox'],
-                                        waymo_tfrecords_dir,
-                                        waymo_results_save_dir,
-                                        waymo_results_final_path, prefix)
-            else:
-                converter = KITTI2Waymo(result_files, waymo_tfrecords_dir,
-                                        waymo_results_save_dir,
-                                        waymo_results_final_path, prefix)
-            converter.convert()
-            save_tmp_dir.cleanup()
+                    camera_info['instances'] = []
+                camera_info['ego2global'] = info['ego2global']
+                if 'image_sweeps' in info:
+                    camera_info['image_sweeps'] = info['image_sweeps']
 
-        return result_files, tmp_dir
+                # TODO check if need to modify the sample id
+                # TODO check when will use it except for evaluation.
+                camera_info['sample_id'] = info['sample_id']
 
-    def evaluate(self,
-                 results,
-                 metric='waymo',
-                 logger=None,
-                 pklfile_prefix=None,
-                 submission_prefix=None,
-                 show=False,
-                 out_dir=None,
-                 pipeline=None):
-        """Evaluation in KITTI protocol.
-
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            metric (str | list[str], optional): Metrics to be evaluated.
-                Default: 'waymo'. Another supported metric is 'kitti'.
-            logger (logging.Logger | str, optional): Logger used for printing
-                related information during evaluation. Default: None.
-            pklfile_prefix (str, optional): The prefix of pkl files including
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-            submission_prefix (str, optional): The prefix of submission data.
-                If not specified, the submission data will not be generated.
-            show (bool, optional): Whether to visualize.
-                Default: False.
-            out_dir (str, optional): Path to save the visualization results.
-                Default: None.
-            pipeline (list[dict], optional): raw data loading for showing.
-                Default: None.
-
-        Returns:
-            dict[str: float]: results of each evaluation metric
-        """
-        assert ('waymo' in metric or 'kitti' in metric), \
-            f'invalid metric {metric}'
-        if 'kitti' in metric:
-            result_files, tmp_dir = self.format_results(
-                results,
-                pklfile_prefix,
-                submission_prefix,
-                data_format='kitti')
-            from mmdet3d.evaluation import kitti_eval
-            gt_annos = [info['annos'] for info in self.data_infos]
-
-            if isinstance(result_files, dict):
-                ap_dict = dict()
-                for name, result_files_ in result_files.items():
-                    eval_types = ['bev', '3d']
-                    ap_result_str, ap_dict_ = kitti_eval(
-                        gt_annos,
-                        result_files_,
-                        self.CLASSES,
-                        eval_types=eval_types)
-                    for ap_type, ap in ap_dict_.items():
-                        ap_dict[f'{name}/{ap_type}'] = float(
-                            '{:.4f}'.format(ap))
-
-                    print_log(
-                        f'Results of {name}:\n' + ap_result_str, logger=logger)
-
-            else:
-                ap_result_str, ap_dict = kitti_eval(
-                    gt_annos,
-                    result_files,
-                    self.CLASSES,
-                    eval_types=['bev', '3d'])
-                print_log('\n' + ap_result_str, logger=logger)
-        if 'waymo' in metric:
-            waymo_root = osp.join(
-                self.data_root.split('kitti_format')[0], 'waymo_format')
-            if pklfile_prefix is None:
-                eval_tmp_dir = tempfile.TemporaryDirectory()
-                pklfile_prefix = osp.join(eval_tmp_dir.name, 'results')
-            else:
-                eval_tmp_dir = None
-            result_files, tmp_dir = self.format_results(
-                results,
-                pklfile_prefix,
-                submission_prefix,
-                data_format='waymo')
-            import subprocess
-            ret_bytes = subprocess.check_output(
-                'mmdet3d/core/evaluation/waymo_utils/' +
-                f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
-                f'{waymo_root}/gt.bin',
-                shell=True)
-            ret_texts = ret_bytes.decode('utf-8')
-            print_log(ret_texts)
-            # parse the text to get ap_dict
-            ap_dict = {
-                'Vehicle/L1 mAP': 0,
-                'Vehicle/L1 mAPH': 0,
-                'Vehicle/L2 mAP': 0,
-                'Vehicle/L2 mAPH': 0,
-                'Pedestrian/L1 mAP': 0,
-                'Pedestrian/L1 mAPH': 0,
-                'Pedestrian/L2 mAP': 0,
-                'Pedestrian/L2 mAPH': 0,
-                'Sign/L1 mAP': 0,
-                'Sign/L1 mAPH': 0,
-                'Sign/L2 mAP': 0,
-                'Sign/L2 mAPH': 0,
-                'Cyclist/L1 mAP': 0,
-                'Cyclist/L1 mAPH': 0,
-                'Cyclist/L2 mAP': 0,
-                'Cyclist/L2 mAPH': 0,
-                'Overall/L1 mAP': 0,
-                'Overall/L1 mAPH': 0,
-                'Overall/L2 mAP': 0,
-                'Overall/L2 mAPH': 0
-            }
-            mAP_splits = ret_texts.split('mAP ')
-            mAPH_splits = ret_texts.split('mAPH ')
-            for idx, key in enumerate(ap_dict.keys()):
-                split_idx = int(idx / 2) + 1
-                if idx % 2 == 0:  # mAP
-                    ap_dict[key] = float(mAP_splits[split_idx].split(']')[0])
-                else:  # mAPH
-                    ap_dict[key] = float(mAPH_splits[split_idx].split(']')[0])
-            ap_dict['Overall/L1 mAP'] = \
-                (ap_dict['Vehicle/L1 mAP'] + ap_dict['Pedestrian/L1 mAP'] +
-                 ap_dict['Cyclist/L1 mAP']) / 3
-            ap_dict['Overall/L1 mAPH'] = \
-                (ap_dict['Vehicle/L1 mAPH'] + ap_dict['Pedestrian/L1 mAPH'] +
-                 ap_dict['Cyclist/L1 mAPH']) / 3
-            ap_dict['Overall/L2 mAP'] = \
-                (ap_dict['Vehicle/L2 mAP'] + ap_dict['Pedestrian/L2 mAP'] +
-                 ap_dict['Cyclist/L2 mAP']) / 3
-            ap_dict['Overall/L2 mAPH'] = \
-                (ap_dict['Vehicle/L2 mAPH'] + ap_dict['Pedestrian/L2 mAPH'] +
-                 ap_dict['Cyclist/L2 mAPH']) / 3
-            if eval_tmp_dir is not None:
-                eval_tmp_dir.cleanup()
-
-        if tmp_dir is not None:
-            tmp_dir.cleanup()
-
-        if show or out_dir:
-            self.show(results, out_dir, show=show, pipeline=pipeline)
-        return ap_dict
-
-    def bbox2result_kitti(self,
-                          net_outputs,
-                          class_names,
-                          pklfile_prefix=None,
-                          submission_prefix=None):
-        """Convert results to kitti format for evaluation and test submission.
-
-        Args:
-            net_outputs (List[np.ndarray]): list of array storing the
-                bbox and score
-            class_nanes (List[String]): A list of class names
-            pklfile_prefix (str): The prefix of pkl file.
-            submission_prefix (str): The prefix of submission file.
-
-        Returns:
-            List[dict]: A list of dict have the kitti 3d format
-        """
-        assert len(net_outputs) == len(self.data_infos), \
-            'invalid list length of network outputs'
-        if submission_prefix is not None:
-            mmcv.mkdir_or_exist(submission_prefix)
-
-        det_annos = []
-        print('\nConverting prediction to KITTI format')
-        for idx, pred_dicts in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
-            annos = []
-            info = self.data_infos[idx]
-            sample_idx = info['image']['image_idx']
-            image_shape = info['image']['image_shape'][:2]
-
-            box_dict = self.convert_valid_bboxes(pred_dicts, info)
-            if len(box_dict['bbox']) > 0:
-                box_2d_preds = box_dict['bbox']
-                box_preds = box_dict['box3d_camera']
-                scores = box_dict['scores']
-                box_preds_lidar = box_dict['box3d_lidar']
-                label_preds = box_dict['label_preds']
-
-                anno = {
-                    'name': [],
-                    'truncated': [],
-                    'occluded': [],
-                    'alpha': [],
-                    'bbox': [],
-                    'dimensions': [],
-                    'location': [],
-                    'rotation_y': [],
-                    'score': []
-                }
-
-                for box, box_lidar, bbox, score, label in zip(
-                        box_preds, box_preds_lidar, box_2d_preds, scores,
-                        label_preds):
-                    bbox[2:] = np.minimum(bbox[2:], image_shape[::-1])
-                    bbox[:2] = np.maximum(bbox[:2], [0, 0])
-                    anno['name'].append(class_names[int(label)])
-                    anno['truncated'].append(0.0)
-                    anno['occluded'].append(0)
-                    anno['alpha'].append(
-                        -np.arctan2(-box_lidar[1], box_lidar[0]) + box[6])
-                    anno['bbox'].append(bbox)
-                    anno['dimensions'].append(box[3:6])
-                    anno['location'].append(box[:3])
-                    anno['rotation_y'].append(box[6])
-                    anno['score'].append(score)
-
-                anno = {k: np.stack(v) for k, v in anno.items()}
-                annos.append(anno)
-
-                if submission_prefix is not None:
-                    curr_file = f'{submission_prefix}/{sample_idx:07d}.txt'
-                    with open(curr_file, 'w') as f:
-                        bbox = anno['bbox']
-                        loc = anno['location']
-                        dims = anno['dimensions']  # lhw -> hwl
-
-                        for idx in range(len(bbox)):
-                            print(
-                                '{} -1 -1 {:.4f} {:.4f} {:.4f} {:.4f} '
-                                '{:.4f} {:.4f} {:.4f} '
-                                '{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f}'.
-                                format(anno['name'][idx], anno['alpha'][idx],
-                                       bbox[idx][0], bbox[idx][1],
-                                       bbox[idx][2], bbox[idx][3],
-                                       dims[idx][1], dims[idx][2],
-                                       dims[idx][0], loc[idx][0], loc[idx][1],
-                                       loc[idx][2], anno['rotation_y'][idx],
-                                       anno['score'][idx]),
-                                file=f)
-            else:
-                annos.append({
-                    'name': np.array([]),
-                    'truncated': np.array([]),
-                    'occluded': np.array([]),
-                    'alpha': np.array([]),
-                    'bbox': np.zeros([0, 4]),
-                    'dimensions': np.zeros([0, 3]),
-                    'location': np.zeros([0, 3]),
-                    'rotation_y': np.array([]),
-                    'score': np.array([]),
-                })
-            annos[-1]['sample_idx'] = np.array(
-                [sample_idx] * len(annos[-1]['score']), dtype=np.int64)
-
-            det_annos += annos
-
-        if pklfile_prefix is not None:
-            if not pklfile_prefix.endswith(('.pkl', '.pickle')):
-                out = f'{pklfile_prefix}.pkl'
-            mmcv.dump(det_annos, out)
-            print(f'Result is saved to {out}.')
-
-        return det_annos
-
-    def convert_valid_bboxes(self, box_dict, info):
-        """Convert the boxes into valid format.
-
-        Args:
-            box_dict (dict): Bounding boxes to be converted.
-
-                - boxes_3d (:obj:``LiDARInstance3DBoxes``): 3D bounding boxes.
-                - scores_3d (np.ndarray): Scores of predicted boxes.
-                - labels_3d (np.ndarray): Class labels of predicted boxes.
-            info (dict): Dataset information dictionary.
-
-        Returns:
-            dict: Valid boxes after conversion.
-
-                - bbox (np.ndarray): 2D bounding boxes (in camera 0).
-                - box3d_camera (np.ndarray): 3D boxes in camera coordinates.
-                - box3d_lidar (np.ndarray): 3D boxes in lidar coordinates.
-                - scores (np.ndarray): Scores of predicted boxes.
-                - label_preds (np.ndarray): Class labels of predicted boxes.
-                - sample_idx (np.ndarray): Sample index.
-        """
-        # TODO: refactor this function
-        box_preds = box_dict['boxes_3d']
-        scores = box_dict['scores_3d']
-        labels = box_dict['labels_3d']
-        sample_idx = info['image']['image_idx']
-        box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
-
-        if len(box_preds) == 0:
-            return dict(
-                bbox=np.zeros([0, 4]),
-                box3d_camera=np.zeros([0, 7]),
-                box3d_lidar=np.zeros([0, 7]),
-                scores=np.zeros([0]),
-                label_preds=np.zeros([0, 4]),
-                sample_idx=sample_idx)
-
-        rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-        P0 = info['calib']['P0'].astype(np.float32)
-        P0 = box_preds.tensor.new_tensor(P0)
-
-        box_preds_camera = box_preds.convert_to(Box3DMode.CAM, rect @ Trv2c)
-
-        box_corners = box_preds_camera.corners
-        box_corners_in_image = points_cam2img(box_corners, P0)
-        # box_corners_in_image: [N, 8, 2]
-        minxy = torch.min(box_corners_in_image, dim=1)[0]
-        maxxy = torch.max(box_corners_in_image, dim=1)[0]
-        box_2d_preds = torch.cat([minxy, maxxy], dim=1)
-        # Post-processing
-        # check box_preds
-        limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
-        valid_pcd_inds = ((box_preds.center > limit_range[:3]) &
-                          (box_preds.center < limit_range[3:]))
-        valid_inds = valid_pcd_inds.all(-1)
-
-        if valid_inds.sum() > 0:
-            return dict(
-                bbox=box_2d_preds[valid_inds, :].numpy(),
-                box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
-                box3d_lidar=box_preds[valid_inds].tensor.numpy(),
-                scores=scores[valid_inds].numpy(),
-                label_preds=labels[valid_inds].numpy(),
-                sample_idx=sample_idx,
-            )
-        else:
-            return dict(
-                bbox=np.zeros([0, 4]),
-                box3d_camera=np.zeros([0, 7]),
-                box3d_lidar=np.zeros([0, 7]),
-                scores=np.zeros([0]),
-                label_preds=np.zeros([0, 4]),
-                sample_idx=sample_idx,
-            )
+                if not self.test_mode:
+                    # used in training
+                    camera_info['ann_info'] = self.parse_ann_info(camera_info)
+                if self.test_mode and self.load_eval_anns:
+                    info['eval_ann_info'] = self.parse_ann_info(info)
+                data_list.append(camera_info)
+            return data_list

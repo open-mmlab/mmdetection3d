@@ -14,7 +14,6 @@ class TestInstanceSegMetric(unittest.TestCase):
     def _demo_mm_inputs(self):
         """Create a superset of inputs needed to run test or train batches."""
         packed_inputs = []
-        results_dict = dict()
         mm_inputs = dict()
         n_points = 3300
         gt_labels = [0, 0, 0, 0, 0, 0, 14, 14, 2, 1]
@@ -26,12 +25,11 @@ class TestInstanceSegMetric(unittest.TestCase):
             gt_instance_mask[begin:end] = i
             gt_semantic_mask[begin:end] = gt_label
 
-        results_dict['pts_instance_mask'] = torch.tensor(gt_instance_mask)
-        results_dict['pts_semantic_mask'] = torch.tensor(gt_semantic_mask)
+        ann_info_data = dict()
+        ann_info_data['pts_instance_mask'] = torch.tensor(gt_instance_mask)
+        ann_info_data['pts_semantic_mask'] = torch.tensor(gt_semantic_mask)
 
-        data_sample = Det3DDataSample()
-        data_sample.gt_pts_seg = PointData(**results_dict)
-        mm_inputs['data_sample'] = data_sample.to_dict()
+        mm_inputs['data_sample'] = dict(eval_ann_info=ann_info_data)
         packed_inputs.append(mm_inputs)
 
         return packed_inputs
@@ -80,5 +78,5 @@ class TestInstanceSegMetric(unittest.TestCase):
         instance_seg_metric = InstanceSegMetric()
         instance_seg_metric.dataset_meta = dataset_meta
         instance_seg_metric.process(data_batch, predictions)
-        res = instance_seg_metric.evaluate(6)
+        res = instance_seg_metric.evaluate(1)
         self.assertIsInstance(res, dict)

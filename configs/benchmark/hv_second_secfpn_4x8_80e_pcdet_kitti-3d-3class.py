@@ -111,23 +111,16 @@ db_sampler = dict(
         Car=20,
         Pedestrian=15,
         Cyclist=15,
-    ))
+    ),
+    points_loader=dict(
+        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
 file_client_args = dict(backend='disk')
 # file_client_args = dict(
 #     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
 
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
@@ -141,12 +134,7 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -171,12 +159,7 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(
         type='DefaultFormatBundle3D',
         class_names=class_names,
