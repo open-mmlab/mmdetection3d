@@ -18,6 +18,11 @@ def parse_args():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
+        '--cam-type',
+        type=str,
+        default='CAM_FRONT',
+        help='choose camera type to inference')
+    parser.add_argument(
         '--score-thr', type=float, default=0.0, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
@@ -34,7 +39,7 @@ def parse_args():
 
 
 def main(args):
-    # register all modules in mmdet into the registries
+    # register all modules in mmdet3d into the registries
     register_all_modules()
 
     # build the model from a config file and a checkpoint file
@@ -49,7 +54,7 @@ def main(args):
 
     # test a single image and point cloud sample
     result, data = inference_multi_modality_detector(model, args.pcd, args.img,
-                                                     args.ann)
+                                                     args.ann, args.cam_type)
     points = data['inputs']['points']
     img = mmcv.imread(args.img)
     img = mmcv.imconvert(img, 'bgr', 'rgb')

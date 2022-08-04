@@ -30,7 +30,7 @@ def parse_args():
 
 
 def main(args):
-    # register all modules in mmdet into the registries
+    # register all modules in mmdet3d into the registries
     register_all_modules()
 
     # TODO: Support inference of point cloud numpy file.

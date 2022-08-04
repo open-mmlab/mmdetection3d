@@ -402,8 +402,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             pts_seg (:obj:`PointData`): Data structure for
                 pixel-level annotations or predictions.
             palette (List[tuple], optional): Palette information
-                corresponding to the category.
-            ignore_index (int): Ignore category.
+                corresponding to the category. Defaults to None.
+            ignore_index (int, optional): Ignore category.
+                Defaults to None.
 
         Returns:
             dict: the drawn points with color.
