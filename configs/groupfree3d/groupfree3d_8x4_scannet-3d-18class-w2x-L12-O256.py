@@ -109,10 +109,7 @@ train_pipeline = [
         with_mask_3d=True,
         with_seg_3d=True),
     dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39)),
+    dict(type='PointSegClassMapping'),
     dict(type='PointSample', num_points=50000),
     dict(
         type='RandomFlip3D',

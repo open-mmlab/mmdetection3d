@@ -50,7 +50,12 @@ class ScanNetDataset(Det3DDataset):
         'CLASSES':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
-         'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin')
+         'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
+        # the valid ids of segmentation annotations
+        'seg_valid_class_ids':
+        (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39),
+        'seg_all_class_ids':
+        tuple(range(1, 41))
     }
 
     def __init__(self,
@@ -67,6 +72,17 @@ class ScanNetDataset(Det3DDataset):
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  **kwargs):
+
+        # construct seg_label_mapping for semantic mask
+        seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
+        seg_valid_cat_ids = self.METAINFO['seg_valid_class_ids']
+        neg_label = len(seg_valid_cat_ids)
+        seg_label_mapping = np.ones(
+            seg_max_cat_id + 1, dtype=np.int) * neg_label
+        for cls_idx, cat_id in enumerate(seg_valid_cat_ids):
+            seg_label_mapping[cat_id] = cls_idx
+        self.seg_label_mapping = seg_label_mapping
+
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -78,6 +94,8 @@ class ScanNetDataset(Det3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
             **kwargs)
+
+        self.metainfo['seg_label_mapping'] = self.seg_label_mapping
         assert 'use_camera' in self.modality and \
                'use_lidar' in self.modality
         assert self.modality['use_camera'] or self.modality['use_lidar']
@@ -122,6 +140,9 @@ class ScanNetDataset(Det3DDataset):
             info['pts_semantic_mask_path'])
 
         info = super().parse_data_info(info)
+        # only be used in `PointSegClassMapping` in pipeline
+        # to map original semantic class to valid category ids.
+        info['seg_label_mapping'] = self.seg_label_mapping
         return info
 
     def parse_ann_info(self, info: dict) -> dict:
@@ -207,9 +228,9 @@ class ScanNetSegDataset(Seg3DDataset):
             [227, 119, 194],
             [82, 84, 163],
         ],
-        'valid_class_ids': (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                            28, 33, 34, 36, 39),
-        'all_class_ids':
+        'seg_valid_class_ids': (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16,
+                                24, 28, 33, 34, 36, 39),
+        'seg_all_class_ids':
         tuple(range(41)),
     }
 
@@ -280,9 +301,9 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
             [227, 119, 194],
             [82, 84, 163],
         ],
-        'valid_class_ids':
+        'seg_valid_class_ids':
         (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39),
-        'all_class_ids':
+        'seg_all_class_ids':
         tuple(range(41))
     }
 
