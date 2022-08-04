@@ -94,9 +94,8 @@ data = dict(
     test=dict(pipeline=test_pipeline, classes=class_names, file_client_args=file_client_args))
 ```
 
-
-
 ## Load pretrained model from Ceph
+
 ```python
 model = dict(
     pts_backbone=dict(
@@ -109,9 +108,10 @@ model = dict(
 ```
 
 ## Load checkpoint from Ceph
+
 ```python
 # replace the path with your checkpoint path on Ceph
-load_from = 's3://openmmlab/checkpoints/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20200620_230614-77663cd6.pth.pth'
+load_from = 's3://openmmlab/checkpoints/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20200620_230614-77663cd6.pth'
 resume_from = None
 workflow = [('train', 1)]
 ```
@@ -132,6 +132,7 @@ evaluation = dict(interval=1, save_best='bbox', out_dir='s3://openmmlab/mmdetect
 ```
 
 ## Save the training log into Ceph
+
 The training log will be backed up to the specified Ceph path after training.
 
 ```python
@@ -141,12 +142,13 @@ log_config = dict(
         dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d'),
     ])
 ```
+
 You can also delete the local training log after backing up to the specified Ceph path by setting `keep_local = False`.
 
 ```python
 log_config = dict(
     interval=50,
     hooks=[
-        dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d'', keep_local=False),
+        dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d', keep_local=False),
     ])
 ```

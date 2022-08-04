@@ -7,30 +7,31 @@
 - GCC 5+
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
-|  MMDetection3D 版本 |   MMDetection 版本  |  MMSegmentation 版本 |     MMCV 版本       |
-|:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| master              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.7.0|
-| v1.0.0rc2           | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.7.0|
-| v1.0.0rc1           | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.4.8, <=1.5.0|
-| v1.0.0rc0           | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
-| 0.18.1              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
-| 0.18.0              | mmdet>=2.19.0, <=3.0.0| mmseg>=0.20.0, <=1.0.0 | mmcv-full>=1.3.17, <=1.5.0|
-| 0.17.3              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.17.2              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.17.1              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.17.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.16.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.15.0              | mmdet>=2.14.0, <=3.0.0| mmseg>=0.14.1, <=1.0.0 | mmcv-full>=1.3.8, <=1.4.0|
-| 0.14.0              | mmdet>=2.10.0, <=2.11.0| mmseg==0.14.0 | mmcv-full>=1.3.1, <=1.4.0|
-| 0.13.0              | mmdet>=2.10.0, <=2.11.0| Not required  | mmcv-full>=1.2.4, <=1.4.0|
-| 0.12.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.4.0|
-| 0.11.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
-| 0.10.0              | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
-| 0.9.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.2.4, <=1.3.0|
-| 0.8.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.3.0|
-| 0.7.0               | mmdet>=2.5.0, <=2.11.0 | Not required  | mmcv-full>=1.1.5, <=1.3.0|
-| 0.6.0               | mmdet>=2.4.0, <=2.11.0 | Not required  | mmcv-full>=1.1.3, <=1.2.0|
-| 0.5.0               | 2.3.0                  | Not required  | mmcv-full==1.0.5|
+| MMDetection3D 版本 |      MMDetection 版本      |    MMSegmentation 版本    |           MMCV 版本           |
+| :--------------: | :----------------------: | :---------------------: | :-------------------------: |
+|      master      | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
+|    v1.0.0rc3     | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
+|    v1.0.0rc2     | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
+|    v1.0.0rc1     | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.5.0  |
+|    v1.0.0rc0     | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
+|      0.18.1      | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
+|      0.18.0      | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
+|      0.17.3      | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|      0.17.2      | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|      0.17.1      | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|      0.17.0      | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|      0.16.0      | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|      0.15.0      | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
+|      0.14.0      | mmdet>=2.10.0, \<=2.11.0 |      mmseg==0.14.0      | mmcv-full>=1.3.1, \<=1.4.0  |
+|      0.13.0      | mmdet>=2.10.0, \<=2.11.0 |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
+|      0.12.0      | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
+|      0.11.0      | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
+|      0.10.0      | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
+|      0.9.0       | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
+|      0.8.0       | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
+|      0.7.0       | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
+|      0.6.0       | mmdet>=2.4.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.3, \<=1.2.0  |
+|      0.5.0       |          2.3.0           |      Not required       |      mmcv-full==1.0.5       |
 
 # 安装
 
@@ -91,6 +92,7 @@ conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
 ```shell
 pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/{cu_version}/{torch_version}/index.html
 ```
+
 需要把命令行中的 `{cu_version}` 和 `{torch_version}` 替换成对应的版本。例如：在 CUDA 11 和 PyTorch 1.7.0 的环境下，可以使用下面命令安装最新版本的 MMCV：
 
 ```shell
@@ -140,6 +142,7 @@ pip install -v -e .  # or "python setup.py develop"
 ```shell
 pip install mmsegmentation
 ```
+
 同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMSegmentation：
 
 ```shell
@@ -156,8 +159,6 @@ git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 ```
 
-
-
 **g. 安装依赖包和 MMDetection3D.**
 
 ```shell
@@ -168,19 +169,19 @@ pip install -v -e .  # or "python setup.py develop"
 
 1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c 。版本号将保存在训练的模型里。推荐在每一次执行步骤 d 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
 
-    > 重要: 如果你重装了不同版本的 CUDA 或者 PyTorch 的 mmdet，请务必移除 `./build` 文件。
+   > 重要: 如果你重装了不同版本的 CUDA 或者 PyTorch 的 mmdet，请务必移除 `./build` 文件。
 
-    ```shell
-    pip uninstall mmdet3d
-    rm -rf ./build
-    find . -name "*.so" | xargs rm
-    ```
+   ```shell
+   pip uninstall mmdet3d
+   rm -rf ./build
+   find . -name "*.so" | xargs rm
+   ```
 
 2. 按照上述说明，MMDetection3D 安装在 `dev` 模式下，因此在本地对代码做的任何修改都会生效，无需重新安装；
 
 3. 如果希望使用 `opencv-python-headless` 而不是 `opencv-python`， 可以在安装 MMCV 之前安装；
 
-4.  一些安装依赖是可以选择的。例如只需要安装最低运行要求的版本，则可以使用 `pip install -v -e .` 命令。如果希望使用可选择的像 `albumentations` 和 `imagecorruptions` 这种依赖项，可以使用 `pip install -r requirements/optional.txt ` 进行手动安装，或者在使用 `pip` 时指定所需的附加功能（例如 `pip install -v -e .[optional]`），支持附加功能的有效键值包括  `all`、`tests`、`build` 以及 `optional` 。
+4. 一些安装依赖是可以选择的。例如只需要安装最低运行要求的版本，则可以使用 `pip install -v -e .` 命令。如果希望使用可选择的像 `albumentations` 和 `imagecorruptions` 这种依赖项，可以使用 `pip install -r requirements/optional.txt ` 进行手动安装，或者在使用 `pip` 时指定所需的附加功能（例如 `pip install -v -e .[optional]`），支持附加功能的有效键值包括  `all`、`tests`、`build` 以及 `optional` 。
 
 5. 我们的代码目前不能在只有 CPU 的环境（CUDA 不可用）下编译运行。
 
@@ -253,7 +254,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 
 如果你想输入一个 `ply` 格式的文件，你可以使用如下函数将它转换为 `bin` 的文件格式。然后就可以使用转化成 `bin` 格式的文件去运行样例程序。
 
-请注意在使用此脚本前，你需要先安装 `pandas` 和 `plyfile`。 这个函数也可使用在数据预处理当中，为了能够直接训练 ```ply data```。
+请注意在使用此脚本前，你需要先安装 `pandas` 和 `plyfile`。 这个函数也可使用在数据预处理当中，为了能够直接训练 `ply data`。
 
 ```python
 import numpy as np

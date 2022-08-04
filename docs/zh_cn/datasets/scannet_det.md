@@ -223,25 +223,25 @@ scannet
 ```
 
 - `points/xxxxx.bin`：下采样后，未与坐标轴平行（即没有对齐）的点云。因为 ScanNet 3D 检测任务将与坐标轴平行的点云作为输入，而 ScanNet 3D 语义分割任务将对齐前的点云作为输入，我们选择存储对齐前的点云和它们的对齐矩阵。请注意：在 3D 检测的预处理流程 [`GlobalAlignment`](https://github.com/open-mmlab/mmdetection3d/blob/9f0b01caf6aefed861ef4c3eb197c09362d26b32/mmdet3d/datasets/pipelines/transforms_3d.py#L423) 后，点云就都是与坐标轴平行的了。
-- `instance_mask/xxxxx.bin`：每个点的实例标签，值的范围为：[0, NUM_INSTANCES]，其中 0 表示没有标注。
-- `semantic_mask/xxxxx.bin`：每个点的语义标签，值的范围为：[1, 40], 也就是 `nyu40id` 的标准。请注意：在训练流程 `PointSegClassMapping` 中，`nyu40id` 的 ID 会被映射到训练 ID。
+- `instance_mask/xxxxx.bin`：每个点的实例标签，值的范围为：\[0, NUM_INSTANCES\]，其中 0 表示没有标注。
+- `semantic_mask/xxxxx.bin`：每个点的语义标签，值的范围为：\[1, 40\], 也就是 `nyu40id` 的标准。请注意：在训练流程 `PointSegClassMapping` 中，`nyu40id` 的 ID 会被映射到训练 ID。
 - `posed_images/scenexxxx_xx`：`.jpg` 图像的集合，还包含 `.txt` 格式的 4x4 相机姿态和单个 `.txt` 格式的相机内参矩阵文件。
 - `scannet_infos_train.pkl`：训练集的数据信息，每个场景的具体信息如下：
-    - info['point_cloud']：`{'num_features': 6, 'lidar_idx': sample_idx}`，其中 `sample_idx` 为该场景的索引。
-    - info['pts_path']：`points/xxxxx.bin` 的路径。
-    - info['pts_instance_mask_path']：`instance_mask/xxxxx.bin` 的路径。
-    - info['pts_semantic_mask_path']：`semantic_mask/xxxxx.bin` 的路径。
-    - info['annos']：每个场景的标注。
-        - annotations['gt_num']：真实物体 (ground truth) 的数量。
-        - annotations['name']：所有真实物体的语义类别名称，比如 `chair`（椅子）。
-        - annotations['location']：depth 坐标系下与坐标轴平行的三维包围框的重力中心 (gravity center)，形状为 [K, 3]，其中 K 是真实物体的数量。
-        - annotations['dimensions']：depth 坐标系下与坐标轴平行的三维包围框的大小，形状为 [K, 3]。
-        - annotations['gt_boxes_upright_depth']：depth 坐标系下与坐标轴平行的三维包围框 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 [K, 6]。
-        - annotations['unaligned_location']：depth 坐标系下与坐标轴不平行（对齐前）的三维包围框的重力中心。
-        - annotations['unaligned_dimensions']：depth 坐标系下与坐标轴不平行的三维包围框的大小。
-        - annotations['unaligned_gt_boxes_upright_depth']：depth 坐标系下与坐标轴不平行的三维包围框。
-        - annotations['index']：所有真实物体的索引，范围为 [0, K)。
-        - annotations['class']：所有真实物体类别的标号，范围为 [0, 18)，形状为 [K, ]。
+  - info\['point_cloud'\]：`{'num_features': 6, 'lidar_idx': sample_idx}`，其中 `sample_idx` 为该场景的索引。
+  - info\['pts_path'\]：`points/xxxxx.bin` 的路径。
+  - info\['pts_instance_mask_path'\]：`instance_mask/xxxxx.bin` 的路径。
+  - info\['pts_semantic_mask_path'\]：`semantic_mask/xxxxx.bin` 的路径。
+  - info\['annos'\]：每个场景的标注。
+    - annotations\['gt_num'\]：真实物体 (ground truth) 的数量。
+    - annotations\['name'\]：所有真实物体的语义类别名称，比如 `chair`（椅子）。
+    - annotations\['location'\]：depth 坐标系下与坐标轴平行的三维包围框的重力中心 (gravity center)，形状为 \[K, 3\]，其中 K 是真实物体的数量。
+    - annotations\['dimensions'\]：depth 坐标系下与坐标轴平行的三维包围框的大小，形状为 \[K, 3\]。
+    - annotations\['gt_boxes_upright_depth'\]：depth 坐标系下与坐标轴平行的三维包围框 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 \[K, 6\]。
+    - annotations\['unaligned_location'\]：depth 坐标系下与坐标轴不平行（对齐前）的三维包围框的重力中心。
+    - annotations\['unaligned_dimensions'\]：depth 坐标系下与坐标轴不平行的三维包围框的大小。
+    - annotations\['unaligned_gt_boxes_upright_depth'\]：depth 坐标系下与坐标轴不平行的三维包围框。
+    - annotations\['index'\]：所有真实物体的索引，范围为 \[0, K)。
+    - annotations\['class'\]：所有真实物体类别的标号，范围为 \[0, 18)，形状为 \[K, \]。
 - `scannet_infos_val.pkl`：验证集上的数据信息，与 `scannet_infos_train.pkl` 格式完全一致。
 - `scannet_infos_test.pkl`：测试集上的数据信息，与 `scannet_infos_train.pkl` 格式几乎完全一致，除了缺少标注。
 
@@ -291,11 +291,11 @@ train_pipeline = [
 ```
 
 - `GlobalAlignment`：输入的点云在施加了坐标轴平行的矩阵后应被转换为与坐标轴平行的形式。
-- `PointSegClassMapping`：训练中，只有合法的类别 ID 才会被映射到类别标签，比如 [0, 18)。
+- `PointSegClassMapping`：训练中，只有合法的类别 ID 才会被映射到类别标签，比如 \[0, 18)。
 - 数据增强:
-    - `PointSample`：下采样输入点云。
-    - `RandomFlip3D`：随机左右或前后翻转点云。
-    - `GlobalRotScaleTrans`: 旋转输入点云，对于 ScanNet 角度通常落入 [-5, 5] （度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0（即不做缩放）；最后平移输入点云，对于 ScanNet 通常位移量为 0（即不做位移）。
+  - `PointSample`：下采样输入点云。
+  - `RandomFlip3D`：随机左右或前后翻转点云。
+  - `GlobalRotScaleTrans`: 旋转输入点云，对于 ScanNet 角度通常落入 \[-5, 5\] （度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0（即不做缩放）；最后平移输入点云，对于 ScanNet 通常位移量为 0（即不做位移）。
 
 ## 评估指标
 

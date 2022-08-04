@@ -116,7 +116,7 @@ Under each following folder there are overall 5285 train files and 5050 val file
 - `label_v1`: Detection annotation data in `.txt` (version 1)
 - `seg_label`: Segmentation annotation data in `.txt`
 
- Currently, we use v1 data for training and testing, so the version 2 labels are unused.
+Currently, we use v1 data for training and testing, so the version 2 labels are unused.
 
 ### Create dataset
 
@@ -139,11 +139,9 @@ The above point cloud data are further saved in `.bin` format. Meanwhile `.pkl` 
 def process_single_scene(sample_idx):
     print(f'{self.split} sample_idx: {sample_idx}')
     # convert depth to points
-    # and downsample the points
-    SAMPLE_NUM = 50000
     pc_upright_depth = self.get_depth(sample_idx)
     pc_upright_depth_subsampled = random_sampling(
-        pc_upright_depth, SAMPLE_NUM)
+        pc_upright_depth, self.num_points)
 
     info = dict()
     pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
@@ -240,24 +238,23 @@ sunrgbd
 
 - `points/0xxxxx.bin`: The point cloud data after downsample.
 - `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
-    - info['point_cloud']: `·`{'num_features': 6, 'lidar_idx': sample_idx}`, where `sample_idx` is the index of the scene.
-    - info['pts_path']: The path of `points/0xxxxx.bin`.
-    - info['image']: The image path and metainfo:
-        - image['image_idx']: The index of the image.
-        - image['image_shape']: The shape of the image tensor.
-        - image['image_path']: The path of the image.
-    - info['annos']: The annotations of each scene.
-        - annotations['gt_num']: The number of ground truths.
-        - annotations['name']: The semantic name of all ground truths, e.g. `chair`.
-        - annotations['location']: The gravity center of the 3D bounding boxes in depth coordinate system. Shape: [K, 3], K is the number of ground truths.
-        - annotations['dimensions']: The dimensions of the 3D bounding boxes in depth coordinate system, i.e. `(x_size, y_size, z_size)`, shape: [K, 3].
-        - annotations['rotation_y']: The yaw angle of the 3D bounding boxes in depth coordinate system. Shape: [K, ].
-        - annotations['gt_boxes_upright_depth']: The 3D bounding boxes in depth coordinate system, each bounding box is `(x, y, z, x_size, y_size, z_size, yaw)`, shape: [K, 7].
-        - annotations['bbox']: The 2D bounding boxes, each bounding box is `(x, y, x_size, y_size)`, shape: [K, 4].
-        - annotations['index']: The index of all ground truths, range [0, K).
-        - annotations['class']: The train class id of the bounding boxes, value range: [0, 10), shape: [K, ].
+  - info\['point_cloud'\]: `·`{'num_features': 6, 'lidar_idx': sample_idx}`, where `sample_idx\` is the index of the scene.
+  - info\['pts_path'\]: The path of `points/0xxxxx.bin`.
+  - info\['image'\]: The image path and metainfo:
+    - image\['image_idx'\]: The index of the image.
+    - image\['image_shape'\]: The shape of the image tensor.
+    - image\['image_path'\]: The path of the image.
+  - info\['annos'\]: The annotations of each scene.
+    - annotations\['gt_num'\]: The number of ground truths.
+    - annotations\['name'\]: The semantic name of all ground truths, e.g. `chair`.
+    - annotations\['location'\]: The gravity center of the 3D bounding boxes in depth coordinate system. Shape: \[K, 3\], K is the number of ground truths.
+    - annotations\['dimensions'\]: The dimensions of the 3D bounding boxes in depth coordinate system, i.e. `(x_size, y_size, z_size)`, shape: \[K, 3\].
+    - annotations\['rotation_y'\]: The yaw angle of the 3D bounding boxes in depth coordinate system. Shape: \[K, \].
+    - annotations\['gt_boxes_upright_depth'\]: The 3D bounding boxes in depth coordinate system, each bounding box is `(x, y, z, x_size, y_size, z_size, yaw)`, shape: \[K, 7\].
+    - annotations\['bbox'\]: The 2D bounding boxes, each bounding box is `(x, y, x_size, y_size)`, shape: \[K, 4\].
+    - annotations\['index'\]: The index of all ground truths, range \[0, K).
+    - annotations\['class'\]: The train class id of the bounding boxes, value range: \[0, 10), shape: \[K, \].
 - `sunrgbd_infos_val.pkl`: The val data infos, which shares the same format as `sunrgbd_infos_train.pkl`.
-
 
 ## Train pipeline
 
@@ -289,8 +286,9 @@ train_pipeline = [
 ```
 
 Data augmentation for point clouds:
+
 - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
-- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of [-30, 30] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of [0.85, 1.15] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D (which means no translation).
+- `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of \[-30, 30\] (degrees) for SUN RGB-D; then scale the input point cloud, usually in the range of \[0.85, 1.15\] for SUN RGB-D; finally translate the input point cloud, usually by 0 for SUN RGB-D (which means no translation).
 - `PointSample`: downsample the input point cloud.
 
 A typical train pipeline of SUN RGB-D for multi-modality (point cloud and image) 3D detection is as follows.
@@ -332,6 +330,7 @@ train_pipeline = [
 ```
 
 Data augmentation/normalization for images:
+
 - `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
 - `Normalize`: normalize the RGB channels of the input image.
 - `RandomFlip`: randomly flip the input image.

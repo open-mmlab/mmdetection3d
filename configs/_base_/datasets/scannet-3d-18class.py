@@ -5,15 +5,31 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')
+
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/scannet/':
+#         's3://openmmlab/datasets/detection3d/scannet_processed/',
+#         'data/scannet/':
+#         's3://openmmlab/datasets/detection3d/scannet_processed/'
+#     }))
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        file_client_args=file_client_args,
         coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
         use_dim=[0, 1, 2]),
     dict(
         type='LoadAnnotations3D',
+        file_client_args=file_client_args,
         with_bbox_3d=True,
         with_label_3d=True,
         with_mask_3d=True,
@@ -46,6 +62,7 @@ train_pipeline = [
 test_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        file_client_args=file_client_args,
         coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
@@ -80,6 +97,7 @@ test_pipeline = [
 eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
+        file_client_args=file_client_args,
         coord_type='DEPTH',
         shift_height=False,
         load_dim=6,
@@ -107,7 +125,8 @@ data = dict(
             classes=class_names,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')),
+            box_type_3d='Depth',
+            file_client_args=file_client_args)),
     val=dict(
         type=dataset_type,
         data_root=data_root,
@@ -115,7 +134,8 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        box_type_3d='Depth'),
+        box_type_3d='Depth',
+        file_client_args=file_client_args),
     test=dict(
         type=dataset_type,
         data_root=data_root,
@@ -123,6 +143,7 @@ data = dict(
         pipeline=test_pipeline,
         classes=class_names,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        file_client_args=file_client_args))
 
 evaluation = dict(pipeline=eval_pipeline)

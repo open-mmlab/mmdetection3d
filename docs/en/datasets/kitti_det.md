@@ -88,27 +88,27 @@ kitti
 
 - `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
 - `kitti_infos_train.pkl`: training dataset infos, each frame info contains following details:
-    - info['point_cloud']: {'num_features': 4, 'velodyne_path': velodyne_path}.
-    - info['annos']: {
-        - location: x,y,z are bottom center in referenced camera coordinate system (in meters), an Nx3 array
-        - dimensions: height, width, length (in meters), an Nx3 array
-        - rotation_y: rotation ry around Y-axis in camera coordinates [-pi..pi], an N array
-        - name:  ground truth name array, an N array
-        - difficulty: kitti difficulty, Easy, Moderate, Hard
-        - group_ids: used for multi-part object
-        }
-    - (optional) info['calib']: {
-        - P0: camera0 projection matrix after rectification, an 3x4 array
-        - P1: camera1 projection matrix after rectification, an 3x4 array
-        - P2: camera2 projection matrix after rectification, an 3x4 array
-        - P3: camera3 projection matrix after rectification, an 3x4 array
-        - R0_rect: rectifying rotation matrix, an 4x4 array
-        - Tr_velo_to_cam: transformation from Velodyne coordinate to camera coordinate, an 4x4 array
-        - Tr_imu_to_velo: transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
-    }
-    - (optional) info['image']:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
+  - info\['point_cloud'\]: {'num_features': 4, 'velodyne_path': velodyne_path}.
+  - info\['annos'\]: {
+    - location: x,y,z are bottom center in referenced camera coordinate system (in meters), an Nx3 array
+    - dimensions: height, width, length (in meters), an Nx3 array
+    - rotation_y: rotation ry around Y-axis in camera coordinates \[-pi..pi\], an N array
+    - name:  ground truth name array, an N array
+    - difficulty: kitti difficulty, Easy, Moderate, Hard
+    - group_ids: used for multi-part object
+      }
+  - (optional) info\['calib'\]: {
+    - P0: camera0 projection matrix after rectification, an 3x4 array
+    - P1: camera1 projection matrix after rectification, an 3x4 array
+    - P2: camera2 projection matrix after rectification, an 3x4 array
+    - P3: camera3 projection matrix after rectification, an 3x4 array
+    - R0_rect: rectifying rotation matrix, an 4x4 array
+    - Tr_velo_to_cam: transformation from Velodyne coordinate to camera coordinate, an 4x4 array
+    - Tr_imu_to_velo: transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
+      }
+  - (optional) info\['image'\]:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
 
-**Note:** the info['annos'] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
+**Note:** the info\['annos'\] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
 
 The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py) for more details.
 
@@ -150,9 +150,9 @@ train_pipeline = [
 ```
 
 - Data augmentation:
-    - `ObjectNoise`: apply noise to each GT objects in the scene.
-    - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
-    - `GlobalRotScaleTrans`: rotate input point cloud.
+  - `ObjectNoise`: apply noise to each GT objects in the scene.
+  - `RandomFlip3D`: randomly flip input point cloud horizontally or vertically.
+  - `GlobalRotScaleTrans`: rotate input point cloud.
 
 ## Evaluation
 

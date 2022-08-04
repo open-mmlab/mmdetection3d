@@ -72,7 +72,6 @@ KITTI 官方提供的目标检测开发[工具包](https://s3.eu-central-1.amazo
 
 更多关于 Waymo 数据集预处理的中间结果的细节，请参照对应的[说明文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/datasets/waymo_det.html)。
 
-
 ## 准备配置文件
 
 第二步是准备配置文件来帮助数据集的读取和使用，另外，为了在 3D 检测中获得不错的性能，调整超参数通常是必要的。

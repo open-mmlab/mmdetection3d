@@ -9,17 +9,18 @@ from ..builder import LOSSES
 
 @weighted_loss
 def axis_aligned_iou_loss(pred, target):
-    """Calculate the IoU loss (1-IoU) of two set of axis aligned bounding
+    """Calculate the IoU loss (1-IoU) of two sets of axis aligned bounding
     boxes. Note that predictions and targets are one-to-one corresponded.
 
     Args:
-        pred (torch.Tensor): Bbox predictions with shape [..., 3].
-        target (torch.Tensor): Bbox targets (gt) with shape [..., 3].
+        pred (torch.Tensor): Bbox predictions with shape [..., 6]
+            (x1, y1, z1, x2, y2, z2).
+        target (torch.Tensor): Bbox targets (gt) with shape [..., 6]
+            (x1, y1, z1, x2, y2, z2).
 
     Returns:
         torch.Tensor: IoU loss between predictions and targets.
     """
-
     axis_aligned_iou = AxisAlignedBboxOverlaps3D()(
         pred, target, is_aligned=True)
     iou_loss = 1 - axis_aligned_iou
@@ -52,8 +53,10 @@ class AxisAlignedIoULoss(nn.Module):
         """Forward function of loss calculation.
 
         Args:
-            pred (torch.Tensor): Bbox predictions with shape [..., 3].
-            target (torch.Tensor): Bbox targets (gt) with shape [..., 3].
+            pred (torch.Tensor): Bbox predictions with shape [..., 6]
+                (x1, y1, z1, x2, y2, z2).
+            target (torch.Tensor): Bbox targets (gt) with shape [..., 6]
+                (x1, y1, z1, x2, y2, z2).
             weight (torch.Tensor | float, optional): Weight of loss.
                 Defaults to None.
             avg_factor (int, optional): Average factor that is used to average

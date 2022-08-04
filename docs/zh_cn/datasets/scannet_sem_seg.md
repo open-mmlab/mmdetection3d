@@ -10,7 +10,6 @@ ScanNet 3D 语义分割数据集的准备和 3D 检测任务的准备很相似�
 因为 ScanNet 测试集对 3D 语义分割任务提供在线评测的基准，我们也需要下载其测试集并置于 `scannet` 目录下。
 数据预处理前的文件目录结构应如下所示：
 
-
 ```
 mmdetection3d
 ├── mmdet3d
@@ -70,8 +69,8 @@ scannet
 ```
 
 - `seg_info`：为支持语义分割任务所生成的信息文件。
-    - `train_label_weight.npy`：每一语义类别的权重系数。因为 ScanNet 中属于不同类的点的数量相差很大，一个常见的操作是在计算损失时对不同类别进行加权 (label re-weighting) 以得到更好的分割性能。
-    - `train_resampled_scene_idxs.npy`：每一个场景 (房间) 的重采样标签。在训练过程中，我们依据每个场景的点的数量，会对其进行不同次数的重采样，以保证训练数据均衡。
+  - `train_label_weight.npy`：每一语义类别的权重系数。因为 ScanNet 中属于不同类的点的数量相差很大，一个常见的操作是在计算损失时对不同类别进行加权 (label re-weighting) 以得到更好的分割性能。
+  - `train_resampled_scene_idxs.npy`：每一个场景 (房间) 的重采样标签。在训练过程中，我们依据每个场景的点的数量，会对其进行不同次数的重采样，以保证训练数据均衡。
 
 ## 训练流程
 
@@ -111,7 +110,7 @@ train_pipeline = [
 ]
 ```
 
-- `PointSegClassMapping`：在训练过程中，只有被使用的类别的序号会被映射到类似 [0, 20) 范围内的类别标签。其余的类别序号会被转换为 `ignore_index` 所制定的忽略标签，在本例中是 `20`。
+- `PointSegClassMapping`：在训练过程中，只有被使用的类别的序号会被映射到类似 \[0, 20) 范围内的类别标签。其余的类别序号会被转换为 `ignore_index` 所制定的忽略标签，在本例中是 `20`。
 - `IndoorPatchPointSample`：从输入点云中裁剪一个含有固定数量点的小块 (patch)。`block_size` 指定了裁剪块的边长，在 ScanNet 上这个数值一般设置为 `1.5`。
 - `NormalizePointsColor`：将输入点的颜色信息归一化，通过将 RGB 值除以 `255` 来实现。
 

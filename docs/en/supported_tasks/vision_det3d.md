@@ -67,8 +67,8 @@ We can also achieve better performance with finetuned FCOS3D by running:
 ./tools/dist_train.sh fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py 8
 ```
 
-after training a baseline model with the previous script.
-Please remember to modify the path [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py#L8) correspondingly.
+After training a baseline model with the previous script,
+please remember to modify the path [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py#L8) correspondingly.
 
 ## Quantitative Evaluation
 

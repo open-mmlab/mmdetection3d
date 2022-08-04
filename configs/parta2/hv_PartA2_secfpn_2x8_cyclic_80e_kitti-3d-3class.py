@@ -90,6 +90,7 @@ data = dict(
             pipeline=train_pipeline,
             modality=input_modality,
             classes=class_names,
+            box_type_3d='LiDAR',
             test_mode=False)),
     val=dict(
         type=dataset_type,
@@ -100,6 +101,7 @@ data = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         classes=class_names,
+        box_type_3d='LiDAR',
         test_mode=True),
     test=dict(
         type=dataset_type,
@@ -110,6 +112,7 @@ data = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         classes=class_names,
+        box_type_3d='LiDAR',
         test_mode=True))
 
 # Part-A2 uses a different learning rate from what SECOND uses.

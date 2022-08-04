@@ -33,9 +33,11 @@ Please refer to [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection
 Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/mvxnet) for details.
 
 ### RegNetX
+
 Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
 
 ### nuImages
+
 We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN, Cascade Mask R-CNN and HTC results currently.
 
 ### H3DNet
@@ -80,24 +82,28 @@ Please refer to [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master
 
 ### DGCNN
 
-Please refer to [DGCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/dgcnn) for details. We provide DGCNN baselines on S3DIS dataset.
+Please refer to [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) for details. We provide DGCNN baselines on S3DIS dataset.
 
 ### SMOKE
 
-Please refer to [SMOKE](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/smoke) for details. We provide SMOKE baselines on KITTI dataset.
+Please refer to [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/smoke) for details. We provide SMOKE baselines on KITTI dataset.
 
 ### PGD
 
-Please refer to [PGD](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pgd) for details. We provide PGD baselines on KITTI and nuScenes dataset.
+Please refer to [PGD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pgd) for details. We provide PGD baselines on KITTI and nuScenes dataset.
 
 ### PointRCNN
 
-Please refer to [PointRCNN](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/point_rcnn) for details. We provide PointRCNN baselines on KITTI dataset.
+Please refer to [PointRCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/point_rcnn) for details. We provide PointRCNN baselines on KITTI dataset.
 
 ### MonoFlex
 
-Please refer to [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/monoflex) for details. We provide MonoFlex baselines on KITTI dataset.
+Please refer to [MonoFlex](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/monoflex) for details. We provide MonoFlex baselines on KITTI dataset.
+
+### SA-SSD
+
+Please refer to [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/sassd) for details. We provide SA-SSD baselines on the KITTI dataset.
 
 ### Mixed Precision (FP16) Training
 
-Please refer to [Mixed Precision (FP16) Training on PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py) for details.
+Please refer to [Mixed Precision (FP16) Training on PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py) for details.

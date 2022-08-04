@@ -67,8 +67,8 @@ scannet
 ```
 
 - `seg_info`: The generated infos to support semantic segmentation model training.
-    - `train_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
-    - `train_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
+  - `train_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
+  - `train_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
 
 ## Training pipeline
 
@@ -108,7 +108,7 @@ train_pipeline = [
 ]
 ```
 
-- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like [0, 20) during training. Other class ids will be converted to `ignore_index` which equals to `20`.
+- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like \[0, 20) during training. Other class ids will be converted to `ignore_index` which equals to `20`.
 - `IndoorPatchPointSample`: Crop a patch containing a fixed number of points from input point cloud. `block_size` indicates the size of the cropped block, typically `1.5` for ScanNet.
 - `NormalizePointsColor`: Normalize the RGB color values of input point cloud by dividing `255`.
 
