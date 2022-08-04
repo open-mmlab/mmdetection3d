@@ -6,6 +6,17 @@ class_names = ('table', 'chair', 'sofa', 'bookcase', 'board')
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
 
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/s3dis/':
+#         's3://s3dis/',
+#     }))
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',

@@ -3,6 +3,7 @@ from .array_converter import ArrayConverter, array_converter
 from .collect_env import collect_env
 from .compat_cfg import compat_cfg
 from .logger import get_root_logger
+from .misc import replace_ceph_backend
 from .setup_env import register_all_modules, setup_multi_processes
 from .typing import (ConfigType, InstanceList, MultiConfig, OptConfigType,
                      OptInstanceList, OptMultiConfig, OptSamplingResultList)
@@ -12,5 +13,5 @@ __all__ = [
     'register_all_modules', 'find_latest_checkpoint', 'array_converter',
     'ArrayConverter', 'ConfigType', 'OptConfigType', 'MultiConfig',
     'OptMultiConfig', 'InstanceList', 'OptInstanceList',
-    'OptSamplingResultList'
+    'OptSamplingResultList', 'replace_ceph_backend'
 ]

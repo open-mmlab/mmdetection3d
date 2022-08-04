@@ -20,9 +20,7 @@ file_client_args = dict(backend='disk')
 #     backend='petrel',
 #     path_mapping=dict({
 #         './data/scannet/':
-#         's3://openmmlab/datasets/detection3d/scannet_processed/',
-#         'data/scannet/':
-#         's3://openmmlab/datasets/detection3d/scannet_processed/'
+#         's3://scannet/',
 #     }))
 
 num_points = 8192
@@ -33,15 +31,13 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5],
-        file_client_args=file_client_args),
+        use_dim=[0, 1, 2, 3, 4, 5]),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True,
-        file_client_args=file_client_args),
+        with_seg_3d=True),
     dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
@@ -61,8 +57,7 @@ test_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5],
-        file_client_args=file_client_args),
+        use_dim=[0, 1, 2, 3, 4, 5]),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         # a wrapper in order to successfully call test function
@@ -95,8 +90,7 @@ eval_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5],
-        file_client_args=file_client_args),
+        use_dim=[0, 1, 2, 3, 4, 5]),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]

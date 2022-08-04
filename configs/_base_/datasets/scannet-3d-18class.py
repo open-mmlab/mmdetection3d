@@ -7,6 +7,18 @@ metainfo = dict(
              'bookshelf', 'picture', 'counter', 'desk', 'curtain',
              'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
              'garbagebin'))
+
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/scannet/':
+#         's3://scannet/',
+#     }))
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -21,11 +33,7 @@ train_pipeline = [
         with_mask_3d=True,
         with_seg_3d=True),
     dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39),
-        max_cat_id=40),
+    dict(type='PointSegClassMapping'),
     dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',

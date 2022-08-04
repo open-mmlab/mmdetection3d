@@ -9,21 +9,21 @@ metainfo = dict(CLASSES=class_names)
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=False, use_camera=True)
 
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/nuscenes/':
-        's3://openmmlab/datasets/detection3d/nuscenes/',
-        'data/nuscenes/':
-        's3://openmmlab/datasets/detection3d/nuscenes/'
-    }))
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/nuscenes/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         'data/nuscenes/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/'
+#     }))
 
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -32,7 +32,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
+    dict(type='Resize', scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
@@ -43,7 +43,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]

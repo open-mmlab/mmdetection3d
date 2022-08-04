@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
 from lyft_dataset_sdk.utils.data_classes import Box as LyftBox
+from mmengine import load
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 from pyquaternion import Quaternion
@@ -45,18 +46,21 @@ class LyftMetric(BaseMetric):
             'gpu'. Defaults to 'cpu'.
     """
 
-    def __init__(self,
-                 data_root: str,
-                 ann_file: str,
-                 metric: Union[str, List[str]] = 'bbox',
-                 modality=dict(
-                     use_camera=False,
-                     use_lidar=True,
-                 ),
-                 prefix: Optional[str] = None,
-                 jsonfile_prefix: str = None,
-                 csv_savepath: str = None,
-                 collect_device: str = 'cpu') -> None:
+    def __init__(
+        self,
+        data_root: str,
+        ann_file: str,
+        metric: Union[str, List[str]] = 'bbox',
+        modality=dict(
+            use_camera=False,
+            use_lidar=True,
+        ),
+        prefix: Optional[str] = None,
+        jsonfile_prefix: str = None,
+        csv_savepath: str = None,
+        collect_device: str = 'cpu',
+        file_client_args: dict = dict(backend='disk')
+    ) -> None:
         self.default_prefix = 'Lyft metric'
         super(LyftMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -64,20 +68,9 @@ class LyftMetric(BaseMetric):
         self.data_root = data_root
         self.modality = modality
         self.jsonfile_prefix = jsonfile_prefix
+        self.file_client_args = file_client_args
         self.csv_savepath = csv_savepath
         self.metrics = metric if isinstance(metric, list) else [metric]
-
-    def load_annotations(self, ann_file: str) -> list:
-        """Load annotations from ann_file.
-
-        Args:
-            ann_file (str): Path of the annotation file.
-
-        Returns:
-            list[dict]: List of annotations.
-        """
-        # loading data from a pkl file
-        return mmcv.load(ann_file, file_format='pkl')
 
     def process(self, data_batch: Sequence[dict],
                 predictions: Sequence[dict]) -> None:
@@ -122,7 +115,8 @@ class LyftMetric(BaseMetric):
         self.version = self.dataset_meta['version']
         # load annotations
 
-        self.data_infos = self.load_annotations(self.ann_file)['data_list']
+        self.data_infos = load(
+            self.ann_file, file_client_args=self.file_client_args)['data_list']
         result_dict, tmp_dir = self.format_results(results, classes,
                                                    self.jsonfile_prefix)
 

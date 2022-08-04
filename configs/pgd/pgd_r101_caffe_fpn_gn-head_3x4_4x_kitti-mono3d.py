@@ -82,7 +82,7 @@ file_client_args = dict(
     }))
 
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -101,7 +101,7 @@ train_pipeline = [
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(type='mmdet.Resize', scale_factor=1.0),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
