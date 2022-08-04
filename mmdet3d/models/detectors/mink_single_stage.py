@@ -3,9 +3,8 @@
 try:
     import MinkowskiEngine as ME
 except ImportError:
-    import warnings
-    warnings.warn(
-        'Please follow `getting_started.md` to install MinkowskiEngine.`')
+    # Please follow getting_started.md to install MinkowskiEngine.
+    pass
 
 from mmdet3d.core import bbox3d2result
 from mmdet3d.models import DETECTORS, build_backbone, build_head
