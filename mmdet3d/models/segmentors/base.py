@@ -2,11 +2,10 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Tuple
 
-from mmengine.data import PixelData
 from mmengine.model import BaseModel
 from torch import Tensor
 
-from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures import Det3DDataSample, PointData
 from mmdet3d.structures.det3d_data_sample import (ForwardResults,
                                                   OptSampleList, SampleList)
 from mmdet3d.utils import OptConfigType, OptMultiConfig
@@ -139,7 +138,7 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         """Placeholder for augmentation test."""
         pass
 
-    def postprocess_result(self, seg_logits_list: List[dict],
+    def postprocess_result(self, seg_pred_list: List[dict],
                            batch_img_metas: List[dict]) -> list:
         """ Convert results list to `Det3DDataSample`.
         Args:
@@ -150,19 +149,16 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
             list[:obj:`Det3DDataSample`]: Segmentation results of the
             input images. Each Det3DDataSample usually contain:
 
-            - ``pred_pts_sem_seg``(PixelData): Prediction of 3D
+            - ``pred_pts_seg``(PixelData): Prediction of 3D
                 semantic segmentation.
-            - ``seg_logits``(PixelData): Predicted logits of semantic
-                segmentation before normalization.
         """
         predictions = []
 
-        for i in range(len(seg_logits_list)):
+        for i in range(len(seg_pred_list)):
             img_meta = batch_img_metas[i]
-            seg_logits = seg_logits_list[i][None],
-            seg_pred = seg_logits.argmax(dim=0, keepdim=True)
+            seg_pred = seg_pred_list[i]
             prediction = Det3DDataSample(**{'metainfo': img_meta})
             prediction.set_data(
-                {'pred_pts_sem_seg': PixelData(**{'data': seg_pred})})
+                {'pred_pts_seg': PointData(**{'pts_semantic_mask': seg_pred})})
             predictions.append(prediction)
         return predictions
