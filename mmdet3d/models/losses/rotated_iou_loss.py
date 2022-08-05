@@ -1,35 +1,34 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmcv.ops import diff_iou_rotated_3d
 from torch import nn as nn
 
 from mmdet.models.losses.utils import weighted_loss
-from ...core.bbox import AxisAlignedBboxOverlaps3D
 from ..builder import LOSSES
 
 
 @weighted_loss
-def axis_aligned_iou_loss(pred, target):
-    """Calculate the IoU loss (1-IoU) of two sets of axis aligned bounding
-    boxes. Note that predictions and targets are one-to-one corresponded.
+def rotated_iou_3d_loss(pred, target):
+    """Calculate the IoU loss (1-IoU) of two sets of rotated bounding boxes.
+    Note that predictions and targets are one-to-one corresponded.
 
     Args:
-        pred (torch.Tensor): Bbox predictions with shape [..., 6]
-            (x1, y1, z1, x2, y2, z2).
-        target (torch.Tensor): Bbox targets (gt) with shape [..., 6]
-            (x1, y1, z1, x2, y2, z2).
+        pred (torch.Tensor): Bbox predictions with shape [N, 7]
+            (x, y, z, w, l, h, alpha).
+        target (torch.Tensor): Bbox targets (gt) with shape [N, 7]
+            (x, y, z, w, l, h, alpha).
 
     Returns:
         torch.Tensor: IoU loss between predictions and targets.
     """
-    axis_aligned_iou = AxisAlignedBboxOverlaps3D()(
-        pred, target, is_aligned=True)
-    iou_loss = 1 - axis_aligned_iou
+    iou_loss = 1 - diff_iou_rotated_3d(pred.unsqueeze(0),
+                                       target.unsqueeze(0))[0]
     return iou_loss
 
 
 @LOSSES.register_module()
-class AxisAlignedIoULoss(nn.Module):
-    """Calculate the IoU loss (1-IoU) of axis aligned bounding boxes.
+class RotatedIoU3DLoss(nn.Module):
+    """Calculate the IoU loss (1-IoU) of rotated bounding boxes.
 
     Args:
         reduction (str): Method to reduce losses.
@@ -38,8 +37,7 @@ class AxisAlignedIoULoss(nn.Module):
     """
 
     def __init__(self, reduction='mean', loss_weight=1.0):
-        super(AxisAlignedIoULoss, self).__init__()
-        assert reduction in ['none', 'sum', 'mean']
+        super().__init__()
         self.reduction = reduction
         self.loss_weight = loss_weight
 
@@ -53,10 +51,10 @@ class AxisAlignedIoULoss(nn.Module):
         """Forward function of loss calculation.
 
         Args:
-            pred (torch.Tensor): Bbox predictions with shape [..., 6]
-                (x1, y1, z1, x2, y2, z2).
-            target (torch.Tensor): Bbox targets (gt) with shape [..., 6]
-                (x1, y1, z1, x2, y2, z2).
+            pred (torch.Tensor): Bbox predictions with shape [..., 7]
+                (x, y, z, w, l, h, alpha).
+            target (torch.Tensor): Bbox targets (gt) with shape [..., 7]
+                (x, y, z, w, l, h, alpha).
             weight (torch.Tensor | float, optional): Weight of loss.
                 Defaults to None.
             avg_factor (int, optional): Average factor that is used to average
@@ -68,15 +66,19 @@ class AxisAlignedIoULoss(nn.Module):
         Returns:
             torch.Tensor: IoU loss between predictions and targets.
         """
+        if weight is not None and not torch.any(weight > 0):
+            return pred.sum() * weight.sum()  # 0
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
             reduction_override if reduction_override else self.reduction)
-        if (weight is not None) and (not torch.any(weight > 0)) and (
-                reduction != 'none'):
-            return (pred * weight).sum()
-        return axis_aligned_iou_loss(
+        if weight is not None and weight.dim() > 1:
+            weight = weight.mean(-1)
+        loss = self.loss_weight * rotated_iou_3d_loss(
             pred,
             target,
-            weight=weight,
+            weight,
+            reduction=reduction,
             avg_factor=avg_factor,
-            reduction=reduction) * self.loss_weight
+            **kwargs)
+
+        return loss

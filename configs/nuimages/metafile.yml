@@ -48,7 +48,7 @@ Models:
         Dataset: nuImages
         Metrics:
           Mask AP: 38.2
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_1x_nuim/
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_1x_nuim/mask_rcnn_r50_caffe_fpn_1x_nuim_20220718_195238-b1742a60.pth
 
   - Name: mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim
     In Collection: Mask R-CNN

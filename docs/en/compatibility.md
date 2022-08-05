@@ -6,6 +6,10 @@ Before mmdet3d version 1.0.0rc4 we sampled 50000 points following VoteNet prepro
 
 Please refer to the SUN RGB-D [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) for more details.
 
+### Fix a small amount of missing objects during S3DIS preprocessing
+
+We fixed a bug in `tools/data_converter/s3dis_data_utils.py` leading to miss not more than one object per scene. Users need to regenerate the annotations with `tools/create_data.py`.
+
 ## v1.0.0rc1
 
 ### Operators Migration

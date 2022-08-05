@@ -42,22 +42,6 @@ Models:
           mAP: 65.74
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/second/hv_second_secfpn_6x8_80e_kitti-3d-3class/hv_second_secfpn_6x8_80e_kitti-3d-3class_20210831_022017-ae782e87.pth
 
-  - Name: hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class
-    In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
-    Metadata:
-      Training Data: Waymo
-      Training Memory (GB): 8.12
-      Training Resources: 8x GeForce GTX 1080 Ti
-    Results:
-      - Task: 3D Object Detection
-        Dataset: Waymo
-        Metrics:
-          mAP@L1: 65.3
-          mAPH@L1: 61.7
-          mAP@L2: 58.9
-          mAPH@L2: 55.7
-
   - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-car
     In Collection: SECOND
     Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py
