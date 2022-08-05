@@ -13,14 +13,14 @@
 
 #### Improvements
 
-- Remove limit the maximum number of points during SUN RGB-D preprocessing (#1555)
-- Support circle ci (#1647)
+- Remove the limitation of the maximum number of points during SUN RGB-D preprocessing (#1555)
+- Support circle CI (#1647)
 - Add mim to extras_require in setup.py (#1560, #1574)
 - Update dockerfile package version (#1697)
 
 #### Bug Fixes
 
-- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1556)
+- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1548, #1556)
 - Fix DGCNN configs (#1587)
 - Fix bbox head not registered bug (#1625)
 - Fix missing objects in S3DIS preprocessing (#1665)
