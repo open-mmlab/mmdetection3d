@@ -8,7 +8,7 @@ except ImportError:
 
 import torch
 from mmcv.cnn import Scale, bias_init_with_prob
-from mmcv.ops import nms3d, nms3d_normal
+from mmcv.ops.iou3d import nms_bev, nms_normal_bev
 from mmcv.runner.base_module import BaseModule
 from torch import nn
 
@@ -640,12 +640,12 @@ class FCAF3DHead(BaseModule):
             class_scores = scores[ids, i]
             class_bboxes = bboxes[ids]
             if with_yaw:
-                nms_function = nms3d
+                nms_function = nms_bev
             else:
                 class_bboxes = torch.cat(
                     (class_bboxes, torch.zeros_like(class_bboxes[:, :1])),
                     dim=1)
-                nms_function = nms3d_normal
+                nms_function = nms_normal_bev
 
             nms_ids = nms_function(class_bboxes, class_scores,
                                    self.test_cfg.iou_thr)
