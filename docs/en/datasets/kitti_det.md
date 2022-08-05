@@ -110,7 +110,7 @@ kitti
 
 **Note:** the info\['annos'\] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
 
-The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py) for more details.
+The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_data_utils.py#L140) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_converter.py#L378). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_converter.py) for more details.
 
 ## Train pipeline
 

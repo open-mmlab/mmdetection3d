@@ -110,7 +110,7 @@ kitti
 
 **注意**：其中的 info\['annos'\] 中的数据均位于相机参考坐标系中，更多的细节请参考[此处](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)。
 
-获取 kitti_infos_xxx.pkl 和 kitti_infos_xxx_mono3d.coco.json 的核心函数分别为 [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378).
+获取 kitti_infos_xxx.pkl 和 kitti_infos_xxx_mono3d.coco.json 的核心函数分别为 [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_data_utils.py#L140) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_converter.py#L378).
 
 ## 训练流程
 

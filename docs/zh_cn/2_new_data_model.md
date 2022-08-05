@@ -68,7 +68,7 @@ KITTI 官方提供的目标检测开发[工具包](https://s3.eu-central-1.amazo
 接下来本文将对 Waymo 数据集原始格式进行转换。
 首先需要将下载的 Waymo 数据集的数据文件和标注文件转换到 KITTI 数据集的格式，接着定义一个从 KittiDataset 类继承而来的 WaymoDataset 类，来帮助数据的加载、模型的训练和评估。
 
-具体来说，首先使用[数据转换器](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/waymo_converter.py)将 Waymo 数据集转换成 KITTI 数据集的格式，并定义 [Waymo 类](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/waymo_dataset.py)对转换的数据进行处理。因为我们将 Waymo 原始数据集进行预处理并重新组织成 KITTI 数据集的格式，因此可以比较容易通过继承 KittiDataset 类来实现 WaymoDataset 类。需要注意的是，由于 Waymo 数据集有相应的官方评估方法，我们需要在定义新数据类的过程中引入官方评估方法，此时用户可以顺利的转换 Waymo 数据的格式，并使用 `WaymoDataset` 数据类进行模型的训练和评估。
+具体来说，首先使用[数据转换器](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/waymo_converter.py)将 Waymo 数据集转换成 KITTI 数据集的格式，并定义 [Waymo 类](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/waymo_dataset.py)对转换的数据进行处理。因为我们将 Waymo 原始数据集进行预处理并重新组织成 KITTI 数据集的格式，因此可以比较容易通过继承 KittiDataset 类来实现 WaymoDataset 类。需要注意的是，由于 Waymo 数据集有相应的官方评估方法，我们需要在定义新数据类的过程中引入官方评估方法，此时用户可以顺利的转换 Waymo 数据的格式，并使用 `WaymoDataset` 数据类进行模型的训练和评估。
 
 更多关于 Waymo 数据集预处理的中间结果的细节，请参照对应的[说明文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/datasets/waymo_det.html)。
 

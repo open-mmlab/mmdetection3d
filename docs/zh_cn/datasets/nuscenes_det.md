@@ -120,7 +120,7 @@ mmdetection3d
     - info\['annotations'\]\[i\]\['id'\]：标注 ID。默认为 `i`。
 
 这里我们只解释训练信息文件中记录的数据。这同样适用于验证和测试集。
-获取 `nuscenes_infos_xxx.pkl` 和 `nuscenes_infos_xxx_mono3d.coco.json` 的核心函数分别为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L143) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py)。
+获取 `nuscenes_infos_xxx.pkl` 和 `nuscenes_infos_xxx_mono3d.coco.json` 的核心函数分别为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L143) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py)。
 
 ## 训练流程
 
