@@ -65,7 +65,7 @@ class KittiMetric(BaseMetric):
         self.submission_prefix = submission_prefix
         self.pred_box_type_3d = pred_box_type_3d
         self.file_client_args = file_client_args
-
+        self.default_cam_key = default_cam_key
         allowed_metrics = ['bbox', 'img_bbox', 'mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
         for metric in self.metrics:
