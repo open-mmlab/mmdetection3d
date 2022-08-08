@@ -29,7 +29,7 @@ param_scheduler = [
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
-        type='CosineAnnealingBetas',
+        type='CosineAnnealingMomentum',
         T_max=8,
         eta_min=0.85 / 0.95,
         begin=0,
@@ -37,7 +37,7 @@ param_scheduler = [
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
-        type='CosineAnnealingBetas',
+        type='CosineAnnealingMomentum',
         T_max=12,
         eta_min=1,
         begin=8,

@@ -88,7 +88,7 @@ param_scheduler = [
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
-        type='CosineAnnealingBetas',
+        type='CosineAnnealingMomentum',
         T_max=epoch_num * 0.4,
         eta_min=0.85 / 0.95,
         begin=0,
@@ -96,7 +96,7 @@ param_scheduler = [
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
-        type='CosineAnnealingBetas',
+        type='CosineAnnealingMomentum',
         T_max=epoch_num * 0.6,
         eta_min=1,
         begin=epoch_num * 0.4,
