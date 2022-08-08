@@ -9,6 +9,20 @@ point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 # PointPillars adopted a different sampling strategies among classes
+
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/kitti/':
+#         's3://openmmlab/datasets/detection3d/kitti/',
+#         'data/kitti/':
+#         's3://openmmlab/datasets/detection3d/kitti/'
+#     }))
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -17,12 +31,28 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
     classes=class_names,
-    sample_groups=dict(Car=15, Pedestrian=15, Cyclist=15))
+    sample_groups=dict(Car=15, Pedestrian=15, Cyclist=15),
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    file_client_args=file_client_args)
 
 # PointPillars uses different augmentation hyper parameters
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=True,
+        with_label_3d=True,
+        file_client_args=file_client_args),
     dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
@@ -36,7 +66,12 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
