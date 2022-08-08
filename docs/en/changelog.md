@@ -1,6 +1,6 @@
 ## Changelog
 
-### v1.0.0rc4 (28/7/2022)
+### v1.0.0rc4 (8/8/2022)
 
 #### Highlights
 
@@ -10,6 +10,7 @@
 
 - Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf) (#1547)
 - Add the transformation to support multi-camera 3D object detection (#1580)
+- Support lift-splat-shoot view transformer (#1598)
 
 #### Improvements
 
