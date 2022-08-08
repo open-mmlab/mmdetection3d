@@ -2,18 +2,21 @@ Import:
   - configs/3dssd/metafile.yml
   - configs/centerpoint/metafile.yml
   - configs/dynamic_voxelization/metafile.yml
+  - configs/fcaf3d/metafile.yml
+  - configs/fcos3d/metafile.yml
   - configs/free_anchor/metafile.yml
+  - configs/groupfree3d/metafile.yml
   - configs/h3dnet/metafile.yml
   - configs/imvotenet/metafile.yml
+  - configs/imvoxelnet/metafile.yml
   - configs/mvxnet/metafile.yml
   - configs/nuimages/metafile.yml
   - configs/parta2/metafile.yml
+  - configs/pgd/metafile.yml
   - configs/pointnet2/metafile.yml
   - configs/pointpillars/metafile.yml
   - configs/regnet/metafile.yml
   - configs/second/metafile.yml
+  - configs/smoke/metafile.yml
   - configs/ssn/metafile.yml
   - configs/votenet/metafile.yml
-  - configs/fcos3d/metafile.yml
-  - configs/imvoxelnet/metafile.yml
-  - configs/pgd/metafile.yml
