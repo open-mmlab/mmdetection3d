@@ -24,7 +24,7 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**News**: We released the codebase v1.0.0rc3.
+**News**: We released the codebase v1.0.0rc4.
 
 Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
 
@@ -84,9 +84,9 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc3 was released in 8/6/2022.
+v1.0.0rc4 was released in 8/8/2022.
 
-- Support [SA-SSD](https://openaccess.thecvf.com/content_CVPR_2020/papers/He_Structure_Aware_Single-Stage_3D_Object_Detection_From_Point_Cloud_CVPR_2020_paper.pdf)
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
