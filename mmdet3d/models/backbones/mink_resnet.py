@@ -5,9 +5,7 @@ try:
     import MinkowskiEngine as ME
     from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
-    import warnings
-    warnings.warn(
-        'Please follow `getting_started.md` to install MinkowskiEngine.`')
+    # Please follow getting_started.md to install MinkowskiEngine.
     # blocks are used in the static part of MinkResNet
     BasicBlock, Bottleneck = None, None
 

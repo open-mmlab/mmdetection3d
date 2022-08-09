@@ -104,6 +104,10 @@
 
 请参考 [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/sassd) 获取更多的细节，我们在 KITTI 数据集上给出了相应的基准结果。
 
+### FCAF3D
+
+请参考 [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcaf3d) 获取更多的细节，我们在 ScanNet, S3DIS 和 SUN RGB-D 数据集上给出了相应的基准结果。
+
 ### Mixed Precision (FP16) Training
 
 细节请参考 [Mixed Precision (FP16) Training 在 PointPillars 训练的样例](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py)。
