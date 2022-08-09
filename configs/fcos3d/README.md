@@ -26,7 +26,7 @@ Currently we first support the benchmark on the large-scale nuScenes dataset, wh
 ### Data Preparation
 
 After supporting FCOS3D and monocular 3D object detection in v0.13.0, the coco-style 2D json info files will include related annotations by default
-(see [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L333) if you would like to change the parameter).
+(see [here](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L333) if you would like to change the parameter).
 So you can just follow the data preparation steps given in the documentation, then all the needed infos are ready together.
 
 ### Training and Inference

@@ -3,11 +3,11 @@ import argparse
 import os
 from os import path as osp
 
-from tools.data_converter import indoor_converter as indoor
-from tools.data_converter import kitti_converter as kitti
-from tools.data_converter import lyft_converter as lyft_converter
-from tools.data_converter import nuscenes_converter as nuscenes_converter
-from tools.data_converter.create_gt_database import (
+from tools.dataset_converters import indoor_converter as indoor
+from tools.dataset_converters import kitti_converter as kitti
+from tools.dataset_converters import lyft_converter as lyft_converter
+from tools.dataset_converters import nuscenes_converter as nuscenes_converter
+from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
 
 
@@ -165,7 +165,7 @@ def waymo_data_prep(root_path,
             Default: 5. Here we store pose information of these frames
             for later use.
     """
-    from tools.data_converter import waymo_converter as waymo
+    from tools.dataset_converters import waymo_converter as waymo
 
     splits = ['training', 'validation', 'testing']
     for i, split in enumerate(splits):
@@ -307,7 +307,7 @@ if __name__ == '__main__':
 
     for file_name in os.listdir(args.out_dir):
         if '_infos_' in file_name and '.pkl' in file_name:
-            cmd = f'python tools/data_converter/update_infos_to_v2.py ' \
+            cmd = f'python tools/dataset_converters/update_infos_to_v2.py ' \
                   f'--dataset {args.dataset} ' \
                   f'--pkl {osp.join(args.out_dir,file_name)} ' \
                   f'--out-dir {args.out_dir}'

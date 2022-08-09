@@ -121,7 +121,7 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 
 ```bash
 python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
-python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
+python tools/dataset_converters/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
 注意，为了文件结构的清晰性，我们遵从了 Lyft 数据原先的文件夹名称。请按照上面展示出的文件结构对原始文件夹进行重命名。

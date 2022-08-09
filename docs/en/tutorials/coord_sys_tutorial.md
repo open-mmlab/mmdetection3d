@@ -132,7 +132,7 @@ __|____|____|____|_________\ x right
 
 ### KITTI
 
-The raw annotation of KITTI is under camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/kitti_data_utils.py). In MMDetection3D, to train LiDAR-based models on KITTI, the data is first converted from camera coordinate system to LiDAR coordinate system, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py). For training vision-based models, the data is kept in the camera coordinate system.
+The raw annotation of KITTI is under camera coordinate system, see [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/kitti_data_utils.py). In MMDetection3D, to train LiDAR-based models on KITTI, the data is first converted from camera coordinate system to LiDAR coordinate system, see [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py). For training vision-based models, the data is kept in the camera coordinate system.
 
 In SECOND, the LiDAR coordinate system for a box is defined as follows (a bird's eye view):
 
@@ -169,7 +169,7 @@ The raw data of ScanNet is not point cloud but mesh. The sampled point cloud dat
 
 The raw data of SUN RGB-D is not point cloud but RGB-D image. By back projection, we obtain the corresponding point cloud for each image, which is under our Depth coordinate system. However, the annotation is not under our system and thus needs conversion.
 
-For the conversion from raw annotation to annotation under our Depth coordinate system, please refer to [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/sunrgbd_data_utils.py).
+For the conversion from raw annotation to annotation under our Depth coordinate system, please refer to [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/sunrgbd_data_utils.py).
 
 ### S3DIS
 

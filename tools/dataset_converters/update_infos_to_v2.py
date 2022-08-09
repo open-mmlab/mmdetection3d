@@ -2,7 +2,7 @@
 """Convert the annotation pkl to the standard format in OpenMMLab V2.0.
 
 Example:
-    python tools/data_converter/update_infos_to_v2.py
+    python tools/dataset_converters/update_infos_to_v2.py
         --pkl ./data/kitti/kitti_infos_train.pkl
         --out-dir ./kitti_v2/
 """

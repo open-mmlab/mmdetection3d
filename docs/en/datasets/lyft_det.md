@@ -47,7 +47,7 @@ To prepare info files for Lyft, run the following commands:
 
 ```bash
 python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
-python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
+python tools/dataset_converters/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
 Note that the second command serves the purpose of fixing a corrupted lidar data file. Please refer to the discussion [here](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000) for more details.
@@ -108,8 +108,8 @@ Next, we will elaborate on the difference compared to nuScenes in terms of the d
 
 Here we only explain the data recorded in the training info files. The same applies to the testing set.
 
-The core function to get `lyft_infos_xxx.pkl` is [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py#L93).
-Please refer to [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py) for more details.
+The core function to get `lyft_infos_xxx.pkl` is [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/lyft_converter.py#L93).
+Please refer to [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/lyft_converter.py) for more details.
 
 ## Training pipeline
 
