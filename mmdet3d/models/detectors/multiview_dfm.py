@@ -200,6 +200,11 @@ class MultiViewDfM(ImVoxelNet, DfM):
             for frame_idx in range(num_frames):
                 volume = []
                 valid_flags = []
+                if isinstance(img_meta['img_shape'], list):
+                    img_shape = img_meta['img_shape'][frame_idx][:2]
+                else:
+                    img_shape = img_meta['img_shape'][:2]
+
                 for view_idx in range(num_views):
                     sample_idx = frame_idx * num_views + view_idx
 
@@ -207,7 +212,6 @@ class MultiViewDfM(ImVoxelNet, DfM):
                         img_scale_factor_idx = img_scale_factor[sample_idx]
                     else:
                         img_scale_factor_idx = img_scale_factor
-
                     sample_results = point_sample(
                         img_meta,
                         img_features=feature[sample_idx][None, ...],
@@ -219,7 +223,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
                         img_crop_offset=img_crop_offset,
                         img_flip=img_flip,
                         img_pad_shape=img_meta['input_shape'],
-                        img_shape=img_meta['img_shape'][:2],
+                        img_shape=img_shape,
                         aligned=False,
                         valid_flag=self.valid_sample)
                     if self.valid_sample:

@@ -21,12 +21,8 @@ class WaymoMetric(KittiMetric):
     """Waymo evaluation metric.
 
     Args:
-<<<<<<< HEAD
         ann_file (str): The path of the annotation file in kitti format.
         waymo_bin_file (str): The path of the annotation file in waymo format.
-=======
-        waymo_bin_file (str): Path of waymo ann in waymo format.
->>>>>>> support multiview wrapper and cam only evaluation
         data_root (str): Path of dataset root.
                          Used for storing waymo evaluation programs.
         split (str): The split of the evaluation set.
@@ -293,7 +289,6 @@ class WaymoMetric(KittiMetric):
         waymo_save_tmp_dir.cleanup()
         return result_files, waymo_save_tmp_dir
 
-<<<<<<< HEAD
     def merge_multi_view_boxes(self, box_dict_per_frame: List[dict],
                                cam0_info: dict):
         """Merge bounding boxes predicted from multi-view images.
@@ -305,10 +300,6 @@ class WaymoMetric(KittiMetric):
         Returns:
             merged_box_dict (dict), store the merge results
         """
-=======
-    def merge_multi_view_boxes(self, box_dict_per_frame, cam0_info):
-        """Merge bounding boxes predicted from multi-view images."""
->>>>>>> update waymo dataset
         box_dict = dict()
         # convert list[dict] to dict[list]
         for key in box_dict_per_frame[0].keys():

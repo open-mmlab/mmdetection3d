@@ -15,7 +15,8 @@ from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 LiDARInstance3DBoxes)
 from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
-from mmdet.datasets.transforms import RandomCrop, RandomFlip
+from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
+                                       RandomFlip)
 from .compose import Compose
 from .data_augment_utils import noise_per_object_v3_
 
@@ -106,12 +107,17 @@ class RandomFlip3D(RandomFlip):
             in horizontal direction. Defaults to 0.0.
         flip_ratio_bev_vertical (float, optional): The flipping probability
             in vertical direction. Defaults to 0.0.
+        flip_box_3d (bool): Whether to flip bounding box. In most of the case,
+            the box should be fliped. In cam-based bev detection, this is set
+            to false, since the flip of 2D images does not influence the 3D
+            box.
     """
 
     def __init__(self,
                  sync_2d: bool = True,
                  flip_ratio_bev_horizontal: float = 0.0,
                  flip_ratio_bev_vertical: float = 0.0,
+                 flip_box3d: bool = True,
                  **kwargs) -> None:
         # `flip_ratio_bev_horizontal` is equal to
         # for flip prob of 2d image when
@@ -121,6 +127,7 @@ class RandomFlip3D(RandomFlip):
         self.sync_2d = sync_2d
         self.flip_ratio_bev_horizontal = flip_ratio_bev_horizontal
         self.flip_ratio_bev_vertical = flip_ratio_bev_vertical
+        self.flip_box3d = flip_box3d
         if flip_ratio_bev_horizontal is not None:
             assert isinstance(
                 flip_ratio_bev_horizontal,
@@ -152,16 +159,16 @@ class RandomFlip3D(RandomFlip):
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
-
-        if 'gt_bboxes_3d' in input_dict:
-            if 'points' in input_dict:
-                input_dict['points'] = input_dict['gt_bboxes_3d'].flip(
-                    direction, points=input_dict['points'])
+        if self.flip_box3d:
+            if 'gt_bboxes_3d' in input_dict:
+                if 'points' in input_dict:
+                    input_dict['points'] = input_dict['gt_bboxes_3d'].flip(
+                        direction, points=input_dict['points'])
+                else:
+                    # vision-only detection
+                    input_dict['gt_bboxes_3d'].flip(direction)
             else:
-                # vision-only detection
-                input_dict['gt_bboxes_3d'].flip(direction)
-        else:
-            input_dict['points'].flip(direction)
+                input_dict['points'].flip(direction)
 
         if 'centers_2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
@@ -177,6 +184,25 @@ class RandomFlip3D(RandomFlip):
             # see more details and examples at
             # https://github.com/open-mmlab/mmdetection3d/pull/744
             input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
+
+    def _flip_on_direction(self, results: dict) -> None:
+        """Function to flip images, bounding boxes, semantic segmentation map
+        and keypoints.
+
+        Add the override feature that if 'flip' is already in results, use it
+        to do the augmentation.
+        """
+        if 'flip' not in results:
+            cur_dir = self._choose_direction()
+        else:
+            cur_dir = results['flip_direction']
+        if cur_dir is None:
+            results['flip'] = False
+            results['flip_direction'] = None
+        else:
+            results['flip'] = True
+            results['flip_direction'] = cur_dir
+            self._flip(results)
 
     def transform(self, input_dict: dict) -> dict:
         """Call function to flip points, values in the ``bbox3d_fields`` and
@@ -1874,7 +1900,10 @@ class RandomResize3D(RandomResize):
             dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor', \
                 'keep_ratio' keys are added into result dict.
         """
-        super(RandomResize3D, self).__call__(results)
+        if 'scale' not in results:
+            results['scale'] = self._random_scale()
+        self.resize.scale = results['scale']
+        results = self.resize(results)
         self._resize_3d(results)
 
         return results
@@ -2016,7 +2045,11 @@ class RandomCrop3D(RandomCrop):
                 updated according to crop size.
         """
         image_size = results['img'].shape[:2]
-        crop_size = self._get_crop_size(image_size)
+        if 'crop_size' not in results:
+            crop_size = self._get_crop_size(image_size)
+            results['crop_size'] = crop_size
+        else:
+            crop_size = results['crop_size']
         results = self._crop_data(results, crop_size, self.allow_negative_crop)
         return results
 
@@ -2614,6 +2647,70 @@ class MultiViewImageNormalize(object):
 
 
 @TRANSFORMS.register_module()
+class PhotoMetricDistortion3D(PhotoMetricDistortion):
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to perform photometric distortion on images.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Result dict with images distorted.
+        """
+        assert 'img' in results, '`img` is not found in results'
+        img = results['img']
+        img = img.astype(np.float32)
+        if 'photometric_param' not in results:
+            photometric_param = self._random_flags()
+            results['photometric_param'] = photometric_param
+        else:
+            photometric_param = results['photometric_param']
+
+        (mode, brightness_flag, contrast_flag, saturation_flag, hue_flag,
+         swap_flag, delta_value, alpha_value, saturation_value, hue_value,
+         swap_value) = photometric_param
+
+        # random brightness
+        if brightness_flag:
+            img += delta_value
+
+        # mode == 0 --> do random contrast first
+        # mode == 1 --> do random contrast last
+        if mode == 1:
+            if contrast_flag:
+                img *= alpha_value
+
+        # convert color from BGR to HSV
+        img = mmcv.bgr2hsv(img)
+
+        # random saturation
+        if saturation_flag:
+            img[..., 1] *= saturation_value
+
+        # random hue
+        if hue_flag:
+            img[..., 0] += hue_value
+            img[..., 0][img[..., 0] > 360] -= 360
+            img[..., 0][img[..., 0] < 0] += 360
+
+        # convert color from HSV to BGR
+        img = mmcv.hsv2bgr(img)
+
+        # random contrast
+        if mode == 0:
+            if contrast_flag:
+                img *= alpha_value
+
+        # randomly swap channels
+        if swap_flag:
+            img = img[..., swap_value]
+
+        results['img'] = img
+        return results
+
+
+@TRANSFORMS.register_module()
 class MultiViewWrapper(object):
     """Wrap transformation from single-view into multi-view.
 
@@ -2635,6 +2732,7 @@ class MultiViewWrapper(object):
 
     def __init__(self,
                  transforms,
+                 override_aug_config=True,
                  process_fields=dict(
                      img_fields=['img', 'lidar2img', 'cam2img', 'lidar2cam']),
                  collected_keys=[
@@ -2642,10 +2740,16 @@ class MultiViewWrapper(object):
                      'scale_factor', 'crop', 'crop_offset', 'ori_shape',
                      'pad_shape', 'img_shape', 'pad_fixed_size',
                      'pad_size_divisor', 'flip', 'flip_direction', 'rotate'
+                 ],
+                 randomness_keys=[
+                     'scale', 'scale_factor', 'crop_size', 'flip',
+                     'flip_direction', 'photometric_param'
                  ]):
         self.transform = Compose(transforms)
+        self.override_aug_config = override_aug_config
         self.collected_keys = collected_keys
         self.process_fields = process_fields
+        self.randomness_keys = randomness_keys
 
     def __call__(self, input_dict):
         for key in self.collected_keys:
@@ -2654,11 +2758,21 @@ class MultiViewWrapper(object):
                 input_dict[key] = []
         for img_id in range(len(input_dict['img'])):
             process_dict = {}
+            prev_process_dict = {}
+
+            # override the process dict (e.g. scale in random scale,
+            # crop_size in random crop, flip, flip_direction in
+            # random flip)
+            if img_id != 0 and self.override_aug_config:
+                for key in self.randomness_keys:
+                    if key in prev_process_dict:
+                        process_dict[key] = prev_process_dict[key]
+
             for field in self.process_fields:
                 for key in self.process_fields[field]:
                     process_dict[key] = input_dict[key][img_id]
-
             process_dict = self.transform(process_dict)
+            prev_process_dict = process_dict
 
             for field in self.process_fields:
                 for key in self.process_fields[field]:

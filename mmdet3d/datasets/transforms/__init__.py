@@ -38,5 +38,5 @@ __all__ = [
     'MultiViewImageNormalize', 'MultiViewImagePad',
     'MultiViewImagePhotoMetricDistortion', 'MultiViewImageRandomResize3D',
     'LoadMultiViewDepthFromFiles', 'MultiViewRandomFlip3D',
-    'MultiViewImageCrop3D', 'MultiViewWrapper'
+    'MultiViewImageCrop3D', 'MultiViewWrapper',
 ]

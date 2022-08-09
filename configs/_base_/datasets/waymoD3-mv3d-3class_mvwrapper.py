@@ -16,14 +16,14 @@ input_modality = dict(use_lidar=False, use_camera=True)
 point_cloud_range = [-35.0, -75.0, -2, 75.0, 75.0, 4]
 
 train_transforms = [
-    # dict(type='PhotoMetricDistortion'),
+    dict(type='PhotoMetricDistortion3D'),
     dict(
         type='RandomResize3D',
         scale=(1248, 832),
         ratio_range=(0.95, 1.05),
         keep_ratio=True),
     dict(type='RandomCrop3D', crop_size=(720, 1080)),
-    dict(type='RandomFlip', prob=0.5, direction='horizontal')
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5, flip_box3d=False),
 ]
 
 train_pipeline = [
@@ -110,7 +110,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_val.pkl',
+        ann_file='waymo_infos_mini_val.pkl',
         data_prefix=dict(
             pts='training/velodyne',
             CAM_FRONT='training/image_0',
@@ -135,7 +135,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_val.pkl',
+        ann_file='waymo_infos_mini_val.pkl',
         data_prefix=dict(
             pts='training/velodyne',
             CAM_FRONT='training/image_0',
