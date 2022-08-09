@@ -89,6 +89,7 @@ class Seg3DDataset(BaseDataset):
 
         metainfo['label_mapping'] = self.label_mapping
         metainfo['label2cat'] = self.label2cat
+        metainfo['ignore_index'] = self.ignore_index
         metainfo['seg_valid_class_ids'] = seg_valid_class_ids
 
         # generate palette if it is not defined based on
@@ -145,7 +146,7 @@ class Seg3DDataset(BaseDataset):
             tuple: The mapping from old classes in cls.METAINFO to
                 new classes in metainfo
         """
-        old_classes = self.METAINFO.get('CLASSSES', None)
+        old_classes = self.METAINFO.get('CLASSES', None)
         if (new_classes is not None and old_classes is not None
                 and list(new_classes) != list(old_classes)):
             if not set(new_classes).issubset(old_classes):
@@ -199,7 +200,7 @@ class Seg3DDataset(BaseDataset):
         if palette is None:
             # If palette is not defined, it generate a palette according
             # to the original PALETTE and classes.
-            old_classes = self.METAINFO.get('CLASSSES', None)
+            old_classes = self.METAINFO.get('CLASSES', None)
             palette = [
                 self.METAINFO['PALETTE'][old_classes.index(cls_name)]
                 for cls_name in new_classes
@@ -266,13 +267,14 @@ class Seg3DDataset(BaseDataset):
         """
         if self.test_mode:
             # when testing, we load one whole scene every time
-            return np.arange(len(self.data_list)).astype(np.int32)
+            return np.arange(len(self)).astype(np.int32)
 
         # we may need to re-sample different scenes according to scene_idxs
         # this is necessary for indoor scene segmentation such as ScanNet
         if scene_idxs is None:
-            scene_idxs = np.arange(len(self.data_list))
+            scene_idxs = np.arange(len(self))
         if isinstance(scene_idxs, str):
+            scene_idxs = osp.join(self.data_root, scene_idxs)
             with self.file_client.get_local_path(scene_idxs) as local_path:
                 scene_idxs = np.load(local_path)
         else:
