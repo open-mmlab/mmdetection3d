@@ -20,7 +20,7 @@ Models:
     Metadata:
       Training Data: KITTI
       Training Resources: 8x Tesla V100
-      Training Memory (GB): TODO
+      Training Memory (GB): 14.8
       Architecture:
         - Anchor3DHead
     Results:
