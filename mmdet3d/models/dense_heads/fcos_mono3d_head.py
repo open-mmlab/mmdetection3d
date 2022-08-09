@@ -702,14 +702,13 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         # Due to the ground truth centers_2d are the gravity center of objects
         # v0.10.0 fix inplace operation to the input tensor of cam_box3d
         # So here we also need to add origin=(0.5, 0.5, 0.5)
-        if not self.pred_attrs:
-            attrs = None
 
         results = InstanceData()
         results.bboxes_3d = bboxes
         results.scores_3d = scores
         results.labels_3d = labels
-        results.attr_labels = attrs
+        if self.pred_attrs and attrs is not None:
+            results.attr_labels = attrs
 
         return results
 
