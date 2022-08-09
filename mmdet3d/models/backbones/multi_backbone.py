@@ -4,7 +4,7 @@ import warnings
 
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
 from torch import nn as nn
 
 from mmdet3d.models.builder import build_backbone
@@ -90,7 +90,6 @@ class MultiBackbone(BaseModule):
                           'please use "init_cfg" instead')
             self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
 
-    @auto_fp16()
     def forward(self, points):
         """Forward pass.
 

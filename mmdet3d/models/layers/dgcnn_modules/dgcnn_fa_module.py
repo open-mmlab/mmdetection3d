@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import BaseModule, force_fp32
+from mmengine.model import BaseModule
 from torch import nn as nn
 
 
@@ -39,7 +39,6 @@ class DGCNNFAModule(BaseModule):
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg))
 
-    @force_fp32()
     def forward(self, points):
         """forward.
 

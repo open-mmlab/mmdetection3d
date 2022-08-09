@@ -2,8 +2,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional, Tuple
 
-from mmcv.runner import BaseModule
 from mmengine.config import ConfigDict
+from mmengine.model import BaseModule
 from torch import Tensor
 
 from mmdet3d.structures.det3d_data_sample import SampleList

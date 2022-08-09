@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.runner import BaseModule, force_fp32
+from mmengine.model import BaseModule
 from torch import nn as nn
 
 from mmdet3d.models.builder import build_loss
@@ -124,7 +124,6 @@ class PointRPNHead(BaseModule):
             batch_size, -1, self._get_reg_out_channels())
         return point_box_preds, point_cls_preds
 
-    @force_fp32(apply_to=('bbox_preds'))
     def loss(self,
              bbox_preds,
              cls_preds,

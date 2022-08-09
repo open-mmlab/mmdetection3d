@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
 from torch import nn as nn
 
 from mmdet3d.models.layers import DGCNNFAModule, DGCNNGFModule
@@ -71,7 +71,6 @@ class DGCNNBackbone(BaseModule):
         self.FA_module = DGCNNFAModule(
             mlp_channels=cur_fa_mlps, act_cfg=act_cfg)
 
-    @auto_fp16(apply_to=('points', ))
     def forward(self, points):
         """Forward pass.
 
