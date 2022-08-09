@@ -1139,7 +1139,7 @@ class PGDHead(FCOSMono3DHead):
             points (list[Tensor]): Points of each fpn level, each has shape
                 (num_points, 2).
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instance_3d.  It usually includes ``bbox_3d``、
+                gt_instance_3d.  It usually includes ``bboxes_3d``、
                 ``labels_3d``、``depths``、``centers_2d`` and attributes.
             batch_gt_instances (list[:obj:`InstanceData`]): Batch of
                 gt_instance.  It usually includes ``bboxes``、``labels``.
