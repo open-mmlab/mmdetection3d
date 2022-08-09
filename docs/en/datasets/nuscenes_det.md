@@ -122,8 +122,8 @@ Next, we will elaborate on the details recorded in these info files.
 
 Here we only explain the data recorded in the training info files. The same applies to validation and testing set.
 
-The core function to get `nuscenes_infos_xxx.pkl` and `nuscenes_infos_xxx_mono3d.coco.json` are [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L143) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py#L397), respectively.
-Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/nuscenes_converter.py) for more details.
+The core function to get `nuscenes_infos_xxx.pkl` and `nuscenes_infos_xxx_mono3d.coco.json` are [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L143) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L397), respectively.
+Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py) for more details.
 
 ## Training pipeline
 
