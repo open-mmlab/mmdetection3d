@@ -174,9 +174,7 @@ train_pipeline = [
         with_mask_3d=False,
         with_seg_3d=True),
     dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names))),
-        max_cat_id=13),
+        type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,

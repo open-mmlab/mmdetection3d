@@ -46,29 +46,38 @@ def replace_ceph_backend(cfg):
         r'''file_client_args = dict(
             backend='petrel',
             path_mapping=dict({
-                '.data/DATA/': 's3://openmmlab/datasets/detection3d/DATA/',
-                'data/DATA/': 's3://openmmlab/datasets/detection3d/DATA/'
+                '.data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/',
+                'data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/'
             }))
         '''
 
     if 'nuscenes' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'nuscenes')
+        replace_strs = replace_strs.replace('CEPH', 'nuscenes')
     elif 'lyft' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'lyft')
+        replace_strs = replace_strs.replace('CEPH', 'lyft')
     elif 'kitti' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'kitti')
+        replace_strs = replace_strs.replace('CEPH', 'kitti')
     elif 'waymo' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'waymo')
+        replace_strs = replace_strs.replace('CEPH', 'waymo')
     elif 'scannet' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('DATA', 'scannet_processed')
+        replace_strs = replace_strs.replace('DATA', 'scannet')
+        replace_strs = replace_strs.replace('CEPH', 'scannet_processed')
     elif 's3dis' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('DATA', 's3dis_processed')
+        replace_strs = replace_strs.replace('DATA', 's3dis')
+        replace_strs = replace_strs.replace('CEPH', 's3dis_processed')
     elif 'sunrgbd' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'sunrgbd')
+        replace_strs = replace_strs.replace('CEPH', 'sunrgbd_processed')
     elif 'semantickitti' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'semantickitti')
+        replace_strs = replace_strs.replace('CEPH', 'semantickitti')
     elif 'nuimages' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'nuimages')
+        replace_strs = replace_strs.replace('CEPH', 'nuimages')
     else:
         NotImplemented('Does not support global replacement')
 

@@ -91,7 +91,7 @@ class PillarFeatureNet(nn.Module):
         self.point_cloud_range = point_cloud_range
 
     @force_fp32(out_fp16=True)
-    def forward(self, features, num_points, coors):
+    def forward(self, features, num_points, coors, *args, **kwargs):
         """Forward function.
 
         Args:

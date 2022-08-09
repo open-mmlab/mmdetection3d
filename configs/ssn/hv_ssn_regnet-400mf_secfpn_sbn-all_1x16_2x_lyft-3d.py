@@ -18,4 +18,4 @@ model = dict(
         style='pytorch'),
     pts_neck=dict(in_channels=[64, 160, 384]))
 # dataset settings
-data = dict(samples_per_gpu=1, workers_per_gpu=2)
+train_dataloader = dict(batch_size=1, num_workers=2)

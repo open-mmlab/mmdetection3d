@@ -69,7 +69,7 @@ class InstanceSegMetric(BaseMetric):
         logger: MMLogger = MMLogger.get_current_instance()
 
         self.classes = self.dataset_meta['CLASSES']
-        self.valid_class_ids = self.dataset_meta['VALID_CLASS_IDS']
+        self.valid_class_ids = self.dataset_meta['seg_valid_class_ids']
 
         gt_semantic_masks = []
         gt_instance_masks = []
