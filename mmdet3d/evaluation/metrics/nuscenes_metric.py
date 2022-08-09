@@ -309,6 +309,7 @@ class NuScenesMetric(BaseMetric):
         Args:
             attr_idx (int): Attribute index.
             label_name (str): Predicted category name.
+
         Returns:
             str: Predicted attribute name.
         """
