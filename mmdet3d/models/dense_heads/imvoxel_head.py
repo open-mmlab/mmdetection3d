@@ -174,8 +174,8 @@ class ImVoxelHead(BaseModule):
 
         bboxes = torch.cat(mlvl_bboxes)
         scores = torch.cat(mlvl_scores)
-        bboxes, scores, labels = self._nms(bboxes, scores, img_meta)
-        return bboxes, scores,
+        bboxes, scores, labels = self._multiclass_nms_single(bboxes, scores, img_meta)
+        return bboxes, scores, labels
 
     def get_bboxes(self, center_preds, bbox_preds, cls_preds, valid_pred,
                    img_metas):
@@ -201,9 +201,10 @@ class ImVoxelHead(BaseModule):
     def _get_points(self, features):
         points = []
         for x in features:
+            n_voxels = x.size()[-3:][::-1]
             points.append(self.prior_generator.grid_anchors(
-                [x.size()[-3:][::-1]],
-                device=x.device)[0][:, :3])
+                [n_voxels], device=x.device)[0][:, :3].reshape(
+                    n_voxels + (3,)).permute(2, 1, 0, 3).reshape(-1, 3))
         return points
 
     @staticmethod

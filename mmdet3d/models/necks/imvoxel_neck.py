@@ -160,9 +160,9 @@ class ResModule(nn.Module):
             self.downsample = ConvModule(
                 in_channels=in_channels,
                 out_channels=out_channels,
-                kernel_size=3,
+                kernel_size=1,
                 stride=stride,
-                padding=1,
+                padding=0,
                 conv_cfg=dict(type='Conv3d'),
                 norm_cfg=dict(type='BN3d'),
                 act_cfg=None)

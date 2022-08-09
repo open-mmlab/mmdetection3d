@@ -39,8 +39,8 @@ model = dict(
     train_cfg=dict(),
     test_cfg=dict(
         nms_pre=1000,
-        nms_thr=.25,  # todo: ?
-        score_thr=.01))  # todo: ?
+        iou_thr=.25,
+        score_thr=.01))
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 
@@ -56,7 +56,7 @@ train_pipeline = [
          img_scale=[(512, 384), (768, 576)],
          multiscale_mode='range',
          keep_ratio=True),
-    # dict(type='RandomFlip3D', sync_2d=False, flip_ratio_bev_horizontal=0.5),  # todo: False?
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
