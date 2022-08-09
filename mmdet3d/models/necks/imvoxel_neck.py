@@ -1,21 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn import ConvModule
+from mmcv.runner import BaseModule
 from torch import nn
 
 from ..builder import NECKS
 
 
 @NECKS.register_module()
-class OutdoorImVoxelNeck(nn.Module):
+class OutdoorImVoxelNeck(BaseModule):
     """Neck for ImVoxelNet outdoor scenario.
 
     Args:
-        in_channels (int): Input channels of multi-scale feature map.
-        out_channels (int): Output channels of multi-scale feature map.
+        in_channels (int): Number of channels in an input tensor.
+        out_channels (int): Number of channels in all output tensors.
     """
 
     def __init__(self, in_channels, out_channels):
-        super().__init__()
+        super(OutdoorImVoxelNeck, self).__init__()
         self.model = nn.Sequential(
             ResModule(in_channels, in_channels),
             ConvModule(
@@ -67,7 +68,15 @@ class OutdoorImVoxelNeck(nn.Module):
 
 
 @NECKS.register_module()
-class IndoorImVoxelNeck(nn.Module):
+class IndoorImVoxelNeck(BaseModule):
+    """Neck for ImVoxelNet outdoor scenario.
+
+    Args:
+        in_channels (int): Number of channels in an input tensor.
+        out_channels (int): Number of channels in all output tensors.
+        n_blocks (list[int]): Number of blocks for each feature level.
+    """
+
     def __init__(self, in_channels, out_channels, n_blocks):
         super(IndoorImVoxelNeck, self).__init__()
         self.n_scales = len(n_blocks)
@@ -81,6 +90,14 @@ class IndoorImVoxelNeck(nn.Module):
             self.__setattr__(f'out_block_{i}', self._make_block(n_channels, out_channels))
 
     def forward(self, x):
+        """Forward function.
+
+        Args:
+            x (torch.Tensor): of shape (N, C_in, N_x, N_y, N_z).
+
+        Returns:
+            list[torch.Tensor]: of shape (N, C_out, N_xi, N_yi, N_zi).
+        """
         down_outs = []
         for i in range(self.n_scales):
             x = self.__getattr__(f'down_layer_{i}')(x)
@@ -96,6 +113,16 @@ class IndoorImVoxelNeck(nn.Module):
 
     @staticmethod
     def _make_layer(stride, n_channels, n_blocks):
+        """Make a layer from several residual blocks.
+
+        Args:
+            stride (int): Stride of the first residual block.
+            n_channels (int): Number of channels of the first residual block.
+            n_blocks (int): Number of residual blocks.
+
+        Returns:
+            torch.nn.Module: With several residual blocks.
+        """
         blocks = []
         for i in range(n_blocks):
             if i == 0 and stride != 1:
@@ -107,28 +134,42 @@ class IndoorImVoxelNeck(nn.Module):
 
     @staticmethod
     def _make_block(in_channels, out_channels):
+        """Make a convolutional block.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+
+        Returns:
+            torch.nn.Module: Convolutional block.
+        """
         return nn.Sequential(
             nn.Conv3d(in_channels, out_channels, 3, 1, 1, bias=False),
             nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True)
-        )
+            nn.ReLU(inplace=True))
 
     @staticmethod
     def _make_up_block(in_channels, out_channels):
+        """Make upsampling convolutional block.
+
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+
+        Returns:
+            torch.nn.Module: Upsampling convolutional block.
+        """
+
         return nn.Sequential(
             nn.ConvTranspose3d(in_channels, out_channels, 2, 2, bias=False),
             nn.BatchNorm3d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv3d(out_channels, out_channels, 3, 1, 1, bias=False),
             nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True)
-        )
-
-    def init_weights(self):
-        pass
+            nn.ReLU(inplace=True))
 
 
-class ResModule(nn.Module):
+class ResModule(BaseModule):
     """3d residual block for ImVoxelNeck.
 
     Args:

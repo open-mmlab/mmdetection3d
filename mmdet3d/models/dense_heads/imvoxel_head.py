@@ -25,12 +25,13 @@ class ImVoxelHead(BaseModule):
             be assigned with.
         pts_center_threshold (int): Max number of locations per box to
             be assigned with.
-        center_loss (dict): Config of centerness loss.
-        bbox_loss (dict): Config of bbox loss.
-        cls_loss (dict): Config of classification loss.
-        train_cfg (dict): Config for train stage. Defaults to None.
-        test_cfg (dict): Config for test stage. Defaults to None.
-        init_cfg (dict): Config for weight initialization. Defaults to None.
+        center_loss (dict, optional): Config of centerness loss.
+        bbox_loss (dict, optional): Config of bbox loss.
+        cls_loss (dict, optional): Config of classification loss.
+        train_cfg (dict, optional): Config for train stage. Defaults to None.
+        test_cfg (dict, optional): Config for test stage. Defaults to None.
+        init_cfg (dict, optional): Config for weight initialization.
+            Defaults to None.
     """
 
     def __init__(self,
@@ -59,28 +60,62 @@ class ImVoxelHead(BaseModule):
         self._init_layers(n_channels, n_reg_outs, n_classes, n_levels)
 
     def _init_layers(self, n_channels, n_reg_outs, n_classes, n_levels):
-        self.center_conv = nn.Conv3d(n_channels, 1, 3, padding=1, bias=False)
-        self.reg_conv = nn.Conv3d(n_channels, n_reg_outs, 3, padding=1, bias=False)
-        self.cls_conv = nn.Conv3d(n_channels, n_classes, 3, padding=1)
+        """Initialize neural network layers of the head."""
+        self.conv_center = nn.Conv3d(n_channels, 1, 3, padding=1, bias=False)
+        self.conv_reg = nn.Conv3d(n_channels, n_reg_outs, 3, padding=1, bias=False)
+        self.conv_cls = nn.Conv3d(n_channels, n_classes, 3, padding=1)
         self.scales = nn.ModuleList([Scale(1.) for _ in range(n_levels)])
 
     def init_weights(self):
-        normal_init(self.center_conv, std=.01)
-        normal_init(self.reg_conv, std=.01)
-        normal_init(self.cls_conv, std=.01, bias=bias_init_with_prob(.01))
+        """Initialize all layer weights."""
+        normal_init(self.conv_center, std=.01)
+        normal_init(self.conv_reg, std=.01)
+        normal_init(self.conv_cls, std=.01, bias=bias_init_with_prob(.01))
 
     def _forward_single(self, x, scale):
-        reg_final = self.reg_conv(x)
+        """Forward pass per level.
+
+        Args:
+            x (Tensor): Per level 3d neck output tensor.
+            scale (mmcv.cnn.Scale): Per level multiplication weight.
+
+        Returns:
+            tuple[Tensor]: Centerness, bbox and classification predictions.
+        """
+        reg_final = self.conv_reg(x)
         reg_distance = torch.exp(scale(reg_final[:, :6]))
         reg_angle = reg_final[:, 6:]
         bbox_pred = torch.cat((reg_distance, reg_angle), dim=1)
-        return self.center_conv(x), bbox_pred, self.cls_conv(x)
+        return self.conv_center(x), bbox_pred, self.conv_cls(x)
 
     def forward(self, x):
+        """Forward function.
+
+        Args:
+            x (list[Tensor]): Features from 3d neck.
+
+        Returns:
+            tuple[Tensor]: Centerness, bbox and classification predictions.
+        """
         return multi_apply(self._forward_single, x, self.scales)
 
     def _loss_single(self, center_preds, bbox_preds, cls_preds, valid_preds,
                      img_meta, gt_bboxes, gt_labels):
+        """Per scene loss function.
+
+        Args:
+            center_preds (list[Tensor]): Centerness predictions for all levels.
+            bbox_preds (list[Tensor]): Bbox predictions for all levels.
+            cls_preds (list[Tensor]): Classification predictions for all
+                levels.
+            valid_preds (list[Tensor]): Valid mask predictions for all levels.
+            img_meta (dict): Scene meta info.
+            gt_bboxes (BaseInstance3DBoxes): Ground truth boxes.
+            gt_labels (Tensor): Ground truth labels.
+
+        Returns:
+            tuple[Tensor]: Centerness, bbox, and classification loss values.
+        """
         points = self._get_points(center_preds)
         center_targets, bbox_targets, cls_targets = self._get_targets(
             points, gt_bboxes, gt_labels)
@@ -129,6 +164,23 @@ class ImVoxelHead(BaseModule):
 
     def loss(self, center_preds, bbox_preds, cls_preds, valid_pred,
              gt_bboxes, gt_labels, img_metas):
+        """Per scene loss function.
+
+        Args:
+            center_preds (list[list[Tensor]]): Centerness predictions for
+                all scenes.
+            bbox_preds (list[list[Tensor]]): Bbox predictions for all scenes.
+            cls_preds (list[list[Tensor]]): Classification predictions for all
+                scenes.
+            valid_pred (Tensor): Valid mask prediction for all scenes.
+            gt_bboxes (list[BaseInstance3DBoxes]): Ground truth boxes for all
+                scenes.
+            gt_labels (list[Tensor]): Ground truth labels for all scenes.
+            img_metas (list[dict]): Meta infos for all scenes.
+
+        Returns:
+            dict: Centerness, bbox, and classification loss values.
+        """
         valid_preds = self._upsample_valid_preds(valid_pred, center_preds)
         center_losses, bbox_losses, cls_losses = [], [], []
         for i in range(len(img_metas)):
@@ -150,6 +202,19 @@ class ImVoxelHead(BaseModule):
 
     def _get_bboxes_single(self, center_preds, bbox_preds, cls_preds, valid_preds,
                            img_meta):
+        """Generate boxes for a single scene.
+
+        Args:
+            center_preds (list[Tensor]): Centerness predictions for all levels.
+            bbox_preds (list[Tensor]): Bbox predictions for all levels.
+            cls_preds (list[Tensor]): Classification predictions for all
+                levels.
+            valid_preds (list[Tensor]): Valid mask predictions for all levels.
+            img_meta (dict): Scene meta info.
+
+        Returns:
+            tuple[Tensor]: Predicted bounding boxes, scores and labels.
+        """
         points = self._get_points(center_preds)
         mlvl_bboxes, mlvl_scores = [], []
         for center_pred, bbox_pred, cls_pred, valid_pred, point in zip(
@@ -174,11 +239,27 @@ class ImVoxelHead(BaseModule):
 
         bboxes = torch.cat(mlvl_bboxes)
         scores = torch.cat(mlvl_scores)
-        bboxes, scores, labels = self._multiclass_nms_single(bboxes, scores, img_meta)
+        bboxes, scores, labels = self._single_scene_multiclass_nms(
+            bboxes, scores, img_meta)
         return bboxes, scores, labels
 
     def get_bboxes(self, center_preds, bbox_preds, cls_preds, valid_pred,
                    img_metas):
+        """Generate boxes for all scenes.
+
+        Args:
+            center_preds (list[list[Tensor]]): Centerness predictions for
+                all scenes.
+            bbox_preds (list[list[Tensor]]): Bbox predictions for all scenes.
+            cls_preds (list[list[Tensor]]): Classification predictions for all
+                scenes.
+            valid_pred (Tensor): Valid mask prediction for all scenes.
+            img_metas (list[dict]): Meta infos for all scenes.
+
+        Returns:
+            list[tuple[Tensor]]: Predicted bboxes, scores, and labels for
+                all scenes.
+        """
         valid_preds = self._upsample_valid_preds(valid_pred, center_preds)
         results = []
         for i in range(len(img_metas)):
@@ -193,12 +274,29 @@ class ImVoxelHead(BaseModule):
 
     @staticmethod
     def _upsample_valid_preds(valid_pred, features):
+        """Upsample valid mask predictions.
+
+        Args:
+            valid_pred (Tensor): Valid mask prediction.
+            features (Tensor): Feature tensor.
+
+        Returns:
+            tuple[Tensor]: Upsampled valid masks for all feature levels.
+        """
         return [
             nn.Upsample(size=x.shape[-3:],
                         mode='trilinear')(valid_pred).round().bool()
             for x in features]
 
     def _get_points(self, features):
+        """Generate final locations.
+
+        Args:
+            features (list[Tensor]): Feature tensors for all feature levels.
+
+        Returns:
+            list(Tensor): Final locations for all feature levels.
+        """
         points = []
         for x in features:
             n_voxels = x.size()[-3:][::-1]
@@ -209,6 +307,15 @@ class ImVoxelHead(BaseModule):
 
     @staticmethod
     def _bbox_pred_to_bbox(points, bbox_pred):
+        """Transform predicted bbox parameters to bbox.
+
+        Args:
+            points (Tensor): Final locations of shape (N, 3).
+            bbox_pred (Tensor): Predicted bbox parameters of shape (N, 7).
+
+        Returns:
+            Tensor: Transformed 3D box of shape (N, 7).
+        """
         if bbox_pred.shape[0] == 0:
             return bbox_pred
 
@@ -232,9 +339,11 @@ class ImVoxelHead(BaseModule):
     @staticmethod
     def _get_face_distances(points, boxes):
         """Calculate distances from point to box faces.
+
         Args:
             points (Tensor): Final locations of shape (N_points, N_boxes, 3).
             boxes (Tensor): 3D boxes of shape (N_points, N_boxes, 7)
+
         Returns:
             Tensor: Face distances of shape (N_points, N_boxes, 6),
                 (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
@@ -261,19 +370,19 @@ class ImVoxelHead(BaseModule):
         """Compute point centerness w.r.t containing box.
 
         Args:
-            face_distances (Tensor): Face distances of shape (..., 6),
+            face_distances (Tensor): Face distances of shape (B, N, 6),
                 (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
 
         Returns:
-            Tensor: Centerness.
+            Tensor: Centerness of shape (B, N).
         """
         x_dims = face_distances[..., [0, 1]]
         y_dims = face_distances[..., [2, 3]]
         z_dims = face_distances[..., [4, 5]]
-        centerness = x_dims.min(dim=-1)[0] / x_dims.max(dim=-1)[0] * \
-                     y_dims.min(dim=-1)[0] / y_dims.max(dim=-1)[0] * \
-                     z_dims.min(dim=-1)[0] / z_dims.max(dim=-1)[0]
-        return torch.sqrt(centerness)
+        centerness_targets = x_dims.min(dim=-1)[0] / x_dims.max(dim=-1)[0] * \
+                             y_dims.min(dim=-1)[0] / y_dims.max(dim=-1)[0] * \
+                             z_dims.min(dim=-1)[0] / z_dims.max(dim=-1)[0]
+        return torch.sqrt(centerness_targets)
 
     # The function is directly copied from FCAF3DHead.
     @torch.no_grad()
@@ -286,7 +395,8 @@ class ImVoxelHead(BaseModule):
             gt_labels (Tensor): Ground truth labels.
 
         Returns:
-            tuple[Tensor]: Centerness, bbox, and classification targets.
+            tuple[Tensor]: Centerness, bbox and classification
+                targets for all locations.
         """
         float_max = points[0].new_tensor(1e8)
         n_levels = len(points)
@@ -357,19 +467,20 @@ class ImVoxelHead(BaseModule):
     # Originally ImVoxelNet utilizes 2d nms as mmdetection3d didn't
     # support 3d nms. But since mmcv==1.5.2 we simply use nms3d here.
     # The function is directly copied from FCAF3DHead.
-    def _multiclass_nms_single(self, bboxes, scores, img_meta):
+    def _single_scene_multiclass_nms(self, bboxes, scores, input_meta):
         """Multi-class nms for a single scene.
 
         Args:
-            bboxes (Tensor): Predicted boxes of shape (N_boxes, 7).
+            bboxes (Tensor): Predicted boxes of shape (N_boxes, 6) or
+                (N_boxes, 7).
             scores (Tensor): Predicted scores of shape (N_boxes, N_classes).
-            img_meta (dict): Scene meta data.
+            input_meta (dict): Scene meta data.
 
         Returns:
-            tuple[Tensor]: Predicted bounding boxes, scores and labels.
+            tuple[Tensor]: Predicted bboxes, scores and labels.
         """
         n_classes = scores.shape[1]
-        yaw_flag = bboxes.shape[1] == 7
+        with_yaw = bboxes.shape[1] == 7
         nms_bboxes, nms_scores, nms_labels = [], [], []
         for i in range(n_classes):
             ids = scores[:, i] > self.test_cfg.score_thr
@@ -378,7 +489,7 @@ class ImVoxelHead(BaseModule):
 
             class_scores = scores[ids, i]
             class_bboxes = bboxes[ids]
-            if yaw_flag:
+            if with_yaw:
                 nms_function = nms3d
             else:
                 class_bboxes = torch.cat(
@@ -403,14 +514,12 @@ class ImVoxelHead(BaseModule):
             nms_scores = bboxes.new_zeros((0,))
             nms_labels = bboxes.new_zeros((0,))
 
-        if yaw_flag:
+        if with_yaw:
             box_dim = 7
-            with_yaw = True
         else:
             box_dim = 6
-            with_yaw = False
             nms_bboxes = nms_bboxes[:, :6]
-        nms_bboxes = img_meta['box_type_3d'](
+        nms_bboxes = input_meta['box_type_3d'](
             nms_bboxes,
             box_dim=box_dim,
             with_yaw=with_yaw,
