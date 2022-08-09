@@ -71,7 +71,7 @@ def replace_ceph_backend(cfg):
         replace_strs = replace_strs.replace('CEPH', 's3dis_processed')
     elif 'sunrgbd' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'sunrgbd')
-        replace_strs = replace_strs.replace('CEPH', 'sunrgbd')
+        replace_strs = replace_strs.replace('CEPH', 'sunrgbd_processed')
     elif 'semantickitti' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'semantickitti')
         replace_strs = replace_strs.replace('CEPH', 'semantickitti')
