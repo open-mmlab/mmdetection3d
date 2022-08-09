@@ -306,6 +306,7 @@ class NuScenesMetric(BaseMetric):
         is not reliable. We map the predicted attribute index to the one
         in the attribute set. If it is consistent with the category, we will
         keep it. Otherwise, we will use the default attribute.
+
         Args:
             attr_idx (int): Attribute index.
             label_name (str): Predicted category name.
