@@ -141,7 +141,7 @@ class WaymoDataset(KittiDataset):
             gt_labels = ann_info['gt_labels']
         else:
             gt_bboxes = np.zeros((0, 4), dtype=np.float32)
-            gt_labels = np.array([], dtype=np.int64)
+            gt_labels = np.zeros(0, dtype=np.int64)
         if 'centers_2d' in ann_info:
             centers_2d = ann_info['centers_2d']
             depths = ann_info['depths']
