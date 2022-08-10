@@ -4,8 +4,8 @@
 
 ## MMCV/MMDet/MMDet3D Installation
 
-- 跟MMCV, MMDetection, MMSegmentation and MMDection3D相关的编译问题; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
-  MMDETECTION3D需要的MMCV, MMDetection 和 MMSegmentation的版本列在了下面。请安装正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免相关的安装问题。
+- 跟 MMCV, MMDetection, MMSegmentation and MMDection3D相关的编译问题; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
+  MMDETECTION3D需要的 MMCV, MMDetection 和 MMSegmentation的版本列在了下面。请安装正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免相关的安装问题。
 
   | MMDetection3D version |   MMDetection version    | MMSegmentation version  |        MMCV version         |
   | :-------------------: | :----------------------: | :---------------------: | :-------------------------: |

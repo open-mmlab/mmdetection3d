@@ -1,6 +1,6 @@
 # 依赖
 
-MMDection3D 可以安装在 Linux, MacOS, (实验性支持 Windows)的平台上，它具体需要下列安装包:
+MMDection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台上，它具体需要下列安装包:
 
 - Python 3.6+
 - PyTorch 1.3+
@@ -117,7 +117,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 4. 一些安装依赖是可以选择的。例如只需要安装最低运行要求的版本，则可以使用 `pip install -v -e .` 命令。如果希望使用可选择的像 `albumentations` 和 `imagecorruptions` 这种依赖项，可以使用 `pip install -r requirements/optional.txt ` 进行手动安装，或者在使用 `pip` 时指定所需的附加功能（例如 `pip install -v -e .[optional]`），支持附加功能的有效键值包括  `all`、`tests`、`build` 以及 `optional` 。
 
-   我们已经支持 spconv2.0. 如果用户已经安装spconv 2.0， 代码会默认使用spconv 2.0。它可以比原生mmcv spconv 使用更少的内存。 用户可以使用下列的命令来安装spconv 2.0.
+   我们已经支持 spconv2.0. 如果用户已经安装 spconv 2.0， 代码会默认使用 spconv 2.0。它可以比原生mmcv spconv 使用更少的内存。 用户可以使用下列的命令来安装 spconv 2.0.
 
    ```bash
    pip install cumm-cuxxx
@@ -128,7 +128,7 @@ pip install -v -e .  # or "python setup.py develop"
 
    例如, 使用 CUDA 10.2, 对应命令是  `pip install cumm-cu102 && pip install spconv-cu102`.
 
-   支持的CUDA 版本包括 10.2, 11.1, 11.3, and 11.4. 用户可以通过源码编译来在这些版本上安装. 具体细节请参考 [spconv v2.x](https://github.com/traveller59/spconv).
+   支持的 CUDA 版本包括 10.2, 11.1, 11.3, and 11.4. 用户可以通过源码编译来在这些版本上安装. 具体细节请参考 [spconv v2.x](https://github.com/traveller59/spconv).
 
    我们同时也支持 Minkowski Engine 来作为稀疏卷机的后端. 如果需要，可以参照 [安装指南](https://github.com/NVIDIA/MinkowskiEngine#installation) 或使用 `pip`:
 
