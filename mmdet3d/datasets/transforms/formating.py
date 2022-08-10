@@ -70,8 +70,11 @@ class Pack3DDetInputs(BaseTransform):
                            'box_mode_3d', 'box_type_3d', 'img_norm_cfg',
                            'pcd_trans', 'sample_idx', 'pcd_scale_factor',
                            'pcd_rotation', 'pcd_rotation_angle', 'lidar_path',
-                           'transformation_3d_flow', 'trans_mat',
-                           'affine_aug')):
+                           'transformation_3d_flow', 'trans_mat', 'affine_aug',
+                           'sweep_img_metas', 'ori_cam2img', 'cam2global',
+                           'crop_offset', 'img_crop_offset',
+                           'img_resized_shape', 'lidar2cam', 'ori_lidar2img',
+                           'num_ref_frames', 'num_views', 'ego2global')):
         self.keys = keys
         self.meta_keys = meta_keys
 

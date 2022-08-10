@@ -27,7 +27,7 @@ class WaymoMetric(KittiMetric):
                          Used for storing waymo evaluation programs.
         split (str): The split of the evaluation set.
         metric (str | list[str]): Metrics to be evaluated.
-            Default to 'lidar'.
+            Default to 'mAP'.
         pcd_limit_range (list): The range of point cloud used to
             filter invalid predicted boxes.
             Default to [0, -40, -3, 70.4, 40, 0.0].
@@ -60,7 +60,7 @@ class WaymoMetric(KittiMetric):
                  waymo_bin_file: str,
                  data_root: str,
                  split: str = 'training',
-                 metric: Union[str, List[str]] = 'lidar',
+                 metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
@@ -121,7 +121,7 @@ class WaymoMetric(KittiMetric):
             classes=self.classes)
         import subprocess
 
-        if self.metric == 'lidar':
+        if self.metric == 'mAP':
             eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
                 f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
@@ -178,7 +178,7 @@ class WaymoMetric(KittiMetric):
             ap_dict['Overall/L2 mAPH'] = \
                 (ap_dict['Vehicle/L2 mAPH'] + ap_dict['Pedestrian/L2 mAPH'] +
                     ap_dict['Cyclist/L2 mAPH']) / 3
-        elif self.metric == 'cam_only':
+        elif self.metric == 'LET_mAP':
             eval_str = 'mmdet3d/core/evaluation/waymo_utils/' + \
                 f'compute_detection_metrics_main_let {pklfile_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'

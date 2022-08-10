@@ -2308,31 +2308,31 @@ class MultiViewWrapper(object):
         process_fields (dict): Desired keys that the transformations should
             be conducted on. Default to dict(img_fields=['img', 'lidar2img',
             'cam2img', 'lidar2cam']
-        collected_keys (List[str]): Collect information in transformation
+        collected_keys (list): Collect information in transformation
             like rotate angles, crop roi, and flip state. Default to
                 [
                     'scale'
                     'scale_factor', 'crop', 'crop_offset', 'ori_shape',
                     'pad_shape', 'img_shape', 'pad_fixed_size',
                     'pad_size_divisor', 'flip', 'flip_direction', 'rotate'],
-        randomness_keys (List[str]): The keys that related to the randomness
+        randomness_keys (list): The keys that related to the randomness
             in transformation Default to[
                      'scale', 'scale_factor', 'crop_size', 'flip',
                      'flip_direction', 'photometric_param']
     """
 
     def __init__(self,
-                 transforms: List[Dict],
+                 transforms: dict,
                  override_aug_config: bool = True,
-                 process_fields: Dict[str] = dict(
+                 process_fields: dict = dict(
                      img_fields=['img', 'lidar2img', 'cam2img', 'lidar2cam']),
-                 collected_keys: List[str] = [
+                 collected_keys: list = [
                      'scale'
                      'scale_factor', 'crop', 'crop_offset', 'ori_shape',
                      'pad_shape', 'img_shape', 'pad_fixed_size',
                      'pad_size_divisor', 'flip', 'flip_direction', 'rotate'
                  ],
-                 randomness_keys: List[str] = [
+                 randomness_keys: list = [
                      'scale', 'scale_factor', 'crop_size', 'flip',
                      'flip_direction', 'photometric_param'
                  ]):
