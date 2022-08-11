@@ -103,7 +103,7 @@ def show_result(points,
 
         vis = Visualizer(points)
         if pred_bboxes is not None:
-            if pred_labels is None:
+            if pred_labels is None or pred_labels.numel() == 0:
                 vis.add_bboxes(bbox3d=pred_bboxes)
             else:
                 palette = np.random.randint(
