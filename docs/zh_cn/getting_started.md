@@ -1,6 +1,6 @@
 # 依赖
 
-MMDection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台上，它具体需要下列安装包:
+MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台上，它具体需要下列安装包:
 
 - Python 3.6+
 - PyTorch 1.3+
@@ -9,10 +9,10 @@ MMDection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台上
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 ```{note}
-如果你已经装了pytorch, 可以跳过这一部分，然后转到[下一章节](#installation). 如果没有，可以参照以下步骤安装环境。
+如果你已经装了 pytorch, 可以跳过这一部分，然后转到[下一章节](#installation). 如果没有，可以参照以下步骤安装环境。
 ```
 
-**Step 0.** 安装MiniConda [官网](https://docs.conda.io/en/latest/miniconda.html).
+**Step 0.** 安装 MiniConda [官网](https://docs.conda.io/en/latest/miniconda.html).
 
 **Step 1.** 使用 conda 新建虚拟环境，并进入该虚拟环境
 
@@ -37,7 +37,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 # 安装
 
-我们建议用户参照我们的最佳实践MMDetection3D。不过，整个过程也是可定制化的，具体可参照[自定义安装章节](#customize-installation)
+我们建议用户参照我们的最佳实践 MMDetection3D。不过，整个过程也是可定制化的，具体可参照[自定义安装章节](#customize-installation)
 
 ## 最佳实践
 
@@ -86,7 +86,7 @@ git checkout v0.20.0  # switch to v0.20.0 branch
 pip install -e .  # or "python setup.py develop"
 ```
 
-**Step 3. 克隆 MMDetection3D 代码仓库**
+**Step 3. 克隆 MMDetection3D 代码仓库.**
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git
@@ -117,7 +117,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 4. 一些安装依赖是可以选择的。例如只需要安装最低运行要求的版本，则可以使用 `pip install -v -e .` 命令。如果希望使用可选择的像 `albumentations` 和 `imagecorruptions` 这种依赖项，可以使用 `pip install -r requirements/optional.txt ` 进行手动安装，或者在使用 `pip` 时指定所需的附加功能（例如 `pip install -v -e .[optional]`），支持附加功能的有效键值包括  `all`、`tests`、`build` 以及 `optional` 。
 
-   我们已经支持 spconv2.0. 如果用户已经安装 spconv 2.0， 代码会默认使用 spconv 2.0。它可以比原生mmcv spconv 使用更少的内存。 用户可以使用下列的命令来安装 spconv 2.0.
+   我们已经支持 spconv2.0. 如果用户已经安装 spconv 2.0， 代码会默认使用 spconv 2.0。它可以比原生 mmcv spconv 使用更少的内存。 用户可以使用下列的命令来安装 spconv 2.0.
 
    ```bash
    pip install cumm-cuxxx
@@ -226,15 +226,15 @@ model.show_results(data, result, out_dir='results')
 
 ### CUDA 版本
 
-当安装PyTorch的时候，你需要去指定CUDA 的版本。如果你不清楚如何选择CUDA的版本，可以参考我们如下的建议：
+当安装 PyTorch 的时候，你需要去指定 CUDA 的版本。如果你不清楚如何选择 CUDA 的版本，可以参考我们如下的建议：
 
 - 对于 Ampere 的 NVIDIA GPU, 比如 GeForce 30 series 和 NVIDIA A100, CUDA 11 是必须的。
-- 对于老款的NVIDIA GPUs, CUDA 11 是可编译的，但是 CUDA 10.2 提供更好的可编译性，并且更轻量。
+- 对于老款的 NVIDIA GPUs, CUDA 11 是可编译的，但是 CUDA 10.2 提供更好的可编译性，并且更轻量。
 
 请确保GPU 驱动版本大于最低需求。这个[表格](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions__table-cuda-toolkit-driver-versions) 提供更多的信息。
 
 ```{note}
-如果你参照最佳实践，你只需要安装CUDA runtime libraries。 这是因为没有代码需要在本地通过CUDA 编译。然而如果你需要编译MMCV源码，或者编译其他CUDA 代码，你需要基于NVIDIA [website](https://developer.nvidia.com/cuda-downloads) 安装完整的CUDA toolkit，并且要保证它的版本跟PyTorch匹配。比如在'conda install` 里对应的cudatoolkit 版本。
+如果你参照最佳实践，你只需要安装 CUDA runtime libraries。 这是因为没有代码需要在本地通过 CUDA 编译。然而如果你需要编译MMCV源码，或者编译其他 CUDA 代码，你需要基于 NVIDIA [website](https://developer.nvidia.com/cuda-downloads) 安装完整的 CUDA toolkit，并且要保证它的版本跟 PyTorch 匹配。比如在 'conda install` 里对应的 cudatoolkit 版本。
 ```
 
 ### 不通过MIM 安装MMCV
