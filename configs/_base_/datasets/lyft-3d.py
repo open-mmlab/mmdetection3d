@@ -12,6 +12,7 @@ data_root = 'data/lyft/'
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=True, use_camera=False)
 data_prefix = dict(pts='samples/LIDAR_TOP', img='')
+
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
@@ -22,17 +23,10 @@ file_client_args = dict(backend='disk')
 #         './data/lyft/': 's3://lyft/lyft/',
 #         'data/lyft/': 's3://lyft/lyft/'
 #    }))
+
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',
@@ -48,16 +42,8 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -78,16 +64,8 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(

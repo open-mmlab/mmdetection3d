@@ -69,7 +69,7 @@ class InstanceSegMetric(BaseMetric):
         logger: MMLogger = MMLogger.get_current_instance()
 
         self.classes = self.dataset_meta['CLASSES']
-        self.valid_class_ids = self.dataset_meta['VALID_CLASS_IDS']
+        self.valid_class_ids = self.dataset_meta['seg_valid_class_ids']
 
         gt_semantic_masks = []
         gt_instance_masks = []
@@ -80,9 +80,10 @@ class InstanceSegMetric(BaseMetric):
         for eval_ann, sinlge_pred_results in results:
             gt_semantic_masks.append(eval_ann['pts_semantic_mask'])
             gt_instance_masks.append(eval_ann['pts_instance_mask'])
-            pred_instance_masks.append(sinlge_pred_results['pts_intance_mask'])
-            pred_instance_labels.append(sinlge_pred_results['instance_label'])
-            pred_instance_scores.append(sinlge_pred_results['instance_score'])
+            pred_instance_masks.append(
+                sinlge_pred_results['pts_instance_mask'])
+            pred_instance_labels.append(sinlge_pred_results['instance_labels'])
+            pred_instance_scores.append(sinlge_pred_results['instance_scores'])
 
         ret_dict = instance_seg_eval(
             gt_semantic_masks,

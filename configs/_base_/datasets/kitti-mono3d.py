@@ -4,21 +4,15 @@ class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 metainfo = dict(CLASSES=class_names)
 
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/',
-        'data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/'
-    }))
+# file_client_args = dict(
+#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
 
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -37,7 +31,7 @@ train_pipeline = [
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(type='Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]

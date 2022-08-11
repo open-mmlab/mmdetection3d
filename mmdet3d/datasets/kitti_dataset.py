@@ -22,6 +22,7 @@ class KittiDataset(Det3DDataset):
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to `dict(use_lidar=True)`.
+
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -49,7 +50,7 @@ class KittiDataset(Det3DDataset):
                  ann_file: str,
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: Optional[dict] = dict(use_lidar=True),
-                 default_cam_key='CAM2',
+                 default_cam_key: str = 'CAM2',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,

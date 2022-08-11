@@ -131,8 +131,8 @@ class DataBaseSampler(object):
             db_infos = mmcv.load(info_path)
 
         # filter database infos
-        from mmdet3d.utils import get_root_logger
-        logger = get_root_logger()
+        from mmengine.logging import MMLogger
+        logger: MMLogger = MMLogger.get_current_instance()
         for k, v in db_infos.items():
             logger.info(f'load {len(v)} {k} database infos')
         for prep_func, val in prepare.items():

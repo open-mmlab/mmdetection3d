@@ -34,17 +34,17 @@ class TestDGCNNHead(TestCase):
         # Test forward
         seg_logits = dgcnn_head.forward(feat_dict)
 
-        self.assertEqual(seg_logits, torch.Size([1, 13, 4096]))
+        self.assertEqual(seg_logits.shape, torch.Size([1, 13, 4096]))
 
         # When truth is non-empty then losses
         # should be nonzero for random inputs
-        pts_semantic_mask = torch.randint(0, 13, (2, 4096)).long()
+        pts_semantic_mask = torch.randint(0, 13, (4096, )).long()
         gt_pts_seg = PointData(pts_semantic_mask=pts_semantic_mask)
 
         datasample = Det3DDataSample()
         datasample.gt_pts_seg = gt_pts_seg
 
-        gt_losses = dgcnn_head.loss(seg_logits, [datasample])
+        gt_losses = dgcnn_head.loss_by_feat(seg_logits, [datasample])
 
         gt_sem_seg_loss = gt_losses['loss_sem_seg'].item()
 

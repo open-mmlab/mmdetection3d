@@ -121,7 +121,9 @@ db_sampler = dict(
         Car=15,
         Pedestrian=15,
         Cyclist=15,
-    ))
+    ),
+    points_loader=dict(
+        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),

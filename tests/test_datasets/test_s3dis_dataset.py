@@ -33,7 +33,10 @@ def _generate_s3dis_seg_dataset_config():
             with_label_3d=False,
             with_mask_3d=False,
             with_seg_3d=True),
-        dict(type='PointSegClassMapping'),
+        dict(
+            type='PointSegClassMapping',
+            valid_cat_ids=tuple(range(len(classes))),
+            max_cat_id=13),
         dict(
             type='IndoorPatchPointSample',
             num_points=5,
@@ -58,11 +61,12 @@ def _generate_s3dis_seg_dataset_config():
 class TestS3DISDataset(unittest.TestCase):
 
     def test_s3dis_seg(self):
-        np.random.seed(0)
         data_root, ann_file, classes, palette, scene_idxs, data_prefix, \
             pipeline, modality, = _generate_s3dis_seg_dataset_config()
 
         register_all_modules()
+        np.random.seed(0)
+
         s3dis_seg_dataset = S3DISSegDataset(
             data_root,
             ann_file,

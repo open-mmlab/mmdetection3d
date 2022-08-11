@@ -107,8 +107,8 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         output = self.conv_seg(feat)
         return output
 
-    def loss(self, inputs: List[Tensor], batch_data_samples: SampleList,
-             train_cfg: ConfigType) -> dict:
+    def loss(self, inputs: List[Tensor],
+             batch_data_samples: SampleList) -> dict:
         """Forward function for training.
 
         Args:

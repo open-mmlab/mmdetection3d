@@ -12,9 +12,9 @@ from mmdet3d.models.layers.fusion_layers import VoteFusion
 
 def test_vote_fusion():
     img_meta = {
-        'ori_shape': (530, 730, 3),
-        'img_shape': (600, 826, 3),
-        'pad_shape': (608, 832, 3),
+        'ori_shape': (530, 730),
+        'img_shape': (600, 826),
+        'pad_shape': (608, 832),
         'scale_factor':
         torch.tensor([1.1315, 1.1321, 1.1315, 1.1321]),
         'flip':

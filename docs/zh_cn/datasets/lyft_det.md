@@ -46,7 +46,7 @@ Lyft 不提供训练集和验证集的官方划分方案，因此 MMDetection3D 
 
 ```bash
 python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft --extra-tag lyft --version v1.01
-python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
+python tools/dataset_converters/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
 请注意，上面的第二行命令用于修复损坏的 lidar 数据文件，请参考[此处](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000)获取更多细节。
@@ -107,8 +107,8 @@ mmdetection3d
 
 这里仅介绍存储在训练数据文件的数据记录信息，在测试数据集也采用上述的数据记录方式。
 
-获取 `lyft_infos_xxx.pkl` 的核心函数是 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py#L93)。
-请参考 [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/lyft_converter.py) 获取更多细节。
+获取 `lyft_infos_xxx.pkl` 的核心函数是 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/lyft_converter.py#L93)。
+请参考 [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/lyft_converter.py) 获取更多细节。
 
 ## 训练流程
 

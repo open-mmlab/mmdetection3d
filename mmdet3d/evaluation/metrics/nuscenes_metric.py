@@ -8,6 +8,7 @@ import mmcv
 import numpy as np
 import pyquaternion
 import torch
+from mmengine import load
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 from nuscenes.eval.detection.config import config_factory
@@ -81,15 +82,18 @@ class NuScenesMetric(BaseMetric):
         'attr_err': 'mAAE'
     }
 
-    def __init__(self,
-                 data_root: str,
-                 ann_file: str,
-                 metric: Union[str, List[str]] = 'bbox',
-                 modality: Dict = dict(use_camera=False, use_lidar=True),
-                 prefix: Optional[str] = None,
-                 jsonfile_prefix: Optional[str] = None,
-                 eval_version: str = 'detection_cvpr_2019',
-                 collect_device: str = 'cpu') -> None:
+    def __init__(
+        self,
+        data_root: str,
+        ann_file: str,
+        metric: Union[str, List[str]] = 'bbox',
+        modality: Dict = dict(use_camera=False, use_lidar=True),
+        prefix: Optional[str] = None,
+        jsonfile_prefix: Optional[str] = None,
+        eval_version: str = 'detection_cvpr_2019',
+        collect_device: str = 'cpu',
+        file_client_args: dict = dict(backend='disk')
+    ) -> None:
         self.default_prefix = 'NuScenes metric'
         super(NuScenesMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -102,23 +106,12 @@ class NuScenesMetric(BaseMetric):
         self.data_root = data_root
         self.modality = modality
         self.jsonfile_prefix = jsonfile_prefix
+        self.file_client_args = file_client_args
 
         self.metrics = metric if isinstance(metric, list) else [metric]
 
         self.eval_version = eval_version
         self.eval_detection_configs = config_factory(self.eval_version)
-
-    def load_annotations(self, ann_file: str) -> list:
-        """Load annotations from ann_file.
-
-        Args:
-            ann_file (str): Path of the annotation file.
-
-        Returns:
-            list[dict]: List of annotations.
-        """
-        # loading data from a pkl file
-        return mmcv.load(ann_file, file_format='pkl')
 
     def process(self, data_batch: Sequence[dict],
                 predictions: Sequence[dict]) -> None:
@@ -162,7 +155,8 @@ class NuScenesMetric(BaseMetric):
         classes = self.dataset_meta['CLASSES']
         self.version = self.dataset_meta['version']
         # load annotations
-        self.data_infos = self.load_annotations(self.ann_file)['data_list']
+        self.data_infos = load(
+            self.ann_file, file_client_args=self.file_client_args)['data_list']
         result_dict, tmp_dir = self.format_results(results, classes,
                                                    self.jsonfile_prefix)
 

@@ -20,7 +20,10 @@ class PointData(BaseDataElement):
     - They are all one dimension.
     - They should have the same length.
 
-    Notice: ``PointData`` behaves like `InstanceData`.
+    `PointData` is used to save point-level semantic and instance mask,
+    it also can save `instances_labels` and `instances_scores` temporarily.
+    In the future, we would consider to move the instance-level info into
+    `gt_instances_3d` and `pred_instances_3d`.
 
     Examples:
         >>> metainfo = dict(
@@ -59,14 +62,6 @@ class PointData(BaseDataElement):
         else:
             assert isinstance(value,
                               Sized), 'value must contain `_len__` attribute'
-
-            if len(self) > 0:
-                assert len(value) == len(self), f'the length of ' \
-                                                f'values {len(value)} is ' \
-                                                f'not consistent with' \
-                                                f' the length of this ' \
-                                                f':obj:`PointData` ' \
-                                                f'{len(self)} '
             super().__setattr__(name, value)
 
     __setitem__ = __setattr__
