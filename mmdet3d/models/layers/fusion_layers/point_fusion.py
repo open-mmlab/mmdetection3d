@@ -48,6 +48,9 @@ def point_sample(img_meta,
             features of out-of-image points. Defaults to 'zeros'.
         align_corners (bool, optional): Whether to align corners when
             sampling image features for each point. Defaults to True.
+        valid_flags (bool, optional): Whether to filter out the points that
+            outside the image and with depth smaller than 0. Defaults to
+            False.
 
     Returns:
         torch.Tensor: NxC image features sampled by point coordinates.

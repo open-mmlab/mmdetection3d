@@ -46,5 +46,4 @@ env_cfg = dict(
 log_level = 'INFO'
 load_from = None
 resume = False
-dist_params = dict(backend='nccl')
 find_unused_parameters = True  # only 1 of 4 FPN outputs is used
