@@ -9,19 +9,19 @@ MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台�
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 ```{note}
-如果你已经装了 pytorch, 可以跳过这一部分，然后转到[下一章节](#installation). 如果没有，可以参照以下步骤安装环境。
+如果你已经装了 pytorch, 可以跳过这一部分，然后转到[下一章节](#安装). 如果没有，可以参照以下步骤安装环境。
 ```
 
-**Step 0.** 安装 MiniConda [官网](https://docs.conda.io/en/latest/miniconda.html).
+**步骤 0.** 安装 MiniConda [官网](https://docs.conda.io/en/latest/miniconda.html).
 
-**Step 1.** 使用 conda 新建虚拟环境，并进入该虚拟环境
+**步骤 1.** 使用 conda 新建虚拟环境，并进入该虚拟环境.
 
 ```shell
 conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
 
-**Step 2.** 基于 [PyTorch 官网](https://pytorch.org/)安装 PyTorch 和 torchvision，例如：\*\*
+**步骤 2.** 基于 [PyTorch 官网](https://pytorch.org/)安装 PyTorch 和 torchvision，例如：
 
 GPU 环境下
 
@@ -53,15 +53,15 @@ cd mmdetection3d
 pip install -e .
 ```
 
-**Step 0. 通过[MIM](https://github.com/open-mmlab/mim) 安装  [MMCV](https://github.com/open-mmlab/mmcv).**
+**步骤 0. 通过[MIM](https://github.com/open-mmlab/mim) 安装  [MMCV](https://github.com/open-mmlab/mmcv).**
 
-**Step 1. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
+**步骤 1. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
 ```shell
 pip install mmdet
 ```
 
-Optionally, you could also build MMDetection from source in case you want to modify the code:
+同时，如果你想修改这部分的代码，也可以通过以下命令从源码编译 MMDetection：
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
@@ -71,7 +71,7 @@ pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
-**Step 2. 安装 [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
+**步骤 2. 安装 [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
 pip install mmsegmentation
@@ -86,14 +86,14 @@ git checkout v0.20.0  # switch to v0.20.0 branch
 pip install -e .  # or "python setup.py develop"
 ```
 
-**Step 3. 克隆 MMDetection3D 代码仓库.**
+**步骤 3. 克隆 MMDetection3D 代码仓库.**
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 ```
 
-**Step 4. 安装依赖包和 MMDetection3D.**
+**步骤 4. 安装依赖包和 MMDetection3D.**
 
 ```shell
 pip install -v -e .  # or "python setup.py develop"
@@ -293,4 +293,4 @@ pip install -v -e .
 ## 故障排除
 
 如果在安装过程中遇到什么问题，可以先参考 [FAQ](faq.md) 页面.
-如果没有找到对应的解决方案，你也可以在Github [提一个 issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose)。
+如果没有找到对应的解决方案，你也可以在 Github [提一个 issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose)。
