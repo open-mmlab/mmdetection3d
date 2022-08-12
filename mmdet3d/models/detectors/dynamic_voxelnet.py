@@ -66,8 +66,8 @@ class DynamicVoxelNet(VoxelNet):
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features from points."""
         # TODO: Remove voxelization to datapreprocessor
-        points = batch_inputs_dict['points']
-        voxels, coors = self.voxelize(points)
+        voxels = batch_inputs_dict['voxels']['voxels']
+        coors = batch_inputs_dict['voxels']['coors']
         voxel_features, feature_coors = self.voxel_encoder(voxels, coors)
         batch_size = coors[-1, 0].item() + 1
         x = self.middle_encoder(voxel_features, feature_coors, batch_size)

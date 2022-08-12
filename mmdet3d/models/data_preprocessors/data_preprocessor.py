@@ -166,6 +166,11 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             'imgs': batch_imgs if imgs is not None else None
         }
 
+        if self.voxel:
+            voxel_dict = self.voxelize(points, self.voxel_type)
+
+        batch_inputs_dict['voxels'] = voxel_dict
+
         return batch_inputs_dict, batch_data_samples
 
     def collate_data(
@@ -221,22 +226,30 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
     def voxelize(self, points: List[torch.Tensor], voxel_type: str) -> tuple:
         """Apply voxelization to points."""
 
+        voxel_dict = dict()
         if voxel_type == 'hard':
-            voxels, coors, num_points = [], [], []
+            voxels, coors, num_points, voxel_centers = [], [], [], []
             for res in points:
                 res_voxels, res_coors, res_num_points = self.voxel_layer(res)
+                res_voxel_centers = (
+                    res_coors[:, [2, 1, 0]] + 0.5) * res_voxels.new_tensor(
+                        self.voxel_layer.voxel_size) + res_voxels.new_tensor(
+                            self.voxel_layer.point_cloud_range[0:3])
                 voxels.append(res_voxels)
                 coors.append(res_coors)
                 num_points.append(res_num_points)
+                voxel_centers.append(res_voxel_centers)
+
             voxels = torch.cat(voxels, dim=0)
             num_points = torch.cat(num_points, dim=0)
+            voxel_centers = torch.cat(voxel_centers, dim=0)
             coors_batch = []
             for i, coor in enumerate(coors):
                 coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
                 coors_batch.append(coor_pad)
             coors_batch = torch.cat(coors_batch, dim=0)
-
-            return voxels, num_points, coors_batch
+            voxel_dict['num_points'] = num_points
+            voxel_dict['voxel_centers'] = voxel_centers
 
         elif voxel_type == 'dynamic':
             coors = []
@@ -244,11 +257,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             for res in points:
                 res_coors = self.voxel_layer(res)
                 coors.append(res_coors)
-            points = torch.cat(points, dim=0)
+            voxels = torch.cat(points, dim=0)
             coors_batch = []
             for i, coor in enumerate(coors):
                 coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
                 coors_batch.append(coor_pad)
             coors_batch = torch.cat(coors_batch, dim=0)
 
-            return points, coors_batch
+        voxel_dict['voxels'] = voxels
+        voxel_dict['coors'] = coors_batch
+
+        return voxel_dict
