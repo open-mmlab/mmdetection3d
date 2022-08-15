@@ -10,6 +10,7 @@ voxel_size = [0.05, 0.05, 0.1]
 model = dict(
     type='DynamicVoxelNet',
     data_preprocessor=dict(
+        voxel_type='dynamic',
         voxel_layer=dict(
             _delete_=True,
             max_num_points=-1,

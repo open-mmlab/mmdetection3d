@@ -6,6 +6,7 @@ point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 model = dict(
     type='DynamicVoxelNet',
     data_preprocessor=dict(
+        voxel_type='dynamic',
         voxel_layer=dict(
             max_num_points=-1,
             point_cloud_range=point_cloud_range,
