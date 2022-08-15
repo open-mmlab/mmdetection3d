@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from numbers import Number
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -179,7 +179,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         }
 
         if self.voxel:
-            voxel_dict = self.voxelize(points, self.voxel_type)
+            voxel_dict = self.voxelize(points)
 
         batch_inputs_dict['voxels'] = voxel_dict
 
@@ -236,11 +236,26 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         return batch_pad_shape
 
     @torch.no_grad()
-    def voxelize(self, points: List[torch.Tensor], voxel_type: str) -> tuple:
-        """Apply voxelization to points."""
+    def voxelize(self, points: List[torch.Tensor]) -> Dict:
+        """Apply voxelization to point cloud.
+
+        Args:
+            points (List[Tensor]): Point cloud in one data batch.
+
+        Returns:
+            dict[str, Tensor]: Voxelization information.
+
+            - voxels (Tensor): Features of voxels, shape is MXNxC for hard
+                voxelization, NXC for dynamic voxelization.
+            - coors (Tensor): Coordinates of voxels, shape is  Nx(1+NDim),
+                where 1 represents the batch index.
+            - num_points (Tensor, optional): Number of points in each voxel.
+            - voxel_centers (Tensor, optional): Centers of voxels.
+        """
 
         voxel_dict = dict()
-        if voxel_type == 'hard':
+
+        if self.voxel_type == 'hard':
             voxels, coors, num_points, voxel_centers = [], [], [], []
             for res in points:
                 res_voxels, res_coors, res_num_points = self.voxel_layer(res)
@@ -263,8 +278,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             coors_batch = torch.cat(coors_batch, dim=0)
             voxel_dict['num_points'] = num_points
             voxel_dict['voxel_centers'] = voxel_centers
-
-        elif voxel_type == 'dynamic':
+        elif self.voxel_type == 'dynamic':
             coors = []
             # dynamic voxelization only provide a coors mapping
             for res in points:
@@ -276,6 +290,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
                 coors_batch.append(coor_pad)
             coors_batch = torch.cat(coors_batch, dim=0)
+        else:
+            raise ValueError(f'Invalid voxelization type {self.voxel_type}')
 
         voxel_dict['voxels'] = voxels
         voxel_dict['coors'] = coors_batch
