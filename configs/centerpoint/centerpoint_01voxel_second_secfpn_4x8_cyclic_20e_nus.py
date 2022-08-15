@@ -14,6 +14,8 @@ class_names = [
 ]
 data_prefix = dict(pts='samples/LIDAR_TOP', img='')
 model = dict(
+    data_preprocessor=dict(
+        voxel_layer=dict(point_cloud_range=point_cloud_range)),
     pts_bbox_head=dict(bbox_coder=dict(pc_range=point_cloud_range[:2])),
     # model training and testing settings
     train_cfg=dict(pts=dict(point_cloud_range=point_cloud_range)),

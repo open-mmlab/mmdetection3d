@@ -235,6 +235,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             batch_pad_shape.append((pad_h, pad_w))
         return batch_pad_shape
 
+    @torch.no_grad()
     def voxelize(self, points: List[torch.Tensor], voxel_type: str) -> tuple:
         """Apply voxelization to points."""
 
