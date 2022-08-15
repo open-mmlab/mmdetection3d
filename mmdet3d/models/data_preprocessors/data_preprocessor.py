@@ -42,7 +42,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         voxel (bool): Whether to apply voxelziation to point cloud.
         voxel_type (str): Voxelization type. Two voxelization types are
             provided: 'hard' and 'dynamic', respectively for hard
-            voxelization and dynamic voxelization. Defaults to `hard`.
+            voxelization and dynamic voxelization. Defaults to 'hard'.
         voxel_layer (:obj:`ConfigDict`, optional): Voxelization layer
             config. Defaults to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
