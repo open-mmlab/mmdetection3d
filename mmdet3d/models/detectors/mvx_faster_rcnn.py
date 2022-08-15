@@ -33,7 +33,7 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
 
         Args:
             voxel_dict(Dict[str, Tensor]): Dict of voxelization infos.
-            points (List[tensor]):  Point cloud of multiple inputs.
+            points (List[tensor], optional):  Point cloud of multiple inputs.
             img_feats (list[Tensor], tuple[tensor], optional): Features from
                 image backbone.
             batch_input_metas (list[dict], optional): The meta information

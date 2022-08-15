@@ -186,6 +186,7 @@ class MVXTwoStageDetector(Base3DDetector):
     def extract_pts_feat(
             self,
             voxel_dict: Dict[str, Tensor],
+            points: Optional[List[Tensor]] = None,
             img_feats: Optional[Sequence[Tensor]] = None,
             batch_input_metas: Optional[List[dict]] = None
     ) -> Sequence[Tensor]:
@@ -193,6 +194,7 @@ class MVXTwoStageDetector(Base3DDetector):
 
         Args:
             voxel_dict(Dict[str, Tensor]): Dict of voxelization infos.
+            points (List[tensor], optional):  Point cloud of multiple inputs.
             img_feats (list[Tensor], tuple[tensor], optional): Features from
                 image backbone.
             batch_input_metas (list[dict], optional): The meta information
@@ -235,9 +237,11 @@ class MVXTwoStageDetector(Base3DDetector):
         """
         voxel_dict = batch_inputs_dict['voxels']
         imgs = batch_inputs_dict['imgs']
+        points = batch_inputs_dict['points']
         img_feats = self.extract_img_feat(imgs, batch_input_metas)
         pts_feats = self.extract_pts_feat(
             voxel_dict,
+            points=points,
             img_feats=img_feats,
             batch_input_metas=batch_input_metas)
         return (img_feats, pts_feats)
