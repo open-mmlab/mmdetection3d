@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'ScanNetDataset'
-data_root = './data/scannet/'
+data_root = 'data/scannet/'
 
 metainfo = dict(
     CLASSES=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',

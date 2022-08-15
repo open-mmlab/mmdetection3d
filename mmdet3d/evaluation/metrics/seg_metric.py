@@ -51,7 +51,7 @@ class SegMetric(BaseMetric):
             cpu_pred_3d = dict()
             for k, v in pred_3d.items():
                 if hasattr(v, 'to'):
-                    cpu_pred_3d[k] = v.to('cpu')
+                    cpu_pred_3d[k] = v.to('cpu').numpy()
                 else:
                     cpu_pred_3d[k] = v
             self.results.append((eval_ann, cpu_pred_3d))

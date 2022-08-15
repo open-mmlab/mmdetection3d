@@ -289,7 +289,7 @@ class NuScenesMetric(BaseMetric):
                 print(f'\nFormating bboxes of {name}')
                 results_ = [out[name] for out in results]
                 tmp_file_ = osp.join(jsonfile_prefix, name)
-                box_type_3d = type(results_[0]['bbox_3d'])
+                box_type_3d = type(results_[0]['bboxes_3d'])
                 if box_type_3d == LiDARInstance3DBoxes:
                     result_dict[name] = self._format_lidar_bbox(
                         results_, sample_id_list, classes, tmp_file_)
@@ -298,6 +298,53 @@ class NuScenesMetric(BaseMetric):
                         results_, sample_id_list, classes, tmp_file_)
 
         return result_dict, tmp_dir
+
+    def get_attr_name(self, attr_idx, label_name):
+        """Get attribute from predicted index.
+
+        This is a workaround to predict attribute when the predicted velocity
+        is not reliable. We map the predicted attribute index to the one
+        in the attribute set. If it is consistent with the category, we will
+        keep it. Otherwise, we will use the default attribute.
+
+        Args:
+            attr_idx (int): Attribute index.
+            label_name (str): Predicted category name.
+
+        Returns:
+            str: Predicted attribute name.
+        """
+        # TODO: Simplify the variable name
+        AttrMapping_rev2 = [
+            'cycle.with_rider', 'cycle.without_rider', 'pedestrian.moving',
+            'pedestrian.standing', 'pedestrian.sitting_lying_down',
+            'vehicle.moving', 'vehicle.parked', 'vehicle.stopped', 'None'
+        ]
+        if label_name == 'car' or label_name == 'bus' \
+            or label_name == 'truck' or label_name == 'trailer' \
+                or label_name == 'construction_vehicle':
+            if AttrMapping_rev2[attr_idx] == 'vehicle.moving' or \
+                AttrMapping_rev2[attr_idx] == 'vehicle.parked' or \
+                    AttrMapping_rev2[attr_idx] == 'vehicle.stopped':
+                return AttrMapping_rev2[attr_idx]
+            else:
+                return self.DefaultAttribute[label_name]
+        elif label_name == 'pedestrian':
+            if AttrMapping_rev2[attr_idx] == 'pedestrian.moving' or \
+                AttrMapping_rev2[attr_idx] == 'pedestrian.standing' or \
+                    AttrMapping_rev2[attr_idx] == \
+                    'pedestrian.sitting_lying_down':
+                return AttrMapping_rev2[attr_idx]
+            else:
+                return self.DefaultAttribute[label_name]
+        elif label_name == 'bicycle' or label_name == 'motorcycle':
+            if AttrMapping_rev2[attr_idx] == 'cycle.with_rider' or \
+                    AttrMapping_rev2[attr_idx] == 'cycle.without_rider':
+                return AttrMapping_rev2[attr_idx]
+            else:
+                return self.DefaultAttribute[label_name]
+        else:
+            return self.DefaultAttribute[label_name]
 
     def _format_camera_bbox(self,
                             results: List[dict],
@@ -335,6 +382,7 @@ class NuScenesMetric(BaseMetric):
 
             sample_id = sample_id_list[i]
 
+            frame_sample_id = sample_id // CAM_NUM
             camera_type_id = sample_id % CAM_NUM
 
             if camera_type_id == 0:
@@ -344,19 +392,19 @@ class NuScenesMetric(BaseMetric):
             # need to merge results from images of the same sample
             annos = []
             boxes, attrs = output_to_nusc_box(det)
-            sample_token = self.data_infos[sample_id]['token']
+            sample_token = self.data_infos[frame_sample_id]['token']
             camera_type = camera_types[camera_type_id]
             boxes, attrs = cam_nusc_box_to_global(
-                self.data_infos[sample_id - camera_type_id], boxes, attrs,
-                camera_type, classes, self.eval_detection_configs)
+                self.data_infos[frame_sample_id], boxes, attrs, classes,
+                self.eval_detection_configs, camera_type)
             boxes_per_frame.extend(boxes)
             attrs_per_frame.extend(attrs)
             # Remove redundant predictions caused by overlap of images
             if (sample_id + 1) % CAM_NUM != 0:
                 continue
-            boxes = global_nusc_box_to_cam(
-                self.data_infos[sample_id + 1 - CAM_NUM], boxes_per_frame,
-                classes, self.eval_detection_configs)
+            boxes = global_nusc_box_to_cam(self.data_infos[frame_sample_id],
+                                           boxes_per_frame, classes,
+                                           self.eval_detection_configs)
             cam_boxes3d, scores, labels = nusc_box_to_cam_box3d(boxes)
             # box nms 3d over 6 images in a frame
             # TODO: move this global setting into config
@@ -386,8 +434,8 @@ class NuScenesMetric(BaseMetric):
             det = bbox3d2result(cam_boxes3d, scores, labels, attrs)
             boxes, attrs = output_to_nusc_box(det)
             boxes, attrs = cam_nusc_box_to_global(
-                self.data_infos[sample_id + 1 - CAM_NUM], boxes, attrs,
-                classes, self.eval_detection_configs)
+                self.data_infos[frame_sample_id], boxes, attrs, classes,
+                self.eval_detection_configs)
 
             for i, box in enumerate(boxes):
                 name = classes[box.label]
@@ -500,14 +548,14 @@ def output_to_nusc_box(detection: dict) -> List[NuScenesBox]:
     Args:
         detection (dict): Detection results.
 
-            - bbox_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
+            - bboxes_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
             - scores_3d (torch.Tensor): Detection scores.
             - labels_3d (torch.Tensor): Predicted box labels.
 
     Returns:
         list[:obj:`NuScenesBox`]: List of standard NuScenesBoxes.
     """
-    bbox3d = detection['bbox_3d']
+    bbox3d = detection['bboxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
     attrs = None
@@ -603,10 +651,14 @@ def lidar_nusc_box_to_global(
     return box_list
 
 
-def cam_nusc_box_to_global(info: dict, boxes: List[NuScenesBox],
-                           attrs: List[str], camera_type: str,
-                           classes: List[str],
-                           eval_configs: DetectionConfig) -> List[NuScenesBox]:
+def cam_nusc_box_to_global(
+    info: dict,
+    boxes: List[NuScenesBox],
+    attrs: List[str],
+    classes: List[str],
+    eval_configs: DetectionConfig,
+    camera_type: str = 'CAM_FRONT',
+) -> List[NuScenesBox]:
     """Convert the box from camera to global coordinate.
 
     Args:
@@ -678,7 +730,7 @@ def global_nusc_box_to_cam(info: dict, boxes: List[NuScenesBox],
             continue
         # Move box to camera coord system
         cam2ego = np.array(info['images']['CAM_FRONT']['cam2ego'])
-        box.translate(-cam2ego[:3, :3])
+        box.translate(-cam2ego[:3, 3])
         box.rotate(
             pyquaternion.Quaternion(matrix=cam2ego, rtol=1e-05,
                                     atol=1e-07).inverse)

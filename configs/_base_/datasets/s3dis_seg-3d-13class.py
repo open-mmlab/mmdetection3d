@@ -58,6 +58,12 @@ test_pipeline = [
         use_color=True,
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         # a wrapper in order to successfully call test function
@@ -105,17 +111,14 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_files=[
-            data_root + f's3dis_infos_Area_{i}.pkl' for i in train_area
-        ],
+        ann_files=[f's3dis_infos_Area_{i}.pkl' for i in train_area],
         metainfo=metainfo,
         data_prefix=data_prefix,
         pipeline=train_pipeline,
         modality=input_modality,
         ignore_index=len(class_names),
         scene_idxs=[
-            data_root + f'seg_info/Area_{i}_resampled_scene_idxs.npy'
-            for i in train_area
+            f'seg_info/Area_{i}_resampled_scene_idxs.npy' for i in train_area
         ],
         test_mode=False))
 test_dataloader = dict(
@@ -127,14 +130,13 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_files=data_root + f's3dis_infos_Area_{test_area}.pkl',
+        ann_files=f's3dis_infos_Area_{test_area}.pkl',
         metainfo=metainfo,
         data_prefix=data_prefix,
         pipeline=test_pipeline,
         modality=input_modality,
         ignore_index=len(class_names),
-        scene_idxs=data_root +
-        f'seg_info/Area_{test_area}_resampled_scene_idxs.npy',
+        scene_idxs=f'seg_info/Area_{test_area}_resampled_scene_idxs.npy',
         test_mode=True))
 val_dataloader = test_dataloader
 
