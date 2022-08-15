@@ -16,12 +16,14 @@ from mmdet.models import DetDataPreprocessor
 
 @MODELS.register_module()
 class Det3DDataPreprocessor(DetDataPreprocessor):
-    """Points (Image) pre-processor for point clouds / multi-modality 3D
-    detection tasks.
+    """Points / Image pre-processor for point clouds / vision-only / multi-
+    modality 3D detection tasks.
 
     It provides the data pre-processing as follows
 
-    - Collate and move data to the target device.
+    - Collate and move image and point cloud data to the target device.
+
+    - 1) For image data:
     - Pad images in inputs to the maximum size of current batch with defined
       ``pad_value``. The padding size can be divisible by a defined
       ``pad_size_divisor``
@@ -29,11 +31,20 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
     - Convert images in inputs from bgr to rgb if the shape of input is
         (3, H, W).
     - Normalize images in inputs with defined std and mean.
+    - Do batch augmentations during training.
+
+    - 2) For point cloud data:
+    - if no voxelization, directly return list of point cloud data.
+    - if voxelization is applied, voxelize point cloud according to
+      ``voxel_type`` and obtain ``voxels``.
 
     Args:
-        voxel (bool): Whether to apply voxelziation to points.
-        voxel_type (str): Voxelization type.
-        voxel_layer (OptConfigType): Voxelization layer config.
+        voxel (bool): Whether to apply voxelziation to point cloud.
+        voxel_type (str): Voxelization type. Two voxelization types are
+            provided: 'hard' and 'dynamic', respectively for hard
+            voxelization and dynamic voxelization. Defaults to `hard`.
+        voxel_layer (:obj:`ConfigDict`, optional): Voxelization layer
+            config. Defaults to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
             Defaults to None.
         std (Sequence[Number], optional): The pixel standard deviation of
@@ -45,6 +56,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             Defaults to False.
         rgb_to_bgr (bool): whether to convert image from RGB to RGB.
             Defaults to False.
+        batch_augments (list[dict], optional): Batch-level augmentations
     """
 
     def __init__(self,
