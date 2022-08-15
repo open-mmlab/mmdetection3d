@@ -3,8 +3,9 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn import Scale, bias_init_with_prob, normal_init
+from mmcv.cnn import Scale
 from mmengine.data import InstanceData
+from mmengine.model.utils import bias_init_with_prob, normal_init
 from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F

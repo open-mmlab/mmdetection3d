@@ -4,8 +4,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
-from mmcv.runner import BaseModule, force_fp32
 from mmengine import InstanceData
+from mmengine.model import BaseModule
 from torch import Tensor, nn
 
 from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
@@ -608,7 +608,6 @@ class CenterHead(BaseModule):
         losses = self.loss_by_feat(outs, batch_gt_instance_3d)
         return losses
 
-    @force_fp32(apply_to=('preds_dicts'))
     def loss_by_feat(self, preds_dicts: Tuple[List[dict]],
                      batch_gt_instances_3d: List[InstanceData], *args,
                      **kwargs):

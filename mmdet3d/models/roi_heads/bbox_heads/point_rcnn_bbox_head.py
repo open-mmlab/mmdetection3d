@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, normal_init
+from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks import build_conv_layer
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
+from mmengine.model.utils import normal_init
 from torch import nn as nn
 
 from mmdet3d.models.layers import nms_bev, nms_normal_bev

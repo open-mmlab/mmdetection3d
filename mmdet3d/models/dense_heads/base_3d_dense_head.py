@@ -4,10 +4,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn.utils.weight_init import constant_init
 from mmengine.config import ConfigDict
 from mmengine.data import InstanceData
 from mmengine.model import BaseModule
+from mmengine.model.utils import constant_init
 from torch import Tensor
 
 from mmdet3d.models.layers import box3d_multiclass_nms

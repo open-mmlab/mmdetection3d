@@ -3,7 +3,8 @@ from abc import abstractmethod
 from typing import Any, List, Sequence, Tuple, Union
 
 import torch
-from mmcv.cnn import ConvModule, bias_init_with_prob, normal_init
+from mmcv.cnn import ConvModule
+from mmengine.model.utils import bias_init_with_prob, normal_init
 from torch import Tensor
 from torch import nn as nn
 

@@ -8,7 +8,7 @@ if IS_SPCONV2_AVAILABLE:
 else:
     from mmcv.ops import SparseConvTensor, SparseSequential
 
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
 
 from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.models.layers.sparse_block import replace_feature
@@ -102,7 +102,6 @@ class SparseUNet(BaseModule):
             indice_key='spconv_down2',
             conv_type='SparseConv3d')
 
-    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseUNet.
 

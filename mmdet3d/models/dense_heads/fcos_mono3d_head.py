@@ -3,8 +3,9 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn import Scale, normal_init
+from mmcv.cnn import Scale
 from mmengine.data import InstanceData
+from mmengine.model.utils import normal_init
 from torch import Tensor
 from torch import nn as nn
 
