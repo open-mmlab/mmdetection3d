@@ -7,7 +7,6 @@ model = dict(
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
-        voxel_type='hard',
         voxel_layer=dict(
             max_num_points=5,  # max_points_per_voxel
             point_cloud_range=point_cloud_range,

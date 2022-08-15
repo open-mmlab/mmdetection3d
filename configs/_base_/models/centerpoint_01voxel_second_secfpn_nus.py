@@ -4,7 +4,6 @@ model = dict(
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
-        voxel_type='hard',
         voxel_layer=dict(
             max_num_points=10,
             voxel_size=voxel_size,
