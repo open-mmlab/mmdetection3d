@@ -7,6 +7,7 @@ import mmcv
 import numpy as np
 import torch
 from mmcv.utils import print_log
+from mmengine import load
 from mmengine.logging import MMLogger
 
 from mmdet3d.models.layers import box3d_multiclass_nms
@@ -102,7 +103,8 @@ class WaymoMetric(KittiMetric):
         self.classes = self.dataset_meta['CLASSES']
 
         # load annotations
-        self.data_infos = self.load_annotations(self.ann_file)['data_list']
+        self.data_infos = load(
+            self.ann_file, file_client_args=self.file_client_args)['data_list']
         # different from kitti, waymo do not need to convert the ann file
 
         if self.pklfile_prefix is None:
@@ -223,7 +225,7 @@ class WaymoMetric(KittiMetric):
         waymo_save_tmp_dir = tempfile.TemporaryDirectory()
         waymo_results_save_dir = waymo_save_tmp_dir.name
         waymo_results_final_path = f'{pklfile_prefix}.bin'
-        from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import \
+        from ..functional.waymo_utils.prediction_kitti_to_waymo import \
             KITTI2Waymo
         converter = KITTI2Waymo(
             result_files['pred_instances_3d'],
