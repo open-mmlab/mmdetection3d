@@ -64,7 +64,7 @@ val_dataloader = dict(
 
 # model settings
 model = dict(
-    pts_voxel_layer=dict(max_num_points=20),
+    data_preprocessor=dict(voxel_layer=dict(max_num_points=20)),
     pts_voxel_encoder=dict(feat_channels=[64, 64]),
     pts_neck=dict(
         _delete_=True,

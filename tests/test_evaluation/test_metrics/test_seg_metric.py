@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import unittest
 
+import numpy as np
 import torch
 from mmengine.data import BaseDataElement
 
@@ -14,7 +15,7 @@ class TestSegMetric(unittest.TestCase):
         """Create a superset of inputs needed to run test or train batches."""
         packed_inputs = []
         mm_inputs = dict()
-        pts_semantic_mask = torch.Tensor([
+        pts_semantic_mask = np.array([
             0, 0, 0, 255, 0, 0, 1, 1, 1, 255, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3,
             3, 255
         ])

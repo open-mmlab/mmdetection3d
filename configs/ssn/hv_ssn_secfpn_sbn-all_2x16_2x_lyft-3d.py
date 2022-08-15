@@ -60,7 +60,8 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # model settings
 model = dict(
-    pts_voxel_layer=dict(point_cloud_range=[-100, -100, -5, 100, 100, 3]),
+    data_preprocessor=dict(
+        voxel_layer=dict(point_cloud_range=[-100, -100, -5, 100, 100, 3])),
     pts_voxel_encoder=dict(
         feat_channels=[32, 64],
         point_cloud_range=[-100, -100, -5, 100, 100, 3]),

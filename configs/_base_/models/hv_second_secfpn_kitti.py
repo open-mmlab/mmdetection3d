@@ -2,12 +2,14 @@ voxel_size = [0.05, 0.05, 0.1]
 
 model = dict(
     type='VoxelNet',
-    data_preprocessor=dict(type='Det3DDataPreprocessor'),
-    voxel_layer=dict(
-        max_num_points=5,
-        point_cloud_range=[0, -40, -3, 70.4, 40, 1],
-        voxel_size=voxel_size,
-        max_voxels=(16000, 40000)),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=5,
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1],
+            voxel_size=voxel_size,
+            max_voxels=(16000, 40000))),
     voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseEncoder',

@@ -20,6 +20,7 @@ def _init_evaluate_input():
     pred_instances_3d.labels_3d = torch.Tensor([0])
 
     predictions.pred_instances_3d = pred_instances_3d
+    predictions.pred_instances = InstanceData()
     predictions = predictions.to_dict()
     return data_batch, [predictions]
 
