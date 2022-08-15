@@ -180,8 +180,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         if self.voxel:
             voxel_dict = self.voxelize(points)
-
-        batch_inputs_dict['voxels'] = voxel_dict
+            batch_inputs_dict['voxels'] = voxel_dict
 
         return batch_inputs_dict, batch_data_samples
 

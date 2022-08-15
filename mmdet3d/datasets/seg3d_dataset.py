@@ -250,9 +250,9 @@ class Seg3DDataset(BaseDataset):
                 osp.join(self.data_prefix.get('pts_semantic_mask', ''),
                          info['pts_semantic_mask_path'])
 
-        # Add label_mapping to input dict for directly
-        # use it in PointSegClassMapping pipeline
-        info['label_mapping'] = self.label_mapping
+        # only be used in `PointSegClassMapping` in pipeline
+        # to map original semantic class to valid category ids.
+        info['seg_label_mapping'] = self.seg_label_mapping
 
         # 'eval_ann_info' will be updated in loading transforms
         if self.test_mode and self.load_eval_anns:

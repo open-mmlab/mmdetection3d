@@ -24,7 +24,7 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
 
     def extract_pts_feat(
             self,
-            voxel_dict: Dict[Tensor],
+            voxel_dict: Dict[str, Tensor],
             points: Optional[List[Tensor]] = None,
             img_feats: Optional[Sequence[Tensor]] = None,
             batch_input_metas: Optional[List[dict]] = None
@@ -32,7 +32,7 @@ class DynamicMVXFasterRCNN(MVXTwoStageDetector):
         """Extract features of points.
 
         Args:
-            voxel_dict(Dict[Tensor]): Dict of voxelization infos.
+            voxel_dict(Dict[str, Tensor]): Dict of voxelization infos.
             points (List[tensor]):  Point cloud of multiple inputs.
             img_feats (list[Tensor], tuple[tensor], optional): Features from
                 image backbone.

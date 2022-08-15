@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Optional, Union
 
+from mmengine import InstanceData
+
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.structures.det3d_data_sample import (ForwardResults,
@@ -131,11 +133,17 @@ class Base3DDetector(BaseDetector):
                (results_list_3d is not None),\
                'please pass at least one type of results_list'
 
+        if results_list_2d is None:
+            results_list_2d = [
+                InstanceData() for _ in range(len(results_list_3d))
+            ]
+        if results_list_3d is None:
+            results_list_3d = [
+                InstanceData() for _ in range(len(results_list_2d))
+            ]
         for i in range(len(results_list_3d)):
             result = Det3DDataSample()
-            if results_list_3d is not None:
-                result.pred_instances_3d = results_list_3d[i]
-            if results_list_2d is not None:
-                result.pred_instances = results_list_2d[i]
+            result.pred_instances_3d = results_list_3d[i]
+            result.pred_instances = results_list_2d[i]
             data_sample_list.append(result)
         return data_sample_list

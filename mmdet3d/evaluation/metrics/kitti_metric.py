@@ -64,6 +64,7 @@ class KittiMetric(BaseMetric):
         self.pklfile_prefix = pklfile_prefix
         self.submission_prefix = submission_prefix
         self.pred_box_type_3d = pred_box_type_3d
+        self.default_cam_key = default_cam_key
         self.file_client_args = file_client_args
 
         allowed_metrics = ['bbox', 'img_bbox', 'mAP']
@@ -284,15 +285,17 @@ class KittiMetric(BaseMetric):
                 pklfile_prefix_ = osp.join(pklfile_prefix, name) + '.pkl'
             else:
                 pklfile_prefix_ = None
-            if 'pred_instances' in name and '3d' in name and name[0] != '_':
+            if 'pred_instances' in name and '3d' in name and name[
+                    0] != '_' and results[0][name]:
                 net_outputs = [result[name] for result in results]
                 result_list_ = self.bbox2result_kitti(net_outputs,
                                                       sample_id_list, classes,
                                                       pklfile_prefix_,
                                                       submission_prefix_)
                 result_dict[name] = result_list_
-            elif name == 'pred_instances' and name[0] != '_':
-                net_outputs = [info[name] for info in results]
+            elif name == 'pred_instances' and name[0] != '_' and results[0][
+                    name]:
+                net_outputs = [result[name] for result in results]
                 result_list_ = self.bbox2result_kitti2d(
                     net_outputs, sample_id_list, classes, pklfile_prefix_,
                     submission_prefix_)
