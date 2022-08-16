@@ -38,6 +38,8 @@ class SparseEncoder(nn.Module):
             Defaults to ((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1, 1)).
         block_type (str, optional): Type of the block to use.
             Defaults to 'conv_module'.
+        mlvl_outputs (bool, optional): Whether output middle features.
+            Default to False.
     """
 
     def __init__(self,
@@ -51,7 +53,8 @@ class SparseEncoder(nn.Module):
                                                                         64)),
                  encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1,
                                                                  1)),
-                 block_type='conv_module'):
+                 block_type='conv_module',
+                 mlvl_outputs=False):
         super().__init__()
         assert block_type in ['conv_module', 'basicblock']
         self.sparse_shape = sparse_shape
@@ -63,6 +66,7 @@ class SparseEncoder(nn.Module):
         self.encoder_paddings = encoder_paddings
         self.stage_num = len(self.encoder_channels)
         self.fp16_enabled = False
+        self.mlvl_outputs = mlvl_outputs
         # Spconv init all weight on its own
 
         assert isinstance(order, tuple) and len(order) == 3
@@ -135,7 +139,10 @@ class SparseEncoder(nn.Module):
         N, C, D, H, W = spatial_features.shape
         spatial_features = spatial_features.view(N, C * D, H, W)
 
-        return spatial_features
+        if self.mlvl_outputs:
+            return spatial_features, encode_features
+        else:
+            return spatial_features
 
     def make_encoder_layers(self,
                             make_block,
