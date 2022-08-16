@@ -4,6 +4,7 @@ import os
 import warnings
 
 import mmcv
+import mmengine
 import numpy as np
 
 from mmdet3d.datasets.transforms import data_augment_utils
@@ -115,7 +116,7 @@ class DataBaseSampler(object):
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
         self.points_loader = TRANSFORMS.build(points_loader)
-        self.file_client = mmcv.FileClient(**file_client_args)
+        self.file_client = mmengine.FileClient(**file_client_args)
 
         # load data base infos
         if hasattr(self.file_client, 'get_local_path'):

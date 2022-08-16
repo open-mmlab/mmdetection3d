@@ -2,7 +2,7 @@
 from os import path as osp
 from typing import Callable, Dict, List, Optional, Sequence, Union
 
-import mmcv
+import mmengine
 import numpy as np
 from mmengine.dataset import BaseDataset
 
@@ -72,7 +72,7 @@ class Seg3DDataset(BaseDataset):
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs) -> None:
         # init file client
-        self.file_client = mmcv.FileClient(**file_client_args)
+        self.file_client = mmengine.FileClient(**file_client_args)
         self.modality = modality
         self.load_eval_anns = load_eval_anns
 
