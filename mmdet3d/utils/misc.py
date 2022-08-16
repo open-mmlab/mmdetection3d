@@ -8,7 +8,7 @@ def replace_ceph_backend(cfg):
         r'''file_client_args = dict(
             backend='petrel',
             path_mapping=dict({
-                '.data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/',
+                './data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/',
                 'data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/'
             }))
         '''
