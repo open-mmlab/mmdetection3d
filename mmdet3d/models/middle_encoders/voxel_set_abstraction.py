@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn.bricks import build_norm_layer
 from mmcv.ops import PointsSampler, gather_points
-from mmengine.model import BaseModule
+from mmengine.model import BaseModule, ModuleList
 from torch import Tensor
 
 from mmdet3d.models.layers.pointnet_modules import build_sa_module
@@ -17,7 +17,6 @@ from mmdet3d.structures.det3d_data_sample import InstanceData
 @MODELS.register_module()
 class VoxelSetAbstraction(BaseModule):
     r"""Voxel set abstraction module for PVRCNN and PVRCNN++.
-
     Args:
         keypoints_sampler (dict or ConfigDict): Key point sampler config.
             It is used to build `PointsSampler` to sample key points from
@@ -33,12 +32,16 @@ class VoxelSetAbstraction(BaseModule):
             voxel features.
         bev_cfg (dict or ConfigDict, optional): Bev features encode cfg. Used
             to gather key points features from Bev features.
-        voxel_center_as_source (bool, optional): Whether used voxel centers as
-            key points to extract features. Default to False.
+        sample_mode (str, optional): Key points sample mode include
+            `raw_points` and `voxel_centers` model. If used `raw_points`
+            the module will use keypoints_sampler to gather key points from
+            raw points. Else if used `voxel_centers`, the module will use
+            voxel centers as key points to extract features. Default to
+            `raw_points.`
         fused_out_channels (int, optional): Key points feature output channel
             num after fused. Default to 128.
         norm_cfg (dict[str], optional): Config of normalization layer. Default
-        used dict(type='BN1d', eps=1e-5, momentum=0.1)
+            used dict(type='BN1d', eps=1e-5, momentum=0.1)
     """
 
     def __init__(
@@ -49,14 +52,15 @@ class VoxelSetAbstraction(BaseModule):
         rawpoint_sa_cfg: dict = None,
         voxel_sa_cfg_list: List[dict] = None,
         bev_cfg: dict = None,
-        voxel_center_as_source: bool = False,
+        sample_mode: str = 'raw_points',
         fused_out_channels: int = 128,
         norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1)
     ) -> None:
         super().__init__()
         self.voxel_size = voxel_size
         self.point_cloud_range = point_cloud_range
-        self.voxel_center_as_source = voxel_center_as_source
+        assert sample_mode in ['raw_points', 'voxel_centers']
+        self.sample_model = sample_mode
 
         self.voxel_sa_cfg_list = voxel_sa_cfg_list
         self.rawpoint_sa_cfg = rawpoint_sa_cfg
@@ -74,7 +78,7 @@ class VoxelSetAbstraction(BaseModule):
                 [x[-1] for x in self.rawpoints_sa_layer.mlp_channels])
 
         if self.voxel_sa_cfg_list is not None:
-            self.voxel_sa_layers = nn.ModuleList()
+            self.voxel_sa_layers = ModuleList()
             self.downsample_scale_factor = []
             for idx, voxel_sa_cfg in enumerate(self.voxel_sa_cfg_list):
                 self.downsample_scale_factor.append(
@@ -155,11 +159,9 @@ class VoxelSetAbstraction(BaseModule):
 
     def sample_key_points(self, batch_inputs_dict: dict) -> Tensor:
         """Sample key points from raw input points.
-
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points', 'voxel_dict' keys.
-
                     - points (list[torch.Tensor]): Point cloud of each sample.
                     - voxel_dict (dict , optional): Voxel dict of each sample.
 
@@ -167,7 +169,7 @@ class VoxelSetAbstraction(BaseModule):
             torch.Tensor: Batch key points, shape is (B,N,D),
                 where N is key points num, D is raw points dim.
         """
-        if self.voxel_center_as_source:
+        if self.sample_model == 'voxel_centers':
             coors = batch_inputs_dict['voxel_dict']['coors']
             batch_key_points, _ = self.get_voxel_centers(coors, scale_factor=1)
         else:
@@ -227,13 +229,11 @@ class VoxelSetAbstraction(BaseModule):
         return batch_centers, batch_voxel_num
 
     def forward(self, batch_inputs_dict: dict, feats_dict: dict,
-                rpn_results_list: List[InstanceData]) -> Dict[Tensor]:
+                rpn_results_list: List[InstanceData]) -> dict:
         """Extract key points features from multi-source features.
-
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points', 'img' keys.
-
                     - points (list[torch.Tensor]): Point cloud of each sample.
                     - imgs (torch.Tensor, optional): Image of each sample.
             feats_dict (dict): Multi-source features.
