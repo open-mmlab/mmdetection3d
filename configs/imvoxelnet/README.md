@@ -27,9 +27,9 @@ Inference time is given for a single NVidia RTX 3090 GPU. Results for ScanNet an
 
 ### SUN RGB-D
 
-|                      Backbone                       | Lr schd | Mem (GB) | Inf time (fps) | mAP@0.25 | mAP@0.5 |                                                                                      Download                                                                                      |
-| :-------------------------------------------------: | :-----: | :------: | :------------: | :------: | :-----: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [ResNet-50](./imvoxelnet_4x2_sunrgbd-3d-10class.py) |   2x    |   7.2    |      22.5      |  40.96   |  13.50  | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416-29ca7d2e.pth) \\ |
+|                      Backbone                       | Lr schd | Mem (GB) | Inf time (fps) | mAP@0.25 | mAP@0.5 |                                                                                                                                                                           Download                                                                                                                                                                           |
+| :-------------------------------------------------: | :-----: | :------: | :------------: | :------: | :-----: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet-50](./imvoxelnet_4x2_sunrgbd-3d-10class.py) |   2x    |   7.2    |      22.5      |  40.96   |  13.50  | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416-29ca7d2e.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416.log.json) |
 
 ## Citation
 
