@@ -4,18 +4,17 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
-# file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/s3dis/':
-        's3://openmmlab/datasets/detection3d/s3dis_processed/',
-        'data/s3dis/':
-        's3://openmmlab/datasets/detection3d/s3dis_processed/'
-    }))
+# model settings
+model = dict(
+    decode_head=dict(
+        num_classes=13, ignore_index=13,
+        loss_decode=dict(class_weight=None)),  # S3DIS doesn't use class_weight
+    test_cfg=dict(
+        num_points=4096,
+        block_size=1.0,
+        sample_rate=0.5,
+        use_normalized_coord=True,
+        batch_size=12))
 
 # data settings
 num_points = 4096
@@ -56,18 +55,6 @@ train_pipeline = [
     dict(type='RandomDropPointsColor', drop_ratio=0.2),
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
-
-# model settings
-model = dict(
-    decode_head=dict(
-        num_classes=13, ignore_index=13,
-        loss_decode=dict(class_weight=None)),  # S3DIS doesn't use class_weight
-    test_cfg=dict(
-        num_points=4096,
-        block_size=1.0,
-        sample_rate=0.5,
-        use_normalized_coord=True,
-        batch_size=12))
 
 train_dataloader = dict(batch_size=8, dataset=dict(pipeline=train_pipeline))
 val_cfg = dict(interval=1)
