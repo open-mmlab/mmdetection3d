@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from torch import nn
-
-from ..builder import HEADS, build_loss
-from mmcv.runner import BaseModule
 from mmcv.cnn import Scale, bias_init_with_prob, normal_init
 from mmcv.ops import nms3d, nms3d_normal
-from mmdet.core import multi_apply, reduce_mean
+from mmcv.runner import BaseModule
+from torch import nn
+
 from mmdet3d.core import build_prior_generator
 from mmdet3d.core.bbox.structures import rotation_3d_in_axis
+from mmdet.core import multi_apply, reduce_mean
+from ..builder import HEADS, build_loss
 
 
 @HEADS.register_module()
@@ -62,7 +62,8 @@ class ImVoxelHead(BaseModule):
     def _init_layers(self, n_channels, n_reg_outs, n_classes, n_levels):
         """Initialize neural network layers of the head."""
         self.conv_center = nn.Conv3d(n_channels, 1, 3, padding=1, bias=False)
-        self.conv_reg = nn.Conv3d(n_channels, n_reg_outs, 3, padding=1, bias=False)
+        self.conv_reg = nn.Conv3d(
+            n_channels, n_reg_outs, 3, padding=1, bias=False)
         self.conv_cls = nn.Conv3d(n_channels, n_classes, 3, padding=1)
         self.scales = nn.ModuleList([Scale(1.) for _ in range(n_levels)])
 
@@ -120,19 +121,20 @@ class ImVoxelHead(BaseModule):
         center_targets, bbox_targets, cls_targets = self._get_targets(
             points, gt_bboxes, gt_labels)
 
-        center_preds = torch.cat([x.permute(1, 2, 3, 0).reshape(-1)
-                                  for x in center_preds])
-        bbox_preds = torch.cat([x.permute(1, 2, 3, 0).reshape(-1, x.shape[0])
-                                for x in bbox_preds])
-        cls_preds = torch.cat([x.permute(1, 2, 3, 0).reshape(-1, x.shape[0])
-                               for x in cls_preds])
-        valid_preds = torch.cat([x.permute(1, 2, 3, 0).reshape(-1)
-                                 for x in valid_preds])
+        center_preds = torch.cat(
+            [x.permute(1, 2, 3, 0).reshape(-1) for x in center_preds])
+        bbox_preds = torch.cat([
+            x.permute(1, 2, 3, 0).reshape(-1, x.shape[0]) for x in bbox_preds
+        ])
+        cls_preds = torch.cat(
+            [x.permute(1, 2, 3, 0).reshape(-1, x.shape[0]) for x in cls_preds])
+        valid_preds = torch.cat(
+            [x.permute(1, 2, 3, 0).reshape(-1) for x in valid_preds])
         points = torch.cat(points)
 
         # cls loss
-        pos_inds = torch.nonzero(torch.logical_and(
-            cls_targets >= 0, valid_preds)).squeeze(1)
+        pos_inds = torch.nonzero(
+            torch.logical_and(cls_targets >= 0, valid_preds)).squeeze(1)
         n_pos = points.new_tensor(len(pos_inds))
         n_pos = max(reduce_mean(n_pos), 1.)
         if torch.any(valid_preds):
@@ -162,8 +164,8 @@ class ImVoxelHead(BaseModule):
             bbox_loss = pos_bbox_preds.sum()
         return center_loss, bbox_loss, cls_loss
 
-    def loss(self, center_preds, bbox_preds, cls_preds, valid_pred,
-             gt_bboxes, gt_labels, img_metas):
+    def loss(self, center_preds, bbox_preds, cls_preds, valid_pred, gt_bboxes,
+             gt_labels, img_metas):
         """Per scene loss function.
 
         Args:
@@ -200,8 +202,8 @@ class ImVoxelHead(BaseModule):
             bbox_loss=torch.mean(torch.stack(bbox_losses)),
             cls_loss=torch.mean(torch.stack(cls_losses)))
 
-    def _get_bboxes_single(self, center_preds, bbox_preds, cls_preds, valid_preds,
-                           img_meta):
+    def _get_bboxes_single(self, center_preds, bbox_preds, cls_preds,
+                           valid_preds, img_meta):
         """Generate boxes for a single scene.
 
         Args:
@@ -220,8 +222,10 @@ class ImVoxelHead(BaseModule):
         for center_pred, bbox_pred, cls_pred, valid_pred, point in zip(
                 center_preds, bbox_preds, cls_preds, valid_preds, points):
             center_pred = center_pred.permute(1, 2, 3, 0).reshape(-1, 1)
-            bbox_pred = bbox_pred.permute(1, 2, 3, 0).reshape(-1, bbox_pred.shape[0])
-            cls_pred = cls_pred.permute(1, 2, 3, 0).reshape(-1, cls_pred.shape[0])
+            bbox_pred = bbox_pred.permute(1, 2, 3,
+                                          0).reshape(-1, bbox_pred.shape[0])
+            cls_pred = cls_pred.permute(1, 2, 3,
+                                        0).reshape(-1, cls_pred.shape[0])
             valid_pred = valid_pred.permute(1, 2, 3, 0).reshape(-1, 1)
 
             scores = cls_pred.sigmoid() * center_pred.sigmoid() * valid_pred
@@ -286,7 +290,8 @@ class ImVoxelHead(BaseModule):
         return [
             nn.Upsample(size=x.shape[-3:],
                         mode='trilinear')(valid_pred).round().bool()
-            for x in features]
+            for x in features
+        ]
 
     def _get_points(self, features):
         """Generate final locations.
@@ -300,9 +305,13 @@ class ImVoxelHead(BaseModule):
         points = []
         for x in features:
             n_voxels = x.size()[-3:][::-1]
-            points.append(self.prior_generator.grid_anchors(
-                [n_voxels], device=x.device)[0][:, :3].reshape(
-                    n_voxels + (3,)).permute(2, 1, 0, 3).reshape(-1, 3))
+            points.append(
+                self.prior_generator.grid_anchors(
+                    [n_voxels],
+                    device=x.device)[0][:, :3].reshape(n_voxels +
+                                                       (3, )).permute(
+                                                           2, 1, 0,
+                                                           3).reshape(-1, 3))
         return points
 
     @staticmethod
@@ -321,18 +330,16 @@ class ImVoxelHead(BaseModule):
 
         # dx_min, dx_max, dy_min, dy_max, dz_min, dz_max, alpha ->
         # x_center, y_center, z_center, w, l, h, alpha
-        shift = torch.stack((
-            (bbox_pred[:, 1] - bbox_pred[:, 0]) / 2,
-            (bbox_pred[:, 3] - bbox_pred[:, 2]) / 2,
-            (bbox_pred[:, 5] - bbox_pred[:, 4]) / 2
-        ), dim=-1).view(-1, 1, 3)
+        shift = torch.stack(((bbox_pred[:, 1] - bbox_pred[:, 0]) / 2,
+                             (bbox_pred[:, 3] - bbox_pred[:, 2]) / 2,
+                             (bbox_pred[:, 5] - bbox_pred[:, 4]) / 2),
+                            dim=-1).view(-1, 1, 3)
         shift = rotation_3d_in_axis(shift, bbox_pred[:, 6], axis=2)[:, 0, :]
         center = points + shift
-        size = torch.stack((
-            bbox_pred[:, 0] + bbox_pred[:, 1],
-            bbox_pred[:, 2] + bbox_pred[:, 3],
-            bbox_pred[:, 4] + bbox_pred[:, 5]
-        ), dim=-1)
+        size = torch.stack(
+            (bbox_pred[:, 0] + bbox_pred[:, 1], bbox_pred[:, 2] +
+             bbox_pred[:, 3], bbox_pred[:, 4] + bbox_pred[:, 5]),
+            dim=-1)
         return torch.cat((center, size, bbox_pred[:, 6:7]), dim=-1)
 
     # The function is directly copied from FCAF3DHead.
@@ -380,8 +387,8 @@ class ImVoxelHead(BaseModule):
         y_dims = face_distances[..., [2, 3]]
         z_dims = face_distances[..., [4, 5]]
         centerness_targets = x_dims.min(dim=-1)[0] / x_dims.max(dim=-1)[0] * \
-                             y_dims.min(dim=-1)[0] / y_dims.max(dim=-1)[0] * \
-                             z_dims.min(dim=-1)[0] / z_dims.max(dim=-1)[0]
+            y_dims.min(dim=-1)[0] / y_dims.max(dim=-1)[0] * \
+            z_dims.min(dim=-1)[0] / z_dims.max(dim=-1)[0]
         return torch.sqrt(centerness_targets)
 
     # The function is directly copied from FCAF3DHead.
@@ -511,8 +518,8 @@ class ImVoxelHead(BaseModule):
             nms_labels = torch.cat(nms_labels, dim=0)
         else:
             nms_bboxes = bboxes.new_zeros((0, bboxes.shape[1]))
-            nms_scores = bboxes.new_zeros((0,))
-            nms_labels = bboxes.new_zeros((0,))
+            nms_scores = bboxes.new_zeros((0, ))
+            nms_labels = bboxes.new_zeros((0, ))
 
         if with_yaw:
             box_dim = 7

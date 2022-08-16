@@ -2,8 +2,8 @@
 import torch
 
 from mmdet3d.core import bbox3d2result, build_prior_generator
-from mmdet3d.models.fusion_layers.point_fusion import point_sample
 from mmdet3d.core.bbox.structures.utils import get_proj_mat_by_coord_type
+from mmdet3d.models.fusion_layers.point_fusion import point_sample
 from mmdet.models.detectors import BaseDetector
 from ..builder import DETECTORS, build_backbone, build_head, build_neck
 
@@ -23,7 +23,8 @@ class ImVoxelNet(BaseDetector):
             'DEPTH', 'LIDAR', or 'CAMERA'.
         train_cfg (dict, optional): Config for train stage. Defaults to None.
         test_cfg (dict, optional): Config for test stage. Defaults to None.
-        init_cfg (dict, optional): Config for weight initialization. Defaults to None.
+        init_cfg (dict, optional): Config for weight initialization.
+            Defaults to None.
         pretrained (str, optional): Deprecated initialization parameter.
             Defaults to None.
     """
@@ -54,7 +55,8 @@ class ImVoxelNet(BaseDetector):
         self.test_cfg = test_cfg
 
     def extract_feat(self, img, img_metas):
-        """Extract 3d features from the backbone -> fpn -> 3d projection
+        """Extract 3d features from the backbone -> fpn -> 3d projection.
+
         -> 3d neck -> bbox_head.
 
         Args:
@@ -68,8 +70,8 @@ class ImVoxelNet(BaseDetector):
         """
         x = self.backbone(img)
         x = self.neck(x)[0]
-        points = self.prior_generator.grid_anchors(
-            [self.n_voxels[::-1]], device=img.device)[0][:, :3]
+        points = self.prior_generator.grid_anchors([self.n_voxels[::-1]],
+                                                   device=img.device)[0][:, :3]
         volumes, valid_preds = [], []
         for feature, img_meta in zip(x, img_metas):
             img_scale_factor = (
@@ -95,7 +97,8 @@ class ImVoxelNet(BaseDetector):
                 aligned=False)
             volumes.append(
                 volume.reshape(self.n_voxels[::-1] + [-1]).permute(3, 2, 1, 0))
-            valid_preds.append(~torch.all(volumes[-1] == 0, dim=0, keepdim=True))
+            valid_preds.append(
+                ~torch.all(volumes[-1] == 0, dim=0, keepdim=True))
         x = torch.stack(volumes)
         x = self.neck_3d(x)
         x = self.bbox_head(x)
@@ -118,7 +121,7 @@ class ImVoxelNet(BaseDetector):
         # For indoor datasets ImVoxelNet uses ImVoxelHead that handles
         # mask of visible voxels.
         if self.coord_type == 'DEPTH':
-            x += (valid_preds,)
+            x += (valid_preds, )
         losses = self.bbox_head.loss(*x, gt_bboxes_3d, gt_labels_3d, img_metas)
         return losses
 
@@ -149,7 +152,7 @@ class ImVoxelNet(BaseDetector):
         # For indoor datasets ImVoxelNet uses ImVoxelHead that handles
         # mask of visible voxels.
         if self.coord_type == 'DEPTH':
-            x += (valid_preds,)
+            x += (valid_preds, )
         bbox_list = self.bbox_head.get_bboxes(*x, img_metas)
         bbox_results = [
             bbox3d2result(det_bboxes, det_scores, det_labels)

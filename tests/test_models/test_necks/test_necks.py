@@ -64,7 +64,9 @@ def test_indoor_imvoxel_neck():
         pytest.skip('test requires GPU and torch+cuda')
 
     neck_cfg = dict(
-        type='IndoorImVoxelNeck', in_channels=64, out_channels=256,
+        type='IndoorImVoxelNeck',
+        in_channels=64,
+        out_channels=256,
         n_blocks=[1, 1, 1])
     neck = build_neck(neck_cfg).cuda()
     inputs = torch.rand([1, 64, 40, 40, 16], device='cuda')

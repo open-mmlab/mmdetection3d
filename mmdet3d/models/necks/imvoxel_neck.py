@@ -83,11 +83,15 @@ class IndoorImVoxelNeck(BaseModule):
         n_channels = in_channels
         for i in range(len(n_blocks)):
             stride = 1 if i == 0 else 2
-            self.__setattr__(f'down_layer_{i}', self._make_layer(stride, n_channels, n_blocks[i]))
+            self.__setattr__(f'down_layer_{i}',
+                             self._make_layer(stride, n_channels, n_blocks[i]))
             n_channels = n_channels * stride
             if i > 0:
-                self.__setattr__(f'up_block_{i}', self._make_up_block(n_channels, n_channels // 2))
-            self.__setattr__(f'out_block_{i}', self._make_block(n_channels, out_channels))
+                self.__setattr__(
+                    f'up_block_{i}',
+                    self._make_up_block(n_channels, n_channels // 2))
+            self.__setattr__(f'out_block_{i}',
+                             self._make_block(n_channels, out_channels))
 
     def forward(self, x):
         """Forward function.
@@ -145,8 +149,7 @@ class IndoorImVoxelNeck(BaseModule):
         """
         return nn.Sequential(
             nn.Conv3d(in_channels, out_channels, 3, 1, 1, bias=False),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True))
+            nn.BatchNorm3d(out_channels), nn.ReLU(inplace=True))
 
     @staticmethod
     def _make_up_block(in_channels, out_channels):
@@ -162,11 +165,9 @@ class IndoorImVoxelNeck(BaseModule):
 
         return nn.Sequential(
             nn.ConvTranspose3d(in_channels, out_channels, 2, 2, bias=False),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True),
+            nn.BatchNorm3d(out_channels), nn.ReLU(inplace=True),
             nn.Conv3d(out_channels, out_channels, 3, 1, 1, bias=False),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True))
+            nn.BatchNorm3d(out_channels), nn.ReLU(inplace=True))
 
 
 class ResModule(BaseModule):
