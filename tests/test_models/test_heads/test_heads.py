@@ -1655,3 +1655,72 @@ def test_fcaf3d_head():
         assert dim == 7
         assert scores.shape == torch.Size([n])
         assert labels.shape == torch.Size([n])
+
+
+def test_imvoxel_head():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    _setup_seed(0)
+
+    # build neck output
+    shapes = [[2, 128, 40, 40, 16], [2, 128, 20, 20, 8], [2, 128, 10, 10, 4]]
+    x = [torch.from_numpy(np.random.rand(*s)).float().cuda() for s in shapes]
+    valid = torch.from_numpy(np.random.rand(2, 1, 40, 40, 16)) > .5
+    valid = valid.float().cuda()
+
+    # build head
+    prior_generator = dict(
+        type='AlignedAnchor3DRangeGenerator',
+        ranges=[[-3.2, -0.2, -2.28, 3.2, 6.2, 0.28]],
+        rotations=[.0])
+    cfg = dict(
+        type='ImVoxelHead',
+        n_classes=10,
+        n_levels=3,
+        n_channels=128,
+        n_reg_outs=7,
+        pts_assign_threshold=27,
+        pts_center_threshold=18,
+        prior_generator=prior_generator)
+    test_cfg = mmcv.Config(dict(nms_pre=1000, iou_thr=.5, score_thr=.01))
+    cfg.update(test_cfg=test_cfg)
+    head = build_head(cfg).cuda()
+    x = head(x)
+
+    # test forward train
+    gt_bboxes = [
+        DepthInstance3DBoxes(
+            torch.tensor([[.0, .0, .0, 2., 2., 2., .0],
+                          [.5, .5, .5, 1., 1., 1., .5]]),
+            box_dim=7,
+            with_yaw=True),
+        DepthInstance3DBoxes(
+            torch.tensor([[.0, .0, .0, 2., 2., 2., .0],
+                          [.5, .5, .5, 1., 1., 1., .5]]),
+            box_dim=7,
+            with_yaw=True)
+    ]
+    gt_labels = [torch.tensor([2, 4]).cuda(), torch.tensor([3, 5]).cuda()]
+    img_metas = [
+        dict(box_type_3d=DepthInstance3DBoxes),
+        dict(box_type_3d=DepthInstance3DBoxes)
+    ]
+
+    losses = head.loss(*x, valid, gt_bboxes, gt_labels, img_metas)
+    assert torch.allclose(
+        losses['center_loss'].detach(), torch.tensor(0.7088), atol=1e-4)
+    assert torch.allclose(
+        losses['bbox_loss'].detach(), torch.tensor(0.7164), atol=1e-4)
+    assert torch.allclose(
+        losses['cls_loss'].detach(), torch.tensor(1692.7), atol=1e-1)
+
+    # test forward test
+    bbox_list = head.get_bboxes(*x, valid, img_metas)
+    assert len(bbox_list) == 2
+    for bboxes, scores, labels in bbox_list:
+        n, dim = bboxes.tensor.shape
+        assert n > 0
+        assert dim == 7
+        assert scores.shape == torch.Size([n])
+        assert labels.shape == torch.Size([n])
