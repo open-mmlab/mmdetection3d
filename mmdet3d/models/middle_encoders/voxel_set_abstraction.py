@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -16,31 +16,32 @@ from mmdet3d.structures.det3d_data_sample import InstanceData
 
 @MODELS.register_module()
 class VoxelSetAbstraction(BaseModule):
-    r"""Voxel set abstraction module for PVRCNN and PVRCNN++.
+    """Voxel set abstraction module for PVRCNN and PVRCNN++.
+
     Args:
         keypoints_sampler (dict or ConfigDict): Key point sampler config.
             It is used to build `PointsSampler` to sample key points from
             raw points.
-        voxel_size (list[float], optional): Size of voxels.
-            Defaults to [0.05, 0.05, 0.1].
-        point_cloud_range (list[float], optional): Point cloud range.
-            Defaults to [0, -40, -3, 70.4, 40, 1].
+        voxel_size (list[float]): Size of voxels. Defaults to
+            [0.05, 0.05, 0.1].
+        point_cloud_range (list[float]): Point cloud range. Defaults to
+            [0, -40, -3, 70.4, 40, 1].
         rawpoint_sa_cfg (dict or ConfigDict, optional): SA module cfg. Used to
-            gather key points features from raw points.
+            gather key points features from raw points. Default to None.
         voxel_sa_cfg_list (List[dict or ConfigDict], optional): List of SA
             module cfg. Used to gather key points features from multi-level
-            voxel features.
+            voxel features. Default to None.
         bev_cfg (dict or ConfigDict, optional): Bev features encode cfg. Used
-            to gather key points features from Bev features.
-        sample_mode (str, optional): Key points sample mode include
-            `raw_points` and `voxel_centers` model. If used `raw_points`
+            to gather key points features from Bev features. Default to None.
+        sample_mode (str): Key points sample mode include
+            `raw_points` and `voxel_centers` modes. If used `raw_points`
             the module will use keypoints_sampler to gather key points from
             raw points. Else if used `voxel_centers`, the module will use
             voxel centers as key points to extract features. Default to
             `raw_points.`
-        fused_out_channels (int, optional): Key points feature output channel
+        fused_out_channels (int): Key points feature output channel
             num after fused. Default to 128.
-        norm_cfg (dict[str], optional): Config of normalization layer. Default
+        norm_cfg (dict[str]): Config of normalization layer. Default
             used dict(type='BN1d', eps=1e-5, momentum=0.1)
     """
 
@@ -49,9 +50,9 @@ class VoxelSetAbstraction(BaseModule):
         keypoints_sampler: dict,
         voxel_size: list = [0.05, 0.05, 0.1],
         point_cloud_range: list = [0, -40, -3, 70.4, 40, 1],
-        rawpoint_sa_cfg: dict = None,
-        voxel_sa_cfg_list: List[dict] = None,
-        bev_cfg: dict = None,
+        rawpoint_sa_cfg: Optional[dict] = None,
+        voxel_sa_cfg_list: Optional[List[dict]] = None,
+        bev_cfg: Optional[dict] = None,
         sample_mode: str = 'raw_points',
         fused_out_channels: int = 128,
         norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1)
@@ -126,11 +127,12 @@ class VoxelSetAbstraction(BaseModule):
             bev_features, grid=grid_sample_xy, align_corners=True)
         return point_bev_features.squeeze(2).permute(0, 2, 1).contiguous()
 
-    def aggregate_keypoint_features(self,
-                                    aggregate_module: nn.Module,
-                                    points_xyz: Tensor,
-                                    features: Tensor = None,
-                                    target_xyz: Tensor = None) -> Tuple:
+    def aggregate_keypoint_features(
+            self,
+            aggregate_module: nn.Module,
+            points_xyz: Tensor,
+            features: Optional[Tensor] = None,
+            target_xyz: Optional[Tensor] = None) -> Tuple:
         """Aggregate keypoint features from one source by aggregate module.
 
         Args:
@@ -144,12 +146,13 @@ class VoxelSetAbstraction(BaseModule):
                 the outputs. Default: None.
 
         Returns:
-            Tensor: (B, M, 3) where M is the number of points.
-                New features xyz.
-            Tensor: (B, M, sum_k(mlps[k][-1])) where M is the number
-                of points. New feature descriptors.
-            Tensor: (B, M) where M is the number of points.
-                Index of the features.
+            Tensor: New features xyz. (B, M, 3) where M is the number of
+                points.
+            Tensor: New feature descriptors.(B, M, C) where M is the number
+                of points. C is the sum of multi-scale SA modules output
+                channels num, like sum_k(mlps[k][-1]).
+            Tensor: Index of the features. (B, M) where M is the number
+                of points.
         """
         new_xyz, pooled_features, indices = aggregate_module(
             points_xyz=points_xyz.contiguous(),
@@ -159,6 +162,7 @@ class VoxelSetAbstraction(BaseModule):
 
     def sample_key_points(self, batch_inputs_dict: dict) -> Tensor:
         """Sample key points from raw input points.
+
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points', 'voxel_dict' keys.
@@ -231,6 +235,7 @@ class VoxelSetAbstraction(BaseModule):
     def forward(self, batch_inputs_dict: dict, feats_dict: dict,
                 rpn_results_list: List[InstanceData]) -> dict:
         """Extract key points features from multi-source features.
+
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points', 'img' keys.
