@@ -72,7 +72,7 @@ jobs:
       - run:
           name: Run unittests
           command: |
-            python -m coverage run --branch --source mmocr -m pytest tests/
+            python -m coverage run --branch --source mmdet3d -m pytest tests/
             python -m coverage xml
             python -m coverage report -m
   build_cuda:
@@ -118,7 +118,7 @@ jobs:
       - run:
           name: Run unittests
           command: |
-            docker exec mmocr python -m pytest tests/
+            docker exec mmdet3d python -m pytest tests/
 workflows:
   pr_stage_lint:
     when: << pipeline.parameters.lint_only >>
