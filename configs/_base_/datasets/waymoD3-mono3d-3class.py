@@ -10,7 +10,7 @@ file_client_args = dict(backend='disk')
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -36,7 +36,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(
         type='RandomResize3D',
         scale=(1248, 832),
@@ -47,7 +47,7 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(type='LoadImageFromFileMono3D', file_client_args=file_client_args),
+    dict(type='LoadImageFromFileMono3D'),
     dict(
         type='RandomResize3D',
         scale=(1248, 832),
@@ -144,7 +144,6 @@ val_evaluator = dict(
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
     data_root='./data/waymo/waymo_format',
-    metric='cam_only',
-    task='mono3d',
-    file_client_args=file_client_args)
+    metric='LET_mAP',
+    task='mono3d')
 test_evaluator = val_evaluator

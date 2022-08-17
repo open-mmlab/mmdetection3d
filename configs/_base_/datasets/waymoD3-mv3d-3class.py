@@ -26,8 +26,7 @@ train_transforms = [
 train_pipeline = [
     dict(
         type='LoadMultiViewImageFromFiles',
-        to_float32=True,
-        file_client_args=file_client_args),
+        to_float32=True),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -56,8 +55,7 @@ test_transforms = [
 test_pipeline = [
     dict(
         type='LoadMultiViewImageFromFiles',
-        to_float32=True,
-        file_client_args=file_client_args),
+        to_float32=True),
     dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
@@ -66,8 +64,7 @@ test_pipeline = [
 eval_pipeline = [
     dict(
         type='LoadMultiViewImageFromFiles',
-        to_float32=True,
-        file_client_args=file_client_args),
+        to_float32=True),
     dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
@@ -152,8 +149,6 @@ val_evaluator = dict(
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
     data_root='./data/waymo/waymo_format',
-    metric='LET_mAP',
-    task='mono3d',
-    file_client_args=file_client_args)
+    metric='LET_mAP')
 
 test_evaluator = val_evaluator

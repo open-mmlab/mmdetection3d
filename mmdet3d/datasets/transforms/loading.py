@@ -23,7 +23,7 @@ class LoadMultiViewImageFromFiles(BaseTransform):
             Defaults to False.
         color_type (str, optional): Color type of the file.
             Defaults to 'unchanged'.
-        file_client_args (dict, optional): Config dict of file clients,
+        file_client_args (dict): Config dict of file clients,
             refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
