@@ -4,6 +4,7 @@ from os import path as osp
 from typing import Dict, List, Optional, Sequence, Union
 
 import mmcv
+import mmengine
 import numpy as np
 import torch
 from mmcv.utils import print_log
@@ -426,7 +427,7 @@ class KittiMetric(BaseMetric):
                 out = f'{pklfile_prefix}.pkl'
             else:
                 out = pklfile_prefix
-            mmcv.dump(det_annos, out)
+            mmengine.dump(det_annos, out)
             print(f'Result is saved to {out}.')
 
         return det_annos
@@ -517,7 +518,7 @@ class KittiMetric(BaseMetric):
                 out = f'{pklfile_prefix}.pkl'
             else:
                 out = pklfile_prefix
-            mmcv.dump(det_annos, out)
+            mmengine.dump(det_annos, out)
             print(f'Result is saved to {out}.')
 
         if submission_prefix is not None:

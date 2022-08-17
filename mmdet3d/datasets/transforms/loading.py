@@ -2,6 +2,7 @@
 from typing import List
 
 import mmcv
+import mmengine
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
@@ -176,7 +177,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
             np.ndarray: An array containing point clouds data.
         """
         if self.file_client is None:
-            self.file_client = mmcv.FileClient(**self.file_client_args)
+            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
             pts_bytes = self.file_client.get(pts_filename)
             points = np.frombuffer(pts_bytes, dtype=np.float32)
@@ -434,7 +435,7 @@ class LoadPointsFromFile(BaseTransform):
             np.ndarray: An array containing point clouds data.
         """
         if self.file_client is None:
-            self.file_client = mmcv.FileClient(**self.file_client_args)
+            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
             pts_bytes = self.file_client.get(pts_filename)
             points = np.frombuffer(pts_bytes, dtype=np.float32)
@@ -690,7 +691,7 @@ class LoadAnnotations3D(LoadAnnotations):
         pts_instance_mask_path = results['pts_instance_mask_path']
 
         if self.file_client is None:
-            self.file_client = mmcv.FileClient(**self.file_client_args)
+            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_instance_mask_path)
             pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
@@ -717,7 +718,7 @@ class LoadAnnotations3D(LoadAnnotations):
         pts_semantic_mask_path = results['pts_semantic_mask_path']
 
         if self.file_client is None:
-            self.file_client = mmcv.FileClient(**self.file_client_args)
+            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
             mask_bytes = self.file_client.get(pts_semantic_mask_path)
             # add .copy() to fix read-only bug

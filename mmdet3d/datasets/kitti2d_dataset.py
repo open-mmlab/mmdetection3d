@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
+import mmengine
 import numpy as np
 
 from mmdet3d.datasets import Det3DDataset
@@ -87,7 +87,7 @@ class Kitti2DDataset(Det3DDataset):
         Returns:
             list[dict]: List of annotations.
         """
-        self.data_infos = mmcv.load(ann_file)
+        self.data_infos = mmengine.load(ann_file)
         self.cat2label = {
             cat_name: i
             for i, cat_name in enumerate(self.CLASSES)

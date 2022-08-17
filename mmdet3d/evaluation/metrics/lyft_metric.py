@@ -6,6 +6,7 @@ from os import path as osp
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import mmcv
+import mmengine
 import numpy as np
 import pandas as pd
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
@@ -192,7 +193,7 @@ class LyftMetric(BaseMetric):
             json_path (str): Path of the result json file.
             csv_savepath (str): Path to save the csv file.
         """
-        results = mmcv.load(json_path)['results']
+        results = mmengine.load(json_path)['results']
         sample_list_path = osp.join(self.data_root, 'sample_submission.csv')
         data = pd.read_csv(sample_list_path)
         Id_list = list(data['Id'])
@@ -269,7 +270,7 @@ class LyftMetric(BaseMetric):
         mmcv.mkdir_or_exist(jsonfile_prefix)
         res_path = osp.join(jsonfile_prefix, 'results_lyft.json')
         print('Results writes to', res_path)
-        mmcv.dump(lyft_submissions, res_path)
+        mmengine.dump(lyft_submissions, res_path)
         return res_path
 
     def lyft_evaluate(self,

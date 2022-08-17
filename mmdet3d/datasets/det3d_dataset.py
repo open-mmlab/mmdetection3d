@@ -3,7 +3,7 @@ import copy
 from os import path as osp
 from typing import Callable, List, Optional, Union
 
-import mmcv
+import mmengine
 import numpy as np
 from mmengine.dataset import BaseDataset
 
@@ -75,7 +75,7 @@ class Det3DDataset(BaseDataset):
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs):
         # init file client
-        self.file_client = mmcv.FileClient(**file_client_args)
+        self.file_client = mmengine.FileClient(**file_client_args)
         self.filter_empty_gt = filter_empty_gt
         self.load_eval_anns = load_eval_anns
         _default_modality_keys = ('use_lidar', 'use_camera')

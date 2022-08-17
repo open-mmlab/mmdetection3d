@@ -4,6 +4,7 @@ import base64
 from os import path as osp
 
 import mmcv
+import mmengine
 import numpy as np
 from nuimages import NuImages
 from nuimages.utils.utils import mask_decode, name_to_index_mapping
@@ -210,7 +211,7 @@ def export_nuim_to_coco(nuim, data_root, out_dir, extra_tag, version, nproc):
     mmcv.mkdir_or_exist(out_dir)
     out_file = osp.join(out_dir, f'{extra_tag}_{version}.json')
     print(f'Annotation dumped to {out_file}')
-    mmcv.dump(coco_format_json, out_file)
+    mmengine.dump(coco_format_json, out_file)
 
 
 def main():

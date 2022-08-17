@@ -4,6 +4,7 @@ from logging import warning
 from os import path as osp
 
 import mmcv
+import mmengine
 import numpy as np
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
 from pyquaternion import Quaternion
@@ -77,18 +78,18 @@ def create_lyft_infos(root_path,
         data = dict(infos=train_lyft_infos, metadata=metadata)
         info_name = f'{info_prefix}_infos_test'
         info_path = osp.join(root_path, f'{info_name}.pkl')
-        mmcv.dump(data, info_path)
+        mmengine.dump(data, info_path)
     else:
         print(f'train sample: {len(train_lyft_infos)}, \
                 val sample: {len(val_lyft_infos)}')
         data = dict(infos=train_lyft_infos, metadata=metadata)
         train_info_name = f'{info_prefix}_infos_train'
         info_path = osp.join(root_path, f'{train_info_name}.pkl')
-        mmcv.dump(data, info_path)
+        mmengine.dump(data, info_path)
         data['infos'] = val_lyft_infos
         val_info_name = f'{info_prefix}_infos_val'
         info_val_path = osp.join(root_path, f'{val_info_name}.pkl')
-        mmcv.dump(data, info_val_path)
+        mmengine.dump(data, info_val_path)
 
 
 def _fill_trainval_infos(lyft,
@@ -234,7 +235,7 @@ def export_2d_annotation(root_path, info_path, version):
         'CAM_BACK_LEFT',
         'CAM_BACK_RIGHT',
     ]
-    lyft_infos = mmcv.load(info_path)['infos']
+    lyft_infos = mmengine.load(info_path)['infos']
     lyft = Lyft(
         data_path=osp.join(root_path, version),
         json_path=osp.join(root_path, version, version),
@@ -268,4 +269,4 @@ def export_2d_annotation(root_path, info_path, version):
                 coco_info['id'] = coco_ann_id
                 coco_2d_dict['annotations'].append(coco_info)
                 coco_ann_id += 1
-    mmcv.dump(coco_2d_dict, f'{info_path[:-4]}.coco.json')
+    mmengine.dump(coco_2d_dict, f'{info_path[:-4]}.coco.json')

@@ -3,6 +3,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 import mmcv
+import mmengine
 import numpy as np
 from nuscenes.utils.geometry_utils import view_points
 
@@ -196,7 +197,7 @@ def create_kitti_info_file(data_path,
     _calculate_num_points_in_gt(data_path, kitti_infos_train, relative_path)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Kitti info train file is saved to {filename}')
-    mmcv.dump(kitti_infos_train, filename)
+    mmengine.dump(kitti_infos_train, filename)
     kitti_infos_val = get_kitti_image_info(
         data_path,
         training=True,
@@ -208,10 +209,10 @@ def create_kitti_info_file(data_path,
     _calculate_num_points_in_gt(data_path, kitti_infos_val, relative_path)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Kitti info val file is saved to {filename}')
-    mmcv.dump(kitti_infos_val, filename)
+    mmengine.dump(kitti_infos_val, filename)
     filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
     print(f'Kitti info trainval file is saved to {filename}')
-    mmcv.dump(kitti_infos_train + kitti_infos_val, filename)
+    mmengine.dump(kitti_infos_train + kitti_infos_val, filename)
 
     kitti_infos_test = get_kitti_image_info(
         data_path,
@@ -224,7 +225,7 @@ def create_kitti_info_file(data_path,
         relative_path=relative_path)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'Kitti info test file is saved to {filename}')
-    mmcv.dump(kitti_infos_test, filename)
+    mmengine.dump(kitti_infos_test, filename)
 
 
 def create_waymo_info_file(data_path,
@@ -288,19 +289,19 @@ def create_waymo_info_file(data_path,
     num_points_in_gt_calculater.calculate(waymo_infos_train)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Waymo info train file is saved to {filename}')
-    mmcv.dump(waymo_infos_train, filename)
+    mmengine.dump(waymo_infos_train, filename)
     waymo_infos_val = waymo_infos_gatherer_trainval.gather(val_img_ids)
     num_points_in_gt_calculater.calculate(waymo_infos_val)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Waymo info val file is saved to {filename}')
-    mmcv.dump(waymo_infos_val, filename)
+    mmengine.dump(waymo_infos_val, filename)
     filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
     print(f'Waymo info trainval file is saved to {filename}')
-    mmcv.dump(waymo_infos_train + waymo_infos_val, filename)
+    mmengine.dump(waymo_infos_train + waymo_infos_val, filename)
     waymo_infos_test = waymo_infos_gatherer_test.gather(test_img_ids)
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'Waymo info test file is saved to {filename}')
-    mmcv.dump(waymo_infos_test, filename)
+    mmengine.dump(waymo_infos_test, filename)
 
 
 def _create_reduced_point_cloud(data_path,
@@ -322,7 +323,7 @@ def _create_reduced_point_cloud(data_path,
         front_camera_id (int, optional): The referenced/front camera ID.
             Default: 2.
     """
-    kitti_infos = mmcv.load(info_path)
+    kitti_infos = mmengine.load(info_path)
 
     for info in mmcv.track_iter_progress(kitti_infos):
         pc_info = info['point_cloud']
@@ -419,7 +420,7 @@ def export_2d_annotation(root_path, info_path, mono3d=True):
             Default: True.
     """
     # get bbox annotations for camera
-    kitti_infos = mmcv.load(info_path)
+    kitti_infos = mmengine.load(info_path)
     cat2Ids = [
         dict(id=kitti_categories.index(cat_name), name=cat_name)
         for cat_name in kitti_categories
@@ -454,7 +455,7 @@ def export_2d_annotation(root_path, info_path, mono3d=True):
         json_prefix = f'{info_path[:-4]}_mono3d'
     else:
         json_prefix = f'{info_path[:-4]}'
-    mmcv.dump(coco_2d_dict, f'{json_prefix}.coco.json')
+    mmengine.dump(coco_2d_dict, f'{json_prefix}.coco.json')
 
 
 def get_2d_boxes(info, occluded, mono3d=True):

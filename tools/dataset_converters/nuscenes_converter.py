@@ -5,6 +5,7 @@ from os import path as osp
 from typing import List, Tuple, Union
 
 import mmcv
+import mmengine
 import numpy as np
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points
@@ -87,18 +88,18 @@ def create_nuscenes_infos(root_path,
         data = dict(infos=train_nusc_infos, metadata=metadata)
         info_path = osp.join(root_path,
                              '{}_infos_test.pkl'.format(info_prefix))
-        mmcv.dump(data, info_path)
+        mmengine.dump(data, info_path)
     else:
         print('train sample: {}, val sample: {}'.format(
             len(train_nusc_infos), len(val_nusc_infos)))
         data = dict(infos=train_nusc_infos, metadata=metadata)
         info_path = osp.join(root_path,
                              '{}_infos_train.pkl'.format(info_prefix))
-        mmcv.dump(data, info_path)
+        mmengine.dump(data, info_path)
         data['infos'] = val_nusc_infos
         info_val_path = osp.join(root_path,
                                  '{}_infos_val.pkl'.format(info_prefix))
-        mmcv.dump(data, info_val_path)
+        mmengine.dump(data, info_val_path)
 
 
 def get_available_scenes(nusc):
@@ -353,7 +354,7 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
         'CAM_BACK_LEFT',
         'CAM_BACK_RIGHT',
     ]
-    nusc_infos = mmcv.load(info_path)['infos']
+    nusc_infos = mmengine.load(info_path)['infos']
     nusc = NuScenes(version=version, dataroot=root_path, verbose=True)
     # info_2d_list = []
     cat2Ids = [
@@ -396,7 +397,7 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
         json_prefix = f'{info_path[:-4]}_mono3d'
     else:
         json_prefix = f'{info_path[:-4]}'
-    mmcv.dump(coco_2d_dict, f'{json_prefix}.coco.json')
+    mmengine.dump(coco_2d_dict, f'{json_prefix}.coco.json')
 
 
 def get_2d_boxes(nusc,
