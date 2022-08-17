@@ -112,7 +112,9 @@ class VoxelSetAbstraction(BaseModule):
 
         voxel_size_xy = keypoints.new_tensor(self.voxel_size[:2])
 
+        # top-left coors in bev view
         bev_tl_grid_cxy = keypoints.new_tensor(self.point_cloud_range[:2])
+        # below-right coors in bev view
         bev_br_grid_cxy = keypoints.new_tensor(self.point_cloud_range[3:5])
         bev_tl_grid_cxy.add_(0.5 * voxel_size_xy * scale_factor)
         bev_br_grid_cxy.sub_(0.5 * voxel_size_xy * scale_factor)
@@ -239,6 +241,7 @@ class VoxelSetAbstraction(BaseModule):
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points', 'img' keys.
+
                     - points (list[torch.Tensor]): Point cloud of each sample.
                     - imgs (torch.Tensor, optional): Image of each sample.
             feats_dict (dict): Multi-source features.
