@@ -13,7 +13,7 @@ from ..builder import HEADS, build_loss
 
 @HEADS.register_module()
 class ImVoxelHead(BaseModule):
-    """`ImVoxelNet<https://arxiv.org/abs/2106.01178>`_ head for indoor
+    r"""`ImVoxelNet<https://arxiv.org/abs/2106.01178>`_ head for indoor
     datasets.
 
     Args:
@@ -26,8 +26,11 @@ class ImVoxelHead(BaseModule):
         pts_center_threshold (int): Max number of locations per box to
             be assigned with.
         center_loss (dict, optional): Config of centerness loss.
+            Default: dict(type='CrossEntropyLoss', use_sigmoid=True).
         bbox_loss (dict, optional): Config of bbox loss.
+            Default: dict(type='RotatedIoU3DLoss').
         cls_loss (dict, optional): Config of classification loss.
+            Default: dict(type='FocalLoss').
         train_cfg (dict, optional): Config for train stage. Defaults to None.
         test_cfg (dict, optional): Config for test stage. Defaults to None.
         init_cfg (dict, optional): Config for weight initialization.
