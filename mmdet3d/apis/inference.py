@@ -4,7 +4,7 @@ from copy import deepcopy
 from os import path as osp
 from typing import Sequence, Union
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
 import torch.nn as nn
@@ -187,7 +187,7 @@ def inference_multi_modality_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
-    data_list = mmcv.load(ann_file)['data_list']
+    data_list = mmengine.load(ann_file)['data_list']
     assert len(imgs) == len(data_list)
 
     data = []
@@ -269,7 +269,7 @@ def inference_mono_3d_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
-    data_list = mmcv.load(ann_file)
+    data_list = mmengine.load(ann_file)
     assert len(imgs) == len(data_list)
 
     data = []

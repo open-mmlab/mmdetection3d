@@ -4,6 +4,7 @@ from concurrent import futures as futures
 from os import path as osp
 
 import mmcv
+import mmengine
 import numpy as np
 
 
@@ -218,7 +219,7 @@ class ScanNetSegData(object):
                  num_points=8192,
                  label_weight_func=None):
         self.data_root = data_root
-        self.data_infos = mmcv.load(ann_file)
+        self.data_infos = mmengine.load(ann_file)
         self.split = split
         assert split in ['train', 'val', 'test']
         self.num_points = num_points

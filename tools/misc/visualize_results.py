@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 
-import mmcv
+import mmengine
 from mmcv import Config
 
 from mmdet3d.datasets import build_dataset
@@ -31,7 +31,7 @@ def main():
 
     # build the dataset
     dataset = build_dataset(cfg.data.test)
-    results = mmcv.load(args.result)
+    results = mmengine.load(args.result)
 
     if getattr(dataset, 'show', None) is not None:
         # data loading pipeline for showing

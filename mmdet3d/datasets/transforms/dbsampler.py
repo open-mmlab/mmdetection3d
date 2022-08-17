@@ -3,7 +3,6 @@ import copy
 import os
 import warnings
 
-import mmcv
 import mmengine
 import numpy as np
 
@@ -122,14 +121,15 @@ class DataBaseSampler(object):
         if hasattr(self.file_client, 'get_local_path'):
             with self.file_client.get_local_path(info_path) as local_path:
                 # loading data from a file-like object needs file format
-                db_infos = mmcv.load(open(local_path, 'rb'), file_format='pkl')
+                db_infos = mmengine.load(
+                    open(local_path, 'rb'), file_format='pkl')
         else:
             warnings.warn(
                 'The used MMCV version does not have get_local_path. '
                 f'We treat the {info_path} as local paths and it '
                 'might cause errors if the path is not a local path. '
                 'Please use MMCV>= 1.3.16 if you meet errors.')
-            db_infos = mmcv.load(info_path)
+            db_infos = mmengine.load(info_path)
 
         # filter database infos
         from mmengine.logging import MMLogger

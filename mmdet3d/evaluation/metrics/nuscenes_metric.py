@@ -5,6 +5,7 @@ from os import path as osp
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import mmcv
+import mmengine
 import numpy as np
 import pyquaternion
 import torch
@@ -235,7 +236,7 @@ class NuScenesMetric(BaseMetric):
         nusc_eval.main(render_curves=False)
 
         # record metrics
-        metrics = mmcv.load(osp.join(output_dir, 'metrics_summary.json'))
+        metrics = mmengine.load(osp.join(output_dir, 'metrics_summary.json'))
         detail = dict()
         metric_prefix = f'{result_name}_NuScenes'
         for name in classes:
@@ -464,7 +465,7 @@ class NuScenesMetric(BaseMetric):
         mmcv.mkdir_or_exist(jsonfile_prefix)
         res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
         print('Results writes to', res_path)
-        mmcv.dump(nusc_submissions, res_path)
+        mmengine.dump(nusc_submissions, res_path)
         return res_path
 
     def _format_lidar_bbox(self,
@@ -538,7 +539,7 @@ class NuScenesMetric(BaseMetric):
         mmcv.mkdir_or_exist(jsonfile_prefix)
         res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
         print('Results writes to', res_path)
-        mmcv.dump(nusc_submissions, res_path)
+        mmengine.dump(nusc_submissions, res_path)
         return res_path
 
 

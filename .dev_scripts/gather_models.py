@@ -23,6 +23,7 @@ import subprocess
 from os import path as osp
 
 import mmcv
+import mmengine
 import torch
 
 # build schedule look-up table to automatically find the final model
@@ -222,7 +223,7 @@ def main():
 
     models = dict(models=publish_model_infos)
     print(f'Totally gathered {len(publish_model_infos)} models')
-    mmcv.dump(models, osp.join(models_out, 'model_info.json'))
+    mmengine.dump(models, osp.join(models_out, 'model_info.json'))
 
 
 if __name__ == '__main__':
