@@ -168,6 +168,7 @@ class VoxelSetAbstraction(BaseModule):
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points', 'voxel_dict' keys.
+
                     - points (list[torch.Tensor]): Point cloud of each sample.
                     - voxel_dict (dict , optional): Voxel dict of each sample.
 
