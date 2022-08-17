@@ -39,9 +39,7 @@ def main(args):
 
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
-    visualizer.dataset_meta = {
-        'CLASSES': model.CLASSES,
-    }
+    visualizer.dataset_meta = model.dataset_meta
 
     # test a single point cloud sample
     result, data = inference_detector(model, args.pcd)
