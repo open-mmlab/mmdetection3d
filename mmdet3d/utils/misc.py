@@ -8,7 +8,7 @@ def replace_ceph_backend(cfg):
         r'''file_client_args = dict(
             backend='petrel',
             path_mapping=dict({
-                '.data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/',
+                './data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/',
                 'data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/'
             }))
         '''
@@ -19,12 +19,12 @@ def replace_ceph_backend(cfg):
     elif 'lyft' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'lyft')
         replace_strs = replace_strs.replace('CEPH', 'lyft')
-    elif 'kitti' in cfg_pretty_text:
-        replace_strs = replace_strs.replace('DATA', 'kitti')
-        replace_strs = replace_strs.replace('CEPH', 'kitti')
     elif 'waymo' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'waymo')
         replace_strs = replace_strs.replace('CEPH', 'waymo')
+    elif 'kitti' in cfg_pretty_text:
+        replace_strs = replace_strs.replace('DATA', 'kitti')
+        replace_strs = replace_strs.replace('CEPH', 'kitti')
     elif 'scannet' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'scannet')
         replace_strs = replace_strs.replace('CEPH', 'scannet_processed')
