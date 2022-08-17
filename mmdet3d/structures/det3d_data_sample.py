@@ -112,7 +112,7 @@ class Det3DDataSample(DetDataSample):
     >>> assert 'pred_instances' in data_sample
 
     >>> pred_instances_3d = InstanceData(metainfo=meta_info)
-    >>> pred_instances_3d.bbox_3d = BaseInstance3DBoxes(torch.rand((5, 7)))
+    >>> pred_instances_3d.bboxes_3d = BaseInstance3DBoxes(torch.rand((5, 7)))
     >>> pred_instances_3d.scores_3d = torch.rand((5, ))
     >>> pred_instances_3d.labels_3d = torch.rand((5, ))
     >>> data_sample = Det3DDataSample(pred_instances_3d=pred_instances_3d)

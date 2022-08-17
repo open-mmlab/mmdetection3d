@@ -4,8 +4,8 @@ from typing import Dict, List, Optional
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.ops import furthest_point_sample
-from mmcv.runner import BaseModule
 from mmengine import InstanceData
+from mmengine.model import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 

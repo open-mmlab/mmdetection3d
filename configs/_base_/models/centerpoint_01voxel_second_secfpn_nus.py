@@ -1,9 +1,13 @@
 voxel_size = [0.1, 0.1, 0.2]
 model = dict(
     type='CenterPoint',
-    data_preprocessor=dict(type='Det3DDataPreprocessor'),
-    pts_voxel_layer=dict(
-        max_num_points=10, voxel_size=voxel_size, max_voxels=(90000, 120000)),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=10,
+            voxel_size=voxel_size,
+            max_voxels=(90000, 120000))),
     pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=5),
     pts_middle_encoder=dict(
         type='SparseEncoder',

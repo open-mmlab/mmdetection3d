@@ -1,9 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional
-
-import torch
-from mmcv.ops import Voxelization
-from torch.nn import functional as F
+from typing import Dict, Optional
 
 from mmdet3d.registry import MODELS
 from .two_stage import TwoStage3DDetector
@@ -17,7 +13,6 @@ class PartA2(TwoStage3DDetector):
     """
 
     def __init__(self,
-                 voxel_layer: dict,
                  voxel_encoder: dict,
                  middle_encoder: dict,
                  backbone: dict,
@@ -37,7 +32,6 @@ class PartA2(TwoStage3DDetector):
             test_cfg=test_cfg,
             init_cfg=init_cfg,
             data_preprocessor=data_preprocessor)
-        self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = MODELS.build(voxel_encoder)
         self.middle_encoder = MODELS.build(middle_encoder)
 
@@ -57,8 +51,7 @@ class PartA2(TwoStage3DDetector):
                 and for inside 3D object detection, usually a dict containing
                 features will be obtained.
         """
-        points = batch_inputs_dict['points']
-        voxel_dict = self.voxelize(points)
+        voxel_dict = batch_inputs_dict['voxels']
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
@@ -71,34 +64,3 @@ class PartA2(TwoStage3DDetector):
             feats_dict.update({'neck_feats': neck_feats})
         feats_dict['voxels_dict'] = voxel_dict
         return feats_dict
-
-    @torch.no_grad()
-    def voxelize(self, points: List[torch.Tensor]) -> Dict:
-        """Apply hard voxelization to points."""
-        voxels, coors, num_points, voxel_centers = [], [], [], []
-        for res in points:
-            res_voxels, res_coors, res_num_points = self.voxel_layer(res)
-            res_voxel_centers = (
-                res_coors[:, [2, 1, 0]] + 0.5) * res_voxels.new_tensor(
-                    self.voxel_layer.voxel_size) + res_voxels.new_tensor(
-                        self.voxel_layer.point_cloud_range[0:3])
-            voxels.append(res_voxels)
-            coors.append(res_coors)
-            num_points.append(res_num_points)
-            voxel_centers.append(res_voxel_centers)
-
-        voxels = torch.cat(voxels, dim=0)
-        num_points = torch.cat(num_points, dim=0)
-        voxel_centers = torch.cat(voxel_centers, dim=0)
-        coors_batch = []
-        for i, coor in enumerate(coors):
-            coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
-            coors_batch.append(coor_pad)
-        coors_batch = torch.cat(coors_batch, dim=0)
-
-        voxel_dict = dict(
-            voxels=voxels,
-            num_points=num_points,
-            coors=coors_batch,
-            voxel_centers=voxel_centers)
-        return voxel_dict

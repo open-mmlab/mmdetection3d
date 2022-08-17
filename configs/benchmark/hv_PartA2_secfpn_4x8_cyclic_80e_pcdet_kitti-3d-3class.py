@@ -4,12 +4,14 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
 
 model = dict(
     type='PartA2',
-    voxel_layer=dict(
-        max_num_points=5,  # max_points_per_voxel
-        point_cloud_range=point_cloud_range,
-        voxel_size=voxel_size,
-        max_voxels=(16000, 40000)  # (training, testing) max_coxels
-    ),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=5,  # max_points_per_voxel
+            point_cloud_range=point_cloud_range,
+            voxel_size=voxel_size,
+            max_voxels=(16000, 40000))),
     voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseUNet',

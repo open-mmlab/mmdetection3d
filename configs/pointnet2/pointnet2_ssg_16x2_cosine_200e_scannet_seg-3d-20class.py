@@ -30,5 +30,5 @@ model = dict(
 train_dataloader = dict(batch_size=16)
 
 # runtime settings
-default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=5), )
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=5))
 val_cfg = dict(interval=5)

@@ -423,7 +423,7 @@ gpu_ids = range(0, 1)  # 所使用的 GPU 编号
 ```python
 model = dict(
     type='MVXFasterRCNN',
-    pts_voxel_layer=dict(...),
+    data_preprocessor=dict(voxel_layer=dict(...)),
     pts_voxel_encoder=dict(...),
     pts_middle_encoder=dict(...),
     pts_backbone=dict(...),

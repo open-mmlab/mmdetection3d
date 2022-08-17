@@ -103,7 +103,7 @@ class SingleStage3DDetector(Base3DDetector):
                     (num_instance, )
                 - labels_3d (Tensor): Labels of bboxes, has a shape
                     (num_instances, ).
-                - bbox_3d (Tensor): Contains a tensor with shape
+                - bboxes_3d (Tensor): Contains a tensor with shape
                     (num_instances, C) where C >=7.
         """
         x = self.extract_feat(batch_inputs_dict)

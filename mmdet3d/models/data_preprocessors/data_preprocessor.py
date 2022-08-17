@@ -1,23 +1,29 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from numbers import Number
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import torch
+from mmcv.ops import Voxelization
 from mmengine.data import BaseDataElement
 from mmengine.model import stack_batch
+from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import OptConfigType
 from mmdet.models import DetDataPreprocessor
 
 
 @MODELS.register_module()
 class Det3DDataPreprocessor(DetDataPreprocessor):
-    """Points (Image) pre-processor for point clouds / multi-modality 3D
-    detection tasks.
+    """Points / Image pre-processor for point clouds / vision-only / multi-
+    modality 3D detection tasks.
 
     It provides the data pre-processing as follows
 
-    - Collate and move data to the target device.
+    - Collate and move image and point cloud data to the target device.
+
+    - 1) For image data:
     - Pad images in inputs to the maximum size of current batch with defined
       ``pad_value``. The padding size can be divisible by a defined
       ``pad_size_divisor``
@@ -25,8 +31,20 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
     - Convert images in inputs from bgr to rgb if the shape of input is
         (3, H, W).
     - Normalize images in inputs with defined std and mean.
+    - Do batch augmentations during training.
+
+    - 2) For point cloud data:
+    - if no voxelization, directly return list of point cloud data.
+    - if voxelization is applied, voxelize point cloud according to
+      ``voxel_type`` and obtain ``voxels``.
 
     Args:
+        voxel (bool): Whether to apply voxelziation to point cloud.
+        voxel_type (str): Voxelization type. Two voxelization types are
+            provided: 'hard' and 'dynamic', respectively for hard
+            voxelization and dynamic voxelization. Defaults to 'hard'.
+        voxel_layer (:obj:`ConfigDict`, optional): Voxelization layer
+            config. Defaults to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
             Defaults to None.
         std (Sequence[Number], optional): The pixel standard deviation of
@@ -38,9 +56,13 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             Defaults to False.
         rgb_to_bgr (bool): whether to convert image from RGB to RGB.
             Defaults to False.
+        batch_augments (list[dict], optional): Batch-level augmentations
     """
 
     def __init__(self,
+                 voxel: bool = False,
+                 voxel_type: str = 'hard',
+                 voxel_layer: OptConfigType = None,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
                  pad_size_divisor: int = 1,
@@ -64,6 +86,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             bgr_to_rgb=bgr_to_rgb,
             rgb_to_bgr=rgb_to_bgr,
             batch_augments=batch_augments)
+        self.voxel = voxel
+        self.voxel_type = voxel_type
+        if voxel:
+            self.voxel_layer = Voxelization(**voxel_layer)
 
     def forward(self,
                 data: List[Union[dict, List[dict]]],
@@ -152,6 +178,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             'imgs': batch_imgs if imgs is not None else None
         }
 
+        if self.voxel:
+            voxel_dict = self.voxelize(points)
+            batch_inputs_dict['voxels'] = voxel_dict
+
         return batch_inputs_dict, batch_data_samples
 
     def collate_data(
@@ -203,3 +233,66 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                                 self.pad_size_divisor)) * self.pad_size_divisor
             batch_pad_shape.append((pad_h, pad_w))
         return batch_pad_shape
+
+    @torch.no_grad()
+    def voxelize(self, points: List[torch.Tensor]) -> Dict:
+        """Apply voxelization to point cloud.
+
+        Args:
+            points (List[Tensor]): Point cloud in one data batch.
+
+        Returns:
+            dict[str, Tensor]: Voxelization information.
+
+            - voxels (Tensor): Features of voxels, shape is MXNxC for hard
+                voxelization, NXC for dynamic voxelization.
+            - coors (Tensor): Coordinates of voxels, shape is  Nx(1+NDim),
+                where 1 represents the batch index.
+            - num_points (Tensor, optional): Number of points in each voxel.
+            - voxel_centers (Tensor, optional): Centers of voxels.
+        """
+
+        voxel_dict = dict()
+
+        if self.voxel_type == 'hard':
+            voxels, coors, num_points, voxel_centers = [], [], [], []
+            for res in points:
+                res_voxels, res_coors, res_num_points = self.voxel_layer(res)
+                res_voxel_centers = (
+                    res_coors[:, [2, 1, 0]] + 0.5) * res_voxels.new_tensor(
+                        self.voxel_layer.voxel_size) + res_voxels.new_tensor(
+                            self.voxel_layer.point_cloud_range[0:3])
+                voxels.append(res_voxels)
+                coors.append(res_coors)
+                num_points.append(res_num_points)
+                voxel_centers.append(res_voxel_centers)
+
+            voxels = torch.cat(voxels, dim=0)
+            num_points = torch.cat(num_points, dim=0)
+            voxel_centers = torch.cat(voxel_centers, dim=0)
+            coors_batch = []
+            for i, coor in enumerate(coors):
+                coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
+                coors_batch.append(coor_pad)
+            coors_batch = torch.cat(coors_batch, dim=0)
+            voxel_dict['num_points'] = num_points
+            voxel_dict['voxel_centers'] = voxel_centers
+        elif self.voxel_type == 'dynamic':
+            coors = []
+            # dynamic voxelization only provide a coors mapping
+            for res in points:
+                res_coors = self.voxel_layer(res)
+                coors.append(res_coors)
+            voxels = torch.cat(points, dim=0)
+            coors_batch = []
+            for i, coor in enumerate(coors):
+                coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
+                coors_batch.append(coor_pad)
+            coors_batch = torch.cat(coors_batch, dim=0)
+        else:
+            raise ValueError(f'Invalid voxelization type {self.voxel_type}')
+
+        voxel_dict['voxels'] = voxels
+        voxel_dict['coors'] = coors_batch
+
+        return voxel_dict

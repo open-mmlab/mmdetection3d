@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer, build_upsample_layer
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
@@ -71,7 +71,6 @@ class SECONDFPN(BaseModule):
                 dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)
             ]
 
-    @auto_fp16()
     def forward(self, x):
         """Forward function.
 

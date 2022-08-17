@@ -93,7 +93,7 @@ The users can tune those fine-grained parameters through customizing optimizer c
 from mmcv.utils import build_from_cfg
 
 from mmcv.runner.optimizer import OPTIMIZER_BUILDERS, OPTIMIZERS
-from mmdet.utils import get_root_logger
+from mmengine.logging import MMLogger
 from .my_optimizer import MyOptimizer
 
 

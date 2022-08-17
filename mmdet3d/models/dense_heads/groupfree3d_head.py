@@ -4,13 +4,14 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, xavier_init
+from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks.transformer import (build_positional_encoding,
                                          build_transformer_layer)
 from mmcv.ops import PointsSampler as Points_Sampler
 from mmcv.ops import gather_points
-from mmcv.runner import BaseModule
 from mmengine import InstanceData
+from mmengine.model import BaseModule
+from mmengine.model.utils import xavier_init
 from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F

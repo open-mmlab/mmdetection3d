@@ -3,8 +3,8 @@ from abc import ABCMeta, abstractmethod
 from typing import List
 
 import torch
-from mmcv.cnn import normal_init
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
+from mmengine.model.utils import normal_init
 from torch import Tensor
 from torch import nn as nn
 
@@ -94,7 +94,6 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         super().init_weights()
         normal_init(self.conv_seg, mean=0, std=0.01)
 
-    @auto_fp16()
     @abstractmethod
     def forward(self, feats_dict: dict):
         """Placeholder of forward function."""

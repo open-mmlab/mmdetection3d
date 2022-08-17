@@ -132,7 +132,7 @@ __|____|____|____|_________\ x 右
 
 ### KITTI
 
-KITTI 数据集的原始标注是在相机坐标系下的，详见 [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/kitti_data_utils.py)。在 MMDetection3D 中，为了在 KITTI 数据集上训练基于激光雷达的模型，首先将数据从相机坐标系转换到激光雷达坐标，详见 [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py)。对于训练基于视觉的模型，数据保持在相机坐标系不变。
+KITTI 数据集的原始标注是在相机坐标系下的，详见 [get_label_anno](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/kitti_data_utils.py)。在 MMDetection3D 中，为了在 KITTI 数据集上训练基于激光雷达的模型，首先将数据从相机坐标系转换到激光雷达坐标，详见 [get_ann_info](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/kitti_dataset.py)。对于训练基于视觉的模型，数据保持在相机坐标系不变。
 
 在 SECOND 中，框的激光雷达坐标系定义如下（鸟瞰图）：
 
@@ -169,7 +169,7 @@ ScanNet 的原始数据不是点云而是网格，需要在我们的深度坐标
 
 SUN RGB-D 的原始数据不是点云而是 RGB-D 图像。我们通过反投影，可以得到每张图像对应的点云，其在我们的深度坐标系下。但是，数据集的标注并不在我们的系统中，所以需要进行转换。
 
-将原始标注转换为我们的深度坐标系下的标注的转换过程请参考 [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/data_converter/sunrgbd_data_utils.py)。
+将原始标注转换为我们的深度坐标系下的标注的转换过程请参考 [sunrgbd_data_utils.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/sunrgbd_data_utils.py)。
 
 ### S3DIS
 
