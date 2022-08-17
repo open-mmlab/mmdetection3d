@@ -58,6 +58,12 @@ test_pipeline = [
         use_color=True,
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         # a wrapper in order to successfully call test function
