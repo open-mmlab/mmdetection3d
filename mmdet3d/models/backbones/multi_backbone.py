@@ -115,10 +115,11 @@ class MultiBackbone(BaseModule):
             cur_ret = self.backbone_list[ind](points)
             cur_suffix = self.suffixes[ind]
             fp_features.append(cur_ret['fp_features'][-1])
+            cur_ret_new = dict()
             if cur_suffix != '':
                 for k in cur_ret.keys():
-                    cur_ret[k + '_' + cur_suffix] = cur_ret.pop(k)
-            ret.update(cur_ret)
+                    cur_ret_new[k + '_' + cur_suffix] = cur_ret[k]
+            ret.update(cur_ret_new)
 
         # Combine the features here
         hd_feature = torch.cat(fp_features, dim=1)
