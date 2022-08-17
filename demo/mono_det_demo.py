@@ -46,10 +46,7 @@ def main(args):
 
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
-    visualizer.dataset_meta = {
-        'CLASSES': model.CLASSES,
-        'PALETTE': model.PALETTE
-    }
+    visualizer.dataset_meta = model.dataset_meta
 
     # test a single image
     result = inference_mono_3d_detector(model, args.img, args.ann,
