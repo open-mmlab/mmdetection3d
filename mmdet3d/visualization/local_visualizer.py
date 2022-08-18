@@ -470,7 +470,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def add_datasample(self,
                        name: str,
                        data_input: dict,
-                       gt_sample: Optional['Det3DDataSample'] = None,
                        pred_sample: Optional['Det3DDataSample'] = None,
                        draw_gt: bool = True,
                        draw_pred: bool = True,
@@ -495,8 +494,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             name (str): The image identifier.
             data_input (dict): It should include the point clouds or image
                 to draw.
-            gt_sample (:obj:`Det3DDataSample`, optional): GT Det3DDataSample.
-                Defaults to None.
             pred_sample (:obj:`Det3DDataSample`, optional): Prediction
                 Det3DDataSample. Defaults to None.
             draw_gt (bool): Whether to draw GT Det3DDataSample.
@@ -524,20 +521,20 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
 
-        if draw_gt and gt_sample is not None:
-            if 'gt_instances_3d' in gt_sample:
-                gt_data_3d = self._draw_instances_3d(data_input,
-                                                     gt_sample.gt_instances_3d,
-                                                     gt_sample.metainfo,
-                                                     vis_task, palette)
-            if 'gt_instances' in gt_sample:
+        if draw_gt and pred_sample is not None:
+            if 'gt_instances_3d' in pred_sample:
+                gt_data_3d = self._draw_instances_3d(
+                    data_input, pred_sample.gt_instances_3d,
+                    pred_sample.metainfo, vis_task, palette)
+            if 'gt_instances' in pred_sample:
                 assert 'img' in data_input
                 if isinstance(data_input['img'], Tensor):
                     img = data_input['img'].permute(1, 2, 0).numpy()
                     img = img[..., [2, 1, 0]]  # bgr to rgb
-                gt_img_data = self._draw_instances(img, gt_sample.gt_instances,
+                gt_img_data = self._draw_instances(img,
+                                                   pred_sample.gt_instances,
                                                    classes, palette)
-            if 'gt_pts_seg' in gt_sample:
+            if 'gt_pts_seg' in pred_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
