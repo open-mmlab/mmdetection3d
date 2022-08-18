@@ -512,6 +512,59 @@ class LoadPointsFromDict(LoadPointsFromFile):
 
 
 @TRANSFORMS.register_module()
+class LoadDepthFromFile(object):
+    """Load depth maps."""
+
+    def __init__(self,
+                 to_float32: bool = False,
+                 file_client_args: dict = dict(backend='disk'),
+                 imdecode_backend: str = 'cv2',
+                 with_transform: bool = True):
+        self.imdecode_backend = imdecode_backend
+        self.to_float32 = to_float32
+        self.file_client_args = file_client_args
+        self.file_client = None
+        self.with_transform = with_transform
+
+    def __call__(self, results):
+        """Call function to load depth maps from files.
+
+        Args:
+            results (dict): Result dict containing multi-frame image filenames.
+        Returns:
+            dict: The result dict containing the multi-frame image data.
+                Added keys are deducted from all pipelines from
+                self.transforms.
+        """
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+        depth_filename = results['depth_img_path']
+
+        depth_bytes = self.file_client.get(depth_filename)
+        depth_img = mmcv.imfrombytes(
+            depth_bytes, flag='grayscale', backend=self.imdecode_backend)
+
+        if self.to_float32:
+            depth_img = depth_img.astype(np.float32)
+
+        depth_img = np.expand_dims(depth_img, 0)
+        results['altitude'] = depth_img
+        # hack the depth_fields with seg_fields given their similarity
+        # TODO: distinguish seg_fields and depth_fields
+        # if self.with_transform:
+        #     # add into seg_fields to apply transforms same as imgs
+        #     results['seg_fields'].append('depth_img')
+
+        return results
+
+    def __repr__(self):
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(transforms={self.transforms}, '
+        return repr_str
+
+
+@TRANSFORMS.register_module()
 class LoadAnnotations3D(LoadAnnotations):
     """Load Annotations3D.
 

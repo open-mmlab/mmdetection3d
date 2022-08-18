@@ -13,7 +13,8 @@ from mmdet3d.registry import DATASETS
 class Seg3DDataset(BaseDataset):
     """Base Class for 3D semantic segmentation dataset.
 
-    This is the base dataset of ScanNet, S3DIS and SemanticKITTI dataset.
+    This is the base dataset of ScanNet, S3DIS, SensatUrban and
+    SemanticKITTI dataset.
 
     Args:
         data_root (str): Path of dataset root.
