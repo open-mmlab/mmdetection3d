@@ -470,7 +470,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def add_datasample(self,
                        name: str,
                        data_input: dict,
-                       pred_sample: Optional['Det3DDataSample'] = None,
+                       data_sample: Optional['Det3DDataSample'] = None,
                        draw_gt: bool = True,
                        draw_pred: bool = True,
                        show: bool = False,
@@ -494,7 +494,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             name (str): The image identifier.
             data_input (dict): It should include the point clouds or image
                 to draw.
-            pred_sample (:obj:`Det3DDataSample`, optional): Prediction
+            data_sample (:obj:`Det3DDataSample`, optional): Prediction
                 Det3DDataSample. Defaults to None.
             draw_gt (bool): Whether to draw GT Det3DDataSample.
                 Default to True.
@@ -521,20 +521,20 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
 
-        if draw_gt and pred_sample is not None:
-            if 'gt_instances_3d' in pred_sample:
+        if draw_gt and data_sample is not None:
+            if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
-                    data_input, pred_sample.gt_instances_3d,
-                    pred_sample.metainfo, vis_task, palette)
-            if 'gt_instances' in pred_sample:
+                    data_input, data_sample.gt_instances_3d,
+                    data_sample.metainfo, vis_task, palette)
+            if 'gt_instances' in data_sample:
                 assert 'img' in data_input
                 if isinstance(data_input['img'], Tensor):
                     img = data_input['img'].permute(1, 2, 0).numpy()
                     img = img[..., [2, 1, 0]]  # bgr to rgb
                 gt_img_data = self._draw_instances(img,
-                                                   pred_sample.gt_instances,
+                                                   data_sample.gt_instances,
                                                    classes, palette)
-            if 'gt_pts_seg' in pred_sample:
+            if 'gt_pts_seg' in data_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -542,23 +542,23 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 gt_seg_data_3d = \
                     self._draw_pts_sem_seg(data_input['points'],
-                                           pred_sample.pred_pts_seg,
+                                           data_sample.pred_pts_seg,
                                            palette, ignore_index)
 
-        if draw_pred and pred_sample is not None:
-            if 'pred_instances_3d' in pred_sample:
-                pred_instances_3d = pred_sample.pred_instances_3d
+        if draw_pred and data_sample is not None:
+            if 'pred_instances_3d' in data_sample:
+                pred_instances_3d = data_sample.pred_instances_3d
                 # .cpu can not be used for BaseInstancesBoxes3D
                 # so we need to use .to('cpu')
                 pred_instances_3d = pred_instances_3d[
                     pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
                 pred_data_3d = self._draw_instances_3d(data_input,
                                                        pred_instances_3d,
-                                                       pred_sample.metainfo,
+                                                       data_sample.metainfo,
                                                        vis_task, palette)
-            if 'pred_instances' in pred_sample:
-                if 'img' in data_input and len(pred_sample.pred_instances) > 0:
-                    pred_instances = pred_sample.pred_instances
+            if 'pred_instances' in data_sample:
+                if 'img' in data_input and len(data_sample.pred_instances) > 0:
+                    pred_instances = data_sample.pred_instances
                     pred_instances = pred_instances_3d[
                         pred_instances.scores > pred_score_thr].cpu()
                     if isinstance(data_input['img'], Tensor):
@@ -566,7 +566,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         img = img[..., [2, 1, 0]]  # bgr to rgb
                     pred_img_data = self._draw_instances(
                         img, pred_instances, classes, palette)
-            if 'pred_pts_seg' in pred_sample:
+            if 'pred_pts_seg' in data_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -574,7 +574,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 pred_seg_data_3d = \
                     self._draw_pts_sem_seg(data_input['points'],
-                                           pred_sample.pred_pts_seg,
+                                           data_sample.pred_pts_seg,
                                            palette, ignore_index)
 
         # monocular 3d object detection image
