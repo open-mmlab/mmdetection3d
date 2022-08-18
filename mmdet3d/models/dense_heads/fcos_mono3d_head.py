@@ -568,7 +568,8 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
                 cfg=cfg,
                 rescale=rescale)
             result_list.append(results)
-        return result_list
+        result_list_2d = None
+        return result_list, result_list_2d
 
     def _predict_by_feat_single(self,
                                 cls_score_list: List[Tensor],

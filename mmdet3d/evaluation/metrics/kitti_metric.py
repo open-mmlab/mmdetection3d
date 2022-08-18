@@ -140,7 +140,7 @@ class KittiMetric(BaseMetric):
         return data_annos
 
     def process(self, data_batch: Sequence[dict],
-                predictions: Sequence[dict]) -> None:
+                data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
         The processed results should be stored in ``self.results``,
@@ -150,18 +150,18 @@ class KittiMetric(BaseMetric):
         Args:
             data_batch (Sequence[dict]): A batch of data
                 from the dataloader.
-            predictions (Sequence[dict]): A batch of outputs from
+            data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        assert len(data_batch) == len(predictions)
-        for data, pred in zip(data_batch, predictions):
+        assert len(data_batch) == len(data_samples)
+        for data, data_sample in zip(data_batch, data_samples):
             result = dict()
-            for pred_result in pred:
-                for attr_name in pred[pred_result]:
-                    pred[pred_result][attr_name] = pred[pred_result][
-                        attr_name].to(self.collect_device)
-                result[pred_result] = pred[pred_result]
-            sample_idx = data['data_sample']['sample_idx']
+            for pred_result in data_sample:
+                for attr_name in data_sample[pred_result]:
+                    data_sample[pred_result][attr_name] = data_sample[
+                        pred_result][attr_name].to(self.collect_device)
+                result[pred_result] = data_sample[pred_result]
+            sample_idx = data_sample['sample_idx']
             result['sample_idx'] = sample_idx
         self.results.append(result)
 

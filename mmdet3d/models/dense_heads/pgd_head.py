@@ -847,6 +847,8 @@ class PGDHead(FCOSMono3DHead):
         mlvl_points = self.get_points(featmap_sizes, bbox_preds[0].dtype,
                                       bbox_preds[0].device)
         result_list = []
+        result_list_2d = []
+
         for img_id in range(len(batch_img_metas)):
             cls_score_list = [
                 cls_scores[i][img_id].detach() for i in range(num_levels)
@@ -901,7 +903,7 @@ class PGDHead(FCOSMono3DHead):
                 centernesses[i][img_id].detach() for i in range(num_levels)
             ]
             img_meta = batch_img_metas[img_id]
-            results = self._predict_by_feat_single(
+            results, results_2d = self._predict_by_feat_single(
                 cls_score_list=cls_score_list,
                 bbox_pred_list=bbox_pred_list,
                 dir_cls_pred_list=dir_cls_pred_list,
@@ -914,7 +916,8 @@ class PGDHead(FCOSMono3DHead):
                 cfg=cfg,
                 rescale=rescale)
             result_list.append(results)
-        return result_list
+            result_list_2d.append(results_2d)
+        return result_list, result_list_2d
 
     def _predict_by_feat_single(self,
                                 cls_score_list: List[Tensor],
@@ -1117,15 +1120,15 @@ class PGDHead(FCOSMono3DHead):
         if attrs is not None:
             results.attr_labels = attrs
 
+        results_2d = InstanceData()
+
         if self.pred_bbox2d:
-            results_2d = InstanceData()
             bboxes2d = nms_results[-1]
             results_2d.bboxes = bboxes2d
             results_2d.scores = scores
             results_2d.labels = labels
-            return results, results_2d
-        else:
-            return results
+
+        return results, results_2d
 
     def get_targets(
         self,

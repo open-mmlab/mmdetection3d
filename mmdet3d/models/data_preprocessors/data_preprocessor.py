@@ -1,12 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import math
 from numbers import Number
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from mmcv.ops import Voxelization
-from mmengine.data import BaseDataElement
 from mmengine.model import stack_batch
+from mmengine.utils import is_list_of
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
@@ -91,10 +92,11 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         if voxel:
             self.voxel_layer = Voxelization(**voxel_layer)
 
-    def forward(self,
-                data: List[Union[dict, List[dict]]],
-                training: bool = False
-                ) -> Tuple[Union[dict, List[dict]], Optional[list]]:
+    def forward(
+        self,
+        data: Union[dict, List[dict]],
+        training: bool = False
+    ) -> Tuple[Union[dict, List[dict]], Optional[list]]:
         """Perform normalization、padding and bgr2rgb conversion based on
         ``BaseDataPreprocessor``.
 
@@ -110,8 +112,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             Tuple[List[Dict], Optional[list[list]]]:
             Data in the same format as the model input.
         """
-        if isinstance(data[0], list):
-            num_augs = len(data[0])
+        if isinstance(data, list):
+            num_augs = len(data)
             aug_batch_data = []
             aug_batch_data_sample = []
             for aug_id in range(num_augs):
@@ -126,34 +128,30 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         else:
             return self.simple_process(data, training)
 
-    def simple_process(self, data: Sequence[dict], training: bool = False):
-        inputs_dict, batch_data_samples = self.collate_data(data)
+    def simple_process(self, data: dict, training: bool = False) -> dict:
+        """Perform normalization、padding and bgr2rgb conversion based on
+        ``BaseDataPreprocessor``.
 
-        if 'points' in inputs_dict[0].keys():
-            points = [input['points'] for input in inputs_dict]
-        else:
-            points = None
+        Args:
+            data (Sequence[dict]): data sampled from dataloader.
+            training (bool): Whether to enable training time augmentation.
 
-        if 'img' in inputs_dict[0].keys():
+        Returns:
+            Tuple[torch.Tensor, Optional[list]]: Data in the same format as the
+            model input.
+        """
+        data = self.collate_data(data)
+        inputs, data_samples = data['inputs'], data['data_samples']
+        batch_pad_shape = self._get_pad_shape(data)
 
-            imgs = [input['img'] for input in inputs_dict]
-
-            # channel transform
-            if self.channel_conversion:
-                imgs = [_img[[2, 1, 0], ...] for _img in imgs]
-            # Normalization.
-            if self._enable_normalize:
-                imgs = [(_img.float() - self.mean) / self.std for _img in imgs]
-            # Pad and stack Tensor.
-            batch_imgs = stack_batch(imgs, self.pad_size_divisor,
-                                     self.pad_value)
-
-            batch_pad_shape = self._get_pad_shape(data)
-
-            if batch_data_samples is not None:
+        if 'imgs' in inputs:
+            imgs = inputs['imgs']
+            if data_samples is not None:
                 # NOTE the batched image size information may be useful, e.g.
-                batch_input_shape = tuple(batch_imgs[0].size()[-2:])
-                for data_samples, pad_shape in zip(batch_data_samples,
+                # in DETR, this is needed for the construction of masks, which
+                # is then used for the transformer_head.
+                batch_input_shape = tuple(imgs[0].size()[-2:])
+                for data_samples, pad_shape in zip(data_samples,
                                                    batch_pad_shape):
                     data_samples.set_metainfo({
                         'batch_input_shape': batch_input_shape,
@@ -161,70 +159,106 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                     })
 
                 if self.pad_mask:
-                    self.pad_gt_masks(batch_data_samples)
+                    self.pad_gt_masks(data_samples)
 
                 if self.pad_seg:
-                    self.pad_gt_sem_seg(batch_data_samples)
+                    self.pad_gt_sem_seg(data_samples)
 
             if training and self.batch_augments is not None:
                 for batch_aug in self.batch_augments:
-                    batch_imgs, batch_data_samples = batch_aug(
-                        batch_imgs, batch_data_samples)
+                    imgs, data_samples = batch_aug(imgs, data_samples)
         else:
             imgs = None
 
-        batch_inputs_dict = {
-            'points': points,
-            'imgs': batch_imgs if imgs is not None else None
-        }
+        inputs['imgs'] = imgs
 
         if self.voxel:
-            voxel_dict = self.voxelize(points)
-            batch_inputs_dict['voxels'] = voxel_dict
+            voxel_dict = self.voxelize(inputs['points'])
+            inputs['voxels'] = voxel_dict
 
-        return batch_inputs_dict, batch_data_samples
+        return data
 
-    def collate_data(
-            self, data: Sequence[dict]) -> Tuple[List[dict], Optional[list]]:
-        """Collating and copying data to the target device.
+    def collate_data(self, data: dict) -> dict:
+        """Copying data to the target device and Performs normalization、
+        padding and bgr2rgb conversion and stack based on
+        ``BaseDataPreprocessor``.
 
         Collates the data sampled from dataloader into a list of dict and
         list of labels, and then copies tensor to the target device.
 
         Args:
-            data (Sequence[dict]): Data sampled from dataloader.
+            data (dict): Data sampled from dataloader.
 
         Returns:
-            Tuple[List[Dict], Optional[list]]: Unstacked list of input
-            data dict and list of labels at target device.
+            dict: Data in the same format as the model input.
         """
-        # rewrite `collate_data` since the inputs is a dict instead of
-        # image tensor.
-        inputs_dict = [{
-            k: v.to(self._device)
-            for k, v in _data['inputs'].items() if v is not None
-        } for _data in data]
+        data = self.cast_data(data)  # type: ignore
 
-        batch_data_samples: List[BaseDataElement] = []
-        # Model can get predictions without any data samples.
-        for _data in data:
-            if 'data_sample' in _data:
-                batch_data_samples.append(_data['data_sample'])
-        # Move data from CPU to corresponding device.
-        batch_data_samples = [
-            data_sample.to(self._device) for data_sample in batch_data_samples
-        ]
+        if 'img' in data['inputs']:
+            _batch_imgs = data['inputs']['img']
 
-        if not batch_data_samples:
-            batch_data_samples = None  # type: ignore
+            # Process data with `pseudo_collate`.
+            if is_list_of(_batch_imgs, torch.Tensor):
+                batch_imgs = []
+                for _batch_img in _batch_imgs:
+                    # channel transform
+                    if self._channel_conversion:
+                        _batch_img = _batch_img[[2, 1, 0], ...]
+                    # Convert to float after channel conversion to ensure
+                    # efficiency
+                    _batch_img = _batch_img.float()
+                    # Normalization.
+                    if self._enable_normalize:
+                        if self.mean.shape[0] == 3:
+                            assert _batch_img.dim(
+                            ) == 3 and _batch_img.shape[0] == 3, (
+                                'If the mean has 3 values, the input tensor '
+                                'should in shape of (3, H, W), but got the '
+                                f'tensor with shape {_batch_img.shape}')
+                        _batch_img = (_batch_img - self.mean) / self.std
+                    batch_imgs.append(_batch_img)
+                # Pad and stack Tensor.
+                batch_imgs = stack_batch(batch_imgs, self.pad_size_divisor,
+                                         self.pad_value)
+            # Process data with `default_collate`.
+            elif isinstance(_batch_imgs, torch.Tensor):
+                assert _batch_imgs.dim() == 4, (
+                    'The input of `ImgDataPreprocessor` should be a NCHW '
+                    'tensor or a list of tensor, but got a tensor with '
+                    f'shape: {_batch_imgs.shape}')
+                if self._channel_conversion:
+                    _batch_imgs = _batch_imgs[:, [2, 1, 0], ...]
+                # Convert to float after channel conversion to ensure
+                # efficiency
+                _batch_imgs = _batch_imgs.float()
+                if self._enable_normalize:
+                    _batch_imgs = (_batch_imgs - self.mean) / self.std
+                h, w = _batch_imgs.shape[2:]
+                target_h = math.ceil(
+                    h / self.pad_size_divisor) * self.pad_size_divisor
+                target_w = math.ceil(
+                    w / self.pad_size_divisor) * self.pad_size_divisor
+                pad_h = target_h - h
+                pad_w = target_w - w
+                batch_imgs = F.pad(_batch_imgs, (0, pad_w, 0, pad_h),
+                                   'constant', self.pad_value)
+            else:
+                raise TypeError(
+                    'Output of `cast_data` should be a list of dict '
+                    'or a tuple with inputs and data_samples, but got'
+                    f'{type(data)}： {data}')
 
-        return inputs_dict, batch_data_samples
+            data['inputs']['imgs'] = batch_imgs
+
+        data.setdefault('data_samples', None)
+
+        return data
 
     def _get_pad_shape(self, data: Sequence[dict]) -> List[tuple]:
         """Get the pad_shape of each image based on data and
         pad_size_divisor."""
         # rewrite `_get_pad_shape` for obaining image inputs.
-        ori_inputs = [_data['inputs']['img'] for _data in data]
+        ori_inputs = [_data['img'] for _data in data['inputs']]
         batch_pad_shape = []
         for ori_input in ori_inputs:
             pad_h = int(np.ceil(ori_input.shape[1] /
