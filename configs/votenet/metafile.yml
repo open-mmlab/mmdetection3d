@@ -15,7 +15,7 @@ Collections:
       Version: v0.5.0
 
 Models:
-  - Name: votenet_16x8_sunrgbd-3d-10class.py
+  - Name: votenet_16x8_sunrgbd-3d-10class
     In Collection: VoteNet
     Config: configs/votenet/votenet_16x8_sunrgbd-3d-10class.py
     Metadata:
@@ -29,7 +29,7 @@ Models:
           AP@0.5: 35.77
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20210820_162823-bf11f014.pth
 
-  - Name: votenet_8x8_scannet-3d-18class.py
+  - Name: votenet_8x8_scannet-3d-18class
     In Collection: VoteNet
     Config: configs/votenet/votenet_8x8_scannet-3d-18class.py
     Metadata:
@@ -57,3 +57,4 @@ Models:
         Metrics:
           AP@0.25: 63.81
           AP@0.5: 44.21
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_8x8_scannet-3d-18class/votenet_8x8_scannet-3d-18class_20210823_234503-cf8134fa.pth

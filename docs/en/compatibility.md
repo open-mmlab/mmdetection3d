@@ -1,3 +1,15 @@
+## v1.0.0rc4
+
+### Number of points in SUN RGB-D preprocessing
+
+Before mmdet3d version 1.0.0rc4 we sampled 50000 points following VoteNet preprocessing. Since 1.0.0v4 version we do not limit the maximum number of points during preprocessing, giving the users more flexibility with `PointSample`. The SUN RGB-D annotations should be updated in case the user wants to achieve best metrics for models supporting more than 50000 input points.
+
+Please refer to the SUN RGB-D [README.md](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) for more details.
+
+### Fix a small amount of missing objects during S3DIS preprocessing
+
+We fixed a bug in `tools/data_converter/s3dis_data_utils.py` leading to miss not more than one object per scene. Users need to regenerate the annotations with `tools/create_data.py`.
+
 ## v1.0.0rc1
 
 ### Operators Migration

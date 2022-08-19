@@ -7,7 +7,7 @@ import numpy as np
 from scipy import io as sio
 
 
-def random_sampling(points, num_points, replace=None, return_choices=False):
+def random_sampling(points, num_points, replace=None):
     """Random sampling.
 
     Sampling point cloud to a certain number of points.
@@ -16,19 +16,16 @@ def random_sampling(points, num_points, replace=None, return_choices=False):
         points (ndarray): Point cloud.
         num_points (int): The number of samples.
         replace (bool): Whether the sample is with or without replacement.
-        return_choices (bool): Whether to return choices.
 
     Returns:
         points (ndarray): Point cloud after sampling.
     """
-
+    if num_points < 0:
+        return points
     if replace is None:
         replace = (points.shape[0] < num_points)
     choices = np.random.choice(points.shape[0], num_points, replace=replace)
-    if return_choices:
-        return points[choices], choices
-    else:
-        return points[choices]
+    return points[choices]
 
 
 class SUNRGBDInstance(object):
@@ -68,12 +65,15 @@ class SUNRGBDData(object):
         root_path (str): Root path of the raw data.
         split (str, optional): Set split type of the data. Default: 'train'.
         use_v1 (bool, optional): Whether to use v1. Default: False.
+        num_points (int, optional): Number of points to sample. Set to -1
+            to utilize all points. Defaults to -1.
     """
 
-    def __init__(self, root_path, split='train', use_v1=False):
+    def __init__(self, root_path, split='train', use_v1=False, num_points=-1):
         self.root_dir = root_path
         self.split = split
         self.split_dir = osp.join(root_path, 'sunrgbd_trainval')
+        self.num_points = num_points
         self.classes = [
             'bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
             'night_stand', 'bookshelf', 'bathtub'
@@ -146,12 +146,9 @@ class SUNRGBDData(object):
         def process_single_scene(sample_idx):
             print(f'{self.split} sample_idx: {sample_idx}')
             # convert depth to points
-            SAMPLE_NUM = 50000
-            # TODO: Check whether can move the point
-            #  sampling process during training.
             pc_upright_depth = self.get_depth(sample_idx)
             pc_upright_depth_subsampled = random_sampling(
-                pc_upright_depth, SAMPLE_NUM)
+                pc_upright_depth, self.num_points)
 
             info = dict()
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
