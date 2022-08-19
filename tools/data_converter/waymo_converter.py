@@ -130,9 +130,9 @@ class Waymo2KITTI(object):
         return len(self.tfrecord_pathnames)
 
     def save_image(self, frame, file_idx, frame_idx):
-        """Parse and save the images in jpg format.
-           Jpg is the original format used by Waymo Open dataset.
-           Saving in png format will cause huge (~3x) unnesssary storage waste.
+        """Parse and save the images in jpg format. Jpg is the original format
+        used by Waymo Open dataset. Saving in png format will cause huge (~3x)
+        unnesssary storage waste.
 
         Args:
             frame (:obj:`Frame`): Open dataset frame proto.
