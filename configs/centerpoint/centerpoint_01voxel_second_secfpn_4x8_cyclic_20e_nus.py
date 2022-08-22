@@ -12,7 +12,7 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-data_prefix = dict(pts='samples/LIDAR_TOP', img='')
+data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
 model = dict(
     data_preprocessor=dict(
         voxel_layer=dict(point_cloud_range=point_cloud_range)),

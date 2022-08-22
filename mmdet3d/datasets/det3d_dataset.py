@@ -111,9 +111,10 @@ class Det3DDataset(BaseDataset):
             }
             self.label_mapping[-1] = -1
 
-        # can be accessed by other component in runner
-        metainfo['box_type_3d'] = box_type_3d
-        metainfo['label_mapping'] = self.label_mapping
+        if metainfo is not None:
+            # can be accessed by other component in runner
+            metainfo['box_type_3d'] = box_type_3d
+            metainfo['label_mapping'] = self.label_mapping
 
         super().__init__(
             ann_file=ann_file,
@@ -235,6 +236,20 @@ class Det3DDataset(BaseDataset):
                     info['lidar_points']['lidar_path'])
 
             info['lidar_path'] = info['lidar_points']['lidar_path']
+            if 'lidar_sweeps' in info:
+                for sweep in info['lidar_sweeps']:
+                    file_suffix = sweep['lidar_points']['lidar_path'].split(
+                        '/')[-1]
+                    if 'samples' in sweep['lidar_points']['lidar_path']:
+                        sweep['lidar_points']['lidar_path'] = \
+                            osp.join(
+                                self.data_root, self.data_prefix['pts'],
+                                file_suffix)
+                    else:
+                        sweep['lidar_points']['lidar_path'] = \
+                            osp.join(
+                                self.data_root, self.data_prefix['sweeps'],
+                                file_suffix)
 
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():
