@@ -184,6 +184,10 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
         </ul>
+        <li><b>Indoor</b></li>
+        <ul>
+          <li><a href="configs/imvoxelnet">ImVoxelNet (WACV'2022)</a></li>
+        </ul>
       </td>
       <td>
         <li><b>Outdoor</b></li>
