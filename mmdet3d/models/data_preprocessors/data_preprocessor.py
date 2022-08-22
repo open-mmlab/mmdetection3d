@@ -106,6 +106,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 a list[list[dict]], the inter list indicate test time
                 augmentation.
             training (bool): Whether to enable training time augmentation.
+                Defaults to False.
 
         Returns:
             Tuple[Dict, Optional[list]] |
@@ -135,6 +136,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         Args:
             data (Sequence[dict]): data sampled from dataloader.
             training (bool): Whether to enable training time augmentation.
+                Defaults to False.
 
         Returns:
             Tuple[torch.Tensor, Optional[list]]: Data in the same format as the
