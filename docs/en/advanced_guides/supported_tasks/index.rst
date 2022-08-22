@@ -1,5 +1,5 @@
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    lidar_det3d.md
    vision_det3d.md

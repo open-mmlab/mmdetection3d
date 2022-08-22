@@ -1,5 +1,5 @@
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    kitti_det.md
    nuscenes_det.md

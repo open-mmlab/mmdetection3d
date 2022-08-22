@@ -1,4 +1,4 @@
-# Tutorial 4: Customize Models
+# Customize Models
 
 We basically categorize model components into 6 types.
 

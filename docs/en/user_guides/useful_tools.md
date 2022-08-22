@@ -1,6 +1,8 @@
+# Useful Tools
+
 We provide lots of useful tools under `tools/` directory.
 
-# Log Analysis
+## Log Analysis
 
 You can plot loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
 
@@ -53,9 +55,9 @@ average iter time: 1.1959 s/iter
 
 &#8195;
 
-# Visualization
+## Visualization
 
-## Results
+### Results
 
 To see the prediction results of trained models, you can run the following command
 
@@ -86,7 +88,7 @@ Or you can use 3D visualization software such as the [MeshLab](http://www.meshla
 
 **Notice**: The visualization API is a little unstable since we plan to refactor these parts together with MMDetection in the future.
 
-## Dataset
+### Dataset
 
 We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, multi-modality 3D detection on KITTI and SUN RGB-D, as well as monocular 3D detection on nuScenes. To browse the KITTI dataset, you can run the following command
 
@@ -128,13 +130,13 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task
 
 &#8195;
 
-# Model Serving
+## Model Serving
 
 **Note**: This tool is still experimental now, only SECOND is supported to be served with [`TorchServe`](https://pytorch.org/serve/). We'll support more models in the future.
 
 In order to serve an `MMDetection3D` model with [`TorchServe`](https://pytorch.org/serve/), you can follow the steps:
 
-## 1. Convert the model from MMDetection3D to TorchServe
+### 1. Convert the model from MMDetection3D to TorchServe
 
 ```shell
 python tools/deployment/mmdet3d2torchserve.py ${CONFIG_FILE} ${CHECKPOINT_FILE} \
@@ -144,13 +146,13 @@ python tools/deployment/mmdet3d2torchserve.py ${CONFIG_FILE} ${CHECKPOINT_FILE} 
 
 **Note**: ${MODEL_STORE} needs to be an absolute path to a folder.
 
-## 2. Build `mmdet3d-serve` docker image
+### 2. Build `mmdet3d-serve` docker image
 
 ```shell
 docker build -t mmdet3d-serve:latest docker/serve/
 ```
 
-## 3. Run `mmdet3d-serve`
+### 3. Run `mmdet3d-serve`
 
 Check the official docs for [running TorchServe with docker](https://github.com/pytorch/serve/blob/master/docker/README.md#running-torchserve-in-a-production-docker-environment).
 
@@ -169,7 +171,7 @@ mmdet3d-serve:latest
 
 [Read the docs](https://github.com/pytorch/serve/blob/072f5d088cce9bb64b2a18af065886c9b01b317b/docs/rest_api.md/) about the Inference (8080), Management (8081) and Metrics (8082) APis
 
-## 4. Test deployment
+### 4. Test deployment
 
 You can use `test_torchserver.py` to compare result of torchserver and pytorch.
 
@@ -186,7 +188,7 @@ python tools/deployment/test_torchserver.py demo/data/kitti/kitti_000008.bin con
 
 &#8195;
 
-# Model Complexity
+## Model Complexity
 
 You can use `tools/analysis_tools/get_flops.py` in MMDetection3D, a script adapted from [flops-counter.pytorch](https://github.com/sovrasov/flops-counter.pytorch), to compute the FLOPs and params of a given model.
 
@@ -215,9 +217,9 @@ comparisons, but double check it before you adopt it in technical reports or pap
 
 &#8195;
 
-# Model Conversion
+## Model Conversion
 
-## RegNet model to MMDetection
+### RegNet model to MMDetection
 
 `tools/model_converters/regnet2mmdet.py` convert keys in pycls pretrained RegNet models to
 MMDetection style.
@@ -226,7 +228,7 @@ MMDetection style.
 python tools/model_converters/regnet2mmdet.py ${SRC} ${DST} [-h]
 ```
 
-## Detectron ResNet to Pytorch
+### Detectron ResNet to Pytorch
 
 `tools/detectron2pytorch.py` in MMDetection could convert keys in the original detectron pretrained
 ResNet models to PyTorch style.
@@ -235,7 +237,7 @@ ResNet models to PyTorch style.
 python tools/detectron2pytorch.py ${SRC} ${DST} ${DEPTH} [-h]
 ```
 
-## Prepare a model for publishing
+### Prepare a model for publishing
 
 `tools/model_converters/publish_model.py` helps users to prepare their model for publishing.
 
@@ -260,7 +262,7 @@ The final output filename will be `faster_rcnn_r50_fpn_1x_20190801-{hash id}.pth
 
 &#8195;
 
-# Dataset Conversion
+## Dataset Conversion
 
 `tools/dataset_converters/` contains tools for converting datasets to other formats. Most of them convert datasets to pickle based info files, like kitti, nuscenes and lyft. Waymo converter is used to reorganize waymo raw data like KITTI style. Users could refer to them for our approach to converting data format. It is also convenient to modify them to use as scripts like nuImages converter.
 
@@ -281,9 +283,9 @@ More details could be referred to the [doc](https://mmdetection3d.readthedocs.io
 
 &#8195;
 
-# Miscellaneous
+## Miscellaneous
 
-## Print the entire config
+### Print the entire config
 
 `tools/misc/print_config.py` prints the whole config verbatim, expanding all its
 imports.
