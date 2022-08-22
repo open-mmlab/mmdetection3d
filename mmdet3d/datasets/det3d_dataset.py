@@ -241,15 +241,11 @@ class Det3DDataset(BaseDataset):
                     file_suffix = sweep['lidar_points']['lidar_path'].split(
                         '/')[-1]
                     if 'samples' in sweep['lidar_points']['lidar_path']:
-                        sweep['lidar_points']['lidar_path'] = \
-                            osp.join(
-                                self.data_root, self.data_prefix['pts'],
-                                file_suffix)
+                        sweep['lidar_points']['lidar_path'] = osp.join(
+                            self.data_prefix['pts'], file_suffix)
                     else:
-                        sweep['lidar_points']['lidar_path'] = \
-                            osp.join(
-                                self.data_root, self.data_prefix['sweeps'],
-                                file_suffix)
+                        sweep['lidar_points']['lidar_path'] = osp.join(
+                            self.data_prefix['sweeps'], file_suffix)
 
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():
