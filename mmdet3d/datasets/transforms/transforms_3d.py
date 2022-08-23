@@ -99,15 +99,15 @@ class RandomFlip3D(RandomFlip):
     - pcd_scale_factor (np.float32)
 
     Args:
-        sync_2d (bool, optional): Whether to apply flip according to the 2D
+        sync_2d (bool): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
             to that of 2D images. Defaults to True.
-        flip_ratio_bev_horizontal (float, optional): The flipping probability
+        flip_ratio_bev_horizontal (float): The flipping probability
             in horizontal direction. Defaults to 0.0.
-        flip_ratio_bev_vertical (float, optional): The flipping probability
+        flip_ratio_bev_vertical (float): The flipping probability
             in vertical direction. Defaults to 0.0.
-        flip_box_3d (bool): Whether to flip bounding box. In most of the case,
+        flip_box3d (bool): Whether to flip bounding box. In most of the case,
             the box should be fliped. In cam-based bev detection, this is set
             to false, since the flip of 2D images does not influence the 3D
             box.
@@ -1926,7 +1926,6 @@ class RandomResize3D(RandomResize):
 
     Args:
         scale (tuple or Sequence[tuple]): Images scales for resizing.
-            Defaults to None.
         ratio_range (tuple[float], optional): (min_ratio, max_ratio).
             Defaults to None.
         resize_type (str): The type of resize class to use. Defaults to
@@ -2020,7 +2019,7 @@ class RandomCrop3D(RandomCrop):
     Args:
         crop_size (tuple): The relative ratio or absolute pixels of
             height and width.
-        crop_type (str, optional): One of "relative_range", "relative",
+        crop_type (str): One of "relative_range", "relative",
             "absolute", "absolute_range". "relative" randomly crops
             (h * crop_size[0], w * crop_size[1]) part from an input of size
             (h, w). "relative_range" uniformly samples relative crop size from
@@ -2030,12 +2029,16 @@ class RandomCrop3D(RandomCrop):
             crop_h in range [crop_size[0], min(h, crop_size[1])] and crop_w
             in range [crop_size[0], min(w, crop_size[1])].
             Defaults to "absolute".
-        allow_negative_crop (bool, optional): Whether to allow a crop that does
+        allow_negative_crop (bool): Whether to allow a crop that does
             not contain any bbox area. Defaults to False.
-        recompute_bbox (bool, optional): Whether to re-compute the boxes based
+        recompute_bbox (bool): Whether to re-compute the boxes based
             on cropped instance masks. Defaults to False.
-        bbox_clip_border (bool, optional): Whether clip the objects outside
+        bbox_clip_border (bool): Whether clip the objects outside
             the border of the image. Defaults to True.
+        rel_offset_h (tuple): The cropping interval of image height. Default
+            to (0., 1.).
+        rel_offset_w (tuple): The cropping interval of image width. Default 
+            to (0., 1.). 
 
     Note:
         - If the image is smaller than the absolute crop size, return the
@@ -2139,14 +2142,6 @@ class RandomCrop3D(RandomCrop):
 
         # manipulate camera intrinsic matrix
         # needs to apply offset to K instead of P2 (on KITTI)
-        # K = results['cam2img'][:3, :3].copy()
-        # inv_K = np.linalg.inv(K)
-        # T = np.matmul(inv_K, results['cam2img'][:3])
-        # K[0, 2] -= crop_x1
-        # K[1, 2] -= crop_y1
-        # offset_cam2img = np.matmul(K, T)
-        # results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
-        #    shape[1]] = offset_cam2img
         if isinstance(results['cam2img'], list):
             # TODO ignore this, but should handle it in the future
             pass

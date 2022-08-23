@@ -42,13 +42,13 @@ def point_sample(img_meta,
             padding, this is necessary to obtain features in feature map.
         img_shape (tuple[int]): int tuple indicates the h & w before padding
             after scaling, this is necessary for flipping coordinates.
-        aligned (bool, optional): Whether use bilinear interpolation when
+        aligned (bool): Whether use bilinear interpolation when
             sampling image features for each point. Defaults to True.
-        padding_mode (str, optional): Padding mode when padding values for
+        padding_mode (str): Padding mode when padding values for
             features of out-of-image points. Defaults to 'zeros'.
-        align_corners (bool, optional): Whether to align corners when
+        align_corners (bool): Whether to align corners when
             sampling image features for each point. Defaults to True.
-        valid_flags (bool, optional): Whether to filter out the points that
+        valid_flag (bool): Whether to filter out the points that
             outside the image and with depth smaller than 0. Defaults to
             False.
 

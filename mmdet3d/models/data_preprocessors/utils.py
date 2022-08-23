@@ -27,7 +27,7 @@ def multiview_img_stack_batch(
         pad_value (int, float): The padding value. Defaults to 0.
 
     Returns:
-       Tensor: The n dim tensor.
+        Tensor: The n dim tensor.
     """
     assert isinstance(
         tensor_list,

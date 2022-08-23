@@ -28,10 +28,14 @@ class MultiViewDfM(ImVoxelNet, DfM):
         voxel_size (:obj:`ConfigDict` or dict): The voxel size.
         anchor_generator (:obj:`ConfigDict` or dict): The anchor generator
             config.
-        neck_2d (:obj:`ConfigDict` or dict): The 2D neck config.
-        bbox_head_2d (:obj:`ConfigDict` or dict): The 2D bbox head config.
-        depth_2d (:obj:`ConfigDict` or dict): The 2D depth head config.
-        depth (:obj:`ConfigDict` or dict): The depth head config.
+        neck_2d (:obj:`ConfigDict` or dict): The 2D neck config for 2D 
+            object detection.
+        bbox_head_2d (:obj:`ConfigDict` or dict): The 2D bbox head config
+            for 2D object detection.
+        depth_2d (:obj:`ConfigDict` or dict): The 2D depth head config for
+            depth estimation in fov space.
+        depth (:obj:`ConfigDict` or dict): The depth head config for depth
+            estimation in 3D voxel projected to fov space .
         train_cfg (:obj:`ConfigDict` or dict, optional): Config dict of
             training hyper-parameters. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Config dict of test
@@ -42,7 +46,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
         valid_sample (bool): Whether to filter invalid points in view
             transformation. Default to True.
         temporal_aggregate (str): Key to determine the aggregation way in
-            temporal fusion. Default to 'mean'.
+            temporal fusion. Default to 'concat'.
         transform_depth (bool): Key to determine the transformation of depth.
             Default to True.
         init_cfg (:obj:`ConfigDict` or dict, optional): The initialization
@@ -66,7 +70,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
                  test_cfg: OptConfigType = None,
                  data_preprocessor: OptConfigType = None,
                  valid_sample: bool = True,
-                 temporal_aggregate: str = 'mean',
+                 temporal_aggregate: str = 'concat',
                  transform_depth: bool = True,
                  init_cfg: OptConfigType = None):
         # TODO merge with DFM
