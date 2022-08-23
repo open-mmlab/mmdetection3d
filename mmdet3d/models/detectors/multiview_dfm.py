@@ -35,8 +35,8 @@ class MultiViewDfM(ImVoxelNet, DfM):
             head config for 2D object detection. Defaults to None.
         depth_head_2d (:obj:`ConfigDict` or dict, optional): The 2D depth
             head config for depth estimation in fov space. Defaults to None.
-        depth_head (:obj:`ConfigDict` or dict): The depth head config for
-            depth estimation in 3D voxel projected to fov space .
+        depth_head (:obj:`ConfigDict` or dict, optional): The depth head
+            config for depth estimation in 3D voxel projected to fov space .
         train_cfg (:obj:`ConfigDict` or dict, optional): Config dict of
             training hyper-parameters. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Config dict of test
