@@ -49,16 +49,16 @@ You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en
 Suppose we use 2 GPUs on a single machine with distributed training:
 
 ```
-./tools/dist_train.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py 2
+./tools/dist_train.sh configs/pointnet2/pointnet2_ssg_2xb16-cosine-200e_scannet-seg.py 2
 ```
 
-Note that `16x2` in the config name refers to the training is completed with 2 GPUs and 16 samples on each GPU.
+Note that `2xb16` in the config name refers to the training is completed with 2 GPUs and 16 samples on each GPU.
 If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
 A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
 
 ## Quantitative Evaluation
 
-During training, the model checkpoints will be evaluated regularly according to the setting of `evaluation = dict(interval=xxx)` in the config.
+During training, the model checkpoints will be evaluated regularly according to the setting of `train_cfg = dict(val_interval=xxx)` in the config.
 We support official evaluation protocols for different datasets.
 For ScanNet, the model will be evaluated with mean Intersection over Union (mIoU) over all 20 categories.
 The evaluation results will be printed in the command like:
@@ -74,15 +74,16 @@ The evaluation results will be printed in the command like:
 In addition, you can also evaluate a specific model checkpoint after training is finished. Simply run scripts like the following:
 
 ```
-./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py \
-    work_dirs/pointnet2_ssg/latest.pth --eval mIoU
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py work_dirs/pointnet2_ssg/latest.pth 8
 ```
 
 ## Testing and Making a Submission
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
-you need to replace the `--eval mIoU` with `--format-only` in the previous evaluation script and change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126). Remember to specify the `txt_prefix` as the directory to save the testing results,
-e.g., adding an option `--eval-options txt_prefix=work_dirs/pointnet2_ssg/test_submission`.
+you should change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the
+ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L129). Remember to
+specify the `submission_prefix` in the `test_evaluator`,
+e.g., adding `test_evaluator = dict(type='SegMetric',submission_prefix=work_dirs/pointnet2_ssg/test_submission`).
 After generating the results, you can basically compress the folder and upload to the [ScanNet evaluation server](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d).
 
 ## Qualitative Validation

@@ -76,7 +76,7 @@ aos AP:97.70, 88.73, 87.34
 
 如果你只想在线上基准上进行推理或者测试模型的表现，你只需要把修改配置文件中的 evaluator 部分。 例如， 在你的配置文件中修改 `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)`，就可以在推理结束后得到结果文件。
 
-。请确保配置文件中的 `data_prefix` [测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L113)与测试集对应，而不是验证集。在生成结果后，你可以压缩文件夹，并上传到 KITTI 的评估服务器上。
+。请确保配置文件中的 `data_prefix` 与 `ann_file` [测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L113)与测试集对应，而不是验证集。在生成结果后，你可以压缩文件夹，并上传到 KITTI 的评估服务器上。
 
 ## 定性验证
 
