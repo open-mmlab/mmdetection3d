@@ -9,6 +9,7 @@ from tools.dataset_converters import lyft_converter as lyft_converter
 from tools.dataset_converters import nuscenes_converter as nuscenes_converter
 from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
+from tools.data_converter.urban_converter import UrbanConverter
 
 
 def kitti_data_prep(root_path,
@@ -146,6 +147,45 @@ def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
     """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
+
+
+def urban_data_prep(root_path,
+                    info_prefix,
+                    out_dir,
+                    workers,
+                    dataset_style='potsdam'):
+    """Prepare the info file for sensaturban dataset.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+        workers (int): Number of process to be used.
+        dataset_style (str): ''
+    """
+
+    converter = UrbanConverter(
+        root_path,
+        info_prefix,
+        out_dir,
+        workers,
+        to_image=True,
+        subsample_method='none',
+        crop_method='random',
+        crop_size=30.0,
+        crop_scale=0.1,
+        subsample_rate=0.5,
+        random_crop_rate=1.0,
+    )
+
+    if dataset_style == 'kitti':
+        # TODO: implement this
+        raise NotImplementedError()
+        # converter.convert2kitti()
+    elif dataset_style == 'potsdam':
+        converter.convert2potsdam()
+    else:
+        raise NotImplementedError()
 
 
 def waymo_data_prep(root_path,
@@ -302,6 +342,12 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,
             workers=args.workers)
+    elif args.dataset == 'sensaturban':
+        urban_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            out_dir=args.out_dir,
+            workers=args.workers)
     else:
         raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')
 
@@ -309,7 +355,7 @@ if __name__ == '__main__':
         if '_infos_' in file_name and '.pkl' in file_name:
             cmd = f'python tools/dataset_converters/update_infos_to_v2.py ' \
                   f'--dataset {args.dataset} ' \
-                  f'--pkl {osp.join(args.out_dir,file_name)} ' \
+                  f'--pkl {osp.join(args.out_dir, file_name)} ' \
                   f'--out-dir {args.out_dir}'
             print(cmd)
             os.system(cmd)
