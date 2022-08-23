@@ -2213,8 +2213,8 @@ class MultiViewWrapper(object):
         override_aug_config (bool): flag of whether to use the same aug config
             for multiview image. Default to True.
         process_fields (dict): Desired keys that the transformations should
-            be conducted on. Default to dict(img_fields=['img', 'lidar2img',
-            'cam2img', 'lidar2cam']
+            be conducted on. Default to dict(img_fields=['img', 'cam2img',
+            'lidar2cam']
         collected_keys (list): Collect information in transformation
             like rotate angles, crop roi, and flip state. Default to
                 ['scale', 'scale_factor', 'crop',
@@ -2232,7 +2232,7 @@ class MultiViewWrapper(object):
                  transforms: dict,
                  override_aug_config: bool = True,
                  process_fields: dict = dict(
-                     img_fields=['img', 'lidar2img', 'cam2img', 'lidar2cam']),
+                     img_fields=['img', 'cam2img', 'lidar2cam']),
                  collected_keys: list = [
                      'scale'
                      'scale_factor', 'crop', 'crop_offset', 'ori_shape',
@@ -2276,7 +2276,9 @@ class MultiViewWrapper(object):
 
             for field in self.process_fields:
                 for key in self.process_fields[field]:
-                    process_dict[key] = input_dict[key][img_id]
+                    if key in input_dict:
+                        process_dict[key] = input_dict[key][img_id]
+
             process_dict = self.transform(process_dict)
             # store the randomness variable in transformation.
             prev_process_dict = process_dict
@@ -2284,7 +2286,8 @@ class MultiViewWrapper(object):
             # store the related results to results_dict
             for field in self.process_fields:
                 for key in self.process_fields[field]:
-                    input_dict[key][img_id] = process_dict[key]
+                    if key in process_dict:
+                        input_dict[key][img_id] = process_dict[key]
             for key in self.collected_keys:
                 if key in process_dict:
                     if len(input_dict[key]) == img_id + 1:

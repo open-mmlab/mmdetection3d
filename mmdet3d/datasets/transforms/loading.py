@@ -112,7 +112,7 @@ class LoadMultiViewImageFromFiles(BaseTransform):
                                                            (choice + 1) *
                                                            self.num_views]
             results['img_filename'] = select_filename
-            for key in ['lidar2img', 'cam2img', 'lidar2cam']:
+            for key in ['cam2img', 'lidar2cam']:
                 if key in results:
                     select_results = []
                     for choice in choices:
@@ -127,9 +127,9 @@ class LoadMultiViewImageFromFiles(BaseTransform):
                     for choice in choices:
                         select_results += [results[key][choice]]
                     results[key] = select_results
-            # Transform lidar2img and lidar2cam to
+            # Transform lidar2cam to
             # [cur_lidar]2[prev_img] and [cur_lidar]2[prev_cam]
-            for key in ['lidar2img', 'lidar2cam']:
+            for key in ['lidar2cam']:
                 if key in results:
                     # only change matrices of previous frames
                     for choice_idx in range(1, len(choices)):
@@ -152,19 +152,16 @@ class LoadMultiViewImageFromFiles(BaseTransform):
                                 results[key][result_idx].dot(cur2prev)
         # Support multi-view images with different shapes
         # TODO: record the origin shape and padded shape
-        filename, cam2img, lidar2img, lidar2cam = [], [], [], []
+        filename, cam2img, lidar2cam = [], [], []
         for _, cam_item in results['images'].items():
             filename.append(cam_item['img_path'])
             cam2img.append(cam_item['cam2img'])
-            lidar2img.append(cam_item['lidar2img'])
             lidar2cam.append(cam_item['lidar2cam'])
         results['filename'] = filename
         results['cam2img'] = cam2img
-        results['lidar2img'] = lidar2img
         results['lidar2cam'] = lidar2cam
 
         results['ori_cam2img'] = copy.deepcopy(results['cam2img'])
-        results['ori_lidar2img'] = copy.deepcopy(results['lidar2img'])
 
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)

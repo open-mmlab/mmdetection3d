@@ -245,12 +245,16 @@ class MultiViewDfM(ImVoxelNet, DfM):
                         img_scale_factor_idx = img_scale_factor[sample_idx]
                     else:
                         img_scale_factor_idx = img_scale_factor
+                    lidar2cam = points.new_tensor(
+                        img_meta['lidar2cam'][sample_idx])
+                    cam2img = points.new_tensor(
+                        img_meta['ori_cam2img'][sample_idx])
+                    proj_mat = torch.matmul(cam2img, lidar2cam)
                     sample_results = point_sample(
                         img_meta,
                         img_features=feature[sample_idx][None, ...],
                         points=points,
-                        proj_mat=points.new_tensor(
-                            img_meta['ori_lidar2img'][sample_idx]),
+                        proj_mat=proj_mat,
                         coord_type='LIDAR',
                         img_scale_factor=img_scale_factor_idx,
                         img_crop_offset=img_crop_offset,
@@ -323,6 +327,11 @@ class MultiViewDfM(ImVoxelNet, DfM):
                         else False
                     img_pad_shape = img_meta['input_shape'] \
                         if self.transform_depth else img_meta['ori_shape'][:2]
+                    lidar2cam = points.new_tensor(
+                        batch_img_metas[batch_idx]['lidar2cam'][view_idx])
+                    cam2img = points.new_tensor(
+                        img_meta[batch_idx]['lidar2cam'][view_idx])
+                    proj_mat = torch.matmul(cam2img, lidar2cam)
                     stereo_feat.append(
                         voxel_sample(
                             volume_feat[batch_idx][None],
@@ -330,9 +339,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
                             voxel_size=self.voxel_size,
                             depth_samples=volume_feat.new_tensor(
                                 self.depth_samples),
-                            proj_mat=points.new_tensor(
-                                batch_img_metas[batch_idx]['ori_lidar2img']
-                                [view_idx]),
+                            proj_mat=proj_mat,
                             downsample_factor=self.depth_head.
                             downsample_factor,
                             img_scale_factor=img_scale_factor,
