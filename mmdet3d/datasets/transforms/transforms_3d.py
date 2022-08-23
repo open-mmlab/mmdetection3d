@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import mmcv
@@ -110,7 +110,7 @@ class RandomFlip3D(RandomFlip):
         flip_box3d (bool): Whether to flip bounding box. In most of the case,
             the box should be fliped. In cam-based bev detection, this is set
             to false, since the flip of 2D images does not influence the 3D
-            box.
+            box. Default to True.
     """
 
     def __init__(self,
@@ -1866,95 +1866,6 @@ class RandomShiftScale(BaseTransform):
 
 @TRANSFORMS.register_module()
 class RandomResize3D(RandomResize):
-    """Random resize images & bbox & keypoints and 3d related attributes
-    (centers, cam2img matrix). Compared to RandomResize in MMCV, RandomResize3D
-    further support using predefined randomness variable (i.e. scale) to do the
-    augmentation.
-
-    How to choose the target scale to resize the image will follow the rules
-    below:
-
-    - if ``scale`` is a sequence of tuple
-
-    .. math::
-        target\\_scale[0] \\sim Uniform([scale[0][0], scale[1][0]])
-    .. math::
-        target\\_scale[1] \\sim Uniform([scale[0][1], scale[1][1]])
-
-    Following the resize order of weight and height in cv2, ``scale[i][0]``
-    is for width, and ``scale[i][1]`` is for height.
-
-    - if ``scale`` is a tuple
-
-    .. math::
-        target\\_scale[0] \\sim Uniform([ratio\\_range[0], ratio\\_range[1]])
-            * scale[0]
-    .. math::
-        target\\_scale[0] \\sim Uniform([ratio\\_range[0], ratio\\_range[1]])
-            * scale[1]
-
-    Following the resize order of weight and height in cv2, ``ratio_range[0]``
-    is for width, and ``ratio_range[1]`` is for height.
-
-    - if ``keep_ratio`` is True, the minimum value of ``target_scale`` will be
-    used to set the shorter side and the maximum value will be used to
-    set the longer side.
-
-    - if ``keep_ratio`` is False, the value of ``target_scale`` will be used to
-    reisze the width and height accordingly.
-
-    Required Keys:
-
-    - img
-    - gt_bboxes
-    - gt_seg_map
-    - gt_keypoints
-
-    Modified Keys:
-
-    - img
-    - gt_bboxes
-    - gt_seg_map
-    - gt_keypoints
-    - img_shape
-
-    Added Keys:
-
-    - scale
-    - scale_factor
-    - keep_ratio
-
-    Args:
-        scale (tuple or Sequence[tuple]): Images scales for resizing.
-        ratio_range (tuple[float], optional): (min_ratio, max_ratio).
-            Defaults to None.
-        resize_type (str): The type of resize class to use. Defaults to
-            "Resize".
-        **resize_kwargs: Other keyword arguments for the ``resize_type``.
-
-    Note:
-        By defaults, the ``resize_type`` is "Resize", if it's not overwritten
-        by your registry, it indicates the :class:`mmcv.Resize`. And therefore,
-        ``resize_kwargs`` accepts any keyword arguments of it, like
-        ``keep_ratio``, ``interpolation`` and so on.
-
-        If you want to use your custom resize class, the class should accept
-        ``scale`` argument and have ``scale`` attribution which determines the
-        resize shape.
-    """
-
-    def __init__(
-        self,
-        scale: Union[Tuple[int, int], Sequence[Tuple[int, int]]],
-        ratio_range: Tuple[float, float] = None,
-        resize_type: str = 'Resize',
-        **resize_kwargs,
-    ) -> None:
-        super().__init__(
-            scale=scale,
-            ratio_range=ratio_range,
-            resize_type=resize_type,
-            **resize_kwargs)
 
     def _resize_3d(self, results):
         """Resize centers_2d and modify camera intrinisc with
@@ -1966,7 +1877,8 @@ class RandomResize3D(RandomResize):
 
     def __call__(self, results):
         """Call function to resize images, bounding boxes, masks, semantic
-        segmentation map.
+        segmentation map. Compared to RandomResize, this function would further
+        check if scale is already set in results.
 
         Args:
             results (dict): Result dict from loading pipeline.
@@ -2037,8 +1949,8 @@ class RandomCrop3D(RandomCrop):
             the border of the image. Defaults to True.
         rel_offset_h (tuple): The cropping interval of image height. Default
             to (0., 1.).
-        rel_offset_w (tuple): The cropping interval of image width. Default 
-            to (0., 1.). 
+        rel_offset_w (tuple): The cropping interval of image width. Default
+            to (0., 1.).
 
     Note:
         - If the image is smaller than the absolute crop size, return the
@@ -2299,20 +2211,20 @@ class MultiViewWrapper(object):
         transforms (list[dict]): A list of dict specifying the transformations
             for the monocular situation.
         override_aug_config (bool): flag of whether to use the same aug config
-            for multiview image Default to True.
+            for multiview image. Default to True.
         process_fields (dict): Desired keys that the transformations should
             be conducted on. Default to dict(img_fields=['img', 'lidar2img',
             'cam2img', 'lidar2cam']
         collected_keys (list): Collect information in transformation
             like rotate angles, crop roi, and flip state. Default to
-                [
-                    'scale'
-                    'scale_factor', 'crop', 'crop_offset', 'ori_shape',
-                    'pad_shape', 'img_shape', 'pad_fixed_size',
-                    'pad_size_divisor', 'flip', 'flip_direction', 'rotate'],
+                ['scale', 'scale_factor', 'crop',
+                 'crop_offset', 'ori_shape',
+                 'pad_shape', 'img_shape',
+                 'pad_fixed_size', 'pad_size_divisor',
+                 'flip', 'flip_direction', 'rotate'],
         randomness_keys (list): The keys that related to the randomness
-            in transformation Default to[
-                     'scale', 'scale_factor', 'crop_size', 'flip',
+            in transformation Default to
+                    ['scale', 'scale_factor', 'crop_size', 'flip',
                      'flip_direction', 'photometric_param']
     """
 
@@ -2339,6 +2251,7 @@ class MultiViewWrapper(object):
 
     def __call__(self, input_dict):
         """Call function to do the transform for multiview image.
+
         Args:
             results (dict): Result dict from loading pipeline.
 

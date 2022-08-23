@@ -3,21 +3,50 @@ import torch
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.ops import bbox3d2result
+from mmdet3d.utils import ConfigType
 from mmdet.models.detectors import BaseDetector
 from ..builder import build_backbone, build_head, build_neck
 
 
 @MODELS.register_module()
 class DfM(BaseDetector):
-    """Monocular 3D Object Detection with Depth from Motion."""
+    """`Monocular 3D Object Detection with Depth from Motion.
+
+        <https://arxiv.org/abs/2207.12988>`_.
+
+    Args:
+        backbone (:obj:`ConfigDict` or dict): The backbone config.
+        neck (:obj:`ConfigDict` or dict): The neck config.
+        backbone_stereo (:obj:`ConfigDict` or dict): The stereo backbone
+        config.
+        backbone_3d (:obj:`ConfigDict` or dict): The 3d backbone config.
+        neck_3d (:obj:`ConfigDict` or dict): The 3D neck config.
+        bbox_head_3d (:obj:`ConfigDict` or dict): The 3d bbox head config.
+        neck_2d (:obj:`ConfigDict` or dict, optional): The 2D neck config
+            for 2D object detection. Defaults to None.
+        bbox_head_2d (:obj:`ConfigDict` or dict, optional): The 2D bbox
+            head config for 2D object detection. Defaults to None.
+        depth_head_2d (:obj:`ConfigDict` or dict, optional): The 2D depth
+            head config for depth estimation in fov space. Defaults to None.
+        depth_head (:obj:`ConfigDict` or dict): The depth head config for
+            depth estimation in 3D voxel projected to fov space .
+        train_cfg (:obj:`ConfigDict` or dict, optional): Config dict of
+            training hyper-parameters. Defaults to None.
+        test_cfg (:obj:`ConfigDict` or dict, optional): Config dict of test
+            hyper-parameters. Defaults to None.
+        pretrained (:obj: `ConfigDict` or dict optional): The pretrained
+            config.
+        init_cfg (:obj:`ConfigDict` or dict, optional): The initialization
+            config. Defaults to None.
+    """
 
     def __init__(self,
-                 backbone,
-                 neck,
-                 backbone_stereo,
-                 backbone_3d,
-                 neck_3d,
-                 bbox_head_3d,
+                 backbone: ConfigType,
+                 neck: ConfigType,
+                 backbone_stereo: ConfigType,
+                 backbone_3d: ConfigType,
+                 neck_3d: ConfigType,
+                 bbox_head_3d: ConfigType,
                  neck_2d=None,
                  bbox_head_2d=None,
                  depth_head_2d=None,
@@ -171,6 +200,7 @@ class DfM(BaseDetector):
         Args:
             img (torch.Tensor): Input images of shape (N, C_in, H, W).
             img_metas (list): Image metas.
+
         Returns:
             list[dict]: Predicted 3d boxes.
         """

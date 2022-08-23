@@ -14,28 +14,29 @@ from .imvoxelnet import ImVoxelNet
 
 @MODELS.register_module()
 class MultiViewDfM(ImVoxelNet, DfM):
-    """Waymo challenge solution Monocular 3D Object Detection with Depth from
-    Motion.
+    """Waymo challenge solution of `MV-FCOS3D++
+
+    <https://arxiv.org/abs/2207.12716>`_.
 
     Args:
         backbone (:obj:`ConfigDict` or dict): The backbone config.
         neck (:obj:`ConfigDict` or dict): The neck config.
-        backbone_stereo (:obj:`ConfigDict` or dict): The backbone stereo
+        backbone_stereo (:obj:`ConfigDict` or dict): The stereo backbone
         config.
-        backbone_3d (:obj:`ConfigDict` or dict): The backbone 3d config.
+        backbone_3d (:obj:`ConfigDict` or dict): The 3d backbone config.
         neck_3d (:obj:`ConfigDict` or dict): The 3D neck config.
         bbox_head (:obj:`ConfigDict` or dict): The bbox head config.
         voxel_size (:obj:`ConfigDict` or dict): The voxel size.
         anchor_generator (:obj:`ConfigDict` or dict): The anchor generator
             config.
-        neck_2d (:obj:`ConfigDict` or dict): The 2D neck config for 2D 
-            object detection.
-        bbox_head_2d (:obj:`ConfigDict` or dict): The 2D bbox head config
-            for 2D object detection.
-        depth_2d (:obj:`ConfigDict` or dict): The 2D depth head config for
-            depth estimation in fov space.
-        depth (:obj:`ConfigDict` or dict): The depth head config for depth
-            estimation in 3D voxel projected to fov space .
+        neck_2d (:obj:`ConfigDict` or dict, optional): The 2D neck config
+            for 2D object detection. Defaults to None.
+        bbox_head_2d (:obj:`ConfigDict` or dict, optional): The 2D bbox
+            head config for 2D object detection. Defaults to None.
+        depth_head_2d (:obj:`ConfigDict` or dict, optional): The 2D depth
+            head config for depth estimation in fov space. Defaults to None.
+        depth_head (:obj:`ConfigDict` or dict): The depth head config for
+            depth estimation in 3D voxel projected to fov space .
         train_cfg (:obj:`ConfigDict` or dict, optional): Config dict of
             training hyper-parameters. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Config dict of test
@@ -44,11 +45,11 @@ class MultiViewDfM(ImVoxelNet, DfM):
             config of :class:`BaseDataPreprocessor`.  it usually includes,
                 ``pad_size_divisor``, ``pad_value``, ``mean`` and ``std``.
         valid_sample (bool): Whether to filter invalid points in view
-            transformation. Default to True.
+            transformation. Defaults to True.
         temporal_aggregate (str): Key to determine the aggregation way in
-            temporal fusion. Default to 'concat'.
+            temporal fusion. Defaults to 'concat'.
         transform_depth (bool): Key to determine the transformation of depth.
-            Default to True.
+            Defaults to True.
         init_cfg (:obj:`ConfigDict` or dict, optional): The initialization
             config. Defaults to None.
     """
