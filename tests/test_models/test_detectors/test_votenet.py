@@ -18,7 +18,7 @@ class TestVotenet(unittest.TestCase):
         DefaultScope.get_instance('test_vote_net', scope_name='mmdet3d')
         _setup_seed(0)
         voxel_net_cfg = _get_detector_cfg(
-            'votenet/votenet_16x8_sunrgbd-3d-10class.py')
+            'votenet/votenet_8xb16_sunrgbd-3d.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 50
         data = [_create_detector_inputs(num_gt_instance=num_gt_instance)]

@@ -1,4 +1,5 @@
-_base_ = './centerpoint_0075voxel_second_secfpn_dcn_4x8_cyclic_20e_nus.py'
+_base_ = './centerpoint_voxel0075-second-secfpn' \
+         '-head-dcn_8xb4-cyclic-20e_nus.py'
 
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 file_client_args = dict(backend='disk')

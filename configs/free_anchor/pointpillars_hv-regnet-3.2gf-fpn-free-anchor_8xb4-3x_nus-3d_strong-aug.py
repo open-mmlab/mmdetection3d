@@ -1,4 +1,4 @@
-_base_ = './hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py'
+_base_ = './pointpillars_hv-fpn-head-free-anchor_8xb4-2x_nus-3d.py'
 
 model = dict(
     pts_backbone=dict(

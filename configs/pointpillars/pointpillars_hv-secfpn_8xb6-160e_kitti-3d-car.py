@@ -1,5 +1,5 @@
 # model settings
-_base_ = './hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py'
+_base_ = './pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py'
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'

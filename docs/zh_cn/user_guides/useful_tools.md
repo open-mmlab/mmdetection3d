@@ -105,7 +105,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 如果您还想显示 2D 图像以及投影的 3D 边界框，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi_modality-det`。一个例子如下所示
 
 ```shell
-python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/mvxnet/mvx_fpn-dv-second-secfpn_8xb2-80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_multi_modality.png)

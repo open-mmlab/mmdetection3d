@@ -1,4 +1,4 @@
-_base_ = ['./votenet_8x8_scannet-3d-18class.py']
+_base_ = ['./votenet_8xb8_scannet-3d.py']
 
 # model settings, add iou loss
 model = dict(

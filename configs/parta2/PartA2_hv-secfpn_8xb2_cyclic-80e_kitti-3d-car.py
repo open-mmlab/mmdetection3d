@@ -1,4 +1,4 @@
-_base_ = './hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class.py'
+_base_ = './PartA2_hv-secfpn_8xb2-cyclic-80e_kitti-3d-3class.py'
 
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
 

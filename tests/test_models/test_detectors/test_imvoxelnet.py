@@ -17,7 +17,7 @@ class TestImVoxelNet(unittest.TestCase):
         DefaultScope.get_instance('test_ImVoxelNet', scope_name='mmdet3d')
         _setup_seed(0)
         imvoxel_net_cfg = _get_detector_cfg(
-            'imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py')
+            'imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py')
         model = MODELS.build(imvoxel_net_cfg)
         num_gt_instance = 1
         data = [

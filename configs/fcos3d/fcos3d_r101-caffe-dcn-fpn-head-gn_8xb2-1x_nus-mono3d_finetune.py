@@ -1,4 +1,4 @@
-_base_ = './fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py'
+_base_ = './fcos3d_r101-caffe-dcn-fpn-head-gn_8xb2-1x_nus-mono3d.py'
 # model settings
 model = dict(
     train_cfg=dict(

@@ -1,4 +1,4 @@
-_base_ = ['./centerpoint_02pillar_second_secfpn_4x8_cyclic_20e_nus.py']
+_base_ = ['./centerpoint_pillar02-second-secfpn_8xb4-cyclic-20e_nus.py']
 
 model = dict(
     pts_bbox_head=dict(
