@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .compat_spconv2 import register_spconv2
+from .overwrite_spconv import register_spconv2
 
 try:
     import spconv

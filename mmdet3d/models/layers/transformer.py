@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmcv.cnn.bricks.registry import ATTENTION
-from mmcv.cnn.bricks.transformer import POSITIONAL_ENCODING, MultiheadAttention
+from mmcv.cnn.bricks.transformer import MultiheadAttention
+from mmengine.registry import MODELS
 from torch import nn as nn
 
 
-@ATTENTION.register_module()
+@MODELS.register_module()
 class GroupFree3DMHA(MultiheadAttention):
     """A warpper for torch.nn.MultiheadAttention for GroupFree3D.
 
@@ -108,7 +108,7 @@ class GroupFree3DMHA(MultiheadAttention):
             **kwargs)
 
 
-@POSITIONAL_ENCODING.register_module()
+@MODELS.register_module()
 class ConvBNPositionalEncoding(nn.Module):
     """Absolute position embedding with Conv learning.
 
