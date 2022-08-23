@@ -28,14 +28,14 @@ mmdetection3d
 │   ├── kitti
 │   │   ├── ImageSets
 │   │   ├── testing
-│   │   │   ├── calib
 │   │   │   ├── image_2
 │   │   │   ├── velodyne
+│   │   │   ├── velodyne_reduced
 │   │   ├── training
-│   │   │   ├── calib
 │   │   │   ├── image_2
 │   │   │   ├── label_2
 │   │   │   ├── velodyne
+│   │   │   ├── velodyne_reduced
 │   │   ├── kitti_gt_database
 │   │   ├── kitti_infos_train.pkl
 │   │   ├── kitti_infos_trainval.pkl
@@ -51,16 +51,16 @@ You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en
 Suppose we use 8 GPUs on a single machine with distributed training:
 
 ```
-./tools/dist_train.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py 8
+./tools/dist_train.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py 8
 ```
 
-Note that `6x8` in the config name refers to the training is completed with 8 GPUs and 6 samples on each GPU.
+Note that `8xb6` in the config name refers to the training is completed with 8 GPUs and 6 samples on each GPU.
 If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
 A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
 
 ## Quantitative Evaluation
 
-During training, the model checkpoints will be evaluated regularly according to the setting of `evaluation = dict(interval=xxx)` in the config.
+During training, the model checkpoints will be evaluated regularly according to the setting of `train_cfg = dict(val_interval=xxx)` in the config.
 We support official evaluation protocols for different datasets.
 For KITTI, the model will be evaluated with mean average precision (mAP) with Intersection over Union (IoU) thresholds 0.5/0.7 for 3 categories respectively.
 The evaluation results will be printed in the command like:
@@ -81,16 +81,15 @@ aos AP:97.70, 88.73, 87.34
 In addition, you can also evaluate a specific model checkpoint after training is finished. Simply run scripts like the following:
 
 ```
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py \
-    work_dirs/pointpillars/latest.pth --eval mAP
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
 ```
 
 ## Testing and Making a Submission
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
-you just need to replace the `--eval mAP` with `--format-only` in the previous evaluation script and specify the `pklfile_prefix` and `submission_prefix` if necessary,
-e.g., adding an option `--eval-options submission_prefix=work_dirs/pointpillars/test_submission`.
-Please guarantee the [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L131) in the config corresponds to the test set instead of validation set.
+you just need to specify the `submission_prefix` for corresponding evaluator,
+e.g., add `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)` in configuration.
+Please guarantee the `data_prefix` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L113) in the config corresponds to the test set instead of validation set.
 After generating the results, you can basically compress the folder and upload to the KITTI evaluation server.
 
 ## Qualitative Validation
