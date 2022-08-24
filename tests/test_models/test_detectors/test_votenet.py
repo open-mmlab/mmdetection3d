@@ -5,8 +5,8 @@ from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import LiDARInstance3DBoxes
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (_setup_seed, create_detector_inputs,
+                             get_detector_cfg)
 
 
 class TestVotenet(unittest.TestCase):
@@ -17,14 +17,14 @@ class TestVotenet(unittest.TestCase):
         assert hasattr(mmdet3d.models, 'VoteNet')
         DefaultScope.get_instance('test_vote_net', scope_name='mmdet3d')
         _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg(
+        voxel_net_cfg = get_detector_cfg(
             'votenet/votenet_16x8_sunrgbd-3d-10class.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 50
-        data = [_create_detector_inputs(num_gt_instance=num_gt_instance)]
+        data = [create_detector_inputs(num_gt_instance=num_gt_instance)]
         aug_data = [
-            _create_detector_inputs(num_gt_instance=num_gt_instance),
-            _create_detector_inputs(num_gt_instance=num_gt_instance + 1)
+            create_detector_inputs(num_gt_instance=num_gt_instance),
+            create_detector_inputs(num_gt_instance=num_gt_instance + 1)
         ]
         # test_aug_test
         metainfo = {

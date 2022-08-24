@@ -7,7 +7,8 @@ from mmengine.config import Config, DictAction
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 
-from mmdet3d.utils import register_all_modules, replace_ceph_backend
+from mmdet3d.testing import replace_to_ceph
+from mmdet3d.utils import register_all_modules
 
 
 # TODO: support fuse_conv_bn, visualization, and format_only
@@ -51,7 +52,7 @@ def main():
     # load config
     cfg = Config.fromfile(args.config)
 
-    cfg = replace_ceph_backend(cfg)
+    cfg = replace_to_ceph(cfg)
 
     cfg.launcher = args.launcher
     if args.cfg_options is not None:

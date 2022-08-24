@@ -5,8 +5,8 @@ from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import LiDARInstance3DBoxes
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (_setup_seed, create_detector_inputs,
+                             get_detector_cfg)
 
 
 class TestFreeAnchor(unittest.TestCase):
@@ -17,19 +17,19 @@ class TestFreeAnchor(unittest.TestCase):
         assert hasattr(mmdet3d.models.dense_heads, 'FreeAnchor3DHead')
         DefaultScope.get_instance('test_freeanchor', scope_name='mmdet3d')
         _setup_seed(0)
-        freeanchor_cfg = _get_detector_cfg(
+        freeanchor_cfg = get_detector_cfg(
             'free_anchor/hv_pointpillars_fpn_sbn-all_free-'
             'anchor_4x8_2x_nus-3d.py')
         model = MODELS.build(freeanchor_cfg)
         num_gt_instance = 3
         data = [
-            _create_detector_inputs(
+            create_detector_inputs(
                 num_gt_instance=num_gt_instance, gt_bboxes_dim=9)
         ]
         aug_data = [
-            _create_detector_inputs(
+            create_detector_inputs(
                 num_gt_instance=num_gt_instance, gt_bboxes_dim=9),
-            _create_detector_inputs(
+            create_detector_inputs(
                 num_gt_instance=num_gt_instance + 1, gt_bboxes_dim=9)
         ]
         # test_aug_test
