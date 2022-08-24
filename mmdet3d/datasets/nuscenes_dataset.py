@@ -44,22 +44,6 @@ class NuScenesDataset(Det3DDataset):
             in the info file as mask to filter gt_boxes and gt_names.
             Defaults to False.
     """
-    NameMapping = {
-        'movable_object.barrier': 'barrier',
-        'vehicle.bicycle': 'bicycle',
-        'vehicle.bus.bendy': 'bus',
-        'vehicle.bus.rigid': 'bus',
-        'vehicle.car': 'car',
-        'vehicle.construction': 'construction_vehicle',
-        'vehicle.motorcycle': 'motorcycle',
-        'human.pedestrian.adult': 'pedestrian',
-        'human.pedestrian.child': 'pedestrian',
-        'human.pedestrian.construction_worker': 'pedestrian',
-        'human.pedestrian.police_officer': 'pedestrian',
-        'movable_object.trafficcone': 'traffic_cone',
-        'vehicle.trailer': 'trailer',
-        'vehicle.truck': 'truck'
-    }
     METAINFO = {
         'CLASSES':
         ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
