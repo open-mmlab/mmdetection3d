@@ -9,7 +9,7 @@ import numpy as np
 from lyft_dataset_sdk.lyftdataset import LyftDataset as Lyft
 from pyquaternion import Quaternion
 
-from mmdet3d.datasets import LyftDataset
+from mmdet3d.datasets.convert_utils import LyftNameMapping
 from .nuscenes_converter import (get_2d_boxes, get_available_scenes,
                                  obtain_sensor2top)
 
@@ -190,8 +190,8 @@ def _fill_trainval_infos(lyft,
 
             names = [b.name for b in boxes]
             for i in range(len(names)):
-                if names[i] in LyftDataset.NameMapping:
-                    names[i] = LyftDataset.NameMapping[names[i]]
+                if names[i] in LyftNameMapping:
+                    names[i] = LyftNameMapping[names[i]]
             names = np.array(names)
 
             # we need to convert box size to
