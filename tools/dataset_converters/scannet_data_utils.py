@@ -3,7 +3,6 @@ import os
 from concurrent import futures as futures
 from os import path as osp
 
-import mmcv
 import mmengine
 import numpy as np
 
@@ -39,8 +38,8 @@ class ScanNetData(object):
         assert split in ['train', 'val', 'test']
         split_file = osp.join(self.root_dir, 'meta_data',
                               f'scannetv2_{split}.txt')
-        mmcv.check_file_exist(split_file)
-        self.sample_id_list = mmcv.list_from_file(split_file)
+        mmengine.check_file_exist(split_file)
+        self.sample_id_list = mmengine.list_from_file(split_file)
         self.test_mode = (split == 'test')
 
     def __len__(self):
@@ -49,19 +48,19 @@ class ScanNetData(object):
     def get_aligned_box_label(self, idx):
         box_file = osp.join(self.root_dir, 'scannet_instance_data',
                             f'{idx}_aligned_bbox.npy')
-        mmcv.check_file_exist(box_file)
+        mmengine.check_file_exist(box_file)
         return np.load(box_file)
 
     def get_unaligned_box_label(self, idx):
         box_file = osp.join(self.root_dir, 'scannet_instance_data',
                             f'{idx}_unaligned_bbox.npy')
-        mmcv.check_file_exist(box_file)
+        mmengine.check_file_exist(box_file)
         return np.load(box_file)
 
     def get_axis_align_matrix(self, idx):
         matrix_file = osp.join(self.root_dir, 'scannet_instance_data',
                                f'{idx}_axis_align_matrix.npy')
-        mmcv.check_file_exist(matrix_file)
+        mmengine.check_file_exist(matrix_file)
         return np.load(matrix_file)
 
     def get_images(self, idx):
@@ -83,7 +82,7 @@ class ScanNetData(object):
     def get_intrinsics(self, idx):
         matrix_file = osp.join(self.root_dir, 'posed_images', idx,
                                'intrinsic.txt')
-        mmcv.check_file_exist(matrix_file)
+        mmengine.check_file_exist(matrix_file)
         return np.loadtxt(matrix_file)
 
     def get_infos(self, num_workers=4, has_label=True, sample_id_list=None):
@@ -111,7 +110,7 @@ class ScanNetData(object):
             pts_filename = osp.join(self.root_dir, 'scannet_instance_data',
                                     f'{sample_idx}_vert.npy')
             points = np.load(pts_filename)
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+            mmengine.mkdir_or_exist(osp.join(self.root_dir, 'points'))
             points.tofile(
                 osp.join(self.root_dir, 'points', f'{sample_idx}.bin'))
             info['pts_path'] = osp.join('points', f'{sample_idx}.bin')
@@ -143,8 +142,10 @@ class ScanNetData(object):
                 pts_semantic_mask = np.load(pts_semantic_mask_path).astype(
                     np.int64)
 
-                mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
-                mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
+                mmengine.mkdir_or_exist(
+                    osp.join(self.root_dir, 'instance_mask'))
+                mmengine.mkdir_or_exist(
+                    osp.join(self.root_dir, 'semantic_mask'))
 
                 pts_instance_mask.tofile(
                     osp.join(self.root_dir, 'instance_mask',
@@ -246,7 +247,7 @@ class ScanNetSegData(object):
             return
         scene_idxs, label_weight = self.get_scene_idxs_and_label_weight()
         save_folder = osp.join(self.data_root, 'seg_info')
-        mmcv.mkdir_or_exist(save_folder)
+        mmengine.mkdir_or_exist(save_folder)
         np.save(
             osp.join(save_folder, f'{self.split}_resampled_scene_idxs.npy'),
             scene_idxs)

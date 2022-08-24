@@ -14,6 +14,7 @@ from glob import glob
 from os.path import join
 
 import mmcv
+import mmengine
 import numpy as np
 import tensorflow as tf
 from waymo_open_dataset.utils import range_image_utils, transform_utils
@@ -94,8 +95,8 @@ class Waymo2KITTI(object):
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmcv.track_parallel_progress(self.convert_one, range(len(self)),
-                                     self.workers)
+        mmengine.track_parallel_progress(self.convert_one, range(len(self)),
+                                         self.workers)
         print('\nFinished ...')
 
     def convert_one(self, file_idx):
@@ -409,10 +410,10 @@ class Waymo2KITTI(object):
             ]
             dir_list2 = [self.image_save_dir]
         for d in dir_list1:
-            mmcv.mkdir_or_exist(d)
+            mmengine.mkdir_or_exist(d)
         for d in dir_list2:
             for i in range(5):
-                mmcv.mkdir_or_exist(f'{d}{str(i)}')
+                mmengine.mkdir_or_exist(f'{d}{str(i)}')
 
     def convert_range_image_to_point_cloud(self,
                                            frame,

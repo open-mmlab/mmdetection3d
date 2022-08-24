@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-from mmcv import ConfigDict
+from mmengine import ConfigDict
 from mmengine.data import InstanceData
 from torch import Tensor
 

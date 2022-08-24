@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import mmcv
+import mmengine
 
 try:
     from model_archiver.model_packaging import package_model
@@ -43,9 +43,9 @@ def mmdet3d2torchserve(
             file under `output_folder` it will be overwritten.
             Default: False.
     """
-    mmcv.mkdir_or_exist(output_folder)
+    mmengine.mkdir_or_exist(output_folder)
 
-    config = mmcv.Config.fromfile(config_file)
+    config = mmengine.Config.fromfile(config_file)
 
     with TemporaryDirectory() as tmpdir:
         config.dump(f'{tmpdir}/config.py')

@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.ops import points_in_boxes_all, three_interpolate, three_nn
-from mmcv.runner import auto_fp16
 from torch import nn as nn
 
 from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
@@ -104,7 +103,6 @@ class SparseEncoder(nn.Module):
             indice_key='spconv_down2',
             conv_type='SparseConv3d')
 
-    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseEncoder.
 
@@ -266,7 +264,6 @@ class SparseEncoderSASSD(SparseEncoder):
         self.point_cls = nn.Linear(64, 1, bias=False)
         self.point_reg = nn.Linear(64, 3, bias=False)
 
-    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size, test_mode=False):
         """Forward of SparseEncoder.
 

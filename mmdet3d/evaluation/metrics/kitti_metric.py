@@ -3,14 +3,12 @@ import tempfile
 from os import path as osp
 from typing import Dict, List, Optional, Sequence, Union
 
-import mmcv
 import mmengine
 import numpy as np
 import torch
-from mmcv.utils import print_log
 from mmengine import load
 from mmengine.evaluator import BaseMetric
-from mmengine.logging import MMLogger
+from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.evaluation import kitti_eval
 from mmdet3d.registry import METRICS
@@ -328,12 +326,12 @@ class KittiMetric(BaseMetric):
         assert len(net_outputs) == len(self.data_infos), \
             'invalid list length of network outputs'
         if submission_prefix is not None:
-            mmcv.mkdir_or_exist(submission_prefix)
+            mmengine.mkdir_or_exist(submission_prefix)
 
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for idx, pred_dicts in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
+                mmengine.track_iter_progress(net_outputs)):
             annos = []
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
@@ -459,7 +457,7 @@ class KittiMetric(BaseMetric):
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
+                mmengine.track_iter_progress(net_outputs)):
             annos = []
             anno = dict(
                 name=[],
@@ -523,7 +521,7 @@ class KittiMetric(BaseMetric):
 
         if submission_prefix is not None:
             # save file in submission format
-            mmcv.mkdir_or_exist(submission_prefix)
+            mmengine.mkdir_or_exist(submission_prefix)
             print(f'Saving KITTI submission to {submission_prefix}')
             for i, anno in enumerate(det_annos):
                 sample_idx = self.data_infos[i]['image']['image_idx']
