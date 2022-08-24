@@ -14,8 +14,7 @@ from .imvoxelnet import ImVoxelNet
 
 @MODELS.register_module()
 class MultiViewDfM(ImVoxelNet, DfM):
-    """Waymo challenge solution of `MV-FCOS3D++
-
+    r"""Waymo challenge solution of `MV-FCOS3D++
     <https://arxiv.org/abs/2207.12716>`_.
 
     Args:

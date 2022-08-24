@@ -10,8 +10,7 @@ from ..builder import build_backbone, build_head, build_neck
 
 @MODELS.register_module()
 class DfM(BaseDetector):
-    """`Monocular 3D Object Detection with Depth from Motion.
-
+    r"""`Monocular 3D Object Detection with Depth from Motion.
         <https://arxiv.org/abs/2207.12988>`_.
 
     Args:

@@ -1866,6 +1866,13 @@ class RandomShiftScale(BaseTransform):
 
 @TRANSFORMS.register_module()
 class RandomResize3D(RandomResize):
+    r"""The difference between RandomResize3D and RandomResize:
+
+    1. Compared to RandomResize, this class would further
+        check if scale is already set in results.
+    2. During resizing, this class would modify the centers_2d
+        and cam2img with ``results['scale']``.
+    """
 
     def _resize_3d(self, results):
         """Resize centers_2d and modify camera intrinisc with
@@ -2207,6 +2214,7 @@ class MultiViewWrapper(object):
     parameter. Multi-view images share the same transformation parameters
     but do not share the same magnitude when a random transformation is
     conducted.
+
     Args:
         transforms (list[dict]): A list of dict specifying the transformations
             for the monocular situation.
