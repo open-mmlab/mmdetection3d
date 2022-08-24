@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (_setup_seed, create_detector_inputs,
+                             get_detector_cfg)
 
 
 class TestGroupfree3d(unittest.TestCase):
@@ -16,12 +16,12 @@ class TestGroupfree3d(unittest.TestCase):
         assert hasattr(mmdet3d.models, 'GroupFree3DNet')
         DefaultScope.get_instance('test_groupfree3d', scope_name='mmdet3d')
         _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg(
+        voxel_net_cfg = get_detector_cfg(
             'groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 5
         data = [
-            _create_detector_inputs(
+            create_detector_inputs(
                 num_gt_instance=num_gt_instance,
                 points_feat_dim=3,
                 with_pts_semantic_mask=True,
