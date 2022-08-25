@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Union
 import mmengine
 import numpy as np
 import torch
-from mmengine import load
+from mmengine import Config, load
 from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.models.layers import box3d_multiclass_nms
@@ -269,7 +269,6 @@ class WaymoMetric(KittiMetric):
             score_thr=0.001,
             min_bbox_size=0,
             max_per_frame=100)
-        from mmengine import Config
         nms_cfg = Config(nms_cfg)
         lidar_boxes3d = LiDARInstance3DBoxes(
             torch.from_numpy(box_dict['box3d_lidar']).cuda())
