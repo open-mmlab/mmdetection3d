@@ -1,11 +1,11 @@
 PARTITION=$1
 CHECKPOINT_DIR=$2
 
-echo 'configs/3dssd/3dssd_4xb4_kitti-3d-car.py.py' &
-mkdir -p $CHECKPOINT_DIR/configs/3dssd/3dssd_4xb4_kitti-3d-car.py.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION 3dssd_4x4_kitti-3d-car configs/3dssd/3dssd_4xb4_kitti-3d-car.py.py \
-$CHECKPOINT_DIR/configs/3dssd/3dssd_4xb4_kitti-3d-car.py.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/3dssd/3dssd_4xb4_kitti-3d-car.py.py/FULL_LOG.txt &
+echo 'configs/3dssd/3dssd_4xb4_kitti-3d-car.py' &
+mkdir -p $CHECKPOINT_DIR/configs/3dssd/3dssd_4xb4_kitti-3d-car.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION 3dssd_4x4_kitti-3d-car configs/3dssd/3dssd_4xb4_kitti-3d-car.py \
+$CHECKPOINT_DIR/configs/3dssd/3dssd_4xb4_kitti-3d-car.py/latest.pth --eval map \
+2>&1|tee $CHECKPOINT_DIR/configs/3dssd/3dssd_4xb4_kitti-3d-car.py/FULL_LOG.txt &
 
 echo 'configs/centerpoint/centerpoint_pillar02_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py' &
 mkdir -p $CHECKPOINT_DIR/configs/centerpoint/centerpoint_pillar02_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py
@@ -31,11 +31,11 @@ GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_secon
 $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/latest.pth --eval map \
 2>&1|tee $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
 
-echo 'configs/free_anchor/pointpillars_hv-regnet-1.6gf_fpn_head-free-anchor_8xb4-3x_nus-3d_strong-aug.py' &
-mkdir -p $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv-regnet-1.6gf_fpn_head-free-anchor_8xb4-3x_nus-3d_strong-aug.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d configs/free_anchor/pointpillars_hv-regnet-1.6gf_fpn_head-free-anchor_8xb4-3x_nus-3d_strong-aug.py \
-$CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv-regnet-1.6gf_fpn_head-free-anchor_8xb4-3x_nus-3d_strong-aug.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv-regnet-1.6gf_fpn_head-free-anchor_8xb4-3x_nus-3d_strong-aug.py/FULL_LOG.txt &
+echo 'configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py' &
+mkdir -p $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py \
+$CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py/latest.pth --eval map \
+2>&1|tee $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py/FULL_LOG.txt &
 
 echo 'configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py' &
 mkdir -p $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py

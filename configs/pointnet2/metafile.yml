@@ -15,9 +15,9 @@ Collections:
       Version: v0.14.0
 
 Models:
-  - Name: pointnet2_ssg-xyz-only_2xb16-cosine-200e_scannet-seg.py
+  - Name: pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg-xyz-only_2xb16-cosine-200e_scannet-seg.py
+    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 1.9
@@ -41,9 +41,9 @@ Models:
           mIoU: 54.44
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class_20210514_143644-ee73704a.pth
 
-  - Name: pointnet2_msg-xyz-only_2xb16-cosine-250e_scannet_seg.py
+  - Name: pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg-xyz-only_2xb16-cosine-250e_scannet_seg.py
+    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 2.4
