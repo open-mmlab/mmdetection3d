@@ -1,4 +1,4 @@
-_base_ = ['./centerpoint_voxel01-second-secfpn_8xb4-cyclic-20e_nus.py']
+_base_ = ['./centerpoint_voxel01_second_secfpn_8xb4-cyclic-20e_nus-3d.py']
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly

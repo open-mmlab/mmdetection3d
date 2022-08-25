@@ -78,7 +78,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 5. Test PointPillars on nuScenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv-fpn-sbn-all_8xb4-2x_nus-3d.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py \
        checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
        --format-only --eval-options 'jsonfile_prefix=./pointpillars_nuscenes_results'
    ```
@@ -198,7 +198,7 @@ If you run MMDetection3D on a cluster managed with [slurm](https://slurm.schedmd
 Here is an example of using 16 GPUs to train Mask R-CNN on the dev partition.
 
 ```shell
-GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
+GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
 ```
 
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.

@@ -1,4 +1,4 @@
-_base_ = './pgd_r101-caffe-fpn_16xb2-1x_nus-mono3d.py'
+_base_ = './pgd_r101-caffe_fpn_head-gn_16xb2-1x_nus-mono3d.py'
 # model settings
 model = dict(
     train_cfg=dict(code_weight=[

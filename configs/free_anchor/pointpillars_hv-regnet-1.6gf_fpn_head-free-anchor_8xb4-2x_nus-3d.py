@@ -1,12 +1,12 @@
-_base_ = './pointpillars_hv-fpn-head-free-anchor_8xb4-2x_nus-3d.py'
+_base_ = './pointpillars_hv_fpn_head-free-anchor_8xb4-2x_nus-3d.py'
 
 model = dict(
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',
-        arch='regnetx_400mf',
+        arch='regnetx_1.6gf',
         init_cfg=dict(
-            type='Pretrained', checkpoint='open-mmlab://regnetx_400mf'),
+            type='Pretrained', checkpoint='open-mmlab://regnetx_1.6gf'),
         out_indices=(1, 2, 3),
         frozen_stages=-1,
         strides=(1, 2, 2, 2),
@@ -15,4 +15,4 @@ model = dict(
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         norm_eval=False,
         style='pytorch'),
-    pts_neck=dict(in_channels=[64, 160, 384]))
+    pts_neck=dict(in_channels=[168, 408, 912]))
