@@ -3,7 +3,8 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from mmcv.ops.nms import batched_nms
-from mmengine import ConfigDict, InstanceData
+from mmengine import ConfigDict
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch.nn import functional as F
 

@@ -3,8 +3,7 @@ from abc import ABCMeta, abstractmethod
 from typing import List
 
 import torch
-from mmengine.model import BaseModule
-from mmengine.model.utils import normal_init
+from mmengine.model import BaseModule, normal_init
 from torch import Tensor
 from torch import nn as nn
 

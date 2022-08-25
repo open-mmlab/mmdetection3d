@@ -5,9 +5,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 import torch
 from mmengine.config import ConfigDict
-from mmengine.data import InstanceData
-from mmengine.model import BaseModule
-from mmengine.model.utils import constant_init
+from mmengine.model import BaseModule, constant_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.models.layers import box3d_multiclass_nms

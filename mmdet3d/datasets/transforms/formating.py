@@ -5,7 +5,7 @@ import mmengine
 import numpy as np
 import torch
 from mmcv import BaseTransform
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 from numpy import dtype
 
 from mmdet3d.registry import TRANSFORMS

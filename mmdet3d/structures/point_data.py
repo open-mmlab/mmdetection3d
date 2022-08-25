@@ -4,7 +4,7 @@ from typing import Union
 
 import numpy as np
 import torch
-from mmengine.data import BaseDataElement
+from mmengine.structures import BaseDataElement
 
 IndexType = Union[str, slice, int, list, torch.LongTensor,
                   torch.cuda.LongTensor, torch.BoolTensor,
