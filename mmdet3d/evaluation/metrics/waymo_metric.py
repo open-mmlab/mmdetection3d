@@ -75,7 +75,6 @@ class WaymoMetric(KittiMetric):
 
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
-        self.file_client_args = file_client_args
         self.split = split
         self.task = task
         self.use_pred_sample_idx = use_pred_sample_idx
@@ -87,7 +86,8 @@ class WaymoMetric(KittiMetric):
             pklfile_prefix=pklfile_prefix,
             submission_prefix=submission_prefix,
             default_cam_key=default_cam_key,
-            collect_device=collect_device)
+            collect_device=collect_device,
+            file_client_args=file_client_args)
         self.default_prefix = 'Waymo metric'
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
@@ -104,8 +104,7 @@ class WaymoMetric(KittiMetric):
         self.classes = self.dataset_meta['CLASSES']
 
         # load annotations
-        self.data_infos = load(
-            self.ann_file, file_client_args=self.file_client_args)['data_list']
+        self.data_infos = load(self.ann_file)['data_list']
         # different from kitti, waymo do not need to convert the ann file
 
         if self.pklfile_prefix is None:
