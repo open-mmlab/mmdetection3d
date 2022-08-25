@@ -85,7 +85,8 @@ class WaymoMetric(KittiMetric):
             pklfile_prefix=pklfile_prefix,
             submission_prefix=submission_prefix,
             default_cam_key=default_cam_key,
-            collect_device=collect_device)
+            collect_device=collect_device,
+            file_client_args=file_client_args)
         self.default_prefix = 'Waymo metric'
 
     def compute_metrics(self, results: list) -> Dict[str, float]:

@@ -79,5 +79,9 @@ def replace_ceph_backend(cfg):
     cfg_pretty_text = cfg_pretty_text.replace('info_path',
                                               replace_strs + ', info_path')
 
+    # replace WaymoMetric
+    cfg_pretty_text = cfg_pretty_text.replace('WaymoMetric\'',
+                                              'WaymoMetric\',' + replace_strs)
+
     cfg = cfg.fromstring(cfg_pretty_text, file_format='.py')
     return cfg
