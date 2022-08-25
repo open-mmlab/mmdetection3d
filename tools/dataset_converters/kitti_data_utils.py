@@ -5,6 +5,7 @@ from os import path as osp
 from pathlib import Path
 
 import mmcv
+import mmengine
 import numpy as np
 from PIL import Image
 from skimage import io
@@ -280,7 +281,6 @@ def get_kitti_image_info(path,
             plane_path = get_plane_path(idx, path, training, relative_path)
             if relative_path:
                 plane_path = str(root_path / plane_path)
-            import mmengine
             lines = mmengine.list_from_file(plane_path)
             info['plane'] = np.array([float(i) for i in lines[3].split()])
 
