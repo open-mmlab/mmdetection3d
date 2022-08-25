@@ -17,7 +17,7 @@ class TestImvoteNet(unittest.TestCase):
         DefaultScope.get_instance('test_imvotenet_img', scope_name='mmdet3d')
         _setup_seed(0)
         votenet_net_cfg = _get_detector_cfg(
-            'imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd.py')
+            'imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py')
         model = MODELS.build(votenet_net_cfg)
 
         data = [
@@ -55,7 +55,7 @@ class TestImvoteNet(unittest.TestCase):
         DefaultScope.get_instance('test_imvotenet', scope_name='mmdet3d')
         _setup_seed(0)
         votenet_net_cfg = _get_detector_cfg(
-            'imvotenet/imvotenet_stage2_8xb16_sunrgbd.py')
+            'imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py')
         model = MODELS.build(votenet_net_cfg)
 
         data = [

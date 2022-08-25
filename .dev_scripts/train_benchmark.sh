@@ -31,35 +31,35 @@ GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION hv_seco
 $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
 2>&1|tee $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py/FULL_LOG.txt &
 
-echo 'configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py \
-$CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_8xb4-strong-aug-3x_nus-3d.py/FULL_LOG.txt &
+echo 'configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py' &
+mkdir -p $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py \
+$CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py/FULL_LOG.txt &
 
-echo 'configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py' &
-mkdir -p $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py
-GPUS=4 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION groupfree3d_8x4_scannet-3d-18class-L6-O256 configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py \
-$CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet.py/FULL_LOG.txt &
+echo 'configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py' &
+mkdir -p $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py
+GPUS=4 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION groupfree3d_8x4_scannet-3d-18class-L6-O256 configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py \
+$CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py/FULL_LOG.txt &
 
-echo 'configs/h3dnet/h3dnet_8xb3_scannet.py' &
-mkdir -p $CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION h3dnet_3x8_scannet-3d-18class configs/h3dnet/h3dnet_8xb3_scannet.py \
-$CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet.py/FULL_LOG.txt &
+echo 'configs/h3dnet/h3dnet_8xb3_scannet-seg.py' &
+mkdir -p $CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet-seg.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION h3dnet_3x8_scannet-3d-18class configs/h3dnet/h3dnet_8xb3_scannet-seg.py \
+$CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet-seg.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet-seg.py/FULL_LOG.txt &
 
-echo 'configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd.py' &
-mkdir -p $CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd.py
-GPUS=4 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd.py \
-$CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd.py/FULL_LOG.txt &
+echo 'configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py' &
+mkdir -p $CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py
+GPUS=4 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py \
+$CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py/FULL_LOG.txt &
 
-echo 'configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd.py' &
-mkdir -p $CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION imvotenet_stage2_16x8_sunrgbd-3d-10class configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd.py \
-$CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd.py/FULL_LOG.txt &
+echo 'configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py' &
+mkdir -p $CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION imvotenet_stage2_16x8_sunrgbd-3d-10class configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py \
+$CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py/FULL_LOG.txt &
 
 echo 'configs/imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py' &
 mkdir -p $CHECKPOINT_DIR/configs/imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py
@@ -67,11 +67,11 @@ GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION imvoxel
 $CHECKPOINT_DIR/configs/imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
 2>&1|tee $CHECKPOINT_DIR/configs/imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py/FULL_LOG.txt &
 
-echo 'configs/mvxnet/mvx_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/mvxnet/mvx_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class configs/mvxnet/mvx_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/mvxnet/mvx_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/mvxnet/mvx_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py/FULL_LOG.txt &
+echo 'configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py' &
+mkdir -p $CHECKPOINT_DIR/configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py \
+$CHECKPOINT_DIR/configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py/FULL_LOG.txt &
 
 echo 'configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py' &
 mkdir -p $CHECKPOINT_DIR/configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py
