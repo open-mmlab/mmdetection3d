@@ -490,7 +490,7 @@ class NuScenesMetric(BaseMetric):
         print('Start to convert detection format...')
         for i, det in enumerate(mmengine.track_iter_progress(results)):
             annos = []
-            boxes = output_to_nusc_box(det)
+            boxes, attrs = output_to_nusc_box(det)
             sample_id = sample_id_list[i]
             sample_token = self.data_infos[sample_id]['token']
             boxes = lidar_nusc_box_to_global(self.data_infos[sample_id], boxes,
