@@ -4,8 +4,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
-from mmengine import InstanceData
 from mmengine.model import BaseModule
+from mmengine.structures import InstanceData
 from torch import Tensor, nn
 
 from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,

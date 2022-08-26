@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.runner import auto_fp16
 from torch import nn
 
 from mmdet3d.registry import MODELS
@@ -25,7 +24,6 @@ class PointPillarsScatter(nn.Module):
         self.in_channels = in_channels
         self.fp16_enabled = False
 
-    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size=None):
         """Foraward function to scatter features."""
         # TODO: rewrite the function in a batch manner

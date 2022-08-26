@@ -160,7 +160,7 @@ def export_nuim_to_coco(nuim, data_root, out_dir, extra_tag, version, nproc):
 
     images = []
     print('Process image meta information...')
-    for sample_info in mmcv.track_iter_progress(nuim.sample_data):
+    for sample_info in mmengine.track_iter_progress(nuim.sample_data):
         if sample_info['is_key_frame']:
             img_idx = len(images)
             images.append(
@@ -172,8 +172,8 @@ def export_nuim_to_coco(nuim, data_root, out_dir, extra_tag, version, nproc):
                     height=sample_info['height']))
 
     seg_root = f'{out_dir}semantic_masks'
-    mmcv.mkdir_or_exist(seg_root)
-    mmcv.mkdir_or_exist(osp.join(data_root, 'calibrated'))
+    mmengine.mkdir_or_exist(seg_root)
+    mmengine.mkdir_or_exist(osp.join(data_root, 'calibrated'))
 
     global process_img_anno
 
@@ -185,11 +185,11 @@ def export_nuim_to_coco(nuim, data_root, out_dir, extra_tag, version, nproc):
 
     print('Process img annotations...')
     if nproc > 1:
-        outputs = mmcv.track_parallel_progress(
+        outputs = mmengine.track_parallel_progress(
             process_img_anno, images, nproc=nproc)
     else:
         outputs = []
-        for img_info in mmcv.track_iter_progress(images):
+        for img_info in mmengine.track_iter_progress(images):
             outputs.append(process_img_anno(img_info))
 
     # Determine the index of object annotation
@@ -208,7 +208,7 @@ def export_nuim_to_coco(nuim, data_root, out_dir, extra_tag, version, nproc):
     coco_format_json = dict(
         images=images, annotations=annotations, categories=categories)
 
-    mmcv.mkdir_or_exist(out_dir)
+    mmengine.mkdir_or_exist(out_dir)
     out_file = osp.join(out_dir, f'{extra_tag}_{version}.json')
     print(f'Annotation dumped to {out_file}')
     mmengine.dump(coco_format_json, out_file)

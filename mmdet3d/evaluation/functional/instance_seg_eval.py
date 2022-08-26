@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-from mmcv.utils import print_log
+from mmengine.logging import print_log
 from terminaltables import AsciiTable
 
 from .scannet_utils.evaluate_semantic_instance import scannet_eval

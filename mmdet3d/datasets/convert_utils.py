@@ -19,7 +19,7 @@ nus_attributes = ('cycle.with_rider', 'cycle.without_rider',
                   'pedestrian.moving', 'pedestrian.standing',
                   'pedestrian.sitting_lying_down', 'vehicle.moving',
                   'vehicle.parked', 'vehicle.stopped', 'None')
-NameMapping = {
+NuScenesNameMapping = {
     'movable_object.barrier': 'barrier',
     'vehicle.bicycle': 'bicycle',
     'vehicle.bus.bendy': 'bus',
@@ -34,6 +34,17 @@ NameMapping = {
     'movable_object.trafficcone': 'traffic_cone',
     'vehicle.trailer': 'trailer',
     'vehicle.truck': 'truck'
+}
+LyftNameMapping = {
+    'bicycle': 'bicycle',
+    'bus': 'bus',
+    'car': 'car',
+    'emergency_vehicle': 'emergency_vehicle',
+    'motorcycle': 'motorcycle',
+    'other_vehicle': 'other_vehicle',
+    'pedestrian': 'pedestrian',
+    'truck': 'truck',
+    'animal': 'animal'
 }
 
 
@@ -390,9 +401,9 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
     repro_rec['bbox_corners'] = [x1, y1, x2, y2]
     repro_rec['filename'] = filename
 
-    if repro_rec['category_name'] not in NameMapping:
+    if repro_rec['category_name'] not in NuScenesNameMapping:
         return None
-    cat_name = NameMapping[repro_rec['category_name']]
+    cat_name = NuScenesNameMapping[repro_rec['category_name']]
     coco_rec['bbox_label'] = nus_categories.index(cat_name)
     coco_rec['bbox_label_3d'] = nus_categories.index(cat_name)
     coco_rec['bbox'] = [x1, y1, x2, y2]

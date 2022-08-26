@@ -93,6 +93,7 @@ class Det3DDataset(BaseDataset):
             f', `use_camera`) for {self.__class__.__name__}')
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
+
         if metainfo is not None and 'CLASSES' in metainfo:
             # we allow to train on subset of self.METAINFO['CLASSES']
             # map unselected labels to -1
@@ -111,10 +112,6 @@ class Det3DDataset(BaseDataset):
             }
             self.label_mapping[-1] = -1
 
-        # can be accessed by other component in runner
-        metainfo['box_type_3d'] = box_type_3d
-        metainfo['label_mapping'] = self.label_mapping
-
         super().__init__(
             ann_file=ann_file,
             metainfo=metainfo,
@@ -123,6 +120,10 @@ class Det3DDataset(BaseDataset):
             pipeline=pipeline,
             test_mode=test_mode,
             **kwargs)
+
+        # can be accessed by other component in runner
+        self.metainfo['box_type_3d'] = box_type_3d
+        self.metainfo['label_mapping'] = self.label_mapping
 
     def _remove_dontcare(self, ann_info):
         """Remove annotations that do not need to be cared.
@@ -235,6 +236,16 @@ class Det3DDataset(BaseDataset):
                     info['lidar_points']['lidar_path'])
 
             info['lidar_path'] = info['lidar_points']['lidar_path']
+            if 'lidar_sweeps' in info:
+                for sweep in info['lidar_sweeps']:
+                    file_suffix = sweep['lidar_points']['lidar_path'].split(
+                        '/')[-1]
+                    if 'samples' in sweep['lidar_points']['lidar_path']:
+                        sweep['lidar_points']['lidar_path'] = osp.join(
+                            self.data_prefix['pts'], file_suffix)
+                    else:
+                        sweep['lidar_points']['lidar_path'] = osp.join(
+                            self.data_prefix['sweeps'], file_suffix)
 
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():

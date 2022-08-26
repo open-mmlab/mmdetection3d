@@ -150,7 +150,7 @@ def process_single_scene(sample_idx):
     info['point_cloud'] = pc_info
 
     # save point cloud data in `.bin` format
-    mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+    mmengine.mkdir_or_exist(osp.join(self.root_dir, 'points'))
     pc_upright_depth_subsampled.tofile(
         osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
 
