@@ -3,7 +3,7 @@ import copy
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.registry import MODELS

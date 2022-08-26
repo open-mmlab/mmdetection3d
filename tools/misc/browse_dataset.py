@@ -2,8 +2,8 @@
 import argparse
 from os import path as osp
 
-import mmcv
-from mmcv import Config, DictAction, mkdir_or_exist
+import mmengine
+from mmengine import Config, DictAction, mkdir_or_exist
 
 from mmdet3d.datasets import build_dataset
 from mmdet3d.registry import VISUALIZERS
@@ -113,7 +113,7 @@ def main():
     visualizer = VISUALIZERS.build(cfg.visualizer)
     visualizer.dataset_meta = dataset.metainfo
 
-    progress_bar = mmcv.ProgressBar(len(dataset))
+    progress_bar = mmengine.ProgressBar(len(dataset))
 
     for item in dataset:
         # the 3D Boxes in input could be in any of three coordinates

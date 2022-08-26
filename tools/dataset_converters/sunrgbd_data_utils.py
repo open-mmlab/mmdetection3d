@@ -3,6 +3,7 @@ from concurrent import futures as futures
 from os import path as osp
 
 import mmcv
+import mmengine
 import numpy as np
 from scipy import io as sio
 
@@ -85,8 +86,8 @@ class SUNRGBDData(object):
         }
         assert split in ['train', 'val', 'test']
         split_file = osp.join(self.split_dir, f'{split}_data_idx.txt')
-        mmcv.check_file_exist(split_file)
-        self.sample_id_list = map(int, mmcv.list_from_file(split_file))
+        mmengine.check_file_exist(split_file)
+        self.sample_id_list = map(int, mmengine.list_from_file(split_file))
         self.image_dir = osp.join(self.split_dir, 'image')
         self.calib_dir = osp.join(self.split_dir, 'calib')
         self.depth_dir = osp.join(self.split_dir, 'depth')
@@ -157,7 +158,7 @@ class SUNRGBDData(object):
             pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
             info['point_cloud'] = pc_info
 
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+            mmengine.mkdir_or_exist(osp.join(self.root_dir, 'points'))
             pc_upright_depth_subsampled.tofile(
                 osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
 

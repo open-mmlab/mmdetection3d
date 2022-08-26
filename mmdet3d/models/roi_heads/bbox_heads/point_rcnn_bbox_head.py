@@ -3,8 +3,7 @@ import numpy as np
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks import build_conv_layer
-from mmengine.model import BaseModule
-from mmengine.model.utils import normal_init
+from mmengine.model import BaseModule, normal_init
 from torch import nn as nn
 
 from mmdet3d.models.layers import nms_bev, nms_normal_bev

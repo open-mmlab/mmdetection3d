@@ -12,7 +12,6 @@ import copy
 import time
 from os import path as osp
 
-import mmcv
 import mmengine
 import numpy as np
 from nuscenes.nuscenes import NuScenes
@@ -276,7 +275,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
     print('Start updating:')
     converted_list = []
     for i, ori_info_dict in enumerate(
-            mmcv.track_iter_progress(data_list['infos'])):
+            mmengine.track_iter_progress(data_list['infos'])):
         temp_data_info = get_empty_standard_data_info(
             camera_types=camera_types)
         temp_data_info['sample_idx'] = i
@@ -385,7 +384,7 @@ def update_kitti_infos(pkl_path, out_dir):
     data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info()
 
         if 'plane' in ori_info_dict:
@@ -509,7 +508,7 @@ def update_s3dis_infos(pkl_path, out_dir):
     data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for i, ori_info_dict in enumerate(mmcv.track_iter_progress(data_list)):
+    for i, ori_info_dict in enumerate(mmengine.track_iter_progress(data_list)):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['sample_id'] = i
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
@@ -575,7 +574,7 @@ def update_scannet_infos(pkl_path, out_dir):
     data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
@@ -638,7 +637,7 @@ def update_sunrgbd_infos(pkl_path, out_dir):
     data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
@@ -712,7 +711,7 @@ def update_lyft_infos(pkl_path, out_dir):
     print('Start updating:')
     converted_list = []
     for i, ori_info_dict in enumerate(
-            mmcv.track_iter_progress(data_list['infos'])):
+            mmengine.track_iter_progress(data_list['infos'])):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['sample_idx'] = i
         temp_data_info['token'] = ori_info_dict['token']
@@ -821,7 +820,7 @@ def update_waymo_infos(pkl_path, out_dir):
     data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info(camera_types)
 
         if 'plane' in ori_info_dict:

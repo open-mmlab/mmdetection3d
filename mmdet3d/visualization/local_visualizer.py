@@ -17,7 +17,7 @@ except ImportError:
     raise ImportError(
         'Please run "pip install open3d" to install open3d first.')
 
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 from mmengine.visualization.utils import check_type, tensor2ndarray
 
 from mmdet3d.registry import VISUALIZERS
@@ -67,7 +67,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     Examples:
         >>> import numpy as np
         >>> import torch
-        >>> from mmengine.data import InstanceData
+        >>> from mmengine.structures import InstanceData
         >>> from mmdet3d.structures import Det3DDataSample
         >>> from mmdet3d.visualization import Det3DLocalVisualizer
 

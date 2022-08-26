@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import torch
 from mmengine import Config
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d import *  # noqa
 from mmdet3d.models.dense_heads import Anchor3DHead

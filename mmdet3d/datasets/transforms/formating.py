@@ -1,11 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Sequence, Union
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
 from mmcv import BaseTransform
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 from numpy import dtype
 
 from mmdet3d.registry import TRANSFORMS
@@ -35,7 +35,7 @@ def to_tensor(
         if data.dtype is dtype('float64'):
             data = data.astype(np.float32)
         return torch.from_numpy(data)
-    elif isinstance(data, Sequence) and not mmcv.is_str(data):
+    elif isinstance(data, Sequence) and not mmengine.is_str(data):
         return torch.tensor(data)
     elif isinstance(data, int):
         return torch.LongTensor([data])

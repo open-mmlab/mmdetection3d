@@ -4,12 +4,11 @@ import tempfile
 from os import path as osp
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-import mmcv
 import mmengine
 import numpy as np
 import pyquaternion
 import torch
-from mmengine import load
+from mmengine import Config, load
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 from nuscenes.eval.detection.config import config_factory
@@ -379,7 +378,7 @@ class NuScenesMetric(BaseMetric):
 
         CAM_NUM = 6
 
-        for i, det in enumerate(mmcv.track_iter_progress(results)):
+        for i, det in enumerate(mmengine.track_iter_progress(results)):
 
             sample_id = sample_id_list[i]
 
@@ -417,7 +416,6 @@ class NuScenesMetric(BaseMetric):
                 score_thr=0.01,
                 min_bbox_size=0,
                 max_per_frame=500)
-            from mmcv import Config
             nms_cfg = Config(nms_cfg)
             cam_boxes3d_for_nms = xywhr2xyxyr(cam_boxes3d.bev)
             boxes3d = cam_boxes3d.tensor
@@ -462,7 +460,7 @@ class NuScenesMetric(BaseMetric):
             'results': nusc_annos,
         }
 
-        mmcv.mkdir_or_exist(jsonfile_prefix)
+        mmengine.mkdir_or_exist(jsonfile_prefix)
         res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
         print('Results writes to', res_path)
         mmengine.dump(nusc_submissions, res_path)
@@ -490,7 +488,7 @@ class NuScenesMetric(BaseMetric):
         nusc_annos = {}
 
         print('Start to convert detection format...')
-        for i, det in enumerate(mmcv.track_iter_progress(results)):
+        for i, det in enumerate(mmengine.track_iter_progress(results)):
             annos = []
             boxes = output_to_nusc_box(det)
             sample_id = sample_id_list[i]
@@ -536,7 +534,7 @@ class NuScenesMetric(BaseMetric):
             'meta': self.modality,
             'results': nusc_annos,
         }
-        mmcv.mkdir_or_exist(jsonfile_prefix)
+        mmengine.mkdir_or_exist(jsonfile_prefix)
         res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
         print('Results writes to', res_path)
         mmengine.dump(nusc_submissions, res_path)

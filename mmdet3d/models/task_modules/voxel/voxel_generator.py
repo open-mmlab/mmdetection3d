@@ -2,7 +2,10 @@
 import numba
 import numpy as np
 
+from mmdet3d.registry import MODELS
 
+
+@MODELS.register_module()
 class VoxelGenerator(object):
     """Voxel generator in numpy implementation.
 

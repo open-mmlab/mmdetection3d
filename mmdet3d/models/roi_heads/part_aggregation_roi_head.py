@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, List, Tuple
 
-from mmcv import ConfigDict
+from mmengine import ConfigDict
 from torch import Tensor
 from torch.nn import functional as F
 

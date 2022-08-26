@@ -3,8 +3,8 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from mmengine.config import ConfigDict
-from mmengine.data import InstanceData
-from mmengine.model.utils import xavier_init
+from mmengine.model import xavier_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 
