@@ -18,7 +18,8 @@ class CBGSDataset(object):
 
     def __init__(self, dataset):
         self.dataset = DATASETS.build(dataset)
-        self.CLASSES = self.dataset.metainfo['CLASSES']
+        self.metainfo = self.dataset.metainfo
+        self.CLASSES = self.metainfo['CLASSES']
         self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
         self.sample_indices = self._get_sample_indices()
         # self.dataset.data_infos = self.data_infos
