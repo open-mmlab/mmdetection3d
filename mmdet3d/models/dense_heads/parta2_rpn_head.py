@@ -3,8 +3,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-from mmcv import ConfigDict
-from mmengine.data import InstanceData
+from mmengine import ConfigDict
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.models.layers import nms_bev, nms_normal_bev

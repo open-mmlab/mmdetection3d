@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.ops import Voxelization
-from mmcv.runner import force_fp32
 from torch.nn import functional as F
 
 from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
@@ -52,7 +51,6 @@ class SASSD(SingleStage3DDetector):
         return x, point_misc
 
     @torch.no_grad()
-    @force_fp32()
     def voxelize(self, points):
         """Apply hard voxelization to points."""
         voxels, coors, num_points = [], [], []

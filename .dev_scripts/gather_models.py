@@ -22,7 +22,6 @@ import shutil
 import subprocess
 from os import path as osp
 
-import mmcv
 import mmengine
 import torch
 
@@ -143,10 +142,10 @@ def main():
     args = parse_args()
     models_root = args.root
     models_out = args.out
-    mmcv.mkdir_or_exist(models_out)
+    mmengine.mkdir_or_exist(models_out)
 
     # find all models in the root directory to be gathered
-    raw_configs = list(mmcv.scandir('./configs', '.py', recursive=True))
+    raw_configs = list(mmengine.scandir('./configs', '.py', recursive=True))
 
     # filter configs that is not trained in the experiments dir
     used_configs = []
@@ -189,7 +188,7 @@ def main():
     publish_model_infos = []
     for model in model_infos:
         model_publish_dir = osp.join(models_out, model['config'].rstrip('.py'))
-        mmcv.mkdir_or_exist(model_publish_dir)
+        mmengine.mkdir_or_exist(model_publish_dir)
 
         model_name = model['config'].split('/')[-1].rstrip(
             '.py') + '_' + model['model_time']

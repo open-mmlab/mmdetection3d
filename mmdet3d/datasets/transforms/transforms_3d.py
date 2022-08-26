@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
-from mmcv import is_tuple_of
 from mmcv.transforms import BaseTransform
+from mmengine import is_tuple_of
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS

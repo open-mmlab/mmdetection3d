@@ -4,8 +4,8 @@ from typing import List, Optional, Sequence, Tuple
 import numpy as np
 import torch
 from mmcv.cnn import Scale
-from mmengine.data import InstanceData
-from mmengine.model.utils import normal_init
+from mmengine.model import normal_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 
@@ -597,7 +597,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             mlvl_points (list[Tensor]): Box reference for a single scale level
                 with shape (num_total_points, 2).
             img_meta (dict): Metadata of input image.
-            cfg (mmcv.Config): Test / postprocessing configuration,
+            cfg (mmengine.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used.
             rescale (bool): If True, return boxes in original image space.
 

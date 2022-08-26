@@ -3,7 +3,7 @@ import warnings
 from copy import deepcopy
 from typing import Dict, List, Optional, Tuple, Union
 
-import mmcv
+import mmengine
 from mmcv import BaseTransform
 from mmengine.dataset import Compose
 
@@ -48,8 +48,8 @@ class MultiScaleFlipAug3D(BaseTransform):
         self.pts_scale_ratio = pts_scale_ratio \
             if isinstance(pts_scale_ratio, list) else[float(pts_scale_ratio)]
 
-        assert mmcv.is_list_of(self.img_scale, tuple)
-        assert mmcv.is_list_of(self.pts_scale_ratio, float)
+        assert mmengine.is_list_of(self.img_scale, tuple)
+        assert mmengine.is_list_of(self.pts_scale_ratio, float)
 
         self.flip = flip
         self.pcd_horizontal_flip = pcd_horizontal_flip
@@ -57,7 +57,7 @@ class MultiScaleFlipAug3D(BaseTransform):
 
         self.flip_direction = flip_direction if isinstance(
             flip_direction, list) else [flip_direction]
-        assert mmcv.is_list_of(self.flip_direction, str)
+        assert mmengine.is_list_of(self.flip_direction, str)
         if not self.flip and self.flip_direction != ['horizontal']:
             warnings.warn(
                 'flip_direction has no effect when flip is set to False')

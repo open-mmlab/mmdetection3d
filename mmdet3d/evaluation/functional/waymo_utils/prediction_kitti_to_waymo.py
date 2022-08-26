@@ -13,7 +13,7 @@ except ImportError:
 from glob import glob
 from os.path import join
 
-import mmcv
+import mmengine
 import numpy as np
 import tensorflow as tf
 from waymo_open_dataset import label_pb2
@@ -101,7 +101,7 @@ class KITTI2Waymo(object):
 
     def create_folder(self):
         """Create folder for data conversion."""
-        mmcv.mkdir_or_exist(self.waymo_results_save_dir)
+        mmengine.mkdir_or_exist(self.waymo_results_save_dir)
 
     def parse_objects(self, kitti_result, T_k2w, context_name,
                       frame_timestamp_micros):
@@ -228,8 +228,8 @@ class KITTI2Waymo(object):
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmcv.track_parallel_progress(self.convert_one, range(len(self)),
-                                     self.workers)
+        mmengine.track_parallel_progress(self.convert_one, range(len(self)),
+                                         self.workers)
         print('\nFinished ...')
 
         # combine all files into one .bin

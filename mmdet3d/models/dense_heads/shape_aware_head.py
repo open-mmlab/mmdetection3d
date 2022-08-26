@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule
-from mmengine.data import InstanceData
 from mmengine.model import BaseModule
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 
