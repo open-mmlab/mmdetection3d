@@ -152,8 +152,8 @@ def get_single_lidar_sweep():
     return single_lidar_sweep
 
 
-def get_empty_standard_data_info(camera_types=['CAM1', 'CAM2', 'CAM3',
-                                               'CAM4']):
+def get_empty_standard_data_info(
+        camera_types=['CAM0', 'CAM1', 'CAM2', 'CAM3', 'CAM4']):
 
     data_info = dict(
         # (str): Sample id of the frame.
@@ -1031,28 +1031,28 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
-    if args.out_dir is None:
-        args.out_dir = args.root_dir
-    if args.dataset.lower() == 'kitti':
-        update_kitti_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'waymo':
-        update_waymo_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'scannet':
-        update_scannet_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'sunrgbd':
-        update_sunrgbd_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'lyft':
-        update_lyft_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'nuscenes':
-        update_nuscenes_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 's3dis':
-        update_s3dis_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+def update_pkl_infos(dataset, out_dir, pkl_path):
+    if dataset.lower() == 'kitti':
+        update_kitti_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'waymo':
+        update_waymo_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'scannet':
+        update_scannet_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'sunrgbd':
+        update_sunrgbd_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'lyft':
+        update_lyft_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'nuscenes':
+        update_nuscenes_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 's3dis':
+        update_s3dis_infos(pkl_path=pkl_path, out_dir=out_dir)
     else:
-        raise NotImplementedError(
-            f'Do not support convert {args.dataset} to v2.')
+        raise NotImplementedError(f'Do not support convert {dataset} to v2.')
 
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    if args.out_dir is None:
+        args.out_dir = args.root_dir
+    update_pkl_infos(
+        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl_path)
