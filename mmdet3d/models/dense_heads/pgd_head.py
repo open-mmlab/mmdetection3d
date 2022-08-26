@@ -4,8 +4,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 import torch
 from mmcv.cnn import Scale
-from mmengine.data import InstanceData
-from mmengine.model.utils import bias_init_with_prob, normal_init
+from mmengine.model import bias_init_with_prob, normal_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
@@ -824,7 +824,7 @@ class PGDHead(FCOSMono3DHead):
                 shape (N, num_points * 1, H, W)
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            cfg (mmcv.Config, optional): Test / postprocessing configuration,
+            cfg (mmengine.Config, optional): Test / postprocessing config,
                 if None, test_cfg would be used. Defaults to None.
             rescale (bool, optional): If True, return boxes in original image
                 space. Defaults to False.
@@ -950,7 +950,7 @@ class PGDHead(FCOSMono3DHead):
             mlvl_points (list[Tensor]): Box reference for a single scale level
                 with shape (num_total_points, 2).
             img_meta (dict): Metadata of input image.
-            cfg (mmcv.Config): Test / postprocessing configuration,
+            cfg (mmengine.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used.
             rescale (bool, optional): If True, return boxes in original image
                 space. Defaults to False.

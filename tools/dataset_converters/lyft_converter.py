@@ -114,7 +114,7 @@ def _fill_trainval_infos(lyft,
     train_lyft_infos = []
     val_lyft_infos = []
 
-    for sample in mmcv.track_iter_progress(lyft.sample):
+    for sample in mmengine.track_iter_progress(lyft.sample):
         lidar_token = sample['data']['LIDAR_TOP']
         sd_rec = lyft.get('sample_data', sample['data']['LIDAR_TOP'])
         cs_record = lyft.get('calibrated_sensor',
@@ -127,7 +127,7 @@ def _fill_trainval_infos(lyft,
         lidar_path = abs_lidar_path.split(f'{os.getcwd()}/')[-1]
         # relative path
 
-        mmcv.check_file_exist(lidar_path)
+        mmengine.check_file_exist(lidar_path)
 
         info = {
             'lidar_path': lidar_path,
@@ -247,7 +247,7 @@ def export_2d_annotation(root_path, info_path, version):
     ]
     coco_ann_id = 0
     coco_2d_dict = dict(annotations=[], images=[], categories=cat2Ids)
-    for info in mmcv.track_iter_progress(lyft_infos):
+    for info in mmengine.track_iter_progress(lyft_infos):
         for cam in camera_types:
             cam_info = info['cams'][cam]
             coco_infos = get_2d_boxes(

@@ -4,7 +4,6 @@ from concurrent import futures as futures
 from os import path as osp
 from pathlib import Path
 
-import mmcv
 import mmengine
 import numpy as np
 from PIL import Image
@@ -502,8 +501,9 @@ class WaymoInfoGatherer:
     def gather(self, image_ids):
         if not isinstance(image_ids, list):
             image_ids = list(range(image_ids))
-        image_infos = mmcv.track_parallel_progress(self.gather_single,
-                                                   image_ids, self.num_worker)
+        image_infos = mmengine.track_parallel_progress(self.gather_single,
+                                                       image_ids,
+                                                       self.num_worker)
         return list(image_infos)
 
 

@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, List
 
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.registry import MODELS

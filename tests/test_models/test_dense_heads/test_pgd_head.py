@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.models.dense_heads import PGDHead
 from mmdet3d.structures import CameraInstance3DBoxes
@@ -40,8 +40,8 @@ class TestFGDHead(TestCase):
             min_bbox_size=0,
             max_per_img=20)
 
-        train_cfg = mmcv.Config(train_cfg)
-        test_cfg = mmcv.Config(test_cfg)
+        train_cfg = mmengine.Config(train_cfg)
+        test_cfg = mmengine.Config(test_cfg)
 
         pgd_head = PGDHead(
             num_classes=3,

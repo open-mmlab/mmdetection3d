@@ -109,8 +109,8 @@ class _NumPointsInGTCalculater:
         return info
 
     def calculate(self, infos):
-        ret_infos = mmcv.track_parallel_progress(self.calculate_single, infos,
-                                                 self.num_worker)
+        ret_infos = mmengine.track_parallel_progress(self.calculate_single,
+                                                     infos, self.num_worker)
         for i, ret_info in enumerate(ret_infos):
             infos[i] = ret_info
 
@@ -120,7 +120,7 @@ def _calculate_num_points_in_gt(data_path,
                                 relative_path,
                                 remove_outside=True,
                                 num_features=4):
-    for info in mmcv.track_iter_progress(infos):
+    for info in mmengine.track_iter_progress(infos):
         pc_info = info['point_cloud']
         image_info = info['image']
         calib = info['calib']
@@ -325,7 +325,7 @@ def _create_reduced_point_cloud(data_path,
     """
     kitti_infos = mmengine.load(info_path)
 
-    for info in mmcv.track_iter_progress(kitti_infos):
+    for info in mmengine.track_iter_progress(kitti_infos):
         pc_info = info['point_cloud']
         image_info = info['image']
         calib = info['calib']
@@ -428,7 +428,7 @@ def export_2d_annotation(root_path, info_path, mono3d=True):
     coco_ann_id = 0
     coco_2d_dict = dict(annotations=[], images=[], categories=cat2Ids)
     from os import path as osp
-    for info in mmcv.track_iter_progress(kitti_infos):
+    for info in mmengine.track_iter_progress(kitti_infos):
         coco_infos = get_2d_boxes(info, occluded=[0, 1, 2, 3], mono3d=mono3d)
         (height, width,
          _) = mmcv.imread(osp.join(root_path,

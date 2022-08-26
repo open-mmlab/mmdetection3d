@@ -37,7 +37,7 @@ def _get_config_directory():
 
 def _get_config_module(fname):
     """Load a configuration as a python module."""
-    from mmcv import Config
+    from mmengine import Config
     config_dpath = _get_config_directory()
     config_fpath = join(config_dpath, fname)
     config_mod = Config.fromfile(config_fpath)
@@ -62,11 +62,11 @@ def _get_detector_cfg(fname):
     These are deep copied to allow for safe modification of parameters without
     influencing other tests.
     """
-    import mmcv
+    import mmengine
     config = _get_config_module(fname)
     model = copy.deepcopy(config.model)
-    train_cfg = mmcv.Config(copy.deepcopy(config.model.train_cfg))
-    test_cfg = mmcv.Config(copy.deepcopy(config.model.test_cfg))
+    train_cfg = mmengine.Config(copy.deepcopy(config.model.train_cfg))
+    test_cfg = mmengine.Config(copy.deepcopy(config.model.test_cfg))
 
     model.update(train_cfg=train_cfg)
     model.update(test_cfg=test_cfg)
