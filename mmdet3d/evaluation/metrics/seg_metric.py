@@ -29,8 +29,7 @@ class SegMetric(BaseMetric):
         super(SegMetric, self).__init__(
             prefix=prefix, collect_device=collect_device)
 
-    def process(self, data_batch: Sequence[dict],
-                data_samples: Sequence[dict]) -> None:
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
         The processed results should be stored in ``self.results``,
@@ -38,12 +37,11 @@ class SegMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
+            data_batch (dict): A batch of data from the dataloader.
             data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        for data, data_sample in zip(data_batch, data_samples):
+        for data_sample in data_samples:
             pred_3d = data_sample['pred_pts_seg']
             eval_ann_info = data_sample['eval_ann_info']
             cpu_pred_3d = dict()

@@ -72,8 +72,7 @@ class LyftMetric(BaseMetric):
         self.csv_savepath = csv_savepath
         self.metrics = metric if isinstance(metric, list) else [metric]
 
-    def process(self, data_batch: Sequence[dict],
-                data_samples: Sequence[dict]) -> None:
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and data_samples.
 
         The processed results should be stored in ``self.results``,
@@ -81,22 +80,22 @@ class LyftMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
+            data_batch (dict): A batch of data from the dataloader.
             data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        assert len(data_batch) == len(data_samples)
-        for data, data_sample in zip(data_batch, data_samples):
+        for data_sample in data_samples:
             result = dict()
-            for pred_result in data_sample:
-                if data_sample[pred_result] is not None:
-                    for attr_name in data_sample[pred_result]:
-                        data_sample[pred_result][attr_name] = data_sample[
-                            pred_result][attr_name].to(self.collect_device)
-                    result[pred_result] = data_sample[pred_result]
-                sample_idx = data_sample['sample_idx']
-                result['sample_idx'] = sample_idx
+            pred_3d = data_sample['pred_instances_3d']
+            pred_2d = data_sample['pred_instances']
+            for attr_name in pred_3d:
+                pred_3d[attr_name] = pred_3d[attr_name].to(self.collect_device)
+            result['pred_instances_3d'] = pred_3d
+            for attr_name in pred_2d:
+                pred_2d[attr_name] = pred_2d[attr_name].to(self.collect_device)
+            result['pred_instances'] = pred_2d
+            sample_idx = data_sample['sample_idx']
+            result['sample_idx'] = sample_idx
         self.results.append(result)
 
     def compute_metrics(self, results: list) -> Dict[str, float]:

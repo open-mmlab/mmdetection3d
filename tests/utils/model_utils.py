@@ -5,7 +5,7 @@ from os.path import dirname, exists, join
 
 import numpy as np
 import torch
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
@@ -118,7 +118,7 @@ def _create_detector_inputs(seed=0,
 
     else:
         img = None
-    inputs_dict = dict(img=img, points=points)
+    inputs_dict = dict(img=[img], points=[points])
     gt_instance_3d = InstanceData()
 
     gt_instance_3d.bboxes_3d = bbox_3d_class[bboxes_3d_type](
@@ -145,4 +145,4 @@ def _create_detector_inputs(seed=0,
         pts_semantic_mask = torch.randint(0, num_classes, [num_points])
         data_sample.gt_pts_seg['pts_semantic_mask'] = pts_semantic_mask
 
-    return dict(inputs=inputs_dict, data_sample=data_sample)
+    return dict(inputs=inputs_dict, data_samples=[data_sample])

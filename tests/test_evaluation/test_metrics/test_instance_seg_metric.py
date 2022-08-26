@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 import torch
-from mmengine.data import BaseDataElement
+from mmengine.structures import BaseDataElement
 
 from mmdet3d.evaluation.metrics import InstanceSegMetric
 from mmdet3d.structures import Det3DDataSample, PointData
@@ -11,10 +11,9 @@ from mmdet3d.structures import Det3DDataSample, PointData
 
 class TestInstanceSegMetric(unittest.TestCase):
 
-    def _demo_mm_inputs(self):
+    def _demo_mm_model_output(self):
         """Create a superset of inputs needed to run test or train batches."""
-        packed_inputs = []
-        mm_inputs = dict()
+
         n_points = 3300
         gt_labels = [0, 0, 0, 0, 0, 0, 14, 14, 2, 1]
         gt_instance_mask = np.ones(n_points, dtype=np.int) * -1
@@ -29,13 +28,6 @@ class TestInstanceSegMetric(unittest.TestCase):
         ann_info_data['pts_instance_mask'] = torch.tensor(gt_instance_mask)
         ann_info_data['pts_semantic_mask'] = torch.tensor(gt_semantic_mask)
 
-        mm_inputs['data_sample'] = dict(eval_ann_info=ann_info_data)
-        packed_inputs.append(mm_inputs)
-
-        return packed_inputs
-
-    def _demo_mm_model_output(self):
-        """Create a superset of inputs needed to run test or train batches."""
         results_dict = dict()
         n_points = 3300
         gt_labels = [0, 0, 0, 0, 0, 0, 14, 14, 2, 1]
@@ -54,6 +46,7 @@ class TestInstanceSegMetric(unittest.TestCase):
         results_dict['instance_scores'] = torch.tensor(scores)
         data_sample = Det3DDataSample()
         data_sample.pred_pts_seg = PointData(**results_dict)
+        data_sample.eval_ann_info = ann_info_data
         batch_data_samples = [data_sample]
 
         predictions = []
@@ -65,7 +58,7 @@ class TestInstanceSegMetric(unittest.TestCase):
         return predictions
 
     def test_evaluate(self):
-        data_batch = self._demo_mm_inputs()
+        data_batch = {}
         predictions = self._demo_mm_model_output()
         seg_valid_class_ids = (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
                                33, 34, 36, 39)

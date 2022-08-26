@@ -37,8 +37,7 @@ class IndoorMetric(BaseMetric):
             prefix=prefix, collect_device=collect_device)
         self.iou_thr = iou_thr
 
-    def process(self, data_batch: Sequence[dict],
-                data_samples: Sequence[dict]) -> None:
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
         The processed results should be stored in ``self.results``,
@@ -46,12 +45,11 @@ class IndoorMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
+            data_batch (dict): A batch of data from the dataloader.
             data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        for data, data_sample in zip(data_batch, data_samples):
+        for data_sample in data_samples:
             pred_3d = data_sample['pred_instances_3d']
             eval_ann_info = data_sample['eval_ann_info']
             cpu_pred_3d = dict()
