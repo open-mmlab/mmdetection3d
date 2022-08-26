@@ -20,10 +20,10 @@ $CHECKPOINT_DIR/configs/dynamic_voxelization/second_dv_secfpn_8xb2-cosine-80e_ki
 2>&1|tee $CHECKPOINT_DIR/configs/dynamic_voxelization/second_dv_secfpn_8xb2-cosine-80e_kitti-3d-3class.py/FULL_LOG.txt &
 
 echo 'configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py' &
-mkdir -p $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101-caffe- fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d configs/fcos3d/fcos3d_r101-caffe- fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py \
-$CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101-caffe- fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101-caffe- fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py/FULL_LOG.txt &
+mkdir -p $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101-caffe-fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d configs/fcos3d/fcos3d_r101-caffe-fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py \
+$CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101-caffe-fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/fcos3d/fcos3d_r101-caffe-fpn-head-gn-dcn_8xb2-1x_nus-mono3d.py/FULL_LOG.txt &
 
 echo 'configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py' &
 mkdir -p $CHECKPOINT_DIR/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
