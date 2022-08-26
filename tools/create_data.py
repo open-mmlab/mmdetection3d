@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import os
 from os import path as osp
 
 from tools.dataset_converters import indoor_converter as indoor
@@ -9,6 +8,7 @@ from tools.dataset_converters import lyft_converter as lyft_converter
 from tools.dataset_converters import nuscenes_converter as nuscenes_converter
 from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
+from tools.dataset_converters.update_infos_to_v2 import update_pkl_infos
 
 
 def kitti_data_prep(root_path,
@@ -32,21 +32,20 @@ def kitti_data_prep(root_path,
     kitti.create_kitti_info_file(root_path, info_prefix, with_plane)
     kitti.create_reduced_point_cloud(root_path, info_prefix)
 
-    info_train_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
-    info_val_path = osp.join(root_path, f'{info_prefix}_infos_val.pkl')
-    info_trainval_path = osp.join(root_path,
-                                  f'{info_prefix}_infos_trainval.pkl')
-    info_test_path = osp.join(root_path, f'{info_prefix}_infos_test.pkl')
+    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
     kitti.export_2d_annotation(root_path, info_train_path)
     kitti.export_2d_annotation(root_path, info_val_path)
     kitti.export_2d_annotation(root_path, info_trainval_path)
-    kitti.export_2d_annotation(root_path, info_test_path)
-
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_trainval_path)
     create_groundtruth_database(
         'KittiDataset',
         root_path,
         info_prefix,
-        f'{out_dir}/{info_prefix}_infos_train.pkl',
+        f'{info_prefix}_infos_train.pkl',
         relative_path=False,
         mask_anno_path='instances_train.json',
         with_mask=(version == 'mask'))
@@ -76,19 +75,22 @@ def nuscenes_data_prep(root_path,
         root_path, info_prefix, version=version, max_sweeps=max_sweeps)
 
     if version == 'v1.0-test':
-        info_test_path = osp.join(root_path, f'{info_prefix}_infos_test.pkl')
+        info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
         nuscenes_converter.export_2d_annotation(
             root_path, info_test_path, version=version)
+        update_pkl_infos('nuscenes', out_dir=out_dir, pkl_path=info_test_path)
         return
 
-    info_train_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
-    info_val_path = osp.join(root_path, f'{info_prefix}_infos_val.pkl')
+    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     nuscenes_converter.export_2d_annotation(
         root_path, info_train_path, version=version)
     nuscenes_converter.export_2d_annotation(
         root_path, info_val_path, version=version)
+    update_pkl_infos('nuscenes', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('nuscenes', out_dir=out_dir, pkl_path=info_val_path)
     create_groundtruth_database(dataset_name, root_path, info_prefix,
-                                f'{out_dir}/{info_prefix}_infos_train.pkl')
+                                f'{info_prefix}_infos_train.pkl')
 
 
 def lyft_data_prep(root_path, info_prefix, version, max_sweeps=10):
@@ -107,6 +109,14 @@ def lyft_data_prep(root_path, info_prefix, version, max_sweeps=10):
     """
     lyft_converter.create_lyft_infos(
         root_path, info_prefix, version=version, max_sweeps=max_sweeps)
+    if version == 'v1.01-test':
+        info_test_path = osp.join(root_path, f'{info_prefix}_infos_test.pkl')
+        update_pkl_infos('lyft', out_dir=root_path, pkl_path=info_test_path)
+    elif version == 'v1.01-train':
+        info_train_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
+        info_val_path = osp.join(root_path, f'{info_prefix}_infos_val.pkl')
+        update_pkl_infos('lyft', out_dir=root_path, pkl_path=info_train_path)
+        update_pkl_infos('lyft', out_dir=root_path, pkl_path=info_val_path)
 
 
 def scannet_data_prep(root_path, info_prefix, out_dir, workers):
@@ -120,6 +130,12 @@ def scannet_data_prep(root_path, info_prefix, out_dir, workers):
     """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
+    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
+    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_test_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
 
 
 def s3dis_data_prep(root_path, info_prefix, out_dir, workers):
@@ -133,6 +149,10 @@ def s3dis_data_prep(root_path, info_prefix, out_dir, workers):
     """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
+    splits = [f'Area_{i}' for i in [1, 2, 3, 4, 5, 6]]
+    for split in splits:
+        filename = osp.join(out_dir, f'{info_prefix}_infos_{split}.pkl')
+        update_pkl_infos('s3dis', out_dir=out_dir, pkl_path=filename)
 
 
 def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
@@ -146,6 +166,10 @@ def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
     """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
+    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
 
 
 def waymo_data_prep(root_path,
@@ -185,6 +209,12 @@ def waymo_data_prep(root_path,
     out_dir = osp.join(out_dir, 'kitti_format')
     kitti.create_waymo_info_file(
         out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
+    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_trainval_path)
     GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
@@ -230,6 +260,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == '__main__':
+    from mmdet3d.utils import register_all_modules
+    register_all_modules()
     if args.dataset == 'kitti':
         kitti_data_prep(
             root_path=args.root_path,
@@ -304,12 +336,3 @@ if __name__ == '__main__':
             workers=args.workers)
     else:
         raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')
-
-    for file_name in os.listdir(args.out_dir):
-        if '_infos_' in file_name and '.pkl' in file_name:
-            cmd = f'python tools/dataset_converters/update_infos_to_v2.py ' \
-                  f'--dataset {args.dataset} ' \
-                  f'--pkl {osp.join(args.out_dir,file_name)} ' \
-                  f'--out-dir {args.out_dir}'
-            print(cmd)
-            os.system(cmd)

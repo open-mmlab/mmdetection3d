@@ -149,14 +149,12 @@ def create_groundtruth_database(dataset_class_name,
     if dataset_class_name == 'KittiDataset':
         file_client_args = dict(backend='disk')
         dataset_cfg.update(
-            test_mode=False,
-            split='training',
             modality=dict(
                 use_lidar=True,
-                use_depth=False,
-                use_lidar_intensity=True,
                 use_camera=with_mask,
             ),
+            data_prefix=dict(
+                pts='training/velodyne_reduced', img='training/image_2'),
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
@@ -174,6 +172,8 @@ def create_groundtruth_database(dataset_class_name,
     elif dataset_class_name == 'NuScenesDataset':
         dataset_cfg.update(
             use_valid_flag=True,
+            data_prefix=dict(
+                pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP'),
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
@@ -236,14 +236,13 @@ def create_groundtruth_database(dataset_class_name,
 
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
-        input_dict = dataset.get_data_info(j)
-        dataset.pre_pipeline(input_dict)
-        example = dataset.pipeline(input_dict)
+        data_info = dataset.get_data_info(j)
+        example = dataset.pipeline(data_info)
         annos = example['ann_info']
         image_idx = example['sample_idx']
         points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
-        names = annos['gt_names']
+        names = [dataset.metainfo['CLASSES'][i] for i in annos['gt_labels_3d']]
         group_dict = dict()
         if 'group_ids' in annos:
             group_ids = annos['group_ids']
