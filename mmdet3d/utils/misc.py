@@ -58,6 +58,11 @@ def replace_ceph_backend(cfg):
         'LoadImageFromFileMono3D\'',
         'LoadImageFromFileMono3D\',' + replace_strs)
 
+    # replace LoadMultiViewImageFromFiles
+    cfg_pretty_text = cfg_pretty_text.replace(
+        'LoadMultiViewImageFromFiles\'',
+        'LoadMultiViewImageFromFiles\',' + replace_strs)
+
     # replace LoadPointsFromFile
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadPointsFromFile\'', 'LoadPointsFromFile\',' + replace_strs)
@@ -74,6 +79,10 @@ def replace_ceph_backend(cfg):
     # replace LoadAnnotations3D
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadAnnotations3D\'', 'LoadAnnotations3D\',' + replace_strs)
+
+    # replace WaymoMetric
+    cfg_pretty_text = cfg_pretty_text.replace('WaymoMetric\'',
+                                              'WaymoMetric\',' + replace_strs)
 
     # replace dbsampler
     cfg_pretty_text = cfg_pretty_text.replace('info_path',

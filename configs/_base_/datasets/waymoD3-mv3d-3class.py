@@ -24,9 +24,7 @@ train_transforms = [
 ]
 
 train_pipeline = [
-    dict(
-        type='LoadMultiViewImageFromFiles',
-        to_float32=True),
+    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -53,18 +51,14 @@ test_transforms = [
         keep_ratio=True)
 ]
 test_pipeline = [
-    dict(
-        type='LoadMultiViewImageFromFiles',
-        to_float32=True),
+    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(
-        type='LoadMultiViewImageFromFiles',
-        to_float32=True),
+    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
@@ -78,7 +72,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_mini_val.pkl',
+        ann_file='waymo_infos_train.pkl',
         data_prefix=dict(
             pts='training/velodyne',
             CAM_FRONT='training/image_0',
@@ -104,7 +98,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_mini_val.pkl',
+        ann_file='waymo_infos_val.pkl',
         data_prefix=dict(
             pts='training/velodyne',
             CAM_FRONT='training/image_0',
@@ -129,7 +123,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_mini_val.pkl',
+        ann_file='waymo_infos_val.pkl',
         data_prefix=dict(
             pts='training/velodyne',
             CAM_FRONT='training/image_0',
