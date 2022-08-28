@@ -4,7 +4,7 @@ from unittest import TestCase
 import numpy as np
 import pytest
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.structures import Det3DDataSample, PointData
 

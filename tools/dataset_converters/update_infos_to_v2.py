@@ -12,7 +12,7 @@ import copy
 import time
 from os import path as osp
 
-import mmcv
+import mmengine
 import numpy as np
 from nuscenes.nuscenes import NuScenes
 
@@ -152,8 +152,8 @@ def get_single_lidar_sweep():
     return single_lidar_sweep
 
 
-def get_empty_standard_data_info(camera_types=['CAM1', 'CAM2', 'CAM3',
-                                               'CAM4']):
+def get_empty_standard_data_info(
+        camera_types=['CAM0', 'CAM1', 'CAM2', 'CAM3', 'CAM4']):
 
     data_info = dict(
         # (str): Sample id of the frame.
@@ -257,7 +257,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
         print(f'Warning, you may overwriting '
               f'the original data {pkl_path}.')
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     METAINFO = {
         'CLASSES':
         ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
@@ -275,7 +275,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
     print('Start updating:')
     converted_list = []
     for i, ori_info_dict in enumerate(
-            mmcv.track_iter_progress(data_list['infos'])):
+            mmengine.track_iter_progress(data_list['infos'])):
         temp_data_info = get_empty_standard_data_info(
             camera_types=camera_types)
         temp_data_info['sample_idx'] = i
@@ -365,7 +365,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
     print(f'ignore classes: {ignore_class_name}')
     converted_data_info = dict(metainfo=METAINFO, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def update_kitti_infos(pkl_path, out_dir):
@@ -381,10 +381,10 @@ def update_kitti_infos(pkl_path, out_dir):
                     'Person_sitting', 'Tram', 'Misc'),
     }
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info()
 
         if 'plane' in ori_info_dict:
@@ -494,7 +494,7 @@ def update_kitti_infos(pkl_path, out_dir):
     converted_data_info = dict(
         metainfo={'DATASET': 'KITTI'}, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def update_s3dis_infos(pkl_path, out_dir):
@@ -505,10 +505,10 @@ def update_s3dis_infos(pkl_path, out_dir):
         time.sleep(5)
     METAINFO = {'CLASSES': ('table', 'chair', 'sofa', 'bookcase', 'board')}
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for i, ori_info_dict in enumerate(mmcv.track_iter_progress(data_list)):
+    for i, ori_info_dict in enumerate(mmengine.track_iter_progress(data_list)):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['sample_id'] = i
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
@@ -555,7 +555,7 @@ def update_s3dis_infos(pkl_path, out_dir):
     converted_data_info = dict(
         metainfo={'DATASET': 'S3DIS'}, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def update_scannet_infos(pkl_path, out_dir):
@@ -571,10 +571,10 @@ def update_scannet_infos(pkl_path, out_dir):
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin')
     }
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
@@ -620,7 +620,7 @@ def update_scannet_infos(pkl_path, out_dir):
     converted_data_info = dict(
         metainfo={'DATASET': 'SCANNET'}, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def update_sunrgbd_infos(pkl_path, out_dir):
@@ -634,10 +634,10 @@ def update_sunrgbd_infos(pkl_path, out_dir):
                     'dresser', 'night_stand', 'bookshelf', 'bathtub')
     }
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
@@ -689,7 +689,7 @@ def update_sunrgbd_infos(pkl_path, out_dir):
     converted_data_info = dict(
         metainfo={'DATASET': 'SUNRGBD'}, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def update_lyft_infos(pkl_path, out_dir):
@@ -698,7 +698,7 @@ def update_lyft_infos(pkl_path, out_dir):
         print(f'Warning, you may overwriting '
               f'the original data {pkl_path}.')
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     METAINFO = {
         'CLASSES':
         ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
@@ -711,7 +711,7 @@ def update_lyft_infos(pkl_path, out_dir):
     print('Start updating:')
     converted_list = []
     for i, ori_info_dict in enumerate(
-            mmcv.track_iter_progress(data_list['infos'])):
+            mmengine.track_iter_progress(data_list['infos'])):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['sample_idx'] = i
         temp_data_info['token'] = ori_info_dict['token']
@@ -793,7 +793,7 @@ def update_lyft_infos(pkl_path, out_dir):
     print(f'ignore classes: {ignore_class_name}')
     converted_data_info = dict(metainfo=METAINFO, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def update_waymo_infos(pkl_path, out_dir):
@@ -817,10 +817,10 @@ def update_waymo_infos(pkl_path, out_dir):
         'CLASSES': ('Car', 'Pedestrian', 'Cyclist', 'Sign'),
     }
     print(f'Reading from input file: {pkl_path}.')
-    data_list = mmcv.load(pkl_path)
+    data_list = mmengine.load(pkl_path)
     print('Start updating:')
     converted_list = []
-    for ori_info_dict in mmcv.track_iter_progress(data_list):
+    for ori_info_dict in mmengine.track_iter_progress(data_list):
         temp_data_info = get_empty_standard_data_info(camera_types)
 
         if 'plane' in ori_info_dict:
@@ -992,7 +992,7 @@ def update_waymo_infos(pkl_path, out_dir):
     converted_data_info = dict(
         metainfo={'DATASET': 'Waymo'}, data_list=converted_list)
 
-    mmcv.dump(converted_data_info, out_path, 'pkl')
+    mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
 def generate_waymo_camera_instances(ori_info_dict, cam_keys):
@@ -1031,28 +1031,28 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
-    if args.out_dir is None:
-        args.out_dir = args.root_dir
-    if args.dataset.lower() == 'kitti':
-        update_kitti_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'waymo':
-        update_waymo_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'scannet':
-        update_scannet_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'sunrgbd':
-        update_sunrgbd_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'lyft':
-        update_lyft_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 'nuscenes':
-        update_nuscenes_infos(pkl_path=args.pkl, out_dir=args.out_dir)
-    elif args.dataset.lower() == 's3dis':
-        update_s3dis_infos(pkl_path=args.pkl, out_dir=args.out_dir)
+def update_pkl_infos(dataset, out_dir, pkl_path):
+    if dataset.lower() == 'kitti':
+        update_kitti_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'waymo':
+        update_waymo_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'scannet':
+        update_scannet_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'sunrgbd':
+        update_sunrgbd_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'lyft':
+        update_lyft_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 'nuscenes':
+        update_nuscenes_infos(pkl_path=pkl_path, out_dir=out_dir)
+    elif dataset.lower() == 's3dis':
+        update_s3dis_infos(pkl_path=pkl_path, out_dir=out_dir)
     else:
-        raise NotImplementedError(
-            f'Do not support convert {args.dataset} to v2.')
+        raise NotImplementedError(f'Do not support convert {dataset} to v2.')
 
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    if args.out_dir is None:
+        args.out_dir = args.root_dir
+    update_pkl_infos(
+        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl_path)

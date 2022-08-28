@@ -12,7 +12,7 @@ data_root = 'data/nuscenes/'
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=True, use_camera=False)
-data_prefix = dict(pts='samples/LIDAR_TOP', img='')
+data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.

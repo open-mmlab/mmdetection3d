@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
 
-import mmcv
+import mmengine
 import numpy as np
 from lyft_dataset_sdk.eval.detection.mAP_evaluation import (Box3D, get_ap,
                                                             get_class_names,
                                                             get_ious,
                                                             group_by_key,
                                                             wrap_in_box)
-from mmcv.utils import print_log
+from mmengine.logging import print_log
 from terminaltables import AsciiTable
 
 
@@ -25,7 +25,7 @@ def load_lyft_gts(lyft, data_root, eval_split, logger=None):
     Returns:
         list[dict]: List of annotation dictionaries.
     """
-    split_scenes = mmcv.list_from_file(
+    split_scenes = mmengine.list_from_file(
         osp.join(data_root, f'{eval_split}.txt'))
 
     # Read out all sample_tokens in DB.
@@ -49,7 +49,7 @@ def load_lyft_gts(lyft, data_root, eval_split, logger=None):
 
     print_log('Loading ground truth annotations...', logger=logger)
     # Load annotations and filter predictions and annotations.
-    for sample_token in mmcv.track_iter_progress(sample_tokens):
+    for sample_token in mmengine.track_iter_progress(sample_tokens):
         sample = lyft.get('sample', sample_token)
         sample_annotation_tokens = sample['anns']
         for sample_annotation_token in sample_annotation_tokens:
@@ -80,7 +80,7 @@ def load_lyft_predictions(res_path):
     Returns:
         list[dict]: List of prediction dictionaries.
     """
-    predictions = mmcv.load(res_path)
+    predictions = mmengine.load(res_path)
     predictions = predictions['results']
     all_preds = []
     for sample_token in predictions.keys():
@@ -136,7 +136,7 @@ def lyft_eval(lyft, data_root, res_path, eval_set, output_dir, logger=None):
     print_log(APs_table.table, logger=logger)
 
     res_path = osp.join(output_dir, 'lyft_metrics.json')
-    mmcv.dump(metrics, res_path)
+    mmengine.dump(metrics, res_path)
     return metrics
 
 

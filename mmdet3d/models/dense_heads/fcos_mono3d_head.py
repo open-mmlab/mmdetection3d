@@ -3,8 +3,9 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn import Scale, normal_init
-from mmengine.data import InstanceData
+from mmcv.cnn import Scale
+from mmengine.model import normal_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 
@@ -596,7 +597,7 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
             mlvl_points (list[Tensor]): Box reference for a single scale level
                 with shape (num_total_points, 2).
             img_meta (dict): Metadata of input image.
-            cfg (mmcv.Config): Test / postprocessing configuration,
+            cfg (mmengine.Config): Test / postprocessing configuration,
                 if None, test_cfg would be used.
             rescale (bool): If True, return boxes in original image space.
 
@@ -702,14 +703,13 @@ class FCOSMono3DHead(AnchorFreeMono3DHead):
         # Due to the ground truth centers_2d are the gravity center of objects
         # v0.10.0 fix inplace operation to the input tensor of cam_box3d
         # So here we also need to add origin=(0.5, 0.5, 0.5)
-        if not self.pred_attrs:
-            attrs = None
 
         results = InstanceData()
         results.bboxes_3d = bboxes
         results.scores_3d = scores
         results.labels_3d = labels
-        results.attr_labels = attrs
+        if self.pred_attrs and attrs is not None:
+            results.attr_labels = attrs
 
         return results
 

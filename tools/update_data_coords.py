@@ -2,7 +2,7 @@ import argparse
 import time
 from os import path as osp
 
-import mmcv
+import mmengine
 import numpy as np
 
 from mmdet3d.structures import limit_period
@@ -18,9 +18,9 @@ def update_sunrgbd_infos(root_dir, out_dir, pkl_files):
     for pkl_file in pkl_files:
         in_path = osp.join(root_dir, pkl_file)
         print(f'Reading from input file: {in_path}.')
-        a = mmcv.load(in_path)
+        a = mmengine.load(in_path)
         print('Start updating:')
-        for item in mmcv.track_iter_progress(a):
+        for item in mmengine.track_iter_progress(a):
             if 'rotation_y' in item['annos']:
                 item['annos']['rotation_y'] = -item['annos']['rotation_y']
                 item['annos']['gt_boxes_upright_depth'][:, -1:] = \
@@ -28,7 +28,7 @@ def update_sunrgbd_infos(root_dir, out_dir, pkl_files):
 
         out_path = osp.join(out_dir, pkl_file)
         print(f'Writing to output file: {out_path}.')
-        mmcv.dump(a, out_path, 'pkl')
+        mmengine.dump(a, out_path, 'pkl')
 
 
 def update_outdoor_dbinfos(root_dir, out_dir, pkl_files):
@@ -41,11 +41,11 @@ def update_outdoor_dbinfos(root_dir, out_dir, pkl_files):
     for pkl_file in pkl_files:
         in_path = osp.join(root_dir, pkl_file)
         print(f'Reading from input file: {in_path}.')
-        a = mmcv.load(in_path)
+        a = mmengine.load(in_path)
         print('Start updating:')
         for k in a.keys():
             print(f'Updating samples of class {k}:')
-            for item in mmcv.track_iter_progress(a[k]):
+            for item in mmengine.track_iter_progress(a[k]):
                 boxes = item['box3d_lidar'].copy()
                 # swap l, w (or dx, dy)
                 item['box3d_lidar'][3] = boxes[4]
@@ -57,7 +57,7 @@ def update_outdoor_dbinfos(root_dir, out_dir, pkl_files):
 
         out_path = osp.join(out_dir, pkl_file)
         print(f'Writing to output file: {out_path}.')
-        mmcv.dump(a, out_path, 'pkl')
+        mmengine.dump(a, out_path, 'pkl')
 
 
 def update_nuscenes_or_lyft_infos(root_dir, out_dir, pkl_files):
@@ -71,9 +71,9 @@ def update_nuscenes_or_lyft_infos(root_dir, out_dir, pkl_files):
     for pkl_file in pkl_files:
         in_path = osp.join(root_dir, pkl_file)
         print(f'Reading from input file: {in_path}.')
-        a = mmcv.load(in_path)
+        a = mmengine.load(in_path)
         print('Start updating:')
-        for item in mmcv.track_iter_progress(a['infos']):
+        for item in mmengine.track_iter_progress(a['infos']):
             boxes = item['gt_boxes'].copy()
             # swap l, w (or dx, dy)
             item['gt_boxes'][:, 3] = boxes[:, 4]
@@ -85,7 +85,7 @@ def update_nuscenes_or_lyft_infos(root_dir, out_dir, pkl_files):
 
         out_path = osp.join(out_dir, pkl_file)
         print(f'Writing to output file: {out_path}.')
-        mmcv.dump(a, out_path, 'pkl')
+        mmengine.dump(a, out_path, 'pkl')
 
 
 parser = argparse.ArgumentParser(description='Arg parser for data coords '

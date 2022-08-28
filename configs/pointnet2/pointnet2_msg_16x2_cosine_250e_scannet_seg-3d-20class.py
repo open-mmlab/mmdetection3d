@@ -4,10 +4,6 @@ _base_ = [
     '../_base_/schedules/seg_cosine_200e.py', '../_base_/default_runtime.py'
 ]
 
-# data settings
-data = dict(samples_per_gpu=16)
-evaluation = dict(interval=5)
-
 # model settings
 model = dict(
     decode_head=dict(
@@ -30,7 +26,12 @@ model = dict(
         use_normalized_coord=False,
         batch_size=24))
 
+# data settings
+train_dataloader = dict(batch_size=16)
+
 # runtime settings
-checkpoint_config = dict(interval=5)
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=5))
+val_cfg = dict(interval=5)
+
 # PointNet2-MSG needs longer training time than PointNet2-SSG
-runner = dict(type='EpochBasedRunner', max_epochs=250)
+train_cfg = dict(by_epoch=True, max_epochs=250)

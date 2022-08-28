@@ -67,11 +67,11 @@ def bbox3d2result(bboxes, scores, labels, attrs=None):
             - attrs_3d (torch.Tensor, optional): Box attributes.
     """
     result_dict = dict(
-        boxes_3d=bboxes.to('cpu'),
+        bboxes_3d=bboxes.to('cpu'),
         scores_3d=scores.cpu(),
         labels_3d=labels.cpu())
 
     if attrs is not None:
-        result_dict['attrs_3d'] = attrs.cpu()
+        result_dict['attr_labels'] = attrs.cpu()
 
     return result_dict

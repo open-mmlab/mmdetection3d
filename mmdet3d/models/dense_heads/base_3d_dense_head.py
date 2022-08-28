@@ -4,10 +4,9 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn.utils.weight_init import constant_init
 from mmengine.config import ConfigDict
-from mmengine.data import InstanceData
-from mmengine.model import BaseModule
+from mmengine.model import BaseModule, constant_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.models.layers import box3d_multiclass_nms
@@ -172,7 +171,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
               (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bbox_3d (BaseInstance3DBoxes): Prediction of bboxes,
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
               contains a tensor with shape (num_instances, C), where
               C >= 7.
         """
@@ -222,7 +221,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
               (num_instances, )
             - labels_3d (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bbox_3d (BaseInstance3DBoxes): Prediction of bboxes,
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
               contains a tensor with shape (num_instances, C), where
               C >= 7.
         """

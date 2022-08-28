@@ -2,7 +2,7 @@
 from typing import Dict, List, Optional, Tuple, Union
 
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet.structures import DetDataSample
 from .point_data import PointData
@@ -55,7 +55,7 @@ class Det3DDataSample(DetDataSample):
             evaluator and do the online evaluation.
 
     Examples:
-    >>> from mmengine.data import InstanceData
+    >>> from mmengine.structures import InstanceData
 
     >>> from mmdet3d.structures import Det3DDataSample
     >>> from mmdet3d.structures import BaseInstance3DBoxes
@@ -112,7 +112,7 @@ class Det3DDataSample(DetDataSample):
     >>> assert 'pred_instances' in data_sample
 
     >>> pred_instances_3d = InstanceData(metainfo=meta_info)
-    >>> pred_instances_3d.bbox_3d = BaseInstance3DBoxes(torch.rand((5, 7)))
+    >>> pred_instances_3d.bboxes_3d = BaseInstance3DBoxes(torch.rand((5, 7)))
     >>> pred_instances_3d.scores_3d = torch.rand((5, ))
     >>> pred_instances_3d.labels_3d = torch.rand((5, ))
     >>> data_sample = Det3DDataSample(pred_instances_3d=pred_instances_3d)

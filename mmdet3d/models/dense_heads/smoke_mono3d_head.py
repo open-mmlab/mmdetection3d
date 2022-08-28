@@ -2,7 +2,7 @@
 from typing import List, Optional, Tuple
 
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch.nn import functional as F
 

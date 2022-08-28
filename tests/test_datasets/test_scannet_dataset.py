@@ -55,11 +55,7 @@ def _generate_scannet_seg_dataset_config():
             with_label_3d=False,
             with_mask_3d=False,
             with_seg_3d=True),
-        dict(
-            type='PointSegClassMapping',
-            valid_cat_ids=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                           28, 33, 34, 36, 39),
-            max_cat_id=40),
+        dict(type='PointSegClassMapping'),
         dict(
             type='IndoorPatchPointSample',
             num_points=5,

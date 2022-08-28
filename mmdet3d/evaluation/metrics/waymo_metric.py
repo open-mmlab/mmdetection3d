@@ -3,11 +3,11 @@ import tempfile
 from os import path as osp
 from typing import Dict, List, Optional, Union
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
-from mmcv.utils import print_log
-from mmengine.logging import MMLogger
+from mmengine import Config, load
+from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import METRICS
@@ -102,7 +102,8 @@ class WaymoMetric(KittiMetric):
         self.classes = self.dataset_meta['CLASSES']
 
         # load annotations
-        self.data_infos = self.load_annotations(self.ann_file)['data_list']
+        self.data_infos = load(
+            self.ann_file, file_client_args=self.file_client_args)['data_list']
         # different from kitti, waymo do not need to convert the ann file
 
         if self.pklfile_prefix is None:
@@ -276,7 +277,7 @@ class WaymoMetric(KittiMetric):
         waymo_save_tmp_dir = tempfile.TemporaryDirectory()
         waymo_results_save_dir = waymo_save_tmp_dir.name
         waymo_results_final_path = f'{pklfile_prefix}.bin'
-        from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import \
+        from ..functional.waymo_utils.prediction_kitti_to_waymo import \
             KITTI2Waymo
         converter = KITTI2Waymo(
             result_files['pred_instances_3d'],
@@ -321,7 +322,6 @@ class WaymoMetric(KittiMetric):
             score_thr=0.001,
             min_bbox_size=0,
             max_per_frame=100)
-        from mmcv import Config
         nms_cfg = Config(nms_cfg)
         lidar_boxes3d = LiDARInstance3DBoxes(
             torch.from_numpy(box_dict['box3d_lidar']).cuda())
@@ -382,12 +382,12 @@ class WaymoMetric(KittiMetric):
         assert len(net_outputs) == len(self.data_infos), \
             'invalid list length of network outputs'
         if submission_prefix is not None:
-            mmcv.mkdir_or_exist(submission_prefix)
+            mmengine.mkdir_or_exist(submission_prefix)
 
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for idx, pred_dicts in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
+                mmengine.track_iter_progress(net_outputs)):
             annos = []
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
@@ -494,7 +494,7 @@ class WaymoMetric(KittiMetric):
                 out = f'{pklfile_prefix}.pkl'
             else:
                 out = pklfile_prefix
-            mmcv.dump(det_annos, out)
+            mmengine.dump(det_annos, out)
             print(f'Result is saved to {out}.')
 
         return det_annos

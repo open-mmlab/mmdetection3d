@@ -4,9 +4,19 @@ _base_ = [
     '../_base_/schedules/seg_cosine_150e.py', '../_base_/default_runtime.py'
 ]
 
+# model settings
+model = dict(
+    decode_head=dict(
+        num_classes=13, ignore_index=13,
+        loss_decode=dict(class_weight=None)),  # S3DIS doesn't use class_weight
+    test_cfg=dict(
+        num_points=4096,
+        block_size=1.0,
+        sample_rate=0.5,
+        use_normalized_coord=True,
+        batch_size=12))
+
 # data settings
-class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
-               'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
 num_points = 4096
 train_pipeline = [
     dict(
@@ -43,24 +53,11 @@ train_pipeline = [
         jitter_std=[0.01, 0.01, 0.01],
         clip_range=[-0.05, 0.05]),
     dict(type='RandomDropPointsColor', drop_ratio=0.2),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 
-data = dict(samples_per_gpu=8, train=dict(pipeline=train_pipeline))
-evaluation = dict(interval=1)
-
-# model settings
-model = dict(
-    decode_head=dict(
-        num_classes=13, ignore_index=13,
-        loss_decode=dict(class_weight=None)),  # S3DIS doesn't use class_weight
-    test_cfg=dict(
-        num_points=4096,
-        block_size=1.0,
-        sample_rate=0.5,
-        use_normalized_coord=True,
-        batch_size=12))
+train_dataloader = dict(batch_size=8, dataset=dict(pipeline=train_pipeline))
 
 # runtime settings
-runner = dict(max_epochs=200)
+val_cfg = dict(interval=1)
+train_cfg = dict(by_epoch=True, max_epochs=200)

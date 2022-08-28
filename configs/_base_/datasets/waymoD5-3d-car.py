@@ -70,12 +70,7 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=6,
-        use_dim=5,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=6, use_dim=5),
     dict(type='Pack3DDetInputs', keys=['points']),
 ]
 
@@ -139,6 +134,5 @@ val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
-    file_client_args=file_client_args)
+    data_root='./data/waymo/waymo_format')
 test_evaluator = val_evaluator

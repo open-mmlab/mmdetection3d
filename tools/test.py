@@ -4,6 +4,7 @@ import os
 import os.path as osp
 
 from mmengine.config import Config, DictAction
+from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 
 from mmdet3d.utils import register_all_modules, replace_ceph_backend
@@ -68,7 +69,13 @@ def main():
     cfg.load_from = args.checkpoint
 
     # build the runner from config
-    runner = Runner.from_cfg(cfg)
+    if 'runner_type' not in cfg:
+        # build the default runner
+        runner = Runner.from_cfg(cfg)
+    else:
+        # build customized runner from the registry
+        # if 'runner_type' is set in the cfg
+        runner = RUNNERS.build(cfg)
 
     # start testing
     runner.test()

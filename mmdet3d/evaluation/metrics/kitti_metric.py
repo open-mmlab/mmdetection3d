@@ -3,13 +3,12 @@ import tempfile
 from os import path as osp
 from typing import Dict, List, Optional, Sequence, Union
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
-from mmcv.utils import print_log
 from mmengine import load
 from mmengine.evaluator import BaseMetric
-from mmengine.logging import MMLogger
+from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.evaluation import kitti_eval
 from mmdet3d.registry import METRICS
@@ -64,7 +63,9 @@ class KittiMetric(BaseMetric):
         self.pklfile_prefix = pklfile_prefix
         self.submission_prefix = submission_prefix
         self.pred_box_type_3d = pred_box_type_3d
+        self.default_cam_key = default_cam_key
         self.file_client_args = file_client_args
+        self.default_cam_key = default_cam_key
 
         allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'LET_mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
@@ -284,15 +285,17 @@ class KittiMetric(BaseMetric):
                 pklfile_prefix_ = osp.join(pklfile_prefix, name) + '.pkl'
             else:
                 pklfile_prefix_ = None
-            if 'pred_instances' in name and '3d' in name and name[0] != '_':
+            if 'pred_instances' in name and '3d' in name and name[
+                    0] != '_' and results[0][name]:
                 net_outputs = [result[name] for result in results]
                 result_list_ = self.bbox2result_kitti(net_outputs,
                                                       sample_id_list, classes,
                                                       pklfile_prefix_,
                                                       submission_prefix_)
                 result_dict[name] = result_list_
-            elif name == 'pred_instances' and name[0] != '_':
-                net_outputs = [info[name] for info in results]
+            elif name == 'pred_instances' and name[0] != '_' and results[0][
+                    name]:
+                net_outputs = [result[name] for result in results]
                 result_list_ = self.bbox2result_kitti2d(
                     net_outputs, sample_id_list, classes, pklfile_prefix_,
                     submission_prefix_)
@@ -324,12 +327,12 @@ class KittiMetric(BaseMetric):
         assert len(net_outputs) == len(self.data_infos), \
             'invalid list length of network outputs'
         if submission_prefix is not None:
-            mmcv.mkdir_or_exist(submission_prefix)
+            mmengine.mkdir_or_exist(submission_prefix)
 
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for idx, pred_dicts in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
+                mmengine.track_iter_progress(net_outputs)):
             annos = []
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
@@ -423,7 +426,7 @@ class KittiMetric(BaseMetric):
                 out = f'{pklfile_prefix}.pkl'
             else:
                 out = pklfile_prefix
-            mmcv.dump(det_annos, out)
+            mmengine.dump(det_annos, out)
             print(f'Result is saved to {out}.')
 
         return det_annos
@@ -455,7 +458,7 @@ class KittiMetric(BaseMetric):
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
+                mmengine.track_iter_progress(net_outputs)):
             annos = []
             anno = dict(
                 name=[],
@@ -514,12 +517,12 @@ class KittiMetric(BaseMetric):
                 out = f'{pklfile_prefix}.pkl'
             else:
                 out = pklfile_prefix
-            mmcv.dump(det_annos, out)
+            mmengine.dump(det_annos, out)
             print(f'Result is saved to {out}.')
 
         if submission_prefix is not None:
             # save file in submission format
-            mmcv.mkdir_or_exist(submission_prefix)
+            mmengine.mkdir_or_exist(submission_prefix)
             print(f'Saving KITTI submission to {submission_prefix}')
             for i, anno in enumerate(det_annos):
                 sample_idx = self.data_infos[i]['image']['image_idx']

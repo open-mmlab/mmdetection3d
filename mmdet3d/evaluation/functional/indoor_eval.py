@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
-from mmcv.utils import print_log
+from mmengine.logging import print_log
 from terminaltables import AsciiTable
 
 

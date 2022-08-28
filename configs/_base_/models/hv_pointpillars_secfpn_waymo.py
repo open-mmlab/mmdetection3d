@@ -6,12 +6,14 @@
 voxel_size = [0.32, 0.32, 6]
 model = dict(
     type='MVXFasterRCNN',
-    data_preprocessor=dict(type='Det3DDataPreprocessor'),
-    pts_voxel_layer=dict(
-        max_num_points=20,
-        point_cloud_range=[-74.88, -74.88, -2, 74.88, 74.88, 4],
-        voxel_size=voxel_size,
-        max_voxels=(32000, 32000)),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=20,
+            point_cloud_range=[-74.88, -74.88, -2, 74.88, 74.88, 4],
+            voxel_size=voxel_size,
+            max_voxels=(32000, 32000))),
     pts_voxel_encoder=dict(
         type='HardVFE',
         in_channels=5,

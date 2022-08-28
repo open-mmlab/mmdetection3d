@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.cnn import NORM_LAYERS
-from mmcv.runner import force_fp32
+from mmengine.registry import MODELS
 from torch import distributed as dist
 from torch import nn as nn
 from torch.autograd.function import Function
@@ -25,7 +24,7 @@ class AllReduce(Function):
         return grad_output
 
 
-@NORM_LAYERS.register_module('naiveSyncBN1d')
+@MODELS.register_module('naiveSyncBN1d')
 class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
     """Synchronized Batch Normalization for 3D Tensors.
 
@@ -48,10 +47,6 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         super().__init__(*args, **kwargs)
         self.fp16_enabled = False
 
-    # customized normalization layer still needs this decorator
-    # to force the input to be fp32 and the output to be fp16
-    # TODO: make mmcv fp16 utils handle customized norm layers
-    @force_fp32(out_fp16=True)
     def forward(self, input):
         """
         Args:
@@ -98,7 +93,7 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         return output
 
 
-@NORM_LAYERS.register_module('naiveSyncBN2d')
+@MODELS.register_module('naiveSyncBN2d')
 class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
     """Synchronized Batch Normalization for 4D Tensors.
 
@@ -121,10 +116,6 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
         super().__init__(*args, **kwargs)
         self.fp16_enabled = False
 
-    # customized normalization layer still needs this decorator
-    # to force the input to be fp32 and the output to be fp16
-    # TODO: make mmcv fp16 utils handle customized norm layers
-    @force_fp32(out_fp16=True)
     def forward(self, input):
         """
         Args:

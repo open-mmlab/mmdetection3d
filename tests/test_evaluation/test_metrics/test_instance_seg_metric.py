@@ -67,14 +67,14 @@ class TestInstanceSegMetric(unittest.TestCase):
     def test_evaluate(self):
         data_batch = self._demo_mm_inputs()
         predictions = self._demo_mm_model_output()
-        valid_class_ids = (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33,
-                           34, 36, 39)
+        seg_valid_class_ids = (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28,
+                               33, 34, 36, 39)
         class_labels = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                         'window', 'bookshelf', 'picture', 'counter', 'desk',
                         'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                         'sink', 'bathtub', 'garbagebin')
         dataset_meta = dict(
-            VALID_CLASS_IDS=valid_class_ids, CLASSES=class_labels)
+            seg_valid_class_ids=seg_valid_class_ids, CLASSES=class_labels)
         instance_seg_metric = InstanceSegMetric()
         instance_seg_metric.dataset_meta = dataset_meta
         instance_seg_metric.process(data_batch, predictions)

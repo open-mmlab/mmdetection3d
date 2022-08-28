@@ -1,8 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from argparse import ArgumentParser
 
-import numpy as np
-
 from mmdet3d.apis import inference_segmentor, init_model
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.utils import register_all_modules
@@ -30,7 +28,7 @@ def parse_args():
 
 
 def main(args):
-    # register all modules in mmdet into the registries
+    # register all modules in mmdet3d into the registries
     register_all_modules()
 
     # build the model from a config file and a checkpoint file
@@ -38,15 +36,11 @@ def main(args):
 
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
-    visualizer.dataset_meta = {
-        'CLASSES': model.CLASSES,
-        'PALETTE': model.PALETTE
-    }
+    visualizer.dataset_meta = model.dataset_meta
 
     # test a single point cloud sample
     result, data = inference_segmentor(model, args.pcd)
-
-    points = np.fromfile(args.pcd, dtype=np.float32)
+    points = data['inputs']['points']
     data_input = dict(points=points)
     # show the results
     visualizer.add_datasample(
@@ -55,8 +49,7 @@ def main(args):
         pred_sample=result,
         show=True,
         wait_time=0,
-        out_file=args.out_file,
-        pred_score_thr=args.score_thr,
+        out_file=args.out_dir,
         vis_task='seg')
 
 

@@ -2,7 +2,6 @@
 import torch
 from mmcv.cnn import build_norm_layer
 from mmcv.ops import DynamicScatter
-from mmcv.runner import force_fp32
 from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
@@ -25,7 +24,6 @@ class HardSimpleVFE(nn.Module):
         self.num_features = num_features
         self.fp16_enabled = False
 
-    @force_fp32(out_fp16=True)
     def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
                 *args, **kwargs) -> Tensor:
         """Forward function.
@@ -66,7 +64,6 @@ class DynamicSimpleVFE(nn.Module):
         self.fp16_enabled = False
 
     @torch.no_grad()
-    @force_fp32(out_fp16=True)
     def forward(self, features, coors, *args, **kwargs):
         """Forward function.
 
@@ -386,7 +383,6 @@ class HardVFE(nn.Module):
         if fusion_layer is not None:
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
 
-    @force_fp32(out_fp16=True)
     def forward(self,
                 features,
                 num_points,

@@ -13,7 +13,7 @@ except ImportError:
 from glob import glob
 from os.path import join
 
-import mmcv
+import mmengine
 import numpy as np
 import tensorflow as tf
 from waymo_open_dataset import label_pb2
@@ -44,7 +44,8 @@ class KITTI2Waymo(object):
                  waymo_results_save_dir,
                  waymo_results_final_path,
                  prefix,
-                 workers=64):
+                 workers=64,
+                 file_client_args=dict(backend='disk')):
 
         self.kitti_result_files = kitti_result_files
         self.waymo_tfrecords_dir = waymo_tfrecords_dir
@@ -52,10 +53,11 @@ class KITTI2Waymo(object):
         self.waymo_results_final_path = waymo_results_final_path
         self.prefix = prefix
         self.workers = int(workers)
+        self.file_client_args = file_client_args
         self.name2idx = {}
         for idx, result in enumerate(kitti_result_files):
-            if len(result['sample_idx']) > 0:
-                self.name2idx[str(result['sample_idx'][0])] = idx
+            if len(result['sample_id']) > 0:
+                self.name2idx[str(result['sample_id'][0])] = idx
 
         # turn on eager execution for older tensorflow versions
         if int(tf.__version__.split('.')[0]) < 2:
@@ -78,13 +80,28 @@ class KITTI2Waymo(object):
 
     def get_file_names(self):
         """Get file names of waymo raw data."""
-        self.waymo_tfrecord_pathnames = sorted(
-            glob(join(self.waymo_tfrecords_dir, '*.tfrecord')))
+        if 'path_mapping' in self.file_client_args:
+            for path in self.file_client_args['path_mapping'].keys():
+                if path in self.waymo_tfrecords_dir:
+                    self.waymo_tfrecords_dir = \
+                        self.waymo_tfrecords_dir.replace(
+                            path, self.file_client_args['path_mapping'][path])
+            from petrel_client.client import Client
+            client = Client()
+            contents = client.list(self.waymo_tfrecords_dir)
+            self.waymo_tfrecord_pathnames = list()
+            for content in sorted(list(contents)):
+                if content.endswith('tfrecord'):
+                    self.waymo_tfrecord_pathnames.append(
+                        join(self.waymo_tfrecords_dir, content))
+        else:
+            self.waymo_tfrecord_pathnames = sorted(
+                glob(join(self.waymo_tfrecords_dir, '*.tfrecord')))
         print(len(self.waymo_tfrecord_pathnames), 'tfrecords found.')
 
     def create_folder(self):
         """Create folder for data conversion."""
-        mmcv.mkdir_or_exist(self.waymo_results_save_dir)
+        mmengine.mkdir_or_exist(self.waymo_results_save_dir)
 
     def parse_objects(self, kitti_result, T_k2w, context_name,
                       frame_timestamp_micros):
@@ -211,8 +228,8 @@ class KITTI2Waymo(object):
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmcv.track_parallel_progress(self.convert_one, range(len(self)),
-                                     self.workers)
+        mmengine.track_parallel_progress(self.convert_one, range(len(self)),
+                                         self.workers)
         print('\nFinished ...')
 
         # combine all files into one .bin

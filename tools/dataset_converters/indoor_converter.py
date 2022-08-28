@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 
-import mmcv
+import mmengine
 import numpy as np
 
 from tools.dataset_converters.s3dis_data_utils import S3DISData, S3DISSegData
@@ -54,17 +54,17 @@ def create_indoor_info_file(data_path,
 
         infos_train = train_dataset.get_infos(
             num_workers=workers, has_label=True)
-        mmcv.dump(infos_train, train_filename, 'pkl')
+        mmengine.dump(infos_train, train_filename, 'pkl')
         print(f'{pkl_prefix} info train file is saved to {train_filename}')
 
         infos_val = val_dataset.get_infos(num_workers=workers, has_label=True)
-        mmcv.dump(infos_val, val_filename, 'pkl')
+        mmengine.dump(infos_val, val_filename, 'pkl')
         print(f'{pkl_prefix} info val file is saved to {val_filename}')
 
     if pkl_prefix == 'scannet':
         infos_test = test_dataset.get_infos(
             num_workers=workers, has_label=False)
-        mmcv.dump(infos_test, test_filename, 'pkl')
+        mmengine.dump(infos_test, test_filename, 'pkl')
         print(f'{pkl_prefix} info test file is saved to {test_filename}')
 
     # generate infos for the semantic segmentation task
@@ -100,7 +100,7 @@ def create_indoor_info_file(data_path,
             info = dataset.get_infos(num_workers=workers, has_label=True)
             filename = os.path.join(save_path,
                                     f'{pkl_prefix}_infos_{split}.pkl')
-            mmcv.dump(info, filename, 'pkl')
+            mmengine.dump(info, filename, 'pkl')
             print(f'{pkl_prefix} info {split} file is saved to {filename}')
             seg_dataset = S3DISSegData(
                 data_root=data_path,

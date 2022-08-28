@@ -9,10 +9,11 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-data_prefix = dict(pts='samples/LIDAR_TOP', img='')
+data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
 model = dict(
-    pts_voxel_layer=dict(
-        voxel_size=voxel_size, point_cloud_range=point_cloud_range),
+    data_preprocessor=dict(
+        voxel_layer=dict(
+            voxel_size=voxel_size, point_cloud_range=point_cloud_range)),
     pts_middle_encoder=dict(sparse_shape=[41, 1440, 1440]),
     pts_bbox_head=dict(
         bbox_coder=dict(

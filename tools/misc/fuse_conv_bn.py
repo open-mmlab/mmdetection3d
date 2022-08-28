@@ -2,7 +2,7 @@
 import argparse
 
 import torch
-from mmcv.runner import save_checkpoint
+from mmengine.runner import save_checkpoint
 from torch import nn as nn
 
 from mmdet3d.apis import init_model

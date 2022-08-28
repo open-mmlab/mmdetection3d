@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -342,13 +342,13 @@ def voxel_sample(voxel_features,
 
     Args:
         voxel_features (torch.Tensor): 1 x C x Nx x Ny x Nz voxel features.
-        voxel_range (list): The range of voxel features. 
+        voxel_range (list): The range of voxel features.
         voxel_size (:obj:`ConfigDict` or dict): The voxel size of voxel
             features.
         depth_samples (torch.Tensor): N depth samples in LiDAR coordinates.
         proj_mat (torch.Tensor): ORIGINAL LiDAR2img projection matrix
             for N views.
-        downsample_factor (int): The downsample factor in rescaling. 
+        downsample_factor (int): The downsample factor in rescaling.
         img_scale_factor (tuple[torch.Tensor]): Scale factor with shape of
             (w_scale, h_scale).
         img_crop_offset (tuple[torch.Tensor]): Crop offset used to crop

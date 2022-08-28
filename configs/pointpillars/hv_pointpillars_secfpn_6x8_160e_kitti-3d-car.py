@@ -38,8 +38,10 @@ db_sampler = dict(
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
     prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
+    classes=class_names,
     sample_groups=dict(Car=15),
-    classes=class_names)
+    points_loader=dict(
+        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),

@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from functools import partial
 
 import imageio
-import mmcv
+import mmengine
 import numpy as np
 
 COMPRESSION_TYPE_COLOR = {-1: 'unknown', 0: 'raw', 1: 'png', 2: 'jpeg'}
@@ -160,7 +160,7 @@ def process_scene(path, limit, idx):
 
 def process_directory(path, limit, nproc):
     print(f'processing {path}')
-    mmcv.track_parallel_progress(
+    mmengine.track_parallel_progress(
         func=partial(process_scene, path, limit),
         tasks=os.listdir(path),
         nproc=nproc)

@@ -5,79 +5,26 @@ Welcome to MMDetection3D's documentation!
    :maxdepth: 1
    :caption: Get Started
 
+   overview.md
    getting_started.md
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Demo
+   :maxdepth: 2
+   :caption: User Guides
 
-   demo.md
+   user_guides/index.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Advanced Guides
+
+   advanced_guides/index.rst
 
 .. toctree::
    :maxdepth: 1
-   :caption: Model Zoo
+   :caption: Migration
 
-   model_zoo.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Data Preparation
-
-   data_preparation.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Exist Data and Model
-
-   1_exist_data_model.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: New Data and Model
-
-   2_new_data_model.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Supported Tasks
-
-   supported_tasks/index.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Datasets
-
-   datasets/index.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Tutorials
-
-   tutorials/index.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Useful Tools and Scripts
-
-   useful_tools.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Notes
-
-   benchmarks.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: FAQ
-
-   faq.md
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Compatibility
-
-   compatibility.md
+   migration.md
 
 .. toctree::
    :maxdepth: 1
@@ -86,7 +33,21 @@ Welcome to MMDetection3D's documentation!
    api.rst
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Model Zoo
+
+   model_zoo.md
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Notes
+
+   notes/index.rst
+
+
+
+.. toctree::
    :caption: Switch Language
 
    switch_language.md

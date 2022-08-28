@@ -3,8 +3,9 @@ from typing import List
 
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule, normal_init
-from mmengine.data import InstanceData
+from mmcv.cnn import ConvModule
+from mmengine.model import normal_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.models import make_sparse_convmodule
@@ -17,7 +18,7 @@ if IS_SPCONV2_AVAILABLE:
 else:
     from mmcv.ops import SparseConvTensor, SparseMaxPool3d, SparseSequential
 
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
 from torch import nn as nn
 
 from mmdet3d.models.builder import build_loss
