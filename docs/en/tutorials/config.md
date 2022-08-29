@@ -395,15 +395,16 @@ lr_config = dict(  # Learning rate scheduler config used to register LrUpdater h
     step=[24, 32])  # Steps to decay the learning rate
 checkpoint_config = dict(  # Config of set the checkpoint hook, Refer to https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/checkpoint.py for implementation.
     interval=1)  # The save interval is 1
-log_config = dict(  # config of register logger hook
+log_config = dict(  # Config to register logger hook
     interval=50,  # Interval to print the log
     hooks=[
-        dict(type='TextLoggerHook', by_epoch=False),
-        dict(type='TensorboardLoggerHook', by_epoch=False),
-        dict(type='WandbLoggerHook', by_epoch=False,
-             init_kwargs={'entity': 'WandBUserOrGroupEntity', 'project': "WandBProjectName", 'config': cfg_dict}), # The Wandb logger is also supported, It requires `wandb` to be installed.
-        # ClearMLLoggerHook, DvcliveLoggerHook, MlflowLoggerHook, NeptuneLoggerHook, PaviLoggerHook, SegmindLoggerHook are also supported based on MMCV implementation.
-    ])  # The logger used to record the training process.
+      dict(type='TextLoggerHook', by_epoch=False),
+      dict(type='TensorboardLoggerHook', by_epoch=False),
+      dict(type='WandbLoggerHook', by_epoch=False,  # The Wandb logger is also supported, It requires `wandb` to be installed.
+           init_kwargs={'entity': "OpenMMLab",  # The entity used to log on Wandb
+                        'project': "MMTracking",  # Project name in WandB 
+                        'config': cfg_dict}),  # Check https://docs.wandb.ai/ref/python/init for more init arguments.
+  ])  # ClearMLLoggerHook, DvcliveLoggerHook, MlflowLoggerHook, NeptuneLoggerHook, PaviLoggerHook, SegmindLoggerHook are also supported based on MMCV implementation.
 runner = dict(type='EpochBasedRunner', max_epochs=36) # Runner that runs the `workflow` in total `max_epochs`
 dist_params = dict(backend='nccl')  # Parameters to setup distributed training, the port can also be set.
 log_level = 'INFO'  # The level of logging.
