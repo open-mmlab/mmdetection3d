@@ -4,7 +4,7 @@ In this section we demonstrate how to prepare an environment with PyTorch.
 MMDection3D works on Linux, Windows (experimental support) and macOS and requires the following packages:
 
 - Python 3.6+
-- PyTorch 1.3+
+- PyTorch 1.6+
 - CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
 - GCC 5+
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
@@ -254,7 +254,7 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 Here is a full script for setting up MMdetection3D with conda.
 
 ```shell
-conda create -n open-mmlab python=3.7 -y
+conda create -n open-mmlab python=3.8 -y
 conda activate open-mmlab
 
 # install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
