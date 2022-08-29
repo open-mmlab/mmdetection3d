@@ -250,7 +250,7 @@ def inference_multi_modality_detector(model: nn.Module,
         results = model.test_step(data)
 
     for index in range(len(data)):
-        meta_info = data[index]['data_sample'].metainfo
+        meta_info = data[index]['data_samples'].metainfo
         results[index].set_metainfo(meta_info)
 
     if not is_batch:
@@ -320,7 +320,7 @@ def inference_mono_3d_detector(model: nn.Module,
         results = model.test_step(data)
 
     for index in range(len(data)):
-        meta_info = data[index]['data_sample'].metainfo
+        meta_info = data[index]['data_samples'].metainfo
         results[index].set_metainfo(meta_info)
 
     if not is_batch:

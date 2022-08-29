@@ -145,8 +145,7 @@ class KittiMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (dict): A batch of data
-                from the dataloader.
+            data_batch (dict): A batch of data from the dataloader.
             data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """

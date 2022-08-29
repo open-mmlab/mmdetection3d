@@ -310,7 +310,7 @@ class Det3DDataset(BaseDataset):
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(
-                    example['data_sample'].gt_instances_3d.labels_3d) == 0:
+                    example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
 
