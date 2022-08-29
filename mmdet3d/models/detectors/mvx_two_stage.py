@@ -218,7 +218,7 @@ class MVXTwoStageDetector(Base3DDetector):
             x = self.pts_neck(x)
         return x
 
-    def extract_feat(self, batch_inputs_dict: List[Tensor],
+    def extract_feat(self, batch_inputs_dict: dict,
                      batch_input_metas: List[dict]) -> tuple:
         """Extract features from images and points.
 
@@ -235,9 +235,9 @@ class MVXTwoStageDetector(Base3DDetector):
              tuple: Two elements in tuple arrange as
              image features and point cloud features.
         """
-        voxel_dict = batch_inputs_dict['voxels']
-        imgs = batch_inputs_dict['imgs']
-        points = batch_inputs_dict['points']
+        voxel_dict = batch_inputs_dict.get('voxels', None)
+        imgs = batch_inputs_dict.get('imgs', None)
+        points = batch_inputs_dict.get('points', None)
         img_feats = self.extract_img_feat(imgs, batch_input_metas)
         pts_feats = self.extract_pts_feat(
             voxel_dict,
@@ -401,6 +401,7 @@ class MVXTwoStageDetector(Base3DDetector):
         else:
             results_list_2d = None
 
-        detsamples = self.convert_to_datasample(results_list_3d,
+        detsamples = self.convert_to_datasample(batch_data_samples,
+                                                results_list_3d,
                                                 results_list_2d)
         return detsamples

@@ -34,7 +34,7 @@ def _generate_nus_dataset_config():
         dict(type='Identity'),
     ]
     modality = dict(use_lidar=True, use_camera=False)
-    data_prefix = dict(pts='lidar', img='')
+    data_prefix = dict(pts='lidar', img='', sweeps='sweeps/LIDAR_TOP')
     return data_root, ann_file, classes, data_prefix, pipeline, modality
 
 
