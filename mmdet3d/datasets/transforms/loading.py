@@ -255,9 +255,10 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                     points_sweep = self._remove_close(points_sweep)
                 # bc-breaking: Timestamp has divided 1e6 in pkl infos.
                 sweep_ts = sweep['timestamp']
-                lidar2cam = np.array(sweep['lidar_points']['lidar2sensor'])
-                points_sweep[:, :3] = points_sweep[:, :3] @ lidar2cam[:3, :3]
-                points_sweep[:, :3] -= lidar2cam[:3, 3]
+                lidar2sensor = np.array(sweep['lidar_points']['lidar2sensor'])
+                points_sweep[:, :
+                             3] = points_sweep[:, :3] @ lidar2sensor[:3, :3]
+                points_sweep[:, :3] -= lidar2sensor[:3, 3]
                 points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
