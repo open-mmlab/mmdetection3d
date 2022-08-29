@@ -3,6 +3,7 @@ import os.path as osp
 import tempfile
 from typing import Dict, Optional, Sequence
 
+import mmcv
 import numpy as np
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
@@ -81,7 +82,7 @@ class SegMetric(BaseMetric):
                 tmp_dir is the temporal directory created for saving submission
                 files when ``submission_prefix`` is not specified.
         """
-        import mmcv
+
         submission_prefix = self.submission_prefix
         if submission_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()
