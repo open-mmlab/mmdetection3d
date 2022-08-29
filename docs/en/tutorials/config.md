@@ -397,8 +397,13 @@ checkpoint_config = dict(  # Config of set the checkpoint hook, Refer to https:/
     interval=1)  # The save interval is 1
 log_config = dict(  # config of register logger hook
     interval=50,  # Interval to print the log
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])  # The logger used to record the training process.
+    hooks=[
+        dict(type='TextLoggerHook', by_epoch=False),
+        dict(type='TensorboardLoggerHook', by_epoch=False),
+        dict(type='WandbLoggerHook', by_epoch=False,
+             init_kwargs={'entity': 'WandBUserOrGroupEntity', 'project': "WandBProjectName", 'config': cfg_dict}), # The Wandb logger is also supported, It requires `wandb` to be installed.
+        # ClearMLLoggerHook, DvcliveLoggerHook, MlflowLoggerHook, NeptuneLoggerHook, PaviLoggerHook, SegmindLoggerHook are also supported based on MMCV implementation.
+    ])  # The logger used to record the training process.
 runner = dict(type='EpochBasedRunner', max_epochs=36) # Runner that runs the `workflow` in total `max_epochs`
 dist_params = dict(backend='nccl')  # Parameters to setup distributed training, the port can also be set.
 log_level = 'INFO'  # The level of logging.

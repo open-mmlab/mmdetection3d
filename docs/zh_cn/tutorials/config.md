@@ -398,8 +398,12 @@ checkpoint_config = dict(  # 设置保存模型权重钩子的配置，具体实
     interval=1)  # 保存模型权重的间隔是 1 轮
 log_config = dict(  # 用于注册输出记录信息钩子的配置
     interval=50,  # 输出记录信息的间隔
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])  # 用于记录训练过程的信息记录机制
+    hooks=[
+        dict(type='TextLoggerHook', by_epoch=False),
+        dict(type='TensorboardLoggerHook', by_epoch=False),
+        dict(type='WandbLoggerHook', by_epoch=False,
+             init_kwargs={'entity': 'WandBUserOrGroupEntity', 'project': "WandBProjectName", 'config': cfg_dict}), # 同样支持 Wandb 日志
+    ])  # 用于记录训练过程的信息记录机制
 runner = dict(type='EpochBasedRunner', max_epochs=36) # 程序运行器，将会运行 `workflow` `max_epochs` 次
 dist_params = dict(backend='nccl')  # 设置分布式训练的配置，通讯端口值也可被设置
 log_level = 'INFO'  # 输出记录信息的等级
