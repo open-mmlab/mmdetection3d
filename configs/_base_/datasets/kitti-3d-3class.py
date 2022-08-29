@@ -124,8 +124,5 @@ test_dataloader = dict(
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-)
-# metric='bbox',
-# pklfile_prefix='results/kitti-3class/kitti_results',
-# submission_prefix='results/kitti-3class/kitti_results')
+    metric='bbox')
 test_evaluator = val_evaluator
