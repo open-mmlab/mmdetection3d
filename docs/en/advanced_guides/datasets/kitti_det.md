@@ -47,7 +47,6 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 
 
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
-
 ```
 
 Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else, and you need to remove the `--with-plane` flag if `planes` are not prepared.
@@ -87,28 +86,25 @@ kitti
 ```
 
 - `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
-- `kitti_infos_train.pkl`: training dataset infos, each frame info contains following details:
-  - info\['point_cloud'\]: {'num_features': 4, 'velodyne_path': velodyne_path}.
-  - info\['annos'\]: {
-    - location: x,y,z are bottom center in referenced camera coordinate system (in meters), an Nx3 array
-    - dimensions: height, width, length (in meters), an Nx3 array
-    - rotation_y: rotation ry around Y-axis in camera coordinates \[-pi..pi\], an N array
-    - name:  ground truth name array, an N array
-    - difficulty: kitti difficulty, Easy, Moderate, Hard
-    - group_ids: used for multi-part object
-      }
-  - (optional) info\['calib'\]: {
-    - P0: camera0 projection matrix after rectification, an 3x4 array
-    - P1: camera1 projection matrix after rectification, an 3x4 array
-    - P2: camera2 projection matrix after rectification, an 3x4 array
-    - P3: camera3 projection matrix after rectification, an 3x4 array
-    - R0_rect: rectifying rotation matrix, an 4x4 array
-    - Tr_velo_to_cam: transformation from Velodyne coordinate to camera coordinate, an 4x4 array
-    - Tr_imu_to_velo: transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
-      }
-  - (optional) info\['image'\]:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
-
-**Note:** the info\['annos'\] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
+- `kitti_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
+  `metadata` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list, which each item contains all the detailed information (`info`) of single sample as follows:
+  - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
+  - info\['lidar_points'\]\['num_features'\]: Number of features for each point.
+  - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate, an 4x4 array
+  - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate, an 4x4 array
+  - info\['sample_idx'\]: The index of this sample in the whole dataset.
+  - info\['images'\]: Cameras calibration information. A dict contains five keys include: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.
+  - info\['lidar_points'\]\['CAM2'\]: Include `cam2img`, `lidar2img`, `lidar2img` three projection matrix; `img_path` image file path; and `height`, `width` image shape infos.
+  - info\['lidar_points'\]\['R0_rect'\]: Rectifying rotation matrix, an 4x4 array.
+  - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
+  - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
+  - info\['instances'\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
+  - info\['instances'\]\['depth'\]: Projected center depth of the 3D bounding box compared to the image plane.
+  - info\['instances'\]\['num_lidar_pts'\]: The number of LiDAR points in the 3D bounding box.
+  - info\['instances'\]\['center_2d'\]: Projected 2D center of the 3D bounding box.
+  - info\['instances'\]\['difficulty'\]: Kitti difficulty, Easy, Moderate, Hard
+  - info\['instances'\]\['group_ids'\]: Used for multi-part object
+  - info\['plane'\](optional): Road level information.
 
 The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/f0e485bdef718f35c86fe1f8ce1262a2342541f4/tools/dataset_converters/kitti_data_utils.py#L165) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/f0e485bdef718f35c86fe1f8ce1262a2342541f4/tools/dataset_converters/kitti_converter.py#L461). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) for more details.
 

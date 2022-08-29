@@ -145,13 +145,13 @@ For using custom datasets, please refer to [Customize Datasets](https://github.c
 
 ### Update data infos
 
-If you used v1.0.0rc1-v1.0.0rc3 mmdetection3d to create data infos, and now you want to use newest 1.0.0 mmdetection3d, you need to update data infos file.
+If you have used v1.0.0rc1-v1.0.0rc3 mmdetection3d to create data infos before, and now you want to use the newest 1.0.0 mmdetection3d, you need to update the data infos file.
 
 ```bash
 python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl ${PKL_PATH} --out-dir ${OUT_DIR}
 ```
 
-- `dataset` : Name of the dataset for data infos pkl file.
+- `dataset` : Name of dataset.
 - `pkl` : Specify the data infos pkl file path.
 - `out-dir` : Output direction of the data infos pkl file.
 
