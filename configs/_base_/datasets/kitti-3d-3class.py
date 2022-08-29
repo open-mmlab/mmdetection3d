@@ -19,7 +19,11 @@ db_sampler = dict(
         type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,  # x, y, z, intensity
+        use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -120,5 +124,8 @@ test_dataloader = dict(
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox')
+)
+# metric='bbox',
+# pklfile_prefix='results/kitti-3class/kitti_results',
+# submission_prefix='results/kitti-3class/kitti_results')
 test_evaluator = val_evaluator

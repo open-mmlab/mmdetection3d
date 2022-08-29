@@ -1,4 +1,4 @@
-# Dataset Preparation
+# Dataset Prepare
 
 ## Before Preparation
 
@@ -133,12 +133,30 @@ Note that we follow the original folder names for clear organization. Please ren
 
 ### S3DIS, ScanNet and SUN RGB-D
 
-To prepare S3DIS data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md/).
+To prepare S3DIS data, please see its [s3dis_sem_seg.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/s3dis_sem_seg.md).
 
-To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/).
+To prepare ScanNet data, please see [scannet_det.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/scannet_det.md) and [scannet_sem_seg.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/scannet_sem_seg.md).
 
-To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/).
+To prepare SUN RGB-D data, please see its [sunrgbd_det.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/sunrgbd_det.md).
 
 ### Customized Datasets
 
-For using custom datasets, please refer to [Tutorials 2: Customize Datasets](https://mmdetection3d.readthedocs.io/en/latest/tutorials/customize_dataset.html).
+For using custom datasets, please refer to [Customize Datasets](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/customize_dataset.md).
+
+### Update data infos
+
+If you used v1.0.0rc1-v1.0.0rc3 mmdetection3d to create data infos, and now you want to use newest 1.0.0 mmdetection3d, you need to update data infos file.
+
+```bash
+python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl ${PKL_PATH} --out-dir ${OUT_DIR}
+```
+
+- `dataset` : Name of the dataset for data infos pkl file.
+- `pkl` : Specify the data infos pkl file path.
+- `out-dir` : Output direction of the data infos pkl file.
+
+Example
+
+```bash
+python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
+```

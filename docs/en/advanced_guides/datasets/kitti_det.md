@@ -110,7 +110,7 @@ kitti
 
 **Note:** the info\['annos'\] is in the referenced camera coordinate system. More details please refer to [this](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)
 
-The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_data_utils.py#L140) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_converter.py#L378). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/dataset_converters/kitti_converter.py) for more details.
+The core function to get kitti_infos_xxx.pkl and kitti_infos_xxx_mono3d.coco.json are [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/f0e485bdef718f35c86fe1f8ce1262a2342541f4/tools/dataset_converters/kitti_data_utils.py#L165) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/f0e485bdef718f35c86fe1f8ce1262a2342541f4/tools/dataset_converters/kitti_converter.py#L461). Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) for more details.
 
 ## Train pipeline
 
@@ -118,17 +118,11 @@ A typical train pipeline of 3D detection on KITTI is as below.
 
 ```python
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4, # x, y, z, intensity
-        use_dim=4, # x, y, z, intensity
-        file_client_args=file_client_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile',
+         coord_type='LIDAR',
+         load_dim=4, # x, y, z, intensity
+         use_dim=4),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -144,8 +138,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 ```
 
@@ -159,7 +154,7 @@ train_pipeline = [
 An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows:
 
 ```shell
-bash tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --eval bbox
+bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
 ## Metrics
@@ -183,12 +178,26 @@ aos  AP:97.70, 89.11, 87.38
 
 ## Testing and make a submission
 
-An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
+An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboardAn example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
+
+- First, you need to modify the `test_evaluator` dict in your config file to add `pklfile_prefix` and `submission_prefix`, just like:
+
+```python
+data_root = 'data/kitti/'
+test_evaluator = dict(
+    type='KittiMetric',
+    ann_file=data_root + 'kitti_infos_val.pkl',
+    metric='bbox',
+    pklfile_prefix='results/kitti-3class/kitti_results',
+    submission_prefix='results/kitti-3class/kitti_results')
+```
+
+- And then, you can run the test script directly.
 
 ```shell
 mkdir -p results/kitti-3class
 
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --out results/kitti-3class/results_eval.pkl --format-only --eval-options 'pklfile_prefix=results/kitti-3class/kitti_results' 'submission_prefix=results/kitti-3class/kitti_results'
+./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
-After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.
+- After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.
