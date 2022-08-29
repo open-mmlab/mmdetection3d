@@ -1,6 +1,6 @@
 _base_ = [
-    '../_base_/datasets/nuim_instance.py',
-    '../_base_/schedules/mmdet_schedule_1x.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/nuim-instance.py',
+    '../_base_/schedules/mmdet-schedule-1x.py', '../_base_/default_runtime.py'
 ]
 # model settings
 model = dict(

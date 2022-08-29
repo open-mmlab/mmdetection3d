@@ -113,7 +113,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8
 您可以简单的使用不同的配置文件，浏览不同的数据集，例如：在 3D 语义分割任务中可视化 ScanNet 数据集
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_seg.png)

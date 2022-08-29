@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/nus-mono3d.py', '../_base_/models/pgd.py',
-    '../_base_/schedules/mmdet_schedule_1x.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/mmdet-schedule-1x.py', '../_base_/default_runtime.py'
 ]
 # model settings
 model = dict(

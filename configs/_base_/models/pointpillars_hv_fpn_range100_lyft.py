@@ -1,4 +1,4 @@
-_base_ = './hv_pointpillars_fpn_nus.py'
+_base_ = './pointpillars_hv_fpn_nus.py'
 
 # model settings (based on nuScenes model settings)
 # Voxel size for voxel encoder

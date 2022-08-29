@@ -1,7 +1,6 @@
 _base_ = [
-    '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/pointnet2_msg.py',
-    '../_base_/schedules/seg_cosine_50e.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/s3dis-seg.py', '../_base_/models/pointnet2_msg.py',
+    '../_base_/schedules/seg-cosine-50e.py', '../_base_/default_runtime.py'
 ]
 
 # model settings

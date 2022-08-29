@@ -115,7 +115,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8
 You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_seg.png)

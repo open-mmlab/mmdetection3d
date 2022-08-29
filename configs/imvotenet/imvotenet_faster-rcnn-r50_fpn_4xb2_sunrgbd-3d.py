@@ -1,6 +1,6 @@
 _base_ = [
-    '../_base_/datasets/sunrgbd-3d-10class.py', '../_base_/default_runtime.py',
-    '../_base_/models/imvotenet_image.py'
+    '../_base_/datasets/sunrgbd-3d.py', '../_base_/default_runtime.py',
+    '../_base_/models/imvotenet.py'
 ]
 
 train_pipeline = [

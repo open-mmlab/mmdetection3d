@@ -1,30 +1,12 @@
 _base_ = [
-    '../_base_/datasets/scannet-3d-18class.py',
-    '../_base_/models/groupfree3d.py', '../_base_/schedules/schedule_3x.py',
-    '../_base_/default_runtime.py'
+    '../_base_/datasets/scannet-3d.py', '../_base_/models/groupfree3d.py',
+    '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
 
 # model settings
 model = dict(
-    backbone=dict(
-        type='PointNet2SASSG',
-        in_channels=3,
-        num_points=(2048, 1024, 512, 256),
-        radius=(0.2, 0.4, 0.8, 1.2),
-        num_samples=(64, 32, 16, 16),
-        sa_channels=((128, 128, 256), (256, 256, 512), (256, 256, 512),
-                     (256, 256, 512)),
-        fp_channels=((512, 512), (512, 288)),
-        norm_cfg=dict(type='BN2d'),
-        sa_cfg=dict(
-            type='PointSAModule',
-            pool_mod='max',
-            use_xyz=True,
-            normalize_xyz=True)),
     bbox_head=dict(
         num_classes=18,
-        num_decoder_layers=12,
-        num_proposal=512,
         size_cls_agnostic=False,
         bbox_coder=dict(
             type='GroupFree3DBBoxCoder',

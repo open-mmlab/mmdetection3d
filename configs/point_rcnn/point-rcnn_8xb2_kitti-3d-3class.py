@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/kitti-3d-car.py', '../_base_/models/point_rcnn.py',
-    '../_base_/default_runtime.py', '../_base_/schedules/cyclic_40e.py'
+    '../_base_/default_runtime.py', '../_base_/schedules/cyclic-40e.py'
 ]
 
 # dataset settings

@@ -1,13 +1,13 @@
 _base_ = [
-    '../_base_/datasets/scannet-3d-18class.py',
-    '../_base_/models/groupfree3d.py', '../_base_/schedules/schedule_3x.py',
-    '../_base_/default_runtime.py'
+    '../_base_/datasets/scannet-3d.py', '../_base_/models/groupfree3d.py',
+    '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
 
 # model settings
 model = dict(
     bbox_head=dict(
         num_classes=18,
+        num_decoder_layers=12,
         size_cls_agnostic=False,
         bbox_coder=dict(
             type='GroupFree3DBBoxCoder',

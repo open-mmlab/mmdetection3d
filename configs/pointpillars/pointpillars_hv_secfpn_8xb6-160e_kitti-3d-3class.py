@@ -1,7 +1,7 @@
 _base_ = [
-    '../_base_/models/hv_pointpillars_secfpn_kitti.py',
+    '../_base_/models/pointpillars_hv_secfpn_kitti.py',
     '../_base_/datasets/kitti-3d-3class.py',
-    '../_base_/schedules/cyclic_40e.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/cyclic-40e.py', '../_base_/default_runtime.py'
 ]
 
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]

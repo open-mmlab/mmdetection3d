@@ -37,11 +37,11 @@ GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION hv_poin
 $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
 2>&1|tee $CHECKPOINT_DIR/configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py/FULL_LOG.txt &
 
-echo 'configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py' &
-mkdir -p $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py
-GPUS=4 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION groupfree3d_8x4_scannet-3d-18class-L6-O256 configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py \
-$CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
-2>&1|tee $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_L6-O256_4xb8_scannet-seg.py/FULL_LOG.txt &
+echo 'configs/groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py' &
+mkdir -p $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py
+GPUS=4 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_train.sh $PARTITION groupfree3d_8x4_scannet-3d-18class-L6-O256 configs/groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py \
+$CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py --cfg-options checkpoint_config.max_keep_ckpts=1 \
+2>&1|tee $CHECKPOINT_DIR/configs/groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py/FULL_LOG.txt &
 
 echo 'configs/h3dnet/h3dnet_8xb3_scannet-seg.py' &
 mkdir -p $CHECKPOINT_DIR/configs/h3dnet/h3dnet_8xb3_scannet-seg.py

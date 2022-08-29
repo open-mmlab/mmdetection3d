@@ -1,7 +1,6 @@
 _base_ = [
-    '../_base_/datasets/s3dis_seg-3d-13class.py',
-    '../_base_/models/paconv_cuda_ssg.py',
-    '../_base_/schedules/seg_cosine_150e.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/s3dis-seg.py', '../_base_/models/paconv_ssg-cuda.py',
+    '../_base_/schedules/seg-cosine-150e.py', '../_base_/default_runtime.py'
 ]
 
 # model settings

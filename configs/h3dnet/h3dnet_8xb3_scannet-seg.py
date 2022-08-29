@@ -1,6 +1,6 @@
 _base_ = [
-    '../_base_/datasets/scannet-3d-18class.py', '../_base_/models/h3dnet.py',
-    '../_base_/schedules/schedule_3x.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/scannet-3d.py', '../_base_/models/h3dnet.py',
+    '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
 
 # model settings
