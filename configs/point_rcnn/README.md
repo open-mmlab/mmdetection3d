@@ -20,9 +20,9 @@ We implement PointRCNN and provide the result with checkpoints on KITTI dataset.
 
 ### KITTI
 
-|                      Backbone                       |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                   Download                                                                                                                                    |
-| :-------------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [PointNet++](./point_rcnn_2x8_kitti-3d-3classes.py) | 3 Class | cyclic 40e |   4.6    |                | 70.83 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.log.json) |
+|                      Backbone                      |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                   Download                                                                                                                                    |
+| :------------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [PointNet++](./point-rcnn_8xb2_kitti-3d-3class.py) | 3 Class | cyclic 40e |   4.6    |                | 70.83 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/point_rcnn/point_rcnn_2x8_kitti-3d-3classes_20211208_151344.log.json) |
 
 Note: mAP represents AP11 results on 3 Class under the moderate setting.
 

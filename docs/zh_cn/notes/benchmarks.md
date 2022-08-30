@@ -119,7 +119,7 @@
 - __MMDetection3D__：在 v0.1.0 版本下, 执行如下命令：
 
   ```bash
-  ./tools/dist_train.sh configs/votenet/votenet_16x8_sunrgbd-3d-10class.py 8 --no-validate
+  ./tools/dist_train.sh configs/votenet/votenet_8xb16_sunrgbd-3d.py 8 --no-validate
   ```
 
 - __votenet__：在 commit [2f6d6d3](https://github.com/facebookresearch/votenet/tree/2f6d6d36ff98d96901182e935afe48ccee82d566) 版本下，执行如下命令：

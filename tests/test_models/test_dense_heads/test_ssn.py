@@ -18,7 +18,7 @@ class TestSSN(unittest.TestCase):
         DefaultScope.get_instance('test_ssn', scope_name='mmdet3d')
         _setup_seed(0)
         ssn_cfg = _get_detector_cfg(
-            'ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py')
+            'ssn/ssn_hv_secfpn_sbn-all_16xb2-2x_nus-3d.py')
         model = MODELS.build(ssn_cfg)
         num_gt_instance = 50
         data = [

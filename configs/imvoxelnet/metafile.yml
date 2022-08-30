@@ -18,7 +18,7 @@ Collections:
 Models:
   - Name: imvoxelnet_kitti-3d-car
     In Collection: ImVoxelNet
-    Config: configs/imvoxelnet/imvoxelnet_kitti-3d-car.py
+    Config: configs/imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py
     Metadata:
       Training Memory (GB): 15.0
     Results:
