@@ -1,4 +1,4 @@
-# Dataset Prepare
+# Dataset Preparation
 
 ## Before Preparation
 
@@ -133,11 +133,11 @@ Note that we follow the original folder names for clear organization. Please ren
 
 ### S3DIS, ScanNet and SUN RGB-D
 
-To prepare S3DIS data, please see its [s3dis_sem_seg.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/s3dis_sem_seg.md).
+To prepare S3DIS data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md/).
 
-To prepare ScanNet data, please see [scannet_det.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/scannet_det.md) and [scannet_sem_seg.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/scannet_sem_seg.md).
+To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/).
 
-To prepare SUN RGB-D data, please see its [sunrgbd_det.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/sunrgbd_det.md).
+To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md/).
 
 ### Customized Datasets
 
@@ -145,7 +145,7 @@ For using custom datasets, please refer to [Customize Datasets](https://github.c
 
 ### Update data infos
 
-If you have used v1.0.0rc1-v1.0.0rc3 mmdetection3d to create data infos before, and now you want to use the newest 1.0.0 mmdetection3d, you need to update the data infos file.
+If you have used v1.0.0rc1-v1.0.0rc4 mmdetection3d to create data infos before, and now you want to use the newest v1.1.0 mmdetection3d, you need to update the data infos file.
 
 ```bash
 python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl ${PKL_PATH} --out-dir ${OUT_DIR}
