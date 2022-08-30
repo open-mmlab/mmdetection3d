@@ -81,10 +81,11 @@ kitti
 
 - `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
 - `kitti_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
-  `metadata` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list, which each item contains all the detailed information (`info`) of single sample as follows:
+  `metadata` is a dict, it contains the essential information for the dataset, such as `CLASSES` and `version`.
+  `data_list` is a list, it has all the needed data information, and each item is detailed information dict for a single sample, detailed information as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
-  - info\['images'\]: Cameras calibration information. A dict contains five keys include: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.
-    - info\['images'\]\['R0_rect'\]: Rectifying rotation matrix, an 4x4 array.
+  - info\['images'\]: Information of images captured by multiple cameras. A dict contains five keys include: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.
+    - info\['images'\]\['R0_rect'\]: Rectifying rotation matrix with shape (4, 4).
     - info\['images'\]\['CAM2'\]: Include some information about the `CAM2` camera sensor.
       - info\['images'\]\['CAM2'\]\['img_path'\]: The path to the image file.
       - info\['images'\]\['CAM2'\]\['height'\]: The shape of the image.
@@ -92,12 +93,12 @@ kitti
       - info\['images'\]\['CAM2'\]\['cam2img'\]: Transformation matrix from camera to image with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2cam'\]: Transformation matrix from lidar or depth to camera with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2img'\]: Transformation matrix from lidar or depth to image with shape (4, 4).
-  - info\['lidar_points'\]: Each dict contains information of LiDAR point cloud frame.
+  - info\['lidar_points'\]: Information of point cloud captured by Lidar. A dict contains information of LiDAR point cloud frame.
     - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
     - info\['lidar_points'\]\['num_features'\]: Number of features for each point.
     - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate with shape (4, 4).
     - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate with shape (4, 4).
-  - info\['instances'\]: Each dict corresponds to annotations of one instance in this frame.
+  - info\['instances'\]: Required by object detection task. A list contains some dict of instance infos. Each dict corresponds to annotations of one instance in this frame.
     - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
     - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
     - info\['instances'\]\['bbox_label'\]: A int indicate the 2D label of instance and the -1 indicate ignore.
