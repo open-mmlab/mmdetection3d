@@ -608,14 +608,12 @@ We follow the below style to name config files. Contributors are advised to foll
 The file name is divided to five parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`.
 
 - `{algorithm name}`: The name of the algorithm. It can be a detector name such as `pointpillars`, `fcos3d`, etc.
-- `{model component names}`: Names of the components used in the algorithm such as backbone, neck, etc. For example, `r50-caffe_fpn_gn-head` means using caffe-style ResNet50, FPN and detection head with Group Norm in the algorithm.
-- `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `4xb4-mixup-giou-coslr-100e` means using 8-gpus x 4-images-per-gpu, mixup augmentation, GIoU loss, cosine annealing learning rate, and train 100 epochs.
+- `{model component names}`: Names of the components used in the algorithm such as voxel_encoder, backbone, neck, etc. For example, `second_secfpn_head-dcn-circlenms` means using Second's SparseEncoder, SECONDFPN and detection head with used dcn and circle nms in the algorithm.
+- `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb4-tta-cyclic-20e` means using 8-gpus x 4-samples-per-gpu, test time augmentation, cyclic annealing learning rate, and train 20 epochs.
   Some abbreviations:
-  - `{gpu x batch_per_gpu}`: GPUs and samples per GPU. `bN` indicates N batch size per GPU. E.g. `4xb4` is the short term of 4-gpus x 4-images-per-gpu.
-  - `{schedule}`: training schedule, options are `1x`, `2x`, `20e`, etc.
-    `1x` and `2x` means 12 epochs and 24 epochs respectively.
-    `20e` is adopted in cascade models, which denotes 20 epochs.
-    For `1x`/`2x`, initial learning rate decays by a factor of 10 at the 8/16th and 11/22th epochs.
-    For `20e`, initial learning rate decays by a factor of 10 at the 16th and 19th epochs.
-- `{training dataset information}`: Training dataset names like `coco`, `coco-panoptic`, `cityscapes`, `voc-0712`, `wider-face`.
+  - `{gpu x batch_per_gpu}`: GPUs and samples per GPU. `bN` indicates N batch size per GPU. E.g. `4xb4` is the short term of 4-gpus x 4-samples-per-gpu.
+  - `{schedule}`: training schedule, options are `schedule-2x`, `schedule-3x`, `cyclic-20e`, etc.
+    `schedule-2x` and `schedule-3x` means 24 epochs and 36 epochs respectively.
+    `cyclic-20e` means 20 epochs respectively.
+- `{training dataset information}`: Training dataset names like `kitti-3d-3class`, `nus-3d`, `s3dis-seg`, `scannet-seg`, `waymoD5-3d-car`. Here `3d` means dataset used for 3d object detection, and `seg` means dataset used for point cloud segmentation.
 - `{testing dataset information}` (optional): Testing dataset name for models trained on one dataset but tested on another. If not mentioned, it means the model was trained and tested on the same dataset type.
