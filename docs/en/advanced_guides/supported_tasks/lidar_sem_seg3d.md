@@ -81,15 +81,13 @@ In addition, you can also evaluate a specific model checkpoint after training is
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
 you should change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the
-ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L129). Remember to
+ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/scannet_seg-3d-20class.py#L129). Remember to
 specify the `submission_prefix` in the `test_evaluator`,
-e.g., adding `test_evaluator = dict(type='SegMetric',submission_prefix=work_dirs/pointnet2_ssg/test_submission`).
+e.g., adding `test_evaluator = dict(type='SegMetric', submission_prefix=work_dirs/pointnet2_ssg/test_submission`).
 After generating the results, you can basically compress the folder and upload to the [ScanNet evaluation server](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d).
 
 ## Qualitative Validation
 
-MMDetection3D also provides versatile tools for visualization such that we can have an intuitive feeling of the segmentation results predicted by our trained models.
-You can either set the `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` option to visualize the segmentation results online during evaluation,
-or using `tools/misc/visualize_results.py` for offline visualization.
+MMDetection3D also provides versatile tools for visualization such that you can use `tools/misc/visualize_results.py` with results pkl file for offline visualization .
 Besides, we also provide scripts `tools/misc/browse_dataset.py` to visualize the dataset without inference.
 Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization).

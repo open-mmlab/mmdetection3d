@@ -82,4 +82,4 @@ aos AP:97.70, 88.73, 87.34
 
 ## 定性验证
 
-MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型的预测结果有一个直观的感受。你可以在命令行中添加 `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` 选项，在评估过程中在线地可视化检测结果；你也可以使用 `tools/misc/visualize_results.py`, 离线地进行可视化。另外，我们还提供了脚本 `tools/misc/browse_dataset.py`， 可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)
+MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型的预测结果有一个直观的感受。你可以使用 `tools/misc/visualize_results.py`, 离线地进行可视化存储的 pkl 结果文件。另外，我们还提供了脚本 `tools/misc/browse_dataset.py`， 可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)

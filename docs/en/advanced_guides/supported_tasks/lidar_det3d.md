@@ -89,7 +89,7 @@ In addition, you can also evaluate a specific model checkpoint after training is
 If you would like to only conduct inference or test the model performance on the online benchmark,
 you just need to specify the `submission_prefix` for corresponding evaluator,
 e.g., add `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)` in the configuration then you can get the results file.
-Please guarantee the `data_prefix` and `ann_file` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L113) in the config corresponds to the test set instead of validation set.
+Please guarantee the `data_prefix` and `ann_file` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/kitti-3d-3class.py#L113) in the config corresponds to the test set instead of validation set.
 After generating the results, you can basically compress the folder and upload to the KITTI evaluation server.
 
 ## Qualitative Validation

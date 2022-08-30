@@ -1,10 +1,10 @@
-# 1: Inference and train with existing models and standard datasets
+# Inference and train with existing models and standard datasets
 
 ## Inference with existing models
 
 Here we provide testing scripts to evaluate a whole dataset (SUNRGBD, ScanNet, KITTI, etc.).
 
-For high-level apis easier to integrated into other projects and basic demos, please refer to Verification/Demo under [Get Started](https://mmdetection3d.readthedocs.io/en/latest/getting_started.html).
+For high-level apis easier to integrated into other projects and basic demos, please refer to Verification/Demo under [Get Started](https://mmdetection3d.readthedocs.io/en/dev-1.x/inference.html).
 
 ### Test existing models on standard datasets
 
@@ -17,26 +17,29 @@ You can use the following commands to test a dataset.
 
 ```shell
 # single-gpu testing
-python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
+python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE}
 
 # CPU: disable GPUs and run single-gpu testing script (experimental)
 export CUDA_VISIBLE_DEVICES=-1
-python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}] [--show] [--show-dir ${SHOW_DIR}]
+python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE}
 
 # multi-gpu testing
-./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE} ${GPU_NUM} [--out ${RESULT_FILE}] [--eval ${EVAL_METRICS}]
+./tools/dist_test.sh ${CONFIG_FILE} ${CHECKPOINT_FILE}
 ```
 
 **Note**:
 
 For now, CPU testing is only supported for SMOKE.
 
-Optional arguments:
+All evaluation related arguments are set in the `test_evaluator` in corresponding dataset configuration. such as
+`test_evaluator = dict(type='KittiMetric', ann_file=data_root + 'kitti_infos_val.pkl', pklfile_prefix=None, submission_prefix=None)`
 
-- `RESULT_FILE`: Filename of the output results in pickle format. If not specified, the results will not be saved to a file.
-- `EVAL_METRICS`: Items to be evaluated on the results. Allowed values depend on the dataset. Typically we default to use official metrics for evaluation on different datasets, so it can be simply set to `mAP` as a placeholder for detection tasks, which applies to nuScenes, Lyft, ScanNet and SUNRGBD. For KITTI, if we only want to evaluate the 2D detection performance, we can simply set the metric to `img_bbox` (unstable, stay tuned). For Waymo, we provide both KITTI-style evaluation (unstable) and Waymo-style official protocol, corresponding to metric `kitti` and `waymo` respectively. We recommend to use the default official metric for stable performance and fair comparison with other methods. Similarly, the metric can be set to `mIoU` for segmentation tasks, which applies to S3DIS and ScanNet.
-- `--show`: If specified, detection results will be plotted in the silient mode. It is only applicable to single GPU testing and used for debugging and visualization. This should be used with `--show-dir`.
-- `--show-dir`: If specified, detection results will be plotted on the `***_points.obj` and `***_pred.obj` files in the specified directory. It is only applicable to single GPU testing and used for debugging and visualization. You do NOT need a GUI available in your environment for using this option.
+The arguments:
+
+- `type`: The name of the corresponding metric, usually associated with the dataset.
+- `ann_file`: The path of annotation file.
+- `pklfile_prefix`: An optional argument. The filename of the output results in pickle format. If not specified, the results will not be saved to a file.
+- `submission_prefix`: An optional argument. The the results will not be saved to a file then you can upload it to do the official evaluation.
 
 Examples:
 
@@ -45,7 +48,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 1. Test VoteNet on ScanNet and save the points and prediction visualization results.
 
    ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+   python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --show --show-dir ./data/scannet/show_results
    ```
@@ -53,7 +56,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 2. Test VoteNet on ScanNet, save the points, prediction, groundtruth visualization results, and evaluate the mAP.
 
    ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+   python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --eval mAP
        --eval-options 'show=True' 'out_dir=./data/scannet/show_results'
@@ -62,7 +65,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 3. Test VoteNet on ScanNet (without saving the test results) and evaluate the mAP.
 
    ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+   python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --eval mAP
    ```
@@ -70,7 +73,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 4. Test SECOND on KITTI with 8 GPUs, and evaluate the mAP.
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-3class.py \
        checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
        --out results.pkl --eval mAP
    ```
@@ -78,7 +81,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 5. Test PointPillars on nuScenes with 8 GPUs, and generate the json file to be submit to the official evaluation server.
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_8xb4-2x_nus-3d.py \
        checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
        --format-only --eval-options 'jsonfile_prefix=./pointpillars_nuscenes_results'
    ```
@@ -88,7 +91,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 6. Test SECOND on KITTI with 8 GPUs, and generate the pkl files and submission data to be submit to the official evaluation server.
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-3class.py \
        checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
        --format-only --eval-options 'pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
    ```
@@ -111,7 +114,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 8. Test PointPillars on waymo with 8 GPUs, and evaluate the mAP with waymo metrics.
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
        --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
        'submission_prefix=results/waymo-car/kitti_results'
@@ -122,7 +125,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 9. Test PointPillars on waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
        --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
        'submission_prefix=results/waymo-car/kitti_results'
@@ -141,10 +144,10 @@ which is specified by `work_dir` in the config file.
 By default we evaluate the model on the validation set after each epoch, you can change the evaluation interval by adding the interval argument in the training config.
 
 ```python
-evaluation = dict(interval=12)  # This evaluate the model per 12 epoch.
+train_cfg = dict(type='EpochBasedTrainLoop', val_interval=1)  # This evaluate the model per 12 epoch.
 ```
 
-**Important**: The default learning rate in config files is for 8 GPUs and the exact batch size is marked by the config's file name, e.g. '2x8' means 2 samples per GPU using 8 GPUs.
+**Important**: The default learning rate in config files is for 8 GPUs and the exact batch size is marked by the config's file name, e.g. '2xb8' means 2 samples per GPU using 8 GPUs.
 According to the [Linear Scaling Rule](https://arxiv.org/abs/1706.02677), you need to set the learning rate proportional to the batch size if you use different GPUs or images per GPU, e.g., lr=0.01 for 4 GPUs * 2 img/gpu and lr=0.08 for 16 GPUs * 4 img/gpu. However, since most of the models in this repo use ADAM rather than SGD for optimization, the rule may not hold and users need to tune the learning rate by themselves.
 
 ### Train with a single GPU
@@ -198,7 +201,7 @@ If you run MMDetection3D on a cluster managed with [slurm](https://slurm.schedmd
 Here is an example of using 16 GPUs to train Mask R-CNN on the dev partition.
 
 ```shell
-GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
+GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
 ```
 
 You can check [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) for full arguments and environment variables.
@@ -236,8 +239,8 @@ If you use launch training jobs with Slurm, there are two ways to specify the po
 1. Set the port through `--options`. This is more recommended since it does not change the original configs.
 
    ```shell
-   CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR} --options 'dist_params.port=29500'
-   CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR} --options 'dist_params.port=29501'
+   CUDA_VISIBLE_DEVICES=0,1,2,3 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config1.py ${WORK_DIR} --options 'env_cfg.dist_cfg.port=29500'
+   CUDA_VISIBLE_DEVICES=4,5,6,7 GPUS=4 ./tools/slurm_train.sh ${PARTITION} ${JOB_NAME} config2.py ${WORK_DIR} --options 'env_cfg.dist_cfg.port=29501'
    ```
 
 2. Modify the config files (usually the 6th line from the bottom in config files) to set different communication ports.
@@ -245,13 +248,17 @@ If you use launch training jobs with Slurm, there are two ways to specify the po
    In `config1.py`,
 
    ```python
-   dist_params = dict(backend='nccl', port=29500)
+    env_cfg = dict(
+        dist_cfg=dict(backend='nccl', port=29500)
+    )
    ```
 
    In `config2.py`,
 
    ```python
-   dist_params = dict(backend='nccl', port=29501)
+    env_cfg = dict(
+        dist_cfg=dict(backend='nccl', port=29500)
+    )
    ```
 
    Then you can launch two jobs with `config1.py` and `config2.py`.
