@@ -19,7 +19,7 @@ class TestVoxelNet(unittest.TestCase):
         DefaultScope.get_instance('test_voxelnet', scope_name='mmdet3d')
         _setup_seed(0)
         pointpillars_cfg = _get_detector_cfg(
-            'pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py')
+            'pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py')
         model = MODELS.build(pointpillars_cfg)
         num_gt_instance = 2
         data = [_create_detector_inputs(num_gt_instance=num_gt_instance)]

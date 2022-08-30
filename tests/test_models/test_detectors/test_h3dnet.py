@@ -16,8 +16,7 @@ class TestH3D(unittest.TestCase):
         assert hasattr(mmdet3d.models, 'H3DNet')
         DefaultScope.get_instance('test_H3DNet', scope_name='mmdet3d')
         _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg(
-            'h3dnet/h3dnet_3x8_scannet-3d-18class.py')
+        voxel_net_cfg = _get_detector_cfg('h3dnet/h3dnet_8xb3_scannet-seg.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 5
         data = [

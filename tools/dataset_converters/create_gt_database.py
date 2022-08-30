@@ -3,9 +3,10 @@ import pickle
 from os import path as osp
 
 import mmcv
+import mmengine
 import numpy as np
-from mmcv import track_iter_progress
 from mmcv.ops import roi_align
+from mmengine import track_iter_progress
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 
@@ -148,14 +149,12 @@ def create_groundtruth_database(dataset_class_name,
     if dataset_class_name == 'KittiDataset':
         file_client_args = dict(backend='disk')
         dataset_cfg.update(
-            test_mode=False,
-            split='training',
             modality=dict(
                 use_lidar=True,
-                use_depth=False,
-                use_lidar_intensity=True,
                 use_camera=with_mask,
             ),
+            data_prefix=dict(
+                pts='training/velodyne_reduced', img='training/image_2'),
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
@@ -173,6 +172,8 @@ def create_groundtruth_database(dataset_class_name,
     elif dataset_class_name == 'NuScenesDataset':
         dataset_cfg.update(
             use_valid_flag=True,
+            data_prefix=dict(
+                pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP'),
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
@@ -223,7 +224,7 @@ def create_groundtruth_database(dataset_class_name,
     if db_info_save_path is None:
         db_info_save_path = osp.join(data_path,
                                      f'{info_prefix}_dbinfos_train.pkl')
-    mmcv.mkdir_or_exist(database_save_path)
+    mmengine.mkdir_or_exist(database_save_path)
     all_db_infos = dict()
     if with_mask:
         coco = COCO(osp.join(data_path, mask_anno_path))
@@ -235,14 +236,13 @@ def create_groundtruth_database(dataset_class_name,
 
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
-        input_dict = dataset.get_data_info(j)
-        dataset.pre_pipeline(input_dict)
-        example = dataset.pipeline(input_dict)
+        data_info = dataset.get_data_info(j)
+        example = dataset.pipeline(data_info)
         annos = example['ann_info']
         image_idx = example['sample_idx']
         points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
-        names = annos['gt_names']
+        names = [dataset.metainfo['CLASSES'][i] for i in annos['gt_labels_3d']]
         group_dict = dict()
         if 'group_ids' in annos:
             group_ids = annos['group_ids']
@@ -585,7 +585,7 @@ class GTDatabaseCreater:
         if self.db_info_save_path is None:
             self.db_info_save_path = osp.join(
                 self.data_path, f'{self.info_prefix}_dbinfos_train.pkl')
-        mmcv.mkdir_or_exist(self.database_save_path)
+        mmengine.mkdir_or_exist(self.database_save_path)
         if self.with_mask:
             self.coco = COCO(osp.join(self.data_path, self.mask_anno_path))
             imgIds = self.coco.getImgIds()
@@ -599,9 +599,9 @@ class GTDatabaseCreater:
             dataset.pre_pipeline(input_dict)
             return input_dict
 
-        multi_db_infos = mmcv.track_parallel_progress(
-            self.create_single, ((loop_dataset(i)
-                                  for i in range(len(dataset))), len(dataset)),
+        multi_db_infos = mmengine.track_parallel_progress(
+            self.create_single,
+            ((loop_dataset(i) for i in range(len(dataset))), len(dataset)),
             self.num_worker)
         print('Make global unique group id')
         group_counter_offset = 0

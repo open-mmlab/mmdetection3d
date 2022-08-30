@@ -3,13 +3,11 @@ import tempfile
 from os import path as osp
 from typing import Dict, List, Optional, Union
 
-import mmcv
 import mmengine
 import numpy as np
 import torch
-from mmcv.utils import print_log
-from mmengine import load
-from mmengine.logging import MMLogger
+from mmengine import Config, load
+from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import METRICS
@@ -75,7 +73,6 @@ class WaymoMetric(KittiMetric):
 
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
-        self.file_client_args = file_client_args
         self.split = split
         self.task = task
         self.use_pred_sample_idx = use_pred_sample_idx
@@ -87,7 +84,8 @@ class WaymoMetric(KittiMetric):
             pklfile_prefix=pklfile_prefix,
             submission_prefix=submission_prefix,
             default_cam_key=default_cam_key,
-            collect_device=collect_device)
+            collect_device=collect_device,
+            file_client_args=file_client_args)
         self.default_prefix = 'Waymo metric'
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
@@ -104,8 +102,7 @@ class WaymoMetric(KittiMetric):
         self.classes = self.dataset_meta['CLASSES']
 
         # load annotations
-        self.data_infos = load(
-            self.ann_file, file_client_args=self.file_client_args)['data_list']
+        self.data_infos = load(self.ann_file)['data_list']
         # different from kitti, waymo do not need to convert the ann file
 
         if self.pklfile_prefix is None:
@@ -271,7 +268,6 @@ class WaymoMetric(KittiMetric):
             score_thr=0.001,
             min_bbox_size=0,
             max_per_frame=100)
-        from mmcv import Config
         nms_cfg = Config(nms_cfg)
         lidar_boxes3d = LiDARInstance3DBoxes(
             torch.from_numpy(box_dict['box3d_lidar']).cuda())
@@ -332,12 +328,12 @@ class WaymoMetric(KittiMetric):
         assert len(net_outputs) == len(self.data_infos), \
             'invalid list length of network outputs'
         if submission_prefix is not None:
-            mmcv.mkdir_or_exist(submission_prefix)
+            mmengine.mkdir_or_exist(submission_prefix)
 
         det_annos = []
         print('\nConverting prediction to KITTI format')
         for idx, pred_dicts in enumerate(
-                mmcv.track_iter_progress(net_outputs)):
+                mmengine.track_iter_progress(net_outputs)):
             annos = []
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]

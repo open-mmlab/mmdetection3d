@@ -22,7 +22,7 @@ def convert_SyncBN(config):
     """Convert config's naiveSyncBN to BN.
 
     Args:
-         config (str or :obj:`mmcv.Config`): Config file path or the config
+         config (str or :obj:`mmengine.Config`): Config file path or the config
             object.
     """
     if isinstance(config, dict):

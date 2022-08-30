@@ -4,7 +4,7 @@ import copy
 import torch
 from mmcv.cnn import ConvModule, build_activation_layer, build_norm_layer
 from mmcv.ops import assign_score_withk as assign_score_cuda
-from mmengine.model.utils import constant_init
+from mmengine.model import constant_init
 from torch import nn as nn
 from torch.nn import functional as F
 

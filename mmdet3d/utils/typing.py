@@ -3,9 +3,9 @@
 from typing import List, Optional, Union
 
 from mmengine.config import ConfigDict
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
-from mmdet.models.task_modules import SamplingResult
+from mmdet.models.task_modules.samplers import SamplingResult
 
 # Type hint of config data
 ConfigType = Union[ConfigDict, dict]

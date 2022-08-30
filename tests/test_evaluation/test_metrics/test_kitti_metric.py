@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.evaluation.metrics import KittiMetric
 from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes

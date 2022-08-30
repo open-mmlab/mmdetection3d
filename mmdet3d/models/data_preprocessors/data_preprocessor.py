@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from mmcv.ops import Voxelization
-from mmengine.data import BaseDataElement
 from mmengine.model import stack_batch
+from mmengine.structures import BaseDataElement
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS

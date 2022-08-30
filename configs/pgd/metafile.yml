@@ -18,7 +18,7 @@ Collections:
 Models:
   - Name: pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d
     In Collection: PGD
-    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d.py
+    Config: configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py
     Metadata:
       Training Memory (GB): 9.1
     Results:
@@ -30,7 +30,7 @@ Models:
 
   - Name: pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d
     In Collection: PGD
-    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d.py
+    Config: configs/pgd/pgd_r101-caffe_fpn_head-gn_16xb2-1x_nus-mono3d.py
     Metadata:
       Training Memory (GB): 9.2
     Results:
@@ -43,7 +43,7 @@ Models:
 
   - Name: pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_finetune
     In Collection: PGD
-    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_1x_nus-mono3d_finetune.py
+    Config: configs/pgd/pgd_r101-caffe_fpn_head-gn_16xb2-1x_nus-mono3d_finetune.py
     Metadata:
       Training Memory (GB): 9.2
     Results:
@@ -56,7 +56,7 @@ Models:
 
   - Name: pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d
     In Collection: PGD
-    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d.py
+    Config: configs/pgd/pgd_r101-caffe_fpn_head-gn_16xb2-2x_nus-mono3d.py
     Metadata:
       Training Memory (GB): 9.2
     Results:
@@ -69,7 +69,7 @@ Models:
 
   - Name: pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune
     In Collection: PGD
-    Config: configs/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune.py
+    Config: configs/pgd/pgd_r101-caffe_fpn_head-gn_16xb2-2x_nus-mono3d_finetune.py
     Metadata:
       Training Memory (GB): 9.2
     Results:
