@@ -27,7 +27,7 @@ class PointPillarsScatter(nn.Module):
 
     @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size=None):
-        """Foraward function to scatter features."""
+        """Forward function to scatter features."""
         # TODO: rewrite the function in a batch manner
         # no need to deal with different batch cases
         if batch_size is not None:
