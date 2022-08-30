@@ -18,7 +18,7 @@ class TestCenterPoint(unittest.TestCase):
         _setup_seed(0)
         DefaultScope.get_instance('test_center_point', scope_name='mmdet3d')
         centerpoint_net_cfg = _get_detector_cfg(
-            'centerpoint/centerpoint_01voxel_second_secfpn_4x8_cyclic_20e_nus.py'  # noqa
+            'centerpoint/centerpoint_voxel01_second_secfpn_8xb4-cyclic-20e_nus-3d.py'  # noqa
         )
         model = MODELS.build(centerpoint_net_cfg)
         num_gt_instance = 50

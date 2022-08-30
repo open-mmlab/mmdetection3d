@@ -18,7 +18,7 @@ class TestMVXNet(unittest.TestCase):
         _setup_seed(0)
         DefaultScope.get_instance('test_mvxnet', scope_name='mmdet3d')
         mvx_net_cfg = _get_detector_cfg(
-            'mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py'  # noqa
+            'mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py'  # noqa
         )
         model = MODELS.build(mvx_net_cfg)
         num_gt_instance = 1

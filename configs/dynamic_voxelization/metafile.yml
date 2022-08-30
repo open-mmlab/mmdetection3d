@@ -18,7 +18,7 @@ Collections:
 Models:
   - Name: dv_second_secfpn_6x8_80e_kitti-3d-car
     In Collection: Dynamic Voxelization
-    Config: configs/dynamic_voxelization/dv_second_secfpn_6x8_80e_kitti-3d-car.py
+    Config: configs/dynamic_voxelization/second_dv_secfpn_8xb6-80e_kitti-3d-car.py
     Metadata:
       Training Memory (GB): 5.5
     Results:
@@ -30,7 +30,7 @@ Models:
 
   - Name: dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class
     In Collection: Dynamic Voxelization
-    Config: configs/dynamic_voxelization/dv_second_secfpn_2x8_cosine_80e_kitti-3d-3class.py
+    Config: configs/dynamic_voxelization/second_dv_secfpn_8xb2-cosine-80e_kitti-3d-3class.py
     Metadata:
       Training Memory (GB): 5.5
     Results:
@@ -42,7 +42,7 @@ Models:
 
   - Name: dv_pointpillars_secfpn_6x8_160e_kitti-3d-car
     In Collection: Dynamic Voxelization
-    Config: configs/dynamic_voxelization/dv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py
+    Config: configs/dynamic_voxelization/pointpillars_dv_secfpn_8xb6-160e_kitti-3d-car.py
     Metadata:
       Training Memory (GB): 4.7
     Results:
