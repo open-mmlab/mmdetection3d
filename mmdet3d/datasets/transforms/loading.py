@@ -748,9 +748,6 @@ class LoadAnnotations3D(LoadAnnotations):
         """
         results['gt_bboxes'] = results['ann_info']['gt_bboxes']
 
-        if 'eval_ann_info' in results:
-            results['eval_ann_info']['gt_bboxes'] = results['gt_bboxes']
-
     def _load_labels(self, results: dict) -> None:
         """Private function to load label annotations.
 
@@ -761,9 +758,6 @@ class LoadAnnotations3D(LoadAnnotations):
             dict: The dict contains loaded label annotations.
         """
         results['gt_bboxes_labels'] = results['ann_info']['gt_bboxes_labels']
-        if 'eval_ann_info' in results:
-            results['eval_ann_info']['gt_bboxes_labels'] = results[
-                'gt_bboxes_labels']
 
     def transform(self, results: dict) -> dict:
         """Function to load multiple types annotations.
