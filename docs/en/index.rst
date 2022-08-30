@@ -9,7 +9,7 @@ Welcome to MMDetection3D's documentation!
    getting_started.md
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: User Guides
 
    user_guides/index.rst
@@ -40,7 +40,7 @@ Welcome to MMDetection3D's documentation!
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Notes
 
    notes/index.rst
