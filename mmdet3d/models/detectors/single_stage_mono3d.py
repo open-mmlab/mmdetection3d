@@ -29,9 +29,9 @@ class SingleStageMono3DDetector(SingleStageDetector):
         Args:
             data_samples (list[:obj:`Det3DDataSample`]): The input data.
             data_instances_3d (list[:obj:`InstanceData`], optional): 3D
-                Detection results of each image.
+                Detection results of each image. Defaults to None.
             data_instances_2d (list[:obj:`InstanceData`], optional): 2D
-                Detection results of each image.
+                Detection results of each image. Defaults to None.
 
         Returns:
             list[:obj:`Det3DDataSample`]: Detection results of the

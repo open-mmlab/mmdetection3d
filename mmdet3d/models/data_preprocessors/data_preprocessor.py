@@ -150,7 +150,6 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         if 'points' in inputs:
             batch_inputs['points'] = inputs['points']
 
-            # Whether to apply voxelization to point cloud
             if self.voxel:
                 voxel_dict = self.voxelize(inputs['points'])
                 batch_inputs['voxels'] = voxel_dict

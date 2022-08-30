@@ -151,7 +151,6 @@ class SingleStage3DDetector(Base3DDetector):
                 and for inside 3D object detection, usually a dict containing
                 features will be obtained.
         """
-        print(batch_inputs_dict)
         points = batch_inputs_dict['points']
         stack_points = torch.stack(points)
         x = self.backbone(stack_points)

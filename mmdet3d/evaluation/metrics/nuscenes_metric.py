@@ -130,10 +130,10 @@ class NuScenesMetric(BaseMetric):
             pred_3d = data_sample['pred_instances_3d']
             pred_2d = data_sample['pred_instances']
             for attr_name in pred_3d:
-                pred_3d[attr_name] = pred_3d[attr_name].to(self.collect_device)
+                pred_3d[attr_name] = pred_3d[attr_name].to('cpu')
             result['pred_instances_3d'] = pred_3d
             for attr_name in pred_2d:
-                pred_2d[attr_name] = pred_2d[attr_name].to(self.collect_device)
+                pred_2d[attr_name] = pred_2d[attr_name].to('cpu')
             result['pred_instances'] = pred_2d
             sample_idx = data_sample['sample_idx']
             result['sample_idx'] = sample_idx
