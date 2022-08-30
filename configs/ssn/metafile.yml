@@ -17,7 +17,7 @@ Collections:
 Models:
   - Name: hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d
     In Collection: SSN
-    Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_nus-3d.py
+    Config: configs/ssn/ssn_hv_secfpn_sbn-all_16xb2-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 3.6
@@ -31,7 +31,7 @@ Models:
 
   - Name: hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d
     In Collection: SSN
-    Config: configs/ssn/hv_ssn_regnet-400mf_secfpn_sbn-all_2x16_2x_nus-3d.py
+    Config: configs/ssn/ssn_hv_regnet-400mf_secfpn_sbn-all_16xb2-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 5.1
@@ -45,7 +45,7 @@ Models:
 
   - Name: hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d
     In Collection: SSN
-    Config: configs/ssn/hv_ssn_secfpn_sbn-all_2x16_2x_lyft-3d.py
+    Config: configs/ssn/ssn_hv_secfpn_sbn-all_16xb2-2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 8.5

@@ -151,7 +151,7 @@ train_pipeline = [
 使用 8 个 GPU 以及 Lyft 指标评估的 PointPillars 的示例如下：
 
 ```shell
-bash ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth 8 --eval bbox
+bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth 8 --eval bbox
 ```
 
 ## 度量指标
@@ -186,7 +186,7 @@ Lyft 提出了一个更加严格的用以评估所预测的 3D 检测框的度�
 使用 8 个 GPU 在 Lyft 上测试 PointPillars 并生成对排行榜的提交的示例如下：
 
 ```shell
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py work_dirs/pp-lyft/latest.pth 8 --out work_dirs/pp-lyft/results_challenge.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-lyft/results_challenge' 'csv_savepath=results/pp-lyft/results_challenge.csv'
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py work_dirs/pp-lyft/latest.pth 8 --out work_dirs/pp-lyft/results_challenge.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-lyft/results_challenge' 'csv_savepath=results/pp-lyft/results_challenge.csv'
 ```
 
 在生成 `work_dirs/pp-lyft/results_challenge.csv`，您可以将生成的文件提交到 Kaggle 评估服务器，请参考[官方网址](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles)获取更多细节。

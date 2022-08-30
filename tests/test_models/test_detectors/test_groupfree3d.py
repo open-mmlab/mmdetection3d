@@ -17,7 +17,7 @@ class TestGroupfree3d(unittest.TestCase):
         DefaultScope.get_instance('test_groupfree3d', scope_name='mmdet3d')
         _setup_seed(0)
         voxel_net_cfg = _get_detector_cfg(
-            'groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py')
+            'groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 5
         data = [

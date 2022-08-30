@@ -17,7 +17,7 @@ Collections:
 Models:
   - Name: h3dnet_3x8_scannet-3d-18class
     In Collection: H3DNet
-    Config: configs/h3dnet/h3dnet_3x8_scannet-3d-18class.py
+    Config: configs/h3dnet/h3dnet_8xb3_scannet-seg.py
     Metadata:
       Training Memory (GB): 7.9
     Results:

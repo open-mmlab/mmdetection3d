@@ -18,7 +18,7 @@ Collections:
 Models:
   - Name: centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_voxel01_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py
     Metadata:
       Training Memory (GB): 4.9
     Results:
@@ -31,7 +31,7 @@ Models:
 
   - Name: centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_voxel01_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py
     Metadata:
       Training Memory (GB): 5.2
     Results:
@@ -44,7 +44,7 @@ Models:
 
   - Name: centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_voxel0075_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py
     Metadata:
       Training Memory (GB): 7.8
     Results:
@@ -57,7 +57,7 @@ Models:
 
   - Name: centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_voxel0075_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py
     Metadata:
       Training Memory (GB): 8.5
     Results:
@@ -70,7 +70,7 @@ Models:
 
   - Name: centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py
     Metadata:
       Training Memory (GB): 4.4
     Results:
@@ -83,7 +83,7 @@ Models:
 
   - Name: centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus
     In Collection: CenterPoint
-    Config: configs/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py
+    Config: configs/centerpoint/centerpoint_pillar02_second_secfpn_head-dcn_8xb4-cyclic-20e_nus-3d.py
     Metadata:
       Training Memory (GB): 4.6
     Results:

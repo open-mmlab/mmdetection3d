@@ -16,7 +16,7 @@ class Test3DSSD(unittest.TestCase):
         assert hasattr(mmdet3d.models, 'SSD3DNet')
         DefaultScope.get_instance('test_ssd3d', scope_name='mmdet3d')
         _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg('3dssd/3dssd_4x4_kitti-3d-car.py')
+        voxel_net_cfg = _get_detector_cfg('3dssd/3dssd_4xb4_kitti-3d-car.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 3
         data = [

@@ -15,9 +15,9 @@ Collections:
       Version: v0.16.0
 
 Models:
-  - Name: paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
+  - Name: paconv_ssg_8xb8-cosine-150e_s3dis-seg.py
     In Collection: PAConv
-    Config: configs/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
+    Config: configs/paconv/paconv_ssg_8xb8-cosine-150e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 5.8
