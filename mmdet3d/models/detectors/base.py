@@ -1,13 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional, Union
+from typing import List, Union
 
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import MODELS
-from mmdet3d.structures import Det3DDataSample
 from mmdet3d.structures.det3d_data_sample import (ForwardResults,
                                                   OptSampleList, SampleList)
-from mmdet3d.utils.typing import InstanceList, OptConfigType, OptMultiConfig
+from mmdet3d.utils.typing import OptConfigType, OptInstanceList, OptMultiConfig
 from mmdet.models import BaseDetector
 
 
@@ -92,8 +91,9 @@ class Base3DDetector(BaseDetector):
 
     def convert_to_datasample(
         self,
-        results_list_3d: Optional[InstanceList] = None,
-        results_list_2d: Optional[InstanceList] = None,
+        data_samples: SampleList,
+        data_instances_3d: OptInstanceList = None,
+        data_instances_2d: OptInstanceList = None,
     ) -> SampleList:
         """Convert results list to `Det3DDataSample`.
 
@@ -101,8 +101,11 @@ class Base3DDetector(BaseDetector):
         3D detectors.
 
         Args:
-            results_list (list[:obj:`InstanceData`]): Detection results of
-                each sample.
+            data_samples (list[:obj:`Det3DDataSample`]): The input data.
+            data_instances_3d (list[:obj:`InstanceData`], optional): 3D
+                Detection results of each sample.
+            data_instances_2d (list[:obj:`InstanceData`], optional): 2D
+                Detection results of each sample.
 
         Returns:
             list[:obj:`Det3DDataSample`]: Detection results of the
@@ -116,6 +119,7 @@ class Base3DDetector(BaseDetector):
               (num_instances, ).
             - bboxes_3d (Tensor): Contains a tensor with shape
               (num_instances, C) where C >=7.
+
             When there are image prediction in some models, it should
             contains  `pred_instances`, And the ``pred_instances`` normally
             contains following keys.
@@ -128,22 +132,20 @@ class Base3DDetector(BaseDetector):
               (num_instances, 4).
         """
 
-        data_sample_list = []
-        assert (results_list_2d is not None) or \
-               (results_list_3d is not None),\
-               'please pass at least one type of results_list'
+        assert (data_instances_2d is not None) or \
+               (data_instances_3d is not None),\
+               'please pass at least one type of data_samples'
 
-        if results_list_2d is None:
-            results_list_2d = [
-                InstanceData() for _ in range(len(results_list_3d))
+        if data_instances_2d is None:
+            data_instances_2d = [
+                InstanceData() for _ in range(len(data_instances_3d))
             ]
-        if results_list_3d is None:
-            results_list_3d = [
-                InstanceData() for _ in range(len(results_list_2d))
+        if data_instances_3d is None:
+            data_instances_3d = [
+                InstanceData() for _ in range(len(data_instances_2d))
             ]
-        for i in range(len(results_list_3d)):
-            result = Det3DDataSample()
-            result.pred_instances_3d = results_list_3d[i]
-            result.pred_instances = results_list_2d[i]
-            data_sample_list.append(result)
-        return data_sample_list
+
+        for i, data_sample in enumerate(data_samples):
+            data_sample.pred_instances_3d = data_instances_3d[i]
+            data_sample.pred_instances = data_instances_2d[i]
+        return data_samples

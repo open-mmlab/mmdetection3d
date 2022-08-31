@@ -72,31 +72,30 @@ class LyftMetric(BaseMetric):
         self.csv_savepath = csv_savepath
         self.metrics = metric if isinstance(metric, list) else [metric]
 
-    def process(self, data_batch: Sequence[dict],
-                predictions: Sequence[dict]) -> None:
-        """Process one batch of data samples and predictions.
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
+        """Process one batch of data samples and data_samples.
 
         The processed results should be stored in ``self.results``,
         which will be used to compute the metrics when all batches
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
-            predictions (Sequence[dict]): A batch of outputs from
+            data_batch (dict): A batch of data from the dataloader.
+            data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        assert len(data_batch) == len(predictions)
-        for data, pred in zip(data_batch, predictions):
+        for data_sample in data_samples:
             result = dict()
-            for pred_result in pred:
-                if pred[pred_result] is not None:
-                    for attr_name in pred[pred_result]:
-                        pred[pred_result][attr_name] = pred[pred_result][
-                            attr_name].to(self.collect_device)
-                    result[pred_result] = pred[pred_result]
-                sample_idx = data['data_sample']['sample_idx']
-                result['sample_idx'] = sample_idx
+            pred_3d = data_sample['pred_instances_3d']
+            pred_2d = data_sample['pred_instances']
+            for attr_name in pred_3d:
+                pred_3d[attr_name] = pred_3d[attr_name].to('cpu')
+            result['pred_instances_3d'] = pred_3d
+            for attr_name in pred_2d:
+                pred_2d[attr_name] = pred_2d[attr_name].to('cpu')
+            result['pred_instances'] = pred_2d
+            sample_idx = data_sample['sample_idx']
+            result['sample_idx'] = sample_idx
         self.results.append(result)
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
