@@ -56,7 +56,8 @@ Suppose we use 8 GPUs on a single machine with distributed training:
 
 Note that `8xb6` in the config name refers to the training is completed with 8 GPUs and 6 samples on each GPU.
 If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
-A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
+A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677). We have supported `--auto-scale-lr` to
+enable automatically scaling LR
 
 ## Quantitative Evaluation
 
@@ -95,7 +96,7 @@ After generating the results, you can basically compress the folder and upload t
 ## Qualitative Validation
 
 MMDetection3D also provides versatile tools for visualization such that we can have an intuitive feeling of the detection results predicted by our trained models.
-You can either set the `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` option to visualize the detection results online during evaluation,
+You can either set the `--show'` option to visualize the detection results online during evaluation,
 or using `tools/misc/visualize_results.py` for offline visualization.
 Besides, we also provide scripts `tools/misc/browse_dataset.py` to visualize the dataset without inference.
 Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization).
