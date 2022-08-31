@@ -118,7 +118,7 @@ def main():
     for item in dataset:
         # the 3D Boxes in input could be in any of three coordinates
         data_input = item['inputs']
-        data_sample = item['data_sample'].numpy()
+        data_sample = item['data_samples'].numpy()
 
         out_file = osp.join(
             args.output_dir) if args.output_dir is not None else None

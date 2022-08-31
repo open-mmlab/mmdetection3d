@@ -63,8 +63,8 @@ train_pipeline = [
     dict(
         type='Collect3D',
         keys=[
-            'img', 'gt_bboxes', 'gt_labels', 'attr_labels', 'gt_bboxes_3d',
-            'gt_labels_3d', 'centers2d', 'depths'
+            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels',
+            'gt_bboxes_3d', 'gt_labels_3d', 'centers2d', 'depths'
         ]),
 ]
 test_pipeline = [
