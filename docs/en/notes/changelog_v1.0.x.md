@@ -1,3 +1,5 @@
+# Changelog of v1.0.x
+
 ### v1.0.0rc4 (8/8/2022)
 
 #### Highlights
