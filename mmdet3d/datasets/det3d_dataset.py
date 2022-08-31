@@ -194,7 +194,6 @@ class Det3DDataset(BaseDataset):
             'center_2d': 'centers_2d',
             'attr_label': 'attr_labels'
         }
-
         instances = info['instances']
         # empty gt
         if len(instances) == 0:
@@ -211,7 +210,12 @@ class Det3DDataset(BaseDataset):
                     ]
                 if ann_name in name_mapping:
                     ann_name = name_mapping[ann_name]
-                temp_anns = np.array(temp_anns)
+
+                if 'label' in ann_name:
+                    temp_anns = np.array(temp_anns).astype(np.int64)
+                else:
+                    temp_anns = np.array(temp_anns).astype(np.float32)
+
                 ann_info[ann_name] = temp_anns
             ann_info['instances'] = info['instances']
         return ann_info
@@ -312,7 +316,7 @@ class Det3DDataset(BaseDataset):
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(
-                    example['data_sample'].gt_instances_3d.labels_3d) == 0:
+                    example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
 

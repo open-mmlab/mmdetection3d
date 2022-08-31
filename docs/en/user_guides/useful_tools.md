@@ -107,7 +107,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi_modality-det`. An example is showed below
 
 ```shell
-python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_multi_modality.png)
@@ -115,7 +115,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --task seg --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_seg.png)

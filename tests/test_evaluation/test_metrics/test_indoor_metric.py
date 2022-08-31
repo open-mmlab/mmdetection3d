@@ -14,9 +14,6 @@ class TestIndoorMetric(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_process(self, stdout):
         indoor_metric = IndoorMetric()
-
-        dummy_batch = dict(data_sample=dict())
-
         eval_ann_info = {
             'gt_bboxes_3d':
             DepthInstance3DBoxes(
@@ -40,7 +37,6 @@ class TestIndoorMetric(unittest.TestCase):
             'gt_labels_3d':
             np.array([2, 2, 2, 3, 4, 17, 4, 7, 2, 8, 17, 11])
         }
-        dummy_batch['data_sample']['eval_ann_info'] = eval_ann_info
 
         pred_instances_3d = dict()
         pred_instances_3d['scores_3d'] = torch.ones(
@@ -50,6 +46,8 @@ class TestIndoorMetric(unittest.TestCase):
             eval_ann_info['gt_labels_3d'])
         pred_dict = dict()
         pred_dict['pred_instances_3d'] = pred_instances_3d
+        pred_dict['eval_ann_info'] = eval_ann_info
+
         indoor_metric.dataset_meta = {
             'CLASSES': ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                         'window', 'bookshelf', 'picture', 'counter', 'desk',
@@ -58,7 +56,8 @@ class TestIndoorMetric(unittest.TestCase):
             'box_type_3d':
             'Depth',
         }
-        indoor_metric.process([dummy_batch], [pred_dict])
+
+        indoor_metric.process({}, [pred_dict])
 
         eval_results = indoor_metric.evaluate(1)
         for v in eval_results.values():

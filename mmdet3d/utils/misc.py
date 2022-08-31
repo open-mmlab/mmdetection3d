@@ -75,6 +75,10 @@ def replace_ceph_backend(cfg):
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadAnnotations3D\'', 'LoadAnnotations3D\',' + replace_strs)
 
+    # replace WaymoMetric
+    cfg_pretty_text = cfg_pretty_text.replace('WaymoMetric\'',
+                                              'WaymoMetric\',' + replace_strs)
+
     # replace dbsampler
     cfg_pretty_text = cfg_pretty_text.replace('info_path',
                                               replace_strs + ', info_path')

@@ -1,4 +1,4 @@
-# Tutorial 7: Backends Support
+# Backends Support
 
 We support different file client backends: Disk, Ceph and LMDB, etc. Here is an example of how to modify configs for Ceph-based data loading and saving.
 

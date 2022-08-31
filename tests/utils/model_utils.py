@@ -5,7 +5,7 @@ from os.path import dirname, exists, join
 
 import numpy as np
 import torch
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
@@ -101,10 +101,13 @@ def _create_detector_inputs(seed=0,
         [[5.23289349e+02, 3.68831943e+02, 6.10469439e+01],
          [1.09560138e+02, 1.97404735e+02, -5.47377738e+02],
          [1.25930002e-02, 9.92229998e-01, -1.23769999e-01]])
+
+    inputs_dict = dict()
+
     if with_points:
         points = torch.rand([num_points, points_feat_dim])
-    else:
-        points = None
+        inputs_dict['points'] = [points]
+
     if with_img:
         if isinstance(img_size, tuple):
             img = torch.rand(3, img_size[0], img_size[1])
@@ -115,10 +118,8 @@ def _create_detector_inputs(seed=0,
             meta_info['img_shape'] = (img_size, img_size)
             meta_info['ori_shape'] = (img_size, img_size)
         meta_info['scale_factor'] = np.array([1., 1.])
+        inputs_dict['img'] = [img]
 
-    else:
-        img = None
-    inputs_dict = dict(img=img, points=points)
     gt_instance_3d = InstanceData()
 
     gt_instance_3d.bboxes_3d = bbox_3d_class[bboxes_3d_type](
@@ -145,4 +146,4 @@ def _create_detector_inputs(seed=0,
         pts_semantic_mask = torch.randint(0, num_classes, [num_points])
         data_sample.gt_pts_seg['pts_semantic_mask'] = pts_semantic_mask
 
-    return dict(inputs=inputs_dict, data_sample=data_sample)
+    return dict(inputs=inputs_dict, data_samples=[data_sample])

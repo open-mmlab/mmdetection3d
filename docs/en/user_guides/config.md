@@ -1,4 +1,4 @@
-# Tutorial 1: Learn about Configs
+# Learn about Configs
 
 We incorporate modular and inheritance design into our config system, which is convenient to conduct various experiments.
 If you wish to inspect the config file, you may run `python tools/misc/print_config.py /PATH/TO/CONFIG` to see the complete config.
@@ -440,7 +440,7 @@ model = dict(
 `FPN` and `SECONDFPN` use different keywords to construct.
 
 ```python
-_base_ = '../_base_/models/hv_pointpillars_fpn_nus.py'
+_base_ = '../_base_/models/pointpillars_hv_fpn_nus.py'
 model = dict(
     pts_neck=dict(
         _delete_=True,
