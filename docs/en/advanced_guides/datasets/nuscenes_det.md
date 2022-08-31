@@ -63,12 +63,13 @@ Next, we will elaborate on the details recorded in these info files.
 - `nuscenes_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
 - `nuscenes_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
   `metadata` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list, which each item contains all the detailed information (`info`) of single sample as follows:
-  - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
-  - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
-  - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['token'\]: Sample data token.
   - info\['timestamp'\]: Timestamp of the sample data.
+  - info\['lidar_points'\]: A dict contains all the information related to the lidar points.
+    - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
+    - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
+    - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]: The lidar data path of i-th sweep.
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
@@ -76,24 +77,29 @@ Next, we will elaborate on the details recorded in these info files.
     - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the main lidar sensor to the current sensor (for collecting the sweep data) to lidar. (4x4 list)
     - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]: The sweep sample data token.
-  - info\['images'\]: Cameras calibration information. A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`.
+  - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information from corresponding camera.
+    - info\['images'\]\['CAM_XXX'\]\['img_path'\]: Filename of image.
+    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]: The transformation matrix recording the intrinsic parameters when projecting 3D points to each image plane. (3x3 list)
+    - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]: Sample data token of image.
+    - info\['images'\]\['CAM_XXX'\]\['timestamp'\]: Timestamp of the image.
+    - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
+    - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
+  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
     - info\['instances'\]\['bbox_3d'\]: 7-DoF annotations of 3D bounding boxes, a list has shape (7,).
     - info\['instances'\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
     - info\['instances'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2.).
     - info\['instances'\]\['num_lidar_pts'\]: Number of lidar points included in each 3D bounding box.
     - info\['instances'\]\['num_radar_pts'\]: Number of radar points included in each 3D bounding box.
     - info\['instances'\]\['bbox_3d_isvalid'\]: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
-  - info\['cam_instances'\]: All annotation information for images from multiple cameras, it is a dict contains keys `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`
-    - info\['cam_instances'\]\['bbox_label'\]: Label of instance.
-    - info\['cam_instances'\]\['bbox_label_3d'\]: Label of instance.
-    - info\['cam_instances'\]\['bbox'\]: 2D bounding box annotation (exterior rectangle of the projected 3D box), a list arrange as \[x1, y1, x2, y2\].
-    - info\['cam_instances'\]\['bbox_corners'\]: 2D bounding box annotation (exterior rectangle of the projected 3D box), a list arrange as \[x1, y1, x2, y2\].
-    - info\['cam_instances'\]\['center_2d'\]: Projected center location on the image, a list has shape (2,), .
-    - info\['cam_instances'\]\['depth'\]: The depth of projected center.
-    - info\['cam_instances'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2,).
-    - info\['cam_instances'\]\['attr_label'\]: The attr label of instance. We maintain a default attribute collection and mapping for attribute classification.
-    - info\['cam_instances'\]\['bbox_3d'\]: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list.
-    - info\['cam_instances'\]\['filename'\]: The file name of the corresponding image.
+  - info\['cam_instances'\]: It is a dict contains keys `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. For vision-based 3D object detection task, we split 3D annotations of the whole scenes according to the camera they belong to.
+    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_label'\]: Label of instance.
+    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_label_3d'\]: Label of instance.
+    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox'\]: 2D bounding box annotation (exterior rectangle of the projected 3D box), a list arrange as \[x1, y1, x2, y2\].
+    - info\['cam_instances'\]\['CAM_XXX'\]\['center_2d'\]: Projected center location on the image, a list has shape (2,), .
+    - info\['cam_instances'\]\['CAM_XXX'\]\['depth'\]: The depth of projected center.
+    - info\['cam_instances'\]\['CAM_XXX'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2,).
+    - info\['cam_instances'\]\['CAM_XXX'\]\['attr_label'\]: The attr label of instance. We maintain a default attribute collection and mapping for attribute classification.
+    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_3d'\]: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list.
 
 Here we only explain the data recorded in the training info files. The same applies to validation and testing set.
 
