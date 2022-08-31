@@ -11,15 +11,6 @@ datasets
 .. automodule:: mmdet3d.datasets
     :members:
 
-api_wrappers
-^^^^^^^^^^
-.. automodule:: mmdet3d.datasets.api_wrappers
-    :members:
-
-samplers
-^^^^^^^^^^
-.. automodule:: mmdet3d.datasets.samplers
-    :members:
 
 transforms
 ^^^^^^^^^^^^
@@ -28,20 +19,6 @@ transforms
 
 mmdet3d.engine
 --------------
-hooks
-^^^^^^^^^^
-.. automodule:: mmdet3d.engine.hooks
-    :members:
-
-optimizers
-^^^^^^^^^^
-.. automodule:: mmdet3d.engine.optimizers
-    :members:
-
-runner
-^^^^^^^^^^
-.. automodule:: mmdet3d.engine.runner
-    :members:
 
 schedulers
 ^^^^^^^^^^
@@ -75,6 +52,12 @@ data_preprocessors
 .. automodule:: mmdet3d.models.data_preprocessors
     :members:
 
+decode_heads
+^^^^^^^^^^^^
+.. automodule:: mmdet3d.models.decode_heads
+    :members:
+
+
 dense_heads
 ^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.dense_heads
@@ -95,6 +78,11 @@ losses
 .. automodule:: mmdet3d.models.losses
     :members:
 
+middle_encoders
+^^^^^^^^^^^^
+.. automodule:: mmdet3d.models.middle_encoders
+    :members:
+
 necks
 ^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.necks
@@ -105,9 +93,9 @@ roi_heads
 .. automodule:: mmdet3d.models.roi_heads
     :members:
 
-seg_heads
+segmentors
 ^^^^^^^^^^
-.. automodule:: mmdet3d.models.seg_heads
+.. automodule:: mmdet3d.models.segmentors
     :members:
 
 task_modules
@@ -125,31 +113,40 @@ utils
 .. automodule:: mmdet3d.models.utils
     :members:
 
+voxel_encoders
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.voxel_encoders
+    :members:
 
 mmdet3d.structures
 --------------
 
-bbox
+structures
 ^^^^^^^^^^
-.. automodule:: mmdet3d.structures.bbox
+.. automodule:: mmdet3d.structures
     :members:
 
-mask
+bbox_3d
 ^^^^^^^^^^
-.. automodule:: mmdet3d.structures.mask
+.. automodule:: mmdet3d.structures.bbox_3d
     :members:
 
-mmdet3d.testing
---------------
-.. automodule::mmdet3d.testing
+ops
+^^^^^^^^^^
+.. automodule:: mmdet3d.structures.ops
     :members:
 
-mmdet3d.visulization
---------------
-.. automodule::mmdet3d.visulization
+points
+^^^^^^^^^^
+.. automodule:: mmdet3d.structures.points
     :members:
 
 mmdet3d.utils
 --------------
 .. automodule::mmdet3d.utils
+    :members:
+
+mmdet3d.visulization
+--------------
+.. automodule::mmdet3d.visulization
     :members:
