@@ -38,14 +38,7 @@ mmdetection3d
 │   │   ├── nuscenes_infos_val.pkl
 │   │   ├── nuscenes_infos_test.pkl
 │   │   ├── nuscenes_dbinfos_train.pkl
-│   │   ├── nuscenes_infos_train_mono3d.coco.json
-│   │   ├── nuscenes_infos_trainval_mono3d.coco.json
-│   │   ├── nuscenes_infos_val_mono3d.coco.json
-│   │   ├── nuscenes_infos_test_mono3d.coco.json
 ```
-
-Note that the .pkl files here are mainly used for methods using LiDAR data and .json files are used for 2D detection/vision-only 3D detection.
-The .json files only contain infos for 2D detection before supporting monocular 3D detection in v0.13.0, so if you need the latest infos, please checkout the branches after v0.13.0.
 
 ## Training
 
@@ -54,25 +47,24 @@ You can basically follow the examples provided in this [tutorial](https://mmdete
 Suppose we use 8 GPUs on a single machine with distributed training:
 
 ```
-./tools/dist_train.sh configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py 8
+./tools/dist_train.sh configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py 8
 ```
 
-Note that `2x8` in the config name refers to the training is completed with 8 GPUs and 2 data samples on each GPU.
-If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
-A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
+Note that `8xb2` in the config name refers to the training is completed with 8 GPUs and 2 data samples on each GPU.
+If your customized setting is different from this, you should add `--auto-scale-lr` to enable automatically scaling learning rate. A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
 
 We can also achieve better performance with finetuned FCOS3D by running:
 
 ```
-./tools/dist_train.sh fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py 8
+./tools/dist_train.sh configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune.py 8
 ```
 
 After training a baseline model with the previous script,
-please remember to modify the path [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py#L8) correspondingly.
+please remember to modify the path [here](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune.py#L8) correspondingly.
 
 ## Quantitative Evaluation
 
-During training, the model checkpoints will be evaluated regularly according to the setting of `evaluation = dict(interval=xxx)` in the config.
+During training, the model checkpoints will be evaluated regularly according to the setting of `train_cfg = dict(val_interval=xxx)` in the config.
 
 We support official evaluation protocols for different datasets.
 Due to the output format is the same as 3D detection based on other modalities, the evaluation methods are also the same.
@@ -107,16 +99,16 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 In addition, you can also evaluate a specific model checkpoint after training is finished. Simply run scripts like the following:
 
 ```
-./tools/dist_test.sh configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py \
-    work_dirs/fcos3d/latest.pth --eval mAP
+./tools/dist_test.sh configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py work_dirs/fcos3d/latest.pth 8
 ```
 
 ## Testing and Making a Submission
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
-you just need to replace the `--eval mAP` with `--format-only` in the previous evaluation script and specify the `jsonfile_prefix` if necessary,
-e.g., adding an option `--eval-options jsonfile_prefix=work_dirs/fcos3d/test_submission`.
-Please guarantee the [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-mono3d.py#L93) in the config corresponds to the test set instead of validation set.
+you just need to specify the `jsonfile_prefix` for corresponding evaluator,
+e.g., add `test_evaluator = dict(type='NuscenesMetric', jsonfile_prefix=work_dirs/fcos3d/test_submission)` in the configuration then you can get the results file.
+
+Please guarantee the `data_prefix` and `ann_file` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/nus-mono3d.py#L93) in the config corresponds to the test set instead of validation set.
 
 After generating the results, you can basically compress the folder and upload to the evalAI evaluation server for nuScenes 3D detection challenge.
 
