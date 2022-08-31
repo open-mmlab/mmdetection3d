@@ -5,8 +5,7 @@ import platform
 import sys
 
 import cv2
-from mmcv import Config
-from mmengine import DefaultScope
+from mmengine import Config, DefaultScope
 
 from mmdet3d.utils import register_all_modules, setup_multi_processes
 

@@ -19,7 +19,7 @@ class TestPack3DDetInputs(unittest.TestCase):
         inputs = packed_results['inputs']
 
         # annotations
-        gt_instances = packed_results['data_sample'].gt_instances_3d
+        gt_instances = packed_results['data_samples'].gt_instances_3d
         self.assertIn('points', inputs)
         self.assertIsInstance(inputs['points'], torch.Tensor)
         assert_allclose(inputs['points'].sum(), torch.tensor(13062.6436))

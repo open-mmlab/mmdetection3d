@@ -76,7 +76,7 @@ class TestS3DISDataset(unittest.TestCase):
         input_dict = s3dis_seg_dataset.prepare_data(0)
 
         points = input_dict['inputs']['points']
-        data_sample = input_dict['data_sample']
+        data_sample = input_dict['data_samples']
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
 
         expected_points = torch.tensor([[

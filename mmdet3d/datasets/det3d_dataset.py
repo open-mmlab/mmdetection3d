@@ -187,12 +187,13 @@ class Det3DDataset(BaseDataset):
         # in `transforms`
         name_mapping = {
             'bbox_label_3d': 'gt_labels_3d',
+            'bbox_label': 'gt_bboxes_labels',
+            'bbox': 'gt_bboxes',
             'bbox_3d': 'gt_bboxes_3d',
             'depth': 'depths',
             'center_2d': 'centers_2d',
             'attr_label': 'attr_labels'
         }
-
         instances = info['instances']
         # empty gt
         if len(instances) == 0:
@@ -203,13 +204,18 @@ class Det3DDataset(BaseDataset):
             for ann_name in keys:
                 temp_anns = [item[ann_name] for item in instances]
                 # map the original dataset label to training label
-                if 'label' in ann_name:
+                if 'label' in ann_name and ann_name != 'attr_label':
                     temp_anns = [
                         self.label_mapping[item] for item in temp_anns
                     ]
                 if ann_name in name_mapping:
                     ann_name = name_mapping[ann_name]
-                temp_anns = np.array(temp_anns)
+
+                if 'label' in ann_name:
+                    temp_anns = np.array(temp_anns).astype(np.int64)
+                else:
+                    temp_anns = np.array(temp_anns).astype(np.float32)
+
                 ann_info[ann_name] = temp_anns
             ann_info['instances'] = info['instances']
         return ann_info
@@ -310,7 +316,7 @@ class Det3DDataset(BaseDataset):
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(
-                    example['data_sample'].gt_instances_3d.labels_3d) == 0:
+                    example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
 

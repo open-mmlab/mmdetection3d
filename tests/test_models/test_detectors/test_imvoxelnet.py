@@ -20,33 +20,29 @@ class TestImVoxelNet(unittest.TestCase):
             'imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py')
         model = MODELS.build(imvoxel_net_cfg)
         num_gt_instance = 1
-        data = [
-            _create_detector_inputs(
-                with_points=False,
-                with_img=True,
-                img_size=(128, 128),
-                num_gt_instance=num_gt_instance,
-                with_pts_semantic_mask=False,
-                with_pts_instance_mask=False)
-        ]
+        packed_inputs = _create_detector_inputs(
+            with_points=False,
+            with_img=True,
+            img_size=(128, 128),
+            num_gt_instance=num_gt_instance,
+            with_pts_semantic_mask=False,
+            with_pts_instance_mask=False)
 
         if torch.cuda.is_available():
             model = model.cuda()
             # test simple_test
             with torch.no_grad():
-                batch_inputs, data_samples = model.data_preprocessor(
-                    data, True)
+                data = model.data_preprocessor(packed_inputs, True)
                 torch.cuda.empty_cache()
-                results = model.forward(
-                    batch_inputs, data_samples, mode='predict')
-            self.assertEqual(len(results), len(data))
+                results = model.forward(**data, mode='predict')
+            self.assertEqual(len(results), 1)
             self.assertIn('bboxes_3d', results[0].pred_instances_3d)
             self.assertIn('scores_3d', results[0].pred_instances_3d)
             self.assertIn('labels_3d', results[0].pred_instances_3d)
 
             # save the memory
             with torch.no_grad():
-                losses = model.forward(batch_inputs, data_samples, mode='loss')
+                losses = model.forward(**data, mode='loss')
 
             self.assertGreaterEqual(losses['loss_cls'][0], 0)
             self.assertGreaterEqual(losses['loss_bbox'][0], 0)
