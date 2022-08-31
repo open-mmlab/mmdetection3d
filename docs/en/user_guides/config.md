@@ -608,7 +608,7 @@ We follow the below style to name config files. Contributors are advised to foll
 The file name is divided to five parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`.
 
 - `{algorithm name}`: The name of the algorithm. It can be a detector name such as `pointpillars`, `fcos3d`, etc.
-- `{model component names}`: Names of the components used in the algorithm such as voxel_encoder, backbone, neck, etc. For example, `second_secfpn_head-dcn-circlenms` means using SECOND's SparseEncoder, SECONDFPN and a detection head with DCN and circle NMS in the algorithm.
+- `{model component names}`: Names of the components used in the algorithm such as voxel_encoder, backbone, neck, etc. For example, `second_secfpn_head-dcn-circlenms` means using SECOND's SparseEncoder, SECONDFPN and a detection head with DCN and circle NMS.
 - `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb4-tta-cyclic-20e` means using 8-gpus x 4-samples-per-gpu, test time augmentation, cyclic annealing learning rate, and train 20 epochs.
   Some abbreviations:
   - `{gpu x batch_per_gpu}`: GPUs and samples per GPU. `bN` indicates N batch size per GPU. E.g. `4xb4` is the short term of 4-gpus x 4-samples-per-gpu.
