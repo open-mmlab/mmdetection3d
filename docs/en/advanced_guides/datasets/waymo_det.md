@@ -131,7 +131,7 @@ Then you can evaluate your models on Waymo. An example to evaluate PointPillars 
 ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth
 ```
 
-`pklfile_prefix` should be set in `test_evaluator` of configuration if the bin file is needed to be generated.
+`pklfile_prefix` should be set in `test_evaluator` of configuration if the bin file is needed to be generated, so you can add `--cfg-options "test_evaluator.pklfile_prefix=xxxx"` in the end of command if you want do it.
 
 **Notice**:
 

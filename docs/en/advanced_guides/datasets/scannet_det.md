@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) page for ScanNet.
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/) page for ScanNet.
 
 ### Export ScanNet point cloud data
 
