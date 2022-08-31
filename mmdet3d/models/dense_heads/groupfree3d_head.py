@@ -9,9 +9,8 @@ from mmcv.cnn.bricks.transformer import (build_positional_encoding,
                                          build_transformer_layer)
 from mmcv.ops import PointsSampler as Points_Sampler
 from mmcv.ops import gather_points
-from mmengine import InstanceData
-from mmengine.model import BaseModule
-from mmengine.model.utils import xavier_init
+from mmengine.model import BaseModule, xavier_init
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F

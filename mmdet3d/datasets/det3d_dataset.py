@@ -93,6 +93,7 @@ class Det3DDataset(BaseDataset):
             f', `use_camera`) for {self.__class__.__name__}')
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
+
         if metainfo is not None and 'CLASSES' in metainfo:
             # we allow to train on subset of self.METAINFO['CLASSES']
             # map unselected labels to -1
@@ -111,10 +112,6 @@ class Det3DDataset(BaseDataset):
             }
             self.label_mapping[-1] = -1
 
-        # can be accessed by other component in runner
-        metainfo['box_type_3d'] = box_type_3d
-        metainfo['label_mapping'] = self.label_mapping
-
         super().__init__(
             ann_file=ann_file,
             metainfo=metainfo,
@@ -123,6 +120,10 @@ class Det3DDataset(BaseDataset):
             pipeline=pipeline,
             test_mode=test_mode,
             **kwargs)
+
+        # can be accessed by other component in runner
+        self.metainfo['box_type_3d'] = box_type_3d
+        self.metainfo['label_mapping'] = self.label_mapping
 
     def _remove_dontcare(self, ann_info):
         """Remove annotations that do not need to be cared.
@@ -186,12 +187,13 @@ class Det3DDataset(BaseDataset):
         # in `transforms`
         name_mapping = {
             'bbox_label_3d': 'gt_labels_3d',
+            'bbox_label': 'gt_bboxes_labels',
+            'bbox': 'gt_bboxes',
             'bbox_3d': 'gt_bboxes_3d',
             'depth': 'depths',
             'center_2d': 'centers_2d',
             'attr_label': 'attr_labels'
         }
-
         instances = info['instances']
         # empty gt
         if len(instances) == 0:
@@ -202,13 +204,18 @@ class Det3DDataset(BaseDataset):
             for ann_name in keys:
                 temp_anns = [item[ann_name] for item in instances]
                 # map the original dataset label to training label
-                if 'label' in ann_name:
+                if 'label' in ann_name and ann_name != 'attr_label':
                     temp_anns = [
                         self.label_mapping[item] for item in temp_anns
                     ]
                 if ann_name in name_mapping:
                     ann_name = name_mapping[ann_name]
-                temp_anns = np.array(temp_anns)
+
+                if 'label' in ann_name:
+                    temp_anns = np.array(temp_anns).astype(np.int64)
+                else:
+                    temp_anns = np.array(temp_anns).astype(np.float32)
+
                 ann_info[ann_name] = temp_anns
             ann_info['instances'] = info['instances']
         return ann_info
@@ -235,6 +242,16 @@ class Det3DDataset(BaseDataset):
                     info['lidar_points']['lidar_path'])
 
             info['lidar_path'] = info['lidar_points']['lidar_path']
+            if 'lidar_sweeps' in info:
+                for sweep in info['lidar_sweeps']:
+                    file_suffix = sweep['lidar_points']['lidar_path'].split(
+                        '/')[-1]
+                    if 'samples' in sweep['lidar_points']['lidar_path']:
+                        sweep['lidar_points']['lidar_path'] = osp.join(
+                            self.data_prefix['pts'], file_suffix)
+                    else:
+                        sweep['lidar_points']['lidar_path'] = osp.join(
+                            self.data_prefix['sweeps'], file_suffix)
 
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():
@@ -299,7 +316,7 @@ class Det3DDataset(BaseDataset):
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(
-                    example['data_sample'].gt_instances_3d.labels_3d) == 0:
+                    example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
         return example
 

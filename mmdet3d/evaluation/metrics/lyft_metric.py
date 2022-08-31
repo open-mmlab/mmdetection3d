@@ -5,7 +5,6 @@ import tempfile
 from os import path as osp
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-import mmcv
 import mmengine
 import numpy as np
 import pandas as pd
@@ -73,31 +72,30 @@ class LyftMetric(BaseMetric):
         self.csv_savepath = csv_savepath
         self.metrics = metric if isinstance(metric, list) else [metric]
 
-    def process(self, data_batch: Sequence[dict],
-                predictions: Sequence[dict]) -> None:
-        """Process one batch of data samples and predictions.
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
+        """Process one batch of data samples and data_samples.
 
         The processed results should be stored in ``self.results``,
         which will be used to compute the metrics when all batches
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
-            predictions (Sequence[dict]): A batch of outputs from
+            data_batch (dict): A batch of data from the dataloader.
+            data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        assert len(data_batch) == len(predictions)
-        for data, pred in zip(data_batch, predictions):
+        for data_sample in data_samples:
             result = dict()
-            for pred_result in pred:
-                if pred[pred_result] is not None:
-                    for attr_name in pred[pred_result]:
-                        pred[pred_result][attr_name] = pred[pred_result][
-                            attr_name].to(self.collect_device)
-                    result[pred_result] = pred[pred_result]
-                sample_idx = data['data_sample']['sample_idx']
-                result['sample_idx'] = sample_idx
+            pred_3d = data_sample['pred_instances_3d']
+            pred_2d = data_sample['pred_instances']
+            for attr_name in pred_3d:
+                pred_3d[attr_name] = pred_3d[attr_name].to('cpu')
+            result['pred_instances_3d'] = pred_3d
+            for attr_name in pred_2d:
+                pred_2d[attr_name] = pred_2d[attr_name].to('cpu')
+            result['pred_instances'] = pred_2d
+            sample_idx = data_sample['sample_idx']
+            result['sample_idx'] = sample_idx
         self.results.append(result)
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
@@ -220,7 +218,7 @@ class LyftMetric(BaseMetric):
             idx = Id_list.index(token)
             pred_list[idx] = prediction_str
         df = pd.DataFrame({'Id': Id_list, 'PredictionString': pred_list})
-        mmcv.mkdir_or_exist(os.path.dirname(csv_savepath))
+        mmengine.mkdir_or_exist(os.path.dirname(csv_savepath))
         df.to_csv(csv_savepath, index=False)
 
     def _format_bbox(self,
@@ -245,7 +243,7 @@ class LyftMetric(BaseMetric):
         lyft_annos = {}
 
         print('Start to convert detection format...')
-        for i, det in enumerate(mmcv.track_iter_progress(results)):
+        for i, det in enumerate(mmengine.track_iter_progress(results)):
             annos = []
             boxes = output_to_lyft_box(det)
             sample_id = sample_id_list[i]
@@ -267,7 +265,7 @@ class LyftMetric(BaseMetric):
             'results': lyft_annos,
         }
 
-        mmcv.mkdir_or_exist(jsonfile_prefix)
+        mmengine.mkdir_or_exist(jsonfile_prefix)
         res_path = osp.join(jsonfile_prefix, 'results_lyft.json')
         print('Results writes to', res_path)
         mmengine.dump(lyft_submissions, res_path)

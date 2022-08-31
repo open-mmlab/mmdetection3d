@@ -12,7 +12,7 @@ from nuscenes.utils.geometry_utils import view_points
 from pyquaternion import Quaternion
 from shapely.geometry import MultiPoint, box
 
-from mmdet3d.datasets import NuScenesDataset
+from mmdet3d.datasets.convert_utils import NuScenesNameMapping
 from mmdet3d.structures import points_cam2img
 
 nus_categories = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
@@ -131,7 +131,7 @@ def get_available_scenes(nusc):
                 # path from lyftdataset is absolute path
                 lidar_path = lidar_path.split(f'{os.getcwd()}/')[-1]
                 # relative path
-            if not mmcv.is_filepath(lidar_path):
+            if not mmengine.is_filepath(lidar_path):
                 scene_not_exist = True
                 break
             else:
@@ -165,7 +165,7 @@ def _fill_trainval_infos(nusc,
     train_nusc_infos = []
     val_nusc_infos = []
 
-    for sample in mmcv.track_iter_progress(nusc.sample):
+    for sample in mmengine.track_iter_progress(nusc.sample):
         lidar_token = sample['data']['LIDAR_TOP']
         sd_rec = nusc.get('sample_data', sample['data']['LIDAR_TOP'])
         cs_record = nusc.get('calibrated_sensor',
@@ -173,7 +173,7 @@ def _fill_trainval_infos(nusc,
         pose_record = nusc.get('ego_pose', sd_rec['ego_pose_token'])
         lidar_path, boxes, _ = nusc.get_sample_data(lidar_token)
 
-        mmcv.check_file_exist(lidar_path)
+        mmengine.check_file_exist(lidar_path)
 
         info = {
             'lidar_path': lidar_path,
@@ -248,8 +248,8 @@ def _fill_trainval_infos(nusc,
 
             names = [b.name for b in boxes]
             for i in range(len(names)):
-                if names[i] in NuScenesDataset.NameMapping:
-                    names[i] = NuScenesDataset.NameMapping[names[i]]
+                if names[i] in NuScenesNameMapping:
+                    names[i] = NuScenesNameMapping[names[i]]
             names = np.array(names)
             # we need to convert box size to
             # the format of our lidar coordinate system
@@ -363,7 +363,7 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
     ]
     coco_ann_id = 0
     coco_2d_dict = dict(annotations=[], images=[], categories=cat2Ids)
-    for info in mmcv.track_iter_progress(nusc_infos):
+    for info in mmengine.track_iter_progress(nusc_infos):
         for cam in camera_types:
             cam_info = info['cams'][cam]
             coco_infos = get_2d_boxes(
@@ -618,9 +618,9 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
     coco_rec['image_id'] = sample_data_token
     coco_rec['area'] = (y2 - y1) * (x2 - x1)
 
-    if repro_rec['category_name'] not in NuScenesDataset.NameMapping:
+    if repro_rec['category_name'] not in NuScenesNameMapping:
         return None
-    cat_name = NuScenesDataset.NameMapping[repro_rec['category_name']]
+    cat_name = NuScenesNameMapping[repro_rec['category_name']]
     coco_rec['category_name'] = cat_name
     coco_rec['category_id'] = nus_categories.index(cat_name)
     coco_rec['bbox'] = [x1, y1, x2 - x1, y2 - y1]

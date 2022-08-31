@@ -441,7 +441,7 @@ model = dict(
 `FPN` 和 `SECONDFPN` 使用不同的关键词来构建。
 
 ```python
-_base_ = '../_base_/models/hv_pointpillars_fpn_nus.py'
+_base_ = '../_base_/models/pointpillars_hv_fpn_nus.py'
 model = dict(
     pts_neck=dict(
         _delete_=True,

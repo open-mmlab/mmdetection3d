@@ -3,7 +3,6 @@ import os
 from concurrent import futures as futures
 from os import path as osp
 
-import mmcv
 import mmengine
 import numpy as np
 
@@ -82,9 +81,9 @@ class S3DISData(object):
             pts_instance_mask = np.load(pts_instance_mask_path).astype(np.int)
             pts_semantic_mask = np.load(pts_semantic_mask_path).astype(np.int)
 
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
-            mmcv.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
+            mmengine.mkdir_or_exist(osp.join(self.root_dir, 'points'))
+            mmengine.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
+            mmengine.mkdir_or_exist(osp.join(self.root_dir, 'semantic_mask'))
 
             points.tofile(
                 osp.join(self.root_dir, 'points',
@@ -194,7 +193,7 @@ class S3DISSegData(object):
     def get_seg_infos(self):
         scene_idxs, label_weight = self.get_scene_idxs_and_label_weight()
         save_folder = osp.join(self.data_root, 'seg_info')
-        mmcv.mkdir_or_exist(save_folder)
+        mmengine.mkdir_or_exist(save_folder)
         np.save(
             osp.join(save_folder, f'{self.split}_resampled_scene_idxs.npy'),
             scene_idxs)

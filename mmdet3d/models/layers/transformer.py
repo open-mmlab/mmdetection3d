@@ -20,7 +20,7 @@ class GroupFree3DMHA(MultiheadAttention):
         proj_drop (float, optional): A Dropout layer. Defaults to 0.0.
         dropout_layer (obj:`ConfigDict`, optional): The dropout_layer used
             when adding the shortcut.
-        init_cfg (obj:`mmcv.ConfigDict`, optional): The Config for
+        init_cfg (obj:`mmengine.ConfigDict`, optional): The Config for
             initialization. Default: None.
         batch_first (bool, optional): Key, Query and Value are shape of
             (batch, n, embed_dim)

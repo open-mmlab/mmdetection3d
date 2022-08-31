@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.models.dense_heads import PGDHead
 from mmdet3d.structures import CameraInstance3DBoxes
@@ -40,8 +40,8 @@ class TestFGDHead(TestCase):
             min_bbox_size=0,
             max_per_img=20)
 
-        train_cfg = mmcv.Config(train_cfg)
-        test_cfg = mmcv.Config(test_cfg)
+        train_cfg = mmengine.Config(train_cfg)
+        test_cfg = mmengine.Config(test_cfg)
 
         pgd_head = PGDHead(
             num_classes=3,
@@ -186,11 +186,12 @@ class TestFGDHead(TestCase):
                            'consistency loss should be positive')
 
         # test get_results
-        results_list = pgd_head.predict_by_feat(*ret_dict, img_metas)
-        self.assertEqual(
-            len(results_list), 1,
-            'there should be no centerness loss when there are no true boxes')
-        results, results_2d = results_list[0]
+        results_list_3d, results_list_2d = pgd_head.predict_by_feat(
+            *ret_dict, img_metas)
+        self.assertEqual(len(results_list_3d), 1, 'batch size should be 1')
+        self.assertEqual(len(results_list_2d), 1, 'batch size should be 1')
+        results = results_list_3d[0]
+        results_2d = results_list_2d[0]
         pred_bboxes_3d = results.bboxes_3d
         pred_scores_3d = results.scores_3d
         pred_labels_3d = results.labels_3d

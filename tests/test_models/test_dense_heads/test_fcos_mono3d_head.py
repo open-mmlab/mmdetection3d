@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
-from mmengine.data import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.models.dense_heads import FCOSMono3DHead
 from mmdet3d.structures import CameraInstance3DBoxes
@@ -39,8 +39,8 @@ class TestFCOSMono3DHead(TestCase):
             min_bbox_size=0,
             max_per_img=200)
 
-        train_cfg = mmcv.Config(train_cfg)
-        test_cfg = mmcv.Config(test_cfg)
+        train_cfg = mmengine.Config(train_cfg)
+        test_cfg = mmengine.Config(test_cfg)
 
         fcos_mono3d_head = FCOSMono3DHead(
             num_classes=10,
@@ -161,11 +161,12 @@ class TestFCOSMono3DHead(TestCase):
         self.assertGreater(gt_atr_loss, 0, 'attribue loss should be positive')
 
         # test get_results
-        results_list = fcos_mono3d_head.predict_by_feat(*ret_dict, img_metas)
-        self.assertEqual(
-            len(results_list), 1,
-            'there should be no centerness loss when there are no true boxes')
-        results = results_list[0]
+        results_list_3d, results_list_2d = fcos_mono3d_head.predict_by_feat(
+            *ret_dict, img_metas)
+        self.assertEqual(len(results_list_3d), 1, 'batch size should be 1')
+        self.assertEqual(results_list_2d, None,
+                         'there is no 2d result in fcos3d')
+        results = results_list_3d[0]
         pred_bboxes_3d = results.bboxes_3d
         pred_scores_3d = results.scores_3d
         pred_labels_3d = results.labels_3d

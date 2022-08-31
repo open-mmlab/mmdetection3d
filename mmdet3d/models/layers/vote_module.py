@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv import is_tuple_of
 from mmcv.cnn import ConvModule
+from mmengine import is_tuple_of
 from torch import nn as nn
 
 from mmdet3d.models.builder import build_loss

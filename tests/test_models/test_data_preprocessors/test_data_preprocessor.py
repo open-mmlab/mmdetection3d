@@ -34,59 +34,64 @@ class TestDet3DDataPreprocessor(TestCase):
 
         points = torch.randn((5000, 3))
         image = torch.randint(0, 256, (3, 11, 10)).float()
-        inputs_dict = dict(points=points, img=image)
+        inputs_dict = dict(points=[points], img=[image])
 
-        data = [{'inputs': inputs_dict, 'data_sample': Det3DDataSample()}]
-        inputs, data_samples = processor(data)
+        data = {'inputs': inputs_dict, 'data_samples': [Det3DDataSample()]}
+        out_data = processor(data)
+        batch_inputs, batch_data_samples = out_data['inputs'], out_data[
+            'data_samples']
 
-        self.assertEqual(inputs['imgs'].shape, (1, 3, 11, 10))
-        self.assertEqual(len(inputs['points']), 1)
-        self.assertEqual(len(data_samples), 1)
+        self.assertEqual(batch_inputs['imgs'].shape, (1, 3, 11, 10))
+        self.assertEqual(len(batch_inputs['points']), 1)
+        self.assertEqual(len(batch_data_samples), 1)
 
         # test image channel_conversion
         processor = Det3DDataPreprocessor(
             mean=[0., 0., 0.], std=[1., 1., 1.], bgr_to_rgb=True)
-        inputs, data_samples = processor(data)
-        self.assertEqual(inputs['imgs'].shape, (1, 3, 11, 10))
-        self.assertEqual(len(data_samples), 1)
+        out_data = processor(data)
+        batch_inputs, batch_data_samples = out_data['inputs'], out_data[
+            'data_samples']
+        self.assertEqual(batch_inputs['imgs'].shape, (1, 3, 11, 10))
+        self.assertEqual(len(batch_data_samples), 1)
 
         # test image padding
-        data = [{
+        data = {
             'inputs': {
-                'points': torch.randn((5000, 3)),
-                'img': torch.randint(0, 256, (3, 10, 11))
+                'points': [torch.randn((5000, 3)),
+                           torch.randn((5000, 3))],
+                'img': [
+                    torch.randint(0, 256, (3, 10, 11)),
+                    torch.randint(0, 256, (3, 9, 14))
+                ]
             }
-        }, {
-            'inputs': {
-                'points': torch.randn((5000, 3)),
-                'img': torch.randint(0, 256, (3, 9, 14))
-            }
-        }]
+        }
         processor = Det3DDataPreprocessor(
             mean=[0., 0., 0.], std=[1., 1., 1.], bgr_to_rgb=True)
-        inputs, data_samples = processor(data)
-        self.assertEqual(inputs['imgs'].shape, (2, 3, 10, 14))
-        self.assertIsNone(data_samples)
+        out_data = processor(data)
+        batch_inputs, batch_data_samples = out_data['inputs'], out_data[
+            'data_samples']
+        self.assertEqual(batch_inputs['imgs'].shape, (2, 3, 10, 14))
+        self.assertIsNone(batch_data_samples)
 
         # test pad_size_divisor
-        data = [{
+        data = {
             'inputs': {
-                'points': torch.randn((5000, 3)),
-                'img': torch.randint(0, 256, (3, 10, 11))
+                'points': [torch.randn((5000, 3)),
+                           torch.randn((5000, 3))],
+                'img': [
+                    torch.randint(0, 256, (3, 10, 11)),
+                    torch.randint(0, 256, (3, 9, 24))
+                ]
             },
-            'data_sample': Det3DDataSample()
-        }, {
-            'inputs': {
-                'points': torch.randn((5000, 3)),
-                'img': torch.randint(0, 256, (3, 9, 24))
-            },
-            'data_sample': Det3DDataSample()
-        }]
+            'data_samples': [Det3DDataSample()] * 2
+        }
         processor = Det3DDataPreprocessor(
             mean=[0., 0., 0.], std=[1., 1., 1.], pad_size_divisor=5)
-        inputs, data_samples = processor(data)
-        self.assertEqual(inputs['imgs'].shape, (2, 3, 10, 25))
-        self.assertEqual(len(data_samples), 2)
-        for data_sample, expected_shape in zip(data_samples, [(10, 15),
-                                                              (10, 25)]):
+        out_data = processor(data)
+        batch_inputs, batch_data_samples = out_data['inputs'], out_data[
+            'data_samples']
+        self.assertEqual(batch_inputs['imgs'].shape, (2, 3, 10, 25))
+        self.assertEqual(len(batch_data_samples), 2)
+        for data_sample, expected_shape in zip(batch_data_samples, [(10, 15),
+                                                                    (10, 25)]):
             self.assertEqual(data_sample.pad_shape, expected_shape)

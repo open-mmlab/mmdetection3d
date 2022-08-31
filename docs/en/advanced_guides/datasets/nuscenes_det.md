@@ -97,7 +97,6 @@ Next, we will elaborate on the details recorded in these info files.
 
 Here we only explain the data recorded in the training info files. The same applies to validation and testing set.
 
-TODO: Fix this @VVsssssk
 The core function to get `nuscenes_infos_xxx.pkl` and `nuscenes_infos_xxx_mono3d.coco.json` are [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L143) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/nuscenes_converter.py#L397), respectively.
 Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py) for more details.
 
@@ -179,7 +178,7 @@ It follows the general pipeline of 2D detection while differs in some details:
 An example to evaluate PointPillars with 8 GPUs with nuScenes metrics is as follows.
 
 ```shell
-bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8
+bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8 --eval bbox
 ```
 
 ## Metrics
@@ -223,7 +222,7 @@ You should modify the `jsonfile_prefix` in the `test_evaluator` filed of corresp
 Then run the command.
 
 ```shell
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py work_dirs/pp-nus/latest.pth 8
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py work_dirs/pp-nus/latest.pth 8 --out work_dirs/pp-nus/results_eval.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-nus/results_eval'
 ```
 
 Note that the testing info should be changed to that for testing set instead of validation set [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-3d.py#L132).

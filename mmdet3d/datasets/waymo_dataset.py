@@ -59,8 +59,7 @@ class WaymoDataset(KittiDataset):
             mono3d: take the groundtruth that can be seen in the cam.
         max_sweeps (int, optional): max sweep for each frame.
     """
-
-    CLASSES = ('Car', 'Pedestrian', 'Cyclist')
+    METAINFO = {'CLASSES': ('Car', 'Pedestrian', 'Cyclist')}
 
     def __init__(self,
                  data_root: str,
@@ -88,7 +87,7 @@ class WaymoDataset(KittiDataset):
         # set loading mode for different task settings
         self.cam_sync_instances = cam_sync_instances
         # construct self.cat_ids for vision-only anns parsing
-        self.cat_ids = range(len(self.CLASSES))
+        self.cat_ids = range(len(self.METAINFO['CLASSES']))
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.max_sweeps = max_sweeps
         self.task = task

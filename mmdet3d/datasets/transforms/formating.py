@@ -1,11 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Sequence, Union
 
-import mmcv
+import mmengine
 import numpy as np
 import torch
 from mmcv import BaseTransform
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 from numpy import dtype
 
 from mmdet3d.registry import TRANSFORMS
@@ -35,7 +35,7 @@ def to_tensor(
         if data.dtype is dtype('float64'):
             data = data.astype(np.float32)
         return torch.from_numpy(data)
-    elif isinstance(data, Sequence) and not mmcv.is_str(data):
+    elif isinstance(data, Sequence) and not mmengine.is_str(data):
         return torch.tensor(data)
     elif isinstance(data, int):
         return torch.LongTensor([data])
@@ -97,8 +97,8 @@ class Pack3DDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_sample' (obj:`Det3DDataSample`): The annotation info of the
-              sample.
+            - 'data_samples' (obj:`Det3DDataSample`): The annotation info of
+                the sample.
         """
         # augtest
         if isinstance(results, list):
@@ -131,8 +131,8 @@ class Pack3DDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_sample' (obj:`Det3DDataSample`): The annotation info of the
-              sample.
+            - 'data_samples' (obj:`Det3DDataSample`): The annotation info
+              of the sample.
         """
         # Format 3D data
         if 'points' in results:
@@ -213,7 +213,7 @@ class Pack3DDetInputs(BaseTransform):
             data_sample.eval_ann_info = None
 
         packed_results = dict()
-        packed_results['data_sample'] = data_sample
+        packed_results['data_samples'] = data_sample
         packed_results['inputs'] = inputs
 
         return packed_results

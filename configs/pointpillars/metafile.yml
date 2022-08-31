@@ -16,7 +16,7 @@ Collections:
 Models:
   - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car.py
     Metadata:
       Training Data: KITTI
       Training Memory (GB): 5.4
@@ -30,7 +30,7 @@ Models:
 
   - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py
     Metadata:
       Training Data: KITTI
       Training Memory (GB): 5.5
@@ -44,7 +44,7 @@ Models:
 
   - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 16.4
@@ -59,7 +59,7 @@ Models:
 
   - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py
+    Config: configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 16.3
@@ -74,7 +74,7 @@ Models:
 
   - Name: hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_8xb2-2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 12.2
@@ -89,7 +89,7 @@ Models:
 
   - Name: hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d.py
+    Config: configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 9.2
@@ -138,7 +138,7 @@ Models:
 
   - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-car.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py
     Metadata:
       Training Data: Waymo
       Training Memory (GB): 7.76
@@ -154,7 +154,7 @@ Models:
 
   - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymo-3d-3class.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-3class.py
     Metadata:
       Training Data: Waymo
       Training Memory (GB): 8.12

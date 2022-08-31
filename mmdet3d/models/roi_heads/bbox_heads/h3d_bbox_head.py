@@ -3,8 +3,8 @@ from typing import Dict, List, Optional, Tuple
 
 import torch
 from mmcv.cnn import ConvModule
-from mmengine import InstanceData
 from mmengine.model import BaseModule
+from mmengine.structures import InstanceData
 from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F

@@ -4,7 +4,7 @@ from concurrent import futures as futures
 from os import path as osp
 from pathlib import Path
 
-import mmcv
+import mmengine
 import numpy as np
 from PIL import Image
 from skimage import io
@@ -280,7 +280,7 @@ def get_kitti_image_info(path,
             plane_path = get_plane_path(idx, path, training, relative_path)
             if relative_path:
                 plane_path = str(root_path / plane_path)
-            lines = mmcv.list_from_file(plane_path)
+            lines = mmengine.list_from_file(plane_path)
             info['plane'] = np.array([float(i) for i in lines[3].split()])
 
         if annotations is not None:
@@ -501,8 +501,9 @@ class WaymoInfoGatherer:
     def gather(self, image_ids):
         if not isinstance(image_ids, list):
             image_ids = list(range(image_ids))
-        image_infos = mmcv.track_parallel_progress(self.gather_single,
-                                                   image_ids, self.num_worker)
+        image_infos = mmengine.track_parallel_progress(self.gather_single,
+                                                       image_ids,
+                                                       self.num_worker)
         return list(image_infos)
 
 

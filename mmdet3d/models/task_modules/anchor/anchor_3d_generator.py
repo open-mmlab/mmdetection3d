@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
+import mmengine
 import torch
 
 from mmdet3d.registry import TASK_UTILS
@@ -44,7 +44,7 @@ class Anchor3DRangeGenerator(object):
                  custom_values=(),
                  reshape_out=True,
                  size_per_range=True):
-        assert mmcv.is_list_of(ranges, list)
+        assert mmengine.is_list_of(ranges, list)
         if size_per_range:
             if len(sizes) != len(ranges):
                 assert len(ranges) == 1
@@ -52,7 +52,7 @@ class Anchor3DRangeGenerator(object):
             assert len(ranges) == len(sizes)
         else:
             assert len(ranges) == 1
-        assert mmcv.is_list_of(sizes, list)
+        assert mmengine.is_list_of(sizes, list)
         assert isinstance(scales, list)
 
         self.sizes = sizes

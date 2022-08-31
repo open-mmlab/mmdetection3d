@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 from mmcv.transforms.base import BaseTransform
-from mmengine.data import InstanceData
 from mmengine.registry import TRANSFORMS
+from mmengine.structures import InstanceData
 
 from mmdet3d.datasets import NuScenesDataset
 from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes
@@ -34,7 +34,10 @@ def _generate_nus_dataset_config():
         dict(type='Identity'),
     ]
     modality = dict(use_lidar=True, use_camera=True)
-    data_prefix = dict(pts='samples/LIDAR_TOP', img='samples/CAM_BACK_LEFT')
+    data_prefix = dict(
+        pts='samples/LIDAR_TOP',
+        img='samples/CAM_BACK_LEFT',
+        sweeps='sweeps/LIDAR_TOP')
     return data_root, ann_file, classes, data_prefix, pipeline, modality
 
 
