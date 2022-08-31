@@ -161,7 +161,8 @@ class TwoStage3DDetector(Base3DDetector):
                                              batch_data_samples)
 
         # connvert to Det3DDataSample
-        results_list = self.convert_to_datasample(results_list)
+        results_list = self.convert_to_datasample(batch_data_samples,
+                                                  results_list)
 
         return results_list
 

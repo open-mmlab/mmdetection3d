@@ -6,11 +6,19 @@ CommandLine:
 
 """
 import torch
+from mmengine import DefaultScope
 
 from mmdet3d.registry import TASK_UTILS
 
 
 def test_anchor_3d_range_generator():
+
+    import mmdet3d.models.task_modules
+
+    assert hasattr(mmdet3d.models.task_modules, 'Anchor3DRangeGenerator')
+    DefaultScope.get_instance(
+        'test_ancho3drange_generator', scope_name='mmdet3d')
+
     if torch.cuda.is_available():
         device = 'cuda'
     else:
@@ -44,6 +52,14 @@ def test_anchor_3d_range_generator():
 
 
 def test_aligned_anchor_generator():
+
+    import mmdet3d.models.task_modules
+
+    assert hasattr(mmdet3d.models.task_modules,
+                   'AlignedAnchor3DRangeGenerator')
+    DefaultScope.get_instance(
+        'test_aligned_ancho3drange_generator', scope_name='mmdet3d')
+
     if torch.cuda.is_available():
         device = 'cuda'
     else:
@@ -185,6 +201,14 @@ def test_aligned_anchor_generator():
 
 
 def test_aligned_anchor_generator_per_cls():
+
+    import mmdet3d.models.task_modules
+
+    assert hasattr(mmdet3d.models.task_modules,
+                   'AlignedAnchor3DRangeGeneratorPerCls')
+    DefaultScope.get_instance(
+        'test_ancho3drange_generator_percls', scope_name='mmdet3d')
+
     if torch.cuda.is_available():
         device = 'cuda'
     else:

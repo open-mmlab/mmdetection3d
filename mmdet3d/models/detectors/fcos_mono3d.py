@@ -1,6 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict
+
+from torch import Tensor
+
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from ...structures.det3d_data_sample import SampleList
 from .single_stage_mono3d import SingleStageMono3DDetector
 
 
@@ -43,3 +48,53 @@ class FCOSMono3D(SingleStageMono3DDetector):
             test_cfg=test_cfg,
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
+
+    def predict(self,
+                batch_inputs_dict: Dict[str, Tensor],
+                batch_data_samples: SampleList,
+                rescale: bool = True) -> SampleList:
+        """Predict results from a batch of inputs and data samples with post-
+        processing.
+
+        Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'imgs' keys
+
+                - imgs (torch.Tensor: Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`.
+            rescale (bool): Whether to rescale the results.
+                Defaults to True.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input. Each Det3DDataSample usually contains
+            'pred_instances_3d'. And the ``pred_instances_3d`` normally
+            contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instance, )
+            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+              (num_instances, C) where C >=7.
+
+            When there are 2D prediction in models, it should
+            contains  `pred_instances`, And the ``pred_instances`` normally
+            contains following keys.
+
+            - scores (Tensor): Classification scores of image, has a shape
+              (num_instance, )
+            - labels (Tensor): Predict Labels of 2D bboxes, has a shape
+              (num_instances, ).
+            - bboxes (Tensor): Contains a tensor with shape
+              (num_instances, 4).
+        """
+        x = self.extract_feat(batch_inputs_dict)
+        results_list, results_list_2d = self.bbox_head.predict(
+            x, batch_data_samples, rescale=rescale)
+        predictions = self.convert_to_datasample(batch_data_samples,
+                                                 results_list, results_list_2d)
+        return predictions

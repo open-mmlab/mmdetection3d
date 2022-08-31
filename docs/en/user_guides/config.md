@@ -1,4 +1,4 @@
-# Tutorial 1: Learn about Configs
+# Learn about Configs
 
 MMDetection3D and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.md). It has a modular and inheritance design, which is convenient to conduct various experiments.
 If you wish to inspect the config file, you may run `python tools/misc/print_config.py /PATH/TO/CONFIG` to see the complete config.
