@@ -48,7 +48,7 @@ Otherwise, you should refer to the step-by-step installation instructions in the
 ```shell
 pip install openmim
 mim install mmengine
-mim install mmcv-full>=2.0.0rc0
+mim install mmcv>=2.0.0rc0
 mim install mmdet>=3.0.0rc0
 git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
 cd mmdetection3d
@@ -60,7 +60,7 @@ pip install -e .
 ```shell
 pip install -U openmim
 mim install mmengine
-mim install mmcv-full>=2.0.0rc0
+mim install mmcv>=2.0.0rc0
 ```
 
 **Step 1.** Install [MMDetection](https://github.com/open-mmlab/mmdetection).
@@ -228,10 +228,10 @@ MMCV contains C++ and CUDA extensions, thus depending on PyTorch in a complex wa
 
 To install MMCV with pip instead of MIM, please follow [MMCV installation guides](https://mmcv.readthedocs.io/en/latest/get_started/installation.html). This requires manually specifying a find-url based on PyTorch version and its CUDA version.
 
-For example, the following command install mmcv-full built for PyTorch 1.10.x and CUDA 11.3.
+For example, the following command install mmcv built for PyTorch 1.10.x and CUDA 11.3.
 
 ```shell
-pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
+pip install mmcv -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
 ```
 
 ### Using MMDetection3D with Docker
@@ -263,7 +263,7 @@ conda install -c pytorch pytorch torchvision -y
 # install mmengine and mmcv
 pip install openmim
 mim install mmengine
-mim install mmcv-full>=2.0.0rc0
+mim install mmcv>=2.0.0rc0
 
 # install mmdetection
 mim install mmdet>=3.0.0rc0
