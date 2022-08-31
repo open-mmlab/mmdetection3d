@@ -20,6 +20,8 @@ def parse_args():
         '--work-dir',
         help='the directory to save the file containing evaluation metrics')
     parser.add_argument(
+        '--ceph', action='store_true', help='Use ceph as data storage backend')
+    parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
@@ -51,7 +53,9 @@ def main():
     # load config
     cfg = Config.fromfile(args.config)
 
-    cfg = replace_ceph_backend(cfg)
+    # TODO: We will unify the ceph support approach in OpenMMLab repos
+    if args.ceph:
+        cfg = replace_ceph_backend(cfg)
 
     cfg.launcher = args.launcher
     if args.cfg_options is not None:
