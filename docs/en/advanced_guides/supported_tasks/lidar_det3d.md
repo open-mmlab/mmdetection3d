@@ -47,7 +47,7 @@ mmdetection3d
 ## Training
 
 Then let us train a model with provided configs for PointPillars.
-You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#inference-with-existing-models) for sample scripts when training with different GPU settings.
+You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/1_exist_data_model.html) for sample scripts when training with different GPU settings.
 Suppose we use 8 GPUs on a single machine with distributed training:
 
 ```
@@ -99,4 +99,4 @@ MMDetection3D also provides versatile tools for visualization such that we can h
 You can either set the `--show'` option to visualize the detection results online during evaluation,
 or using `tools/misc/visualize_results.py` for offline visualization.
 Besides, we also provide scripts `tools/misc/browse_dataset.py` to visualize the dataset without inference.
-Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization).
+Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/dev-1.x/useful_tools.html#visualization).
