@@ -1,19 +1,7 @@
-Inference and train
-**************
-
 .. toctree::
    :maxdepth: 3
 
    1_exist_data_model.md
-   2_new_data_model.md
-
-Inference and train
-**************
-
-.. toctree::
-   :maxdepth: 3
-
-
    backends_support.md
    config.md
    coord_sys_tutorial.md
