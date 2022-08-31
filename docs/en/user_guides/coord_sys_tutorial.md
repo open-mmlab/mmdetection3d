@@ -1,4 +1,4 @@
-# Tutorial 6: Coordinate System
+# Coordinate System
 
 ## Overview
 

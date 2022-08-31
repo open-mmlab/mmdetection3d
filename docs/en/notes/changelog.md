@@ -1,4 +1,4 @@
-## Changelog
+# Changelog
 
 ### v1.0.0rc3 (8/6/2022)
 

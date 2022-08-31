@@ -1,73 +1,76 @@
-mmdet3d.core
+mmdet3d.apis
 --------------
-
-anchor
-^^^^^^^^^^
-.. automodule:: mmdet3d.core.anchor
-    :members:
-
-bbox
-^^^^^^^^^^
-.. automodule:: mmdet3d.core.bbox
-    :members:
-
-evaluation
-^^^^^^^^^^
-.. automodule:: mmdet3d.core.evaluation
-    :members:
-
-visualizer
-^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.core.visualizer
-    :members:
-
-voxel
-^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.core.voxel
-    :members:
-
-post_processing
-^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.core.post_processing
+.. automodule:: mmdet3d.apis
     :members:
 
 mmdet3d.datasets
-----------------
+--------------
 
+datasets
+^^^^^^^^^^
 .. automodule:: mmdet3d.datasets
     :members:
 
-mmdet3d.models
+
+transforms
+^^^^^^^^^^^^
+.. automodule:: mmdet3d.datasets.transforms
+    :members:
+
+mmdet3d.engine
 --------------
 
-detectors
+schedulers
 ^^^^^^^^^^
-.. automodule:: mmdet3d.models.detectors
+.. automodule:: mmdet3d.engine.schedulers
     :members:
+
+mmdet3d.evaluation
+--------------
+
+functional
+^^^^^^^^^^
+.. automodule:: mmdet3d.engine.functional
+    :members:
+
+metrics
+^^^^^^^^^^
+.. automodule:: mmdet3d.engine.metrics
+    :members:
+
+
+mmdet3d.models
+--------------
 
 backbones
 ^^^^^^^^^^
 .. automodule:: mmdet3d.models.backbones
     :members:
 
-necks
+data_preprocessors
 ^^^^^^^^^^
-.. automodule:: mmdet3d.models.necks
+.. automodule:: mmdet3d.models.data_preprocessors
     :members:
+
+decode_heads
+^^^^^^^^^^^^
+.. automodule:: mmdet3d.models.decode_heads
+    :members:
+
 
 dense_heads
 ^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.dense_heads
     :members:
 
-roi_heads
+detectors
 ^^^^^^^^^^
-.. automodule:: mmdet3d.models.roi_heads
+.. automodule:: mmdet3d.models.detectors
     :members:
 
-fusion_layers
-^^^^^^^^^^^^^
-.. automodule:: mmdet3d.models.fusion_layers
+layers
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.layers
     :members:
 
 losses
@@ -76,11 +79,74 @@ losses
     :members:
 
 middle_encoders
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.middle_encoders
     :members:
 
-model_utils
-^^^^^^^^^^^^^
-.. automodule:: mmdet3d.models.model_utils
+necks
+^^^^^^^^^^^^
+.. automodule:: mmdet3d.models.necks
+    :members:
+
+roi_heads
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.roi_heads
+    :members:
+
+segmentors
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.segmentors
+    :members:
+
+task_modules
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.task_modules
+    :members:
+
+test_time_augs
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.test_time_augs
+    :members:
+
+utils
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.utils
+    :members:
+
+voxel_encoders
+^^^^^^^^^^
+.. automodule:: mmdet3d.models.voxel_encoders
+    :members:
+
+mmdet3d.structures
+--------------
+
+structures
+^^^^^^^^^^
+.. automodule:: mmdet3d.structures
+    :members:
+
+bbox_3d
+^^^^^^^^^^
+.. automodule:: mmdet3d.structures.bbox_3d
+    :members:
+
+ops
+^^^^^^^^^^
+.. automodule:: mmdet3d.structures.ops
+    :members:
+
+points
+^^^^^^^^^^
+.. automodule:: mmdet3d.structures.points
+    :members:
+
+mmdet3d.utils
+--------------
+.. automodule::mmdet3d.utils
+    :members:
+
+mmdet3d.visulization
+--------------
+.. automodule::mmdet3d.visulization
     :members:
