@@ -3,7 +3,7 @@
 MMDetection3D and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.md). It has a modular and inheritance design, which is convenient to conduct various experiments.
 If you wish to inspect the config file, you may run `python tools/misc/print_config.py /PATH/TO/CONFIG` to see the complete config.
 
-## Config file content
+## Config File Content
 
 MMDetection3D uses a modular design, all modules with different functions can be configured through the config. Taking PointPillars as an example, we will introduce each field in the config according to different function modules:
 
@@ -453,7 +453,7 @@ The configs that are composed by components from `_base_` are called _primitive_
 For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
 
 For easy understanding, we recommend contributors to inherit from exiting methods.
-For example, if some modification is made based on PointPillars, user may first inherit the basic PointPillars structure by specifying `_base_ = ../pointpillars/pointpillars_hv_fpn_sbn-all_8xb4_2x_nus-3d.py`, then modify the necessary fields in the config files.
+For example, if some modification is made based on PointPillars, user may first inherit the basic PointPillars structure by specifying `_base_ = ../pointpillars/pointpillars_hv_fpn_sbn-all_8xb4_2x_nus-3d.py`, and then modify the necessary fields in the config files.
 
 If you are building an entirely new method that does not share the structure with any of the existing methods, you may create a folder `xxx_rcnn` under `configs`,
 
@@ -576,7 +576,7 @@ _base_ = './pointpillars_hv_secfpn_8xb6_160e_kitti-3d-3class.py'
 a = {{_base_.model}} # variable `a` is equal to the `model` defined in `_base_`
 ```
 
-## Modify config through script arguments
+## Modify Config Through Script Arguments
 
 When submitting jobs using "tools/train.py" or "tools/test.py", you may specify `--cfg-options` to in-place modify the config.
 
@@ -597,7 +597,7 @@ When submitting jobs using "tools/train.py" or "tools/test.py", you may specify 
   change the mean values, you may specify `--cfg-options model.data_preprocessor.mean="[127,127,127]"`. Note that the quotation mark `"` is necessary to
   support list/tuple data types, and that **NO** white space is allowed inside the quotation marks in the specified value.
 
-## Config name style
+## Config Name Style
 
 We follow the below style to name config files. Contributors are advised to follow the same style.
 
@@ -608,12 +608,12 @@ We follow the below style to name config files. Contributors are advised to foll
 The file name is divided to five parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`.
 
 - `{algorithm name}`: The name of the algorithm. It can be a detector name such as `pointpillars`, `fcos3d`, etc.
-- `{model component names}`: Names of the components used in the algorithm such as voxel_encoder, backbone, neck, etc. For example, `second_secfpn_head-dcn-circlenms` means using Second's SparseEncoder, SECONDFPN and detection head with used dcn and circle nms in the algorithm.
+- `{model component names}`: Names of the components used in the algorithm such as voxel_encoder, backbone, neck, etc. For example, `second_secfpn_head-dcn-circlenms` means using SECOND's SparseEncoder, SECONDFPN and a detection head with DCN and circle NMS in the algorithm.
 - `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb4-tta-cyclic-20e` means using 8-gpus x 4-samples-per-gpu, test time augmentation, cyclic annealing learning rate, and train 20 epochs.
   Some abbreviations:
   - `{gpu x batch_per_gpu}`: GPUs and samples per GPU. `bN` indicates N batch size per GPU. E.g. `4xb4` is the short term of 4-gpus x 4-samples-per-gpu.
   - `{schedule}`: training schedule, options are `schedule-2x`, `schedule-3x`, `cyclic-20e`, etc.
-    `schedule-2x` and `schedule-3x` means 24 epochs and 36 epochs respectively.
+    `schedule-2x` and `schedule-3x` mean 24 epochs and 36 epochs respectively.
     `cyclic-20e` means 20 epochs respectively.
 - `{training dataset information}`: Training dataset names like `kitti-3d-3class`, `nus-3d`, `s3dis-seg`, `scannet-seg`, `waymoD5-3d-car`. Here `3d` means dataset used for 3d object detection, and `seg` means dataset used for point cloud segmentation.
 - `{testing dataset information}` (optional): Testing dataset name for models trained on one dataset but tested on another. If not mentioned, it means the model was trained and tested on the same dataset type.
