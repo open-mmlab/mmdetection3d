@@ -194,7 +194,7 @@ test_evaluator = dict(
     submission_prefix='results/kitti-3class/kitti_results')
 ```
 
-- And then, you can run the test script directly.
+- And then, you can run the test script.
 
 ```shell
 mkdir -p results/kitti-3class
@@ -202,4 +202,12 @@ mkdir -p results/kitti-3class
 ./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
-- After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.
+- Or you can use `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command, and run test script directly.
+
+```shell
+mkdir -p results/kitti-3class
+
+./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
+```
+
+After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.
