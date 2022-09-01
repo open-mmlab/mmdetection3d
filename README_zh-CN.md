@@ -89,7 +89,6 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 我们激动地宣布 MMDetection3D 1.1.0rc0 版本发布。
 
-Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 更多细节和版本发布历史可以参考[changelog.md](docs/en/notes/changelog.md).
 
 ## 基准测试和模型库
