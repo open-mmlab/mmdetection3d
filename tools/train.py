@@ -30,6 +30,8 @@ def parse_args():
         action='store_true',
         help='resume from the latest checkpoint in the work_dir automatically')
     parser.add_argument(
+        '--ceph', action='store_true', help='Use ceph as data storage backend')
+    parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
@@ -60,7 +62,9 @@ def main():
     # load config
     cfg = Config.fromfile(args.config)
 
-    cfg = replace_ceph_backend(cfg)
+    # TODO: We will unify the ceph support approach with other OpenMMLab repos
+    if args.ceph:
+        cfg = replace_ceph_backend(cfg)
 
     cfg.launcher = args.launcher
     if args.cfg_options is not None:
