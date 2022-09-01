@@ -4,7 +4,7 @@ In this section we demonstrate how to prepare an environment with PyTorch.
 MMDection3D works on Linux, Windows (experimental support) and macOS and requires the following packages:
 
 - Python 3.6+
-- PyTorch 1.3+
+- PyTorch 1.6+
 - CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
 - GCC 5+
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
@@ -47,55 +47,49 @@ Otherwise, you should refer to the step-by-step installation instructions in the
 
 ```shell
 pip install openmim
-mim install mmcv-full
-mim install mmdet
-mim install mmsegmentation
-git clone https://github.com/open-mmlab/mmdetection3d.git
+mim install mmengine
+mim install mmcv>=2.0.0rc0
+mim install mmdet>=3.0.0rc0
+git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
 cd mmdetection3d
 pip install -e .
 ```
 
-**Step 0.** Install [MMCV](https://github.com/open-mmlab/mmcv) using [MIM](https://github.com/open-mmlab/mim).
+**Step 0.** Install [MMEngine](https://github.com/open-mmlab/mmengine) and [MMCV](https://github.com/open-mmlab/mmcv) using [MIM](https://github.com/open-mmlab/mim).
+
+```shell
+pip install -U openmim
+mim install mmengine
+mim install mmcv>=2.0.0rc0
+```
 
 **Step 1.** Install [MMDetection](https://github.com/open-mmlab/mmdetection).
 
 ```shell
-pip install mmdet
+mim install mmdet>=3.0.0rc0
 ```
 
 Optionally, you could also build MMDetection from source in case you want to modify the code:
 
 ```shell
-git clone https://github.com/open-mmlab/mmdetection.git
+git clone https://github.com/open-mmlab/mmdetection.git -b dev-3.x
+# "-b dev-3.x" means checkout to the `dev-3.x` branch.
 cd mmdetection
-git checkout v2.24.0  # switch to v2.24.0 branch
-pip install -r requirements/build.txt
-pip install -v -e .  # or "python setup.py develop"
+pip install -v -e .
+# "-v" means verbose, or more output
+# "-e" means installing a project in editable mode,
+# thus any local modifications made to the code will take effect without reinstallation.
 ```
 
-**Step 2.** Install [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).
+**Step 2.** Clone the MMDetection3D repository.
 
 ```shell
-pip install mmsegmentation
-```
-
-Optionally, you could also build MMSegmentation from source in case you want to modify the code:
-
-```shell
-git clone https://github.com/open-mmlab/mmsegmentation.git
-cd mmsegmentation
-git checkout v0.20.0  # switch to v0.20.0 branch
-pip install -e .  # or "python setup.py develop"
-```
-
-**Step 3.** Clone the MMDetection3D repository.
-
-```shell
-git clone https://github.com/open-mmlab/mmdetection3d.git
+git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
+# "-b dev-1.x" means checkout to the `dev-1.x` branch.
 cd mmdetection3d
 ```
 
-**Step 4.** Install build requirements and then install MMDetection3D.
+**Step 3.** Install build requirements and then install MMDetection3D.
 
 ```shell
 pip install -v -e .  # or "python setup.py develop"
@@ -156,7 +150,7 @@ python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device 
 Examples:
 
 ```shell
-python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
+python demo/pcd_demo.py demo/data/kitti/000008.bin configs/second/second_hv-secfpn_8xb6-80e_kitti-3d-car.py checkpoints/second_hv-secfpn_8xb6-80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
 
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
@@ -218,16 +212,26 @@ Please make sure the GPU driver satisfies the minimum version requirements. See 
 Installing CUDA runtime libraries is enough if you follow our best practices, because no CUDA code will be compiled locally. However if you hope to compile MMCV from source or develop other CUDA operators, you need to install the complete CUDA toolkit from NVIDIA's [website](https://developer.nvidia.com/cuda-downloads), and its version should match the CUDA version of PyTorch. i.e., the specified version of cudatoolkit in `conda install` command.
 ```
 
+### Install MMEngine without MIM
+
+To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmcv.readthedocs.io/en/latest/get_started/installation.html).
+
+For example, you can install MMEngine by the following command.
+
+```shell
+pip install mmengine
+```
+
 ### Install MMCV without MIM
 
 MMCV contains C++ and CUDA extensions, thus depending on PyTorch in a complex way. MIM solves such dependencies automatically and makes the installation easier. However, it is not a must.
 
 To install MMCV with pip instead of MIM, please follow [MMCV installation guides](https://mmcv.readthedocs.io/en/latest/get_started/installation.html). This requires manually specifying a find-url based on PyTorch version and its CUDA version.
 
-For example, the following command install mmcv-full built for PyTorch 1.10.x and CUDA 11.3.
+For example, the following command install mmcv built for PyTorch 1.10.x and CUDA 11.3.
 
 ```shell
-pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
+pip install mmcv -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
 ```
 
 ### Using MMDetection3D with Docker
@@ -250,25 +254,24 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 Here is a full script for setting up MMdetection3D with conda.
 
 ```shell
-conda create -n open-mmlab python=3.7 -y
+conda create -n open-mmlab python=3.8 -y
 conda activate open-mmlab
 
 # install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
 conda install -c pytorch pytorch torchvision -y
 
-# install mmcv
-pip install mmcv-full
+# install mmengine and mmcv
+pip install openmim
+mim install mmengine
+mim install mmcv>=2.0.0rc0
 
 # install mmdetection
-pip install git+https://github.com/open-mmlab/mmdetection.git
-
-# install mmsegmentation
-pip install git+https://github.com/open-mmlab/mmsegmentation.git
+mim install mmdet>=3.0.0rc0
 
 # install mmdetection3d
-git clone https://github.com/open-mmlab/mmdetection3d.git
+git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
 cd mmdetection3d
-pip install -v -e .
+pip install -e .
 ```
 
 ## Trouble shooting
