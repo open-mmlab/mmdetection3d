@@ -79,7 +79,7 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
   - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
+    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, w, h, yaw) order.
     - info\['instances'\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
     - info\['instances'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2.).
     - info\['instances'\]\['num_lidar_pts'\]: Number of lidar points included in each 3D bounding box.
@@ -93,9 +93,14 @@ mmdetection3d
     - info\['cam_instances'\]\['CAM_XXX'\]\['depth'\]: The depth of projected center.
     - info\['cam_instances'\]\['CAM_XXX'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2,).
     - info\['cam_instances'\]\['CAM_XXX'\]\['attr_label'\]: The attr label of instance. We maintain a default attribute collection and mapping for attribute classification.
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_3d'\]: 3D bounding box (gravity) center location (3), size (3), (global) yaw angle (1), 1x7 list.
+    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, h, w, yaw) order.
 
-Here we only explain the data recorded in the training info files. The same applies to validation and testing set.
+Note:
+
+1. The differences between  `bbox_3d` in `instances`  and it in `cam_instances`.
+   Both `bbox_3d`  have been converted to MMDet3D coordinate system, but `bboxes_3d` in `instances` is in LiDAR coordinate format and `bboxes_3d` in `cam_instances` is in Camera coordinate format. Mind the difference between them in 3D Box representation ('l, w, h' and 'l, h, w').
+
+2. Here we only explain the data recorded in the training info files. The same applies to validation and testing set (the pkl of test set does not contains `instances` and `cam_instances`).
 
 The core function to get `nuscenes_infos_xxx.pkl` are  [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L397), respectively.
 Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py) for more details.
@@ -113,11 +118,11 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        file_client_args=file_client_args),
+        ),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
-        file_client_args=file_client_args),
+        ),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',
@@ -155,7 +160,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
@@ -178,7 +183,7 @@ It follows the general pipeline of 2D detection while differs in some details:
 An example to evaluate PointPillars with 8 GPUs with nuScenes metrics is as follows.
 
 ```shell
-bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8 ----cfg-options "test_evaluator.metric='bbox'"
+bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth 8
 ```
 
 ## Metrics
@@ -217,13 +222,13 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 An example to test PointPillars on nuScenes with 8 GPUs and generate a submission to the leaderboard is as follows.
 
-You should modify the `jsonfile_prefix` in the `test_evaluator` filed of corresponding configuration. for example, adding `test_evaluator = dict(type='NuScenesMetric', jsonfile_prefix='work_dirs/pp-nus/results_eval.json')` or using `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command.
+You should modify the `jsonfile_prefix` in the `test_evaluator` of corresponding configuration. for example, adding `test_evaluator = dict(type='NuScenesMetric', jsonfile_prefix='work_dirs/pp-nus/results_eval.json')` or using `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command.
 
 ```shell
 ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py work_dirs/pp-nus/latest.pth 8 --cfg-options 'test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval'
 ```
 
-Note that the testing info should be changed to that for testing set instead of validation set [here](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-3d.py#L132).
+Note that the testing info should be changed to that for testing set instead of validation set [here](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/nus-3d.py#L132).
 
 After generating the `work_dirs/pp-nus/results_eval.json`, you can compress it and submit it to nuScenes benchmark. Please refer to the [nuScenes official website](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) for more information.
 
