@@ -6,16 +6,16 @@ We are excited to announce the release of MMDetection3D 1.1.0rc0.
 MMDet3D 1.1.0rc0 is the first version of MMDetection3D 1.1.x, a part of the OpenMMLab 2.0 projects.
 Built upon the new [training engine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x),
 MMDet3D 1.1.x unifies the interfaces of dataset, models, evaluation, and visualization with faster training and testing speed.
-It also provides a standard protocol for different datasets, modalities and tasks.
+It also provides a standard data protocol for different datasets, modalities, and tasks for 3D perception.
 We will support more strong baselines in the future release, with our latest exploration on camera-only 3D detection from videos.
 
 ### Highlights
 
-1. **New engines**. MMDet3D 1.1.x is based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x), which provides a universal and powerful runner that allows more flexible customizations and significantly simplifies the entrypoints of high-level interfaces.
+1. **New engines**. MMDet3D 1.1.x is based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x), which provides a universal and powerful runner that allows more flexible customizations and significantly simplifies the entry points of high-level interfaces.
 
 2. **Unified interfaces**. As a part of the OpenMMLab 2.0 projects, MMDet3D 1.1.x unifies and refactors the interfaces and internal logics of train, testing, datasets, models, evaluation, and visualization. All the OpenMMLab 2.0 projects share the same design in those interfaces and logics to allow the emergence of multi-task/modality algorithms.
 
-3. **Standard protocol for all the datasets and modalities**. In addition to unified base datasets inherited from MMEngine, we also define the common keys across different datasets and unify all the info files with a standard protocol. It significantly simplifies the usage of multiple datasets and data modalities and paves the way for dataset customization. Please refer to the documentation of customized datasets for details.
+3. **Standard data protocol for all the datasets, modalities, and tasks for 3D perception**. Based on the unified base datasets inherited from MMEngine, we also design a standard data protocol that defines and unifies the common keys across different datasets, tasks, and modalities. It significantly simplifies the usage of multiple datasets and data modalities for multi-task frameworks and eases dataset customization. Please refer to the [documentation of customized datasets](../advanced_guides/customize_dataset.md) for details.
 
 4. **Strong baselines**. We will release strong baselines of many popular models to enable fair comparisons among state-of-the-art models.
 
@@ -37,7 +37,7 @@ Users can also refer to the [compatibility documentation](./compatibility.md) an
 
 #### Training and testing
 
-- MMDet3D 1.1.x uses Runner in [MMEngine](https://github.com/open-mmlab/mmengine) rather than that in MMCV. The new Runner implements and unifies the building logic of dataset, model, evaluation, and visualizer. Therefore, MMDet3D 1.1.x no longer relies on the building logics of those modules in `mmdet.train.apis` and `tools/train.py`. Those code have been migrated into [MMEngine](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/runner.py). Please refer to the [migration guide of Runner in MMEngine](https://mmengine.readthedocs.io/en/latest/migration/runner.html) for more details.
+- MMDet3D 1.1.x uses Runner in [MMEngine](https://github.com/open-mmlab/mmengine) rather than that in MMCV. The new Runner implements and unifies the building logic of dataset, model, evaluation, and visualizer. Therefore, MMDet3D 1.1.x no longer relies on the building logics of those modules in `mmdet3d.train.apis` and `tools/train.py`. Those code have been migrated into [MMEngine](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/runner.py). Please refer to the [migration guide of Runner in MMEngine](https://mmengine.readthedocs.io/en/latest/migration/runner.html) for more details.
 - The Runner in MMEngine also supports testing and validation. The testing scripts are also simplified, which has similar logic as that in training scripts to build the runner.
 - The execution points of hooks in the new Runner have been enriched to allow more flexible customization. Please refer to the [migration guide of Hook in MMEngine](https://mmengine.readthedocs.io/en/latest/migration/hook.html) for more details.
 - Learning rate and momentum scheduling has been migrated from Hook to [Parameter Scheduler in MMEngine](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). Please refer to the [migration guide of Parameter Scheduler in MMEngine](https://mmengine.readthedocs.io/en/latest/migration/param_scheduler.html) for more details.
@@ -73,7 +73,7 @@ Users can refer to [the tutorial of model in MMengine](https://mmengine.readthed
 Accordingly, there are several changes as the following:
 
 - The model interfaces, including the input and output formats, are significantly simplified and unified following the new convention in MMDet3D 1.1.x.
-  Specifically, all the input data in training and testing are packed into `inputs` and `data_samples`, where `inputs` contains model inputs like a list of image tensors, and `data_samples` contains other information of the current data sample such as ground truths, region proposals, and model predictions. In this way, different tasks in MMDet3D 1.1.x can share the same input arguments, which makes the models more general and suitable for multi-task learning and some flexible training paradigms like semi-supervised learning.
+  Specifically, all the input data in training and testing are packed into `inputs` and `data_samples`, where `inputs` contains model inputs like a dict contain a list of image tensors and the point cloud data, and `data_samples` contains other information of the current data sample such as ground truths, region proposals, and model predictions. In this way, different tasks in MMDet3D 1.1.x can share the same input arguments, which makes the models more general and suitable for multi-task learning and some flexible training paradigms like semi-supervised learning.
 - The model has a data preprocessor module, which are used to pre-process the input data of model. In MMDet3D 1.1.x, the data preprocessor usually does necessary steps to form the input images into a batch, such as padding. It can also serve as a place for some special data augmentations or more efficient data transformations like normalization.
 - The internal logic of model have been changed. In MMDet3D 1.1.x, model uses `forward_train`, `forward_test`, `simple_test`, and `aug_test` to deal with different model forward logics. In MMDet3D 1.1.x and OpenMMLab 2.0, the forward function has three modes: 'loss', 'predict', and 'tensor' for training, inference, and tracing or other purposes, respectively.
   The forward function calls `self.loss`, `self.predict`, and `self._forward` given the modes 'loss', 'predict', and 'tensor', respectively.
@@ -86,7 +86,7 @@ Users can build evaluator in MMDet3D 1.1.x to conduct offline evaluation, i.e., 
 
 #### Visualization
 
-The functions of visualization in MMDet3D 1.1.x are removed. Instead, in OpenMMLab 2.0 projects, we use [Visualizer](https://mmengine.readthedocs.io/en/latest/design/visualization.html) to visualize data. MMDet3D 1.1.x implements `Det3DLocalVisualizer` to allow visualization of ground truths, model predictions, and feature maps, etc., at any place. It also supports to send the visualization data to any external visualization backends such as Tensorboard.
+The functions of visualization in MMDet3D 1.1.x are removed. Instead, in OpenMMLab 2.0 projects, we use [Visualizer](https://mmengine.readthedocs.io/en/latest/design/visualization.html) to visualize data. MMDet3D 1.1.x implements `Det3DLocalVisualizer` to allow visualization of 2D and 3D data, ground truths, model predictions, and feature maps, etc., at any place. It also supports to send the visualization data to any external visualization backends such as Tensorboard.
 
 ### Planned changes
 
