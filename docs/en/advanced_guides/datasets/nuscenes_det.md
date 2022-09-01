@@ -97,7 +97,7 @@ mmdetection3d
 
 Note:
 
-1. The differences between  `bbox_3d` in `instances`  and it in `cam_instances`.
+1. The differences between  `bbox_3d` in `instances`  and that in `cam_instances`.
    Both `bbox_3d`  have been converted to MMDet3D coordinate system, but `bboxes_3d` in `instances` is in LiDAR coordinate format and `bboxes_3d` in `cam_instances` is in Camera coordinate format. Mind the difference between them in 3D Box representation ('l, w, h' and 'l, h, w').
 
 2. Here we only explain the data recorded in the training info files. The same applies to validation and testing set (the pkl of test set does not contains `instances` and `cam_instances`).
