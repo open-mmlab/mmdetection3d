@@ -232,7 +232,7 @@ scannet
   - info\['lidar_points'\]\['pts_instance_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
   - info\['lidar_points'\]\['axis_align_matrix'\]: The transformation matrix to align the axis.
   - info\['instances'\]: A list of dict contains all annotations, each dict contains all annotation information of single instance.
-    - info\['instances'\]\[i\]\['bbox_3d'\]: The axis-aligned 3D bounding boxes in depth coordinate system, each bounding box is (x, y, z, x_size, y_size, z_size), shape: \[K, 6\].
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 6 numbers representing the axis-aligned 3D bounding box of the instance in depth coordinate system, in (x, y, z, l, w, h) order.
     - info\['instances'\]\[i\]\['bbox_label_3d'\]: The label of each 3d bounding boxes.
 - `scannet_infos_val.pkl`: The val data infos, which shares the same format as `scannet_infos_train.pkl`.
 - `scannet_infos_test.pkl`: The test data infos, which almost shares the same format as `scannet_infos_train.pkl` except for the lack of annotation.
@@ -257,10 +257,7 @@ train_pipeline = [
         with_seg_3d=True),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39),
-        max_cat_id=40),
+        type='PointSegClassMapping'),
     dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
