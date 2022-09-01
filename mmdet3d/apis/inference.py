@@ -137,6 +137,7 @@ def inference_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
+    result_list = []
     data = []
     for pcd in pcds:
         # prepare data
@@ -158,15 +159,21 @@ def inference_detector(model: nn.Module,
                 box_mode_3d=box_mode_3d)
         data_ = test_pipeline(data_)
         data.append(data_)
+        print(data_)
 
-    # forward the model
-    with torch.no_grad():
-        results = model.test_step(data)
+        data_['inputs'] = [data_['inputs']]
+        data_['data_samples'] = [data_['data_samples']]
+
+        # forward the model
+        with torch.no_grad():
+            results = model.test_step(data_)[0]
+
+        result_list.append(results)
 
     if not is_batch:
-        return results[0], data[0]
+        return result_list[0], data[0]
     else:
-        return results, data
+        return result_list, data
 
 
 def inference_multi_modality_detector(model: nn.Module,
