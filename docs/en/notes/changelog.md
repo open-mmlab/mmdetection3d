@@ -4,14 +4,14 @@
 
 We are excited to announce the release of MMDetection3D 1.1.0rc0.
 MMDet3D 1.1.0rc0 is the first version of MMDetection3D 1.1.x, a part of the OpenMMLab 2.0 projects.
-Built upon the new [training engine](https://github.com/open-mmlab/mmengine),
+Built upon the new [training engine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x),
 MMDet3D 1.1.x unifies the interfaces of dataset, models, evaluation, and visualization with faster training and testing speed.
 It also provides a standard protocol for different datasets, modalities and tasks.
 We will support more strong baselines in the future release, with our latest exploration on camera-only 3D detection from videos.
 
 ### Highlights
 
-1. **New engines**. MMDet3D 1.1.x is based on [MMEngine](https://github.com/open-mmlab/mmengine), which provides a universal and powerful runner that allows more flexible customizations and significantly simplifies the entrypoints of high-level interfaces.
+1. **New engines**. MMDet3D 1.1.x is based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x), which provides a universal and powerful runner that allows more flexible customizations and significantly simplifies the entrypoints of high-level interfaces.
 
 2. **Unified interfaces**. As a part of the OpenMMLab 2.0 projects, MMDet3D 1.1.x unifies and refactors the interfaces and internal logics of train, testing, datasets, models, evaluation, and visualization. All the OpenMMLab 2.0 projects share the same design in those interfaces and logics to allow the emergence of multi-task/modality algorithms.
 
@@ -23,7 +23,7 @@ We will support more strong baselines in the future release, with our latest exp
 
 ### Breaking Changes
 
-MMDet3D 1.1.x has gone through big changes to have better design, higher efficiency, more flexibility, and more unified interfaces.
+MMDet3D 1.1.x has undergone significant changes to have better design, higher efficiency, more flexibility, and more unified interfaces.
 Besides the changes of API, we briefly list the major breaking changes in this section.
 We will update the [migration guide](../migration.md) to provide complete details and migration instructions.
 Users can also refer to the [compatibility documentation](./compatibility.md) and [API doc](https://mmdetection3d.readthedocs.io/en/1.1.x/) for more details.
@@ -33,6 +33,7 @@ Users can also refer to the [compatibility documentation](./compatibility.md) an
 - MMDet3D 1.1.x runs on PyTorch>=1.6. We have deprecated the support of PyTorch 1.5 to embrace the mixed precision training and other new features since PyTorch 1.6. Some models can still run on PyTorch 1.5, but the full functionality of MMDet3D 1.1.x is not guaranteed.
 - MMDet3D 1.1.x relies on MMEngine to run. MMEngine is a new foundational library for training deep learning models of OpenMMLab and are widely depended by OpenMMLab 2.0 projects. The dependencies of file IO and training are migrated from MMCV 1.x to MMEngine.
 - MMDet3D 1.1.x relies on MMCV>=2.0.0rc0. Although MMCV no longer maintains the training functionalities since 2.0.0rc0, MMDet3D 1.1.x relies on the data transforms, CUDA operators, and image processing interfaces in MMCV. Note that the package `mmcv` is the version that provides pre-built CUDA operators and `mmcv-lite` does not since MMCV 2.0.0rc0, while `mmcv-full` has been deprecated since 2.0.0rc0.
+- MMDet3D 1.1.x is based on MMDet 3.x, which is also a part of OpenMMLab 2.0 projects.
 
 #### Training and testing
 
@@ -95,5 +96,5 @@ We list several planned changes of MMDet3D 1.1.0rc0 so that the community could 
 2. Inference interfaces: a unified inference interfaces will be supported in the future to ease the use of released models.
 3. Interfaces of useful tools that can be used in notebook: more useful tools that implemented in the `tools` directory will have their python interfaces so that they can be used through notebook and in downstream libraries.
 4. Documentation: we will add more design docs, tutorials, and migration guidance so that the community can deep dive into our new design, participate the future development, and smoothly migrate downstream libraries to MMDet3D 1.1.x.
-5. Wandb visualization: MMDet 2.x supports data visualization since v2.25.0, which has not been migrated to MMDet 3.x for now. Since Wandb provides strong visualization and experiment management capabilities, a `DetWandbVisualizer` and maybe a hook are planned to fully migrated those functionalities in MMDet 2.x. Accordingly, MMDet3D 1.1.x also plans to integrate strong visualization interfaces from Wandb.
-6. Will support recent new features added in MMDet3D 1.0.x and our recent exploration on camera-only 3D detection from videos: we will help refactor these models and support them with benchmarks and models soon.
+5. Wandb visualization: MMDet 2.x supports data visualization since v2.25.0, which has not been migrated to MMDet 3.x for now. Since Wandb provides strong visualization and experiment management capabilities, a `DetWandbVisualizer` and maybe a hook are planned to fully migrated those functionalities in MMDet 2.x and a `Det3DWandbVisualizer` will be supported in MMDet3D 1.1.x accordingly.
+6. Will support recent new features added in MMDet3D 1.0.x and our recent exploration on camera-only 3D detection from videos: we will refactor these models and support them with benchmarks and models soon.
