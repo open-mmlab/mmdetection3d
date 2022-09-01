@@ -1,6 +1,6 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 
-__version__ = '1.1rc0'
+__version__ = '1.1.0rc0'
 short_version = __version__
 
 

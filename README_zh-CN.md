@@ -26,7 +26,7 @@
 
 **新闻**:
 
-**v1.1rc0** 版本已经在 2022.9.1 发布：
+**v1.1.0rc0** 版本已经在 2022.9.1 发布：
 
 - 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 和 [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 通过一个标准的数据格式定义和统一了不同数据集的通用内容。
@@ -82,7 +82,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-MMDetection3D 1.1rc0，MMDet3D 在 OpenMMLab 2.0 项目中的首个版本发布。
+MMDetection3D 1.1.0rc0，MMDet3D 在 OpenMMLab 2.0 项目中的首个版本发布。
 
 更多细节和版本发布历史可以参考[changelog.md](docs/en/notes/changelog.md).
 
