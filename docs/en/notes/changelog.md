@@ -1,9 +1,9 @@
 # Changelog of v1.1
 
-### v1.1.0rc0 (1/9/2022)
+### v1.1rc0 (1/9/2022)
 
-We are excited to announce the release of MMDetection3D 1.1.0rc0.
-MMDet3D 1.1.0rc0 is the first version of MMDetection3D 1.1, a part of the OpenMMLab 2.0 projects.
+We are excited to announce the release of MMDetection3D 1.1rc0.
+MMDet3D 1.1rc0 is the first version of MMDetection3D 1.1, a part of the OpenMMLab 2.0 projects.
 Built upon the new [training engine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x),
 MMDet3D 1.1 unifies the interfaces of dataset, models, evaluation, and visualization with faster training and testing speed.
 It also provides a standard data protocol for different datasets, modalities, and tasks for 3D perception.
@@ -90,7 +90,7 @@ The functions of visualization in MMDet3D 1.1 are removed. Instead, in OpenMMLab
 
 ### Planned changes
 
-We list several planned changes of MMDet3D 1.1.0rc0 so that the community could more comprehensively know the progress of MMDet3D 1.1. Feel free to create a PR, issue, or discussion if you are interested, have any suggestions and feedbacks, or want to participate.
+We list several planned changes of MMDet3D 1.1rc0 so that the community could more comprehensively know the progress of MMDet3D 1.1. Feel free to create a PR, issue, or discussion if you are interested, have any suggestions and feedbacks, or want to participate.
 
 1. Test-time augmentation: which is supported in MMDet3D 1.0.x, is not implemented in this version due to limited time slot. We will support it in the following releases with a new and simplified design.
 2. Inference interfaces: a unified inference interfaces will be supported in the future to ease the use of released models.

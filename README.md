@@ -26,7 +26,7 @@
 
 **News**:
 
-**v1.1.0rc0** was released in 1/9/2022:
+**v1.1rc0** was released in 1/9/2022:
 
 - Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
 - A standard data protocol defines and unifies the common keys across different datasets.
@@ -82,7 +82,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-We are excited to announce the release of MMDetection3D 1.1.0rc0.
+We are excited to announce the release of MMDetection3D 1.1rc0.
 
 MMDet3D 1.1 unifies the interfaces of dataset, models, evaluation, and visualization with faster training and testing speed.
 

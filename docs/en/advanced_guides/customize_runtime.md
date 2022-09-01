@@ -253,7 +253,7 @@ train_cfg = dict(
 
 #### 1. Implement a new hook
 
-MMEngine provides many useful [hooks](https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/hook.md), but there are some occasions when the users might need to implement a new hook. MMDetection3D supports customized hooks in training based on MMEngine after v1.1.0rc0. Thus the users could implement a hook directly in mmdet3d or their mmdet3d-based codebases and use the hook by only modifying the config in training.
+MMEngine provides many useful [hooks](https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/hook.md), but there are some occasions when the users might need to implement a new hook. MMDetection3D supports customized hooks in training based on MMEngine after v1.1rc0. Thus the users could implement a hook directly in mmdet3d or their mmdet3d-based codebases and use the hook by only modifying the config in training.
 Here we give an example of creating a new hook in mmdet3d and using it in training.
 
 ```python

@@ -1,6 +1,6 @@
 # Compatibility
 
-## v1.1.0rc0
+## v1.1rc0
 
 ### OpenMMLab v2.0 Refactoring
 
