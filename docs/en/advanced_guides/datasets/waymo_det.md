@@ -122,19 +122,16 @@ sudo apt install build-essential
 bazel clean
 
 bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
-cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/evaluation/functional/waymo_utils/
 ```
 
 Then you can evaluate your models on Waymo. An example to evaluate PointPillars on Waymo with 8 GPUs with Waymo metrics is as follows.
 
 ```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-    --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-    'submission_prefix=results/waymo-car/kitti_results'
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth
 ```
 
-`pklfile_prefix` should be given in the `--eval-options` if the bin file is needed to be generated. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evaluation, the lack of occlusion and truncation in the converted data, different definitions of difficulty and different methods of computing Average Precision.
+`pklfile_prefix` should be set in `test_evaluator` of configuration if the bin file is needed to be generated, so you can add `--cfg-options "test_evaluator.pklfile_prefix=xxxx"` in the end of command if you want do it.
 
 **Notice**:
 
@@ -148,12 +145,7 @@ Then you can evaluate your models on Waymo. An example to evaluate PointPillars 
 
 An example to test PointPillars on Waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
-```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-    --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-    'submission_prefix=results/waymo-car/kitti_results'
-```
+`submission_prefix` should be set in `test_evaluator` of configuration before you run the test command  if you want to generate the bin files and make a submission to the leaderboard..
 
 After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/). Basically, here are some example commands.
 
@@ -162,11 +154,11 @@ cd ../waymo-od/
 bazel build waymo_open_dataset/metrics/tools/create_submission
 cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
 vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
-cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/evaluation/functional/waymo_utils/
 
 cd ../mmdetection3d
 # suppose the result bin is in `results/waymo-car/submission`
-mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
+mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/evaluation/functional/waymo_utils/submission.txtpb'
 
 tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
 gzip results/waymo-car/submission/my_model.tar

@@ -26,11 +26,13 @@ mmdetection3d
 │   │   │   ├── calib
 │   │   │   ├── image_2
 │   │   │   ├── velodyne
+│   │   │   ├── velodyne_reduced
 │   │   ├── training
 │   │   │   ├── calib
 │   │   │   ├── image_2
 │   │   │   ├── label_2
 │   │   │   ├── velodyne
+│   │   │   ├── velodyne_reduced
 │   │   ├── kitti_gt_database
 │   │   ├── kitti_infos_train.pkl
 │   │   ├── kitti_infos_trainval.pkl
@@ -44,7 +46,7 @@ mmdetection3d
 接着，我们将使用提供的配置文件训练 PointPillars。当你使用不同的 GPU 设置进行训练时，你基本上可以按照这个[教程](https://mmdetection3d.readthedocs.io/zh_CN/latest/1_exist_data_model.html)的示例脚本进行训练。假设我们在一台具有 8 块 GPU 的机器上进行分布式训练：
 
 ```
-./tools/dist_train.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py 8
+./tools/dist_train.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py 8
 ```
 
 注意到，配置文件名字中的 `6x8` 是指训练时是用了 8 块 GPU，每块 GPU 上有 6 个样本。如果你有不同的自定义的设置，那么有时你可能需要调整学习率。可以参考这篇[文献](https://arxiv.org/abs/1706.02677)。
@@ -69,14 +71,15 @@ aos AP:97.70, 88.73, 87.34
 评估某个特定的模型权重文件。你可以简单地执行下列的脚本：
 
 ```
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py \
-    work_dirs/pointpillars/latest.pth --eval mAP
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
 ```
 
 ## 测试与提交
 
-如果你只想在线上基准上进行推理或者测试模型的表现，你只需要把上面评估脚本中的 `--eval mAP` 替换为 `--format-only`。如果需要的话，还可以指定 `pklfile_prefix` 和 `submission_prefix`，如，添加命令行选项 `--eval-options submission_prefix=work_dirs/pointpillars/test_submission`。请确保配置文件中的[测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L131)与测试集对应，而不是验证集。在生成结果后，你可以压缩文件夹，并上传到 KITTI 的评估服务器上。
+如果你只想在线上基准上进行推理或者测试模型的表现，你只需要把修改配置文件中的 evaluator 部分。 例如， 在你的配置文件中修改 `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)`，就可以在推理结束后得到结果文件。
+
+。请确保配置文件中的 `data_prefix` 与 `ann_file` [测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L113)与测试集对应，而不是验证集。在生成结果后，你可以压缩文件夹，并上传到 KITTI 的评估服务器上。
 
 ## 定性验证
 
-MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型的预测结果有一个直观的感受。你可以在命令行中添加 `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` 选项，在评估过程中在线地可视化检测结果；你也可以使用 `tools/misc/visualize_results.py`, 离线地进行可视化。另外，我们还提供了脚本 `tools/misc/browse_dataset.py`， 可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)
+MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型的预测结果有一个直观的感受。你可以使用 `tools/misc/visualize_results.py`, 离线地进行可视化存储的 pkl 结果文件。另外，我们还提供了脚本 `tools/misc/browse_dataset.py`， 可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)
