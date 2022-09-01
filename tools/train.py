@@ -62,7 +62,7 @@ def main():
     # load config
     cfg = Config.fromfile(args.config)
 
-    # TODO: We will unify the ceph support approach in OpenMMLab repos
+    # TODO: We will unify the ceph support approach with other OpenMMLab repos
     if args.ceph:
         cfg = replace_ceph_backend(cfg)
 
