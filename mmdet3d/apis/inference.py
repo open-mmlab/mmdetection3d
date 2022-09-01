@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from mmengine.config import Config
-from mmengine.dataset import Compose
+from mmengine.dataset import Compose, pseudo_collate
 from mmengine.runner import load_checkpoint
 
 from mmdet3d.registry import MODELS
@@ -136,7 +136,6 @@ def inference_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
-    result_list = []
     data = []
     for pcd in pcds:
         # prepare data
@@ -159,20 +158,16 @@ def inference_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
-        packed_data_ = deepcopy(data_)
-        packed_data_['inputs']['points'] = [data_['inputs']['points']]
-        packed_data_['data_samples'] = [data_['data_samples']]
+    collate_data = pseudo_collate(data)
 
-        # forward the model
-        with torch.no_grad():
-            results = model.test_step(packed_data_)[0]
-
-        result_list.append(results)
+    # forward the model
+    with torch.no_grad():
+        results = model.test_step(collate_data)
 
     if not is_batch:
-        return result_list[0], data[0]
+        return results[0], data[0]
     else:
-        return result_list, data
+        return results, data
 
 
 def inference_multi_modality_detector(model: nn.Module,
@@ -221,7 +216,6 @@ def inference_multi_modality_detector(model: nn.Module,
     data_list = mmengine.load(ann_file)['data_list']
     assert len(imgs) == len(data_list)
 
-    result_list = []
     data = []
     for index, pcd in enumerate(pcds):
         # get data info containing calib
@@ -252,21 +246,16 @@ def inference_multi_modality_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
-        packed_data_ = deepcopy(data_)
-        packed_data_['inputs']['points'] = [data_['inputs']['points']]
-        packed_data_['inputs']['img'] = [data_['inputs']['img']]
-        packed_data_['data_samples'] = [data_['data_samples']]
+    collate_data = pseudo_collate(data)
 
-        # forward the model
-        with torch.no_grad():
-            results = model.test_step(packed_data_)[0]
-
-        result_list.append(results)
+    # forward the model
+    with torch.no_grad():
+        results = model.test_step(collate_data)
 
     if not is_batch:
-        return result_list[0], data[0]
+        return results[0], data[0]
     else:
-        return result_list, data
+        return results, data
 
 
 def inference_mono_3d_detector(model: nn.Module,
@@ -307,7 +296,6 @@ def inference_mono_3d_detector(model: nn.Module,
     data_list = mmengine.load(ann_file)
     assert len(imgs) == len(data_list)
 
-    result_list = []
     data = []
     for index, img in enumerate(imgs):
         # get data info containing calib
@@ -326,20 +314,16 @@ def inference_mono_3d_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
-        packed_data_ = deepcopy(data_)
-        packed_data_['inputs']['img'] = [data_['inputs']['img']]
-        packed_data_['data_samples'] = [data_['data_samples']]
+    collate_data = pseudo_collate(data)
 
-        # forward the model
-        with torch.no_grad():
-            results = model.test_step(packed_data_)[0]
-
-        result_list.append(results)
+    # forward the model
+    with torch.no_grad():
+        results = model.test_step(collate_data)
 
     if not is_batch:
-        return result_list[0]
+        return results[0]
     else:
-        return result_list
+        return results
 
 
 def inference_segmentor(model: nn.Module, pcds: PointsType):
@@ -372,7 +356,6 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
             new_test_pipeline.append(pipeline)
     test_pipeline = Compose(new_test_pipeline)
 
-    result_list = []
     data = []
     # TODO: support load points array
     for pcd in pcds:
@@ -380,17 +363,13 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
         data_ = test_pipeline(data_)
         data.append(data_)
 
-        packed_data_ = deepcopy(data_)
-        packed_data_['inputs']['points'] = [data_['inputs']['points']]
-        packed_data_['data_samples'] = [data_['data_samples']]
+    collate_data = pseudo_collate(data)
 
-        # forward the model
-        with torch.no_grad():
-            results = model.test_step(packed_data_)[0]
-
-        result_list.append(results)
+    # forward the model
+    with torch.no_grad():
+        results = model.test_step(collate_data)
 
     if not is_batch:
-        return result_list[0], data[0]
+        return results[0], data[0]
     else:
-        return result_list, data
+        return results, data
