@@ -222,7 +222,7 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 An example to test PointPillars on nuScenes with 8 GPUs and generate a submission to the leaderboard is as follows.
 
-You should modify the `jsonfile_prefix` in the `test_evaluator` of corresponding configuration. for example, adding `test_evaluator = dict(type='NuScenesMetric', jsonfile_prefix='work_dirs/pp-nus/results_eval.json')` or using `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command.
+You should modify the `jsonfile_prefix` in the `test_evaluator` of corresponding configuration. For example, adding `test_evaluator = dict(type='NuScenesMetric', jsonfile_prefix='work_dirs/pp-nus/results_eval.json')` or using `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command.
 
 ```shell
 ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py work_dirs/pp-nus/latest.pth 8 --cfg-options 'test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval'
