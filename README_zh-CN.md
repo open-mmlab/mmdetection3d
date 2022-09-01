@@ -28,14 +28,11 @@
 
 **v1.1.0rc0** 版本已经在 2022.9.1 发布：
 
-- 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 统一了各组件接口。
-- 全面支持混合精度，训练测试速度更快。
+- 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 和 [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
+- 通过一个标准的数据格式定义和统一了不同数据集的通用内容。
+- 实现了更快的训练和测试速度，并提供了更多强大的基准模型。
 
-由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在这个版本中，我们更新了部分坐标系重构后的模型权重文件。您可以在 [变更日志](docs/en/changelog.md) 中查看更多详细信息。
-
-在第三届 [nuScenes 3D 检测挑战赛](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)（第五届 AI Driving Olympics, NeurIPS 2020）中，我们获得了最佳 PKL 奖、第三名和最好的纯视觉的结果，相关的代码和模型将会在不久后发布。
-
-最好的纯视觉方法 [FCOS3D](https://arxiv.org/abs/2104.10956) 的代码和模型已经发布。请继续关注我们的多模态检测器 [MoCa](https://arxiv.org/abs/2012.12741)。
+由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在 [变更日志](docs/en/changelog.md) 和 [v1.0.x版本变更日志](docs/en/notes/changelog_v1.0.x.md) 中查看更多详细信息。
 
 文档: https://mmdetection3d.readthedocs.io/
 

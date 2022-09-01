@@ -28,14 +28,11 @@
 
 **v1.1.0rc0** was released in 1/9/2022:
 
-- Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine).
-- Faster training and testing speed with complete support of mixed precision training.
+- Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
+- A standard data protocol defines and unifies the common keys across different datasets.
+- Faster training and testing speed with more strong baselines.
 
-The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In this version, we update some of the model checkpoints after the refactor of coordinate systems. See more details in the [Changelog](docs/en/notes/changelog.md).
-
-In the [nuScenes 3D detection challenge](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any) of the 5th AI Driving Olympics in NeurIPS 2020, we obtained the best PKL award and the second runner-up by multi-modality entry, and the best vision-only results.
-
-Code and models for the best vision-only method, [FCOS3D](https://arxiv.org/abs/2104.10956), have been released. Please stay tuned for [MoCa](https://arxiv.org/abs/2012.12741).
+The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
 
 Documentation: https://mmdetection3d.readthedocs.io/
 
