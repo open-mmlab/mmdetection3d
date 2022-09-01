@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from mmengine.model import BaseModel
 from torch import Tensor
@@ -64,8 +64,8 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         pass
 
     def forward(self,
-                batch_inputs_dict: Tensor,
-                batch_data_samples: OptSampleList = None,
+                inputs: Union[dict, List[dict]],
+                data_samples: OptSampleList = None,
                 mode: str = 'tensor') -> ForwardResults:
         """The unified entry for a forward process in both training and test.
 
@@ -82,12 +82,12 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         optimizer updating, which are done in the :meth:`train_step`.
 
         Args:
-            batch_inputs_dict (dict): Input sample dict which
+            inputs (dict | List[dict]): Input sample dict which
                 includes 'points' and 'imgs' keys.
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
                 - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
-            batch_data_samples (list[:obj:`Det3DDataSample`], optional):
+            data_samples (list[:obj:`Det3DDataSample`], optional):
                 The annotation data of every samples. Defaults to None.
             mode (str): Return what kind of value. Defaults to 'tensor'.
 
@@ -99,11 +99,11 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
             - If ``mode="loss"``, return a dict of tensor.
         """
         if mode == 'loss':
-            return self.loss(batch_inputs_dict, batch_data_samples)
+            return self.loss(inputs, data_samples)
         elif mode == 'predict':
-            return self.predict(batch_inputs_dict, batch_data_samples)
+            return self.predict(inputs, data_samples)
         elif mode == 'tensor':
-            return self._forward(batch_inputs_dict, batch_data_samples)
+            return self._forward(inputs, data_samples)
         else:
             raise RuntimeError(f'Invalid mode "{mode}". '
                                'Only supports loss, predict and tensor mode')

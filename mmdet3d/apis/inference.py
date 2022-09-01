@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from mmengine.config import Config
-from mmengine.dataset import Compose
+from mmengine.dataset import Compose, pseudo_collate
 from mmengine.runner import load_checkpoint
 
 from mmdet3d.registry import MODELS
@@ -60,8 +60,7 @@ def init_model(config: Union[str, Path, Config],
                         f'but got {type(config)}')
     if cfg_options is not None:
         config.merge_from_dict(cfg_options)
-    elif 'init_cfg' in config.model.backbone:
-        config.model.backbone.init_cfg = None
+
     convert_SyncBN(config.model)
     config.model.train_cfg = None
     model = MODELS.build(config.model)
@@ -159,9 +158,11 @@ def inference_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
+    collate_data = pseudo_collate(data)
+
     # forward the model
     with torch.no_grad():
-        results = model.test_step(data)
+        results = model.test_step(collate_data)
 
     if not is_batch:
         return results[0], data[0]
@@ -245,13 +246,11 @@ def inference_multi_modality_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
+    collate_data = pseudo_collate(data)
+
     # forward the model
     with torch.no_grad():
-        results = model.test_step(data)
-
-    for index in range(len(data)):
-        meta_info = data[index]['data_samples'].metainfo
-        results[index].set_metainfo(meta_info)
+        results = model.test_step(collate_data)
 
     if not is_batch:
         return results[0], data[0]
@@ -315,13 +314,11 @@ def inference_mono_3d_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
+    collate_data = pseudo_collate(data)
+
     # forward the model
     with torch.no_grad():
-        results = model.test_step(data)
-
-    for index in range(len(data)):
-        meta_info = data[index]['data_samples'].metainfo
-        results[index].set_metainfo(meta_info)
+        results = model.test_step(collate_data)
 
     if not is_batch:
         return results[0]
@@ -352,7 +349,12 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
 
     # build the data pipeline
     test_pipeline = deepcopy(cfg.test_dataloader.dataset.pipeline)
-    test_pipeline = Compose(test_pipeline)
+
+    new_test_pipeline = []
+    for pipeline in test_pipeline:
+        if pipeline['type'] != 'LoadAnnotations3D':
+            new_test_pipeline.append(pipeline)
+    test_pipeline = Compose(new_test_pipeline)
 
     data = []
     # TODO: support load points array
@@ -361,9 +363,11 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
         data_ = test_pipeline(data_)
         data.append(data_)
 
+    collate_data = pseudo_collate(data)
+
     # forward the model
     with torch.no_grad():
-        results = model.test_step(data)
+        results = model.test_step(collate_data)
 
     if not is_batch:
         return results[0], data[0]
