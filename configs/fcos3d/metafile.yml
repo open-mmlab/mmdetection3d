@@ -18,7 +18,7 @@ Collections:
 Models:
   - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d
     In Collection: FCOS3D
-    Config: configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d.py
+    Config: configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py
     Metadata:
       Training Memory (GB): 8.7
     Results:
@@ -31,7 +31,7 @@ Models:
 
   - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune
     In Collection: FCOS3D
-    Config: configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py
+    Config: configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune.py
     Metadata:
       Training Memory (GB): 8.7
     Results:

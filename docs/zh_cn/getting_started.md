@@ -209,7 +209,7 @@ to_ply('./test.obj', './test.ply', 'obj')
 ```python
 from mmdet3d.apis import init_model, inference_detector
 
-config_file = 'configs/votenet/votenet_8x8_scannet-3d-18class.py'
+config_file = 'configs/votenet/votenet_8xb8_scannet-3d.py'
 checkpoint_file = 'checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth'
 
 # 从配置文件和预训练的模型文件中构建模型

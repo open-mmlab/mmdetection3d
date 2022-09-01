@@ -1,18 +1,26 @@
+Datasets
+**************
+
 .. toctree::
    :maxdepth: 1
-   :caption: Datasets
 
    datasets/index.rst
 
+
+Supported Tasks
+**************
+
 .. toctree::
-   :maxdepth: 1
-   :caption: Supported Tasks
+   :maxdepth: 2
 
    supported_tasks/index.rst
 
 
+Customization
+**************
+
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    customize_dataset.md
    customize_models.md

@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
-from mmengine import InstanceData
+from mmengine.structures import InstanceData
 
 from mmdet3d.models.task_modules import IoUNegPiecewiseSampler
 from mmdet3d.models.task_modules.assigners import Max3DIoUAssigner

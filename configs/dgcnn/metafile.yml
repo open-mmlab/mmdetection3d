@@ -10,9 +10,9 @@ Collections:
     README: configs/dgcnn/README.md
 
 Models:
-  - Name: dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py
+  - Name: dgcnn_4xb32-cosine-100e_s3dis-seg.py
     In Collection: DGCNN
-    Config: configs/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class.py
+    Config: configs/dgcnn/dgcnn_4xb32-cosine-100e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 13.3

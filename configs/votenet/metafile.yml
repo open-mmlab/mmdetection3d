@@ -15,9 +15,9 @@ Collections:
       Version: v0.5.0
 
 Models:
-  - Name: votenet_16x8_sunrgbd-3d-10class.py
+  - Name: votenet_8xb16_sunrgbd-3d.py
     In Collection: VoteNet
-    Config: configs/votenet/votenet_16x8_sunrgbd-3d-10class.py
+    Config: configs/votenet/votenet_8xb16_sunrgbd-3d.py
     Metadata:
       Training Data: SUNRGBD
       Training Memory (GB): 8.1
@@ -29,9 +29,9 @@ Models:
           AP@0.5: 35.77
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/votenet/votenet_16x8_sunrgbd-3d-10class/votenet_16x8_sunrgbd-3d-10class_20210820_162823-bf11f014.pth
 
-  - Name: votenet_8x8_scannet-3d-18class.py
+  - Name: votenet_8xb8_scannet-3d.py
     In Collection: VoteNet
-    Config: configs/votenet/votenet_8x8_scannet-3d-18class.py
+    Config: configs/votenet/votenet_8xb8_scannet-3d.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 4.1
@@ -45,7 +45,7 @@ Models:
 
   - Name: votenet_iouloss_8x8_scannet-3d-18class
     In Collection: VoteNet
-    Config: configs/votenet/votenet_iouloss_8x8_scannet-3d-18class.py
+    Config: configs/votenet/votenet_head-iouloss_8xb8_scannet-3d.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 4.1
