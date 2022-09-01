@@ -3,7 +3,7 @@
 ### v1.1.0rc0 (1/9/2022)
 
 We are excited to announce the release of MMDetection3D 1.1.0rc0.
-MMDet3D 1.1.0rc0 is the first version of MMDetection3D 1.1.x, a part of the OpenMMLab 2.x projects.
+MMDet3D 1.1.0rc0 is the first version of MMDetection3D 1.1.x, a part of the OpenMMLab 2.0 projects.
 Built upon the new [training engine](https://github.com/open-mmlab/mmengine),
 MMDet3D 1.1.x unifies the interfaces of dataset, models, evaluation, and visualization with faster training and testing speed.
 It also provides a standard protocol for different datasets, modalities and tasks.
@@ -11,9 +11,9 @@ We will support more strong baselines in the future release, with our latest exp
 
 ### Highlights
 
-1. **New engines**. MMDet3D 1.1.x is based on [MMEngine](https://github.com/open-mmlab/mmengine), which provides a general and powerful runner that allows more flexible customizations and significantly simplifies the entrypoints of high-level interfaces.
+1. **New engines**. MMDet3D 1.1.x is based on [MMEngine](https://github.com/open-mmlab/mmengine), which provides a universal and powerful runner that allows more flexible customizations and significantly simplifies the entrypoints of high-level interfaces.
 
-2. **Unified interfaces**. As a part of the OpenMMLab 2.x projects, MMDet3D 1.1.x unifies and refactors the interfaces and internal logics of train, testing, datasets, models, evaluation, and visualization. All the OpenMMLab 2.x projects share the same design in those interfaces and logics to allow the emergence of multi-task/modality algorithms.
+2. **Unified interfaces**. As a part of the OpenMMLab 2.0 projects, MMDet3D 1.1.x unifies and refactors the interfaces and internal logics of train, testing, datasets, models, evaluation, and visualization. All the OpenMMLab 2.0 projects share the same design in those interfaces and logics to allow the emergence of multi-task/modality algorithms.
 
 3. **Standard protocol for all the datasets and modalities**. In addition to unified base datasets inherited from MMEngine, we also define the common keys across different datasets and unify all the info files with a standard protocol. It significantly simplifies the usage of multiple datasets and data modalities and paves the way for dataset customization. Please refer to the documentation of customized datasets for details.
 
@@ -31,7 +31,7 @@ Users can also refer to the [compatibility documentation](./compatibility.md) an
 #### Dependencies
 
 - MMDet3D 1.1.x runs on PyTorch>=1.6. We have deprecated the support of PyTorch 1.5 to embrace the mixed precision training and other new features since PyTorch 1.6. Some models can still run on PyTorch 1.5, but the full functionality of MMDet3D 1.1.x is not guaranteed.
-- MMDet3D 1.1.x relies on MMEngine to run. MMEngine is a new foundational library for training deep learning models of OpenMMLab and are widely depended by OpenMMLab 2.x projects. The dependencies of file IO and training are migrated from MMCV 1.x to MMEngine.
+- MMDet3D 1.1.x relies on MMEngine to run. MMEngine is a new foundational library for training deep learning models of OpenMMLab and are widely depended by OpenMMLab 2.0 projects. The dependencies of file IO and training are migrated from MMCV 1.x to MMEngine.
 - MMDet3D 1.1.x relies on MMCV>=2.0.0rc0. Although MMCV no longer maintains the training functionalities since 2.0.0rc0, MMDet3D 1.1.x relies on the data transforms, CUDA operators, and image processing interfaces in MMCV. Note that the package `mmcv` is the version that provides pre-built CUDA operators and `mmcv-lite` does not since MMCV 2.0.0rc0, while `mmcv-full` has been deprecated since 2.0.0rc0.
 
 #### Training and testing
@@ -44,7 +44,7 @@ Users can also refer to the [compatibility documentation](./compatibility.md) an
 #### Configs
 
 - The [Runner in MMEngine](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/runner.py) uses a different config structure to ease the understanding of the components in runner. Users can read the [config example of MMDet3D 1.1.x](../user_guides/config.md) or refer to the [migration guide in MMEngine](https://mmengine.readthedocs.io/en/latest/migration/runner.html) for migration details.
-- The file names of configs and models are also refactored to follow the new rules unified across OpenMMLab 2.x projects. The names of checkpoints are not updated for now as there is no BC-breaking of model weights between MMDet3D 1.1.x and 1.0.x. We will progressively replace all the model weights by those trained in MMDet3D 1.1.x. Please refer to the [user guides of config](../user_guides/config.md) for more details.
+- The file names of configs and models are also refactored to follow the new rules unified across OpenMMLab 2.0 projects. The names of checkpoints are not updated for now as there is no BC-breaking of model weights between MMDet3D 1.1.x and 1.0.x. We will progressively replace all the model weights by those trained in MMDet3D 1.1.x. Please refer to the [user guides of config](../user_guides/config.md) for more details.
 
 #### Dataset
 
@@ -57,24 +57,24 @@ The Dataset classes implemented in MMDet3D 1.1.x all inherits from the `Det3DDat
 
 #### Data Transforms
 
-The data transforms in MMDet3D 1.1.x all inherits from `BaseTransform` in MMCV>=2.0.0rc0, which defines a new convention in OpenMMLab 2.x projects.
+The data transforms in MMDet3D 1.1.x all inherits from `BaseTransform` in MMCV>=2.0.0rc0, which defines a new convention in OpenMMLab 2.0 projects.
 Besides the interface changes, there are several changes listed as below:
 
 - The functionality of some data transforms (e.g., `Resize`) are decomposed into several transforms to simplify and clarify the usages.
 - The format of data dict processed by each data transform is changed according to the new data structure of dataset.
 - Some inefficient data transforms (e.g., normalization and padding) are moved into data preprocessor of model to improve data loading and training speed.
-- The same data transforms in different OpenMMLab 2.x libraries have the same augmentation implementation and the logic given the same arguments, i.e., `Resize` in MMDet 3.x and MMSeg 1.x will resize the image in the exact same manner given the same arguments.
+- The same data transforms in different OpenMMLab 2.0 libraries have the same augmentation implementation and the logic given the same arguments, i.e., `Resize` in MMDet 3.x and MMSeg 1.x will resize the image in the exact same manner given the same arguments.
 
 #### Model
 
-The models in MMDet3D 1.1.x all inherits from `BaseModel` in MMEngine, which defines a new convention of models in OpenMMLeb 2.x projects.
+The models in MMDet3D 1.1.x all inherits from `BaseModel` in MMEngine, which defines a new convention of models in OpenMMLeb 2.0 projects.
 Users can refer to [the tutorial of model in MMengine](https://mmengine.readthedocs.io/en/latest/tutorials/model.html) for more details.
 Accordingly, there are several changes as the following:
 
 - The model interfaces, including the input and output formats, are significantly simplified and unified following the new convention in MMDet3D 1.1.x.
   Specifically, all the input data in training and testing are packed into `inputs` and `data_samples`, where `inputs` contains model inputs like a list of image tensors, and `data_samples` contains other information of the current data sample such as ground truths, region proposals, and model predictions. In this way, different tasks in MMDet3D 1.1.x can share the same input arguments, which makes the models more general and suitable for multi-task learning and some flexible training paradigms like semi-supervised learning.
 - The model has a data preprocessor module, which are used to pre-process the input data of model. In MMDet3D 1.1.x, the data preprocessor usually does necessary steps to form the input images into a batch, such as padding. It can also serve as a place for some special data augmentations or more efficient data transformations like normalization.
-- The internal logic of model have been changed. In MMDet3D 1.1.x, model uses `forward_train`, `forward_test`, `simple_test`, and `aug_test` to deal with different model forward logics. In MMDet3D 1.1.x and OpenMMLab 2.x, the forward function has three modes: 'loss', 'predict', and 'tensor' for training, inference, and tracing or other purposes, respectively.
+- The internal logic of model have been changed. In MMDet3D 1.1.x, model uses `forward_train`, `forward_test`, `simple_test`, and `aug_test` to deal with different model forward logics. In MMDet3D 1.1.x and OpenMMLab 2.0, the forward function has three modes: 'loss', 'predict', and 'tensor' for training, inference, and tracing or other purposes, respectively.
   The forward function calls `self.loss`, `self.predict`, and `self._forward` given the modes 'loss', 'predict', and 'tensor', respectively.
 
 #### Evaluation
@@ -85,7 +85,7 @@ Users can build evaluator in MMDet3D 1.1.x to conduct offline evaluation, i.e., 
 
 #### Visualization
 
-The functions of visualization in MMDet3D 1.1.x are removed. Instead, in OpenMMLab 2.x projects, we use [Visualizer](https://mmengine.readthedocs.io/en/latest/design/visualization.html) to visualize data. MMDet3D 1.1.x implements `Det3DLocalVisualizer` to allow visualization of ground truths, model predictions, and feature maps, etc., at any place. It also supports to send the visualization data to any external visualization backends such as Tensorboard.
+The functions of visualization in MMDet3D 1.1.x are removed. Instead, in OpenMMLab 2.0 projects, we use [Visualizer](https://mmengine.readthedocs.io/en/latest/design/visualization.html) to visualize data. MMDet3D 1.1.x implements `Det3DLocalVisualizer` to allow visualization of ground truths, model predictions, and feature maps, etc., at any place. It also supports to send the visualization data to any external visualization backends such as Tensorboard.
 
 ### Planned changes
 
