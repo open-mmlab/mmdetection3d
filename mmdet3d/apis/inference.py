@@ -60,8 +60,7 @@ def init_model(config: Union[str, Path, Config],
                         f'but got {type(config)}')
     if cfg_options is not None:
         config.merge_from_dict(cfg_options)
-    elif 'init_cfg' in config.model.backbone:
-        config.model.backbone.init_cfg = None
+
     convert_SyncBN(config.model)
     config.model.train_cfg = None
     model = MODELS.build(config.model)
@@ -159,14 +158,14 @@ def inference_detector(model: nn.Module,
                 box_mode_3d=box_mode_3d)
         data_ = test_pipeline(data_)
         data.append(data_)
-        print(data_)
 
-        data_['inputs'] = [data_['inputs']]
-        data_['data_samples'] = [data_['data_samples']]
+        packed_data_ = deepcopy(data_)
+        packed_data_['inputs']['points'] = [data_['inputs']['points']]
+        packed_data_['data_samples'] = [data_['data_samples']]
 
         # forward the model
         with torch.no_grad():
-            results = model.test_step(data_)[0]
+            results = model.test_step(packed_data_)[0]
 
         result_list.append(results)
 
@@ -222,6 +221,7 @@ def inference_multi_modality_detector(model: nn.Module,
     data_list = mmengine.load(ann_file)['data_list']
     assert len(imgs) == len(data_list)
 
+    result_list = []
     data = []
     for index, pcd in enumerate(pcds):
         # get data info containing calib
@@ -252,18 +252,21 @@ def inference_multi_modality_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
-    # forward the model
-    with torch.no_grad():
-        results = model.test_step(data)
+        packed_data_ = deepcopy(data_)
+        packed_data_['inputs']['points'] = [data_['inputs']['points']]
+        packed_data_['inputs']['img'] = [data_['inputs']['img']]
+        packed_data_['data_samples'] = [data_['data_samples']]
 
-    for index in range(len(data)):
-        meta_info = data[index]['data_samples'].metainfo
-        results[index].set_metainfo(meta_info)
+        # forward the model
+        with torch.no_grad():
+            results = model.test_step(packed_data_)[0]
+
+        result_list.append(results)
 
     if not is_batch:
-        return results[0], data[0]
+        return result_list[0], data[0]
     else:
-        return results, data
+        return result_list, data
 
 
 def inference_mono_3d_detector(model: nn.Module,
@@ -304,6 +307,7 @@ def inference_mono_3d_detector(model: nn.Module,
     data_list = mmengine.load(ann_file)
     assert len(imgs) == len(data_list)
 
+    result_list = []
     data = []
     for index, img in enumerate(imgs):
         # get data info containing calib
@@ -322,18 +326,20 @@ def inference_mono_3d_detector(model: nn.Module,
         data_ = test_pipeline(data_)
         data.append(data_)
 
-    # forward the model
-    with torch.no_grad():
-        results = model.test_step(data)
+        packed_data_ = deepcopy(data_)
+        packed_data_['inputs']['img'] = [data_['inputs']['img']]
+        packed_data_['data_samples'] = [data_['data_samples']]
 
-    for index in range(len(data)):
-        meta_info = data[index]['data_samples'].metainfo
-        results[index].set_metainfo(meta_info)
+        # forward the model
+        with torch.no_grad():
+            results = model.test_step(packed_data_)[0]
+
+        result_list.append(results)
 
     if not is_batch:
-        return results[0]
+        return result_list[0]
     else:
-        return results
+        return result_list
 
 
 def inference_segmentor(model: nn.Module, pcds: PointsType):
@@ -361,6 +367,7 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
     test_pipeline = deepcopy(cfg.test_dataloader.dataset.pipeline)
     test_pipeline = Compose(test_pipeline)
 
+    result_list = []
     data = []
     # TODO: support load points array
     for pcd in pcds:
@@ -368,11 +375,17 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
         data_ = test_pipeline(data_)
         data.append(data_)
 
-    # forward the model
-    with torch.no_grad():
-        results = model.test_step(data)
+        packed_data_ = deepcopy(data_)
+        packed_data_['inputs']['points'] = [data_['inputs']['points']]
+        packed_data_['data_samples'] = [data_['data_samples']]
+
+        # forward the model
+        with torch.no_grad():
+            results = model.test_step(packed_data_)[0]
+
+        result_list.append(results)
 
     if not is_batch:
-        return results[0], data[0]
+        return result_list[0], data[0]
     else:
-        return results, data
+        return result_list, data

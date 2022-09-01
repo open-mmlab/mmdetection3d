@@ -354,9 +354,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
 
-        drawn_img = None
-        drawn_points = None
-        drawn_bboxes_3d = None
+        data_3d = dict()
 
         if vis_task in ['det', 'multi_modality-det']:
             assert 'points' in data_input
@@ -372,8 +370,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(points, pcd_mode=2, vis_task=vis_task)
             self.draw_bboxes_3d(bboxes_3d_depth)
 
-            drawn_bboxes_3d = tensor2ndarray(bboxes_3d_depth.tensor)
-            drawn_points = points
+            data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
+            data_3d['points'] = points
 
         if vis_task in ['mono-det', 'multi_modality-det']:
             assert 'img' in data_input
@@ -384,9 +382,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_image(img)
             self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
             drawn_img = self.get_image()
+            data_3d['img'] = drawn_img
 
-        data_3d = dict(
-            points=drawn_points, img=drawn_img, bboxes_3d=drawn_bboxes_3d)
         return data_3d
 
     def _draw_pts_sem_seg(self,
@@ -578,13 +575,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                            palette, ignore_index)
 
         # monocular 3d object detection image
-        if gt_data_3d is not None and pred_data_3d is not None:
-            drawn_img_3d = np.concatenate(
-                (gt_data_3d['img'], pred_data_3d['img']), axis=1)
-        elif gt_data_3d is not None:
-            drawn_img_3d = gt_data_3d['img']
-        elif pred_data_3d is not None:
-            drawn_img_3d = pred_data_3d['img']
+        if vis_task in ['mono-det', 'multi_modality-det']:
+            if gt_data_3d is not None and pred_data_3d is not None:
+                drawn_img_3d = np.concatenate(
+                    (gt_data_3d['img'], pred_data_3d['img']), axis=1)
+            elif gt_data_3d is not None:
+                drawn_img_3d = gt_data_3d['img']
+            elif pred_data_3d is not None:
+                drawn_img_3d = pred_data_3d['img']
         else:
             drawn_img_3d = None
 
@@ -618,10 +616,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 write_oriented_bbox(gt_data_3d['bboxes_3d'],
                                     osp.join(out_file, 'gt_bbox.obj'))
             if pred_data_3d is not None:
-                write_obj(pred_data_3d['points'],
-                          osp.join(out_file, 'points.obj'))
-                write_oriented_bbox(pred_data_3d['bboxes_3d'],
-                                    osp.join(out_file, 'pred_bbox.obj'))
+                if 'points' in pred_data_3d:
+                    write_obj(pred_data_3d['points'],
+                              osp.join(out_file, 'points.obj'))
+                    write_oriented_bbox(pred_data_3d['bboxes_3d'],
+                                        osp.join(out_file, 'pred_bbox.obj'))
             if gt_seg_data_3d is not None:
                 write_obj(gt_seg_data_3d['points'],
                           osp.join(out_file, 'points.obj'))
