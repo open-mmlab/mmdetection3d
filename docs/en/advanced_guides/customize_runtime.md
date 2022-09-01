@@ -2,7 +2,7 @@
 
 ## Customize optimization settings
 
-Optimization related configuration is now all managed by `optim_wrapper` which usually has three fields: `optimizer`, `paramwise_cfg`, `clip_grad`, refer to [OptimWrapper](https://mmengine.readthedocs.io/en/latest/tutorials/optim_wrapper.md) for more detail. See the example below, where `Adamw` is used as an `optimizer`, the learning rate of the backbone is reduced by a factor of 10, and gradient clipping is added.
+Optimization related configuration is now all managed by `optim_wrapper` which usually has three fields: `optimizer`, `paramwise_cfg`, `clip_grad`. Please refer to [OptimWrapper](https://mmengine.readthedocs.io/en/latest/tutorials/optim_wrapper.md) for more detail. See the example below, where `Adamw` is used as an `optimizer`, the learning rate of the backbone is reduced by a factor of 10, and gradient clipping is added.
 
 ```python
 optim_wrapper = dict(
@@ -45,7 +45,7 @@ To modify the learning rate of the model, the users only need to modify the `lr`
 A customized optimizer could be defined as following.
 
 Assume you want to add a optimizer named `MyOptimizer`, which has arguments `a`, `b`, and `c`.
-You need to create a new directory named `mmdet3d/engine/optimizers`. And then implement the new optimizer in a file, e.g., in `mmdet3d/engine/optimizers/my_optimizer.py`:
+You need to create a new directory named `mmdet3d/engine/optimizers`, and then implement the new optimizer in a file, e.g., in `mmdet3d/engine/optimizers/my_optimizer.py`:
 
 ```python
 from mmdet3d.registry import OPTIMIZERS
@@ -81,7 +81,7 @@ The module `mmdet3d.engine.optimizers.my_optimizer` will be imported at the begi
 Note that only the package containing the class `MyOptimizer` should be imported.
 `mmdet3d.engine.optimizers.my_optimizer.MyOptimizer` **cannot** be imported directly.
 
-Actually users can use a totally different file directory structure using this importing method, as long as the module root can be located in `PYTHONPATH`.
+Actually users can use a totally different file directory structure with this importing method, as long as the module root is located in `PYTHONPATH`.
 
 #### 3. Specify the optimizer in the config file
 
@@ -193,7 +193,7 @@ Tricks not implemented by the optimizer should be implemented through optimizer 
 ## Customize training schedules
 
 By default we use step learning rate with 1x schedule, this calls [MultiStepLR](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139) in MMEngine.
-We support many other learning rate schedule [here](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py), such as `CosineAnnealingLR` and `PolyLR` schedule. Here are some examples
+We support many other learning rate schedule [here](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py), such as `CosineAnnealingLR` and `PolyLR` schedules. Here are some examples
 
 - Poly schedule:
 
@@ -289,7 +289,7 @@ class MyHook(Hook):
                          outputs: Optional[dict] = None) -> None:
 ```
 
-Depending on the functionality of the hook, the users need to specify what the hook will do at each stage of the training in `before_run`, `after_run`, `before_train`, `after_train` , `before_train_epoch`, `after_train_epoch`, `before_train_iter`, and `after_train_iter`.  There are more points where hooks can be inserted, refer to [base hook class](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/hook.py#L9) for more detail.
+Depending on the functionality of the hook, users need to specify what the hook will do at each stage of the training in `before_run`, `after_run`, `before_train`, `after_train` , `before_train_epoch`, `after_train_epoch`, `before_train_iter`, and `after_train_iter`.  There are more points where hooks can be inserted, refer to [base hook class](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/hook.py#L9) for more detail.
 
 #### 2. Register the new hook
 
@@ -358,7 +358,7 @@ default_hooks = dict(
 
 #### LoggerHook
 
-The `LoggerHook` enables to set intervals. And the detail usages can be found in the [docstring](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/logger_hook.py#L18).
+The `LoggerHook` enables setting intervals. Detailed instructions can be found in the [docstring](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/logger_hook.py#L18).
 
 ```python
 default_hooks = dict(logger=dict(type='LoggerHook', interval=50))
