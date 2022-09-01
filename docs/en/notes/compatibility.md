@@ -1,5 +1,40 @@
 # Compatibility
 
+## v1.1.0rc0
+
+### OpenMMLab v2.0 Refactoring
+
+In this version, we make large refactoring based on MMEngine to achieve unified data elements, model interfaces, visualizers, evaluators and other runtime modules across different datasets, tasks and even codebases. A brief summary for this refactoring is as follows:
+
+- Data Element:
+  - We add [`Det3DDataSample`](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/structures/det3d_data_sample.py) as the common data element passing through datasets and models. It inherits from [`DetDataSample`]([https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/structures/det3d_data_sample.py](https://github.com/open-mmlab/mmdetection/blob/dev-3.x/mmdet/structures/det_data_sample.py)) in mmdetection and implement ``InstanceData``, ``PixelData``, and
+``LabelData`` inheriting from ``BaseDataElement`` in MMEngine to represent different types of ground truth labels or predictions.
+- Datasets:
+  - We add [`Det3DDataset`](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/datasets/det3d_dataset.py) and [`Seg3DDataset`](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/datasets/seg3d_dataset.py) as the base datasets to inherit from the unified `BaseDataset` in MMEngine. They implement most functions that are commonly used across different datasets and simplify the info loading/processing in the current datasets. Re-defined input arguments and functions can be most re-used in different datasets, which are important for the implementation of customized datasets.
+  - We define the common keys across different datasets and unify all the info files with a standard protocol. The same info is more clear for users because they share the same key across different dataset infos. Besides, for different settings, such as camera-only and LiDAR-only methods, we no longer need different info formats (like the previous pkl and json files). We can just revise the `parse_data_info` to read the necessary information from a complete info file.
+  - We add `train_dataloader`, `val_dataloader` and `test_dataloader` to replace the original `data` in the config. It simplify the levels of data-related fields.
+- Data Transforms
+  - Based on the basic transforms and wrappers re-implemented and simplified in the latest MMCV, we refactor data transforms to inherit from them.
+  - We also adjust the implementation of current data pipelines to make them compatible with our latest data protocol.
+  - Normalization, padding of images and voxelization operations are moved to the data-preprocessing.
+  - `DefaultFormatBundle3D` and `Collect3D` are replaced with `PackDet3DInputs` to pack the data into the element format as model input.
+- Models
+  - Unify the model interface as `inputs`, `data_samples`, `return_loss=False`
+  - The basic pre-processing before model forward includes: 1) convert input from CPU to GPU tensors; 2) padding images; 3) normalize images; 4) voxelization.
+  - Return `loss_dict` during training while return `list[data_sample]` during inference
+  - Simply function interfaces in the models
+  - Add `preprocess_cfg` in the model configs for pre-processing
+- Visualizer
+  - Design a unified visualizer, [`Det3DLocalVisualizer`](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/visualization/local_visualizer.py), based on MMEngine for different 3D tasks and settings
+  - Support browsing dataset and visualization hooks based on the [`Det3DLocalVisualizer`](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/visualization/local_visualizer.py)
+- Evaluator
+  - Decouple evaluators from datasets to make them more flexible: the evaluation codes of each dataset are implemented as a metric class exclusively.
+  - Add evaluator information to the current dataset configs
+- Registry
+  - Refactor all the registries to inherit from root registries in MMEngine
+  - When using modules from other codebases, it is necessary to specify the registry scope, such as `mmdet.ResNet`
+- Others: Refactor logging, hooks, scheduler, runner and other runtime configs based on MMEngine
+
 ## v1.0.0rc1
 
 ### Operators Migration
