@@ -365,7 +365,12 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
 
     # build the data pipeline
     test_pipeline = deepcopy(cfg.test_dataloader.dataset.pipeline)
-    test_pipeline = Compose(test_pipeline)
+
+    new_test_pipeline = []
+    for pipeline in test_pipeline:
+        if pipeline['type'] != 'LoadAnnotations3D':
+            new_test_pipeline.append(pipeline)
+    test_pipeline = Compose(new_test_pipeline)
 
     result_list = []
     data = []
