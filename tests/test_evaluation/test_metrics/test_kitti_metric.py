@@ -10,7 +10,7 @@ data_root = 'tests/data/kitti'
 
 
 def _init_evaluate_input():
-    data_batch = [dict(data_sample=dict(sample_idx=0))]
+    metainfo = dict(sample_idx=0)
     predictions = Det3DDataSample()
     pred_instances_3d = InstanceData()
     pred_instances_3d.bboxes_3d = LiDARInstance3DBoxes(
@@ -21,12 +21,13 @@ def _init_evaluate_input():
 
     predictions.pred_instances_3d = pred_instances_3d
     predictions.pred_instances = InstanceData()
+    predictions.set_metainfo(metainfo)
     predictions = predictions.to_dict()
-    return data_batch, [predictions]
+    return {}, [predictions]
 
 
 def _init_multi_modal_evaluate_input():
-    data_batch = [dict(data_sample=dict(sample_idx=0))]
+    metainfo = dict(sample_idx=0)
     predictions = Det3DDataSample()
     pred_instances_3d = InstanceData()
     pred_instances = InstanceData()
@@ -42,8 +43,9 @@ def _init_multi_modal_evaluate_input():
 
     predictions.pred_instances_3d = pred_instances_3d
     predictions.pred_instances = pred_instances
+    predictions.set_metainfo(metainfo)
     predictions = predictions.to_dict()
-    return data_batch, [predictions]
+    return {}, [predictions]
 
 
 def test_multi_modal_kitti_metric():

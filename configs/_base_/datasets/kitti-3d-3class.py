@@ -19,7 +19,11 @@ db_sampler = dict(
         type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,  # x, y, z, intensity
+        use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(

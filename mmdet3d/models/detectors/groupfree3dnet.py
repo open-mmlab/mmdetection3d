@@ -82,5 +82,6 @@ class GroupFree3DNet(SingleStage3DDetector):
         points = batch_inputs_dict['points']
         results_list = self.bbox_head.predict(points, x, batch_data_samples,
                                               **kwargs)
-        predictions = self.convert_to_datasample(results_list)
+        predictions = self.convert_to_datasample(batch_data_samples,
+                                                 results_list)
         return predictions

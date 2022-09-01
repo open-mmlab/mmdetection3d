@@ -186,11 +186,12 @@ class TestFGDHead(TestCase):
                            'consistency loss should be positive')
 
         # test get_results
-        results_list = pgd_head.predict_by_feat(*ret_dict, img_metas)
-        self.assertEqual(
-            len(results_list), 1,
-            'there should be no centerness loss when there are no true boxes')
-        results, results_2d = results_list[0]
+        results_list_3d, results_list_2d = pgd_head.predict_by_feat(
+            *ret_dict, img_metas)
+        self.assertEqual(len(results_list_3d), 1, 'batch size should be 1')
+        self.assertEqual(len(results_list_2d), 1, 'batch size should be 1')
+        results = results_list_3d[0]
+        results_2d = results_list_2d[0]
         pred_bboxes_3d = results.bboxes_3d
         pred_scores_3d = results.scores_3d
         pred_labels_3d = results.labels_3d

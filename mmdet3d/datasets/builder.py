@@ -18,7 +18,8 @@ PIPELINES = TRANSFORMS
 
 
 def build_dataset(cfg, default_args=None):
-    from mmengine import ClassBalancedDataset, ConcatDataset, RepeatDataset
+    from mmengine.dataset import (ClassBalancedDataset, ConcatDataset,
+                                  RepeatDataset)
 
     from mmdet3d.datasets.dataset_wrappers import CBGSDataset
     if isinstance(cfg, (list, tuple)):

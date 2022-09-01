@@ -22,30 +22,25 @@ class TestMVXNet(unittest.TestCase):
         )
         model = MODELS.build(mvx_net_cfg)
         num_gt_instance = 1
-        data = [
-            _create_detector_inputs(
-                with_img=False,
-                num_gt_instance=num_gt_instance,
-                points_feat_dim=4)
-        ]
+        packed_inputs = _create_detector_inputs(
+            with_img=False, num_gt_instance=num_gt_instance, points_feat_dim=4)
 
         if torch.cuda.is_available():
 
             model = model.cuda()
             # test simple_test
-            batch_inputs, data_samples = model.data_preprocessor(data, True)
+            data = model.data_preprocessor(packed_inputs, True)
             # save the memory when do the unitest
             with torch.no_grad():
                 torch.cuda.empty_cache()
-                losses = model.forward(batch_inputs, data_samples, mode='loss')
+                losses = model.forward(**data, mode='loss')
             assert losses['loss_cls'][0] >= 0
             assert losses['loss_bbox'][0] >= 0
             assert losses['loss_dir'][0] >= 0
 
             with torch.no_grad():
-                results = model.forward(
-                    batch_inputs, data_samples, mode='predict')
-            self.assertEqual(len(results), len(data))
+                results = model.forward(**data, mode='predict')
+            self.assertEqual(len(results), 1)
             self.assertIn('bboxes_3d', results[0].pred_instances_3d)
             self.assertIn('scores_3d', results[0].pred_instances_3d)
             self.assertIn('labels_3d', results[0].pred_instances_3d)

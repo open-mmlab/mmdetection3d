@@ -2,9 +2,10 @@
 import argparse
 
 import torch
-from mmcv import Config, DictAction
+from mmengine import Config, DictAction
 
-from mmdet3d.models import build_model
+from mmdet3d.registry import MODELS
+from mmdet3d.utils import register_all_modules
 
 try:
     from mmcv.cnn import get_model_complexity_info
@@ -42,7 +43,7 @@ def parse_args():
 
 
 def main():
-
+    register_all_modules()
     args = parse_args()
 
     if args.modality == 'point':
@@ -64,20 +65,10 @@ def main():
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 
-    model = build_model(
-        cfg.model,
-        train_cfg=cfg.get('train_cfg'),
-        test_cfg=cfg.get('test_cfg'))
+    model = MODELS.build(cfg.model)
     if torch.cuda.is_available():
         model.cuda()
     model.eval()
-
-    if hasattr(model, 'forward_dummy'):
-        model.forward = model.forward_dummy
-    else:
-        raise NotImplementedError(
-            'FLOPs counter is currently not supported for {}'.format(
-                model.__class__.__name__))
 
     flops, params = get_model_complexity_info(model, input_shape)
     split_line = '=' * 30
