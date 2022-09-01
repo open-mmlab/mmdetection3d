@@ -45,7 +45,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 1. 在 ScanNet 数据集上测试 VoteNet，保存模型，可视化预测结果
 
    ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+   python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --show --show-dir ./data/scannet/show_results
    ```
@@ -53,7 +53,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 2. 在 ScanNet 数据集上测试 VoteNet，保存模型，可视化预测结果，可视化真实标签，计算 mAP
 
    ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+   python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --eval mAP
        --eval-options 'show=True' 'out_dir=./data/scannet/show_results'
@@ -62,7 +62,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 3. 在 ScanNet 数据集上测试 VoteNet（不保存测试结果），计算 mAP
 
    ```shell
-   python tools/test.py configs/votenet/votenet_8x8_scannet-3d-18class.py \
+   python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
        checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
        --eval mAP
    ```
@@ -78,7 +78,7 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
 5. 使用8块显卡在 nuScenes 数据集上测试 PointPillars，生成提交给官方评测服务器的 json 文件
 
    ```shell
-   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d.py \
+   ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py \
        checkpoints/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth \
        --format-only --eval-options 'jsonfile_prefix=./pointpillars_nuscenes_results'
    ```
@@ -196,7 +196,7 @@ export CUDA_VISIBLE_DEVICES=-1
 下面是一个使用16块显卡在 dev 分区上训练 Mask R-CNN 的示例：
 
 ```shell
-GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
+GPUS=16 ./tools/slurm_train.sh dev pp_kitti_3class pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py /nfs/xxxx/pp_kitti_3class
 ```
 
 你可以查看 [slurm_train.sh](https://github.com/open-mmlab/mmdetection/blob/master/tools/slurm_train.sh) 来获取所有的参数和环境变量。

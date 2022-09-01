@@ -13,12 +13,12 @@ The basic steps are as below:
 There are three ways to support a new dataset in MMDetection3D:
 
 1. reorganize the dataset into existing format.
-2. reorganize the dataset into a middle format.
+2. reorganize the dataset into a standard format.
 3. implement a new dataset.
 
 Usually we recommend to use the first two methods which are usually easier than the third.
 
-In this note, we give an example for converting the data into KITTI format.
+In this note, we give an example for converting the data into KITTI format, you can refer to this to reorganize your dataset into kitti format. About the standard format dataset, and you can refer to [customize_dataset.md](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/customize_dataset.md).
 
 **Note**: We take Waymo as the example here considering its format is totally different from other existing formats. For other datasets using similar methods to organize data, like Lyft compared to nuScenes, it would be easier to directly implement the new data converter (for the second approach above) instead of converting it to another format (for the first approach above).
 
@@ -69,24 +69,25 @@ Specific annotation format is described in the official object development [kit]
 ```
 
 Assume we use the Waymo dataset.
-After downloading the data, we need to implement a function to convert both the input data and annotation format into the KITTI style. Then we can implement WaymoDataset inherited from KittiDataset to load the data and perform training and evaluation.
 
-Specifically, we implement a waymo [converter](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/waymo_converter.py) to convert Waymo data into KITTI format and a waymo dataset [class](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/datasets/waymo_dataset.py) to process it. Because we preprocess the raw data and reorganize it like KITTI, the dataset class could be implemented more easily by inheriting from KittiDataset. The last thing needed to be noted is the evaluation protocol you would like to use. Because Waymo has its own evaluation approach, we further incorporate it into our dataset class. Afterwards, users can successfully convert the data format and use `WaymoDataset` to train and evaluate the model.
+After downloading the data, we need to implement a function to convert both the input data and annotation format into the KITTI style. Then we can implement `WaymoDataset` inherited from `KittiDataset` to load the data and perform training, and implement `WaymoMetric` inherited from `KittiMetric` for evaluation.
 
-For more details about the intermediate results of preprocessing of Waymo dataset, please refer to its [tutorial](https://mmdetection3d.readthedocs.io/en/latest/datasets/waymo_det.html).
+Specifically, we implement a waymo [converter](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/waymo_converter.py) to convert Waymo data into KITTI format and a waymo dataset [class](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/datasets/waymo_dataset.py) to process it, in addition need to add a waymo [metric](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/metrics/waymo_metric.py) to evaluate results. Because we preprocess the raw data and reorganize it like KITTI, the dataset class could be implemented more easily by inheriting from KittiDataset. Regarding the dataset evaluation metric, because Waymo has its own evaluation approach, we need further implement a new Waymo metric; more about the metric could refer to [metric_and_evaluator.md](https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/metric_and_evaluator.md). Afterward, users can successfully convert the data format and use `WaymoDataset` to train and evaluate the model by `WaymoMetric`.
+
+For more details about the intermediate results of preprocessing of Waymo dataset, please refer to its [waymo_det.md](https://mmdetection3d.readthedocs.io/en/latest/datasets/waymo_det.html).
 
 ## Prepare a config
 
 The second step is to prepare configs such that the dataset could be successfully loaded. In addition, adjusting hyperparameters is usually necessary to obtain decent performance in 3D detection.
 
-Suppose we would like to train PointPillars on Waymo to achieve 3D detection for 3 classes, vehicle, cyclist and pedestrian, we need to prepare dataset config like [this](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/waymoD5-3d-3class.py), model config like [this](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_waymo.py) and combine them like [this](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py), compared to KITTI [dataset config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py), [model config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/models/hv_pointpillars_secfpn_kitti.py) and [overall](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py).
+Suppose we would like to train PointPillars on Waymo to achieve 3D detection for 3 classes, vehicle, cyclist and pedestrian, we need to prepare dataset config like [this](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/waymoD5-3d-3class.py), model config like [this](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/models/pointpillars_hv_secfpn_waymo.py) and combine them like [this](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py), compared to KITTI [dataset config](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/kitti-3d-3class.py), [model config](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/models/pointpillars_hv_secfpn_kitti.py) and [overall](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py).
 
 ## Train a new model
 
 To train a model with the new config, you can simply run
 
 ```shell
-python tools/train.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
+python tools/train.py configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py
 ```
 
 For more detailed usages, please refer to the [Case 1](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html).
@@ -96,7 +97,7 @@ For more detailed usages, please refer to the [Case 1](https://mmdetection3d.rea
 To test the trained model, you can simply run
 
 ```shell
-python tools/test.py configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py work_dirs/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class/latest.pth --eval waymo
+python tools/test.py configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py work_dirs/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class/latest.pth
 ```
 
 **Note**: To use Waymo evaluation protocol, you need to follow the [tutorial](https://mmdetection3d.readthedocs.io/en/latest/datasets/waymo_det.html) and prepare files related to metrics computation as official instructions.

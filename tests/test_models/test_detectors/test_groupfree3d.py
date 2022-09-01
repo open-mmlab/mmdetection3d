@@ -17,34 +17,30 @@ class TestGroupfree3d(unittest.TestCase):
         DefaultScope.get_instance('test_groupfree3d', scope_name='mmdet3d')
         _setup_seed(0)
         voxel_net_cfg = _get_detector_cfg(
-            'groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256.py')
+            'groupfree3d/groupfree3d_head-L6-O256_4xb8_scannet-seg.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 5
-        data = [
-            _create_detector_inputs(
-                num_gt_instance=num_gt_instance,
-                points_feat_dim=3,
-                with_pts_semantic_mask=True,
-                with_pts_instance_mask=True)
-        ]
+        packed_inputs = _create_detector_inputs(
+            num_gt_instance=num_gt_instance,
+            points_feat_dim=3,
+            with_pts_semantic_mask=True,
+            with_pts_instance_mask=True)
 
         if torch.cuda.is_available():
             model = model.cuda()
             # test simple_test
             with torch.no_grad():
-                batch_inputs, data_samples = model.data_preprocessor(
-                    data, True)
+                data = model.data_preprocessor(packed_inputs, True)
                 torch.cuda.empty_cache()
-                results = model.forward(
-                    batch_inputs, data_samples, mode='predict')
-            self.assertEqual(len(results), len(data))
+                results = model.forward(**data, mode='predict')
+            self.assertEqual(len(results), 1)
             self.assertIn('bboxes_3d', results[0].pred_instances_3d)
             self.assertIn('scores_3d', results[0].pred_instances_3d)
             self.assertIn('labels_3d', results[0].pred_instances_3d)
 
             # save the memory
             with torch.no_grad():
-                losses = model.forward(batch_inputs, data_samples, mode='loss')
+                losses = model.forward(**data, mode='loss')
 
             self.assertGreater(losses['sampling_objectness_loss'], 0)
             self.assertGreater(losses['proposal.objectness_loss'], 0)

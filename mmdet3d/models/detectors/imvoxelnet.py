@@ -5,7 +5,6 @@ import torch
 
 from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
 from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet3d.structures import Det3DDataSample
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import ConfigType, InstanceList, OptConfigType
 from mmdet.models.detectors import BaseDetector
@@ -58,13 +57,13 @@ class ImVoxelNet(BaseDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-    def convert_to_datasample(self, results_list: InstanceList) -> SampleList:
-        """Convert results list to `Det3DDataSample`.
-
+    def convert_to_datasample(self, data_samples: SampleList,
+                              data_instances: InstanceList) -> SampleList:
+        """ Convert results list to `Det3DDataSample`.
         Args:
-            results_list (list[:obj:`InstanceData`]): 3D Detection results of
-                each image.
-
+            inputs (list[:obj:`Det3DDataSample`]): The input data.
+            data_instances (list[:obj:`InstanceData`]): 3D Detection
+                results of each image.
         Returns:
             list[:obj:`Det3DDataSample`]: 3D Detection results of the
             input images. Each Det3DDataSample usually contain
@@ -77,13 +76,11 @@ class ImVoxelNet(BaseDetector):
                     (num_instances, ).
                 - bboxes_3d (Tensor): Contains a tensor with shape
                     (num_instances, C) where C >=7.
-        """
-        out_results_list = []
-        for i in range(len(results_list)):
-            result = Det3DDataSample()
-            result.pred_instances_3d = results_list[i]
-            out_results_list.append(result)
-        return out_results_list
+            """
+        for data_sample, pred_instances_3d in zip(data_samples,
+                                                  data_instances):
+            data_sample.pred_instances_3d = pred_instances_3d
+        return data_samples
 
     def extract_feat(self, batch_inputs_dict: dict,
                      batch_data_samples: SampleList):
@@ -188,7 +185,8 @@ class ImVoxelNet(BaseDetector):
         """
         x = self.extract_feat(batch_inputs_dict, batch_data_samples)
         results_list = self.bbox_head.predict(x, batch_data_samples, **kwargs)
-        predictions = self.convert_to_datasample(results_list)
+        predictions = self.convert_to_datasample(batch_data_samples,
+                                                 results_list)
         return predictions
 
     def _forward(self, batch_inputs_dict: dict, batch_data_samples: SampleList,

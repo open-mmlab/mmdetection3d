@@ -29,8 +29,7 @@ class SegMetric(BaseMetric):
         super(SegMetric, self).__init__(
             prefix=prefix, collect_device=collect_device)
 
-    def process(self, data_batch: Sequence[dict],
-                predictions: Sequence[dict]) -> None:
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
         The processed results should be stored in ``self.results``,
@@ -38,23 +37,20 @@ class SegMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
-            predictions (Sequence[dict]): A batch of outputs from
+            data_batch (dict): A batch of data from the dataloader.
+            data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        batch_eval_anns = [
-            item['data_sample']['eval_ann_info'] for item in data_batch
-        ]
-        for eval_ann, pred_dict in zip(batch_eval_anns, predictions):
-            pred_3d = pred_dict['pred_pts_seg']
+        for data_sample in data_samples:
+            pred_3d = data_sample['pred_pts_seg']
+            eval_ann_info = data_sample['eval_ann_info']
             cpu_pred_3d = dict()
             for k, v in pred_3d.items():
                 if hasattr(v, 'to'):
                     cpu_pred_3d[k] = v.to('cpu').numpy()
                 else:
                     cpu_pred_3d[k] = v
-            self.results.append((eval_ann, cpu_pred_3d))
+            self.results.append((eval_ann_info, cpu_pred_3d))
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
         """Compute the metrics from processed results.

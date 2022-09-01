@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Tuple
 
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
-from mmdet3d.structures import Det3DDataSample
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import InstanceList
+from mmdet3d.utils import OptInstanceList
 from mmdet.models.detectors.single_stage import SingleStageDetector
 
 
@@ -18,38 +18,63 @@ class SingleStageMono3DDetector(SingleStageDetector):
     boxes on the output features of the backbone+neck.
     """
 
-    def convert_to_datasample(self, results_list: InstanceList) -> SampleList:
-        """ Convert results list to `Det3DDataSample`.
+    def convert_to_datasample(
+        self,
+        data_samples: SampleList,
+        data_instances_3d: OptInstanceList = None,
+        data_instances_2d: OptInstanceList = None,
+    ) -> SampleList:
+        """Convert results list to `Det3DDataSample`.
+
         Args:
-            results_list (list[:obj:`InstanceData`]):Detection results
-            of each image. For each image, it could contains two results
-            format:
-                1. pred_instances_3d
-                2. (pred_instances_3d, pred_instances)
+            data_samples (list[:obj:`Det3DDataSample`]): The input data.
+            data_instances_3d (list[:obj:`InstanceData`], optional): 3D
+                Detection results of each image. Defaults to None.
+            data_instances_2d (list[:obj:`InstanceData`], optional): 2D
+                Detection results of each image. Defaults to None.
 
         Returns:
-            list[:obj:`Det3DDataSample`]: 3D Detection results of the
-            input images. Each Det3DDataSample usually contain
-            'pred_instances_3d'. And the ``pred_instances_3d`` usually
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input. Each Det3DDataSample usually contains
+            'pred_instances_3d'. And the ``pred_instances_3d`` normally
             contains following keys.
 
             - scores_3d (Tensor): Classification scores, has a shape
-                (num_instance, )
-            - labels_3d (Tensor): Labels of bboxes, has a shape
-                (num_instances, ).
+              (num_instance, )
+            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
+              (num_instances, ).
             - bboxes_3d (Tensor): Contains a tensor with shape
-                (num_instances, C) where C >=7.
-            """
-        out_results_list = []
-        for i in range(len(results_list)):
-            result = Det3DDataSample()
-            if len(results_list[i]) == 2:
-                result.pred_instances_3d = results_list[i][0]
-                result.pred_instances = results_list[i][1]
-            else:
-                result.pred_instances_3d = results_list[i]
-            out_results_list.append(result)
-        return out_results_list
+              (num_instances, C) where C >=7.
+
+            When there are 2D prediction in some models, it should
+            contains  `pred_instances`, And the ``pred_instances`` normally
+            contains following keys.
+
+            - scores (Tensor): Classification scores of image, has a shape
+              (num_instance, )
+            - labels (Tensor): Predict Labels of 2D bboxes, has a shape
+              (num_instances, ).
+            - bboxes (Tensor): Contains a tensor with shape
+              (num_instances, 4).
+        """
+
+        assert (data_instances_2d is not None) or \
+               (data_instances_3d is not None),\
+               'please pass at least one type of data_samples'
+
+        if data_instances_2d is None:
+            data_instances_2d = [
+                InstanceData() for _ in range(len(data_instances_3d))
+            ]
+        if data_instances_3d is None:
+            data_instances_3d = [
+                InstanceData() for _ in range(len(data_instances_2d))
+            ]
+
+        for i, data_sample in enumerate(data_samples):
+            data_sample.pred_instances_3d = data_instances_3d[i]
+            data_sample.pred_instances = data_instances_2d[i]
+        return data_samples
 
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features.
