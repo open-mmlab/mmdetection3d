@@ -52,22 +52,16 @@ mmdetection3d
 │   │   ├── nuscenes_infos_val.pkl
 │   │   ├── nuscenes_infos_test.pkl
 │   │   ├── nuscenes_dbinfos_train.pkl
-│   │   ├── nuscenes_infos_train_mono3d.coco.json
-│   │   ├── nuscenes_infos_val_mono3d.coco.json
-│   │   ├── nuscenes_infos_test_mono3d.coco.json
 ```
 
-Here, .pkl files are generally used for methods involving point clouds and coco-style .json files are more suitable for image-based methods, such as image-based 2D and 3D detection.
-Next, we will elaborate on the details recorded in these info files.
-
 - `nuscenes_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
-- `nuscenes_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
-  `metadata` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list, which each item contains all the detailed information (`info`) of single sample as follows:
+- `nuscenes_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
+  `metadata` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict ( hereinafter referred to as`info`) contains all the detailed information of single sample as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['token'\]: Sample data token.
   - info\['timestamp'\]: Timestamp of the sample data.
   - info\['lidar_points'\]: A dict contains all the information related to the lidar points.
-    - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
     - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
     - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
@@ -77,7 +71,7 @@ Next, we will elaborate on the details recorded in these info files.
     - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the main lidar sensor to the current sensor (for collecting the sweep data) to lidar. (4x4 list)
     - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]: The sweep sample data token.
-  - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information from corresponding camera.
+  - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information related to  corresponding camera.
     - info\['images'\]\['CAM_XXX'\]\['img_path'\]: Filename of image.
     - info\['images'\]\['CAM_XXX'\]\['cam2img'\]: The transformation matrix recording the intrinsic parameters when projecting 3D points to each image plane. (3x3 list)
     - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]: Sample data token of image.
@@ -85,7 +79,7 @@ Next, we will elaborate on the details recorded in these info files.
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
   - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
-    - info\['instances'\]\['bbox_3d'\]: 7-DoF annotations of 3D bounding boxes, a list has shape (7,).
+    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
     - info\['instances'\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
     - info\['instances'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2.).
     - info\['instances'\]\['num_lidar_pts'\]: Number of lidar points included in each 3D bounding box.
@@ -103,7 +97,7 @@ Next, we will elaborate on the details recorded in these info files.
 
 Here we only explain the data recorded in the training info files. The same applies to validation and testing set.
 
-The core function to get `nuscenes_infos_xxx.pkl` and `nuscenes_infos_xxx_mono3d.coco.json` are [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L397), respectively.
+The core function to get `nuscenes_infos_xxx.pkl` are  [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146) and [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L397), respectively.
 Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py) for more details.
 
 ## Training pipeline
@@ -166,7 +160,7 @@ train_pipeline = [
     dict(
         type='Pack3DDetInputs',
         keys=[
-            'img', 'gt_bboxes', 'gt_labels', 'attr_labels', 'gt_bboxes_3d',
+            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
             'gt_labels_3d', 'centers_2d', 'depths'
         ]),
 ]
