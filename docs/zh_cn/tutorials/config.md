@@ -52,8 +52,8 @@
 ```python
 # 已经弃用的形式
 model = dict(
-   type=...,
-   ...
+    type=...,
+    ...
 )
 train_cfg=dict(...)
 test_cfg=dict(...)
@@ -64,10 +64,10 @@ test_cfg=dict(...)
 ```python
 # 推荐的形式
 model = dict(
-   type=...,
-   ...
-   train_cfg=dict(...),
-   test_cfg=dict(...),
+    type=...,
+    ...
+train_cfg=dict(...),
+          test_cfg=dict(...),
 )
 ```
 
@@ -205,10 +205,10 @@ train_pipeline = [  # 训练流水线，更多细节请参考 mmdet3d.datasets.p
                        36, 39),  # 所有有效类别的编号
         max_cat_id=40),  # 输入语义分割掩码中可能存在的最大类别编号
     dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
-            num_points=40000),  # 采样的点的数量
+         num_points=40000),  # 采样的点的数量
     dict(type='IndoorFlipData',  # 数据增广流程，随机翻转点和 3D 框
-        flip_ratio_yz=0.5,  # 沿着 yz 平面被翻转的概率
-        flip_ratio_xz=0.5),  # 沿着 xz 平面被翻转的概率
+         flip_ratio_yz=0.5,  # 沿着 yz 平面被翻转的概率
+         flip_ratio_xz=0.5),  # 沿着 xz 平面被翻转的概率
     dict(
         type='IndoorGlobalRotScale',  # 数据增广流程，旋转并放缩点和 3D 框，更多细节请参考 mmdet3d.datasets.pipelines.indoor_augment
         shift_height=True,  # 读取的点是否有高度这一属性
@@ -234,7 +234,7 @@ test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.pi
         load_dim=6,  # 读取的点的维度
         use_dim=[0, 1, 2]),  # 使用所读取点的哪些维度
     dict(type='PointSample',  # 室内点采样，更多细节请参考 mmdet3d.datasets.pipelines.indoor_sample
-            num_points=40000),  # 采样的点的数量
+         num_points=40000),  # 采样的点的数量
     dict(
         type='DefaultFormatBundle3D',  # 默认格式打包以收集读取的所有数据，更多细节请参考 mmdet3d.datasets.pipelines.formatting
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
@@ -242,7 +242,7 @@ test_pipeline = [  # 测试流水线，更多细节请参考 mmdet3d.datasets.pi
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
     dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
-        keys=['points'])
+         keys=['points'])
 ]
 eval_pipeline = [  # 模型验证或可视化所使用的流水线，更多细节请参考 mmdet3d.datasets.pipelines
     dict(
@@ -256,77 +256,47 @@ eval_pipeline = [  # 模型验证或可视化所使用的流水线，更多细�
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
-        with_label=False),
-    dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
-        keys=['points'])
+    with_label=False),
+dict(type='Collect3D',  # 最后一个流程，决定哪些键值对应的数据会被输入给检测器，更多细节请参考 mmdet3d.datasets.pipelines.formatting
+     keys=['points'])
 ]
 data = dict(
-    samples_per_gpu=8,  # 单张 GPU 上的样本数
-    workers_per_gpu=4,  # 每张 GPU 上用于读取数据的进程数
-    train=dict(  # 训练数据集配置
-        type='RepeatDataset',  # 数据集嵌套，更多细节请参考 https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py
-        times=5,  # 重复次数
-        dataset=dict(
-            type='ScanNetDataset',  # 数据集类型
-            data_root='./data/scannet/',  # 数据路径
-            ann_file='./data/scannet/scannet_infos_train.pkl',  # 数据标注文件的路径
-            pipeline=[  # 流水线，这里传入的就是上面创建的训练流水线变量
-                dict(
-                    type='LoadPointsFromFile',
-                    shift_height=True,
-                    load_dim=6,
-                    use_dim=[0, 1, 2]),
-                dict(
-                    type='LoadAnnotations3D',
-                    with_bbox_3d=True,
-                    with_label_3d=True,
-                    with_mask_3d=True,
-                    with_seg_3d=True),
-                dict(
-                    type='PointSegClassMapping',
-                    valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                                   28, 33, 34, 36, 39),
-                    max_cat_id=40),
-                dict(type='PointSample', num_points=40000),
-                dict(
-                    type='IndoorFlipData',
-                    flip_ratio_yz=0.5,
-                    flip_ratio_xz=0.5),
-                dict(
-                    type='IndoorGlobalRotScale',
-                    shift_height=True,
-                    rot_range=[-0.027777777777777776, 0.027777777777777776],
-                    scale_range=None),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
-                                 'door', 'window', 'bookshelf', 'picture',
-                                 'counter', 'desk', 'curtain', 'refrigerator',
-                                 'showercurtrain', 'toilet', 'sink', 'bathtub',
-                                 'garbagebin')),
-                dict(
-                    type='Collect3D',
-                    keys=[
-                        'points', 'gt_bboxes_3d', 'gt_labels_3d',
-                        'pts_semantic_mask', 'pts_instance_mask'
-                    ])
-            ],
-            filter_empty_gt=False,  # 是否过滤掉空的标签框
-            classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
-                     'window', 'bookshelf', 'picture', 'counter', 'desk',
-                     'curtain', 'refrigerator', 'showercurtrain', 'toilet',
-                     'sink', 'bathtub', 'garbagebin'))),  # 类别名称
-    val=dict(  # 验证数据集配置
+samples_per_gpu=8,  # 单张 GPU 上的样本数
+workers_per_gpu=4,  # 每张 GPU 上用于读取数据的进程数
+train=dict(  # 训练数据集配置
+    type='RepeatDataset',  # 数据集嵌套，更多细节请参考 https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py
+    times=5,  # 重复次数
+    dataset=dict(
         type='ScanNetDataset',  # 数据集类型
         data_root='./data/scannet/',  # 数据路径
-        ann_file='./data/scannet/scannet_infos_val.pkl',  # 数据标注文件的路径
-        pipeline=[  # 流水线，这里传入的就是上面创建的测试流水线变量
+        ann_file='./data/scannet/scannet_infos_train.pkl',  # 数据标注文件的路径
+        pipeline=[  # 流水线，这里传入的就是上面创建的训练流水线变量
             dict(
                 type='LoadPointsFromFile',
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=True,
+                with_label_3d=True,
+                with_mask_3d=True,
+                with_seg_3d=True),
+            dict(
+                type='PointSegClassMapping',
+                valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
+                               28, 33, 34, 36, 39),
+                max_cat_id=40),
             dict(type='PointSample', num_points=40000),
+            dict(
+                type='IndoorFlipData',
+                flip_ratio_yz=0.5,
+                flip_ratio_xz=0.5),
+            dict(
+                type='IndoorGlobalRotScale',
+                shift_height=True,
+                rot_range=[-0.027777777777777776, 0.027777777777777776],
+                scale_range=None),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
@@ -334,38 +304,68 @@ data = dict(
                              'counter', 'desk', 'curtain', 'refrigerator',
                              'showercurtrain', 'toilet', 'sink', 'bathtub',
                              'garbagebin')),
-            dict(type='Collect3D', keys=['points'])
-        ],
-        classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-                 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-                 'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-                 'garbagebin'),  # 类别名称
-        test_mode=True),  # 是否开启测试模式
-    test=dict(  # 测试数据集配置
-        type='ScanNetDataset',  # 数据集类型
-        data_root='./data/scannet/',  # 数据路径
-        ann_file='./data/scannet/scannet_infos_val.pkl',  # 数据标注文件的路径
-        pipeline=[  # 流水线，这里传入的就是上面创建的测试流水线变量
             dict(
-                type='LoadPointsFromFile',
-                shift_height=True,
-                load_dim=6,
-                use_dim=[0, 1, 2]),
-            dict(type='PointSample', num_points=40000),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
-                             'door', 'window', 'bookshelf', 'picture',
-                             'counter', 'desk', 'curtain', 'refrigerator',
-                             'showercurtrain', 'toilet', 'sink', 'bathtub',
-                             'garbagebin')),
-            dict(type='Collect3D', keys=['points'])
+                type='Collect3D',
+                keys=[
+                    'points', 'gt_bboxes_3d', 'gt_labels_3d',
+                    'pts_semantic_mask', 'pts_instance_mask'
+                ])
         ],
-        classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-                 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-                 'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-                 'garbagebin'),  # 类别名称
-        test_mode=True))  # 是否开启测试模式
+        filter_empty_gt=False,  # 是否过滤掉空的标签框
+        classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                 'window', 'bookshelf', 'picture', 'counter', 'desk',
+                 'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                 'sink', 'bathtub', 'garbagebin'))),  # 类别名称
+val=dict(  # 验证数据集配置
+    type='ScanNetDataset',  # 数据集类型
+    data_root='./data/scannet/',  # 数据路径
+    ann_file='./data/scannet/scannet_infos_val.pkl',  # 数据标注文件的路径
+    pipeline=[  # 流水线，这里传入的就是上面创建的测试流水线变量
+        dict(
+            type='LoadPointsFromFile',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(type='PointSample', num_points=40000),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
+                         'door', 'window', 'bookshelf', 'picture',
+                         'counter', 'desk', 'curtain', 'refrigerator',
+                         'showercurtrain', 'toilet', 'sink', 'bathtub',
+                         'garbagebin')),
+        dict(type='Collect3D', keys=['points'])
+    ],
+    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+             'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+             'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+             'garbagebin'),  # 类别名称
+    test_mode=True),  # 是否开启测试模式
+test=dict(  # 测试数据集配置
+    type='ScanNetDataset',  # 数据集类型
+    data_root='./data/scannet/',  # 数据路径
+    ann_file='./data/scannet/scannet_infos_val.pkl',  # 数据标注文件的路径
+    pipeline=[  # 流水线，这里传入的就是上面创建的测试流水线变量
+        dict(
+            type='LoadPointsFromFile',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(type='PointSample', num_points=40000),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
+                         'door', 'window', 'bookshelf', 'picture',
+                         'counter', 'desk', 'curtain', 'refrigerator',
+                         'showercurtrain', 'toilet', 'sink', 'bathtub',
+                         'garbagebin')),
+        dict(type='Collect3D', keys=['points'])
+    ],
+    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+             'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+             'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+             'garbagebin'),  # 类别名称
+    test_mode=True))  # 是否开启测试模式
 evaluation = dict(pipeline=[  # 流水线，这里传入的就是上面创建的验证流水线变量
     dict(
         type='LoadPointsFromFile',
@@ -384,28 +384,28 @@ evaluation = dict(pipeline=[  # 流水线，这里传入的就是上面创建的
 ])
 lr = 0.008  # 优化器的学习率
 optimizer = dict(  # 构建优化器所使用的配置，我们支持所有 PyTorch 中支持的优化器，并且拥有相同的参数名称
-    type='Adam',  # 优化器类型，更多细节请参考 https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12
-    lr=0.008)  # 优化器的学习率，用户可以在 PyTorch 文档中查看这些参数的详细使用方法
+type='Adam',  # 优化器类型，更多细节请参考 https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12
+lr=0.008)  # 优化器的学习率，用户可以在 PyTorch 文档中查看这些参数的详细使用方法
 optimizer_config = dict(  # 构建优化器钩子的配置，更多实现细节可参考 https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/optimizer.py#L22
-    grad_clip=dict(  # 梯度裁剪的配置
+grad_clip=dict(  # 梯度裁剪的配置
     max_norm=10,  # 梯度的最大模长
     norm_type=2))  # 所使用的 p-范数的类型，可以设置成 'inf' 则指代无穷范数
 lr_config = dict(  # 学习率策略配置，用于注册学习率更新的钩子
-    policy='step',  # 学习率调整的策略，支持 CosineAnnealing、Cyclic 等，更多支持的种类请参考 https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L9
-    warmup=None,  # Warmup 策略，同时也支持 `exp` 和 `constant`
-    step=[24, 32])  # 学习率衰减的步数
+policy='step',  # 学习率调整的策略，支持 CosineAnnealing、Cyclic 等，更多支持的种类请参考 https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L9
+warmup=None,  # Warmup 策略，同时也支持 `exp` 和 `constant`
+step=[24, 32])  # 学习率衰减的步数
 checkpoint_config = dict(  # 设置保存模型权重钩子的配置，具体实现请参考 https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/checkpoint.py
-    interval=1)  # 保存模型权重的间隔是 1 轮
+interval=1)  # 保存模型权重的间隔是 1 轮
 log_config = dict(  # 注册日志钩子的设置
     interval=20,  # 打印日志间隔
     hooks=[ # 训练期间执行的钩子
-      dict(type='TextLoggerHook', by_epoch=False),
-      dict(type='TensorboardLoggerHook', by_epoch=False),
-      dict(type='WandbLoggerHook', by_epoch=False, # 还支持 Wandb 记录器，它需要安装 `wandb`。
-           init_kwargs={'entity': "entity", # 用于登录wandb的实体
-                        'project': "project", # WandB中的项目名称
-                        'config': cfg_dict}), # 检查 https://docs.wandb.ai/ref/python/init 以获取更多初始化参数
-  ])
+        dict(type='TextLoggerHook', by_epoch=False),
+        dict(type='TensorboardLoggerHook', by_epoch=False),
+        dict(type='WandbLoggerHook', by_epoch=False, # 还支持 Wandb 记录器，它需要安装 `wandb`。
+             init_kwargs={'entity': "OpenMMLab", # 用于登录wandb的实体
+                          'project': "MMDet3D", # WandB中的项目名称
+                          'config': cfg_dict}), # 检查 https://docs.wandb.ai/ref/python/init 以获取更多初始化参数
+    ])
 runner = dict(type='EpochBasedRunner', max_epochs=36) # 程序运行器，将会运行 `workflow` `max_epochs` 次
 dist_params = dict(backend='nccl')  # 设置分布式训练的配置，通讯端口值也可被设置
 log_level = 'INFO'  # 输出记录信息的等级

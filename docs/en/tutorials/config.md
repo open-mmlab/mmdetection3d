@@ -51,8 +51,8 @@ Following MMDetection, the `train_cfg` and `test_cfg` are deprecated in config f
 ```python
 # deprecated
 model = dict(
-   type=...,
-   ...
+    type=...,
+    ...
 )
 train_cfg=dict(...)
 test_cfg=dict(...)
@@ -63,10 +63,10 @@ The migration example is as below.
 ```python
 # recommended
 model = dict(
-   type=...,
-   ...
-   train_cfg=dict(...),
-   test_cfg=dict(...)
+    type=...,
+    ...
+train_cfg=dict(...),
+          test_cfg=dict(...)
 )
 ```
 
@@ -204,10 +204,10 @@ train_pipeline = [  # Training pipeline, refer to mmdet3d.datasets.pipelines for
                        36, 39),  # all valid categories ids
         max_cat_id=40),  # max possible category id in input segmentation mask
     dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
-            num_points=40000),  # Number of points to be sampled
+         num_points=40000),  # Number of points to be sampled
     dict(type='IndoorFlipData',  # Augmentation pipeline that flip points and 3d boxes
-        flip_ratio_yz=0.5,  # Probability of being flipped along yz plane
-        flip_ratio_xz=0.5),  # Probability of being flipped along xz plane
+         flip_ratio_yz=0.5,  # Probability of being flipped along yz plane
+         flip_ratio_xz=0.5),  # Probability of being flipped along xz plane
     dict(
         type='IndoorGlobalRotScale',  # Augmentation pipeline that rotate and scale points and 3d boxes, refer to mmdet3d.datasets.pipelines.indoor_augment for more details
         shift_height=True,  # Whether the loaded points use `shift_height` attribute
@@ -233,7 +233,7 @@ test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for m
         load_dim=6,  # The dimension of the loaded points
         use_dim=[0, 1, 2]),  # Which dimensions of the points to be used
     dict(type='PointSample',  # Sample points, refer to mmdet3d.datasets.pipelines.transforms_3d for more details
-        num_points=40000),  # Number of points to be sampled
+         num_points=40000),  # Number of points to be sampled
     dict(
         type='DefaultFormatBundle3D',  # Default format bundle to gather data in the pipeline, refer to mmdet3d.datasets.pipelines.formatting for more details
         class_names=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
@@ -241,7 +241,7 @@ test_pipeline = [  # Testing pipeline, refer to mmdet3d.datasets.pipelines for m
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
     dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
-        keys=['points'])
+         keys=['points'])
 ]
 eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmdet3d.datasets.pipelines for more details
     dict(
@@ -255,77 +255,47 @@ eval_pipeline = [  # Pipeline used for evaluation or visualization, refer to mmd
                      'window', 'bookshelf', 'picture', 'counter', 'desk',
                      'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                      'sink', 'bathtub', 'garbagebin')),
-        with_label=False),
-    dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
-        keys=['points'])
+    with_label=False),
+dict(type='Collect3D',  # Pipeline that decides which keys in the data should be passed to the detector, refer to mmdet3d.datasets.pipelines.formatting for more details
+     keys=['points'])
 ]
 data = dict(
-    samples_per_gpu=8,  # Batch size of a single GPU
-    workers_per_gpu=4,  # Number of workers to pre-fetch data for each single GPU
-    train=dict(  # Train dataset config
-        type='RepeatDataset',  # Wrapper of dataset, refer to https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py for details.
-        times=5,  # Repeat times
-        dataset=dict(
-            type='ScanNetDataset',  # Type of dataset
-            data_root='./data/scannet/',  # Root path of the data
-            ann_file='./data/scannet/scannet_infos_train.pkl',  # Ann path of the data
-            pipeline=[  # pipeline, this is passed by the train_pipeline created before.
-                dict(
-                    type='LoadPointsFromFile',
-                    shift_height=True,
-                    load_dim=6,
-                    use_dim=[0, 1, 2]),
-                dict(
-                    type='LoadAnnotations3D',
-                    with_bbox_3d=True,
-                    with_label_3d=True,
-                    with_mask_3d=True,
-                    with_seg_3d=True),
-                dict(
-                    type='PointSegClassMapping',
-                    valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
-                                   28, 33, 34, 36, 39),
-                    max_cat_id=40),
-                dict(type='PointSample', num_points=40000),
-                dict(
-                    type='IndoorFlipData',
-                    flip_ratio_yz=0.5,
-                    flip_ratio_xz=0.5),
-                dict(
-                    type='IndoorGlobalRotScale',
-                    shift_height=True,
-                    rot_range=[-0.027777777777777776, 0.027777777777777776],
-                    scale_range=None),
-                dict(
-                    type='DefaultFormatBundle3D',
-                    class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
-                                 'door', 'window', 'bookshelf', 'picture',
-                                 'counter', 'desk', 'curtain', 'refrigerator',
-                                 'showercurtrain', 'toilet', 'sink', 'bathtub',
-                                 'garbagebin')),
-                dict(
-                    type='Collect3D',
-                    keys=[
-                        'points', 'gt_bboxes_3d', 'gt_labels_3d',
-                        'pts_semantic_mask', 'pts_instance_mask'
-                    ])
-            ],
-            filter_empty_gt=False,  # Whether to filter empty ground truth boxes
-            classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
-                     'window', 'bookshelf', 'picture', 'counter', 'desk',
-                     'curtain', 'refrigerator', 'showercurtrain', 'toilet',
-                     'sink', 'bathtub', 'garbagebin'))),  # Names of classes
-    val=dict(  # Validation dataset config
+samples_per_gpu=8,  # Batch size of a single GPU
+workers_per_gpu=4,  # Number of workers to pre-fetch data for each single GPU
+train=dict(  # Train dataset config
+    type='RepeatDataset',  # Wrapper of dataset, refer to https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py for details.
+    times=5,  # Repeat times
+    dataset=dict(
         type='ScanNetDataset',  # Type of dataset
         data_root='./data/scannet/',  # Root path of the data
-        ann_file='./data/scannet/scannet_infos_val.pkl',  # Ann path of the data
-        pipeline=[  # Pipeline is passed by test_pipeline created before
+        ann_file='./data/scannet/scannet_infos_train.pkl',  # Ann path of the data
+        pipeline=[  # pipeline, this is passed by the train_pipeline created before.
             dict(
                 type='LoadPointsFromFile',
                 shift_height=True,
                 load_dim=6,
                 use_dim=[0, 1, 2]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=True,
+                with_label_3d=True,
+                with_mask_3d=True,
+                with_seg_3d=True),
+            dict(
+                type='PointSegClassMapping',
+                valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24,
+                               28, 33, 34, 36, 39),
+                max_cat_id=40),
             dict(type='PointSample', num_points=40000),
+            dict(
+                type='IndoorFlipData',
+                flip_ratio_yz=0.5,
+                flip_ratio_xz=0.5),
+            dict(
+                type='IndoorGlobalRotScale',
+                shift_height=True,
+                rot_range=[-0.027777777777777776, 0.027777777777777776],
+                scale_range=None),
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
@@ -333,38 +303,68 @@ data = dict(
                              'counter', 'desk', 'curtain', 'refrigerator',
                              'showercurtrain', 'toilet', 'sink', 'bathtub',
                              'garbagebin')),
-            dict(type='Collect3D', keys=['points'])
-        ],
-        classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-                 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-                 'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-                 'garbagebin'),  # Names of classes
-        test_mode=True),  # Whether to use test mode
-    test=dict(  # Test dataset config
-        type='ScanNetDataset',  # Type of dataset
-        data_root='./data/scannet/',  # Root path of the data
-        ann_file='./data/scannet/scannet_infos_val.pkl',  # Ann path of the data
-        pipeline=[  # Pipeline is passed by test_pipeline created before
             dict(
-                type='LoadPointsFromFile',
-                shift_height=True,
-                load_dim=6,
-                use_dim=[0, 1, 2]),
-            dict(type='PointSample', num_points=40000),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
-                             'door', 'window', 'bookshelf', 'picture',
-                             'counter', 'desk', 'curtain', 'refrigerator',
-                             'showercurtrain', 'toilet', 'sink', 'bathtub',
-                             'garbagebin')),
-            dict(type='Collect3D', keys=['points'])
+                type='Collect3D',
+                keys=[
+                    'points', 'gt_bboxes_3d', 'gt_labels_3d',
+                    'pts_semantic_mask', 'pts_instance_mask'
+                ])
         ],
-        classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-                 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-                 'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-                 'garbagebin'),  # Names of classes
-        test_mode=True))  # Whether to use test mode
+        filter_empty_gt=False,  # Whether to filter empty ground truth boxes
+        classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+                 'window', 'bookshelf', 'picture', 'counter', 'desk',
+                 'curtain', 'refrigerator', 'showercurtrain', 'toilet',
+                 'sink', 'bathtub', 'garbagebin'))),  # Names of classes
+val=dict(  # Validation dataset config
+    type='ScanNetDataset',  # Type of dataset
+    data_root='./data/scannet/',  # Root path of the data
+    ann_file='./data/scannet/scannet_infos_val.pkl',  # Ann path of the data
+    pipeline=[  # Pipeline is passed by test_pipeline created before
+        dict(
+            type='LoadPointsFromFile',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(type='PointSample', num_points=40000),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
+                         'door', 'window', 'bookshelf', 'picture',
+                         'counter', 'desk', 'curtain', 'refrigerator',
+                         'showercurtrain', 'toilet', 'sink', 'bathtub',
+                         'garbagebin')),
+        dict(type='Collect3D', keys=['points'])
+    ],
+    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+             'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+             'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+             'garbagebin'),  # Names of classes
+    test_mode=True),  # Whether to use test mode
+test=dict(  # Test dataset config
+    type='ScanNetDataset',  # Type of dataset
+    data_root='./data/scannet/',  # Root path of the data
+    ann_file='./data/scannet/scannet_infos_val.pkl',  # Ann path of the data
+    pipeline=[  # Pipeline is passed by test_pipeline created before
+        dict(
+            type='LoadPointsFromFile',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(type='PointSample', num_points=40000),
+        dict(
+            type='DefaultFormatBundle3D',
+            class_names=('cabinet', 'bed', 'chair', 'sofa', 'table',
+                         'door', 'window', 'bookshelf', 'picture',
+                         'counter', 'desk', 'curtain', 'refrigerator',
+                         'showercurtrain', 'toilet', 'sink', 'bathtub',
+                         'garbagebin')),
+        dict(type='Collect3D', keys=['points'])
+    ],
+    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+             'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+             'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+             'garbagebin'),  # Names of classes
+    test_mode=True))  # Whether to use test mode
 evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created before
     dict(
         type='LoadPointsFromFile',
@@ -383,28 +383,28 @@ evaluation = dict(pipeline=[  # Pipeline is passed by eval_pipeline created befo
 ])
 lr = 0.008  # Learning rate of optimizers
 optimizer = dict(  # Config used to build optimizer, support all the optimizers in PyTorch whose arguments are also the same as those in PyTorch
-    type='Adam',  # Type of optimizers, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12 for more details
-    lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentation of PyTorch
+type='Adam',  # Type of optimizers, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/optimizer/default_constructor.py#L12 for more details
+lr=0.008)  # Learning rate of optimizers, see detail usages of the parameters in the documentation of PyTorch
 optimizer_config = dict(  # Config used to build the optimizer hook, refer to https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/optimizer.py#L22 for implementation details.
-    grad_clip=dict(  # Config used to grad_clip
+grad_clip=dict(  # Config used to grad_clip
     max_norm=10,  # max norm of the gradients
     norm_type=2))  # Type of the used p-norm. Can be 'inf' for infinity norm.
 lr_config = dict(  # Learning rate scheduler config used to register LrUpdater hook
-    policy='step',  # The policy of scheduler, also support CosineAnnealing, Cyclic, etc. Refer to details of supported LrUpdater from https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L9.
-    warmup=None,  # The warmup policy, also support `exp` and `constant`.
-    step=[24, 32])  # Steps to decay the learning rate
+policy='step',  # The policy of scheduler, also support CosineAnnealing, Cyclic, etc. Refer to details of supported LrUpdater from https://github.com/open-mmlab/mmcv/blob/v1.3.7/mmcv/runner/hooks/lr_updater.py#L9.
+warmup=None,  # The warmup policy, also support `exp` and `constant`.
+step=[24, 32])  # Steps to decay the learning rate
 checkpoint_config = dict(  # Config of set the checkpoint hook, Refer to https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/checkpoint.py for implementation.
-    interval=1)  # The save interval is 1
+interval=1)  # The save interval is 1
 log_config = dict(  # Config to register logger hook
     interval=50,  # Interval to print the log
     hooks=[
-      dict(type='TextLoggerHook', by_epoch=False),
-      dict(type='TensorboardLoggerHook', by_epoch=False),
-      dict(type='WandbLoggerHook', by_epoch=False,  # The Wandb logger is also supported, It requires `wandb` to be installed.
-           init_kwargs={'entity': "OpenMMLab",  # The entity used to log on Wandb
-                        'project': "MMTracking",  # Project name in WandB 
-                        'config': cfg_dict}),  # Check https://docs.wandb.ai/ref/python/init for more init arguments.
-  ])  # ClearMLLoggerHook, DvcliveLoggerHook, MlflowLoggerHook, NeptuneLoggerHook, PaviLoggerHook, SegmindLoggerHook are also supported based on MMCV implementation.
+        dict(type='TextLoggerHook', by_epoch=False),
+        dict(type='TensorboardLoggerHook', by_epoch=False),
+        dict(type='WandbLoggerHook', by_epoch=False,  # The Wandb logger is also supported, It requires `wandb` to be installed.
+             init_kwargs={'entity': "OpenMMLab",  # The entity used to log on Wandb
+                          'project': "MMDet3D",  # Project name in WandB
+                          'config': cfg_dict}),  # Check https://docs.wandb.ai/ref/python/init for more init arguments.
+    ])  # ClearMLLoggerHook, DvcliveLoggerHook, MlflowLoggerHook, NeptuneLoggerHook, PaviLoggerHook, SegmindLoggerHook are also supported based on MMCV implementation.
 runner = dict(type='EpochBasedRunner', max_epochs=36) # Runner that runs the `workflow` in total `max_epochs`
 dist_params = dict(backend='nccl')  # Parameters to setup distributed training, the port can also be set.
 log_level = 'INFO'  # The level of logging.
