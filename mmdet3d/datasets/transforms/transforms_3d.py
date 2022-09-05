@@ -59,6 +59,7 @@ class RandomDropPointsColor(BaseTransform):
         # so we keep this hack in our codebase
         if np.random.rand() > 1.0 - self.drop_ratio:
             points.color = points.color * 0.0
+        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
@@ -282,6 +283,7 @@ class RandomJitterPoints(BaseTransform):
                                    self.clip_range[1])
 
         points.translate(jitter_noise)
+        input_dict['points'] = points
         return input_dict
 
     def __repr__(self):
