@@ -68,6 +68,7 @@ def register_all_modules(init_default_scope: bool = True) -> None:
             Defaults to True.
     """  # noqa
     import mmdet3d.datasets  # noqa: F401,F403
+    import mmdet3d.engine  # noqa: F401,F403
     import mmdet3d.evaluation.metrics  # noqa: F401,F403
     import mmdet3d.structures  # noqa: F401,F403
     import mmdet3d.visualization  # noqa: F401,F403

@@ -37,8 +37,7 @@ class IndoorMetric(BaseMetric):
             prefix=prefix, collect_device=collect_device)
         self.iou_thr = iou_thr
 
-    def process(self, data_batch: Sequence[dict],
-                predictions: Sequence[dict]) -> None:
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
         The processed results should be stored in ``self.results``,
@@ -46,23 +45,20 @@ class IndoorMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
-            predictions (Sequence[dict]): A batch of outputs from
+            data_batch (dict): A batch of data from the dataloader.
+            data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        batch_eval_anns = [
-            item['data_sample']['eval_ann_info'] for item in data_batch
-        ]
-        for eval_ann, pred_dict in zip(batch_eval_anns, predictions):
-            pred_3d = pred_dict['pred_instances_3d']
+        for data_sample in data_samples:
+            pred_3d = data_sample['pred_instances_3d']
+            eval_ann_info = data_sample['eval_ann_info']
             cpu_pred_3d = dict()
             for k, v in pred_3d.items():
                 if hasattr(v, 'to'):
                     cpu_pred_3d[k] = v.to('cpu')
                 else:
                     cpu_pred_3d[k] = v
-            self.results.append((eval_ann, cpu_pred_3d))
+            self.results.append((eval_ann_info, cpu_pred_3d))
 
     def compute_metrics(self, results: list) -> Dict[str, float]:
         """Compute the metrics from processed results.
@@ -121,8 +117,7 @@ class Indoor2DMetric(BaseMetric):
             prefix=prefix, collect_device=collect_device)
         self.iou_thr = iou_thr
 
-    def process(self, data_batch: Sequence[dict],
-                predictions: Sequence[dict]) -> None:
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
         The processed results should be stored in ``self.results``,
@@ -130,19 +125,16 @@ class Indoor2DMetric(BaseMetric):
         have been processed.
 
         Args:
-            data_batch (Sequence[dict]): A batch of data
-                from the dataloader.
+            data_batch (dict): A batch of data from the dataloader.
             predictions (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        batch_eval_anns = [
-            item['data_sample']['eval_ann_info'] for item in data_batch
-        ]
-        for eval_ann, pred_dict in zip(batch_eval_anns, predictions):
-            pred = pred_dict['pred_instances']
+        for data_sample in data_samples:
+            pred = data_sample['pred_instances']
+            eval_ann_info = data_sample['eval_ann_info']
             ann = dict(
-                labels=eval_ann['gt_bboxes_labels'],
-                bboxes=eval_ann['gt_bboxes'])
+                labels=eval_ann_info['gt_bboxes_labels'],
+                bboxes=eval_ann_info['gt_bboxes'])
 
             pred_bboxes = pred['bboxes'].cpu().numpy()
             pred_scores = pred['scores'].cpu().numpy()

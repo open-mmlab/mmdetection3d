@@ -354,9 +354,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
 
-        drawn_img = None
-        drawn_points = None
-        drawn_bboxes_3d = None
+        data_3d = dict()
 
         if vis_task in ['det', 'multi_modality-det']:
             assert 'points' in data_input
@@ -372,8 +370,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(points, pcd_mode=2, vis_task=vis_task)
             self.draw_bboxes_3d(bboxes_3d_depth)
 
-            drawn_bboxes_3d = tensor2ndarray(bboxes_3d_depth.tensor)
-            drawn_points = points
+            data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
+            data_3d['points'] = points
 
         if vis_task in ['mono-det', 'multi_modality-det']:
             assert 'img' in data_input
@@ -384,9 +382,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_image(img)
             self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
             drawn_img = self.get_image()
+            data_3d['img'] = drawn_img
 
-        data_3d = dict(
-            points=drawn_points, img=drawn_img, bboxes_3d=drawn_bboxes_3d)
         return data_3d
 
     def _draw_pts_sem_seg(self,
@@ -470,8 +467,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def add_datasample(self,
                        name: str,
                        data_input: dict,
-                       gt_sample: Optional['Det3DDataSample'] = None,
-                       pred_sample: Optional['Det3DDataSample'] = None,
+                       data_sample: Optional['Det3DDataSample'] = None,
                        draw_gt: bool = True,
                        draw_pred: bool = True,
                        show: bool = False,
@@ -495,9 +491,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             name (str): The image identifier.
             data_input (dict): It should include the point clouds or image
                 to draw.
-            gt_sample (:obj:`Det3DDataSample`, optional): GT Det3DDataSample.
-                Defaults to None.
-            pred_sample (:obj:`Det3DDataSample`, optional): Prediction
+            data_sample (:obj:`Det3DDataSample`, optional): Prediction
                 Det3DDataSample. Defaults to None.
             draw_gt (bool): Whether to draw GT Det3DDataSample.
                 Default to True.
@@ -524,20 +518,20 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
 
-        if draw_gt and gt_sample is not None:
-            if 'gt_instances_3d' in gt_sample:
-                gt_data_3d = self._draw_instances_3d(data_input,
-                                                     gt_sample.gt_instances_3d,
-                                                     gt_sample.metainfo,
-                                                     vis_task, palette)
-            if 'gt_instances' in gt_sample:
+        if draw_gt and data_sample is not None:
+            if 'gt_instances_3d' in data_sample:
+                gt_data_3d = self._draw_instances_3d(
+                    data_input, data_sample.gt_instances_3d,
+                    data_sample.metainfo, vis_task, palette)
+            if 'gt_instances' in data_sample:
                 assert 'img' in data_input
                 if isinstance(data_input['img'], Tensor):
                     img = data_input['img'].permute(1, 2, 0).numpy()
                     img = img[..., [2, 1, 0]]  # bgr to rgb
-                gt_img_data = self._draw_instances(img, gt_sample.gt_instances,
+                gt_img_data = self._draw_instances(img,
+                                                   data_sample.gt_instances,
                                                    classes, palette)
-            if 'gt_pts_seg' in gt_sample:
+            if 'gt_pts_seg' in data_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -545,23 +539,23 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 gt_seg_data_3d = \
                     self._draw_pts_sem_seg(data_input['points'],
-                                           pred_sample.pred_pts_seg,
+                                           data_sample.pred_pts_seg,
                                            palette, ignore_index)
 
-        if draw_pred and pred_sample is not None:
-            if 'pred_instances_3d' in pred_sample:
-                pred_instances_3d = pred_sample.pred_instances_3d
+        if draw_pred and data_sample is not None:
+            if 'pred_instances_3d' in data_sample:
+                pred_instances_3d = data_sample.pred_instances_3d
                 # .cpu can not be used for BaseInstancesBoxes3D
                 # so we need to use .to('cpu')
                 pred_instances_3d = pred_instances_3d[
                     pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
                 pred_data_3d = self._draw_instances_3d(data_input,
                                                        pred_instances_3d,
-                                                       pred_sample.metainfo,
+                                                       data_sample.metainfo,
                                                        vis_task, palette)
-            if 'pred_instances' in pred_sample:
-                if 'img' in data_input and len(pred_sample.pred_instances) > 0:
-                    pred_instances = pred_sample.pred_instances
+            if 'pred_instances' in data_sample:
+                if 'img' in data_input and len(data_sample.pred_instances) > 0:
+                    pred_instances = data_sample.pred_instances
                     pred_instances = pred_instances_3d[
                         pred_instances.scores > pred_score_thr].cpu()
                     if isinstance(data_input['img'], Tensor):
@@ -569,7 +563,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         img = img[..., [2, 1, 0]]  # bgr to rgb
                     pred_img_data = self._draw_instances(
                         img, pred_instances, classes, palette)
-            if 'pred_pts_seg' in pred_sample:
+            if 'pred_pts_seg' in data_sample:
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -577,17 +571,18 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 pred_seg_data_3d = \
                     self._draw_pts_sem_seg(data_input['points'],
-                                           pred_sample.pred_pts_seg,
+                                           data_sample.pred_pts_seg,
                                            palette, ignore_index)
 
         # monocular 3d object detection image
-        if gt_data_3d is not None and pred_data_3d is not None:
-            drawn_img_3d = np.concatenate(
-                (gt_data_3d['img'], pred_data_3d['img']), axis=1)
-        elif gt_data_3d is not None:
-            drawn_img_3d = gt_data_3d['img']
-        elif pred_data_3d is not None:
-            drawn_img_3d = pred_data_3d['img']
+        if vis_task in ['mono-det', 'multi_modality-det']:
+            if gt_data_3d is not None and pred_data_3d is not None:
+                drawn_img_3d = np.concatenate(
+                    (gt_data_3d['img'], pred_data_3d['img']), axis=1)
+            elif gt_data_3d is not None:
+                drawn_img_3d = gt_data_3d['img']
+            elif pred_data_3d is not None:
+                drawn_img_3d = pred_data_3d['img']
         else:
             drawn_img_3d = None
 
@@ -621,10 +616,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 write_oriented_bbox(gt_data_3d['bboxes_3d'],
                                     osp.join(out_file, 'gt_bbox.obj'))
             if pred_data_3d is not None:
-                write_obj(pred_data_3d['points'],
-                          osp.join(out_file, 'points.obj'))
-                write_oriented_bbox(pred_data_3d['bboxes_3d'],
-                                    osp.join(out_file, 'pred_bbox.obj'))
+                if 'points' in pred_data_3d:
+                    write_obj(pred_data_3d['points'],
+                              osp.join(out_file, 'points.obj'))
+                    write_oriented_bbox(pred_data_3d['bboxes_3d'],
+                                        osp.join(out_file, 'pred_bbox.obj'))
             if gt_seg_data_3d is not None:
                 write_obj(gt_seg_data_3d['points'],
                           osp.join(out_file, 'points.obj'))

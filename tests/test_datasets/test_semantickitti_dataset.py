@@ -80,6 +80,6 @@ class TestSemanticKITTIDataset(unittest.TestCase):
         input_dict = semantickitti_dataset.prepare_data(0)
 
         points = input_dict['inputs']['points']
-        data_sample = input_dict['data_sample']
+        data_sample = input_dict['data_samples']
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
         self.assertEqual(points.shape[0], pts_semantic_mask.shape[0])

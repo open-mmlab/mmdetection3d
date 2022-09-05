@@ -15,9 +15,9 @@ Collections:
       Version: v0.14.0
 
 Models:
-  - Name: pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py
+  - Name: pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class.py
+    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 1.9
@@ -28,9 +28,9 @@ Models:
           mIoU: 53.91
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class/pointnet2_ssg_xyz-only_16x2_cosine_200e_scannet_seg-3d-20class_20210514_143628-4e341a48.pth
 
-  - Name: pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py
+  - Name: pointnet2_ssg_2xb16-cosine-200e_scannet-seg.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py
+    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-200e_scannet-seg.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 1.9
@@ -41,9 +41,9 @@ Models:
           mIoU: 54.44
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class_20210514_143644-ee73704a.pth
 
-  - Name: pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class.py
+  - Name: pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class.py
+    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 2.4
@@ -54,9 +54,9 @@ Models:
           mIoU: 54.26
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class/pointnet2_msg_xyz-only_16x2_cosine_250e_scannet_seg-3d-20class_20210514_143838-b4a3cf89.pth
 
-  - Name: pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py
+  - Name: pointnet2_msg_2xb16-cosine-250e_scannet-seg.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class.py
+    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-250e_scannet-seg.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 2.4
@@ -67,9 +67,9 @@ Models:
           mIoU: 55.05
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class_20210514_144009-24477ab1.pth
 
-  - Name: pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class.py
+  - Name: pointnet2_ssg_2xb16-cosine-50e_s3dis-seg.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class.py
+    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-50e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 3.6
@@ -80,9 +80,9 @@ Models:
           mIoU: 56.93
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class/pointnet2_ssg_16x2_cosine_50e_s3dis_seg-3d-13class_20210514_144205-995d0119.pth
 
-  - Name: pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py
+  - Name: pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg_16x2_cosine_80e_s3dis_seg-3d-13class.py
+    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 3.6

@@ -19,7 +19,7 @@ Collections:
 Models:
   - Name: hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
-    Config: free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: free_anchor/pointpillars_hv_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 16.3
     Results:
@@ -32,7 +32,7 @@ Models:
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-400mf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 17.6
     Results:
@@ -45,7 +45,7 @@ Models:
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 24.3
     Results:
@@ -58,7 +58,7 @@ Models:
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py
     Metadata:
       Training Memory (GB): 24.4
     Results:
@@ -71,7 +71,7 @@ Models:
 
   - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-3.2gf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 29.4
     Results:
@@ -84,7 +84,7 @@ Models:
 
   - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-3.2gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py
     Metadata:
       Training Memory (GB): 29.2
     Results:

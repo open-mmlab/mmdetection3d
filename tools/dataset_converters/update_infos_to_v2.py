@@ -390,7 +390,7 @@ def update_kitti_infos(pkl_path, out_dir):
         if 'plane' in ori_info_dict:
             temp_data_info['plane'] = ori_info_dict['plane']
 
-        temp_data_info['sample_id'] = ori_info_dict['image']['image_idx']
+        temp_data_info['sample_idx'] = ori_info_dict['image']['image_idx']
 
         temp_data_info['images']['CAM0']['cam2img'] = ori_info_dict['calib'][
             'P0'].tolist()

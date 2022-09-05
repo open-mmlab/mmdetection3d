@@ -173,16 +173,18 @@ def load_json_logs(json_logs):
     log_dicts = [dict() for _ in json_logs]
     for json_log, log_dict in zip(json_logs, log_dicts):
         with open(json_log, 'r') as log_file:
+            epoch = 1
             for line in log_file:
                 log = json.loads(line.strip())
-                # skip lines without `epoch` field
-                if 'epoch' not in log:
+                # skip lines only contains one key
+                if not len(log) > 1:
                     continue
-                epoch = log.pop('epoch')
                 if epoch not in log_dict:
                     log_dict[epoch] = defaultdict(list)
                 for k, v in log.items():
                     log_dict[epoch][k].append(v)
+                if 'epoch' in log.keys():
+                    epoch = log['epoch'] + 1
     return log_dicts
 
 

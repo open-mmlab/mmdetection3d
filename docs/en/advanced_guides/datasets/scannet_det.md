@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) page for ScanNet.
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/) page for ScanNet.
 
 ### Export ScanNet point cloud data
 
@@ -226,21 +226,14 @@ scannet
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: \[1, 40\], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
 - `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
-  - info\['point_cloud'\]: {'num_features': 6, 'lidar_idx': sample_idx}.
-  - info\['pts_path'\]: The path of `points/xxxxx.bin`.
-  - info\['pts_instance_mask_path'\]: The path of `instance_mask/xxxxx.bin`.
-  - info\['pts_semantic_mask_path'\]: The path of `semantic_mask/xxxxx.bin`.
-  - info\['annos'\]: The annotations of each scan.
-    - annotations\['gt_num'\]: The number of ground truths.
-    - annotations\['name'\]： The semantic name of all ground truths, e.g. `chair`.
-    - annotations\['location'\]: The gravity center of the axis-aligned 3D bounding boxes in depth coordinate system. Shape: \[K, 3\], K is the number of ground truths.
-    - annotations\['dimensions'\]: The dimensions of the axis-aligned 3D bounding boxes in depth coordinate system, i.e. (x_size, y_size, z_size), shape: \[K, 3\].
-    - annotations\['gt_boxes_upright_depth'\]: The axis-aligned 3D bounding boxes in depth coordinate system, each bounding box is (x, y, z, x_size, y_size, z_size), shape: \[K, 6\].
-    - annotations\['unaligned_location'\]: The gravity center of the axis-unaligned 3D bounding boxes in depth coordinate system.
-    - annotations\['unaligned_dimensions'\]: The dimensions of the axis-unaligned 3D bounding boxes in depth coordinate system.
-    - annotations\['unaligned_gt_boxes_upright_depth'\]: The axis-unaligned 3D bounding boxes in depth coordinate system.
-    - annotations\['index'\]: The index of all ground truths, i.e. \[0, K).
-    - annotations\['class'\]: The train class ID of the bounding boxes, value range: \[0, 18), shape: \[K, \].
+  - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
+  - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
+  - info\['lidar_points'\]\['pts_semantic_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
+  - info\['lidar_points'\]\['pts_instance_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
+  - info\['lidar_points'\]\['axis_align_matrix'\]: The transformation matrix to align the axis.
+  - info\['instances'\]: A list of dict contains all annotations, each dict contains all annotation information of single instance.
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 6 numbers representing the axis-aligned 3D bounding box of the instance in depth coordinate system, in (x, y, z, l, w, h) order.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: The label of each 3d bounding boxes.
 - `scannet_infos_val.pkl`: The val data infos, which shares the same format as `scannet_infos_train.pkl`.
 - `scannet_infos_test.pkl`: The test data infos, which almost shares the same format as `scannet_infos_train.pkl` except for the lack of annotation.
 
@@ -264,10 +257,7 @@ train_pipeline = [
         with_seg_3d=True),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34,
-                       36, 39),
-        max_cat_id=40),
+        type='PointSegClassMapping'),
     dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
@@ -279,9 +269,8 @@ train_pipeline = [
         rot_range=[-0.087266, 0.087266],
         scale_ratio_range=[1.0, 1.0],
         shift_height=True),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
+        type='Pack3DDetInputs',
         keys=[
             'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
             'pts_instance_mask'
@@ -298,6 +287,6 @@ train_pipeline = [
 
 ## Metrics
 
-Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py).
+Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py).
 
 As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D Non-Maximum Suppression (NMS), which is regardless of rotation, is adopted during post-processing .

@@ -20,7 +20,7 @@ Collections:
 Models:
   - Name: imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class
     In Collection: ImVoteNet
-    Config: configs/imvotenet/imvotenet_faster_rcnn_r50_fpn_2x4_sunrgbd-3d-10class.py
+    Config: configs/imvotenet/imvotenet_faster-rcnn-r50_fpn_4xb2_sunrgbd-3d.py
     Metadata:
       Training Memory (GB): 2.1
     Results:
@@ -32,7 +32,7 @@ Models:
 
   - Name: imvotenet_stage2_16x8_sunrgbd-3d-10class
     In Collection: ImVoteNet
-    Config: configs/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class.py
+    Config: configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd-3d.py
     Metadata:
       Training Memory (GB): 9.4
     Results:

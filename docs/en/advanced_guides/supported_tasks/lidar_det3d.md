@@ -31,11 +31,13 @@ mmdetection3d
 │   │   │   ├── calib
 │   │   │   ├── image_2
 │   │   │   ├── velodyne
+│   │   │   ├── velodyne_reduced
 │   │   ├── training
 │   │   │   ├── calib
 │   │   │   ├── image_2
 │   │   │   ├── label_2
 │   │   │   ├── velodyne
+│   │   │   ├── velodyne_reduced
 │   │   ├── kitti_gt_database
 │   │   ├── kitti_infos_train.pkl
 │   │   ├── kitti_infos_trainval.pkl
@@ -47,20 +49,21 @@ mmdetection3d
 ## Training
 
 Then let us train a model with provided configs for PointPillars.
-You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en/latest/1_exist_data_model.html#inference-with-existing-models) for sample scripts when training with different GPU settings.
+You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/1_exist_data_model.html) for sample scripts when training with different GPU settings.
 Suppose we use 8 GPUs on a single machine with distributed training:
 
 ```
-./tools/dist_train.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py 8
+./tools/dist_train.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py 8
 ```
 
-Note that `6x8` in the config name refers to the training is completed with 8 GPUs and 6 samples on each GPU.
+Note that `8xb6` in the config name refers to the training is completed with 8 GPUs and 6 samples on each GPU.
 If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
-A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677).
+A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677). We have supported `--auto-scale-lr` to
+enable automatically scaling LR
 
 ## Quantitative Evaluation
 
-During training, the model checkpoints will be evaluated regularly according to the setting of `evaluation = dict(interval=xxx)` in the config.
+During training, the model checkpoints will be evaluated regularly according to the setting of `train_cfg = dict(val_interval=xxx)` in the config.
 We support official evaluation protocols for different datasets.
 For KITTI, the model will be evaluated with mean average precision (mAP) with Intersection over Union (IoU) thresholds 0.5/0.7 for 3 categories respectively.
 The evaluation results will be printed in the command like:
@@ -81,22 +84,22 @@ aos AP:97.70, 88.73, 87.34
 In addition, you can also evaluate a specific model checkpoint after training is finished. Simply run scripts like the following:
 
 ```
-./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py \
-    work_dirs/pointpillars/latest.pth --eval mAP
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
 ```
 
 ## Testing and Making a Submission
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
-you just need to replace the `--eval mAP` with `--format-only` in the previous evaluation script and specify the `pklfile_prefix` and `submission_prefix` if necessary,
-e.g., adding an option `--eval-options submission_prefix=work_dirs/pointpillars/test_submission`.
-Please guarantee the [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L131) in the config corresponds to the test set instead of validation set.
+you just need to specify the `submission_prefix` for corresponding evaluator,
+e.g., add `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)` in the configuration then you can get the results file or you can just add
+`--cfg-options "test_evaluator.submission_prefix=work_dirs/pointpillars/test_submission` in the end of test command.
+Please guarantee the `data_prefix` and `ann_file` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/kitti-3d-3class.py#L113) in the config corresponds to the test set instead of validation set.
 After generating the results, you can basically compress the folder and upload to the KITTI evaluation server.
 
 ## Qualitative Validation
 
 MMDetection3D also provides versatile tools for visualization such that we can have an intuitive feeling of the detection results predicted by our trained models.
-You can either set the `--eval-options 'show=True' 'out_dir=${SHOW_DIR}'` option to visualize the detection results online during evaluation,
+You can either set the `--show'` option to visualize the detection results online during evaluation,
 or using `tools/misc/visualize_results.py` for offline visualization.
 Besides, we also provide scripts `tools/misc/browse_dataset.py` to visualize the dataset without inference.
-Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/latest/useful_tools.html#visualization).
+Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/dev-1.x/useful_tools.html#visualization).

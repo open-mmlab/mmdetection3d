@@ -45,14 +45,14 @@ mmdetection3d
 接着，我们将使用提供的配置文件训练 PointNet++ (SSG) 模型。当你使用不同的 GPU 设置进行训练时，你基本上可以按照这个[教程](https://mmdetection3d.readthedocs.io/zh_CN/latest/1_exist_data_model.html#inference-with-existing-models)的示例脚本。假设我们在一台具有 2 块 GPU 的机器上使用分布式训练：
 
 ```
-./tools/dist_train.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py 2
+./tools/dist_train.sh configs/pointnet2/pointnet2_ssg_2xb16-cosine-200e_scannet-seg.py 2
 ```
 
 注意，配置文件名中的 `16x2` 是指训练时用了 2 块 GPU，每块 GPU 上有 16 个样本。如果你的自定义设置不同于此，那么有时候你需要相应的调整学习率。基本规则可以参考[此处](https://arxiv.org/abs/1706.02677)。
 
 ## 定量评估
 
-在训练期间，模型权重将会根据配置文件中的 `evaluation = dict(interval=xxx)` 设置被周期性地评估。我们支持不同数据集的官方评估方案。对于 ScanNet，将使用 20 个类别的平均交并比 (mIoU) 对模型进行评估。评估结果将会被打印到终端中，如下所示：
+在训练期间，模型权重将会根据配置文件中的 `train_cfg = dict(val_interval=xxx)` 设置被周期性地评估。我们支持不同数据集的官方评估方案。对于 ScanNet，将使用 20 个类别的平均交并比 (mIoU) 对模型进行评估。评估结果将会被打印到终端中，如下所示：
 
 ```
 +---------+--------+--------+---------+--------+--------+--------+--------+--------+--------+-----------+---------+---------+--------+---------+--------------+----------------+--------+--------+---------+----------------+--------+--------+---------+
@@ -65,13 +65,13 @@ mmdetection3d
 此外，在训练完成后你也可以评估特定的模型权重文件。你可以简单地执行以下脚本：
 
 ```
-./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py \
-    work_dirs/pointnet2_ssg/latest.pth --eval mIoU
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py work_dirs/pointnet2_ssg/latest.pth 8
 ```
 
 ## 测试与提交
 
-如果你只想在在线基准上进行推理或测试模型性能，你需要将之前评估脚本中的 `--eval mIoU` 替换成 `--format-only`，并将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126)中的 `ann_file=data_root + 'scannet_infos_val.pkl'` 变成 `ann_file=data_root + 'scannet_infos_test.pkl'`。记住将 `txt_prefix` 指定为保存测试结果的目录，例如，添加选项 `--eval-options txt_prefix=work_dirs/pointnet2_ssg/test_submission`。在生成结果后，你可以压缩文件夹并上传至 [ScanNet 评估服务器](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d)上。
+如果你只想在在线基准上进行推理或测试模型性能，你需要在配置文件中的 `test_evalutor` 字段增加 `submission_prefix`， 例如配置文件增加 `test_evaluator = dict(type='SegMetric',submission_prefix=work_dirs/pointnet2_ssg/test_submission`)。
+并将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L129)中的 `ann_file=scannet_infos_val.pkl` 变成 `ann_file=scannet_infos_test.pkl`。在生成结果后，你可以压缩文件夹并上传至 [ScanNet 评估服务器](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d)上。
 
 ## 定性评估
 

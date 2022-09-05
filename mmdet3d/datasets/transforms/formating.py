@@ -100,8 +100,8 @@ class Pack3DDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_sample' (obj:`Det3DDataSample`): The annotation info of the
-              sample.
+            - 'data_samples' (obj:`Det3DDataSample`): The annotation info of
+                the sample.
         """
         # augtest
         if isinstance(results, list):
@@ -134,8 +134,8 @@ class Pack3DDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_sample' (obj:`Det3DDataSample`): The annotation info of the
-              sample.
+            - 'data_samples' (obj:`Det3DDataSample`): The annotation info
+              of the sample.
         """
         # Format 3D data
         if 'points' in results:
@@ -216,7 +216,7 @@ class Pack3DDetInputs(BaseTransform):
             data_sample.eval_ann_info = None
 
         packed_results = dict()
-        packed_results['data_sample'] = data_sample
+        packed_results['data_samples'] = data_sample
         packed_results['inputs'] = inputs
 
         return packed_results
