@@ -7,6 +7,7 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐
 尽管数据集和采集设备多种多样，但是通过总结 3D 目标检测的工作线，我们可以将坐标系大致分为三类：
 
 - 相机坐标系 -- 大多数相机的坐标系，在该坐标系中 y 轴正方向指向地面，x 轴正方向指向右侧，z 轴正方向指向前方。
+
   ```
               上  z 前
               |    ^
@@ -22,7 +23,9 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐
               v
             y 下
   ```
+
 - 激光雷达坐标系 -- 众多激光雷达的坐标系，在该坐标系中 z 轴负方向指向地面，x 轴正方向指向前方，y 轴正方向指向左侧。
+
   ```
                 z 上   x 前
                  ^    ^
@@ -32,7 +35,9 @@ MMDetection3D 使用 3 种不同的坐标系。3D 目标检测领域中不同坐
                  |/
   y 左   <------ 0 ------ 右
   ```
+
 - 深度坐标系 -- VoteNet、H3DNet 等模型使用的坐标系，在该坐标系中 z 轴负方向指向地面，x 轴正方向指向右侧，y 轴正方向指向前方。
+
   ```
              z 上   y 前
               ^    ^
@@ -215,7 +220,7 @@ SUN RGB-D 的原始数据不是点云而是 RGB-D 图像。我们通过反投影
 
 #### Q1: 与框相关的算子是否适用于所有坐标系类型？
 
-否。例如，[用于 RoI-Aware Pooling 的算子](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/roiaware_pool3d.py)只适用于深度坐标系和激光雷达坐标系下的框。由于如果从上方看，旋转是顺时针的，所以 KITTI 数据集[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/kitti_utils)的评估函数仅适用于相机坐标系下的框。
+否。例如，[用于 RoI-Aware Pooling 的算子](https://github.com/open-mmlab/mmcv/blob/master/mmcv/ops/roiaware_pool3d.py)只适用于深度坐标系和激光雷达坐标系下的框。由于如果从上方看，旋转是顺时针的，所以 KITTI 数据集[这里](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/kitti_utils.py)的评估函数仅适用于相机坐标系下的框。
 
 对于每个和框相关的算子，我们注明了其所适用的框类型。
 

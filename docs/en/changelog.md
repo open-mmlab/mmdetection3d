@@ -1,5 +1,38 @@
 ## Changelog
 
+### v1.0.0rc4 (8/8/2022)
+
+#### Highlights
+
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+
+#### New Features
+
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf) (#1547)
+- Add the transformation to support multi-camera 3D object detection (#1580)
+- Support lift-splat-shoot view transformer (#1598)
+
+#### Improvements
+
+- Remove the limitation of the maximum number of points during SUN RGB-D preprocessing (#1555)
+- Support circle CI (#1647)
+- Add mim to extras_require in setup.py (#1560, #1574)
+- Update dockerfile package version (#1697)
+
+#### Bug Fixes
+
+- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1548, #1556)
+- Fix DGCNN configs (#1587)
+- Fix bbox head not registered bug (#1625)
+- Fix missing objects in S3DIS preprocessing (#1665)
+- Fix spconv2.0 model loading bug (#1699)
+
+#### Contributors
+
+A total of 7 developers contributed to this release.
+
+@Tai-Wang, @ZwwWayne, @filaPro, @lianqing11, @ZCMax, @HuangJunJie2017, @Xiangxu-0103, @ChonghaoSima, @VVsssssk
+
 ### v1.0.0rc3 (8/6/2022)
 
 #### Highlights

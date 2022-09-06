@@ -14,17 +14,22 @@ In this paper, we introduce the task of multi-view RGB-based 3D object detection
 
 ## Introduction
 
-We implement a monocular 3D detector ImVoxelNet and provide its results and checkpoints on KITTI dataset.
-Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNet authors
-[repo](https://github.com/saic-vul/imvoxelnet) (based on mmdetection3d).
+We implement a monocular 3D detector ImVoxelNet and provide its results and checkpoints on KITTI and SUN RGB-D datasets.
+Inference time is given for a single NVidia RTX 3090 GPU. Results for ScanNet and nuScenes are currently available in ImVoxelNet authors [repo](https://github.com/saic-vul/imvoxelnet) (based on mmdetection3d).
 
 ## Results and models
 
 ### KITTI
 
-|                 Backbone                  | Class | Lr schd | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                               Download                                                                                                                                                               |
-| :---------------------------------------: | :---: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [ResNet-50](./imvoxelnet_kitti-3d-car.py) |  Car  |   3x    |          |                | 17.26 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json) |
+|                   Backbone                    | Class | Lr schd | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                               Download                                                                                                                                                               |
+| :-------------------------------------------: | :---: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet-50](./imvoxelnet_4x8_kitti-3d-car.py) |  Car  |   3x    |   14.8   |      8.4       | 17.26 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json) |
+
+### SUN RGB-D
+
+|                      Backbone                       | Lr schd | Mem (GB) | Inf time (fps) | mAP@0.25 | mAP@0.5 |                                                                                                                                                                           Download                                                                                                                                                                           |
+| :-------------------------------------------------: | :-----: | :------: | :------------: | :------: | :-----: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet-50](./imvoxelnet_4x2_sunrgbd-3d-10class.py) |   2x    |   7.2    |      22.5      |  40.96   |  13.50  | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416-29ca7d2e.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416.log.json) |
 
 ## Citation
 
@@ -32,7 +37,8 @@ Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNe
 @article{rukhovich2021imvoxelnet,
   title={ImVoxelNet: Image to Voxels Projection for Monocular and Multi-View General-Purpose 3D Object Detection},
   author={Danila Rukhovich, Anna Vorontsova, Anton Konushin},
-  journal={arXiv preprint arXiv:2106.01178},
-  year={2021}
+  booktitle={Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision},
+  pages={2397--2406},
+  year={2022}
 }
 ```

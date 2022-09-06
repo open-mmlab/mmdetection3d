@@ -76,14 +76,11 @@ jobs:
           apt-get update && apt-get install -y ffmpeg libsm6 git ninja-build libglib2.0-0 libsm6 libxrender-dev python${{matrix.python-version}}-dev
           apt-get clean
           rm -rf /var/lib/apt/lists/*
-      - name: Install Pillow
-        run: python -m pip install Pillow==6.2.2
-        if: ${{matrix.torchvision < 0.5}}
       - name: Install PyTorch
         run: python -m pip install numpy==1.19.5 torch==${{matrix.torch}} torchvision==${{matrix.torchvision}} -f https://download.pytorch.org/whl/torch_stable.html
       - name: Install mmdet3d dependencies
         run: |
-          python -m pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
+          python -m pip install mmcv-full==1.6.0 -f https://download.openmmlab.com/mmcv/dist/cu101/${{matrix.torch_version}}/index.html
           python -m pip install mmdet
           python -m pip install mmsegmentation
           python -m pip install -r requirements.txt
