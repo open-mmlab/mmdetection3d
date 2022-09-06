@@ -27,3 +27,9 @@ jobs:
         run: yapf -r -d mmdet3d/ tests/ examples/
       - name: Check docstring
         run: interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --exclude mmdet3d/ops --ignore-regex "__repr__" --fail-under 95 mmdet3d
+      - name: Check doc link
+        run: |
+          python3 .github/scripts/doc_link_checker.py --target docs/zh_cn
+          python3 .github/scripts/doc_link_checker.py --target README_zh-CN.md
+          python3 .github/scripts/doc_link_checker.py --target docs/en
+          python3 .github/scripts/doc_link_checker.py --target README.md
