@@ -67,3 +67,8 @@ default_hooks = dict(
     logger=dict(type='LoggerHook', interval=30)
 )
 # yapf:enable
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (3 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=24)
