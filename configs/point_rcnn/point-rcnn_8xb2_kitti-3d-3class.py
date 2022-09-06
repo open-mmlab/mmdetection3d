@@ -94,3 +94,8 @@ log_config = dict(
         dict(type='TensorboardLoggerHook')
     ])
 # yapf:enable
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)

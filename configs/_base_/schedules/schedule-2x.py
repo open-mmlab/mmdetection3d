@@ -28,3 +28,9 @@ param_scheduler = [
         milestones=[20, 23],
         gamma=0.1)
 ]
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=32)

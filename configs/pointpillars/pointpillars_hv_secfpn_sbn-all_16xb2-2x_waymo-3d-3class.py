@@ -7,3 +7,8 @@ _base_ = [
 
 # data settings
 data = dict(train=dict(dataset=dict(load_interval=1)))
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (16 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=32)
