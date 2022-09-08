@@ -164,9 +164,7 @@ class RandomFlip3D(RandomFlip):
         if 'centers_2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
                 'Only support sync_2d=True and horizontal flip with images'
-            # TODO fix this ori_shape and other keys in vision based model
-            # TODO ori_shape to img_shape
-            w = input_dict['ori_shape'][1]
+            w = input_dict['img_shape'][1]
             input_dict['centers_2d'][..., 0] = \
                 w - input_dict['centers_2d'][..., 0]
             # need to modify the horizontal position of camera center
@@ -367,11 +365,10 @@ class ObjectSample(BaseTransform):
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 
-        if self.use_ground_plane and 'plane' in input_dict['ann_info']:
-            ground_plane = input_dict['plane']
+        if self.use_ground_plane:
+            ground_plane = input_dict.get('plane', None)
             assert ground_plane is not None, '`use_ground_plane` is True ' \
                                              'but find plane is None'
-            input_dict['plane'] = ground_plane
         else:
             ground_plane = None
         # change to float for blending operation
@@ -1665,8 +1662,9 @@ class AffineResize(BaseTransform):
 
             if 'gt_bboxes' in results:
                 results['gt_bboxes'] = results['gt_bboxes'][valid_index]
-                if 'gt_labels' in results:
-                    results['gt_labels'] = results['gt_labels'][valid_index]
+                if 'gt_bboxes_labels' in results:
+                    results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                        valid_index]
                 if 'gt_masks' in results:
                     raise NotImplementedError(
                         'AffineResize only supports bbox.')

@@ -35,6 +35,10 @@ test_pipeline = [
     dict(type='Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
+eval_pipeline = [
+    dict(type='LoadImageFromFileMono3D'),
+    dict(type='Pack3DDetInputs', keys=['img'])
+]
 
 train_dataloader = dict(
     batch_size=2,
@@ -44,7 +48,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='kitti_infos_train.pkl',
+        ann_file='kitti_infos_train_mini_v2.pkl',
         data_prefix=dict(img='training/image_2'),
         pipeline=train_pipeline,
         modality=input_modality,
@@ -52,6 +56,7 @@ train_dataloader = dict(
         metainfo=metainfo,
         # we use box_type_3d='Camera' in monocular 3d
         # detection task
+        task='mono3d',
         box_type_3d='Camera'))
 val_dataloader = dict(
     batch_size=1,
@@ -78,3 +83,4 @@ val_evaluator = dict(
     pred_box_type_3d='Camera')
 
 test_evaluator = val_evaluator
+randomness = dict(seed=0)

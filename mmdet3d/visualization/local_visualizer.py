@@ -383,6 +383,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 img = img[..., [2, 1, 0]]  # bgr to rgb
             self.set_image(img)
             self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
+            if vis_task == 'mono-det':
+                centers_2d = instances.centers_2d
+                self.draw_points(centers_2d)
             drawn_img = self.get_image()
 
         data_3d = dict(
@@ -534,7 +537,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 gt_img_data = self._draw_instances(img,
                                                    data_sample.gt_instances,
                                                    classes, palette)
-            if 'gt_pts_seg' in data_sample:
+            if 'gt_pts_seg' in data_sample and vis_task == 'seg':
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -566,7 +569,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         img = img[..., [2, 1, 0]]  # bgr to rgb
                     pred_img_data = self._draw_instances(
                         img, pred_instances, classes, palette)
-            if 'pred_pts_seg' in data_sample:
+            if 'pred_pts_seg' in data_sample and vis_task == 'seg':
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
