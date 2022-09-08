@@ -2,7 +2,7 @@
 import torch
 from mmengine.model import BaseModule
 from torch import nn as nn
-
+from torch import Tensor
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS, TASK_UTILS
@@ -10,7 +10,10 @@ from mmdet3d.structures import xywhr2xyxyr
 from mmdet3d.structures.bbox_3d import (DepthInstance3DBoxes,
                                         LiDARInstance3DBoxes)
 from mmdet.models.utils import multi_apply
-
+from mmengine.structures import InstanceData
+from typing import Dict, Tuple, List
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils.typing import InstanceList
 
 @MODELS.register_module()
 class PointRPNHead(BaseModule):
@@ -102,7 +105,7 @@ class PointRPNHead(BaseModule):
         # torch.cos(yaw) (1), torch.sin(yaw) (1)
         return self.bbox_coder.code_size
 
-    def forward(self, feat_dict):
+    def forward(self, feat_dict: dict) -> Tuple[list]:
         """Forward pass.
 
         Args:
@@ -112,7 +115,7 @@ class PointRPNHead(BaseModule):
             tuple[list[torch.Tensor]]: Predicted boxes and classification
                 scores.
         """
-        point_features = feat_dict['fp_features']
+        point_features = feat_dict['features']
         point_features = point_features.permute(0, 2, 1).contiguous()
         batch_size = point_features.shape[0]
         feat_cls = point_features.view(-1, point_features.shape[-1])
@@ -124,13 +127,13 @@ class PointRPNHead(BaseModule):
             batch_size, -1, self._get_reg_out_channels())
         return point_box_preds, point_cls_preds
 
-    def loss(self,
-             bbox_preds,
-             cls_preds,
+    def loss_by_feat(self,
+             bbox_preds: List[Tensor],
+             cls_preds: List[Tensor],
              points,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             img_metas=None):
+             batch_gt_instances_3d,
+             batch_input_metas=None,
+             batch_gt_instances_ignore= None):
         """Compute loss.
 
         Args:
@@ -147,7 +150,7 @@ class PointRPNHead(BaseModule):
         Returns:
             dict: Losses of PointRCNN RPN module.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d)
+        targets = self.get_targets(points, batch_gt_instances_3d)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
          box_loss_weights, point_targets) = targets
 
@@ -169,7 +172,7 @@ class PointRPNHead(BaseModule):
 
         return losses
 
-    def get_targets(self, points, gt_bboxes_3d, gt_labels_3d):
+    def get_targets(self, points, batch_gt_instances_3d):
         """Generate targets of PointRCNN RPN head.
 
         Args:
@@ -181,6 +184,8 @@ class PointRPNHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Targets of PointRCNN RPN head.
         """
+        gt_labels_3d = [instances.labels_3d for instances in batch_gt_instances_3d]
+        gt_bboxes_3d = [instances.bboxes_3d for instances in batch_gt_instances_3d]
         # find empty example
         for index in range(len(gt_labels_3d)):
             if len(gt_labels_3d[index]) == 0:
@@ -243,11 +248,12 @@ class PointRPNHead(BaseModule):
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
                 point_targets)
 
-    def get_bboxes(self,
+    def predict_by_feat(self,
                    points,
                    bbox_preds,
                    cls_preds,
-                   input_metas,
+                   batch_input_metas,
+                   cfg,
                    rescale=False):
         """Generate bboxes from RPN head predictions.
 
@@ -273,16 +279,19 @@ class PointRPNHead(BaseModule):
                                             object_class[b])
             bbox_selected, score_selected, labels, cls_preds_selected = \
                 self.class_agnostic_nms(obj_scores[b], sem_scores[b], bbox3d,
-                                        points[b, ..., :3], input_metas[b])
-            bbox = input_metas[b]['box_type_3d'](
-                bbox_selected.clone(),
-                box_dim=bbox_selected.shape[-1],
-                with_yaw=True)
-            results.append((bbox, score_selected, labels, cls_preds_selected))
+                                        points[b, ..., :3], batch_input_metas[b],cfg.nms_cfg)
+            bbox_selected = batch_input_metas[b]['box_type_3d'](
+                bbox_selected, box_dim=bbox_selected.shape[-1])
+            result = InstanceData()
+            result.bboxes_3d = bbox_selected
+            result.scores_3d = score_selected
+            result.labels_3d = labels
+            result.cls_preds = cls_preds_selected
+            results.append(result)
         return results
 
     def class_agnostic_nms(self, obj_scores, sem_scores, bbox, points,
-                           input_meta):
+                           input_meta,nms_cfg):
         """Class agnostic nms.
 
         Args:
@@ -293,8 +302,6 @@ class PointRPNHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
-        nms_cfg = self.test_cfg.nms_cfg if not self.training \
-            else self.train_cfg.nms_cfg
         if nms_cfg.use_rotate_nms:
             nms_func = nms_bev
         else:
@@ -323,14 +330,14 @@ class PointRPNHead(BaseModule):
 
         bbox = bbox[nonempty_box_mask]
 
-        if self.test_cfg.score_thr is not None:
-            score_thr = self.test_cfg.score_thr
+        if nms_cfg.score_thr is not None:
+            score_thr = nms_cfg.score_thr
             keep = (obj_scores >= score_thr)
             obj_scores = obj_scores[keep]
             sem_scores = sem_scores[keep]
             bbox = bbox.tensor[keep]
 
-        if obj_scores.shape[0] > 0:
+        if bbox.tensor.shape[0] > 0:
             topk = min(nms_cfg.nms_pre, obj_scores.shape[0])
             obj_scores_nms, indices = torch.topk(obj_scores, k=topk)
             bbox_for_nms = xywhr2xyxyr(bbox[indices].bev)
@@ -343,12 +350,18 @@ class PointRPNHead(BaseModule):
             score_selected = obj_scores_nms[keep]
             cls_preds = sem_scores_nms[keep]
             labels = torch.argmax(cls_preds, -1)
+            if bbox_selected.shape[0] > nms_cfg.nms_post:
+                _, inds = score_selected.sort(descending=True)
+                inds = inds[: score_selected.nms_post]
+                bbox_selected = bbox_selected[inds, :]
+                labels = labels[inds]
+                score_selected = score_selected[inds]
+                cls_preds = cls_preds[inds,:]
         else:
             bbox_selected = bbox.tensor
             score_selected = obj_scores.new_zeros([0])
             labels = obj_scores.new_zeros([0])
             cls_preds = obj_scores.new_zeros([0, sem_scores.shape[-1]])
-
         return bbox_selected, score_selected, labels, cls_preds
 
     def _assign_targets_by_points_inside(self, bboxes_3d, points):
@@ -379,3 +392,81 @@ class PointRPNHead(BaseModule):
             raise NotImplementedError('Unsupported bbox type!')
 
         return points_mask, assignment
+
+    def predict(self, feats_dict: Dict,
+                batch_data_samples: SampleList) -> InstanceList:
+        """Perform forward propagation of the 3D detection head and predict
+        detection results on the features of the upstream network.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
+        """
+        batch_input_metas = [
+            data_samples.metainfo for data_samples in batch_data_samples
+        ]
+        stack_points = feats_dict.pop('stack_points')
+        bbox_preds, cls_preds = self(feats_dict)
+        proposal_cfg = self.test_cfg
+
+        proposal_list = self.predict_by_feat(
+            stack_points, bbox_preds, cls_preds, cfg=proposal_cfg, batch_input_metas=batch_input_metas)
+        feats_dict['points_cls_preds'] = cls_preds
+        return proposal_list
+
+    def loss_and_predict(self,
+                         feats_dict: Dict,
+                         batch_data_samples: SampleList,
+                         proposal_cfg=None,
+                         **kwargs):
+        """Perform forward propagation of the head, then calculate loss and
+        predictions from the features and data samples.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+            proposal_cfg (ConfigDict, optional): Proposal config.
+
+        Returns:
+            tuple: the return value is a tuple contains:
+
+            - losses: (dict[str, Tensor]): A dictionary of loss components.
+            - predictions (list[:obj:`InstanceData`]): Detection
+              results of each sample after the post process.
+        """
+        batch_gt_instances_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+        stack_points = feats_dict.pop('stack_points')
+        bbox_preds, cls_preds = self(feats_dict)
+
+        loss_inputs = (bbox_preds, cls_preds, stack_points) + (batch_gt_instances_3d, batch_input_metas,
+                              batch_gt_instances_ignore)
+        losses = self.loss_by_feat(*loss_inputs)
+
+        predictions = self.predict_by_feat(
+            stack_points, bbox_preds, cls_preds, batch_input_metas=batch_input_metas, cfg=proposal_cfg)
+        feats_dict['points_cls_preds'] = cls_preds
+        return losses, predictions

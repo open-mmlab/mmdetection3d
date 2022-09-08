@@ -14,7 +14,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
     Args:
         bbox_head (dict): Config of bbox_head.
-        point_roi_extractor (dict): Config of RoI extractor.
+        bbox_roi_extractor (dict): Config of RoI extractor.
         train_cfg (dict): Train configs.
         test_cfg (dict): Test configs.
         depth_normalizer (float, optional): Normalize depth feature.
@@ -24,32 +24,20 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
     def __init__(self,
                  bbox_head,
-                 point_roi_extractor,
+                 bbox_roi_extractor,
                  train_cfg,
                  test_cfg,
                  depth_normalizer=70.0,
-                 pretrained=None,
                  init_cfg=None):
         super(PointRCNNRoIHead, self).__init__(
             bbox_head=bbox_head,
+            bbox_roi_extractor=bbox_roi_extractor,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
             init_cfg=init_cfg)
         self.depth_normalizer = depth_normalizer
 
-        if point_roi_extractor is not None:
-            self.point_roi_extractor = MODELS.build(point_roi_extractor)
-
         self.init_assigner_sampler()
-
-    def init_bbox_head(self, bbox_head):
-        """Initialize box head.
-
-        Args:
-            bbox_head (dict): Config dict of RoI Head.
-        """
-        self.bbox_head = MODELS.build(bbox_head)
 
     def init_mask_head(self):
         """Initialize maek head."""
@@ -68,8 +56,8 @@ class PointRCNNRoIHead(Base3DRoIHead):
                 ]
             self.bbox_sampler = TASK_UTILS.build(self.train_cfg.sampler)
 
-    def forward_train(self, feats_dict, input_metas, proposal_list,
-                      gt_bboxes_3d, gt_labels_3d):
+    def loss(self, feats_dict, rpn_results_list,
+             batch_data_samples, **kwargs) -> dict:
         """Training forward function of PointRCNNRoIHead.
 
         Args:
@@ -94,9 +82,15 @@ class PointRCNNRoIHead(Base3DRoIHead):
         point_cls_preds = feats_dict['points_cls_preds']
         sem_scores = point_cls_preds.sigmoid()
         point_scores = sem_scores.max(-1)[0]
-
-        sample_results = self._assign_and_sample(proposal_list, gt_bboxes_3d,
-                                                 gt_labels_3d)
+        batch_gt_instances_3d = []
+        batch_gt_instances_ignore = []
+        for data_sample in batch_data_samples:
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+            if 'ignored_instances' in data_sample:
+                batch_gt_instances_ignore.append(data_sample.ignored_instances)
+            else:
+                batch_gt_instances_ignore.append(None)
+        sample_results = self._assign_and_sample(rpn_results_list, batch_gt_instances_3d,batch_gt_instances_ignore)
 
         # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
@@ -114,7 +108,12 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
         return losses
 
-    def simple_test(self, feats_dict, img_metas, proposal_list, **kwargs):
+    def predict(self,
+                feats_dict,
+                rpn_results_list,
+                batch_data_samples,
+                rescale: bool = False,
+                **kwargs):
         """Simple testing forward function of PointRCNNRoIHead.
 
         Note:
@@ -128,9 +127,11 @@ class PointRCNNRoIHead(Base3DRoIHead):
         Returns:
             dict: Bbox results of one frame.
         """
-        rois = bbox3d2roi([res['boxes_3d'].tensor for res in proposal_list])
-        labels_3d = [res['labels_3d'] for res in proposal_list]
-
+        rois = bbox3d2roi([res['bboxes_3d'].tensor for res in rpn_results_list])
+        labels_3d = [res['labels_3d'] for res in rpn_results_list]
+        batch_input_metas = [
+            data_samples.metainfo for data_samples in batch_data_samples
+        ]
         features = feats_dict['features']
         points = feats_dict['points']
         point_cls_preds = feats_dict['points_cls_preds']
@@ -148,19 +149,15 @@ class PointRCNNRoIHead(Base3DRoIHead):
         batch_size = features.shape[0]
         bbox_results = self._bbox_forward(features, points, batch_size, rois)
         object_score = bbox_results['cls_score'].sigmoid()
-        bbox_list = self.bbox_head.get_bboxes(
+        bbox_list = self.bbox_head.get_results(
             rois,
             object_score,
             bbox_results['bbox_pred'],
             labels_3d,
-            img_metas,
+            batch_input_metas,
             cfg=self.test_cfg)
 
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
-        return bbox_results
+        return bbox_list
 
     def _bbox_forward_train(self, features, points, sampling_results):
         """Forward training function of roi_extractor and bbox_head.
@@ -203,14 +200,14 @@ class PointRCNNRoIHead(Base3DRoIHead):
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
-        pooled_point_feats = self.point_roi_extractor(features, points,
+        pooled_point_feats = self.bbox_roi_extractor(features, points,
                                                       batch_size, rois)
 
         cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
         bbox_results = dict(cls_score=cls_score, bbox_pred=bbox_pred)
         return bbox_results
 
-    def _assign_and_sample(self, proposal_list, gt_bboxes_3d, gt_labels_3d):
+    def _assign_and_sample(self, rpn_results_list, batch_gt_instances_3d,batch_gt_instances_ignore):
         """Assign and sample proposals for training.
 
         Args:
@@ -225,12 +222,16 @@ class PointRCNNRoIHead(Base3DRoIHead):
         """
         sampling_results = []
         # bbox assign
-        for batch_idx in range(len(proposal_list)):
-            cur_proposal_list = proposal_list[batch_idx]
-            cur_boxes = cur_proposal_list['boxes_3d']
+        for batch_idx in range(len(rpn_results_list)):
+            cur_proposal_list = rpn_results_list[batch_idx]
+            cur_boxes = cur_proposal_list['bboxes_3d']
             cur_labels_3d = cur_proposal_list['labels_3d']
-            cur_gt_bboxes = gt_bboxes_3d[batch_idx].to(cur_boxes.device)
-            cur_gt_labels = gt_labels_3d[batch_idx]
+            cur_gt_instances_3d = batch_gt_instances_3d[batch_idx]
+            cur_gt_instances_3d.bboxes_3d = cur_gt_instances_3d.\
+                bboxes_3d.tensor
+            cur_gt_instances_ignore = batch_gt_instances_ignore[batch_idx]
+            cur_gt_bboxes = cur_gt_instances_3d.bboxes_3d.to(cur_boxes.device)
+            cur_gt_labels = cur_gt_instances_3d.labels_3d
             batch_num_gts = 0
             # 0 is bg
             batch_gt_indis = cur_gt_labels.new_full((len(cur_boxes), ), 0)
@@ -244,9 +245,9 @@ class PointRCNNRoIHead(Base3DRoIHead):
                     gt_per_cls = (cur_gt_labels == i)
                     pred_per_cls = (cur_labels_3d == i)
                     cur_assign_res = assigner.assign(
-                        cur_boxes.tensor[pred_per_cls],
-                        cur_gt_bboxes.tensor[gt_per_cls],
-                        gt_labels=cur_gt_labels[gt_per_cls])
+                        cur_proposal_list[pred_per_cls],
+                        cur_gt_instances_3d[gt_per_cls],
+                        cur_gt_instances_ignore)
                     # gather assign_results in different class into one result
                     batch_num_gts += cur_assign_res.num_gts
                     # gt inds (1-based)
@@ -272,14 +273,12 @@ class PointRCNNRoIHead(Base3DRoIHead):
                                              batch_gt_labels)
             else:  # for single class
                 assign_result = self.bbox_assigner.assign(
-                    cur_boxes.tensor,
-                    cur_gt_bboxes.tensor,
-                    gt_labels=cur_gt_labels)
+                    cur_proposal_list, cur_gt_instances_3d, cur_gt_instances_ignore)
 
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,
-                                                       cur_gt_bboxes.tensor,
+                                                       cur_gt_bboxes,
                                                        cur_gt_labels)
             sampling_results.append(sampling_result)
         return sampling_results

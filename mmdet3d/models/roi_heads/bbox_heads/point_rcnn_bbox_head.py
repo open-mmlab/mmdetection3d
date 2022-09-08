@@ -12,7 +12,7 @@ from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet.models.utils import multi_apply
-
+from mmengine.structures import InstanceData
 
 @MODELS.register_module()
 class PointRCNNBboxHead(BaseModule):
@@ -449,12 +449,12 @@ class PointRCNNBboxHead(BaseModule):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
 
-    def get_bboxes(self,
+    def get_results(self,
                    rois,
                    cls_score,
                    bbox_pred,
                    class_labels,
-                   img_metas,
+                   input_metas,
                    cfg=None):
         """Generate bboxes from bbox head predictions.
 
@@ -494,16 +494,18 @@ class PointRCNNBboxHead(BaseModule):
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             keep = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
                                         cfg.score_thr, cfg.nms_thr,
-                                        img_metas[batch_id],
+                                        input_metas[batch_id],
                                         cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[keep]
             selected_label_preds = cur_class_labels[keep]
             selected_scores = cur_cls_score[keep]
+            results = InstanceData()
+            results.bboxes_3d = input_metas[batch_id]['box_type_3d'](
+                selected_bboxes, selected_bboxes.shape[-1])
+            results.scores_3d = selected_scores
+            results.labels_3d = selected_label_preds
 
-            result_list.append(
-                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
-                                                    self.bbox_coder.code_size),
-                 selected_scores, selected_label_preds))
+            result_list.append(results)
         return result_list
 
     def multi_class_nms(self,
