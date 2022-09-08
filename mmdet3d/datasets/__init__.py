@@ -22,8 +22,8 @@ from .transforms import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                          ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
                          ObjectSample, PointSample, PointShuffle,
                          PointsRangeFilter, RandomDropPointsColor,
-                         RandomFlip3D, RandomJitterPoints, RandomShiftScale,
-                         VoxelBasedPointSampler)
+                         RandomFlip3D, RandomJitterPoints, RandomResize3D,
+                         RandomShiftScale, VoxelBasedPointSampler)
 from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
@@ -40,5 +40,6 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES', 'get_2d_boxes'
+    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES', 'get_2d_boxes',
+    'RandomResize3D'
 ]

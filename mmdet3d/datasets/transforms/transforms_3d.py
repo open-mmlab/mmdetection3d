@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
-from mmcv.transforms import BaseTransform
+from mmcv.transforms import BaseTransform, RandomResize
 from mmengine import is_tuple_of
 
 from mmdet3d.models.task_modules import VoxelGenerator
@@ -166,7 +166,7 @@ class RandomFlip3D(RandomFlip):
                 'Only support sync_2d=True and horizontal flip with images'
             # TODO fix this ori_shape and other keys in vision based model
             # TODO ori_shape to img_shape
-            w = input_dict['ori_shape'][1]
+            w = input_dict['img_shape'][1]
             input_dict['centers_2d'][..., 0] = \
                 w - input_dict['centers_2d'][..., 0]
             # need to modify the horizontal position of camera center
@@ -1834,3 +1834,41 @@ class RandomShiftScale(BaseTransform):
         repr_str += f'(shift_scale={self.shift_scale}, '
         repr_str += f'aug_prob={self.aug_prob}) '
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class RandomResize3D(RandomResize):
+    r"""The difference between RandomResize3D and RandomResize:
+    1. Compared to RandomResize, this class would further
+        check if scale is already set in results.
+    2. During resizing, this class would modify the centers_2d
+        and cam2img with ``results['scale']``.
+    """
+
+    def _resize_3d(self, results):
+        """Resize centers_2d and modify camera intrinisc with
+        ``results['scale']``."""
+        if 'centers_2d' in results:
+            results['centers_2d'] *= results['scale_factor'][:2]
+        results['cam2img'][0] *= np.array(results['scale_factor'][0])
+        results['cam2img'][1] *= np.array(results['scale_factor'][1])
+
+    def __call__(self, results):
+        """Call function to resize images, bounding boxes, masks, semantic
+        segmentation map.
+
+        Compared to RandomResize, this function would further
+        check if scale is already set in results.
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor', \
+                'keep_ratio' keys are added into result dict.
+        """
+        if 'scale' not in results:
+            results['scale'] = self._random_scale()
+        self.resize.scale = results['scale']
+        results = self.resize(results)
+        self._resize_3d(results)
+
+        return results
