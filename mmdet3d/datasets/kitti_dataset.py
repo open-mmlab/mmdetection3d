@@ -51,6 +51,7 @@ class KittiDataset(Det3DDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: Optional[dict] = dict(use_lidar=True),
                  default_cam_key: str = 'CAM2',
+                 task: str = '3d',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -58,6 +59,7 @@ class KittiDataset(Det3DDataset):
                  **kwargs):
 
         self.pcd_limit_range = pcd_limit_range
+        self.task = task
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -107,6 +109,9 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
+        if self.task == 'mono3d':
+            info['instances'] = info['cam_instances'][self.default_cam_key]
+
         info = super().parse_data_info(info)
 
         return info
@@ -134,6 +139,12 @@ class KittiDataset(Det3DDataset):
             # empty instance
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
+
+            if self.task == 'mono3d':
+                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
+                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
+                ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         ann_info = self._remove_dontcare(ann_info)
         # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
