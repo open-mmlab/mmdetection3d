@@ -134,4 +134,4 @@ param_scheduler = [
         gamma=0.1)
 ]
 
-train_cfg = dict(max_epochs=48)
+train_cfg = dict(max_epochs=48, val_interval=2)

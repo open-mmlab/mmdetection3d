@@ -70,3 +70,5 @@ optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='Adam', lr=2.5e-4),
     clip_grad=None)
+
+find_unused_parameters = True
