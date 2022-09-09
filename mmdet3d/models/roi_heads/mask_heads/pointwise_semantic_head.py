@@ -4,7 +4,6 @@ from mmengine.model import BaseModule
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.bbox_3d import rotation_3d_in_axis
 from mmdet3d.utils import InstanceList
@@ -50,8 +49,8 @@ class PointwiseSemanticHead(BaseModule):
         self.seg_cls_layer = nn.Linear(in_channels, 1, bias=True)
         self.seg_reg_layer = nn.Linear(in_channels, 3, bias=True)
 
-        self.loss_seg = build_loss(loss_seg)
-        self.loss_part = build_loss(loss_part)
+        self.loss_seg = MODELS.build(loss_seg)
+        self.loss_part = MODELS.build(loss_part)
 
     def forward(self, x):
         """Forward pass.
