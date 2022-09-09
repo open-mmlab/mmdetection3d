@@ -89,10 +89,9 @@ class PartAggregationROIHead(Base3DRoIHead):
         bbox_results.update(loss_bbox=loss_bbox)
         return bbox_results
 
-    def _assign_and_sample(
-            self, proposal_list: InstanceList,
-            batch_gt_instances_3d: InstanceList,
-    batch_gt_instances_ignore) -> List[SamplingResult]:
+    def _assign_and_sample(self, proposal_list: InstanceList,
+                           batch_gt_instances_3d: InstanceList,
+                           batch_gt_instances_ignore) -> List[SamplingResult]:
         """Assign and sample proposals for training.
 
         Args:
@@ -116,8 +115,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             cur_gt_instances_ignore = batch_gt_instances_ignore[batch_idx]
             cur_gt_instances_3d.bboxes_3d = cur_gt_instances_3d.\
                 bboxes_3d.tensor
-            cur_gt_bboxes = cur_gt_instances_3d.bboxes_3d.to(
-                cur_boxes.device)
+            cur_gt_bboxes = cur_gt_instances_3d.bboxes_3d.to(cur_boxes.device)
             cur_gt_labels = cur_gt_instances_3d.labels_3d
 
             batch_num_gts = 0
@@ -161,7 +159,8 @@ class PartAggregationROIHead(Base3DRoIHead):
                                              batch_gt_labels)
             else:  # for single class
                 assign_result = self.bbox_assigner.assign(
-                    cur_proposal_list, cur_gt_instances_3d,cur_gt_instances_ignore)
+                    cur_proposal_list, cur_gt_instances_3d,
+                    cur_gt_instances_ignore)
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,
                                                        cur_boxes.tensor,

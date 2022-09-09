@@ -183,8 +183,7 @@ class PartA2RPNHead(Anchor3DHead):
         result = self.class_agnostic_nms(mlvl_bboxes, mlvl_bboxes_for_nms,
                                          mlvl_max_scores, mlvl_label_pred,
                                          mlvl_cls_score, mlvl_dir_scores,
-                                         score_thr, cfg,
-                                         input_meta)
+                                         score_thr, cfg, input_meta)
         return result
 
     def loss_and_predict(self,
@@ -340,7 +339,7 @@ class PartA2RPNHead(Anchor3DHead):
             labels = torch.cat(labels, dim=0)
             if bboxes.shape[0] > cfg.nms_post:
                 _, inds = scores.sort(descending=True)
-                inds = inds[: cfg.nms_post]
+                inds = inds[:cfg.nms_post]
                 bboxes = bboxes[inds, :]
                 labels = labels[inds]
                 scores = scores[inds]

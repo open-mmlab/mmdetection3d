@@ -21,8 +21,7 @@ class TestPointRCNN(unittest.TestCase):
         model = MODELS.build(pointrcnn_cfg)
         num_gt_instance = 2
         packed_inputs = _create_detector_inputs(
-            num_points=10101,
-            num_gt_instance=num_gt_instance)
+            num_points=10101, num_gt_instance=num_gt_instance)
 
         if torch.cuda.is_available():
             model = model.cuda()

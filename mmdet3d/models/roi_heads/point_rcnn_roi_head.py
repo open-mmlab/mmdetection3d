@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict
+
 import torch
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet3d.structures import bbox3d2result, bbox3d2roi
+from mmdet3d.structures import bbox3d2roi
+from mmdet3d.utils.typing import InstanceList, SampleList
 from mmdet.models.task_modules import AssignResult
 from .base_3droi_head import Base3DRoIHead
 
@@ -56,26 +59,21 @@ class PointRCNNRoIHead(Base3DRoIHead):
                 ]
             self.bbox_sampler = TASK_UTILS.build(self.train_cfg.sampler)
 
-    def loss(self, feats_dict, rpn_results_list,
-             batch_data_samples, **kwargs) -> dict:
-        """Training forward function of PointRCNNRoIHead.
+    def loss(self, feats_dict: Dict, rpn_results_list: InstanceList,
+             batch_data_samples: SampleList, **kwargs) -> dict:
+        """Perform forward propagation and loss calculation of the detection
+        roi on the features of the upstream network.
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            imput_metas (list[dict]): Meta info of each input.
-            proposal_list (list[dict]): Proposal information from rpn.
-                The dictionary should contain the following keys:
-
-                - boxes_3d (:obj:`BaseInstance3DBoxes`): Proposal bboxes
-                - labels_3d (torch.Tensor): Labels of proposals
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]):
-                GT bboxes of each sample. The bboxes are encapsulated
-                by 3D box bboxes_3d.
-            gt_labels_3d (list[LongTensor]): GT labels of each sample.
+            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+                of rpn head.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
 
         Returns:
-            dict: Losses from RoI RCNN head.
-                - loss_bbox (torch.Tensor): Loss of bboxes
+            dict[str, Tensor]: A dictionary of loss components
         """
         features = feats_dict['features']
         points = feats_dict['points']
@@ -90,7 +88,9 @@ class PointRCNNRoIHead(Base3DRoIHead):
                 batch_gt_instances_ignore.append(data_sample.ignored_instances)
             else:
                 batch_gt_instances_ignore.append(None)
-        sample_results = self._assign_and_sample(rpn_results_list, batch_gt_instances_3d,batch_gt_instances_ignore)
+        sample_results = self._assign_and_sample(rpn_results_list,
+                                                 batch_gt_instances_3d,
+                                                 batch_gt_instances_ignore)
 
         # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
@@ -109,25 +109,39 @@ class PointRCNNRoIHead(Base3DRoIHead):
         return losses
 
     def predict(self,
-                feats_dict,
-                rpn_results_list,
-                batch_data_samples,
+                feats_dict: Dict,
+                rpn_results_list: InstanceList,
+                batch_data_samples: SampleList,
                 rescale: bool = False,
-                **kwargs):
-        """Simple testing forward function of PointRCNNRoIHead.
-
-        Note:
-            This function assumes that the batch size is 1
+                **kwargs) -> InstanceList:
+        """Perform forward propagation of the roi head and predict detection
+        results on the features of the upstream network.
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            img_metas (list[dict]): Meta info of each image.
-            proposal_list (list[dict]): Proposal information from rpn.
+            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+                of rpn head.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+            rescale (bool): If True, return boxes in original image space.
+                Defaults to False.
 
         Returns:
-            dict: Bbox results of one frame.
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
         """
-        rois = bbox3d2roi([res['bboxes_3d'].tensor for res in rpn_results_list])
+        rois = bbox3d2roi(
+            [res['bboxes_3d'].tensor for res in rpn_results_list])
         labels_3d = [res['labels_3d'] for res in rpn_results_list]
         batch_input_metas = [
             data_samples.metainfo for data_samples in batch_data_samples
@@ -201,13 +215,14 @@ class PointRCNNRoIHead(Base3DRoIHead):
                 features of roi_extractor.
         """
         pooled_point_feats = self.bbox_roi_extractor(features, points,
-                                                      batch_size, rois)
+                                                     batch_size, rois)
 
         cls_score, bbox_pred = self.bbox_head(pooled_point_feats)
         bbox_results = dict(cls_score=cls_score, bbox_pred=bbox_pred)
         return bbox_results
 
-    def _assign_and_sample(self, rpn_results_list, batch_gt_instances_3d,batch_gt_instances_ignore):
+    def _assign_and_sample(self, rpn_results_list, batch_gt_instances_3d,
+                           batch_gt_instances_ignore):
         """Assign and sample proposals for training.
 
         Args:
@@ -273,7 +288,8 @@ class PointRCNNRoIHead(Base3DRoIHead):
                                              batch_gt_labels)
             else:  # for single class
                 assign_result = self.bbox_assigner.assign(
-                    cur_proposal_list, cur_gt_instances_3d, cur_gt_instances_ignore)
+                    cur_proposal_list, cur_gt_instances_3d,
+                    cur_gt_instances_ignore)
 
             # sample boxes
             sampling_result = self.bbox_sampler.sample(assign_result,

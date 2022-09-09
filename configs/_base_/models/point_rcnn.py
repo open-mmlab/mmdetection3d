@@ -91,8 +91,11 @@ model = dict(
         pos_distance_thr=10.0,
         rpn=dict(
             rpn_proposal=dict(
-                use_rotate_nms=True,score_thr=None, iou_thr=0.8, nms_pre=9000, nms_post=512)),
-
+                use_rotate_nms=True,
+                score_thr=None,
+                iou_thr=0.8,
+                nms_pre=9000,
+                nms_post=512)),
         rcnn=dict(
             assigner=[
                 dict(  # for Pedestrian
@@ -136,7 +139,10 @@ model = dict(
             cls_neg_thr=0.25)),
     test_cfg=dict(
         rpn=dict(
-        nms_cfg=dict(
-            use_rotate_nms=True, iou_thr=0.85, nms_pre=9000, nms_post=512,
-            score_thr=None)),
+            nms_cfg=dict(
+                use_rotate_nms=True,
+                iou_thr=0.85,
+                nms_pre=9000,
+                nms_post=512,
+                score_thr=None)),
         rcnn=dict(use_rotate_nms=True, nms_thr=0.1, score_thr=0.1)))

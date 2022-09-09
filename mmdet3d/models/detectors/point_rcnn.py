@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, Optional
+
 import torch
 
 from mmdet3d.registry import MODELS
 from .two_stage import TwoStage3DDetector
-from typing import Optional,Dict
+
+
 @MODELS.register_module()
 class PointRCNN(TwoStage3DDetector):
     r"""PointRCNN detector.
@@ -38,7 +41,7 @@ class PointRCNN(TwoStage3DDetector):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg,
-        data_preprocessor=data_preprocessor)
+            data_preprocessor=data_preprocessor)
 
     def extract_feat(self, batch_inputs_dict: Dict) -> Dict:
         """Directly extract features from the backbone+neck.
@@ -58,4 +61,7 @@ class PointRCNN(TwoStage3DDetector):
 
         if self.with_neck:
             x = self.neck(x)
-        return dict(features=x['fp_features'].clone(),points=x['fp_xyz'].clone(),stack_points=points)
+        return dict(
+            features=x['fp_features'].clone(),
+            points=x['fp_xyz'].clone(),
+            stack_points=points)

@@ -10,6 +10,7 @@ from torch import Tensor
 
 from mmdet3d.models import make_sparse_convmodule
 from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
+from mmdet3d.utils.typing import InstanceList
 from mmdet.models.utils import multi_apply
 
 if IS_SPCONV2_AVAILABLE:
@@ -514,7 +515,7 @@ class PartA2BboxHead(BaseModule):
                     class_labels: Tensor,
                     class_pred: Tensor,
                     input_metas: List[dict],
-                    cfg: dict = None) -> List:
+                    cfg: dict = None) -> InstanceList:
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -527,7 +528,17 @@ class PartA2BboxHead(BaseModule):
             cfg (:obj:`ConfigDict`): Testing config.
 
         Returns:
-            list[tuple]: Decoded bbox, scores and labels after nms.
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
         """
         roi_batch_id = rois[..., 0]
         roi_boxes = rois[..., 1:]  # boxes without batch id

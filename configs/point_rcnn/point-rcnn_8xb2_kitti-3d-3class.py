@@ -67,12 +67,13 @@ test_pipeline = [
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-train_dataloader = dict(batch_size=2,
-                        num_workers=2,
-                        dataset=dict(type='RepeatDataset',
-                                     times=2,
-                                     dataset=dict(pipeline=train_pipeline,
-                                                  metainfo=metainfo)))
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=2,
+    dataset=dict(
+        type='RepeatDataset',
+        times=2,
+        dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 
