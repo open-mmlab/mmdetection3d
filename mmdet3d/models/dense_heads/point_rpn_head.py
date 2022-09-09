@@ -3,7 +3,6 @@ import torch
 from mmengine.model import BaseModule
 from torch import nn as nn
 from torch import Tensor
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import xywhr2xyxyr
@@ -53,8 +52,8 @@ class PointRPNHead(BaseModule):
         self.enlarge_width = enlarge_width
 
         # build loss function
-        self.bbox_loss = build_loss(bbox_loss)
-        self.cls_loss = build_loss(cls_loss)
+        self.bbox_loss = MODELS.build(bbox_loss)
+        self.cls_loss = MODELS.build(cls_loss)
 
         # build box coder
         self.bbox_coder = TASK_UTILS.build(bbox_coder)

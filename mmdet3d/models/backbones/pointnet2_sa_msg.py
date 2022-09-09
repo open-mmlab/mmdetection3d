@@ -105,7 +105,7 @@ class PointNet2SAMSG(BasePointNet):
                     dilated_group=dilated_group[sa_index],
                     norm_cfg=norm_cfg,
                     cfg=sa_cfg,
-                    bias=True))
+                    bias=False))
             skip_channel_list.append(sa_out_channel)
 
             cur_aggregation_channel = aggregation_channels[sa_index]
