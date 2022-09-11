@@ -44,7 +44,7 @@ def _generate_sensaturban_dataset_config():
         dict(
             type='Pack3DDetInputs',
             keys=[
-                'points', 'img', 'altitude', 'pts_semantic_mask', 'gt_seg_map'
+                'points', 'img', 'depth_img', 'pts_semantic_mask', 'gt_seg_map'
             ])
     ]
 
@@ -79,7 +79,7 @@ class TestSensatUrbanDataset(unittest.TestCase):
 
         points = input_dict['inputs']['points']
         bev = input_dict['inputs']['img']
-        altitude = input_dict['inputs']['altitude']
+        altitude = input_dict['inputs']['depth_img']
         data_sample = input_dict['data_sample']
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
         seg_map = data_sample.gt_pts_seg.seg_map

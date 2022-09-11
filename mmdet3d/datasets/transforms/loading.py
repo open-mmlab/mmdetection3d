@@ -531,6 +531,7 @@ class LoadDepthFromFile(object):
 
         Args:
             results (dict): Result dict containing multi-frame image filenames.
+
         Returns:
             dict: The result dict containing the multi-frame image data.
                 Added keys are deducted from all pipelines from
@@ -548,7 +549,7 @@ class LoadDepthFromFile(object):
             depth_img = depth_img.astype(np.float32)
 
         depth_img = np.expand_dims(depth_img, 0)
-        results['altitude'] = depth_img
+        results['depth_img'] = depth_img
         # hack the depth_fields with seg_fields given their similarity
         # TODO: distinguish seg_fields and depth_fields
         # if self.with_transform:

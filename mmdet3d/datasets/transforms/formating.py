@@ -47,7 +47,7 @@ def to_tensor(
 
 @TRANSFORMS.register_module()
 class Pack3DDetInputs(BaseTransform):
-    INPUTS_KEYS = ['points', 'img', 'altitude']
+    INPUTS_KEYS = ['points', 'img', 'depth_img']
     INSTANCEDATA_3D_KEYS = [
         'gt_bboxes_3d', 'gt_labels_3d', 'attr_labels', 'depths', 'centers_2d'
     ]

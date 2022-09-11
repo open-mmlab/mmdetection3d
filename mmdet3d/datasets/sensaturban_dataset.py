@@ -10,6 +10,10 @@ from .seg3d_dataset import Seg3DDataset
 class SensatUrbanDataset(Seg3DDataset):
     r"""SensatUrban Dataset.
 
+    This class serves as the API for experiments on the SensatUrban Dataset
+    Please refer to <https://urban3dchallenge.github.io>`_
+    for data downloading
+
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
@@ -24,7 +28,6 @@ class SensatUrbanDataset(Seg3DDataset):
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes
-
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
