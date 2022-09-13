@@ -348,10 +348,11 @@ class PointRCNNBboxHead(BaseModule):
             torch.norm(pred_box_corners - gt_box_corners_flip, dim=2))
         # huber loss
         abs_error = corner_dist.abs()
-        quadratic = abs_error.clamp(max=delta)
-        linear = (abs_error - quadratic)
-        corner_loss = 0.5 * quadratic**2 + delta * linear
-        return corner_loss.mean(dim=1)
+        # quadratic = abs_error.clamp(max=delta)
+        # linear = (abs_error - quadratic)
+        # corner_loss = 0.5 * quadratic**2 + delta * linear
+        loss = torch.where(abs_error < delta, 0.5 * abs_error ** 2 / delta, abs_error - 0.5 * delta)
+        return loss.mean()
 
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
         """Generate targets.
