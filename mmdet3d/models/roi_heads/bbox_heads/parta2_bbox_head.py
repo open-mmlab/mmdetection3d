@@ -329,9 +329,9 @@ class PartA2BboxHead(BaseModule):
         pos_inds = (reg_mask > 0)
         if pos_inds.any() == 0:
             # fake a part loss
-            losses['loss_bbox'] = loss_cls.new_tensor(0)
+            losses['loss_bbox'] = loss_cls.new_tensor(0) * loss_cls.sum()
             if self.with_corner_loss:
-                losses['loss_corner'] = loss_cls.new_tensor(0)
+                losses['loss_corner'] = loss_cls.new_tensor(0) * loss_cls.sum()
         else:
             pos_bbox_pred = bbox_pred.view(rcnn_batch_size, -1)[pos_inds]
             bbox_weights_flat = bbox_weights[pos_inds].view(-1, 1).repeat(

@@ -310,12 +310,11 @@ class PointRCNNBboxHead(BaseModule):
 
             # calculate corner loss
             loss_corner = self.get_corner_loss_lidar(pred_boxes3d,
-                                                     pos_gt_bboxes)
+                                                     pos_gt_bboxes).mean()
 
             losses['loss_corner'] = loss_corner
         else:
-            losses['loss_corner'] = loss_cls.new_tensor(0)
-
+            losses['loss_corner'] = loss_cls.new_tensor(0) * loss_cls.sum()
         return losses
 
     def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0):
@@ -352,7 +351,7 @@ class PointRCNNBboxHead(BaseModule):
         # linear = (abs_error - quadratic)
         # corner_loss = 0.5 * quadratic**2 + delta * linear
         loss = torch.where(abs_error < delta, 0.5 * abs_error ** 2 / delta, abs_error - 0.5 * delta)
-        return loss.mean()
+        return loss.mean(dim=1)
 
     def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
         """Generate targets.
