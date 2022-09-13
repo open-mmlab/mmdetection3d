@@ -107,9 +107,10 @@ class NuScenesDataset(Det3DDataset):
             return anns_results
 
         if self.use_valid_flag:
-            mask = ann_info['bbox_3d_isvalid']
+            mask = ann_info['bbox_3d_isvalid'].astype(bool)
         else:
             mask = ann_info['num_lidar_pts'] > 0
+
         gt_bboxes_3d = ann_info['gt_bboxes_3d'][mask]
         gt_labels_3d = ann_info['gt_labels_3d'][mask]
 
