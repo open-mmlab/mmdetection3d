@@ -11,11 +11,11 @@ class SensatUrbanDataset(Seg3DDataset):
     r"""SensatUrban Dataset.
 
     This class serves as the API for experiments on the SensatUrban Dataset
-    Please refer to <https://urban3dchallenge.github.io>`_
-    for data downloading
+    Please refer to `its official website
+    <https://urban3dchallenge.github.io>`_ for more details.
 
     Args:
-        data_root (str): Path of dataset root.
+        data_root (str, optional): Path of dataset root.
         ann_file (str): Path of annotation file.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
