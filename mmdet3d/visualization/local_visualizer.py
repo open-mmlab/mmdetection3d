@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import os
 from os import path as osp
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -517,7 +518,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pred_seg_data_3d = None
         gt_img_data = None
         pred_img_data = None
-
         if draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
@@ -605,6 +605,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 win_name=name,
                 wait_time=wait_time)
 
+        if not osp.exists(out_file):
+            os.mkdir(out_file)
+        
         if out_file is not None:
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file + '.jpg')
