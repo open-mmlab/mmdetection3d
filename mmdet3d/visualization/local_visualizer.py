@@ -518,6 +518,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pred_seg_data_3d = None
         gt_img_data = None
         pred_img_data = None
+
         if draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
