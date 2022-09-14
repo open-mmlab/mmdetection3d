@@ -161,7 +161,7 @@ def urban_data_prep(root_path,
         info_prefix (str): The prefix of info filenames.
         out_dir (str): Output directory of the generated info file.
         workers (int): Number of process to be used.
-        dataset_style (str): ''
+        dataset_style (str): 'semantickitti' or 'potsdam'.Default to potsdam.
     """
 
     converter = UrbanConverter(
@@ -178,7 +178,7 @@ def urban_data_prep(root_path,
         random_crop_rate=1.0,
     )
 
-    if dataset_style == 'kitti':
+    if dataset_style == 'semantickitti':
         # TODO: implement this
         raise NotImplementedError()
         # converter.convert2kitti()

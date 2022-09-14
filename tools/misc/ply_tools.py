@@ -21,36 +21,24 @@ valid_formats = {
 def read_ply(filename, triangular_mesh=False):
     """Read ".ply" files.
 
-    Parameters
-    ----------
-    filename : string
-        the name of the file to read.
+    Args:
+        filename (str): the name of the file to read.
 
-    Returns
-    -------
-    result : array
-        data stored in the file
-
-    Examples
-    --------
-    Store data in file
-
-    >>> points = np.random.rand(5, 3)
-    >>> values = np.random.randint(2, size=10)
-    >>> write_ply('example.ply', [points, values], ['x', 'y', 'z', 'values'])
-
-    Read the file
-
-    >>> data = read_ply('example.ply')
-    >>> values = data['values']
-    array([0, 0, 1, 1, 0])
-
-    >>> points = np.vstack((data['x'], data['y'], data['z'])).T
-    array([[ 0.466  0.595  0.324]
-           [ 0.538  0.407  0.654]
-           [ 0.850  0.018  0.988]
-           [ 0.395  0.394  0.363]
-           [ 0.873  0.996  0.092]])
+    Examples:
+        Store data in file
+        >>> points = np.random.rand(5, 3)
+        >>> values = np.random.randint(2, size=10)
+        >>> write_ply('example.ply',[points, values],['x', 'y', 'z', 'values'])
+        Read the file
+        >>> data = read_ply('example.ply')
+        >>> values = data['values']
+        array([0, 0, 1, 1, 0])
+        >>> points = np.vstack((data['x'], data['y'], data['z'])).T
+        array([[ 0.466  0.595  0.324]
+               [ 0.538  0.407  0.654]
+               [ 0.850  0.018  0.988]
+               [ 0.395  0.394  0.363]
+               [ 0.873  0.996  0.092]])
     """
 
     with open(filename, 'rb') as plyfile:
@@ -102,34 +90,28 @@ def read_ply(filename, triangular_mesh=False):
 def write_ply(filename, field_list, field_names, triangular_faces=None):
     """Write ".ply" files.
 
-    Parameters
-    ----------
-    filename : string
-        the name of the file to which the data is saved.
-        A '.ply' extension will be appended to the
-        file name if it does no already have one.
+    Args:
+        filename (str):the name of the file to which the data is saved.
+            A '.ply' extension will be appended to the
+            file name if it does no already have one.
+        field_list (list|tuple|array):the fields to be saved in the ply file.
+            Either numpy array, list of numpy arrays or tuple of numpy arrays.
+            Each 1D numpy array and each column of 2D numpy arrays
+            are considered as one field.
+        field_names (list):
+            the name of each fields as a list of strings.
+            Has to be the same length as the number of fields.
 
-    field_list : list, tuple, numpy array
-        the fields to be saved in the ply file.
-        Either a numpy array,a list of numpy arrays or a tuple of numpy arrays.
-        Each 1D numpy array and each column of 2D numpy arrays are considered
-        as one field.
+    Examples:
+        >>> points = np.random.rand(10, 3)
+        >>> write_ply('example1.ply', points, ['x', 'y', 'z'])
 
-    field_names : list
-        the name of each fields as a list of strings.
-        Has to be the same length as the number of fields.
+        >>> values = np.random.randint(2, size=10)
+        >>> write_ply('example2.ply',[points,values],['x', 'y', 'z', 'values'])
 
-    Examples
-    --------
-    >>> points = np.random.rand(10, 3)
-    >>> write_ply('example1.ply', points, ['x', 'y', 'z'])
-
-    >>> values = np.random.randint(2, size=10)
-    >>> write_ply('example2.ply', [points, values], ['x', 'y', 'z', 'values'])
-
-    >>> colors = np.random.randint(255, size=(10,3), dtype=np.uint8)
-    >>> field_names = ['x', 'y', 'z', 'red', 'green', 'blue', 'values']
-    >>> write_ply('example3.ply', [points, colors, values], field_names)
+        >>> colors = np.random.randint(255, size=(10,3), dtype=np.uint8)
+        >>> field_names = ['x', 'y', 'z', 'red', 'green', 'blue', 'values']
+        >>> write_ply('example3.ply', [points, colors, values], field_names)
     """
 
     # Format list input to the right form
@@ -215,11 +197,21 @@ def write_ply(filename, field_list, field_names, triangular_faces=None):
             data['1'] = triangular_faces[:, 1]
             data['2'] = triangular_faces[:, 2]
             data.tofile(plyfile)
-
     return True
 
 
 def header_properties(field_list, field_names):
+    """Points properties description
+    Args:
+        field_list (list|tuple|np.array):
+            the fields to be saved in the ply file.
+            Either numpy array, list of numpy arrays or tuple of numpy arrays.
+            Each 1D numpy array and each column of 2D numpy arrays
+            are considered as one field.
+        field_names (list):
+            the name of each fields as a list of strings.
+            Has to be the same length as the number of fields.
+    """
     # List of lines to write
     lines = []
 
@@ -237,6 +229,12 @@ def header_properties(field_list, field_names):
 
 
 def parse_mesh_header(plyfile, ext):
+    """Parse header.
+
+    Args:
+        plyfile (file): the plyfile object
+        ext (str): extension for building the numpy dtypes
+    """
     # Variables
     line = []
     vertex_properties = []
@@ -271,6 +269,12 @@ def parse_mesh_header(plyfile, ext):
 
 
 def parse_header(plyfile, ext):
+    """Parse header.
+
+    Args:
+        plyfile (file): the plyfile object
+        ext (str): extension for building the numpy dtypes
+    """
     # Variables
     line = []
     properties = []
