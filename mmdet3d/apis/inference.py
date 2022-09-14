@@ -143,6 +143,7 @@ def inference_detector(model: nn.Module,
             # load from point cloud file
             data_ = dict(
                 lidar_points=dict(lidar_path=pcd),
+                timestamp=1,
                 # for ScanNet demo we need axis_align_matrix
                 axis_align_matrix=np.eye(4),
                 box_type_3d=box_type_3d,
@@ -151,6 +152,7 @@ def inference_detector(model: nn.Module,
             # directly use loaded point cloud
             data_ = dict(
                 points=pcd,
+                timestamp=1,
                 # for ScanNet demo we need axis_align_matrix
                 axis_align_matrix=np.eye(4),
                 box_type_3d=box_type_3d,
