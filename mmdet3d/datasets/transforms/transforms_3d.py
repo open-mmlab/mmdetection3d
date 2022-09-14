@@ -2006,13 +2006,19 @@ class RandomCrop3D(RandomCrop):
         assert crop_size[0] > 0 and crop_size[1] > 0
         for key in results.get('img_fields', ['img']):
             img = results[key]
-            margin_h = max(img.shape[0] - crop_size[0], 0)
-            margin_w = max(img.shape[1] - crop_size[1], 0)
-            # TOCHECK: a little different from LIGA implementation
-            offset_h = np.random.randint(self.rel_offset_h[0] * margin_h,
-                                         self.rel_offset_h[1] * margin_h + 1)
-            offset_w = np.random.randint(self.rel_offset_w[0] * margin_w,
-                                         self.rel_offset_w[1] * margin_w + 1)
+            if 'img_crop_offset' not in results:
+                margin_h = max(img.shape[0] - crop_size[0], 0)
+                margin_w = max(img.shape[1] - crop_size[1], 0)
+                # TOCHECK: a little different from LIGA implementation
+                offset_h = np.random.randint(
+                    self.rel_offset_h[0] * margin_h,
+                    self.rel_offset_h[1] * margin_h + 1)
+                offset_w = np.random.randint(
+                    self.rel_offset_w[0] * margin_w,
+                    self.rel_offset_w[1] * margin_w + 1)
+            else:
+                offset_w, offset_h = results['img_crop_offset']
+
             crop_h = min(crop_size[0], img.shape[0])
             crop_w = min(crop_size[1], img.shape[1])
             crop_y1, crop_y2 = offset_h, offset_h + crop_h
@@ -2074,7 +2080,7 @@ class RandomCrop3D(RandomCrop):
             results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
                                shape[1]] = offset_cam2img
 
-        results['crop_offset'] = [crop_x1, crop_y1]
+        results['img_crop_offset'] = [offset_w, offset_h]
 
         return results
 
@@ -2220,9 +2226,9 @@ class MultiViewWrapper(object):
             for the monocular situation.
         override_aug_config (bool): flag of whether to use the same aug config
             for multiview image. Default to True.
-        process_fields (dict): Desired keys that the transformations should
-            be conducted on. Default to dict(img_fields=['img', 'cam2img',
-            'lidar2cam']
+        process_fields (list): Desired keys that the transformations should
+            be conducted on. Default to ['img', 'cam2img', 'lidar2cam'],
+
         collected_keys (list): Collect information in transformation
             like rotate angles, crop roi, and flip state. Default to
                 ['scale', 'scale_factor', 'crop',
@@ -2239,17 +2245,15 @@ class MultiViewWrapper(object):
     def __init__(self,
                  transforms: dict,
                  override_aug_config: bool = True,
-                 process_fields: dict = dict(
-                     img_fields=['img', 'cam2img', 'lidar2cam']),
+                 process_fields: list = ['img', 'cam2img', 'lidar2cam'],
                  collected_keys: list = [
-                     'scale'
-                     'scale_factor', 'crop', 'crop_offset', 'ori_shape',
-                     'pad_shape', 'img_shape', 'pad_fixed_size',
+                     'scale', 'scale_factor', 'crop', 'img_crop_offset',
+                     'ori_shape', 'pad_shape', 'img_shape', 'pad_fixed_size',
                      'pad_size_divisor', 'flip', 'flip_direction', 'rotate'
                  ],
                  randomness_keys: list = [
-                     'scale', 'scale_factor', 'crop_size', 'flip',
-                     'flip_direction', 'photometric_param'
+                     'scale', 'scale_factor', 'crop_size', 'img_crop_offset',
+                     'flip', 'flip_direction', 'photometric_param'
                  ]):
         self.transform = Compose(transforms)
         self.override_aug_config = override_aug_config
@@ -2266,13 +2270,14 @@ class MultiViewWrapper(object):
         Returns:
             dict: output dict after transformtaion
         """
+        # store the augmentation related keys for each image.
         for key in self.collected_keys:
             if key not in input_dict or \
                     not isinstance(input_dict[key], list):
                 input_dict[key] = []
+        prev_process_dict = {}
         for img_id in range(len(input_dict['img'])):
             process_dict = {}
-            prev_process_dict = {}
 
             # override the process dict (e.g. scale in random scale,
             # crop_size in random crop, flip, flip_direction in
@@ -2282,20 +2287,18 @@ class MultiViewWrapper(object):
                     if key in prev_process_dict:
                         process_dict[key] = prev_process_dict[key]
 
-            for field in self.process_fields:
-                for key in self.process_fields[field]:
-                    if key in input_dict:
-                        process_dict[key] = input_dict[key][img_id]
-
+            for key in self.process_fields:
+                if key in input_dict:
+                    process_dict[key] = input_dict[key][img_id]
             process_dict = self.transform(process_dict)
             # store the randomness variable in transformation.
             prev_process_dict = process_dict
 
             # store the related results to results_dict
-            for field in self.process_fields:
-                for key in self.process_fields[field]:
-                    if key in process_dict:
-                        input_dict[key][img_id] = process_dict[key]
+            for key in self.process_fields:
+                if key in process_dict:
+                    input_dict[key][img_id] = process_dict[key]
+            # update the keys
             for key in self.collected_keys:
                 if key in process_dict:
                     if len(input_dict[key]) == img_id + 1:

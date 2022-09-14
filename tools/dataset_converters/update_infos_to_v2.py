@@ -194,7 +194,7 @@ def clear_data_info_unused_keys(data_info):
     empty_flag = True
     for key in keys:
         # we allow no annotations in datainfo
-        if key == 'instances':
+        if key in ['instances', 'cam_sync_instances', 'cam_instances']:
             empty_flag = False
             continue
         if isinstance(data_info[key], list):

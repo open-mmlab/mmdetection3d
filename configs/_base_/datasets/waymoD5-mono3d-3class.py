@@ -83,7 +83,7 @@ train_dataloader = dict(
         box_type_3d='Camera',
         task='mono3d',
         # load one frame every three frames
-        load_interval=3))
+        load_interval=5))
 
 val_dataloader = dict(
     batch_size=1,

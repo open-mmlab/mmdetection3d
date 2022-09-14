@@ -5,6 +5,7 @@ import torch
 from mmdet3d.models.layers.fusion_layers.point_fusion import (point_sample,
                                                               voxel_sample)
 from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures.bbox_3d.utils import get_lidar2img
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import ConfigType, OptConfigType
 from mmdet.models.detectors import BaseDetector
@@ -206,24 +207,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
         img_flips = []
         img_crop_offsets = []
         for feature, img_meta in zip(batch_feats, batch_img_metas):
-            if 'scale_factor' in img_meta:
-                if isinstance(
-                        img_meta['scale_factor'],
-                        np.ndarray) and len(img_meta['scale_factor']) >= 2:
-                    img_scale_factor = (
-                        points.new_tensor(img_meta['scale_factor'][:2]))
-                else:
-                    img_scale_factor = (
-                        points.new_tensor(img_meta['scale_factor']))
-            else:
-                img_scale_factor = (1)
-            img_flip = img_meta['flip'] if 'flip' in img_meta.keys() else False
-            img_crop_offset = (
-                points.new_tensor(img_meta['img_crop_offset'])
-                if 'img_crop_offset' in img_meta.keys() else 0)
-            img_scale_factors.append(img_scale_factor)
-            img_flips.append(img_flip)
-            img_crop_offsets.append(img_crop_offset)
+
             # TODO: remove feature sampling from back
             # TODO: support different scale_factors/flip/crop_offset for
             # different views
@@ -238,24 +222,42 @@ class MultiViewDfM(ImVoxelNet, DfM):
                     img_shape = img_meta['img_shape'][:2]
 
                 for view_idx in range(num_views):
+
                     sample_idx = frame_idx * num_views + view_idx
 
-                    if isinstance(img_scale_factor, list):
-                        img_scale_factor_idx = img_scale_factor[sample_idx]
+                    if 'scale_factor' in img_meta:
+                        img_scale_factor = img_meta['scale_factor'][sample_idx]
+                        if isinstance(img_scale_factor, np.ndarray) and \
+                                len(img_meta['scale_factor']) >= 2:
+                            img_scale_factor = (
+                                points.new_tensor(img_scale_factor[:2]))
+                        else:
+                            img_scale_factor = (
+                                points.new_tensor(img_scale_factor))
                     else:
-                        img_scale_factor_idx = img_scale_factor
+                        img_scale_factor = (1)
+                    img_flip = img_meta['flip'][sample_idx] \
+                        if 'flip' in img_meta.keys() else False
+                    img_crop_offset = (
+                        points.new_tensor(
+                            img_meta['img_crop_offset'][sample_idx])
+                        if 'img_crop_offset' in img_meta.keys() else 0)
                     lidar2cam = points.new_tensor(
                         img_meta['lidar2cam'][sample_idx])
                     cam2img = points.new_tensor(
                         img_meta['ori_cam2img'][sample_idx])
-                    proj_mat = torch.matmul(cam2img, lidar2cam)
+                    # align the precision, the tensor is converted to float32
+                    lidar2img = get_lidar2img(cam2img.double(),
+                                              lidar2cam.double())
+                    lidar2img = lidar2img.float()
+
                     sample_results = point_sample(
                         img_meta,
                         img_features=feature[sample_idx][None, ...],
                         points=points,
-                        proj_mat=proj_mat,
+                        proj_mat=lidar2img,
                         coord_type='LIDAR',
-                        img_scale_factor=img_scale_factor_idx,
+                        img_scale_factor=img_scale_factor,
                         img_crop_offset=img_crop_offset,
                         img_flip=img_flip,
                         img_pad_shape=img_meta['input_shape'],
@@ -278,6 +280,11 @@ class MultiViewDfM(ImVoxelNet, DfM):
                 else:
                     volume = torch.stack(volume, dim=0).mean(0)
                 frame_volume.append(volume)
+
+            img_scale_factors.append(img_scale_factor)
+            img_flips.append(img_flip)
+            img_crop_offsets.append(img_crop_offset)
+
             if self.valid_sample:
                 if self.temporal_aggregate == 'mean':
                     frame_volume = torch.stack(frame_volume, dim=0).sum(0)

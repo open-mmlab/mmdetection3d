@@ -11,8 +11,9 @@ from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import METRICS
-from mmdet3d.structures import (Box3DMode, LiDARInstance3DBoxes, bbox3d2result,
-                                xywhr2xyxyr)
+from mmdet3d.structures import (Box3DMode, CameraInstance3DBoxes,
+                                LiDARInstance3DBoxes, bbox3d2result,
+                                points_cam2img, xywhr2xyxyr)
 from .kitti_metric import KittiMetric
 
 
@@ -54,6 +55,7 @@ class WaymoMetric(KittiMetric):
             'gpu'. Defaults to 'cpu'.
         file_client_args (dict): file client for reading gt in waymo format.
     """
+    num_cams = 5
 
     def __init__(self,
                  ann_file: str,
@@ -70,7 +72,6 @@ class WaymoMetric(KittiMetric):
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
                  file_client_args: dict = dict(backend='disk')):
-
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
         self.split = split
@@ -104,6 +105,29 @@ class WaymoMetric(KittiMetric):
         # load annotations
         self.data_infos = load(self.ann_file)['data_list']
         # different from kitti, waymo do not need to convert the ann file
+        # handle the mono3d task
+        if self.task == 'mono3d':
+            new_data_infos = []
+            for info in self.data_infos:
+                for (cam_key, img_info) in info['images'].items():
+                    camera_info = dict()
+                    camera_info['images'] = dict()
+                    camera_info['images'][cam_key] = img_info
+                    if 'cam_instances' in info \
+                            and cam_key in info['cam_instances']:
+                        camera_info['instances'] = info['cam_instances'][
+                            cam_key]
+                    else:
+                        camera_info['instances'] = []
+                    camera_info['ego2global'] = info['ego2global']
+                    if 'image_sweeps' in info:
+                        camera_info['image_sweeps'] = info['image_sweeps']
+
+                    # TODO check if need to modify the sample id
+                    # TODO check when will use it except for evaluation.
+                    camera_info['sample_id'] = info['sample_id']
+                    new_data_infos.append(camera_info)
+            self.data_infos = new_data_infos
 
         if self.pklfile_prefix is None:
             eval_tmp_dir = tempfile.TemporaryDirectory()
@@ -119,15 +143,45 @@ class WaymoMetric(KittiMetric):
             pklfile_prefix=pklfile_prefix,
             submission_prefix=self.submission_prefix,
             classes=self.classes)
+
+        metric_dict = {}
+        for metric in self.metrics:
+            ap_dict = self.waymo_evaluate(
+                pklfile_prefix, metric=metric, logger=logger)
+            metric_dict[metric] = ap_dict
+        if eval_tmp_dir is not None:
+            eval_tmp_dir.cleanup()
+
+        if tmp_dir is not None:
+            tmp_dir.cleanup()
+        return metric_dict
+
+    def waymo_evaluate(self,
+                       pklfile_prefix: str,
+                       metric: str = None,
+                       logger: MMLogger = None) -> dict:
+        """Evaluation in Waymo protocol.
+
+        Args:
+            pklfile_prefix (str): The location that stored the prediction
+                results.
+            metric (str): Metric to be evaluated. Defaults to None.
+            logger (MMLogger, optional): Logger used for printing
+                related information during evaluation. Default: None.
+
+        Returns:
+            dict[str, float]: Results of each evaluation metric.
+        """
+
         import subprocess
 
-        if self.metric == 'mAP':
+        if metric == 'mAP':
             eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
                 f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
             print(eval_str)
             ret_bytes = subprocess.check_output(
-                'mmdet3d/core/evaluation/functional/waymo_utils/' +
+                'mmdet3d/evaluation/functional/waymo_utils/' +
                 f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
                 f'{self.waymo_bin_file}',
                 shell=True)
@@ -178,9 +232,9 @@ class WaymoMetric(KittiMetric):
             ap_dict['Overall/L2 mAPH'] = \
                 (ap_dict['Vehicle/L2 mAPH'] + ap_dict['Pedestrian/L2 mAPH'] +
                     ap_dict['Cyclist/L2 mAPH']) / 3
-        elif self.metric == 'LET_mAP':
-            eval_str = 'mmdet3d/core/evaluation/waymo_utils/' + \
-                f'compute_detection_metrics_main_let {pklfile_prefix}.bin ' + \
+        elif metric == 'LET_mAP':
+            eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
+                f'compute_detection_let_metrics_main {pklfile_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
 
             print(eval_str)
@@ -225,13 +279,6 @@ class WaymoMetric(KittiMetric):
             ap_dict['Overall mAPH'] = \
                 (ap_dict['Vehicle mAPH'] + ap_dict['Pedestrian mAPH'] +
                     ap_dict['Cyclist mAPH']) / 3
-
-        if eval_tmp_dir is not None:
-            eval_tmp_dir.cleanup()
-
-        if tmp_dir is not None:
-            tmp_dir.cleanup()
-
         return ap_dict
 
     def format_results(self,
@@ -390,23 +437,30 @@ class WaymoMetric(KittiMetric):
             annos = []
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
-            # Here default used 'CAM2' to compute metric. If you want to
-            # use another camera, please modify it.
-            image_shape = (info['images'][self.default_cam_key]['height'],
-                           info['images'][self.default_cam_key]['width'])
 
             if self.task == 'mono3d':
                 if idx % self.num_cams == 0:
                     box_dict_per_frame = []
-                    cam0_idx = idx
-            box_dict = self.convert_valid_bboxes(pred_dicts, info)
-
+                    cam0_key = list(info['images'].keys())[0]
+                    # Here in mono3d, we use the 'CAM_FRONT' "the first
+                    # index in the camera" as the default image shape.
+                    # If you want to another camera, please modify it.
+                    image_shape = (info['images'][cam0_key]['height'],
+                                   info['images'][cam0_key]['width'])
+                box_dict = self.convert_valid_bboxes(pred_dicts, info)
+            else:
+                box_dict = self.convert_valid_bboxes(pred_dicts, info)
+                # Here default used 'CAM_FRONT' to compute metric.
+                # If you want to use another camera, please modify it.
+                image_shape = (info['images'][self.default_cam_key]['height'],
+                               info['images'][self.default_cam_key]['width'])
             if self.task == 'mono3d':
                 box_dict_per_frame.append(box_dict)
                 if (idx + 1) % self.num_cams != 0:
                     continue
                 box_dict = self.merge_multi_view_boxes(
-                    box_dict_per_frame, self.data_infos[cam0_idx])
+                    box_dict_per_frame, self.data_infos[sample_idx])
+
             anno = {
                 'name': [],
                 'truncated': [],
@@ -497,3 +551,106 @@ class WaymoMetric(KittiMetric):
             print(f'Result is saved to {out}.')
 
         return det_annos
+
+    def convert_valid_bboxes(self, box_dict: dict, info: dict):
+        """Convert the predicted boxes into valid ones. Should handle the
+        different task mode (mono3d, mv3d, lidar), separately.
+
+        Args:
+            box_dict (dict): Box dictionaries to be converted.
+
+                - boxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
+                - scores_3d (torch.Tensor): Scores of boxes.
+                - labels_3d (torch.Tensor): Class labels of boxes.
+            info (dict): Data info.
+
+        Returns:
+            dict: Valid predicted boxes.
+
+                - bbox (np.ndarray): 2D bounding boxes.
+                - box3d_camera (np.ndarray): 3D bounding boxes in
+                    camera coordinate.
+                - box3d_lidar (np.ndarray): 3D bounding boxes in
+                    LiDAR coordinate.
+                - scores (np.ndarray): Scores of boxes.
+                - label_preds (np.ndarray): Class label predictions.
+                - sample_idx (int): Sample index.
+        """
+        # TODO: refactor this function
+        box_preds = box_dict['bboxes_3d']
+        scores = box_dict['scores_3d']
+        labels = box_dict['labels_3d']
+        sample_idx = info['sample_id']
+        box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
+
+        if len(box_preds) == 0:
+            return dict(
+                bbox=np.zeros([0, 4]),
+                box3d_camera=np.zeros([0, 7]),
+                box3d_lidar=np.zeros([0, 7]),
+                scores=np.zeros([0]),
+                label_preds=np.zeros([0, 4]),
+                sample_idx=sample_idx)
+        # Here default used 'CAM2' to compute metric. If you want to
+        # use another camera, please modify it.
+        if self.task in ['mv3d', 'lidar']:
+            cam_key = self.default_cam_key
+        elif self.task == 'mono3d':
+            cam_key = list(info['images'].keys())[0]
+        else:
+            raise NotImplementedError
+
+        lidar2cam = np.array(info['images'][cam_key]['lidar2cam']).astype(
+            np.float32)
+        P2 = np.array(info['images'][cam_key]['cam2img']).astype(np.float32)
+        img_shape = (info['images'][cam_key]['height'],
+                     info['images'][cam_key]['width'])
+        P2 = box_preds.tensor.new_tensor(P2)
+
+        if isinstance(box_preds, LiDARInstance3DBoxes):
+            box_preds_camera = box_preds.convert_to(Box3DMode.CAM, lidar2cam)
+            box_preds_lidar = box_preds
+        elif isinstance(box_preds, CameraInstance3DBoxes):
+            box_preds_camera = box_preds
+            box_preds_lidar = box_preds.convert_to(Box3DMode.LIDAR,
+                                                   np.linalg.inv(lidar2cam))
+
+        box_corners = box_preds_camera.corners
+        box_corners_in_image = points_cam2img(box_corners, P2)
+        # box_corners_in_image: [N, 8, 2]
+        minxy = torch.min(box_corners_in_image, dim=1)[0]
+        maxxy = torch.max(box_corners_in_image, dim=1)[0]
+        box_2d_preds = torch.cat([minxy, maxxy], dim=1)
+        # Post-processing
+        # check box_preds_camera
+        image_shape = box_preds.tensor.new_tensor(img_shape)
+        valid_cam_inds = ((box_2d_preds[:, 0] < image_shape[1]) &
+                          (box_2d_preds[:, 1] < image_shape[0]) &
+                          (box_2d_preds[:, 2] > 0) & (box_2d_preds[:, 3] > 0))
+        # check box_preds_lidar
+        if self.task in ['lidar', 'mono3d']:
+            limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
+            valid_pcd_inds = ((box_preds_lidar.center > limit_range[:3]) &
+                              (box_preds_lidar.center < limit_range[3:]))
+            valid_inds = valid_pcd_inds.all(-1)
+        elif self.task == 'mono3d':
+            valid_inds = valid_cam_inds
+
+        if valid_inds.sum() > 0:
+            return dict(
+                bbox=box_2d_preds[valid_inds, :].numpy(),
+                pred_box_type_3d=type(box_preds),
+                box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
+                box3d_lidar=box_preds_lidar[valid_inds].tensor.numpy(),
+                scores=scores[valid_inds].numpy(),
+                label_preds=labels[valid_inds].numpy(),
+                sample_idx=sample_idx)
+        else:
+            return dict(
+                bbox=np.zeros([0, 4]),
+                pred_box_type_3d=type(box_preds),
+                box3d_camera=np.zeros([0, 7]),
+                box3d_lidar=np.zeros([0, 7]),
+                scores=np.zeros([0]),
+                label_preds=np.zeros([0, 4]),
+                sample_idx=sample_idx)

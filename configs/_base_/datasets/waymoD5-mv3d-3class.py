@@ -86,7 +86,7 @@ train_dataloader = dict(
         test_mode=False,
         metainfo=metainfo,
         box_type_3d='Lidar',
-        load_interval=3,
+        load_interval=5,
     ))
 
 val_dataloader = dict(
@@ -111,7 +111,7 @@ val_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='lidar',
+        box_type_3d='Lidar',
     ))
 
 test_dataloader = dict(
@@ -136,7 +136,7 @@ test_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='lidar',
+        box_type_3d='Lidar',
     ))
 val_evaluator = dict(
     type='WaymoMetric',

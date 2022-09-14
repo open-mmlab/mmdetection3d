@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/datasets/waymoD3-mv3d-3class.py',
+    '../_base_/datasets/waymoD5-mv3d-3class.py',
     '../_base_/models/multiview_dfm.py'
 ]
 

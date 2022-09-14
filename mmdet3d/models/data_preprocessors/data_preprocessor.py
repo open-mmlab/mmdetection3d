@@ -287,6 +287,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         if is_list_of(_batch_inputs, torch.Tensor):
             batch_pad_shape = []
             for ori_input in _batch_inputs:
+                if ori_input.dim() == 4:
+                    # mean multiivew input, select ont of the
+                    # image to calculate the pad shape
+                    ori_input = ori_input[0]
                 pad_h = int(
                     np.ceil(ori_input.shape[1] /
                             self.pad_size_divisor)) * self.pad_size_divisor
