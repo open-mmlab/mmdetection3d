@@ -17,22 +17,21 @@ class SensatUrbanDataset(Seg3DDataset):
     Args:
         data_root (str, optional): Path of dataset root.
         ann_file (str): Path of annotation file.
+        metainfo (dict, optional): Meta information for dataset, such as class
+            information. Defaults to None.
+        data_prefix (dict, optional): Prefix for training data. Defaults to
+            dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
         pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to None.
-        box_type_3d (str, optional): NO 3D box for this dataset.
-            You can choose any type
-            Based on the `box_type_3d`, the dataset will encapsulate the box
-            to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes
-            - 'LiDAR': Box in LiDAR coordinates.
-            - 'Depth': Box in depth coordinates, usually for indoor dataset.
-            - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
+        ignore_index (int, optional): The label index to be ignored, e.g.
+            unannotated points. If None is given, set to len(self.CLASSES) to
+            be consistent with PointSegClassMapping function in pipeline.
+            Defaults to None.
+        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+            data. For scenes with many points, we may sample it several times.
+            Defaults to None.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
     """
@@ -54,9 +53,9 @@ class SensatUrbanDataset(Seg3DDataset):
                      pts='points', img='', instance_mask='', semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 ignore_index=None,
-                 scene_idxs=None,
-                 test_mode=False,
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[str] = None,
+                 test_mode: bool = False,
                  **kwargs) -> None:
 
         super().__init__(
