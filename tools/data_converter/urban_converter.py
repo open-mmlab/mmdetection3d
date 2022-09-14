@@ -19,7 +19,10 @@ class PLYHandler(BaseFileHandler):
         return read_ply(kwargs['path'])
 
     def dump_to_str(self, obj, **kwargs):
-        return obj.tobytes()
+        write_ply(
+            filename=kwargs['path'],
+            field_list=kwargs['field_list'],
+            field_names=kwargs['field_names'])
 
     def dump_to_fileobj(self, obj, file, **kwargs):
         write_ply(
@@ -60,42 +63,49 @@ class UrbanConverter(object):
         to_image=False,
         subsample_method='none',
         crop_method='random',
-        crop_size=30.0,
-        crop_scale=0.1,
+        crop_size=12.5,
+        crop_scale=0.05,
         subsample_rate=0.5,
-        random_crop_rate=1.0,
+        random_crop_rate=0.5,
     ):
         """Urban dataset converter.
 
         Args:
             root_path (str): The path to the original dataset.
-            info_prefix (str):
+            info_prefix (str): Prefix of the info file.
             out_dir (str): The output path.
             workers (int): How many threads to process.
             to_image (bool): Whether to generate image datasets.
                 If True, bevs/altitude/masks folders will be generated.
                 If False, only generated the points and labels folders
                 where the color information is contained in points.
+                Default to False.
             subsample_method (str): The downsampled dataset generation method.
                 It can be selected in 'none','uniform','random' and 'grid'.
                 If it is not None, an additional reduced_points and
                 reduced_labels folders will be generated and subsample_rate
                 is the sample rate of the corresponding method.
+                Default to none.
             crop_method (str): The generation mode of the segmented dataset,
                 it can be selected in 'sliding' and 'random'.
                 If 'random', center point will be randomly selected.
                 If 'sliding', it will be cropped by sliding window.
-            crop_size (float):  Each crop ranges between ± crop_size
+                Default to sliding.
+            crop_size (float):  Each crop ranges between ± crop_size.
+                Default to 12.5
             crop_scale (float): One pixel of image represents how many meters,
                 which together with crop_size determines the size of BEV image.
+                Default to 0.05.
             subsample_rate (float):The down-sampling rate.
                 In 'random' mode, it represents the number of sampling points.
                 In 'uniform' mode, it represents sampling one point every
                 subsample_rate points.
                 In 'voxel' mode , it represents the voxel size in the grid.
+                Default to 0.5.
             random_crop_rate (float): How many times will each file
                 be sampled in random crop_method.
                 If 1.0, sample random_crop_rate * 1 times every 1MB.
+                Default to 1.0.
         """
         self.root_path = root_path
         self.info_prefix = info_prefix
@@ -187,8 +197,6 @@ class UrbanConverter(object):
             self._random_crop_and_save(points, colors, labels, save_dir,
                                        file_name, is_train)
         elif self.crop_method == 'sliding':
-            # TODO: fix this
-            raise NotImplementedError()
             self._sliding_crop_and_save(points, colors, labels, save_dir,
                                         file_name, is_train)
         else:
@@ -209,7 +217,9 @@ class UrbanConverter(object):
                 & (points[:, 0] < pick_point[0, 0] + self.crop_size)
                 & (points[:, 1] < pick_point[0, 1] + self.crop_size))
             queried_pc_xyz = points[queried_idx]
-            queried_pc_xyz = queried_pc_xyz - pick_point
+            queried_pc_xyz = queried_pc_xyz - pick_point + [
+                self.crop_size, self.crop_size, 0.0
+            ]
             queried_pc_colors = colors[queried_idx]
             if is_train:
                 queried_pc_labels = labels[queried_idx]
@@ -219,12 +229,9 @@ class UrbanConverter(object):
 
             if self.to_image:
                 if is_train:
-                    queried_pc_labels = np.expand_dims(queried_pc_labels, 1)
                     bev, alt, mask = self._to_bev(
-                        np.hstack([
-                            queried_pc_xyz, queried_pc_colors,
-                            queried_pc_labels
-                        ]), is_train)
+                        [queried_pc_xyz, queried_pc_colors, queried_pc_labels],
+                        is_train)
                     os.makedirs(osp.join(save_dir, 'masks'), exist_ok=True)
                     mmcv.imwrite(
                         mask,
@@ -232,22 +239,21 @@ class UrbanConverter(object):
 
                 else:
                     bev, alt, _ = self._to_bev(
-                        np.hstack([queried_pc_xyz, queried_pc_colors]),
-                        is_train)
+                        [queried_pc_xyz, queried_pc_colors], is_train)
 
                 os.makedirs(osp.join(save_dir, 'bevs'), exist_ok=True)
                 os.makedirs(osp.join(save_dir, 'altitude'), exist_ok=True)
 
                 mmcv.imwrite(
                     bev, osp.join(save_dir, 'bevs', save_filename + '.png'))
-                mmcv.imwrite(
-                    alt, osp.join(save_dir, 'altitude',
-                                  save_filename + '.png'))
+                np.save(
+                    osp.join(save_dir, 'altitude', save_filename + '.npy'),
+                    alt)
 
             os.makedirs(osp.join(save_dir, 'points'), exist_ok=True)
-            queried_pc_xyz_with_color = np.hstack(
-                [queried_pc_xyz, queried_pc_colors])
-            queried_pc_xyz_with_color.astype(np.float32).tofile(
+            queried_pc_xyzrgb = np.concatenate(
+                [queried_pc_xyz, queried_pc_colors], axis=1)
+            queried_pc_xyzrgb.astype(np.float32).tofile(
                 osp.join(save_dir, 'points', save_filename + '.bin'))
 
     def _save_subsample_points_and_labels(self, points, colors, labels,
@@ -263,31 +269,36 @@ class UrbanConverter(object):
         sub_labels.astype(np.float32).tofile(
             osp.join(save_dir, 'reduced_labels', save_filename + '.label'))
 
-    def _to_bev(self, grid_data, is_train):
+    def _to_bev(self, data, is_train):
         gird_size = int(self.crop_size / self.crop_scale * 2)
         grid_size_scale = self.crop_scale
+        grid_data = data[0]
+        rgb_data = data[1]
+        class_data = data[2]
         num = grid_data.shape[0]
+        bev = np.zeros((gird_size, gird_size, 3))
+        alt = np.zeros((gird_size, gird_size, 1)) - 999
         if is_train:
-            bev = np.zeros((gird_size, gird_size, 5))
-        else:
-            bev = np.zeros((gird_size, gird_size, 4))
-        off = int(gird_size / 2)
-        xs = (grid_data[:, 0] / grid_size_scale).astype(np.int32) + off
-        ys = (grid_data[:, 1] / grid_size_scale).astype(np.int32) + off
+            cls = np.zeros((gird_size, gird_size, 1)) + 255
+
+        ys = (grid_data[:, 0] / grid_size_scale).astype(np.int32)
+        xs = gird_size - (grid_data[:, 1] / grid_size_scale).astype(
+            np.int32) - 1
+
         for i in range(num):
             if is_train:
-                bev[xs[i], ys[i], 4] = grid_data[i, 6]  # class
-
-            bev[xs[i], ys[i], 3] = grid_data[i, 2]  # altitude
-            bev[xs[i], ys[i], 2] = grid_data[i, 3]  # R
-            bev[xs[i], ys[i], 1] = grid_data[i, 4]  # G
-            bev[xs[i], ys[i], 0] = grid_data[i, 5]  # B
+                cls[xs[i], ys[i], 0] = class_data[i]  # class
+            alt[xs[i], ys[i], 0] = grid_data[i, 2]  # altitude
+            bev[xs[i], ys[i], 2] = rgb_data[i, 0]  # R
+            bev[xs[i], ys[i], 1] = rgb_data[i, 1]  # G
+            bev[xs[i], ys[i], 0] = rgb_data[i, 2]  # B
 
         if is_train:
-            return (bev[:, :, :3] * 255).astype(np.int32), bev[:, :,
-                                                               3], bev[:, :, 4]
+            return (bev[:, :, :3] * 255).astype(np.int32), alt.astype(
+                np.float32), cls.astype(np.uint8)
         else:
-            return (bev[:, :, :3] * 255).astype(np.int32), bev[:, :, 3], None
+            return (bev[:, :, :3] * 255).astype(np.int32), alt.astype(
+                np.float32), None
 
     def _reduce_pointcloud(self, raw_pointcloud, raw_labels, subsample_method,
                            subsample_rate):
@@ -342,62 +353,58 @@ class UrbanConverter(object):
         num_crop_x = int(range_x / self.crop_size / 2) + 1
         num_crop_y = int(range_y / self.crop_size / 2) + 1
 
-        idx_hash = points[:, 0] / self.crop_size / 2 * np.power(
-            10, len(str(int(max_y / self.crop_size /
-                            2)))) + points[:, 1] / self.crop_size / 2
-        idx_hash = idx_hash.astype(np.int32)
+        for idx in range(num_crop_x):
+            for idy in range(num_crop_y):
+                queried_idx = np.where(
+                    (points[:, 0] > min_x + self.crop_size * 2 * idx)
+                    & (points[:, 1] > min_y + self.crop_size * 2 * idy)
+                    & (points[:, 0] < min_x + self.crop_size * 2 * (idx + 1))
+                    & (points[:, 1] < min_y + self.crop_size * 2 * (idy + 1)))
 
-        idx_dict = {}
-
-        for i in range(idx_hash.shape[0]):
-            try:
-                idx_dict[idx_hash[i]].append(idx_hash[i])
-            except KeyError:
-                idx_dict[idx_hash[i]] = [idx_hash[i]]
-
-        for hash, queried_idx in idx_dict.items():
-            x_hash = int(hash / num_crop_y)
-            y_hash = int(hash - np.power(10, len(str(num_crop_y))))
-            save_filename = str(file_name + '_' +
-                                f'{str(x_hash).zfill(len(str(num_crop_x)))}' +
-                                f'{str(y_hash).zfill(len(str(num_crop_y)))} ')
-
-            pick_point = np.array([(2 * x_hash + 1) * self.crop_size,
-                                   (2 * y_hash + 1) * self.crop_size, 0.0])
-
-            queried_pc_xyz = points[queried_idx]
-            queried_pc_xyz = queried_pc_xyz - pick_point
-            queried_pc_colors = colors[queried_idx]
-            if is_train:
-                queried_pc_labels = labels[queried_idx]
-                os.makedirs(osp.join(save_dir, 'labels'), exist_ok=True)
-                queried_pc_labels.astype(np.int8).tofile(
-                    osp.join(save_dir, 'labels', save_filename + '.label'))
-
-            if self.to_image:
+                queried_pc_xyz = points[queried_idx]
+                if queried_pc_xyz.shape[0] < 100:
+                    continue
+                queried_pc_xyz = queried_pc_xyz - [
+                    min_x + self.crop_size * 2 * idx,
+                    min_y + self.crop_size * 2 * idy, 0
+                ]
+                queried_pc_colors = colors[queried_idx]
+                save_filename = str(file_name + '_' +
+                                    f'{str(idx).zfill(len(str(num_crop_x)))}' +
+                                    f'{str(idy).zfill(len(str(num_crop_y)))}')
                 if is_train:
-                    queried_pc_labels = np.expand_dims(queried_pc_labels, 1)
-                    bev, alt, mask = self._to_bev(
-                        np.hstack([
+                    queried_pc_labels = labels[queried_idx]
+                    os.makedirs(osp.join(save_dir, 'labels'), exist_ok=True)
+                    queried_pc_labels.astype(np.int8).tofile(
+                        osp.join(save_dir, 'labels', save_filename + '.label'))
+
+                if self.to_image:
+                    if is_train:
+                        bev, alt, mask = self._to_bev([
                             queried_pc_xyz, queried_pc_colors,
                             queried_pc_labels
-                        ]), is_train)
-                    os.makedirs(osp.join(save_dir, 'masks'), exist_ok=True)
-                    mask.astype(np.int8).tofile(
-                        osp.join(save_dir, 'masks', save_filename + '.npy'))
-                else:
-                    bev, alt, _ = self._to_bev(
-                        np.hstack([queried_pc_xyz, queried_pc_colors]),
-                        is_train)
+                        ], is_train)
+                        os.makedirs(osp.join(save_dir, 'masks'), exist_ok=True)
+                        mmcv.imwrite(
+                            mask,
+                            osp.join(save_dir, 'masks',
+                                     save_filename + '.png'))
+                    else:
+                        bev, alt, _ = self._to_bev(
+                            [queried_pc_xyz, queried_pc_colors], is_train)
 
-                os.makedirs(osp.join(save_dir, 'bevs'), exist_ok=True)
-                os.makedirs(osp.join(save_dir, 'altitude'), exist_ok=True)
+                    os.makedirs(osp.join(save_dir, 'bevs'), exist_ok=True)
+                    os.makedirs(osp.join(save_dir, 'altitude'), exist_ok=True)
 
-                bev.astype(np.int8).tofile(
-                    osp.join(save_dir, 'bevs', save_filename + '.npy'))
-                alt.astype(np.float32).tofile(
-                    osp.join(save_dir, 'altitude', save_filename + '.npy'))
+                    mmcv.imwrite(
+                        bev, osp.join(save_dir, 'bevs',
+                                      save_filename + '.png'))
+                    np.save(
+                        osp.join(save_dir, 'altitude', save_filename + '.npy'),
+                        alt)
 
-            os.makedirs(osp.join(save_dir, 'points'), exist_ok=True)
-            queried_pc_xyz.astype(np.float32).tofile(
-                osp.join(save_dir, 'points', save_filename + '.bin'))
+                os.makedirs(osp.join(save_dir, 'points'), exist_ok=True)
+                queried_pc_xyzrgb = np.concatenate(
+                    [queried_pc_xyz, queried_pc_colors], axis=1)
+                queried_pc_xyzrgb.astype(np.float32).tofile(
+                    osp.join(save_dir, 'points', save_filename + '.bin'))
