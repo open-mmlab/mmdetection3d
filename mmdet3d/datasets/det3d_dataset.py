@@ -192,7 +192,8 @@ class Det3DDataset(BaseDataset):
             'bbox_3d': 'gt_bboxes_3d',
             'depth': 'depths',
             'center_2d': 'centers_2d',
-            'attr_label': 'attr_labels'
+            'attr_label': 'attr_labels',
+            'velocity': 'velocities',
         }
         instances = info['instances']
         # empty gt
@@ -209,14 +210,18 @@ class Det3DDataset(BaseDataset):
                         self.label_mapping[item] for item in temp_anns
                     ]
                 if ann_name in name_mapping:
-                    ann_name = name_mapping[ann_name]
+                    mapped_ann_name = name_mapping[ann_name]
+                else:
+                    mapped_ann_name = ann_name
 
                 if 'label' in ann_name:
                     temp_anns = np.array(temp_anns).astype(np.int64)
-                else:
+                elif ann_name in name_mapping:
                     temp_anns = np.array(temp_anns).astype(np.float32)
+                else:
+                    temp_anns = np.array(temp_anns)
 
-                ann_info[ann_name] = temp_anns
+                ann_info[mapped_ann_name] = temp_anns
             ann_info['instances'] = info['instances']
         return ann_info
 
