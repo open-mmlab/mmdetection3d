@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-import os
 from os import path as osp
 from typing import Dict, List, Optional, Tuple, Union
 
 import mmcv
 import numpy as np
 from mmengine.dist import master_only
+from mmengine import mkdir_or_exist
 from torch import Tensor
 
 from mmdet.visualization import DetLocalVisualizer
@@ -605,8 +605,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 win_name=name,
                 wait_time=wait_time)
 
-        if not osp.exists(out_file):
-            os.mkdir(out_file)
+        mkdir_or_exist(out_file)
         
         if out_file is not None:
             if drawn_img_3d is not None:
