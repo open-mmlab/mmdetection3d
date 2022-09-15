@@ -99,8 +99,8 @@ class VoteNet(SingleStage3DDetector):
         points = batch_inputs_dict['points']
         results_list = self.bbox_head.predict(points, feats_dict,
                                               batch_data_samples, **kwargs)
-        data_3d_samples = self.convert_to_datasample(batch_data_samples,
-                                                     results_list)
+        data_3d_samples = self.add_pred_to_datasample(batch_data_samples,
+                                                      results_list)
         return data_3d_samples
 
     def aug_test(self, aug_inputs_list: List[dict],
@@ -143,6 +143,6 @@ class VoteNet(SingleStage3DDetector):
                                                   self.bbox_head.test_cfg)
 
         merged_results = InstanceData(**merged_results_dict)
-        data_3d_samples = self.convert_to_datasample(batch_data_samples,
-                                                     [merged_results])
+        data_3d_samples = self.add_pred_to_datasample(batch_data_samples,
+                                                      [merged_results])
         return data_3d_samples
