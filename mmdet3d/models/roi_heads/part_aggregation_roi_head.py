@@ -89,17 +89,19 @@ class PartAggregationROIHead(Base3DRoIHead):
         bbox_results.update(loss_bbox=loss_bbox)
         return bbox_results
 
-    def _assign_and_sample(self, proposal_list: InstanceList,
-                           batch_gt_instances_3d: InstanceList,
-                           batch_gt_instances_ignore) -> List[SamplingResult]:
+    def _assign_and_sample(
+            self, rpn_results_list: InstanceList,
+            batch_gt_instances_3d: InstanceList,
+            batch_gt_instances_ignore: InstanceList) -> List[SamplingResult]:
         """Assign and sample proposals for training.
 
         Args:
-            proposal_list (list[:obj:`InstancesData`]): Proposals produced by
-                rpn head.
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
+                of rpn head.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
                 gt_instances. It usually includes ``bboxes_3d`` and
                 ``labels_3d`` attributes.
+            batch_gt_instances_ignore (list): Ignore instances of gt bboxes.
 
         Returns:
             list[:obj:`SamplingResult`]: Sampled results of each training
@@ -107,8 +109,8 @@ class PartAggregationROIHead(Base3DRoIHead):
         """
         sampling_results = []
         # bbox assign
-        for batch_idx in range(len(proposal_list)):
-            cur_proposal_list = proposal_list[batch_idx]
+        for batch_idx in range(len(rpn_results_list)):
+            cur_proposal_list = rpn_results_list[batch_idx]
             cur_boxes = cur_proposal_list['bboxes_3d']
             cur_labels_3d = cur_proposal_list['labels_3d']
             cur_gt_instances_3d = batch_gt_instances_3d[batch_idx]
@@ -202,7 +204,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -249,7 +251,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             voxel_dict (dict): Contains information of voxels.
             batch_input_metas (list[dict], Optional): Batch image meta info.
                 Defaults to None.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             test_cfg (Config): Test config.
 
@@ -318,7 +320,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -361,7 +363,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
 
         Returns:

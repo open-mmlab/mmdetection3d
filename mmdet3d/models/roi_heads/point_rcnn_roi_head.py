@@ -2,6 +2,7 @@
 from typing import Dict
 
 import torch
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS, TASK_UTILS
@@ -26,12 +27,12 @@ class PointRCNNRoIHead(Base3DRoIHead):
     """
 
     def __init__(self,
-                 bbox_head,
-                 bbox_roi_extractor,
-                 train_cfg,
-                 test_cfg,
-                 depth_normalizer=70.0,
-                 init_cfg=None):
+                 bbox_head: dict,
+                 bbox_roi_extractor: dict,
+                 train_cfg: dict,
+                 test_cfg: dict,
+                 depth_normalizer: dict = 70.0,
+                 init_cfg: dict = None) -> None:
         super(PointRCNNRoIHead, self).__init__(
             bbox_head=bbox_head,
             bbox_roi_extractor=bbox_roi_extractor,
@@ -66,7 +67,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -75,8 +76,8 @@ class PointRCNNRoIHead(Base3DRoIHead):
         Returns:
             dict[str, Tensor]: A dictionary of loss components
         """
-        features = feats_dict['features']
-        points = feats_dict['points']
+        features = feats_dict['fp_features']
+        fp_points = feats_dict['fp_points']
         point_cls_preds = feats_dict['points_cls_preds']
         sem_scores = point_cls_preds.sigmoid()
         point_scores = sem_scores.max(-1)[0]
@@ -94,14 +95,14 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
         # concat the depth, semantic features and backbone features
         features = features.transpose(1, 2).contiguous()
-        point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5
+        point_depths = fp_points.norm(dim=2) / self.depth_normalizer - 0.5
         features_list = [
             point_scores.unsqueeze(2),
             point_depths.unsqueeze(2), features
         ]
         features = torch.cat(features_list, dim=2)
 
-        bbox_results = self._bbox_forward_train(features, points,
+        bbox_results = self._bbox_forward_train(features, fp_points,
                                                 sample_results)
         losses = dict()
         losses.update(bbox_results['loss_bbox'])
@@ -119,7 +120,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -146,14 +147,14 @@ class PointRCNNRoIHead(Base3DRoIHead):
         batch_input_metas = [
             data_samples.metainfo for data_samples in batch_data_samples
         ]
-        features = feats_dict['features']
-        points = feats_dict['points']
+        fp_features = feats_dict['fp_features']
+        fp_points = feats_dict['fp_points']
         point_cls_preds = feats_dict['points_cls_preds']
         sem_scores = point_cls_preds.sigmoid()
         point_scores = sem_scores.max(-1)[0]
 
-        features = features.transpose(1, 2).contiguous()
-        point_depths = points.norm(dim=2) / self.depth_normalizer - 0.5
+        features = fp_features.transpose(1, 2).contiguous()
+        point_depths = fp_points.norm(dim=2) / self.depth_normalizer - 0.5
         features_list = [
             point_scores.unsqueeze(2),
             point_depths.unsqueeze(2), features
@@ -161,7 +162,8 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
         features = torch.cat(features_list, dim=2)
         batch_size = features.shape[0]
-        bbox_results = self._bbox_forward(features, points, batch_size, rois)
+        bbox_results = self._bbox_forward(features, fp_points, batch_size,
+                                          rois)
         object_score = bbox_results['cls_score'].sigmoid()
         bbox_list = self.bbox_head.get_results(
             rois,
@@ -173,7 +175,8 @@ class PointRCNNRoIHead(Base3DRoIHead):
 
         return bbox_list
 
-    def _bbox_forward_train(self, features, points, sampling_results):
+    def _bbox_forward_train(self, features: Tensor, points: Tensor,
+                            sampling_results: SampleList) -> dict:
         """Forward training function of roi_extractor and bbox_head.
 
         Args:
@@ -199,7 +202,8 @@ class PointRCNNRoIHead(Base3DRoIHead):
         bbox_results.update(loss_bbox=loss_bbox)
         return bbox_results
 
-    def _bbox_forward(self, features, points, batch_size, rois):
+    def _bbox_forward(self, features: Tensor, points: Tensor, batch_size: int,
+                      rois: Tensor) -> dict:
         """Forward function of roi_extractor and bbox_head used in both
         training and testing.
 
@@ -221,15 +225,20 @@ class PointRCNNRoIHead(Base3DRoIHead):
         bbox_results = dict(cls_score=cls_score, bbox_pred=bbox_pred)
         return bbox_results
 
-    def _assign_and_sample(self, rpn_results_list, batch_gt_instances_3d,
-                           batch_gt_instances_ignore):
+    def _assign_and_sample(
+            self, rpn_results_list: InstanceList,
+            batch_gt_instances_3d: InstanceList,
+            batch_gt_instances_ignore: InstanceList) -> SampleList:
         """Assign and sample proposals for training.
 
         Args:
-            proposal_list (list[dict]): Proposals produced by RPN.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                boxes.
-            gt_labels_3d (list[torch.Tensor]): Ground truth labels
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
+                of rpn head.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`]): Ignore
+                instances of gt bboxes.
 
         Returns:
             list[:obj:`SamplingResult`]: Sampled results of each training

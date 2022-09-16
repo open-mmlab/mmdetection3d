@@ -3,19 +3,19 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
+import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks import build_conv_layer
 from mmengine.model import BaseModule, normal_init
 from mmengine.structures import InstanceData
 from torch import Tensor
-from torch import nn as nn
 
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.models.layers.pointnet_modules import build_sa_module
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.utils.typing import InstanceList
+from mmdet3d.utils.typing import InstanceList, SamplingResultList
 from mmdet.models.utils import multi_apply
 
 
@@ -175,7 +175,8 @@ class PointRCNNBboxHead(BaseModule):
         if init_cfg is None:
             self.init_cfg = dict(type='Xavier', layer=['Conv2d', 'Conv1d'])
 
-    def _add_conv_branch(self, in_channels, conv_channels):
+    def _add_conv_branch(self, in_channels: int,
+                         conv_channels: tuple) -> nn.Sequential:
         """Add shared or separable branch.
 
         Args:
@@ -317,7 +318,10 @@ class PointRCNNBboxHead(BaseModule):
             losses['loss_corner'] = loss_cls.new_tensor(0) * loss_cls.sum()
         return losses
 
-    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0):
+    def get_corner_loss_lidar(self,
+                              pred_bbox3d: Tensor,
+                              gt_bbox3d: Tensor,
+                              delta: float = 1.0) -> Tensor:
         """Calculate corner loss of given boxes.
 
         Args:
@@ -350,17 +354,21 @@ class PointRCNNBboxHead(BaseModule):
         # quadratic = abs_error.clamp(max=delta)
         # linear = (abs_error - quadratic)
         # corner_loss = 0.5 * quadratic**2 + delta * linear
-        loss = torch.where(abs_error < delta, 0.5 * abs_error ** 2 / delta, abs_error - 0.5 * delta)
+        loss = torch.where(abs_error < delta, 0.5 * abs_error**2 / delta,
+                           abs_error - 0.5 * delta)
         return loss.mean(dim=1)
 
-    def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
+    def get_targets(self,
+                    sampling_results: SamplingResultList,
+                    rcnn_train_cfg: dict,
+                    concat: bool = True) -> Tuple[Tensor]:
         """Generate targets.
 
         Args:
             sampling_results (list[:obj:`SamplingResult`]):
                 Sampled results from rois.
             rcnn_train_cfg (:obj:`ConfigDict`): Training config of rcnn.
-            concat (bool, optional): Whether to concatenate targets between
+            concat (bool): Whether to concatenate targets between
                 batches. Defaults to True.
 
         Returns:
@@ -393,7 +401,8 @@ class PointRCNNBboxHead(BaseModule):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
 
-    def _get_target_single(self, pos_bboxes, pos_gt_bboxes, ious, cfg):
+    def _get_target_single(self, pos_bboxes: Tensor, pos_gt_bboxes: Tensor,
+                           ious: Tensor, cfg: dict) -> Tuple[Tensor]:
         """Generate training targets for a single sample.
 
         Args:
@@ -527,12 +536,12 @@ class PointRCNNBboxHead(BaseModule):
         return result_list
 
     def multi_class_nms(self,
-                        box_probs,
-                        box_preds,
-                        score_thr,
-                        nms_thr,
-                        input_meta,
-                        use_rotate_nms=True):
+                        box_probs: Tensor,
+                        box_preds: Tensor,
+                        score_thr: float,
+                        nms_thr: float,
+                        input_meta: dict,
+                        use_rotate_nms: bool = True) -> Tensor:
         """Multi-class NMS for box head.
 
         Note:
@@ -547,7 +556,7 @@ class PointRCNNBboxHead(BaseModule):
             score_thr (float): Threshold of scores.
             nms_thr (float): Threshold for NMS.
             input_meta (dict): Meta information of the current sample.
-            use_rotate_nms (bool, optional): Whether to use rotated nms.
+            use_rotate_nms (bool): Whether to use rotated nms.
                 Defaults to True.
 
         Returns:

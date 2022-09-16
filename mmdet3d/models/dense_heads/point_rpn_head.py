@@ -10,7 +10,8 @@ from torch import nn as nn
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import xywhr2xyxyr
-from mmdet3d.structures.bbox_3d import (DepthInstance3DBoxes,
+from mmdet3d.structures.bbox_3d import (BaseInstance3DBoxes,
+                                        DepthInstance3DBoxes,
                                         LiDARInstance3DBoxes)
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils.typing import InstanceList
@@ -72,7 +73,8 @@ class PointRPNHead(BaseModule):
             input_channels=pred_layer_cfg.in_channels,
             output_channels=self._get_reg_out_channels())
 
-    def _make_fc_layers(self, fc_cfg, input_channels, output_channels):
+    def _make_fc_layers(self, fc_cfg: dict, input_channels: int,
+                        output_channels: int) -> nn.Sequential:
         """Make fully connect layers.
 
         Args:
@@ -107,7 +109,7 @@ class PointRPNHead(BaseModule):
         # torch.cos(yaw) (1), torch.sin(yaw) (1)
         return self.bbox_coder.code_size
 
-    def forward(self, feat_dict: dict) -> Tuple[list]:
+    def forward(self, feat_dict: dict) -> Tuple[List[Tensor]]:
         """Forward pass.
 
         Args:
@@ -117,7 +119,7 @@ class PointRPNHead(BaseModule):
             tuple[list[torch.Tensor]]: Predicted boxes and classification
                 scores.
         """
-        point_features = feat_dict['features']
+        point_features = feat_dict['fp_features']
         point_features = point_features.permute(0, 2, 1).contiguous()
         batch_size = point_features.shape[0]
         feat_cls = point_features.view(-1, point_features.shape[-1])
@@ -177,14 +179,15 @@ class PointRPNHead(BaseModule):
 
         return losses
 
-    def get_targets(self, points, batch_gt_instances_3d):
+    def get_targets(self, points: List[Tensor],
+                    batch_gt_instances_3d: InstanceList) -> Tuple[Tensor]:
         """Generate targets of PointRCNN RPN head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
 
         Returns:
             tuple[torch.Tensor]: Targets of PointRCNN RPN head.
@@ -216,7 +219,9 @@ class PointRPNHead(BaseModule):
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
                 box_loss_weights, point_targets)
 
-    def get_targets_single(self, points, gt_bboxes_3d, gt_labels_3d):
+    def get_targets_single(self, points: Tensor,
+                           gt_bboxes_3d: BaseInstance3DBoxes,
+                           gt_labels_3d: Tensor) -> Tuple[Tensor]:
         """Generate targets of PointRCNN RPN head for single batch.
 
         Args:
@@ -386,7 +391,8 @@ class PointRPNHead(BaseModule):
             cls_preds = obj_scores.new_zeros([0, sem_scores.shape[-1]])
         return bbox_selected, score_selected, labels, cls_preds
 
-    def _assign_targets_by_points_inside(self, bboxes_3d, points):
+    def _assign_targets_by_points_inside(self, bboxes_3d: BaseInstance3DBoxes,
+                                         points: Tensor) -> Tuple[Tensor]:
         """Compute assignment by checking whether point is inside bbox.
 
         Args:
@@ -442,12 +448,12 @@ class PointRPNHead(BaseModule):
         batch_input_metas = [
             data_samples.metainfo for data_samples in batch_data_samples
         ]
-        stack_points = feats_dict.pop('stack_points')
+        raw_points = feats_dict.pop('raw_points')
         bbox_preds, cls_preds = self(feats_dict)
         proposal_cfg = self.test_cfg
 
         proposal_list = self.predict_by_feat(
-            stack_points,
+            raw_points,
             bbox_preds,
             cls_preds,
             cfg=proposal_cfg,
@@ -485,16 +491,16 @@ class PointRPNHead(BaseModule):
             batch_gt_instances_3d.append(data_sample.gt_instances_3d)
             batch_gt_instances_ignore.append(
                 data_sample.get('ignored_instances', None))
-        stack_points = feats_dict.pop('stack_points')
+        raw_points = feats_dict.pop('raw_points')
         bbox_preds, cls_preds = self(feats_dict)
 
-        loss_inputs = (bbox_preds, cls_preds, stack_points) + (
-            batch_gt_instances_3d, batch_input_metas,
-            batch_gt_instances_ignore)
+        loss_inputs = (bbox_preds, cls_preds,
+                       raw_points) + (batch_gt_instances_3d, batch_input_metas,
+                                      batch_gt_instances_ignore)
         losses = self.loss_by_feat(*loss_inputs)
 
         predictions = self.predict_by_feat(
-            stack_points,
+            raw_points,
             bbox_preds,
             cls_preds,
             batch_input_metas=batch_input_metas,

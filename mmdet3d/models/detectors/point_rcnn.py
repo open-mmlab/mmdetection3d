@@ -62,6 +62,6 @@ class PointRCNN(TwoStage3DDetector):
         if self.with_neck:
             x = self.neck(x)
         return dict(
-            features=x['fp_features'].clone(),
-            points=x['fp_xyz'].clone(),
-            stack_points=points)
+            fp_features=x['fp_features'].clone(),
+            fp_points=x['fp_xyz'].clone(),
+            raw_points=points)
