@@ -423,13 +423,9 @@ class ObjectSample(BaseTransform):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
+        repr_str += f'db_sampler={self.db_sampler},'
         repr_str += f' sample_2d={self.sample_2d},'
-        repr_str += f' data_root={self.sampler_cfg.data_root},'
-        repr_str += f' info_path={self.sampler_cfg.info_path},'
-        repr_str += f' rate={self.sampler_cfg.rate},'
-        repr_str += f' prepare={self.sampler_cfg.prepare},'
-        repr_str += f' classes={self.sampler_cfg.classes},'
-        repr_str += f' sample_groups={self.sampler_cfg.sample_groups}'
+        repr_str += f' use_ground_plane={self.use_ground_plane}'
         return repr_str
 
 
