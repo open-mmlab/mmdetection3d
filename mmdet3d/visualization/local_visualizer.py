@@ -191,7 +191,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     # We draw GT / pred bboxes on the same point cloud scenes
     # for better detection performance comparison
     def draw_bboxes_3d(self,
-                       bboxes_3d: DepthInstance3DBoxes,
+                       bboxes_3d: BaseInstance3DBoxes,
                        bbox_color=(0, 1, 0),
                        points_in_box_color=(1, 0, 0),
                        rot_axis=2,
@@ -201,7 +201,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         bbox3d.
 
         Args:
-            bboxes_3d (:obj:`DepthInstance3DBoxes`, shape=[M, 7]):
+            bboxes_3d (:obj:`DaseInstance3DBoxes`, shape=[M, 7]):
                 3d bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             bbox_color (tuple[float], optional): the color of 3D bboxes.
                 Default: (0, 1, 0).
@@ -217,7 +217,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """
         # Before visualizing the 3D Boxes in point cloud scene
         # we need to convert the boxes to Depth mode
-        check_type('bboxes', bboxes_3d, (DepthInstance3DBoxes))
+        check_type('bboxes', bboxes_3d, (BaseInstance3DBoxes))
+
+        if not isinstance(bboxes_3d, DepthInstance3DBoxes):
+            _, bboxes_3d = to_depth_mode(bboxes=bboxes_3d)
 
         # convert bboxes to numpy dtype
         bboxes_3d = tensor2ndarray(bboxes_3d.tensor)
