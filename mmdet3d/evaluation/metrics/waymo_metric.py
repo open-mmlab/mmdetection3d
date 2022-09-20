@@ -109,10 +109,16 @@ class WaymoMetric(KittiMetric):
         if self.task == 'mono3d':
             new_data_infos = []
             for info in self.data_infos:
+                height = info['images'][self.default_cam_key]['height']
+                width = info['images'][self.default_cam_key]['width']
                 for (cam_key, img_info) in info['images'].items():
                     camera_info = dict()
                     camera_info['images'] = dict()
                     camera_info['images'][cam_key] = img_info
+                    # TODO remove the check by updating the data info;
+                    if 'height' not in img_info:
+                        img_info['height'] = height
+                        img_info['width'] = width
                     if 'cam_instances' in info \
                             and cam_key in info['cam_instances']:
                         camera_info['instances'] = info['cam_instances'][
@@ -238,7 +244,7 @@ class WaymoMetric(KittiMetric):
                 f'{self.waymo_bin_file}'
 
             print(eval_str)
-            ret_bytes = subprocess.check_output(eval_str)
+            ret_bytes = subprocess.check_output(eval_str, shell=True)
             ret_texts = ret_bytes.decode('utf-8')
 
             print_log(ret_texts, logger=logger)
@@ -384,14 +390,14 @@ class WaymoMetric(KittiMetric):
             nms_cfg.max_per_frame, nms_cfg)
         lidar_boxes3d = LiDARInstance3DBoxes(boxes3d)
         det = bbox3d2result(lidar_boxes3d, scores, labels)
-        box_preds_lidar = det['boxes_3d']
+        box_preds_lidar = det['bboxes_3d']
         scores = det['scores_3d']
         labels = det['labels_3d']
         # box_preds_camera is in the cam0 system
-        rect = cam0_info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = cam0_info['calib']['Tr_velo_to_cam'].astype(np.float32)
+        lidar2cam = cam0_info['images'][self.default_cam_key]['lidar2img']
+        lidar2cam = np.array(lidar2cam).astype(np.float32)
         box_preds_camera = box_preds_lidar.convert_to(
-            Box3DMode.CAM, rect @ Trv2c, correct_yaw=True)
+            Box3DMode.CAM, np.linalg.inv(lidar2cam), correct_yaw=True)
         # Note: bbox is meaningless in final evaluation, set to 0
         merged_box_dict = dict(
             bbox=np.zeros([box_preds_lidar.tensor.shape[0], 4]),
@@ -399,7 +405,7 @@ class WaymoMetric(KittiMetric):
             box3d_lidar=box_preds_lidar.tensor.numpy(),
             scores=scores.numpy(),
             label_preds=labels.numpy(),
-            sample_idx=box_dict['sample_idx'],
+            sample_idx=box_dict['sample_id'],
         )
         return merged_box_dict
 
@@ -442,6 +448,7 @@ class WaymoMetric(KittiMetric):
                 if idx % self.num_cams == 0:
                     box_dict_per_frame = []
                     cam0_key = list(info['images'].keys())[0]
+                    cam0_info = info
                     # Here in mono3d, we use the 'CAM_FRONT' "the first
                     # index in the camera" as the default image shape.
                     # If you want to another camera, please modify it.
@@ -458,8 +465,8 @@ class WaymoMetric(KittiMetric):
                 box_dict_per_frame.append(box_dict)
                 if (idx + 1) % self.num_cams != 0:
                     continue
-                box_dict = self.merge_multi_view_boxes(
-                    box_dict_per_frame, self.data_infos[sample_idx])
+                box_dict = self.merge_multi_view_boxes(box_dict_per_frame,
+                                                       cam0_info)
 
             anno = {
                 'name': [],
@@ -652,5 +659,5 @@ class WaymoMetric(KittiMetric):
                 box3d_camera=np.zeros([0, 7]),
                 box3d_lidar=np.zeros([0, 7]),
                 scores=np.zeros([0]),
-                label_preds=np.zeros([0, 4]),
+                label_preds=np.zeros([0]),
                 sample_idx=sample_idx)
