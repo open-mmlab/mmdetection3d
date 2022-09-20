@@ -1882,8 +1882,8 @@ class RandomResize3D(RandomResize):
         results['cam2img'][0] *= np.array(results['scale_factor'][0])
         results['cam2img'][1] *= np.array(results['scale_factor'][1])
 
-    def __call__(self, results):
-        """Call function to resize images, bounding boxes, masks, semantic
+    def transform(self, results):
+        """Transform function to resize images, bounding boxes, masks, semantic
         segmentation map. Compared to RandomResize, this function would further
         check if scale is already set in results.
 
@@ -2084,8 +2084,8 @@ class RandomCrop3D(RandomCrop):
 
         return results
 
-    def __call__(self, results):
-        """Call function to randomly crop images, bounding boxes, masks,
+    def transform(self, results):
+        """Transform function to randomly crop images, bounding boxes, masks,
         semantic segmentation maps.
 
         Args:
@@ -2261,8 +2261,8 @@ class MultiViewWrapper(object):
         self.process_fields = process_fields
         self.randomness_keys = randomness_keys
 
-    def __call__(self, input_dict):
-        """Call function to do the transform for multiview image.
+    def transform(self, input_dict):
+        """Transform function to do the transform for multiview image.
 
         Args:
             results (dict): Result dict from loading pipeline.
