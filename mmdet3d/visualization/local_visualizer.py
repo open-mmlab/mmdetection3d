@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import mmcv
 import numpy as np
+from mmengine import mkdir_or_exist
 from mmengine.dist import master_only
 from torch import Tensor
 
@@ -604,6 +605,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 drawn_img,
                 win_name=name,
                 wait_time=wait_time)
+
+        mkdir_or_exist(out_file)
 
         if out_file is not None:
             if drawn_img_3d is not None:
