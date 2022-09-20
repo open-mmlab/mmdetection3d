@@ -462,6 +462,11 @@ _base_ = [
 ]
 ```
 
+#### Visualize your dataset (optional)
+
+To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/browse_dataest.py` script
+to visualize your dataset and annotations before training and validation, more details refer to the visualization doc.
+
 ## Evaluation
 
 Once the data and config has been prepared well, you can directly run the training / testing script following our doc.
