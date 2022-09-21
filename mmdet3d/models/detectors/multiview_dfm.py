@@ -190,7 +190,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
         Args:
             batch_feats (torch.Tensor): Perspective view features of shape
                 (batch_size, num_views, C, H, W).
-            img_metas (list[dict]): Image meta information. Each element
+            batch_img_metas (list[dict]): Image meta information. Each element
                 corresponds to a group of images. len(img_metas) == B.
             num_views (int): Number of views.
             num_frames (int): Number of consecutive frames.

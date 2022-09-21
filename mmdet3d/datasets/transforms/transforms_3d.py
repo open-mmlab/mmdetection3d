@@ -1861,7 +1861,7 @@ class RandomShiftScale(BaseTransform):
 
 @TRANSFORMS.register_module()
 class RandomResize3D(RandomResize):
-    r"""The difference between RandomResize3D and RandomResize:
+    """The difference between RandomResize3D and RandomResize:
 
     1. Compared to RandomResize, this class would further
         check if scale is already set in results.
