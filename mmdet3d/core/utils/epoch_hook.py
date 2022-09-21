@@ -17,10 +17,23 @@ class EpochHook(Hook):
             for i in range(lens):
                 if isinstance(runner.data_loader.dataset.pipeline.transforms[i], ObjectSample):
                     runner.data_loader.dataset.pipeline.transforms[i].cur_epoch = runner.epoch + 1
+                    import logging
+                    logging.error("EpochHook set ObjectSample's cur_epoch:{} success!".format(runner.epoch + 1))
                     break
         except:
-            import logging
-            logging.error("EpochHook set ObjectSample's cur_epoch:{} failed!".format(runner.epoch + 1))
+            try:
+                lens = len(runner.data_loader.dataset.dataset.pipeline.transforms)
+                for i in range(lens):
+                    if isinstance(runner.data_loader.dataset.dataset.pipeline.transforms[i], ObjectSample):
+                        runner.data_loader.dataset.dataset.pipeline.transforms[i].cur_epoch = runner.epoch + 1
+                        import logging
+                        logging.error("EpochHook set ObjectSample's cur_epoch:{} success!".format(runner.epoch + 1))
+                        break
+            except:
+                import logging
+                logging.error("EpochHook set ObjectSample's cur_epoch:{} failed!".format(runner.epoch + 1))
+
+
 
     def after_epoch(self, runner):
         pass
