@@ -108,8 +108,8 @@ class SingleStage3DDetector(Base3DDetector):
         """
         x = self.extract_feat(batch_inputs_dict)
         results_list = self.bbox_head.predict(x, batch_data_samples, **kwargs)
-        predictions = self.convert_to_datasample(batch_data_samples,
-                                                 results_list)
+        predictions = self.add_pred_to_datasample(batch_data_samples,
+                                                  results_list)
         return predictions
 
     def _forward(self,

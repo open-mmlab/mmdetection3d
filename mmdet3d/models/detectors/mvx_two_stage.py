@@ -401,7 +401,7 @@ class MVXTwoStageDetector(Base3DDetector):
         else:
             results_list_2d = None
 
-        detsamples = self.convert_to_datasample(batch_data_samples,
-                                                results_list_3d,
-                                                results_list_2d)
+        detsamples = self.add_pred_to_datasample(batch_data_samples,
+                                                 results_list_3d,
+                                                 results_list_2d)
         return detsamples
