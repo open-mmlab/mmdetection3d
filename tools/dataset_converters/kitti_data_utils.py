@@ -437,8 +437,24 @@ class WaymoInfoGatherer:
             Tr_velo_to_cam = np.array([
                 float(info) for info in lines[6].split(' ')[1:13]
             ]).reshape([3, 4])
+            Tr_velo_to_cam1 = np.array([
+                float(info) for info in lines[7].split(' ')[1:13]
+            ]).reshape([3, 4])
+            Tr_velo_to_cam2 = np.array([
+                float(info) for info in lines[8].split(' ')[1:13]
+            ]).reshape([3, 4])
+            Tr_velo_to_cam3 = np.array([
+                float(info) for info in lines[9].split(' ')[1:13]
+            ]).reshape([3, 4])
+            Tr_velo_to_cam4 = np.array([
+                float(info) for info in lines[10].split(' ')[1:13]
+            ]).reshape([3, 4])
             if self.extend_matrix:
                 Tr_velo_to_cam = _extend_matrix(Tr_velo_to_cam)
+                Tr_velo_to_cam1 = _extend_matrix(Tr_velo_to_cam1)
+                Tr_velo_to_cam2 = _extend_matrix(Tr_velo_to_cam2)
+                Tr_velo_to_cam3 = _extend_matrix(Tr_velo_to_cam3)
+                Tr_velo_to_cam4 = _extend_matrix(Tr_velo_to_cam4)
             calib_info['P0'] = P0
             calib_info['P1'] = P1
             calib_info['P2'] = P2
@@ -446,6 +462,10 @@ class WaymoInfoGatherer:
             calib_info['P4'] = P4
             calib_info['R0_rect'] = rect_4x4
             calib_info['Tr_velo_to_cam'] = Tr_velo_to_cam
+            calib_info['Tr_velo_to_cam1'] = Tr_velo_to_cam1
+            calib_info['Tr_velo_to_cam2'] = Tr_velo_to_cam2
+            calib_info['Tr_velo_to_cam3'] = Tr_velo_to_cam3
+            calib_info['Tr_velo_to_cam4'] = Tr_velo_to_cam4
             info['calib'] = calib_info
         if self.pose:
             pose_path = get_pose_path(
