@@ -68,8 +68,9 @@ class Pack3DDetInputs(BaseTransform):
                            'depth2img', 'cam2img', 'pad_shape', 'scale_factor',
                            'flip', 'pcd_horizontal_flip', 'pcd_vertical_flip',
                            'box_mode_3d', 'box_type_3d', 'img_norm_cfg',
-                           'pcd_trans', 'sample_idx', 'pcd_scale_factor',
-                           'pcd_rotation', 'pcd_rotation_angle', 'lidar_path',
+                           'num_pts_feats', 'pcd_trans', 'sample_idx',
+                           'pcd_scale_factor', 'pcd_rotation',
+                           'pcd_rotation_angle', 'lidar_path',
                            'transformation_3d_flow', 'trans_mat',
                            'affine_aug')):
         self.keys = keys
