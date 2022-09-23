@@ -44,9 +44,9 @@ class TestFCOSMono3DHead(TestCase):
 
         fcos_mono3d_head = FCOSMono3DHead(
             num_classes=10,
-            in_channels=256,
+            in_channels=32,
             stacked_convs=2,
-            feat_channels=256,
+            feat_channels=32,
             use_direction_classifier=True,
             diff_rad_by_sin=True,
             pred_attrs=True,
@@ -55,16 +55,16 @@ class TestFCOSMono3DHead(TestCase):
             dir_limit_offset=0,
             strides=[8, 16, 32, 64, 128],
             group_reg_dims=(2, 1, 3, 1, 2),  # offset, depth, size, rot, velo
-            cls_branch=(256, ),
+            cls_branch=(32, ),
             reg_branch=(
-                (256, ),  # offset
-                (256, ),  # depth
-                (256, ),  # size
-                (256, ),  # rot
+                (32, ),  # offset
+                (32, ),  # depth
+                (32, ),  # size
+                (32, ),  # rot
                 ()  # velo
             ),
-            dir_branch=(256, ),
-            attr_branch=(256, ),
+            dir_branch=(32, ),
+            attr_branch=(32, ),
             loss_cls=dict(
                 type='mmdet.FocalLoss',
                 use_sigmoid=True,
@@ -96,11 +96,11 @@ class TestFCOSMono3DHead(TestCase):
 
         # FCOS3D head expects a multiple levels of features per image
         feats = [
-            torch.rand([1, 256, 116, 200], dtype=torch.float32),
-            torch.rand([1, 256, 58, 100], dtype=torch.float32),
-            torch.rand([1, 256, 29, 50], dtype=torch.float32),
-            torch.rand([1, 256, 15, 25], dtype=torch.float32),
-            torch.rand([1, 256, 8, 13], dtype=torch.float32)
+            torch.rand([1, 32, 116, 200], dtype=torch.float32),
+            torch.rand([1, 32, 58, 100], dtype=torch.float32),
+            torch.rand([1, 32, 29, 50], dtype=torch.float32),
+            torch.rand([1, 32, 15, 25], dtype=torch.float32),
+            torch.rand([1, 32, 8, 13], dtype=torch.float32)
         ]
 
         # Test forward
