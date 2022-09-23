@@ -73,7 +73,8 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
-                 **kwargs) -> None:
+                 show_ins_statistics: bool = False,
+                 **kwargs):
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
         self.filter_empty_gt = filter_empty_gt
@@ -125,7 +126,11 @@ class Det3DDataset(BaseDataset):
         self.metainfo['box_type_3d'] = box_type_3d
         self.metainfo['label_mapping'] = self.label_mapping
 
-    def _remove_dontcare(self, ann_info: dict) -> dict:
+        # used for statistics of the number of instances before and
+        # after processing
+        self.show_ins_statistics = show_ins_statistics
+
+    def _remove_dontcare(self, ann_info):
         """Remove annotations that do not need to be cared.
 
         -1 indicate dontcare in MMDet3d.
@@ -302,10 +307,10 @@ class Det3DDataset(BaseDataset):
         Returns:
             dict | None: Data dict of the corresponding index.
         """
-        input_dict = self.get_data_info(index)
+        ori_input_dict = self.get_data_info(index)
 
         # deepcopy here to avoid inplace modification in pipeline.
-        input_dict = copy.deepcopy(input_dict)
+        input_dict = copy.deepcopy(ori_input_dict)
 
         # box_type_3d (str): 3D box type.
         input_dict['box_type_3d'] = self.box_type_3d
@@ -318,12 +323,23 @@ class Det3DDataset(BaseDataset):
                 return None
 
         example = self.pipeline(input_dict)
+
         if not self.test_mode and self.filter_empty_gt:
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(
                     example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
+
+        if self.show_ins_statistics:
+            from mmengine.logging import MMLogger
+            logger: MMLogger = MMLogger.get_current_instance()
+            ori_num_instances = len(ori_input_dict['ann_info']['gt_labels_3d'])
+            new_num_instances = len(example['data_samples'].gt_instances_3d)
+            logger.info(
+                'The number of instances after and before through pipeline: '
+                f'{new_num_instances} / {ori_num_instances}')
+
         return example
 
     def get_cat_ids(self, idx: int) -> List[int]:
