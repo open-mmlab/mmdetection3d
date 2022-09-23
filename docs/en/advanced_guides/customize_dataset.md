@@ -6,7 +6,7 @@ The basic steps are as below:
 
 1. Prepare data
 2. Prepare a config
-3. Train, test, inference models on the customized dataset.
+3. Train, test and inference models on the customized dataset.
 
 ## Data Preparation
 
@@ -16,14 +16,14 @@ The ideal situation is that we can reorganize the customized raw data and conver
 
 #### Point cloud Format
 
-Currently, we only support `.bin` format point cloud training and inference, before training on your own datasets, you need to transform your point cloud format to `.bin` file. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
+Currently, we only support '.bin' format point cloud for training and inference. Before training on your own datasets, you need to convert your point cloud files with other formats to '.bin' files. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
 
 1. Convert pcd to bin: https://github.com/leofansq/Tools_RosBag2KITTI
 2. Convert las to bin: The common conversion path is las -> pcd -> bin, and the conversion from las -> pcd can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
 
 #### Label Format
 
-The most basic information: 3D bounding box and category label of each scene need to be contained in annotation `.txt` file. Each line represents a 3D box in a given scene as follow:
+The most basic information: 3D bounding box and category label of each scene need to be contained in annotation `.txt` file. Each line represents a 3D box in a certain scene as follow:
 
 ```python
 # format: [x, y, z, dx, dy, dz, yaw, category_name]
@@ -38,7 +38,7 @@ The 3D Box should be stored in unified 3D coordinates.
 
 #### Calibration Format
 
-During data collection, we will have multiple lidars and cameras with different sensor setup. For the point cloud data collected by each lidar, they are usually fused and  converted to a certain LiDAR coordinate, So typically the calibration information file should contain the intrinsic matrix of each camera and the transformation extrinsic matrix from the lidar to each camera in calibration `.txt` file, while `Px` represents the intrinsic matrix of `camera_x` and `lidar2camx` represents the transformation extrinsic matrix from the `lidar` to `camera_x`.
+For the point cloud data collected by each lidar, they are usually fused and converted to a certain LiDAR coordinate. So typically the calibration information file should contain the intrinsic matrix of each camera and the transformation extrinsic matrix from the lidar to each camera in calibration `.txt` file, while `Px` represents the intrinsic matrix of `camera_x` and `lidar2camx` represents the transformation extrinsic matrix from the `lidar` to `camera_x`.
 
 ```
 P0
@@ -342,7 +342,7 @@ If the `point_cloud_range` and `voxel_size` are set to be `[0, -40, -3, 70.4, 40
 
 Regarding the setting of `anchor_range`, it is generally adjusted according to dataset. Note that `z` value needs to be adjusted accordingly to the position of the point cloud, please refer to this [issue](https://github.com/open-mmlab/mmdetection3d/issues/986).
 
-Regarding the setting of `anchor_size`, it is usually necessary to count the average length, width and height of the entire training dataset as `anchor_size` to obtain the best results.
+Regarding the setting of `anchor_size`, it is usually necessary to count the average length, width and height of objects in the entire training dataset as `anchor_size` to obtain the best results.
 
 In `configs/_base_/models/pointpillars_hv_secfpn_custom.py`:
 
@@ -465,13 +465,14 @@ _base_ = [
 #### Visualize your dataset (optional)
 
 To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/browse_dataest.py` script
-to visualize your dataset and annotations before training and validation, more details refer to the visualization doc.
+to visualize your dataset and annotations before training and validation, more details refer to the [visualization](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/user_guides/visualization.md/) doc.
+s
 
 ## Evaluation
 
-Once the data and config has been prepared well, you can directly run the training / testing script following our doc.
+Once the data and config have been prepared, you can directly run the training/testing script following our doc.
 
-**Note**: we only provide an implementation for KITTI stype evaluation for customized dataset. It should be included in dataset config:
+**Note**: we only provide an implementation for KITTI style evaluation for the customized dataset. It should be included in the dataset config:
 
 ```python
 val_evaluator = dict(
