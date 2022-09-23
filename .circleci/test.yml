@@ -152,8 +152,8 @@ workflows:
           name: maximum_version_cpu
           torch: 1.9.0
           torchvision: 0.10.0
-          python: 3.8.14
-          mmcv: https://download.openmmlab.com/mmcv/dev-2.x/cpu/torch1.9.0/mmcv_full-2.0.0rc0-cp38-cp38-manylinux1_x86_64.whl
+          python: 3.9.0
+          mmcv: https://download.openmmlab.com/mmcv/dev-2.x/cpu/torch1.9.0/mmcv_full-2.0.0rc0-cp39-cp39-manylinux1_x86_64.whl
           requires:
             - minimum_version_cpu
       - hold:
