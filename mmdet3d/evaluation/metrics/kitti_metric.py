@@ -168,7 +168,7 @@ class KittiMetric(BaseMetric):
         """Compute the metrics from processed results.
 
         Args:
-            results (list): The processed results of each batch.
+            results (list): The processed results of the whole dataset.
 
         Returns:
             Dict[str, float]: The computed metrics. The keys are the names of
@@ -416,7 +416,7 @@ class KittiMetric(BaseMetric):
                                 anno['score'][idx]),
                             file=f)
 
-            annos[-1]['sample_id'] = np.array(
+            annos[-1]['sample_idx'] = np.array(
                 [sample_idx] * len(annos[-1]['score']), dtype=np.int64)
 
             det_annos += annos
@@ -508,7 +508,7 @@ class KittiMetric(BaseMetric):
                 anno = {k: np.stack(v) for k, v in anno.items()}
                 annos.append(anno)
 
-            annos[-1]['sample_id'] = np.array(
+            annos[-1]['sample_idx'] = np.array(
                 [sample_idx] * num_example, dtype=np.int64)
             det_annos += annos
 

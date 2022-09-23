@@ -606,9 +606,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 win_name=name,
                 wait_time=wait_time)
 
-        mkdir_or_exist(out_file)
-
         if out_file is not None:
+            mkdir_or_exist(out_file)
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file + '.jpg')
             if drawn_img is not None:
