@@ -6,6 +6,7 @@ from typing import Callable, List, Optional, Union
 import mmengine
 import numpy as np
 from mmengine.dataset import BaseDataset
+from mmengine.logging import MMLogger
 
 from mmdet3d.datasets import DATASETS
 from mmdet3d.structures import get_box_type
@@ -53,11 +54,13 @@ class Det3DDataset(BaseDataset):
             empty GT. Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        load_eval_anns (bool, optional): Whether to load annotations
-            in test_mode, the annotation will be save in `eval_ann_infos`,
-            which can be used in Evaluator. Defaults to True.
-        file_client_args (dict, optional): Configuration of file client.
-            Defaults to dict(backend='disk').
+        load_eval_anns (bool): Whether to load annotations
+            in test_mode, the annotation will be save in
+            `eval_ann_infos`, which can be use in Evaluator.
+        file_client_args (dict): Configuration of file client.
+            Defaults to `dict(backend='disk')`.
+        show_ins_statistics (bool, optional): Whether to show the statistics of
+            instances before and after through pipeline. Defaults to False.
     """
 
     def __init__(self,
@@ -332,7 +335,6 @@ class Det3DDataset(BaseDataset):
                 return None
 
         if self.show_ins_statistics:
-            from mmengine.logging import MMLogger
             logger: MMLogger = MMLogger.get_current_instance()
             ori_num_instances = len(ori_input_dict['ann_info']['gt_labels_3d'])
             new_num_instances = len(example['data_samples'].gt_instances_3d)
