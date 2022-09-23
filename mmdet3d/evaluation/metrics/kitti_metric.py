@@ -416,7 +416,7 @@ class KittiMetric(BaseMetric):
                                 anno['score'][idx]),
                             file=f)
 
-            annos[-1]['sample_idx'] = np.array(
+            annos[-1]['sample_id'] = np.array(
                 [sample_idx] * len(annos[-1]['score']), dtype=np.int64)
 
             det_annos += annos
@@ -508,7 +508,7 @@ class KittiMetric(BaseMetric):
                 anno = {k: np.stack(v) for k, v in anno.items()}
                 annos.append(anno)
 
-            annos[-1]['sample_idx'] = np.array(
+            annos[-1]['sample_id'] = np.array(
                 [sample_idx] * num_example, dtype=np.int64)
             det_annos += annos
 
