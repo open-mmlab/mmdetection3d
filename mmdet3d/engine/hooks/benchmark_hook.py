@@ -12,7 +12,9 @@ class BenchmarkHook(Hook):
     priority = 'NORMAL'
 
     def after_train_epoch(self, runner) -> None:
-        """Save the checkpoint and synchronize buffers after each epoch.
+        """We use the average throughput in iterations of the entire training
+        run and skip the first 50 iterations of each epoch to skip GPU warmup
+        time.
 
         Args:
             runner (Runner): The runner of the training process.
