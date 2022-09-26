@@ -7,10 +7,7 @@ from mmdet3d.registry import HOOKS
 
 @HOOKS.register_module()
 class BenchmarkHook(Hook):
-    """A hook that logs the time spent during iteration.
-
-    E.g. ``data_time`` for loading data and ``time`` for a model train step.
-    """
+    """A hook that logs the training speed of each epch."""
 
     priority = 'NORMAL'
 
