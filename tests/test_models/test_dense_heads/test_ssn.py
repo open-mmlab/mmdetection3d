@@ -26,7 +26,6 @@ class TestSSN(unittest.TestCase):
         ssn_cfg.pts_neck.out_channels = [1, 1, 1]
         ssn_cfg.pts_bbox_head.in_channels = 3
         ssn_cfg.pts_bbox_head.feat_channels = 1
-        print(ssn_cfg)
         model = MODELS.build(ssn_cfg)
         num_gt_instance = 50
         packed_inputs = _create_detector_inputs(
