@@ -16,7 +16,7 @@ class MultiScaleFlipAug3D(BaseTransform):
 
     Args:
         transforms (list[dict]): Transforms to apply in each augmentation.
-        img_scale (tuple | list[tuple]: Images scales for resizing.
+        img_scale (tuple | list[tuple]): Images scales for resizing.
         pts_scale_ratio (float | list[float]): Points scale ratios for
             resizing.
         flip (bool, optional): Whether apply flip augmentation.
@@ -25,11 +25,11 @@ class MultiScaleFlipAug3D(BaseTransform):
             directions for images, options are "horizontal" and "vertical".
             If flip_direction is list, multiple flip augmentations will
             be applied. It has no effect when ``flip == False``.
-            Defaults to "horizontal".
-        pcd_horizontal_flip (bool, optional): Whether apply horizontal
+            Defaults to 'horizontal'.
+        pcd_horizontal_flip (bool, optional): Whether to apply horizontal
             flip augmentation to point cloud. Defaults to True.
             Note that it works only when 'flip' is turned on.
-        pcd_vertical_flip (bool, optional): Whether apply vertical flip
+        pcd_vertical_flip (bool, optional): Whether to apply vertical flip
             augmentation to point cloud. Defaults to True.
             Note that it works only when 'flip' is turned on.
     """

@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -75,7 +75,6 @@ class RandomFlip3D(RandomFlip):
     If the input dict contains the key "flip", then the flag will be used,
     otherwise it will be randomly decided by a ratio specified in the init
     method.
-
 
     Required Keys:
 
@@ -329,7 +328,7 @@ class ObjectSample(BaseTransform):
     def __init__(self,
                  db_sampler: dict,
                  sample_2d: bool = False,
-                 use_ground_plane: bool = False):
+                 use_ground_plane: bool = False) -> None:
         self.sampler_cfg = db_sampler
         self.sample_2d = sample_2d
         if 'type' not in db_sampler.keys():
@@ -456,9 +455,9 @@ class ObjectNoise(BaseTransform):
     """
 
     def __init__(self,
-                 translation_std: list = [0.25, 0.25, 0.25],
-                 global_rot_range: list = [0.0, 0.0],
-                 rot_range: list = [-0.15707963267, 0.15707963267],
+                 translation_std: List[float] = [0.25, 0.25, 0.25],
+                 global_rot_range: List[float] = [0.0, 0.0],
+                 rot_range: List[float] = [-0.15707963267, 0.15707963267],
                  num_try: int = 100):
         self.translation_std = translation_std
         self.global_rot_range = global_rot_range
@@ -522,7 +521,7 @@ class GlobalAlignment(BaseTransform):
     def __init__(self, rotation_axis: int) -> None:
         self.rotation_axis = rotation_axis
 
-    def _trans_points(self, results: Dict, trans_factor: np.ndarray) -> None:
+    def _trans_points(self, results: dict, trans_factor: np.ndarray) -> None:
         """Private function to translate points.
 
         Args:
@@ -534,7 +533,7 @@ class GlobalAlignment(BaseTransform):
         """
         results['points'].translate(trans_factor)
 
-    def _rot_points(self, results: Dict, rot_mat: np.ndarray) -> None:
+    def _rot_points(self, results: dict, rot_mat: np.ndarray) -> None:
         """Private function to rotate bounding boxes and points.
 
         Args:
@@ -560,7 +559,7 @@ class GlobalAlignment(BaseTransform):
         is_valid &= (rot_mat[:, self.rotation_axis] == valid_array).all()
         assert is_valid, f'invalid rotation matrix {rot_mat}'
 
-    def transform(self, results: Dict) -> Dict:
+    def transform(self, results: dict) -> dict:
         """Call function to shuffle points.
 
         Args:
@@ -586,6 +585,7 @@ class GlobalAlignment(BaseTransform):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(rotation_axis={self.rotation_axis})'
         return repr_str
@@ -804,6 +804,7 @@ class PointShuffle(BaseTransform):
         return input_dict
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         return self.__class__.__name__
 
 
@@ -823,7 +824,7 @@ class ObjectRangeFilter(BaseTransform):
         point_cloud_range (list[float]): Point cloud range.
     """
 
-    def __init__(self, point_cloud_range: list):
+    def __init__(self, point_cloud_range: List[float]):
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
 
     def transform(self, input_dict: dict) -> dict:
@@ -885,7 +886,7 @@ class PointsRangeFilter(BaseTransform):
         point_cloud_range (list[float]): Point cloud range.
     """
 
-    def __init__(self, point_cloud_range: list):
+    def __init__(self, point_cloud_range: List[float]):
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
 
     def transform(self, input_dict: dict) -> dict:
@@ -938,7 +939,7 @@ class ObjectNameFilter(BaseTransform):
         classes (list[str]): List of class names to be kept for training.
     """
 
-    def __init__(self, classes: list):
+    def __init__(self, classes: List[str]) -> None:
         self.classes = classes
         self.labels = list(range(len(self.classes)))
 
@@ -997,17 +998,17 @@ class PointSample(BaseTransform):
     def __init__(self,
                  num_points: int,
                  sample_range: float = None,
-                 replace: bool = False):
+                 replace: bool = False) -> None:
         self.num_points = num_points
         self.sample_range = sample_range
         self.replace = replace
 
     def _points_random_sampling(self,
-                                points,
-                                num_samples,
-                                sample_range=None,
-                                replace=False,
-                                return_choices=False):
+                                points: Union[np.ndarray, BasePoints],
+                                num_samples: int,
+                                sample_range: float = None,
+                                replace: bool = False,
+                                return_choices: bool = False):
         """Points random sampling.
 
         Sample points to a certain number.
@@ -1021,8 +1022,10 @@ class PointSample(BaseTransform):
                 Defaults to None.
             return_choices (bool, optional): Whether return choice.
                 Defaults to False.
+
         Returns:
             tuple[np.ndarray] | np.ndarray:
+
                 - points (np.ndarray | :obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
@@ -1055,6 +1058,7 @@ class PointSample(BaseTransform):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
+
         Returns:
             dict: Results after sampling, 'points', 'pts_instance_mask'
                 and 'pts_semantic_mask' keys are updated in the result dict.
@@ -1433,7 +1437,7 @@ class BackgroundPointsFilter(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class VoxelBasedPointSampler(object):
+class VoxelBasedPointSampler(BaseTransform):
     """Voxel based point sampler.
 
     Apply voxel sampling to multiple sweep points.
@@ -1445,7 +1449,10 @@ class VoxelBasedPointSampler(object):
             for input points.
     """
 
-    def __init__(self, cur_sweep_cfg, prev_sweep_cfg=None, time_dim=3):
+    def __init__(self,
+                 cur_sweep_cfg: dict,
+                 prev_sweep_cfg: Optional[dict] = None,
+                 time_dim: int = 3) -> None:
         self.cur_voxel_generator = VoxelGenerator(**cur_sweep_cfg)
         self.cur_voxel_num = self.cur_voxel_generator._max_voxels
         self.time_dim = time_dim
@@ -1458,7 +1465,10 @@ class VoxelBasedPointSampler(object):
             self.prev_voxel_generator = None
             self.prev_voxel_num = 0
 
-    def _sample_points(self, points, sampler, point_dim):
+    def _sample_points(self,
+                       points: np.ndarray,
+                       sampler: VoxelGenerator,
+                       point_dim: int) -> np.ndarray:
         """Sample points for each points subset.
 
         Args:
@@ -1484,7 +1494,7 @@ class VoxelBasedPointSampler(object):
 
         return sample_points
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> dict:
         """Call function to sample points from multiple sweeps.
 
         Args:
@@ -1766,6 +1776,7 @@ class AffineResize(BaseTransform):
         return ref_point3
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(img_scale={self.img_scale}, '
         repr_str += f'down_ratio={self.down_ratio}) '
@@ -1825,6 +1836,7 @@ class RandomShiftScale(BaseTransform):
         return results
 
     def __repr__(self):
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(shift_scale={self.shift_scale}, '
         repr_str += f'aug_prob={self.aug_prob}) '

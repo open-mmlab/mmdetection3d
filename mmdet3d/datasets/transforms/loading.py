@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Union
 
 import mmcv
 import mmengine
@@ -13,7 +13,7 @@ from mmdet.datasets.transforms import LoadAnnotations
 
 
 @TRANSFORMS.register_module()
-class LoadMultiViewImageFromFiles(object):
+class LoadMultiViewImageFromFiles(BaseTransform):
     """Load multi channel images from a list of separate channel files.
 
     Expects results['img_filename'] to be a list of filenames.
@@ -25,11 +25,15 @@ class LoadMultiViewImageFromFiles(object):
             Defaults to 'unchanged'.
     """
 
-    def __init__(self, to_float32=False, color_type='unchanged'):
+    def __init__(
+        self,
+        to_float32: bool = False,
+        color_type: str = 'unchanged'
+    ) -> None:
         self.to_float32 = to_float32
         self.color_type = color_type
 
-    def __call__(self, results):
+    def transform(self, results: dict) -> dict:
         """Call function to load multi-view image from files.
 
         Args:
@@ -139,7 +143,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
             Defaults to [0, 1, 2, 4].
         file_client_args (dict, optional): Config dict of file clients,
             refer to
-            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
         pad_empty_sweeps (bool, optional): Whether to repeat keyframe when
             sweeps is empty. Defaults to False.
@@ -150,14 +154,16 @@ class LoadPointsFromMultiSweeps(BaseTransform):
             Defaults to False.
     """
 
-    def __init__(self,
-                 sweeps_num=10,
-                 load_dim=5,
-                 use_dim=[0, 1, 2, 4],
-                 file_client_args=dict(backend='disk'),
-                 pad_empty_sweeps=False,
-                 remove_close=False,
-                 test_mode=False):
+    def __init__(
+        self,
+        sweeps_num: int = 10,
+        load_dim: int = 5,
+        use_dim: List[int] = [0, 1, 2, 4],
+        file_client_args: dict = dict(backend='disk'),
+        pad_empty_sweeps: bool = False,
+        remove_close: bool = False,
+        test_mode: bool = False
+    ) -> None:
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
         self.use_dim = use_dim
@@ -167,7 +173,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         self.remove_close = remove_close
         self.test_mode = test_mode
 
-    def _load_points(self, pts_filename):
+    def _load_points(self, pts_filename: str) -> np.ndarray:
         """Private function to load point clouds data.
 
         Args:
@@ -189,7 +195,11 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                 points = np.fromfile(pts_filename, dtype=np.float32)
         return points
 
-    def _remove_close(self, points, radius=1.0):
+    def _remove_close(
+        self,
+        points: Union[np.ndarray, BasePoints],
+        radius: float = 1.0
+    ) -> Union[np.ndarray, BasePoints]:
         """Removes point too close within a certain radius from origin.
 
         Args:
@@ -198,7 +208,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                 Defaults to 1.0.
 
         Returns:
-            np.ndarray: Points after removing.
+            np.ndarray | :obj:`BasePoints`: Points after removing.
         """
         if isinstance(points, np.ndarray):
             points_numpy = points
@@ -211,7 +221,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         not_close = np.logical_not(np.logical_and(x_filt, y_filt))
         return points[not_close]
 
-    def transform(self, results):
+    def transform(self, results: dict) -> dict:
         """Call function to load multi-sweep point clouds from files.
 
         Args:
@@ -220,7 +230,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
 
         Returns:
             dict: The result dict containing the multi-sweep points data.
-                Added key and value are described below.
+                Updated key and value are described below.
 
                 - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point
                     cloud arrays.
@@ -290,7 +300,7 @@ class PointSegClassMapping(BaseTransform):
     others as len(valid_cat_ids).
     """
 
-    def transform(self, results: dict) -> None:
+    def transform(self, results: dict) -> dict:
         """Call function to map original semantic class to valid category ids.
 
         Args:
@@ -322,8 +332,6 @@ class PointSegClassMapping(BaseTransform):
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(valid_cat_ids={self.valid_cat_ids}, '
-        repr_str += f'max_cat_id={self.max_cat_id})'
         return repr_str
 
 
@@ -385,13 +393,14 @@ class LoadPointsFromFile(BaseTransform):
     Args:
         coord_type (str): The type of coordinates of points cloud.
             Available options includes:
+
             - 'LIDAR': Points in LiDAR coordinates.
             - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
             - 'CAMERA': Points in camera coordinates.
         load_dim (int, optional): The dimension of the loaded points.
             Defaults to 6.
-        use_dim (list[int], optional): Which dimensions of the points to use.
-            Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
+        use_dim (list[int] | int, optional): Which dimensions of the points
+            to use. Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
         shift_height (bool, optional): Whether to use shifted height.
             Defaults to False.
@@ -399,7 +408,7 @@ class LoadPointsFromFile(BaseTransform):
             Defaults to False.
         file_client_args (dict, optional): Config dict of file clients,
             refer to
-            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
     """
 
@@ -407,7 +416,7 @@ class LoadPointsFromFile(BaseTransform):
         self,
         coord_type: str,
         load_dim: int = 6,
-        use_dim: list = [0, 1, 2],
+        use_dim: Union[int, List[int]] = [0, 1, 2],
         shift_height: bool = False,
         use_color: bool = False,
         file_client_args: dict = dict(backend='disk')
@@ -523,6 +532,7 @@ class LoadAnnotations3D(LoadAnnotations):
     Required Keys:
 
     - ann_info (dict)
+
         - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes` |
           :obj:`DepthInstance3DBoxes` | :obj:`CameraInstance3DBoxes`):
           3D ground truth bboxes. Only when `with_bbox_3d` is True
@@ -592,7 +602,7 @@ class LoadAnnotations3D(LoadAnnotations):
         seg_3d_dtype (dtype, optional): Dtype of 3D semantic masks.
             Defaults to int64.
         file_client_args (dict): Config dict of file clients, refer to
-            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
             for more details.
     """
 
