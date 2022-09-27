@@ -126,3 +126,7 @@ val_evaluator = dict(
     ann_file=data_root + 'nuscenes_infos_val.pkl',
     metric='bbox')
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
