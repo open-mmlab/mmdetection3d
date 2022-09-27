@@ -11,6 +11,7 @@ from mmengine import mkdir_or_exist
 from mmengine.dist import master_only
 from torch import Tensor
 
+from mmdet3d.structures.bbox_3d.box_3d_mode import Box3DMode
 from mmdet.visualization import DetLocalVisualizer
 
 try:
@@ -231,10 +232,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """
         # Before visualizing the 3D Boxes in point cloud scene
         # we need to convert the boxes to Depth mode
-        check_type('bboxes', bboxes_3d, (BaseInstance3DBoxes))
+        check_type('bboxes', bboxes_3d, BaseInstance3DBoxes)
 
         if not isinstance(bboxes_3d, DepthInstance3DBoxes):
-            _, bboxes_3d = to_depth_mode(bboxes=bboxes_3d)
+            bboxes_3d = bboxes_3d.convert_to(Box3DMode.DEPTH)
 
         # convert bboxes to numpy dtype
         bboxes_3d = tensor2ndarray(bboxes_3d.tensor)
