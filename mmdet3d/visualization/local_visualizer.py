@@ -7,28 +7,26 @@ import mmcv
 import numpy as np
 from mmengine import mkdir_or_exist
 from mmengine.dist import master_only
-from torch import Tensor
-
-from mmdet.visualization import DetLocalVisualizer
-
-try:
-    import open3d as o3d
-    from open3d import geometry
-except ImportError:
-    raise ImportError(
-        'Please run "pip install open3d" to install open3d first.')
-
 from mmengine.structures import InstanceData
 from mmengine.visualization.utils import check_type, tensor2ndarray
+from torch import Tensor
 
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.structures import (BaseInstance3DBoxes, CameraInstance3DBoxes,
                                 Coord3DMode, DepthInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
                                 PointData)
+from mmdet.visualization import DetLocalVisualizer
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode, write_obj,
                         write_oriented_bbox)
+
+# try:
+#     import open3d as o3d
+#     from open3d import geometry
+# except ImportError:
+#     raise ImportError(
+#         'Please run "pip install open3d" to install open3d first.')
 
 
 @VISUALIZERS.register_module()
@@ -108,7 +106,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             mask_color=mask_color,
             line_width=line_width,
             alpha=alpha)
-        self.o3d_vis = self._initialize_o3d_vis(vis_cfg)
+        # self.o3d_vis = self._initialize_o3d_vis(vis_cfg)
         self.seg_num = 0
 
     def _initialize_o3d_vis(self, vis_cfg) -> tuple:

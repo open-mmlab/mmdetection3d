@@ -196,7 +196,7 @@ def create_groundtruth_database(dataset_class_name,
         file_client_args = dict(backend='disk')
         dataset_cfg.update(
             test_mode=False,
-            split='training',
+            data_prefix=dict(pts='velodyne', img='', sweeps='velodyne'),
             modality=dict(
                 use_lidar=True,
                 use_depth=False,
@@ -510,7 +510,8 @@ class GTDatabaseCreater:
             file_client_args = dict(backend='disk')
             dataset_cfg.update(
                 test_mode=False,
-                split='training',
+                data_prefix=dict(
+                    pts='training/velodyne_reduced', img='training/image_2'),
                 modality=dict(
                     use_lidar=True,
                     use_depth=False,
@@ -534,6 +535,9 @@ class GTDatabaseCreater:
         elif self.dataset_class_name == 'NuScenesDataset':
             dataset_cfg.update(
                 use_valid_flag=True,
+                data_prefix=dict(
+                    pts='samples/LIDAR_TOP', img='',
+                    sweeps='sweeps/LIDAR_TOP'),
                 pipeline=[
                     dict(
                         type='LoadPointsFromFile',
@@ -556,7 +560,7 @@ class GTDatabaseCreater:
             file_client_args = dict(backend='disk')
             dataset_cfg.update(
                 test_mode=False,
-                split='training',
+                data_prefix=dict(pts='velodyne', img='', sweeps='velodyne'),
                 modality=dict(
                     use_lidar=True,
                     use_depth=False,

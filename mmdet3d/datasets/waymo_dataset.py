@@ -137,7 +137,7 @@ class WaymoDataset(KittiDataset):
         # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
         if 'gt_bboxes' in ann_info:
             gt_bboxes = ann_info['gt_bboxes']
-            gt_labels = ann_info['gt_labels']
+            gt_labels = ann_info['gt_bboxes_labels']
         else:
             gt_bboxes = np.zeros((0, 4), dtype=np.float32)
             gt_labels = np.array([], dtype=np.int64)
