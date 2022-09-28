@@ -16,18 +16,18 @@ class BatchSampler:
 
     Args:
         sample_list (list[dict]): List of samples.
-        name (str, optional): The category of samples. Default: None.
-        epoch (int, optional): Sampling epoch. Default: None.
-        shuffle (bool, optional): Whether to shuffle indices. Default: False.
-        drop_reminder (bool, optional): Drop reminder. Default: False.
+        name (str, optional): The category of samples. Defaults to None.
+        epoch (int, optional): Sampling epoch. Defaults to None.
+        shuffle (bool, optional): Whether to shuffle indices. Defaults to False.
+        drop_reminder (bool, optional): Drop reminder. Defaults to False.
     """
 
     def __init__(self,
-                 sampled_list,
-                 name=None,
-                 epoch=None,
-                 shuffle=True,
-                 drop_reminder=False):
+                 sampled_list: List[dict],
+                 name: Optional[str] = None,
+                 epoch: Optional[int] = None,
+                 shuffle: bool = True,
+                 drop_reminder: bool = False) -> None:
         self._sampled_list = sampled_list
         self._indices = np.arange(len(sampled_list))
         if shuffle:
@@ -40,7 +40,7 @@ class BatchSampler:
         self._epoch_counter = 0
         self._drop_reminder = drop_reminder
 
-    def _sample(self, num):
+    def _sample(self, num: int) -> List[int]:
         """Sample specific number of ground truths and return indices.
 
         Args:
@@ -57,7 +57,7 @@ class BatchSampler:
             self._idx += num
         return ret
 
-    def _reset(self):
+    def _reset(self) -> None:
         """Reset the index of batchsampler to zero."""
         assert self._name is not None
         # print("reset", self._name)
@@ -65,7 +65,7 @@ class BatchSampler:
             np.random.shuffle(self._indices)
         self._idx = 0
 
-    def sample(self, num):
+    def sample(self, num: int) -> List[dict]:
         """Sample specific number of ground truths.
 
         Args:
@@ -90,7 +90,7 @@ class DataBaseSampler(object):
         sample_groups (dict): Sampled classes and numbers.
         classes (list[str], optional): List of classes. Defaults to None.
         points_loader(dict, optional): Config of points loader. Defaults to
-            dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0,1,2,3]).
+            dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0, 1, 2, 3]).
         file_client_args (dict, optional): Config dict of file clients,
             refer to
             https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
