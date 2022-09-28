@@ -1864,7 +1864,8 @@ class Resize3D(Resize):
 
 @TRANSFORMS.register_module()
 class RandomResize3D(RandomResize):
-    r"""The difference between RandomResize3D and RandomResize:
+    """The difference between RandomResize3D and RandomResize:
+
     1. Compared to RandomResize, this class would further
         check if scale is already set in results.
     2. During resizing, this class would modify the centers_2d
@@ -1885,6 +1886,7 @@ class RandomResize3D(RandomResize):
 
         Compared to RandomResize, this function would further
         check if scale is already set in results.
+
         Args:
             results (dict): Result dict from loading pipeline.
         Returns:
