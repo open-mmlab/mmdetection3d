@@ -997,36 +997,38 @@ class PointSample(BaseTransform):
 
     def __init__(self,
                  num_points: int,
-                 sample_range: float = None,
+                 sample_range: Optional[float] = None,
                  replace: bool = False) -> None:
         self.num_points = num_points
         self.sample_range = sample_range
         self.replace = replace
 
-    def _points_random_sampling(self,
-                                points: Union[np.ndarray, BasePoints],
-                                num_samples: int,
-                                sample_range: float = None,
-                                replace: bool = False,
-                                return_choices: bool = False):
+    def _points_random_sampling(
+        self,
+        points: BasePoints,
+        num_samples: int,
+        sample_range: Optional[float] = None,
+        replace: bool = False,
+        return_choices: bool = False
+    ) -> Union[Tuple[BasePoints, np.ndarray], np.ndarray]:
         """Points random sampling.
 
         Sample points to a certain number.
 
         Args:
-            points (np.ndarray | :obj:`BasePoints`): 3D Points.
+            points (:obj:`BasePoints`): 3D Points.
             num_samples (int): Number of samples to be sampled.
             sample_range (float, optional): Indicating the range where the
                 points will be sampled. Defaults to None.
             replace (bool, optional): Sampling with or without replacement.
-                Defaults to None.
+                Defaults to False.
             return_choices (bool, optional): Whether return choice.
                 Defaults to False.
 
         Returns:
-            tuple[np.ndarray] | np.ndarray:
+            tuple[:obj:`BasePoints`, np.ndarray] | np.ndarray:
 
-                - points (np.ndarray | :obj:`BasePoints`): 3D Points.
+                - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
         if not replace:
@@ -1034,7 +1036,7 @@ class PointSample(BaseTransform):
         point_range = range(len(points))
         if sample_range is not None and not replace:
             # Only sampling the near points when len(points) >= num_samples
-            dist = np.linalg.norm(points.tensor, axis=1)
+            dist = np.linalg.norm(points.coord.numpy(), axis=1)
             far_inds = np.where(dist >= sample_range)[0]
             near_inds = np.where(dist < sample_range)[0]
             # in case there are too many far points
@@ -1218,8 +1220,11 @@ class IndoorPatchPointSample(BaseTransform):
 
         return points
 
-    def _patch_points_sampling(self, points: BasePoints,
-                               sem_mask: np.ndarray) -> BasePoints:
+    def _patch_points_sampling(
+        self,
+        points: BasePoints,
+        sem_mask: np.ndarray
+    ) -> Tuple[BasePoints, np.ndarray]:
         """Patch points sampling.
 
         First sample a valid patch.
@@ -1230,7 +1235,7 @@ class IndoorPatchPointSample(BaseTransform):
             sem_mask (np.ndarray): semantic segmentation mask for input points.
 
         Returns:
-            tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
+            tuple[:obj:`BasePoints`, np.ndarray]:
 
                 - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray): The generated random samples.
@@ -1797,7 +1802,7 @@ class RandomShiftScale(BaseTransform):
         aug_prob (float): The shifting and scaling probability.
     """
 
-    def __init__(self, shift_scale: Tuple[float], aug_prob: float):
+    def __init__(self, shift_scale: Tuple[float], aug_prob: float) -> None:
 
         self.shift_scale = shift_scale
         self.aug_prob = aug_prob
