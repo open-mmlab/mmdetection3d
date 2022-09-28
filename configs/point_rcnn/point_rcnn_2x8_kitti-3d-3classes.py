@@ -9,14 +9,7 @@ data_root = 'data/kitti/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/',
-        'data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/'
-    }))
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -25,25 +18,11 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
     sample_groups=dict(Car=20, Pedestrian=15, Cyclist=15),
-    points_loader=dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        file_client_args=file_client_args),
     classes=class_names)
 
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectSample', db_sampler=db_sampler),
@@ -65,12 +44,7 @@ train_pipeline = [
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -100,18 +74,9 @@ data = dict(
     train=dict(
         type='RepeatDataset',
         times=2,
-        dataset=dict(
-            pipeline=train_pipeline,
-            classes=class_names,
-            file_client_args=file_client_args)),
-    val=dict(
-        pipeline=test_pipeline,
-        classes=class_names,
-        file_client_args=file_client_args),
-    test=dict(
-        pipeline=test_pipeline,
-        classes=class_names,
-        file_client_args=file_client_args))
+        dataset=dict(pipeline=train_pipeline, classes=class_names)),
+    val=dict(pipeline=test_pipeline, classes=class_names),
+    test=dict(pipeline=test_pipeline, classes=class_names))
 
 # optimizer
 lr = 0.001  # max learning rate
