@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict
+from typing import Dict, Optional
 
 import torch
 from torch import Tensor
@@ -21,7 +21,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
         bbox_roi_extractor (dict): Config of RoI extractor.
         train_cfg (dict): Train configs.
         test_cfg (dict): Test configs.
-        depth_normalizer (float, optional): Normalize depth feature.
+        depth_normalizer (float): Normalize depth feature.
             Defaults to 70.0.
         init_cfg (dict, optional): Config of initialization. Defaults to None.
     """
@@ -32,7 +32,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
                  train_cfg: dict,
                  test_cfg: dict,
                  depth_normalizer: dict = 70.0,
-                 init_cfg: dict = None) -> None:
+                 init_cfg: Optional[dict] = None) -> None:
         super(PointRCNNRoIHead, self).__init__(
             bbox_head=bbox_head,
             bbox_roi_extractor=bbox_roi_extractor,
@@ -182,7 +182,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
         Args:
             features (torch.Tensor): Backbone features with depth and \
                 semantic features.
-            points (torch.Tensor): Pointcloud.
+            points (torch.Tensor): Point cloud.
             sampling_results (:obj:`SamplingResult`): Sampled results used
                 for training.
 
@@ -210,7 +210,7 @@ class PointRCNNRoIHead(Base3DRoIHead):
         Args:
             features (torch.Tensor): Backbone features with depth and
                 semantic features.
-            points (torch.Tensor): Pointcloud.
+            points (torch.Tensor): Point cloud.
             batch_size (int): Batch size.
             rois (torch.Tensor): RoI boxes.
 

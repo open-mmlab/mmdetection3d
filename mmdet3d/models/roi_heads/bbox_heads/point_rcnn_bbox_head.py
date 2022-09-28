@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -29,17 +29,17 @@ class PointRCNNBboxHead(BaseModule):
         mlp_channels (list[int]): the number of mlp channels
         pred_layer_cfg (dict, optional): Config of classfication and
             regression prediction layers. Defaults to None.
-        num_points (tuple, optional): The number of points which each SA
+        num_points (tuple): The number of points which each SA
             module samples. Defaults to (128, 32, -1).
-        radius (tuple, optional): Sampling radius of each SA module.
+        radius (tuple): Sampling radius of each SA module.
             Defaults to (0.2, 0.4, 100).
-        num_samples (tuple, optional): The number of samples for ball query
+        num_samples (tuple): The number of samples for ball query
             in each SA module. Defaults to (64, 64, 64).
-        sa_channels (tuple, optional): Out channels of each mlp in SA module.
+        sa_channels (tuple): Out channels of each mlp in SA module.
             Defaults to ((128, 128, 128), (128, 128, 256), (256, 256, 512)).
-        bbox_coder (dict, optional): Config dict of box coders.
+        bbox_coder (dict): Config dict of box coders.
             Defaults to dict(type='DeltaXYZWLHRBBoxCoder').
-        sa_cfg (dict, optional): Config of set abstraction module, which may
+        sa_cfg (dict): Config of set abstraction module, which may
             contain the following keys and values:
 
             - pool_mod (str): Pool method ('max' or 'avg') for SA modules.
@@ -48,20 +48,20 @@ class PointRCNNBboxHead(BaseModule):
               each SA module.
             Defaults to dict(type='PointSAModule', pool_mod='max',
                 use_xyz=True).
-        conv_cfg (dict, optional): Config dict of convolutional layers.
+        conv_cfg (dict): Config dict of convolutional layers.
              Defaults to dict(type='Conv1d').
-        norm_cfg (dict, optional): Config dict of normalization layers.
+        norm_cfg (dict): Config dict of normalization layers.
              Defaults to dict(type='BN1d').
-        act_cfg (dict, optional): Config dict of activation layers.
+        act_cfg (dict): Config dict of activation layers.
             Defaults to dict(type='ReLU').
-        bias (str, optional): Type of bias. Defaults to 'auto'.
-        loss_bbox (dict, optional): Config of regression loss function.
+        bias (str): Type of bias. Defaults to 'auto'.
+        loss_bbox (dict): Config of regression loss function.
             Defaults to dict(type='SmoothL1Loss', beta=1.0 / 9.0,
                 reduction='sum', loss_weight=1.0).
-        loss_cls (dict, optional): Config of classification loss function.
+        loss_cls (dict): Config of classification loss function.
              Defaults to dict(type='CrossEntropyLoss', use_sigmoid=True,
                 reduction='sum', loss_weight=1.0).
-        with_corner_loss (bool, optional): Whether using corner loss.
+        with_corner_loss (bool): Whether using corner loss.
             Defaults to True.
         init_cfg (dict, optional): Config of initialization. Defaults to None.
     """
@@ -70,7 +70,7 @@ class PointRCNNBboxHead(BaseModule):
                  num_classes: dict,
                  in_channels: dict,
                  mlp_channels: dict,
-                 pred_layer_cfg: dict = None,
+                 pred_layer_cfg: Optional[dict] = None,
                  num_points: dict = (128, 32, -1),
                  radius: dict = (0.2, 0.4, 100),
                  num_samples: dict = (64, 64, 64),
@@ -94,7 +94,7 @@ class PointRCNNBboxHead(BaseModule):
                      reduction='sum',
                      loss_weight=1.0),
                  with_corner_loss: bool = True,
-                 init_cfg: dict = None) -> None:
+                 init_cfg: Optional[dict] = None) -> None:
         super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.num_sa = len(sa_channels)

@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from mmengine.model import BaseModule
@@ -40,15 +40,15 @@ class PointRPNHead(BaseModule):
     """
 
     def __init__(self,
-                 num_classes: dict,
+                 num_classes: int,
                  train_cfg: dict,
                  test_cfg: dict,
-                 pred_layer_cfg: dict = None,
-                 enlarge_width: dict = 0.1,
-                 cls_loss: dict = None,
-                 bbox_loss: dict = None,
-                 bbox_coder: dict = None,
-                 init_cfg: dict = None) -> None:
+                 pred_layer_cfg: Optional[dict] = None,
+                 enlarge_width: float = 0.1,
+                 cls_loss: Optional[dict] = None,
+                 bbox_loss: Optional[dict] = None,
+                 bbox_coder: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None) -> None:
         super().__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -131,22 +131,24 @@ class PointRPNHead(BaseModule):
             batch_size, -1, self._get_reg_out_channels())
         return point_box_preds, point_cls_preds
 
-    def loss_by_feat(self,
-                     bbox_preds: List[Tensor],
-                     cls_preds: List[Tensor],
-                     points: List[Tensor],
-                     batch_gt_instances_3d: InstanceList,
-                     batch_input_metas: List[dict] = None,
-                     batch_gt_instances_ignore: InstanceList = None) -> Dict:
+    def loss_by_feat(
+            self,
+            bbox_preds: List[Tensor],
+            cls_preds: List[Tensor],
+            points: List[Tensor],
+            batch_gt_instances_3d: InstanceList,
+            batch_input_metas: Optional[List[dict]] = None,
+            batch_gt_instances_ignore: Optional[InstanceList] = None) -> Dict:
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of PointRCNN RPN_Head.
-            cls_preds (dict): Classification from forward of PointRCNN
-                RPN_Head.
+            bbox_preds (list[torch.Tensor]): Predictions from forward of
+            PointRCNN RPN_Head.
+            cls_preds (list[torch.Tensor]): Classification from forward of
+                PointRCNN RPN_Head.
             points (list[torch.Tensor]): Input points.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instances. It usually includes ``bboxes_3d`` and
+                gt_instances_3d. It usually includes ``bboxes_3d`` and
                 ``labels_3d`` attributes.
             batch_input_metas (list[dict]): Contain pcd and img's meta info.
             batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
@@ -184,9 +186,9 @@ class PointRPNHead(BaseModule):
         """Generate targets of PointRCNN RPN head.
 
         Args:
-            points (list[torch.Tensor]): Points of each batch.
+            points (list[torch.Tensor]): Points in one batch.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instances. It usually includes ``bboxes_3d`` and
+                gt_instances_3d. It usually includes ``bboxes_3d`` and
                 ``labels_3d`` attributes.
 
         Returns:
@@ -264,13 +266,15 @@ class PointRPNHead(BaseModule):
 
     def predict_by_feat(self, points: Tensor, bbox_preds: List[Tensor],
                         cls_preds: List[Tensor], batch_input_metas: List[dict],
-                        cfg: Dict) -> InstanceList:
+                        cfg: Optional[dict]) -> InstanceList:
         """Generate bboxes from RPN head predictions.
 
         Args:
             points (torch.Tensor): Input points.
-            bbox_preds (list): Regression predictions from PointRCNN head.
-            cls_preds (list): Class scores predictions from PointRCNN head.
+            bbox_preds (list[tensor]): Regression predictions from PointRCNN
+                head.
+            cls_preds (list[tensor]): Class scores predictions from PointRCNN
+                head.
             batch_input_metas (list[dict]): Batch inputs meta info.
             cfg (ConfigDict, optional): Test / postprocessing
                 configuration.
@@ -467,7 +471,7 @@ class PointRPNHead(BaseModule):
     def loss_and_predict(self,
                          feats_dict: Dict,
                          batch_data_samples: SampleList,
-                         proposal_cfg=None,
+                         proposal_cfg: Optional[dict] = None,
                          **kwargs) -> Tuple[dict, InstanceList]:
         """Perform forward propagation of the head, then calculate loss and
         predictions from the features and data samples.

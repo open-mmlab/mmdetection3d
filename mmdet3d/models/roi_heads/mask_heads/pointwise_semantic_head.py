@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import torch
 from mmengine.model import BaseModule
@@ -34,7 +34,7 @@ class PointwiseSemanticHead(BaseModule):
         num_classes: int = 3,
         extra_width: float = 0.2,
         seg_score_thr: float = 0.3,
-        init_cfg: dict = None,
+        init_cfg: Optional[dict] = None,
         loss_seg: dict = dict(
             type='FocalLoss',
             use_sigmoid=True,

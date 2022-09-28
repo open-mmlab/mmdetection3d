@@ -27,39 +27,42 @@ class PrimitiveHead(BaseModule):
             available mode ['z', 'xy', 'line'].
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
-        train_cfg (dict): Config for training.
-        test_cfg (dict): Config for testing.
-        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
-        vote_aggregation_cfg (dict): Config of vote aggregation layer.
+        train_cfg (dict, optional): Config for training.
+        test_cfg (dict, optional): Config for testing.
+        vote_module_cfg (dict, optional): Config of VoteModule for point-wise
+            votes.
+        vote_aggregation_cfg (dict, optional): Config of vote aggregation
+            layer.
         feat_channels (tuple[int]): Convolution channels of
             prediction layer.
         upper_thresh (float): Threshold for line matching.
         surface_thresh (float): Threshold for surface matching.
-        conv_cfg (dict): Config of convolution in prediction layer.
-        norm_cfg (dict): Config of BN in prediction layer.
-        objectness_loss (dict): Config of objectness loss.
-        center_loss (dict): Config of center loss.
-        semantic_loss (dict): Config of point-wise semantic segmentation loss.
+        conv_cfg (dict, optional): Config of convolution in prediction layer.
+        norm_cfg (dict, optional): Config of BN in prediction layer.
+        objectness_loss (dict, optional): Config of objectness loss.
+        center_loss (dict, optional): Config of center loss.
+        semantic_loss (dict, optional): Config of point-wise semantic
+            segmentation loss.
     """
 
     def __init__(self,
                  num_dims: int,
                  num_classes: int,
                  primitive_mode: str,
-                 train_cfg: dict = None,
-                 test_cfg: dict = None,
-                 vote_module_cfg: dict = None,
-                 vote_aggregation_cfg: dict = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 vote_module_cfg: Optional[dict] = None,
+                 vote_aggregation_cfg: Optional[dict] = None,
                  feat_channels: tuple = (128, 128),
                  upper_thresh: float = 100.0,
                  surface_thresh: float = 0.5,
                  conv_cfg: dict = dict(type='Conv1d'),
                  norm_cfg: dict = dict(type='BN1d'),
-                 objectness_loss: dict = None,
-                 center_loss: dict = None,
-                 semantic_reg_loss: dict = None,
-                 semantic_cls_loss: dict = None,
-                 init_cfg: dict = None):
+                 objectness_loss: Optional[dict] = None,
+                 center_loss: Optional[dict] = None,
+                 semantic_reg_loss: Optional[dict] = None,
+                 semantic_cls_loss: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(PrimitiveHead, self).__init__(init_cfg=init_cfg)
         # bounding boxes centers,  face centers and edge centers
         assert primitive_mode in ['z', 'xy', 'line']
@@ -256,10 +259,8 @@ class PrimitiveHead(BaseModule):
                 attributes.
             batch_pts_semantic_mask (list[tensor]): Semantic mask
                 of points cloud. Defaults to None.
-            batch_pts_semantic_mask (list[tensor]): Instance mask
+            batch_pts_instance_mask (list[tensor]): Instance mask
                 of points cloud. Defaults to None.
-            batch_input_metas (list[dict]): Contain pcd and img's meta info.
-            ret_target (bool): Return targets or not. Defaults to False.
 
         Returns:
             dict: Losses of Primitive Head.
