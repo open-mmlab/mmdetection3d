@@ -71,7 +71,7 @@ class NuScenesDataset(Det3DDataset):
         self.with_velocity = with_velocity
 
         # TODO: Redesign multi-view data process in the future
-        assert task in ('3d', 'mono3d', 'multi-view')
+        assert task in ('lidar_det', 'mono_det', 'multi-view_det')
         self.task = task
 
         assert box_type_3d.lower() in ('lidar', 'camera')
@@ -138,7 +138,7 @@ class NuScenesDataset(Det3DDataset):
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
         # TODO: Unify the coordinates
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             gt_bboxes_3d = CameraInstance3DBoxes(
                 gt_bboxes_3d,
                 box_dim=gt_bboxes_3d.shape[-1],
@@ -173,7 +173,7 @@ class NuScenesDataset(Det3DDataset):
             dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             data_list = []
             if self.modality['use_lidar']:
                 info['lidar_points']['lidar_path'] = \

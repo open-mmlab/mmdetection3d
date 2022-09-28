@@ -109,7 +109,7 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             info['instances'] = info['cam_instances'][self.default_cam_key]
 
         info = super().parse_data_info(info)
@@ -140,7 +140,7 @@ class KittiDataset(Det3DDataset):
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.task == 'mono3d':
+            if self.task == 'mono_det':
                 ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
                 ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
                 ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
