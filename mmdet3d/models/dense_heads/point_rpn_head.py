@@ -200,13 +200,6 @@ class PointRPNHead(BaseModule):
         gt_bboxes_3d = [
             instances.bboxes_3d for instances in batch_gt_instances_3d
         ]
-        # find empty example
-        for index in range(len(gt_labels_3d)):
-            if len(gt_labels_3d[index]) == 0:
-                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
-                    1, gt_bboxes_3d[index].tensor.shape[-1])
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
-                gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
 
         (bbox_targets, mask_targets, positive_mask, negative_mask,
          point_targets) = multi_apply(self.get_targets_single, points,
