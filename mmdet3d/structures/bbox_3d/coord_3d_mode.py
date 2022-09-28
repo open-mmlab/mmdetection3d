@@ -41,7 +41,7 @@ class Coord3DMode(IntEnum):
              v
         down y
 
-    The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
+    The relative coordinate of bottom center in a CAM box is (0.5, 1.0, 0.5),
     and the yaw is around the y axis, thus the rotation axis=1.
 
     Coordinates in Depth mode:
