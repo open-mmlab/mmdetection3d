@@ -75,7 +75,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  seg_pad_value: int = 255,
                  bgr_to_rgb: bool = False,
                  rgb_to_bgr: bool = False,
-                 boxlist2tensor: bool = True,
+                 boxtype2tensor: bool = True,
                  batch_augments: Optional[List[dict]] = None):
         super().__init__(
             mean=mean,
@@ -88,7 +88,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             seg_pad_value=seg_pad_value,
             bgr_to_rgb=bgr_to_rgb,
             rgb_to_bgr=rgb_to_bgr,
-            boxlist2tensor=boxlist2tensor,
+            boxtype2tensor=boxtype2tensor,
             batch_augments=batch_augments)
         self.voxel = voxel
         self.voxel_type = voxel_type
@@ -169,7 +169,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                         'pad_shape': pad_shape
                     })
 
-                if self.boxlist2tensor:
+                if self.boxtype2tensor:
                     samplelist_boxtype2tensor(data_samples)
 
                 if self.pad_mask:
