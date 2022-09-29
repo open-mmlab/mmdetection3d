@@ -336,11 +336,23 @@ class Det3DDataset(BaseDataset):
 
         if self.show_ins_statistics:
             logger: MMLogger = MMLogger.get_current_instance()
-            ori_num_instances = len(ori_input_dict['ann_info']['gt_labels_3d'])
-            new_num_instances = len(example['data_samples'].gt_instances_3d)
+            ori_num_per_cat = dict()
+            for label in ori_input_dict['ann_info']['gt_labels_3d']:
+                cat_name = self.metainfo['CLASSES'][label]
+                ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name,
+                                                                0) + 1
+            new_num_per_cat = dict()
+            for label in example['data_samples'].gt_instances_3d.labels_3d:
+                cat_name = self.metainfo['CLASSES'][label]
+                new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name,
+                                                                0) + 1
+            content_show = ''
+            for cat_name, num in ori_num_per_cat.items():
+                new_num = new_num_per_cat.get(cat_name, 0)
+                content_show += f'\n{cat_name}'.ljust(25) + f'{new_num}/{num}'
             logger.info(
-                'The number of instances after and before through pipeline: '
-                f'{new_num_instances} / {ori_num_instances}')
+                'The number of instances per category after and before '
+                f'through pipeline: {content_show}')
 
         return example
 
