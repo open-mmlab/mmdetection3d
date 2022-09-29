@@ -191,4 +191,4 @@ mkdir -p results/kitti-3class
 ./tools/dist_test.sh configs/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --out results/kitti-3class/results_eval.pkl --format-only --eval-options 'pklfile_prefix=results/kitti-3class/kitti_results' 'submission_prefix=results/kitti-3class/kitti_results'
 ```
 
-在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](<(http://www.cvlibs.net/datasets/kitti/index.php)>)获取更多细节。
+在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](http://www.cvlibs.net/datasets/kitti/index.php)获取更多细节。
