@@ -513,20 +513,40 @@ class LoadPointsFromDict(LoadPointsFromFile):
 
 @TRANSFORMS.register_module()
 class LoadDepthFromFile(object):
-    """Load depth maps."""
+    """Load depth imgs.
+
+    Required Keys:
+
+    - lidar_points (dict)
+
+        - depth_img_path (str)
+
+    Added Keys:
+
+    - depth_img (np.float32)
+
+    Args:
+        to_float32 (bool): Default to True.
+        file_client_args (dict, optional): Config dict of file clients,
+            refer to
+            https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
+            for more details. Defaults to dict(backend='disk').
+        imdecode_backend (str):  The image decoding backend type. The backend
+            argument for :func:``mmcv.imfrombytes``.
+            See :fun:``mmcv.imfrombytes`` for details.
+            Defaults to 'cv2'.
+    """
 
     def __init__(self,
-                 to_float32: bool = False,
+                 to_float32: bool = True,
                  file_client_args: dict = dict(backend='disk'),
-                 imdecode_backend: str = 'cv2',
-                 with_transform: bool = True):
+                 imdecode_backend: str = 'cv2'):
         self.imdecode_backend = imdecode_backend
         self.to_float32 = to_float32
         self.file_client_args = file_client_args
         self.file_client = None
-        self.with_transform = with_transform
 
-    def __call__(self, results):
+    def __call__(self, results: dict) -> dict:
         """Call function to load depth maps from files.
 
         Args:
@@ -541,26 +561,24 @@ class LoadDepthFromFile(object):
             self.file_client = mmcv.FileClient(**self.file_client_args)
         depth_filename = results['depth_img_path']
 
-        depth_bytes = self.file_client.get(depth_filename)
-        depth_img = mmcv.imfrombytes(
-            depth_bytes, flag='grayscale', backend=self.imdecode_backend)
+        if depth_filename.endswith('.npy'):
+            depth_img = np.load(depth_filename)
+        else:
+            depth_bytes = self.file_client.get(depth_filename)
+            depth_img = mmcv.imfrombytes(
+                depth_bytes, flag='grayscale', backend=self.imdecode_backend)
 
-        if self.to_float32:
-            depth_img = depth_img.astype(np.float32)
+            if self.to_float32:
+                depth_img = depth_img.astype(np.float32)
 
         depth_img = np.expand_dims(depth_img, 0)
         results['depth_img'] = depth_img
-        # hack the depth_fields with seg_fields given their similarity
-        # TODO: distinguish seg_fields and depth_fields
-        # if self.with_transform:
-        #     # add into seg_fields to apply transforms same as imgs
-        #     results['seg_fields'].append('depth_img')
-
         return results
 
     def __repr__(self):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
+        repr_str += f'to_float32={self.to_float32}, '
         repr_str += f'(transforms={self.transforms}, '
         return repr_str
 

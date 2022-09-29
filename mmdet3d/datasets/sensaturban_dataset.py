@@ -15,12 +15,12 @@ class SensatUrbanDataset(Seg3DDataset):
     <https://urban3dchallenge.github.io>`_ for more details.
 
     Args:
-        data_root (str, optional): Path of dataset root.
+        data_root (str, optional): Path of dataset root. Defaults to None.
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
-            dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
+        data_prefix (dict, optional): Prefix for training data.
+            Defaults to None.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
@@ -49,10 +49,9 @@ class SensatUrbanDataset(Seg3DDataset):
                  data_root: Optional[str] = None,
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
-                 data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                 data_prefix: dict = None,
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality: dict = dict(use_lidar=True, use_camera=False),
+                 modality: dict = None,
                  ignore_index: Optional[int] = None,
                  scene_idxs: Optional[str] = None,
                  test_mode: bool = False,
@@ -94,17 +93,17 @@ class SensatUrbanDataset(Seg3DDataset):
             img_info = info['images']
             if 'img_path' in img_info:
                 info['img_path'] = osp.join(
-                    self.data_prefix.get('bev_prefix', ''),
+                    self.data_prefix.get('img_prefix', ''),
                     img_info['img_path'])
             depth_info = info['depth_images']
             if 'depth_img_path' in depth_info:
                 info['depth_img_path'] = osp.join(
-                    self.data_prefix.get('alt_prefix', ''),
+                    self.data_prefix.get('depth_prefix', ''),
                     depth_info['depth_img_path'])
 
         if 'seg_map_path' in info:
             info['seg_map_path'] = \
-                osp.join(self.data_prefix.get('bev_semantic_mask_prefix', ''),
+                osp.join(self.data_prefix.get('img_semantic_mask_prefix', ''),
                          info['seg_map_path'])
 
         if 'pts_semantic_mask_path' in info:

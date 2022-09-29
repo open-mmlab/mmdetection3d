@@ -29,10 +29,7 @@ def _generate_sensaturban_dataset_config():
             type='LoadImageFromFile',
             color_type='color',
             imdecode_backend='cv2'),
-        dict(
-            type='LoadDepthFromFile',
-            with_transform=False,
-            imdecode_backend='cv2'),
+        dict(type='LoadDepthFromFile'),
         dict(
             type='LoadAnnotations3D',
             with_bbox_3d=False,
@@ -51,9 +48,9 @@ def _generate_sensaturban_dataset_config():
     data_prefix = dict(
         pts_prefix='train/points',
         pts_semantic_mask_prefix='train/labels',
-        bev_prefix='train/bevs',
-        alt_prefix='train/altitude',
-        bev_semantic_mask_prefix='train/masks')
+        img_prefix='train/imgs',
+        depth_prefix='train/depths',
+        img_semantic_mask_prefix='train/masks')
 
     return (data_root, ann_file, classes, palette, data_prefix, pipeline,
             modality)
@@ -63,7 +60,7 @@ class TestSensatUrbanDataset(unittest.TestCase):
 
     def test_sensaturban(self):
         data_root, ann_file, classes, palette, data_prefix, \
-         pipeline, modality, = _generate_sensaturban_dataset_config()
+            pipeline, modality, = _generate_sensaturban_dataset_config()
 
         register_all_modules()
         np.random.seed(0)
@@ -76,16 +73,15 @@ class TestSensatUrbanDataset(unittest.TestCase):
             modality=modality)
 
         input_dict = sensaturban_dataset.prepare_data(0)
-
         points = input_dict['inputs']['points']
-        bev = input_dict['inputs']['img']
-        altitude = input_dict['inputs']['depth_img']
+        img = input_dict['inputs']['img']
+        depth_img = input_dict['inputs']['depth_img']
         data_sample = input_dict['data_sample']
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
         seg_map = data_sample.gt_pts_seg.seg_map
 
-        self.assertEqual(bev.shape[1], altitude.shape[1])
-        self.assertEqual(bev.shape[1], seg_map.shape[1])
-        self.assertEqual(bev.shape[2], altitude.shape[2])
-        self.assertEqual(bev.shape[2], seg_map.shape[2])
+        self.assertEqual(img.shape[1], depth_img.shape[1])
+        self.assertEqual(img.shape[1], seg_map.shape[1])
+        self.assertEqual(img.shape[2], depth_img.shape[2])
+        self.assertEqual(img.shape[2], seg_map.shape[2])
         self.assertEqual(points.shape[0], pts_semantic_mask.shape[0])
