@@ -48,8 +48,12 @@ class LoadMultiViewImageFromFiles(object):
         """
         filename = results['img_filename']
         # img is of shape (h, w, c, num_views)
-        img = np.stack(
-            [mmcv.imread(name, self.color_type, file_client_args=self.file_client_args) for name in filename], axis=-1)
+        img = np.stack([
+            mmcv.imread(
+                name, self.color_type, file_client_args=self.file_client_args)
+            for name in filename
+        ],
+                       axis=-1)
         if self.to_float32:
             img = img.astype(np.float32)
         results['filename'] = filename
