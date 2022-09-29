@@ -291,3 +291,22 @@ imports.
 ```shell
 python tools/misc/print_config.py ${CONFIG} [-h] [--options ${OPTIONS [OPTIONS...]}]
 ```
+
+## Read and write ply file
+
+`tools/misc/ply_tools.py` implemented the function of reading and writing ply files.
+
+```python
+from ply_tools import read_ply
+import numpy as np
+ply_file = 'example.ply'
+data = read_ply(ply_file)
+xyz = np.vstack((data['x'], data['y'], data['z'])).T
+colors = np.vstack((data['red'], data['green'], data['blue'])).T
+labels = data['class']
+```
+
+```python
+from ply_tools import write_ply
+field_names = ['x', 'y', 'z', 'red', 'green', 'blue', 'class']
+```

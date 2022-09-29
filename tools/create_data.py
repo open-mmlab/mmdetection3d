@@ -9,7 +9,7 @@ from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
 from tools.data_converter.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
-from tools.data_converter.urban_converter import UrbanConverter
+from tools.data_converter.sensaturban_converter import SensatUrbanConverter
 
 
 def kitti_data_prep(root_path,
@@ -149,33 +149,63 @@ def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
         root_path, info_prefix, out_dir, workers=workers)
 
 
-def urban_data_prep(root_path,
-                    info_prefix,
-                    out_dir,
-                    workers,
-                    dataset_style='potsdam'):
+def sensaturban_data_prep(root_path,
+                          info_prefix,
+                          out_dir,
+                          workers,
+                          dataset_style='potsdam'):
     """Prepare the info file for sensaturban dataset.
 
     Args:
-        root_path (str): Path of dataset root.
-        info_prefix (str): The prefix of info filenames.
-        out_dir (str): Output directory of the generated info file.
-        workers (int): Number of process to be used.
-        dataset_style (str): 'semantickitti' or 'potsdam'.Default to potsdam.
+        root_path (str): The path to the original dataset.
+        info_prefix (str): Prefix of the info file.
+        out_dir (str): The output path.
+        workers (int): How many threads to process.
+        to_image (bool): Whether to generate image datasets.
+            If True, bevs/altitude/masks folders will be generated.
+            If False, only generated the points and labels folders
+            where the color information is contained in points.
+            Default to False.
+        subsample_method (str): The downsampled dataset generation method.
+            It can be selected in 'none','uniform','random' and 'grid'.
+            If it is not None, an additional reduced_points and
+            reduced_labels folders will be generated and subsample_rate
+            is the sample rate of the corresponding method.
+            Default to none.
+        crop_method (str): The generation mode of the segmented dataset,
+            it can be selected in 'sliding' and 'random'.
+            If 'random', center point will be randomly selected.
+            If 'sliding', it will be cropped by sliding window.
+            Default to sliding.
+        crop_size (float):  Each crop ranges between ± crop_size.
+            Default to 12.5
+        crop_scale (float): One pixel of image represents how many meters,
+            which together with crop_size determines the size of BEV image.
+            Default to 0.05.
+        subsample_rate (float):The down-sampling rate.
+            In 'random' mode, it represents the number of sampling points.
+            In 'uniform' mode, it represents sampling one point every
+            subsample_rate points.
+            In 'voxel' mode , it represents the voxel size in the grid.
+            Default to 0.5.
+        random_crop_ratio (float): How many times will each file
+            be sampled in random crop_method.
+            If 1.0, sample random_crop_ratio * 1 times every 1MB.
+            Default to 1.0.
     """
 
-    converter = UrbanConverter(
+    converter = SensatUrbanConverter(
         root_path,
         info_prefix,
         out_dir,
         workers,
-        to_image=True,
+        to_image=False,
         subsample_method='none',
-        crop_method='random',
-        crop_size=30.0,
-        crop_scale=0.1,
+        crop_method='sliding',
+        crop_size=12.5,
+        crop_scale=0.05,
         subsample_rate=0.5,
-        random_crop_rate=1.0,
+        random_crop_ratio=1.0,
     )
 
     if dataset_style == 'semantickitti':
@@ -183,7 +213,7 @@ def urban_data_prep(root_path,
         raise NotImplementedError()
         # converter.convert2kitti()
     elif dataset_style == 'potsdam':
-        converter.convert2potsdam()
+        converter._convert2potsdam()
     else:
         raise NotImplementedError()
 
@@ -343,7 +373,7 @@ if __name__ == '__main__':
             out_dir=args.out_dir,
             workers=args.workers)
     elif args.dataset == 'sensaturban':
-        urban_data_prep(
+        sensaturban_data_prep(
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,

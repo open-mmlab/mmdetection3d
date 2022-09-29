@@ -31,7 +31,7 @@ class PLYHandler(BaseFileHandler):
             field_names=kwargs['field_names'])
 
 
-class UrbanConverter(object):
+class SensatUrbanConverter(object):
     label_to_names = {
         0: 'Ground',
         1: 'High Vegetation',
@@ -48,7 +48,6 @@ class UrbanConverter(object):
         12: 'Water'
     }
 
-    # TODO: create info files use val_files
     val_files = [
         'birmingham_block_1.ply', 'birmingham_block_5.ply',
         'cambridge_block_10.ply', 'cambridge_block_7.ply'
@@ -66,7 +65,7 @@ class UrbanConverter(object):
         crop_size=12.5,
         crop_scale=0.05,
         subsample_rate=0.5,
-        random_crop_rate=0.5,
+        random_crop_ratio=0.5,
     ):
         """Urban dataset converter.
 
@@ -102,9 +101,9 @@ class UrbanConverter(object):
                 subsample_rate points.
                 In 'voxel' mode , it represents the voxel size in the grid.
                 Default to 0.5.
-            random_crop_rate (float): How many times will each file
+            random_crop_ratio (float): How many times will each file
                 be sampled in random crop_method.
-                If 1.0, sample random_crop_rate * 1 times every 1MB.
+                If 1.0, sample random_crop_ratio * 1 times every 1MB.
                 Default to 1.0.
         """
         self.root_path = root_path
@@ -117,7 +116,7 @@ class UrbanConverter(object):
         self.crop_size = crop_size
         self.crop_scale = crop_scale
         self.subsample_rate = subsample_rate
-        self.random_crop_rate = random_crop_rate
+        self.random_crop_ratio = random_crop_ratio
 
         self.files = np.sort(
             glob.glob(osp.join(self.root_path, 'train', '*.ply')))
@@ -142,27 +141,25 @@ class UrbanConverter(object):
         os.makedirs(self.train_save_dir, exist_ok=True)
         os.makedirs(self.test_save_dir, exist_ok=True)
 
-    def convert2kitti(self):
-        """Convert action."""
-        print('Start converting to kitti...')
-        mmcv.track_parallel_progress(self.convert2kitti_one,
+    def _convert2semantickitti(self):
+        print('Start converting to semantickitti...')
+        mmcv.track_parallel_progress(self._convert2semantickitti_one,
                                      range(self.train_files.shape[0]),
                                      self.workers)
         print('\nFinished ...')
 
-    def convert2potsdam(self):
-        """Convert action."""
+    def _convert2potsdam(self):
         print('Start converting to potsdam...')
-        mmcv.track_parallel_progress(self.convert2potsdam_one,
+        mmcv.track_parallel_progress(self._convert2potsdam_one,
                                      range(self.train_files.shape[0]),
                                      self.workers)
         print('\nFinished ...')
 
-    def convert2kitti_one(self, file_idx):
+    def _convert2semantickitti_one(self, file_idx):
         # TODO: implement this
         raise NotImplementedError()
 
-    def convert2potsdam_one(self, file_idx):
+    def _convert2potsdam_one(self, file_idx):
         file_path = self.all_files[file_idx]
         file_name = osp.basename(file_path)[:-4]
         if file_path not in self.test_files:
@@ -205,7 +202,7 @@ class UrbanConverter(object):
     def _random_crop_and_save(self, points, colors, labels, save_dir,
                               file_name, is_train):
         num_iter = int(
-            colors.shape[0] * 4 * 7 / 1000000 * self.random_crop_rate) + 1
+            colors.shape[0] * 4 * 7 / 1000000 * self.random_crop_ratio) + 1
         num_points = points.shape[0]
         for i in range(num_iter):
             save_filename = file_name + '_' + f'{str(i).zfill(5)}'
