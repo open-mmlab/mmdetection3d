@@ -5,9 +5,7 @@ try:
     import MinkowskiEngine as ME
     from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
-    import warnings
-    warnings.warn(
-        'Please follow `getting_started.md` to install MinkowskiEngine.`')
+    # Please follow getting_started.md to install MinkowskiEngine.
     # blocks are used in the static part of MinkResNet
     BasicBlock, Bottleneck = None, None
 
@@ -58,7 +56,7 @@ class MinkResNet(nn.Module):
 
         for i, num_blocks in enumerate(stage_blocks):
             setattr(
-                self, f'layer{i}',
+                self, f'layer{i + 1}',
                 self._make_layer(block, 64 * 2**i, stage_blocks[i], stride=2))
 
     def init_weights(self):
@@ -111,6 +109,6 @@ class MinkResNet(nn.Module):
             x = self.maxpool(x)
         outs = []
         for i in range(self.num_stages):
-            x = getattr(self, f'layer{i}')(x)
+            x = getattr(self, f'layer{i + 1}')(x)
             outs.append(x)
         return outs

@@ -1,0 +1,58 @@
+Collections:
+  - Name: FCAF3D
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Training Resources: 2x V100 GPUs
+      Architecture:
+        - MinkResNet
+    Paper:
+      URL: https://arxiv.org/abs/2112.00322
+      Title: 'FCAF3D: Fully Convolutional Anchor-Free 3D Object Detection'
+    README: configs/fcaf3d/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/mink_single_stage.py#L15
+      Version: v1.0.0rc4
+
+Models:
+  - Name: fcaf3d_8x2_scannet-3d-18class
+    In Collection: FCAF3D
+    Config: configs/fcaf3d/fcaf3d_8x2_scannet-3d-18class.py
+    Metadata:
+      Training Data: ScanNet
+      Training Memory (GB): 10.7
+    Results:
+      - Task: 3D Object Detection
+        Dataset: ScanNet
+        Metrics:
+          AP@0.25: 69.7
+          AP@0.5: 55.2
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_scannet-3d-18class/fcaf3d_8x2_scannet-3d-18class_20220805_084956.pth
+
+  - Name: fcaf3d_8x2_sunrgbd-3d-10class
+    In Collection: FCAF3D
+    Config: configs/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class.py
+    Metadata:
+      Training Data: SUNRGBD
+      Training Memory (GB): 6.5
+    Results:
+      - Task: 3D Object Detection
+        Dataset: SUNRGBD
+        Metrics:
+          AP@0.25: 64.75
+          AP@0.5: 48.21
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.pth
+
+  - Name: fcaf3d_8x2_s3dis-3d-5class
+    In Collection: FCAF3D
+    Config: configs/fcaf3d/fcaf3d_8x2_s3dis-3d-5class.py
+    Metadata:
+      Training Data: S3DIS
+      Training Memory (GB): 23.5
+    Results:
+      - Task: 3D Object Detection
+        Dataset: S3DIS
+        Metrics:
+          AP@0.25: 67.36
+          AP@0.5: 45.74
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_s3dis-3d-5class/fcaf3d_8x2_s3dis-3d-5class_20220805_121957.pth

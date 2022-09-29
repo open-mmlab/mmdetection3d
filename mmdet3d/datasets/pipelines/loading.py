@@ -116,6 +116,8 @@ class LoadPointsFromMultiSweeps(object):
             Defaults to 5.
         use_dim (list[int], optional): Which dimension to use.
             Defaults to [0, 1, 2, 4].
+        time_dim (int, optional): Which dimension to represent the timestamps
+            of each points. Defaults to 4.
         file_client_args (dict, optional): Config dict of file clients,
             refer to
             https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
@@ -133,6 +135,7 @@ class LoadPointsFromMultiSweeps(object):
                  sweeps_num=10,
                  load_dim=5,
                  use_dim=[0, 1, 2, 4],
+                 time_dim=4,
                  file_client_args=dict(backend='disk'),
                  pad_empty_sweeps=False,
                  remove_close=False,
@@ -140,11 +143,16 @@ class LoadPointsFromMultiSweeps(object):
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
         self.use_dim = use_dim
+        self.time_dim = time_dim
+        assert time_dim < load_dim, \
+            f'Expect the timestamp dimension < {load_dim}, got {time_dim}'
         self.file_client_args = file_client_args.copy()
         self.file_client = None
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
+        assert max(use_dim) < load_dim, \
+            f'Expect all used dimensions < {load_dim}, got {use_dim}'
 
     def _load_points(self, pts_filename):
         """Private function to load point clouds data.
@@ -205,7 +213,7 @@ class LoadPointsFromMultiSweeps(object):
                     cloud arrays.
         """
         points = results['points']
-        points.tensor[:, 4] = 0
+        points.tensor[:, self.time_dim] = 0
         sweep_points_list = [points]
         ts = results['timestamp']
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
@@ -232,7 +240,7 @@ class LoadPointsFromMultiSweeps(object):
                 points_sweep[:, :3] = points_sweep[:, :3] @ sweep[
                     'sensor2lidar_rotation'].T
                 points_sweep[:, :3] += sweep['sensor2lidar_translation']
-                points_sweep[:, 4] = ts - sweep_ts
+                points_sweep[:, self.time_dim] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
 
