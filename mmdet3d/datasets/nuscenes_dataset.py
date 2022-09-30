@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Dict, List
+from typing import Callable, List, Union
 
 import numpy as np
 
@@ -57,9 +57,9 @@ class NuScenesDataset(Det3DDataset):
                  data_root: str,
                  ann_file: str,
                  task: str = '3d',
-                 pipeline: List[dict] = None,
+                 pipeline: List[Union[dict, Callable]] = [],
                  box_type_3d: str = 'LiDAR',
-                 modality: Dict = dict(
+                 modality: dict = dict(
                      use_camera=False,
                      use_lidar=True,
                  ),

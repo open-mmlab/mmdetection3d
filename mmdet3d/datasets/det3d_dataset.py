@@ -246,8 +246,7 @@ class Det3DDataset(BaseDataset):
                     self.data_prefix.get('pts', ''),
                     info['lidar_points']['lidar_path'])
 
-            if 'num_pts_feats' in info['lidar_points']:
-                info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
+            info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
             info['lidar_path'] = info['lidar_points']['lidar_path']
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
