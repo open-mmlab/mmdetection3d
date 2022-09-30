@@ -23,7 +23,7 @@ Currently, we only support '.bin' format point cloud for training and inference.
 
 #### Label Format
 
-The most basic information: 3D bounding box and category label of each scene need to be contained in annotation `.txt` file. Each line represents a 3D box in a certain scene as follow:
+The most basic information: 3D bounding box and category label of each scene need to be contained in the annotation `.txt` file. Each line represents a 3D box in a certain scene as follow:
 
 ```python
 # format: [x, y, z, dx, dy, dz, yaw, category_name]
@@ -59,7 +59,7 @@ lidar2cam4
 
 #### LiDAR-Based 3D Detection
 
-The raw data for LiDAR-Based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `points` include point cloud data which are supposed to be stored in `.bin` format and `labels` includes label files for 3D detection.
+The raw data for LiDAR-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `points` includes point cloud data which are supposed to be stored in `.bin` format and `labels` includes label files for 3D detection.
 
 ```
 mmdetection3d
@@ -83,7 +83,7 @@ mmdetection3d
 
 #### Vision-Based 3D Detection
 
-The raw data for Vision-Based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images\images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
+The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images\images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
 
 ```
 mmdetection3d
@@ -115,7 +115,7 @@ mmdetection3d
 
 #### Multi-Modality 3D Detection
 
-The raw data for Multi-Modality 3D object detection are typically organized as follows. Different from Vision-based 3D Object detection, calibration information files in `calibs` store the camera intrinsic matrix of each camera and extrinsic matrix.
+The raw data for multi-modality 3D object detection are typically organized as follows. Different from vision-based 3D Object detection, calibration information files in `calibs` store the camera intrinsic matrix of each camera and extrinsic matrix.
 
 ```
 mmdetection3d
