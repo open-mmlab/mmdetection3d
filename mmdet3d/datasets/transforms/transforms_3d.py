@@ -458,7 +458,7 @@ class ObjectNoise(BaseTransform):
                  translation_std: List[float] = [0.25, 0.25, 0.25],
                  global_rot_range: List[float] = [0.0, 0.0],
                  rot_range: List[float] = [-0.15707963267, 0.15707963267],
-                 num_try: int = 100):
+                 num_try: int = 100) -> None:
         self.translation_std = translation_std
         self.global_rot_range = global_rot_range
         self.rot_range = rot_range
@@ -886,7 +886,7 @@ class PointsRangeFilter(BaseTransform):
         point_cloud_range (list[float]): Point cloud range.
     """
 
-    def __init__(self, point_cloud_range: List[float]):
+    def __init__(self, point_cloud_range: List[float]) -> None:
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
 
     def transform(self, input_dict: dict) -> dict:
@@ -1010,7 +1010,7 @@ class PointSample(BaseTransform):
         sample_range: Optional[float] = None,
         replace: bool = False,
         return_choices: bool = False
-    ) -> Union[Tuple[BasePoints, np.ndarray], np.ndarray]:
+    ) -> Union[Tuple[BasePoints, np.ndarray], BasePoints]:
         """Points random sampling.
 
         Sample points to a certain number.
@@ -1026,7 +1026,7 @@ class PointSample(BaseTransform):
                 Defaults to False.
 
         Returns:
-            tuple[:obj:`BasePoints`, np.ndarray] | np.ndarray:
+            tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
 
                 - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
