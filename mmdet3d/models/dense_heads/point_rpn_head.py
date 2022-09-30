@@ -143,7 +143,7 @@ class PointRPNHead(BaseModule):
 
         Args:
             bbox_preds (list[torch.Tensor]): Predictions from forward of
-            PointRCNN RPN_Head.
+                PointRCNN RPN_Head.
             cls_preds (list[torch.Tensor]): Classification from forward of
                 PointRCNN RPN_Head.
             points (list[torch.Tensor]): Input points.
