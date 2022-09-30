@@ -18,7 +18,8 @@ class BatchSampler:
         sample_list (list[dict]): List of samples.
         name (str, optional): The category of samples. Defaults to None.
         epoch (int, optional): Sampling epoch. Defaults to None.
-        shuffle (bool, optional): Whether to shuffle indices. Defaults to False.
+        shuffle (bool, optional): Whether to shuffle indices.
+            Defaults to False.
         drop_reminder (bool, optional): Drop reminder. Defaults to False.
     """
 
