@@ -104,8 +104,8 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
   - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, w, h, yaw) order.
-    - info\['instances'\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
+    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in lidar coordinate system of the instance, in (x, y, z, l, w, h, yaw) order.
+    - info\['instances'\]\['bbox_label_3d'\]: A int starting from 0 indicates the label of instance, while the -1 indicates ignore class.
     - info\['instances'\]\['bbox_3d_isvalid'\]: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
 
 Next, we will elaborate on the difference compared to nuScenes in terms of the details recorded in these info files.
@@ -134,11 +134,11 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        file_client_args=file_client_args),
+        ),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
-        file_client_args=file_client_args),
+        ),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',

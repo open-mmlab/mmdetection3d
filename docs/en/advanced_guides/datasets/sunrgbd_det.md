@@ -162,10 +162,10 @@ sunrgbd
     - info\['images'\]\['CAM0'\]\['height'\]: The height of image.
     - info\['images'\]\['CAM0'\]\['width'\]: The width of image.
   - info\['instances'\]: A list of dict contains all the annotations of this frame. Each dict corresponds to annotations of single instance.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
+    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in depth coordinate system.
     - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
-    - info\['instances'\]\['bbox_label_3d'\]: An int indicate the 3D label of instance and the -1 indicating ignore.
-    - info\['instances'\]\['bbox_label'\]: An int indicate the 2D label of instance and the -1 indicating ignore.
+    - info\['instances'\]\['bbox_label_3d'\]: An int indicates the 3D label of instance and the -1 indicates ignore class.
+    - info\['instances'\]\['bbox_label'\]: An int indicates the 2D label of instance and the -1 indicates ignore class.
 - `sunrgbd_infos_val.pkl`: The val data infos, which shares the same format as `sunrgbd_infos_train.pkl`.
 
 ## Train pipeline
@@ -217,9 +217,8 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
+    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.0),
-    dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(
         type='RandomFlip3D',
@@ -240,9 +239,7 @@ train_pipeline = [
 Data augmentation/normalization for images:
 
 - `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
-- `Normalize`: normalize the RGB channels of the input image.
 - `RandomFlip`: randomly flip the input image.
-- `Pad`: pad the input image with zeros by default.
 
 The image augmentation and normalization functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines).
 
