@@ -99,7 +99,7 @@ class Pack3DDetInputs(BaseTransform):
                 - img
 
             - 'data_samples' (obj:`Det3DDataSample`): The annotation info of
-                the sample.
+              the sample.
         """
         # augtest
         if isinstance(results, list):
@@ -132,7 +132,7 @@ class Pack3DDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_samples' (obj:`Det3DDataSample`): The annotation info
+            - 'data_samples' (:obj:`Det3DDataSample`): The annotation info
               of the sample.
         """
         # Format 3D data
