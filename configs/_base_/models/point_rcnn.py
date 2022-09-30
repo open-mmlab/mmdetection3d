@@ -1,5 +1,6 @@
 model = dict(
     type='PointRCNN',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
@@ -34,14 +35,14 @@ model = dict(
             cls_linear_channels=(256, 256),
             reg_linear_channels=(256, 256)),
         cls_loss=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             reduction='sum',
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
         bbox_loss=dict(
-            type='SmoothL1Loss',
+            type='mmdet.SmoothL1Loss',
             beta=1.0 / 9.0,
             reduction='sum',
             loss_weight=1.0),
@@ -55,12 +56,22 @@ model = dict(
                                                             1.73]])),
     roi_head=dict(
         type='PointRCNNRoIHead',
-        point_roi_extractor=dict(
+        bbox_roi_extractor=dict(
             type='Single3DRoIPointExtractor',
             roi_layer=dict(type='RoIPointPool3d', num_sampled_points=512)),
         bbox_head=dict(
             type='PointRCNNBboxHead',
             num_classes=1,
+            loss_bbox=dict(
+                type='mmdet.SmoothL1Loss',
+                beta=1.0 / 9.0,
+                reduction='sum',
+                loss_weight=1.0),
+            loss_cls=dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=True,
+                reduction='sum',
+                loss_weight=1.0),
             pred_layer_cfg=dict(
                 in_channels=512,
                 cls_conv_channels=(256, 256),
@@ -79,22 +90,16 @@ model = dict(
     train_cfg=dict(
         pos_distance_thr=10.0,
         rpn=dict(
-            nms_cfg=dict(
-                use_rotate_nms=True, iou_thr=0.8, nms_pre=9000, nms_post=512),
-            score_thr=None),
+            rpn_proposal=dict(
+                use_rotate_nms=True,
+                score_thr=None,
+                iou_thr=0.8,
+                nms_pre=9000,
+                nms_post=512)),
         rcnn=dict(
             assigner=[
-                dict(  # for Car
-                    type='MaxIoUAssigner',
-                    iou_calculator=dict(
-                        type='BboxOverlaps3D', coordinate='lidar'),
-                    pos_iou_thr=0.55,
-                    neg_iou_thr=0.55,
-                    min_pos_iou=0.55,
-                    ignore_iof_thr=-1,
-                    match_low_quality=False),
                 dict(  # for Pedestrian
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(
                         type='BboxOverlaps3D', coordinate='lidar'),
                     pos_iou_thr=0.55,
@@ -103,7 +108,16 @@ model = dict(
                     ignore_iof_thr=-1,
                     match_low_quality=False),
                 dict(  # for Cyclist
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1,
+                    match_low_quality=False),
+                dict(  # for Car
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(
                         type='BboxOverlaps3D', coordinate='lidar'),
                     pos_iou_thr=0.55,
@@ -126,6 +140,9 @@ model = dict(
     test_cfg=dict(
         rpn=dict(
             nms_cfg=dict(
-                use_rotate_nms=True, iou_thr=0.85, nms_pre=9000, nms_post=512),
-            score_thr=None),
+                use_rotate_nms=True,
+                iou_thr=0.85,
+                nms_pre=9000,
+                nms_post=512,
+                score_thr=None)),
         rcnn=dict(use_rotate_nms=True, nms_thr=0.1, score_thr=0.1)))

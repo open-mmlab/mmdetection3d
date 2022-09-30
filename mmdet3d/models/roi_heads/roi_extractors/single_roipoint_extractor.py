@@ -1,7 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional
+
 import torch
+import torch.nn as nn
 from mmcv import ops
-from torch import nn as nn
+from torch import Tensor
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.bbox_3d import rotation_3d_in_axis
@@ -14,14 +17,14 @@ class Single3DRoIPointExtractor(nn.Module):
     Extract Point-wise roi features.
 
     Args:
-        roi_layer (dict): The config of roi layer.
+        roi_layer (dict, optional): The config of roi layer.
     """
 
-    def __init__(self, roi_layer=None):
+    def __init__(self, roi_layer: Optional[dict] = None) -> None:
         super(Single3DRoIPointExtractor, self).__init__()
         self.roi_layer = self.build_roi_layers(roi_layer)
 
-    def build_roi_layers(self, layer_cfg):
+    def build_roi_layers(self, layer_cfg: dict) -> nn.Module:
         """Build roi layers using `layer_cfg`"""
         cfg = layer_cfg.copy()
         layer_type = cfg.pop('type')
@@ -30,7 +33,8 @@ class Single3DRoIPointExtractor(nn.Module):
         roi_layers = layer_cls(**cfg)
         return roi_layers
 
-    def forward(self, feats, coordinate, batch_inds, rois):
+    def forward(self, feats: Tensor, coordinate: Tensor, batch_inds: Tensor,
+                rois: Tensor) -> Tensor:
         """Extract point-wise roi features.
 
         Args:

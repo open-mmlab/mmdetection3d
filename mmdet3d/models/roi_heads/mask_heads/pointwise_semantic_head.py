@@ -1,12 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, Optional, Tuple
+
 import torch
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
-from mmdet3d.structures.bbox_3d import rotation_3d_in_axis
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes, rotation_3d_in_axis
 from mmdet3d.utils import InstanceList
 from mmdet.models.utils import multi_apply
 
@@ -26,23 +28,23 @@ class PointwiseSemanticHead(BaseModule):
         loss_part (dict): Config of part prediction loss.
     """
 
-    def __init__(self,
-                 in_channels,
-                 num_classes=3,
-                 extra_width=0.2,
-                 seg_score_thr=0.3,
-                 init_cfg=None,
-                 loss_seg=dict(
-                     type='FocalLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     gamma=2.0,
-                     alpha=0.25,
-                     loss_weight=1.0),
-                 loss_part=dict(
-                     type='CrossEntropyLoss',
-                     use_sigmoid=True,
-                     loss_weight=1.0)):
+    def __init__(
+        self,
+        in_channels: int,
+        num_classes: int = 3,
+        extra_width: float = 0.2,
+        seg_score_thr: float = 0.3,
+        init_cfg: Optional[dict] = None,
+        loss_seg: dict = dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            reduction='sum',
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=1.0),
+        loss_part: dict = dict(
+            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)
+    ) -> None:
         super(PointwiseSemanticHead, self).__init__(init_cfg=init_cfg)
         self.extra_width = extra_width
         self.num_classes = num_classes
@@ -50,10 +52,10 @@ class PointwiseSemanticHead(BaseModule):
         self.seg_cls_layer = nn.Linear(in_channels, 1, bias=True)
         self.seg_reg_layer = nn.Linear(in_channels, 3, bias=True)
 
-        self.loss_seg = build_loss(loss_seg)
-        self.loss_part = build_loss(loss_part)
+        self.loss_seg = MODELS.build(loss_seg)
+        self.loss_part = MODELS.build(loss_part)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Dict[str, Tensor]:
         """Forward pass.
 
         Args:
@@ -79,7 +81,9 @@ class PointwiseSemanticHead(BaseModule):
         return dict(
             seg_preds=seg_preds, part_preds=part_preds, part_feats=part_feats)
 
-    def get_targets_single(self, voxel_centers, gt_bboxes_3d, gt_labels_3d):
+    def get_targets_single(self, voxel_centers: Tensor,
+                           gt_bboxes_3d: BaseInstance3DBoxes,
+                           gt_labels_3d: Tensor) -> Tuple[Tensor]:
         """generate segmentation and part prediction targets for a single
         sample.
 
@@ -162,7 +166,8 @@ class PointwiseSemanticHead(BaseModule):
         part_targets = torch.cat(part_targets, dim=0)
         return dict(seg_targets=seg_targets, part_targets=part_targets)
 
-    def loss(self, semantic_results, semantic_targets):
+    def loss(self, semantic_results: dict,
+             semantic_targets: dict) -> Dict[str, Tensor]:
         """Calculate point-wise segmentation and part prediction losses.
 
         Args:
