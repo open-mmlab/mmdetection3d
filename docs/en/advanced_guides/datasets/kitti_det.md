@@ -95,7 +95,7 @@ kitti
       - info\['images'\]\['CAM2'\]\['lidar2img'\]: Transformation matrix from lidar to image with shape (4, 4).
   - info\['lidar_points'\]: Information of point cloud captured by Lidar. A dict contains information of LiDAR point cloud frame.
     - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
-    - info\['lidar_points'\]\['num_features'\]: Number of features for each point.
+    - info\['lidar_points'\]\['num_pts_feats'\]: Number of features for each point.
     - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate with shape (4, 4).
     - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate with shape (4, 4).
   - info\['instances'\]: Required by object detection task. A list contains some dict of instance infos. Each dict corresponds to annotations of one instance in this frame.
@@ -156,7 +156,7 @@ train_pipeline = [
 An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows:
 
 ```shell
-bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
 ## Metrics
@@ -180,7 +180,7 @@ aos  AP:97.70, 89.11, 87.38
 
 ## Testing and make a submission
 
-An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard. An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
+An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
 
 - First, you need to modify the `test_evaluator` dict in your config file to add `pklfile_prefix` and `submission_prefix`, just like:
 
@@ -199,15 +199,15 @@ test_evaluator = dict(
 ```shell
 mkdir -p results/kitti-3class
 
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
-- Or you can use `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command, and run test script directly.
+- Or you can use `--cfg-options "test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results" "test_evaluator.submission_prefix=results/kitti-3class/kitti_results"` after the test command, and run test script directly.
 
 ```shell
 mkdir -p results/kitti-3class
 
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
 ```
 
 After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.
