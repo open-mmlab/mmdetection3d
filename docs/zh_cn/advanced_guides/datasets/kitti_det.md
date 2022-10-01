@@ -81,7 +81,7 @@ kitti
 其中的各项文件的含义如下所示：
 
 - `kitti_gt_database/xxxxx.bin`：训练数据集中包含在 3D 标注框中的点云数据
-- `kitti_infos_train.pkl`：训练数据集的信息，其中每一帧的信息包含 `metainfo` 和 `data_list` 两个键值。`metainfo` 是一个字典，它包含数据集的基本信息，例如 `CLASSES` 和 `version`。`datalist` 是一个列表，它包含了所有需要的数据信息，每一个元素是一个样本的详细信息字典。详细信息如下所示：
+- `kitti_infos_train.pkl`：训练数据集，其中每一帧的信息包含 `metainfo` 和 `data_list` 两个键值。`metainfo` 是一个字典，它包含数据集的基本信息，例如 `CLASSES` 和 `version`。`data_list` 是一个列表，它包含了所有需要的数据信息，每一个元素是一个样本的详细信息字典。详细信息如下所示：
   - info\['sample_idx'\]：样本在整个数据集的索引。
   - info\['images'\]：多个相机捕获的图像信息。是一个字典，包含 5 个键值：`CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`。
     - info\['images'\]\['R0_rect'\]：校准旋转矩阵，是一个 4x4 数组。
