@@ -196,7 +196,8 @@ def create_groundtruth_database(dataset_class_name,
         file_client_args = dict(backend='disk')
         dataset_cfg.update(
             test_mode=False,
-            data_prefix=dict(pts='velodyne', img='', sweeps='velodyne'),
+            data_prefix=dict(
+                pts='training/velodyne', img='', sweeps='training/velodyne'),
             modality=dict(
                 use_lidar=True,
                 use_depth=False,
@@ -407,7 +408,9 @@ class GTDatabaseCreater:
         image_idx = example['sample_idx']
         points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
-        names = annos['gt_names']
+        names = [
+            self.dataset.metainfo['CLASSES'][i] for i in annos['gt_labels_3d']
+        ]
         group_dict = dict()
         if 'group_ids' in annos:
             group_ids = annos['group_ids']
@@ -560,7 +563,10 @@ class GTDatabaseCreater:
             file_client_args = dict(backend='disk')
             dataset_cfg.update(
                 test_mode=False,
-                data_prefix=dict(pts='velodyne', img='', sweeps='velodyne'),
+                data_prefix=dict(
+                    pts='training/velodyne',
+                    img='',
+                    sweeps='training/velodyne'),
                 modality=dict(
                     use_lidar=True,
                     use_depth=False,
@@ -581,8 +587,8 @@ class GTDatabaseCreater:
                         file_client_args=file_client_args)
                 ])
 
-        dataset = build_dataset(dataset_cfg)
-        self.pipeline = dataset.pipeline
+        self.dataset = build_dataset(dataset_cfg)
+        self.pipeline = self.dataset.pipeline
         if self.database_save_path is None:
             self.database_save_path = osp.join(
                 self.data_path, f'{self.info_prefix}_gt_database')
@@ -599,14 +605,23 @@ class GTDatabaseCreater:
                 self.file2id.update({info['file_name']: i})
 
         def loop_dataset(i):
-            input_dict = dataset.get_data_info(i)
-            dataset.pre_pipeline(input_dict)
+            input_dict = self.dataset.get_data_info(i)
+            input_dict['box_type_3d'] = self.dataset.box_type_3d
+            input_dict['box_mode_3d'] = self.dataset.box_mode_3d
             return input_dict
 
-        multi_db_infos = mmengine.track_parallel_progress(
-            self.create_single,
-            ((loop_dataset(i) for i in range(len(dataset))), len(dataset)),
-            self.num_worker)
+        multi_db_infos = []
+        from mmengine import ProgressBar
+        progress_bar = ProgressBar(len(self.dataset))
+        for i in range(len(self.dataset)):
+            multi_db_infos.append(self.create_single(loop_dataset(i)))
+            progress_bar.update()
+
+        # multi_db_infos = mmengine.track_parallel_progress(
+        #     self.create_single,
+        #     ((loop_dataset(i)
+        #       for i in range(len(self.dataset))), len(self.dataset)),
+        #     self.num_worker)
         print('Make global unique group id')
         group_counter_offset = 0
         all_db_infos = dict()

@@ -284,6 +284,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
         temp_data_info['ego2global'] = convert_quaternion_to_matrix(
             ori_info_dict['ego2global_rotation'],
             ori_info_dict['ego2global_translation'])
+        temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
+            'num_features']
         temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
             'lidar_path'].split('/')[-1]
         temp_data_info['lidar_points'][

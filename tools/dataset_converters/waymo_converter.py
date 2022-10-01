@@ -149,7 +149,7 @@ class Waymo2KITTI(object):
         return len(self.tfrecord_pathnames)
 
     def save_image(self, frame, file_idx, frame_idx):
-        """Parse and save the images in png format.
+        """Parse and save the images in jpg format.
 
         Args:
             frame (:obj:`Frame`): Open dataset frame proto.
@@ -159,7 +159,7 @@ class Waymo2KITTI(object):
         for img in frame.images:
             img_path = f'{self.image_save_dir}{str(img.name - 1)}/' + \
                 f'{self.prefix}{str(file_idx).zfill(3)}' + \
-                f'{str(frame_idx).zfill(3)}.png'
+                f'{str(frame_idx).zfill(3)}.jpg'
             img = mmcv.imfrombytes(img.image)
             mmcv.imwrite(img, img_path)
 
@@ -227,7 +227,7 @@ class Waymo2KITTI(object):
             file_idx (int): Current file index.
             frame_idx (int): Current frame index.
         """
-        range_images, camera_projections, range_image_top_pose = \
+        range_images, camera_projections, seg_labels, range_image_top_pose = \
             parse_range_image_and_camera_projection(frame)
 
         # First return
