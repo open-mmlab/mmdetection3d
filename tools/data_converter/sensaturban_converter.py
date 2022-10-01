@@ -61,7 +61,7 @@ class SensatUrbanConverter(object):
         workers,
         to_image=False,
         subsample_method='none',
-        crop_method='random',
+        crop_method='sliding',
         crop_size=12.5,
         crop_scale=0.05,
         subsample_rate=0.5,
@@ -75,7 +75,7 @@ class SensatUrbanConverter(object):
             out_dir (str): The output path.
             workers (int): How many threads to process.
             to_image (bool): Whether to generate image datasets.
-                If True, bevs/altitude/masks folders will be generated.
+                If True, imgs/depths/masks folders will be generated.
                 If False, only generated the points and labels folders
                 where the color information is contained in points.
                 Default to False.
@@ -104,7 +104,7 @@ class SensatUrbanConverter(object):
             random_crop_ratio (float): How many times will each file
                 be sampled in random crop_method.
                 If 1.0, sample random_crop_ratio * 1 times every 1MB.
-                Default to 1.0.
+                Default to 0.5.
         """
         self.root_path = root_path
         self.info_prefix = info_prefix
@@ -238,14 +238,13 @@ class SensatUrbanConverter(object):
                     bev, alt, _ = self._to_bev(
                         [queried_pc_xyz, queried_pc_colors], is_train)
 
-                os.makedirs(osp.join(save_dir, 'bevs'), exist_ok=True)
-                os.makedirs(osp.join(save_dir, 'altitude'), exist_ok=True)
+                os.makedirs(osp.join(save_dir, 'imgs'), exist_ok=True)
+                os.makedirs(osp.join(save_dir, 'depths'), exist_ok=True)
 
                 mmcv.imwrite(
-                    bev, osp.join(save_dir, 'bevs', save_filename + '.png'))
+                    bev, osp.join(save_dir, 'imgs', save_filename + '.png'))
                 np.save(
-                    osp.join(save_dir, 'altitude', save_filename + '.npy'),
-                    alt)
+                    osp.join(save_dir, 'depths', save_filename + '.npy'), alt)
 
             os.makedirs(osp.join(save_dir, 'points'), exist_ok=True)
             queried_pc_xyzrgb = np.concatenate(
@@ -285,7 +284,7 @@ class SensatUrbanConverter(object):
         for i in range(num):
             if is_train:
                 cls[xs[i], ys[i], 0] = class_data[i]  # class
-            alt[xs[i], ys[i], 0] = grid_data[i, 2]  # altitude
+            alt[xs[i], ys[i], 0] = grid_data[i, 2]  # depth
             bev[xs[i], ys[i], 2] = rgb_data[i, 0]  # R
             bev[xs[i], ys[i], 1] = rgb_data[i, 1]  # G
             bev[xs[i], ys[i], 0] = rgb_data[i, 2]  # B
@@ -390,14 +389,14 @@ class SensatUrbanConverter(object):
                         bev, alt, _ = self._to_bev(
                             [queried_pc_xyz, queried_pc_colors], is_train)
 
-                    os.makedirs(osp.join(save_dir, 'bevs'), exist_ok=True)
-                    os.makedirs(osp.join(save_dir, 'altitude'), exist_ok=True)
+                    os.makedirs(osp.join(save_dir, 'imgs'), exist_ok=True)
+                    os.makedirs(osp.join(save_dir, 'depths'), exist_ok=True)
 
                     mmcv.imwrite(
-                        bev, osp.join(save_dir, 'bevs',
+                        bev, osp.join(save_dir, 'imgs',
                                       save_filename + '.png'))
                     np.save(
-                        osp.join(save_dir, 'altitude', save_filename + '.npy'),
+                        osp.join(save_dir, 'depths', save_filename + '.npy'),
                         alt)
 
                 os.makedirs(osp.join(save_dir, 'points'), exist_ok=True)
