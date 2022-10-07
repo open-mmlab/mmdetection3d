@@ -1,14 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple
+
 import torch
 from mmengine.model import BaseModule
+from mmengine.structures import InstanceData
+from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import xywhr2xyxyr
-from mmdet3d.structures.bbox_3d import (DepthInstance3DBoxes,
+from mmdet3d.structures.bbox_3d import (BaseInstance3DBoxes,
+                                        DepthInstance3DBoxes,
                                         LiDARInstance3DBoxes)
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils.typing import InstanceList
 from mmdet.models.utils import multi_apply
 
 
@@ -34,15 +40,15 @@ class PointRPNHead(BaseModule):
     """
 
     def __init__(self,
-                 num_classes,
-                 train_cfg,
-                 test_cfg,
-                 pred_layer_cfg=None,
-                 enlarge_width=0.1,
-                 cls_loss=None,
-                 bbox_loss=None,
-                 bbox_coder=None,
-                 init_cfg=None):
+                 num_classes: int,
+                 train_cfg: dict,
+                 test_cfg: dict,
+                 pred_layer_cfg: Optional[dict] = None,
+                 enlarge_width: float = 0.1,
+                 cls_loss: Optional[dict] = None,
+                 bbox_loss: Optional[dict] = None,
+                 bbox_coder: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None) -> None:
         super().__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.train_cfg = train_cfg
@@ -50,8 +56,8 @@ class PointRPNHead(BaseModule):
         self.enlarge_width = enlarge_width
 
         # build loss function
-        self.bbox_loss = build_loss(bbox_loss)
-        self.cls_loss = build_loss(cls_loss)
+        self.bbox_loss = MODELS.build(bbox_loss)
+        self.cls_loss = MODELS.build(cls_loss)
 
         # build box coder
         self.bbox_coder = TASK_UTILS.build(bbox_coder)
@@ -67,7 +73,8 @@ class PointRPNHead(BaseModule):
             input_channels=pred_layer_cfg.in_channels,
             output_channels=self._get_reg_out_channels())
 
-    def _make_fc_layers(self, fc_cfg, input_channels, output_channels):
+    def _make_fc_layers(self, fc_cfg: dict, input_channels: int,
+                        output_channels: int) -> nn.Sequential:
         """Make fully connect layers.
 
         Args:
@@ -102,7 +109,7 @@ class PointRPNHead(BaseModule):
         # torch.cos(yaw) (1), torch.sin(yaw) (1)
         return self.bbox_coder.code_size
 
-    def forward(self, feat_dict):
+    def forward(self, feat_dict: dict) -> Tuple[List[Tensor]]:
         """Forward pass.
 
         Args:
@@ -124,30 +131,35 @@ class PointRPNHead(BaseModule):
             batch_size, -1, self._get_reg_out_channels())
         return point_box_preds, point_cls_preds
 
-    def loss(self,
-             bbox_preds,
-             cls_preds,
-             points,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             img_metas=None):
+    def loss_by_feat(
+            self,
+            bbox_preds: List[Tensor],
+            cls_preds: List[Tensor],
+            points: List[Tensor],
+            batch_gt_instances_3d: InstanceList,
+            batch_input_metas: Optional[List[dict]] = None,
+            batch_gt_instances_ignore: Optional[InstanceList] = None) -> Dict:
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of PointRCNN RPN_Head.
-            cls_preds (dict): Classification from forward of PointRCNN
-                RPN_Head.
+            bbox_preds (list[torch.Tensor]): Predictions from forward of
+                PointRCNN RPN_Head.
+            cls_preds (list[torch.Tensor]): Classification from forward of
+                PointRCNN RPN_Head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each sample.
-            gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            img_metas (list[dict], Optional): Contain pcd and img's meta info.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances_3d. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
+            batch_input_metas (list[dict]): Contain pcd and img's meta info.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
                 Defaults to None.
 
         Returns:
             dict: Losses of PointRCNN RPN module.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d)
+        targets = self.get_targets(points, batch_gt_instances_3d)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
          box_loss_weights, point_targets) = targets
 
@@ -169,25 +181,25 @@ class PointRPNHead(BaseModule):
 
         return losses
 
-    def get_targets(self, points, gt_bboxes_3d, gt_labels_3d):
+    def get_targets(self, points: List[Tensor],
+                    batch_gt_instances_3d: InstanceList) -> Tuple[Tensor]:
         """Generate targets of PointRCNN RPN head.
 
         Args:
-            points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
+            points (list[torch.Tensor]): Points in one batch.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances_3d. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
 
         Returns:
             tuple[torch.Tensor]: Targets of PointRCNN RPN head.
         """
-        # find empty example
-        for index in range(len(gt_labels_3d)):
-            if len(gt_labels_3d[index]) == 0:
-                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
-                    1, gt_bboxes_3d[index].tensor.shape[-1])
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
-                gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
+        gt_labels_3d = [
+            instances.labels_3d for instances in batch_gt_instances_3d
+        ]
+        gt_bboxes_3d = [
+            instances.bboxes_3d for instances in batch_gt_instances_3d
+        ]
 
         (bbox_targets, mask_targets, positive_mask, negative_mask,
          point_targets) = multi_apply(self.get_targets_single, points,
@@ -202,7 +214,9 @@ class PointRPNHead(BaseModule):
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
                 box_loss_weights, point_targets)
 
-    def get_targets_single(self, points, gt_bboxes_3d, gt_labels_3d):
+    def get_targets_single(self, points: Tensor,
+                           gt_bboxes_3d: BaseInstance3DBoxes,
+                           gt_labels_3d: Tensor) -> Tuple[Tensor]:
         """Generate targets of PointRCNN RPN head for single batch.
 
         Args:
@@ -243,24 +257,34 @@ class PointRPNHead(BaseModule):
         return (bbox_targets, mask_targets, positive_mask, negative_mask,
                 point_targets)
 
-    def get_bboxes(self,
-                   points,
-                   bbox_preds,
-                   cls_preds,
-                   input_metas,
-                   rescale=False):
+    def predict_by_feat(self, points: Tensor, bbox_preds: List[Tensor],
+                        cls_preds: List[Tensor], batch_input_metas: List[dict],
+                        cfg: Optional[dict]) -> InstanceList:
         """Generate bboxes from RPN head predictions.
 
         Args:
             points (torch.Tensor): Input points.
-            bbox_preds (dict): Regression predictions from PointRCNN head.
-            cls_preds (dict): Class scores predictions from PointRCNN head.
-            input_metas (list[dict]): Point cloud and image's meta info.
-            rescale (bool, optional): Whether to rescale bboxes.
-                Defaults to False.
+            bbox_preds (list[tensor]): Regression predictions from PointRCNN
+                head.
+            cls_preds (list[tensor]): Class scores predictions from PointRCNN
+                head.
+            batch_input_metas (list[dict]): Batch inputs meta info.
+            cfg (ConfigDict, optional): Test / postprocessing
+                configuration.
 
         Returns:
-            list[tuple[torch.Tensor]]: Bounding boxes, scores and labels.
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
+            - cls_preds (torch.Tensor): Class score of each bbox.
         """
         sem_scores = cls_preds.sigmoid()
         obj_scores = sem_scores.max(-1)[0]
@@ -271,30 +295,40 @@ class PointRPNHead(BaseModule):
         for b in range(batch_size):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
+            mask = ~bbox3d.sum(dim=1).isinf()
             bbox_selected, score_selected, labels, cls_preds_selected = \
-                self.class_agnostic_nms(obj_scores[b], sem_scores[b], bbox3d,
-                                        points[b, ..., :3], input_metas[b])
-            bbox = input_metas[b]['box_type_3d'](
-                bbox_selected.clone(),
-                box_dim=bbox_selected.shape[-1],
-                with_yaw=True)
-            results.append((bbox, score_selected, labels, cls_preds_selected))
+                self.class_agnostic_nms(obj_scores[b][mask],
+                                        sem_scores[b][mask, :],
+                                        bbox3d[mask, :],
+                                        points[b, ..., :3][mask, :],
+                                        batch_input_metas[b],
+                                        cfg.nms_cfg)
+            bbox_selected = batch_input_metas[b]['box_type_3d'](
+                bbox_selected, box_dim=bbox_selected.shape[-1])
+            result = InstanceData()
+            result.bboxes_3d = bbox_selected
+            result.scores_3d = score_selected
+            result.labels_3d = labels
+            result.cls_preds = cls_preds_selected
+            results.append(result)
         return results
 
-    def class_agnostic_nms(self, obj_scores, sem_scores, bbox, points,
-                           input_meta):
+    def class_agnostic_nms(self, obj_scores: Tensor, sem_scores: Tensor,
+                           bbox: Tensor, points: Tensor, input_meta: Dict,
+                           nms_cfg: Dict) -> Tuple[Tensor]:
         """Class agnostic nms.
 
         Args:
             obj_scores (torch.Tensor): Objectness score of bounding boxes.
             sem_scores (torch.Tensor): Semantic class score of bounding boxes.
             bbox (torch.Tensor): Predicted bounding boxes.
+            points (torch.Tensor): Input points.
+            input_meta (dict): Contain pcd and img's meta info.
+            nms_cfg (dict): NMS config dict.
 
         Returns:
             tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
-        nms_cfg = self.test_cfg.nms_cfg if not self.training \
-            else self.train_cfg.nms_cfg
         if nms_cfg.use_rotate_nms:
             nms_func = nms_bev
         else:
@@ -323,14 +357,14 @@ class PointRPNHead(BaseModule):
 
         bbox = bbox[nonempty_box_mask]
 
-        if self.test_cfg.score_thr is not None:
-            score_thr = self.test_cfg.score_thr
+        if nms_cfg.score_thr is not None:
+            score_thr = nms_cfg.score_thr
             keep = (obj_scores >= score_thr)
             obj_scores = obj_scores[keep]
             sem_scores = sem_scores[keep]
             bbox = bbox.tensor[keep]
 
-        if obj_scores.shape[0] > 0:
+        if bbox.tensor.shape[0] > 0:
             topk = min(nms_cfg.nms_pre, obj_scores.shape[0])
             obj_scores_nms, indices = torch.topk(obj_scores, k=topk)
             bbox_for_nms = xywhr2xyxyr(bbox[indices].bev)
@@ -343,15 +377,22 @@ class PointRPNHead(BaseModule):
             score_selected = obj_scores_nms[keep]
             cls_preds = sem_scores_nms[keep]
             labels = torch.argmax(cls_preds, -1)
+            if bbox_selected.shape[0] > nms_cfg.nms_post:
+                _, inds = score_selected.sort(descending=True)
+                inds = inds[:score_selected.nms_post]
+                bbox_selected = bbox_selected[inds, :]
+                labels = labels[inds]
+                score_selected = score_selected[inds]
+                cls_preds = cls_preds[inds, :]
         else:
             bbox_selected = bbox.tensor
             score_selected = obj_scores.new_zeros([0])
             labels = obj_scores.new_zeros([0])
             cls_preds = obj_scores.new_zeros([0, sem_scores.shape[-1]])
-
         return bbox_selected, score_selected, labels, cls_preds
 
-    def _assign_targets_by_points_inside(self, bboxes_3d, points):
+    def _assign_targets_by_points_inside(self, bboxes_3d: BaseInstance3DBoxes,
+                                         points: Tensor) -> Tuple[Tensor]:
         """Compute assignment by checking whether point is inside bbox.
 
         Args:
@@ -379,3 +420,92 @@ class PointRPNHead(BaseModule):
             raise NotImplementedError('Unsupported bbox type!')
 
         return points_mask, assignment
+
+    def predict(self, feats_dict: Dict,
+                batch_data_samples: SampleList) -> InstanceList:
+        """Perform forward propagation of the 3D detection head and predict
+        detection results on the features of the upstream network.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
+        """
+        batch_input_metas = [
+            data_samples.metainfo for data_samples in batch_data_samples
+        ]
+        raw_points = feats_dict.pop('raw_points')
+        bbox_preds, cls_preds = self(feats_dict)
+        proposal_cfg = self.test_cfg
+
+        proposal_list = self.predict_by_feat(
+            raw_points,
+            bbox_preds,
+            cls_preds,
+            cfg=proposal_cfg,
+            batch_input_metas=batch_input_metas)
+        feats_dict['points_cls_preds'] = cls_preds
+        return proposal_list
+
+    def loss_and_predict(self,
+                         feats_dict: Dict,
+                         batch_data_samples: SampleList,
+                         proposal_cfg: Optional[dict] = None,
+                         **kwargs) -> Tuple[dict, InstanceList]:
+        """Perform forward propagation of the head, then calculate loss and
+        predictions from the features and data samples.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+            proposal_cfg (ConfigDict, optional): Proposal config.
+
+        Returns:
+            tuple: the return value is a tuple contains:
+
+            - losses: (dict[str, Tensor]): A dictionary of loss components.
+            - predictions (list[:obj:`InstanceData`]): Detection
+              results of each sample after the post process.
+        """
+        batch_gt_instances_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+        raw_points = feats_dict.pop('raw_points')
+        bbox_preds, cls_preds = self(feats_dict)
+
+        loss_inputs = (bbox_preds, cls_preds,
+                       raw_points) + (batch_gt_instances_3d, batch_input_metas,
+                                      batch_gt_instances_ignore)
+        losses = self.loss_by_feat(*loss_inputs)
+
+        predictions = self.predict_by_feat(
+            raw_points,
+            bbox_preds,
+            cls_preds,
+            batch_input_metas=batch_input_metas,
+            cfg=proposal_cfg)
+        feats_dict['points_cls_preds'] = cls_preds
+        if predictions[0].bboxes_3d.tensor.isinf().any():
+            print(predictions)
+        return losses, predictions

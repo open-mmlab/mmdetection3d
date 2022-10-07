@@ -204,7 +204,7 @@ class Base3DDenseHead(BaseModule, metaclass=ABCMeta):
             score_factors (list[Tensor], optional): Score factor for
                 all scale level, each is a 4D-tensor, has shape
                 (batch_size, num_priors * 1, H, W). Defaults to None.
-            batch_input_metas (list[dict], Optional): Batch image meta info.
+            batch_input_metas (list[dict], Optional): Batch inputs meta info.
                 Defaults to None.
             cfg (ConfigDict, optional): Test / postprocessing
                 configuration, if None, test_cfg would be used.

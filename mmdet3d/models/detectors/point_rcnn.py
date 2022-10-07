@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, Optional
+
 import torch
 
 from mmdet3d.registry import MODELS
@@ -23,14 +25,14 @@ class PointRCNN(TwoStage3DDetector):
     """
 
     def __init__(self,
-                 backbone,
-                 neck=None,
-                 rpn_head=None,
-                 roi_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
+                 backbone: dict,
+                 neck: Optional[dict] = None,
+                 rpn_head: Optional[dict] = None,
+                 roi_head: Optional[dict] = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None,
+                 data_preprocessor: Optional[dict] = None) -> Optional:
         super(PointRCNN, self).__init__(
             backbone=backbone,
             neck=neck,
@@ -38,111 +40,28 @@ class PointRCNN(TwoStage3DDetector):
             roi_head=roi_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
-            init_cfg=init_cfg)
+            init_cfg=init_cfg,
+            data_preprocessor=data_preprocessor)
 
-    def extract_feat(self, points):
+    def extract_feat(self, batch_inputs_dict: Dict) -> Dict:
         """Directly extract features from the backbone+neck.
 
         Args:
-            points (torch.Tensor): Input points.
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor, optional): Image of each sample.
 
         Returns:
-            dict: Features from the backbone+neck
+            dict: Features from the backbone+neck and raw points.
         """
+        points = torch.stack(batch_inputs_dict['points'])
         x = self.backbone(points)
 
         if self.with_neck:
             x = self.neck(x)
-        return x
-
-    def forward_train(self, points, input_metas, gt_bboxes_3d, gt_labels_3d):
-        """Forward of training.
-
-        Args:
-            points (list[torch.Tensor]): Points of each batch.
-            input_metas (list[dict]): Meta information of each sample.
-            gt_bboxes_3d (:obj:`BaseInstance3DBoxes`): gt bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): gt class labels of each batch.
-
-        Returns:
-            dict: Losses.
-        """
-        losses = dict()
-        stack_points = torch.stack(points)
-        x = self.extract_feat(stack_points)
-
-        # features for rcnn
-        backbone_feats = x['fp_features'].clone()
-        backbone_xyz = x['fp_xyz'].clone()
-        rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
-
-        bbox_preds, cls_preds = self.rpn_head(x)
-
-        rpn_loss = self.rpn_head.loss(
-            bbox_preds=bbox_preds,
-            cls_preds=cls_preds,
-            points=points,
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            input_metas=input_metas)
-        losses.update(rpn_loss)
-
-        bbox_list = self.rpn_head.get_bboxes(stack_points, bbox_preds,
-                                             cls_preds, input_metas)
-        proposal_list = [
-            dict(
-                boxes_3d=bboxes,
-                scores_3d=scores,
-                labels_3d=labels,
-                cls_preds=preds_cls)
-            for bboxes, scores, labels, preds_cls in bbox_list
-        ]
-        rcnn_feats.update({'points_cls_preds': cls_preds})
-
-        roi_losses = self.roi_head.forward_train(rcnn_feats, input_metas,
-                                                 proposal_list, gt_bboxes_3d,
-                                                 gt_labels_3d)
-        losses.update(roi_losses)
-
-        return losses
-
-    def simple_test(self, points, img_metas, imgs=None, rescale=False):
-        """Forward of testing.
-
-        Args:
-            points (list[torch.Tensor]): Points of each sample.
-            img_metas (list[dict]): Image metas.
-            imgs (list[torch.Tensor], optional): Images of each sample.
-                Defaults to None.
-            rescale (bool, optional): Whether to rescale results.
-                Defaults to False.
-
-        Returns:
-            list: Predicted 3d boxes.
-        """
-        stack_points = torch.stack(points)
-
-        x = self.extract_feat(stack_points)
-        # features for rcnn
-        backbone_feats = x['fp_features'].clone()
-        backbone_xyz = x['fp_xyz'].clone()
-        rcnn_feats = {'features': backbone_feats, 'points': backbone_xyz}
-        bbox_preds, cls_preds = self.rpn_head(x)
-        rcnn_feats.update({'points_cls_preds': cls_preds})
-
-        bbox_list = self.rpn_head.get_bboxes(
-            stack_points, bbox_preds, cls_preds, img_metas, rescale=rescale)
-
-        proposal_list = [
-            dict(
-                boxes_3d=bboxes,
-                scores_3d=scores,
-                labels_3d=labels,
-                cls_preds=preds_cls)
-            for bboxes, scores, labels, preds_cls in bbox_list
-        ]
-        bbox_results = self.roi_head.simple_test(rcnn_feats, img_metas,
-                                                 proposal_list)
-
-        return bbox_results
+        return dict(
+            fp_features=x['fp_features'].clone(),
+            fp_points=x['fp_xyz'].clone(),
+            raw_points=points)

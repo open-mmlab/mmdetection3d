@@ -183,8 +183,7 @@ class PartA2RPNHead(Anchor3DHead):
         result = self.class_agnostic_nms(mlvl_bboxes, mlvl_bboxes_for_nms,
                                          mlvl_max_scores, mlvl_label_pred,
                                          mlvl_cls_score, mlvl_dir_scores,
-                                         score_thr, cfg.nms_post, cfg,
-                                         input_meta)
+                                         score_thr, cfg, input_meta)
         return result
 
     def loss_and_predict(self,
@@ -275,7 +274,7 @@ class PartA2RPNHead(Anchor3DHead):
                            mlvl_bboxes_for_nms: Tensor,
                            mlvl_max_scores: Tensor, mlvl_label_pred: Tensor,
                            mlvl_cls_score: Tensor, mlvl_dir_scores: Tensor,
-                           score_thr: int, max_num: int, cfg: ConfigDict,
+                           score_thr: int, cfg: ConfigDict,
                            input_meta: dict) -> Dict:
         """Class agnostic nms for single batch.
 
@@ -291,7 +290,6 @@ class PartA2RPNHead(Anchor3DHead):
             mlvl_dir_scores (torch.Tensor): Direction scores of
                 Multi-level bbox.
             score_thr (int): Score threshold.
-            max_num (int): Max number of bboxes after nms.
             cfg (:obj:`ConfigDict`): Training or testing config.
             input_meta (dict): Contain pcd and img's meta info.
 
@@ -339,9 +337,9 @@ class PartA2RPNHead(Anchor3DHead):
             scores = torch.cat(scores, dim=0)
             cls_scores = torch.cat(cls_scores, dim=0)
             labels = torch.cat(labels, dim=0)
-            if bboxes.shape[0] > max_num:
+            if bboxes.shape[0] > cfg.nms_post:
                 _, inds = scores.sort(descending=True)
-                inds = inds[:max_num]
+                inds = inds[:cfg.nms_post]
                 bboxes = bboxes[inds, :]
                 labels = labels[inds]
                 scores = scores[inds]

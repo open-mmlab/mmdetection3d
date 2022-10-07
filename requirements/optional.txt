@@ -1,4 +1,4 @@
 black==20.8b1 # be compatible with typing-extensions 3.7.4
 spconv
-typing-extensions==3.7.4 # required by tensorflow before version 2.6
-waymo-open-dataset-tf-2-4-0
+typing-extensions==3.7.4 # required by tensorflow<=2.6
+waymo-open-dataset-tf-2-6-0 # requires python>=3.7

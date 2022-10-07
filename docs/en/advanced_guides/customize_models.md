@@ -365,7 +365,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -412,7 +412,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             voxel_dict (dict): Contains information of voxels.
             batch_input_metas (list[dict], Optional): Batch image meta info.
                 Defaults to None.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             test_cfg (Config): Test config.
 
@@ -438,7 +438,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
