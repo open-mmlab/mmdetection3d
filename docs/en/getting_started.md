@@ -195,7 +195,7 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](user_guides/inference.md).
 
 ## Customize Installation
 
@@ -214,7 +214,7 @@ Installing CUDA runtime libraries is enough if you follow our best practices, be
 
 ### Install MMEngine without MIM
 
-To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmcv.readthedocs.io/en/latest/get_started/installation.html).
+To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmengine.readthedocs.io/en/latest/get_started/installation.html).
 
 For example, you can install MMEngine by the following command.
 

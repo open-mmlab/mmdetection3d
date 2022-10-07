@@ -128,7 +128,7 @@ Create a new file `mmdet3d/models/necks/second_fpn.py`.
 ```python
 from mmdet3d.registry import MODELS
 
-@MODELS.register
+@MODELS.register_module()
 class SECONDFPN(BaseModule):
 
     def __init__(self,

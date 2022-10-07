@@ -26,7 +26,7 @@ optim_wrapper = dict(
     clip_grad=dict(max_norm=0.01, norm_type=2))
 ```
 
-### Customize optimizer supported by Pytorch
+### Customize optimizer supported by PyTorch
 
 We already support to use all the optimizers implemented by PyTorch, and the only modification is to change the `optimizer` field in `optim_wrapper` field of config files. For example, if you want to use `ADAM` (note that the performance could drop a lot), the modification could be as the following.
 
@@ -219,7 +219,6 @@ We support many other learning rate schedule [here](https://github.com/open-mmla
           begin=0,
           end=8,
           by_epoch=True)]
-
   ```
 
 ## Customize train loop

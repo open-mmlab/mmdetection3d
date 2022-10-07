@@ -145,7 +145,7 @@ Then you can evaluate your models on Waymo. An example to evaluate PointPillars 
 
 An example to test PointPillars on Waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
-`submission_prefix` should be set in `test_evaluator` of configuration before you run the test command  if you want to generate the bin files and make a submission to the leaderboard..
+`submission_prefix` should be set in `test_evaluator` of configuration before you run the test command if you want to generate the bin files and make a submission to the leaderboard..
 
 After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/). Basically, here are some example commands.
 

@@ -25,3 +25,4 @@ Customization
    customize_dataset.md
    customize_models.md
    customize_runtime.md
+   pure_point_cloud_dataset.md
