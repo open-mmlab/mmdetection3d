@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Dict, List
+from typing import Callable, List, Union
 
 import numpy as np
 
@@ -22,25 +22,26 @@ class NuScenesDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
+        task (str, optional): Detection task. Defaults to '3d'.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes.
+            Defaults to 'LiDAR' in this dataset. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
         modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_camera=False,use_lidar=True).
-        filter_empty_gt (bool): Whether to filter empty GT.
+            as input. Defaults to dict(use_camera=False, use_lidar=True).
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool): Whether the dataset is in test mode.
+        test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        with_velocity (bool): Whether include velocity prediction
+        with_velocity (bool, optional): Whether to include velocity prediction
             into the experiments. Defaults to True.
-        use_valid_flag (bool): Whether to use `use_valid_flag` key
+        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
             in the info file as mask to filter gt_boxes and gt_names.
             Defaults to False.
     """
@@ -56,9 +57,9 @@ class NuScenesDataset(Det3DDataset):
                  data_root: str,
                  ann_file: str,
                  task: str = '3d',
-                 pipeline: List[dict] = None,
+                 pipeline: List[Union[dict, Callable]] = [],
                  box_type_3d: str = 'LiDAR',
-                 modality: Dict = dict(
+                 modality: dict = dict(
                      use_camera=False,
                      use_lidar=True,
                  ),
@@ -66,7 +67,7 @@ class NuScenesDataset(Det3DDataset):
                  test_mode: bool = False,
                  with_velocity: bool = True,
                  use_valid_flag: bool = False,
-                 **kwargs):
+                 **kwargs) -> None:
         self.use_valid_flag = use_valid_flag
         self.with_velocity = with_velocity
 
@@ -85,7 +86,7 @@ class NuScenesDataset(Det3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def _filter_with_mask(self, ann_info):
+    def _filter_with_mask(self, ann_info: dict) -> dict:
         """Remove annotations that do not need to be cared.
 
         Args:
