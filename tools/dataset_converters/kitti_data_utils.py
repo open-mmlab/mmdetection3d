@@ -523,6 +523,14 @@ class WaymoInfoGatherer:
                             relative_path=False,
                             use_prefix_id=True)) as f:
                     prev_info['timestamp'] = np.int64(f.read())
+                prev_info['image_path'] = get_image_path(
+                    prev_idx,
+                    self.path,
+                    self.training,
+                    self.relative_path,
+                    info_type='image_0',
+                    file_tail='.jpg',
+                    use_prefix_id=True)
                 prev_pose_path = get_pose_path(
                     prev_idx,
                     self.path,
