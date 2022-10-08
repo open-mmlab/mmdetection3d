@@ -281,7 +281,7 @@ class SparseEncoderSASSD(SparseEncoder):
         Returns:
             dict: Backbone features.
             tuple[torch.Tensor]: Mean feature value of the points,
-                Classificaion result of the points,
+                Classification result of the points,
                 Regression offsets of the points.
         """
         coors = coors.int()
@@ -412,7 +412,7 @@ class SparseEncoderSASSD(SparseEncoder):
 
         Args:
             points (torch.Tensor): Mean feature value of the points.
-            point_cls (torch.Tensor): Classificaion result of the points.
+            point_cls (torch.Tensor): Classification result of the points.
             point_reg (torch.Tensor): Regression offsets of the points.
             gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 boxes for each sample.

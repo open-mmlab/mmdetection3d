@@ -567,7 +567,7 @@ def test_lidar_boxes3d():
 def test_boxes_conversion():
     """Test the conversion of boxes between different modes.
 
-    ComandLine:
+    CommandLine:
         xdoctest tests/test_box3d.py::test_boxes_conversion zero
     """
     lidar_boxes = LiDARInstance3DBoxes(
@@ -1122,7 +1122,7 @@ def test_camera_boxes3d():
 def test_boxes3d_overlaps():
     """Test the iou calculation of boxes in different modes.
 
-    ComandLine:
+    CommandLine:
         xdoctest tests/test_box3d.py::test_boxes3d_overlaps zero
     """
     if not torch.cuda.is_available():

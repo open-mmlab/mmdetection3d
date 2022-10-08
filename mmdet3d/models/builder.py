@@ -111,7 +111,7 @@ def build_segmentor(cfg, train_cfg=None, test_cfg=None):
 
 
 def build_model(cfg, train_cfg=None, test_cfg=None):
-    """A function warpper for building 3D detector or segmentor according to
+    """A function wrapper for building 3D detector or segmentor according to
     cfg.
 
     Should be deprecated in the future.

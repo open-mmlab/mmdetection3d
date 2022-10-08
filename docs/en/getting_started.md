@@ -1,4 +1,5 @@
 # Prerequisites
+
 In this section we demonstrate how to prepare an environment with PyTorch.
 MMDection3D works on Linux, Windows (experimental support) and macOS and requires the following packages:
 
@@ -40,6 +41,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 We recommend that users follow our best practices to install MMDetection3D. However, the whole process is highly customizable. See [Customize Installation](#customize-installation) section for more information.
 
 ## Best Practices
+
 Assuming that you already have CUDA 11.0 installed, here is a full script for quick installation of MMDetection3D with conda.
 Otherwise, you should refer to the step-by-step installation instructions in the next section.
 
@@ -56,7 +58,6 @@ pip install -e .
 **Step 0.** Install [MMCV](https://github.com/open-mmlab/mmcv) using [MIM](https://github.com/open-mmlab/mim).
 
 **Step 1.** Install [MMDetection](https://github.com/open-mmlab/mmdetection).
-
 
 ```shell
 pip install mmdet
@@ -103,7 +104,7 @@ pip install -v -e .  # or "python setup.py develop"
 Note:
 
 1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
-It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
+   It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
 
    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
 
@@ -116,7 +117,7 @@ It is recommended that you run step d each time you pull some updates from githu
 2. Following the above instructions, MMDetection3D is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
 
 3. If you would like to use `opencv-python-headless` instead of `opencv-python`,
-you can install it before installing MMCV.
+   you can install it before installing MMCV.
 
 4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
 
@@ -135,10 +136,10 @@ you can install it before installing MMCV.
 
    We also support Minkowski Engine as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip`:
 
-    ```shell
-    conda install openblas-devel -c anaconda
-    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
-    ```
+   ```shell
+   conda install openblas-devel -c anaconda
+   pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
+   ```
 
 5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
@@ -159,7 +160,7 @@ python demo/pcd_demo.py demo/data/kitti/kitti_000008.bin configs/second/hv_secon
 ```
 
 If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
-Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training ```ply data```.
+Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training `ply data`.
 
 ```python
 import numpy as np
