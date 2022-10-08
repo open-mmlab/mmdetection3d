@@ -433,7 +433,7 @@ class ImVoteNet(Base3DDetector):
         if points is None:
             assert imgs is not None
             results_2d = self.predict_img_only(imgs, batch_data_samples)
-            return self.convert_to_datasample(
+            return self.add_pred_to_datasample(
                 batch_data_samples, data_instances_2d=results_2d)
 
         else:
@@ -488,7 +488,7 @@ class ImVoteNet(Base3DDetector):
                 batch_data_samples,
                 rescale=True)
 
-            return self.convert_to_datasample(batch_data_samples, results_3d)
+            return self.add_pred_to_datasample(batch_data_samples, results_3d)
 
     def predict_img_only(self,
                          imgs: Tensor,

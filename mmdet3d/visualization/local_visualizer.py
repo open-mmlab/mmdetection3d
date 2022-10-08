@@ -525,14 +525,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     data_input, data_sample.gt_instances_3d,
                     data_sample.metainfo, vis_task, palette)
             if 'gt_instances' in data_sample:
-                assert 'img' in data_input
-                if isinstance(data_input['img'], Tensor):
-                    img = data_input['img'].permute(1, 2, 0).numpy()
-                    img = img[..., [2, 1, 0]]  # bgr to rgb
-                gt_img_data = self._draw_instances(img,
-                                                   data_sample.gt_instances,
-                                                   classes, palette)
-            if 'gt_pts_seg' in data_sample:
+                if len(data_sample.gt_instances) > 0:
+                    assert 'img' in data_input
+                    if isinstance(data_input['img'], Tensor):
+                        img = data_input['img'].permute(1, 2, 0).numpy()
+                        img = img[..., [2, 1, 0]]  # bgr to rgb
+                    gt_img_data = self._draw_instances(
+                        img, data_sample.gt_instances, classes, palette)
+            if 'gt_pts_seg' in data_sample and vis_task == 'seg':
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -606,9 +606,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 win_name=name,
                 wait_time=wait_time)
 
-        mkdir_or_exist(out_file)
-
         if out_file is not None:
+            mkdir_or_exist(out_file)
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file + '.jpg')
             if drawn_img is not None:

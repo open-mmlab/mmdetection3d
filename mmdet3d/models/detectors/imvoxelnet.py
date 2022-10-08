@@ -4,6 +4,7 @@ from typing import List, Tuple, Union
 import torch
 from mmengine.structures import InstanceData
 
+from mmdet3d.models.detectors import Base3DDetector
 from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.det3d_data_sample import SampleList
@@ -11,8 +12,9 @@ from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
 from mmdet.models.detectors import BaseDetector
 
 
+
 @MODELS.register_module()
-class ImVoxelNet(BaseDetector):
+class ImVoxelNet(Base3DDetector):
     r"""`ImVoxelNet <https://arxiv.org/abs/2106.01178>`_.
 
     Args:
@@ -161,8 +163,8 @@ class ImVoxelNet(BaseDetector):
         """
         x = self.extract_feat(batch_inputs_dict, batch_data_samples)
         results_list = self.bbox_head.predict(x, batch_data_samples, **kwargs)
-        predictions = self.convert_to_datasample(batch_data_samples,
-                                                 results_list)
+        predictions = self.add_pred_to_datasample(batch_data_samples,
+                                                  results_list)
         return predictions
 
     def _forward(self, batch_inputs_dict: dict, batch_data_samples: SampleList,

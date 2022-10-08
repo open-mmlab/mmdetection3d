@@ -154,4 +154,4 @@ class H3DNet(TwoStage3DDetector):
             feats_dict,
             batch_data_samples,
             suffix='_optimized')
-        return self.convert_to_datasample(batch_data_samples, results_list)
+        return self.add_pred_to_datasample(batch_data_samples, results_list)
