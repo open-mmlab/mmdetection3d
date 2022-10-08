@@ -81,7 +81,7 @@ mmdetection3d
 ```
 
 - `lyft_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
-  `metainfo` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict ( hereinafter referred to as`info`) contains all the detailed information of single sample as follows:
+  `metainfo` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict (hereinafter referred to as `info`) contains all the detailed information of single sample as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['token'\]: Sample data token.
   - info\['timestamp'\]: Timestamp of the sample data.
@@ -93,7 +93,7 @@ mmdetection3d
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]: The lidar data path of i-th sweep.
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle in i-th sweep timestamp
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle in i-th sweep timestamp to global coordinates. (4x4 list)
-    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the the lidar (for collecting the i-th sweep data) to the lidar collecting the key/sample data. (4x4 list)
+    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the lidar (for collecting the i-th sweep data) to the lidar collecting the key/sample data. (4x4 list)
     - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]: The sweep sample data token.
   - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information related to  corresponding camera.
@@ -117,7 +117,7 @@ Next, we will elaborate on the difference compared to nuScenes in terms of the d
   - Without info\['instances'\]\['velocity'\], There is no velocity measurement on Lyft.
   - Without info\['instances'\]\['num_lidar_pts'\] and info\['instances'\]\['num_radar_pts'\]
 
-Here we only explain the data recorded in the training info files. The same applies to the validation set and test set(without instances).
+Here we only explain the data recorded in the training info files. The same applies to the validation set and test set (without instances).
 
 Please refer to [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/lyft_converter.py) for more details about the structure of `lyft_infos_xxx.pkl`.
 
@@ -133,12 +133,10 @@ train_pipeline = [
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
-        use_dim=5,
-        ),
+        use_dim=5),
     dict(
         type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        ),
+        sweeps_num=10),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',

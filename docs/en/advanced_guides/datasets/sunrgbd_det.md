@@ -232,7 +232,7 @@ train_pipeline = [
         shift_height=True),
     dict(
         type='Pack3DDetInputs',
-        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d','img', 'gt_bboxes', 'gt_bboxes_labels', ])
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d','img', 'gt_bboxes', 'gt_bboxes_labels'])
 ]
 ```
 

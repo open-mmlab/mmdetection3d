@@ -227,11 +227,12 @@ scannet
 - `semantic_mask/xxxxx.bin`：每个点的语义标签，值的范围为：\[1, 40\], 也就是 `nyu40id` 的标准。请注意：在训练流程 `PointSegClassMapping` 中，`nyu40id` 的 ID 会被映射到训练 ID。
 - `posed_images/scenexxxx_xx`：`.jpg` 图像的集合，还包含 `.txt` 格式的 4x4 相机姿态和单个 `.txt` 格式的相机内参矩阵文件。
 - `scannet_infos_train.pkl`：训练集的数据信息，每个场景的具体信息如下：
-  - info\['lidar_points'\]\['lidar_path'\]：点云数据 `xxx.bin` 的文件路径。
-  - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
-  - info\['lidar_points'\]\['pts_semantic_mask_path'\]：包含语义分割标注的 `xxx.bin` 文件路径。
-  - info\['lidar_points'\]\['pts_instance_mask_path'\]：包含实例分割标注的 `xxx.bin` 文件路径。
-  - info\['lidar_points'\]\['axis_align_matrix'\]：用于对齐坐标轴的变换矩阵。
+  - info\['lidar_points'\]：字典包含与激光雷达点相关的信息。
+    - info\['lidar_points'\]\['lidar_path'\]：点云数据 `xxx.bin` 的文件路径。
+    - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
+    - info\['lidar_points'\]\['axis_align_matrix'\]：用于对齐坐标轴的变换矩阵。
+  - info\['pts_semantic_mask_path'\]：包含语义分割标注的 `xxx.bin` 文件路径。
+  - info\['pts_instance_mask_path'\]：包含实例分割标注的 `xxx.bin` 文件路径。
   - info\['instances'\]：字典组成的列表，每个字典包含一个实例的所有标注信息。
     - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 6 的列表，以 (x, y, z, l, w, h) 的顺序表示深度坐标系下与坐标轴平行的 3D 边界框。
     - info\[instances\]\[i\]\['bbox_label_3d'\]：3D 边界框的标签。
