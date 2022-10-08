@@ -494,9 +494,10 @@ def show_result_meshlab(data,
     Args:
         data (dict): Contain data from pipeline.
         result (dict): Predicted result from model.
-        out_dir (str): Directory to save visualized result, Default: mmdet3d-output
+        out_dir (str): Directory to save visualized result.
+            Defaults to 'mmdet3d-output'.
         score_thr (float, optional): Minimum score of bboxes to be shown.
-            Default: 0.0
+            Defaults to 0.0.
         show (bool, optional): Visualize the results online. Defaults to False.
         snapshot (bool, optional): Whether to save the online results.
             Defaults to False.
