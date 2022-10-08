@@ -10,7 +10,7 @@
 
 - Fix docs link and add docs link checker (#1811)
 - Fix the cross-codebase reference problem in metafile README (#1644)
-- Update the cn docs about getting start (#1715)
+- Update the cn docs about getting started (#1715)
 
 #### Bug Fixes
 
