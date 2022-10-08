@@ -1,5 +1,29 @@
 ## Changelog
 
+### v1.0.0rc5 (9/10/2022)
+
+#### New Features
+
+- Add indoor monocular 3d object detector ImVoxelNet on SUN RGB-D (#1738)
+
+#### Improvements
+
+- Fix docs link and add docs link checker (#1811)
+- Fix the cross-codebase reference problem in metafile README (#1644)
+- Update the cn docs about getting start (#1715)
+
+#### Bug Fixes
+
+- Fix PointRCNN produce Nan loss bug in training (#1874)
+- Fix segmentation visualization bug due to wrong parameter passing (#1858)
+- Fix visualization bug due to empty prediction labels (#1725)
+
+#### Contributors
+
+A total of 9 developers contributed to this release.
+
+@ZwwWayne, @Tai-Wang, @filaPro, @VVsssssk, @ZCMax, @Xiangxu-0103, @holtvogt, @tpoisonooo, @lianqing01
+
 ### v1.0.0rc4 (8/8/2022)
 
 #### Highlights
