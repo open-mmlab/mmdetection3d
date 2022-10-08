@@ -1,5 +1,37 @@
 # Changelog of v1.1
 
+### v1.1.0rc1 (9/10/2022)
+
+#### New Features
+
+- Refactor PointRCNN in mmdet3d 1.1.x version (#1819)
+
+#### Improvements
+
+- Add the code of generating cam_sync_labels in waymo dataset (#1870)
+- Update SUN RGB-D and Lyft datasets docs (#1833)
+- Update customized dataset docs (#1845)
+- Update dataset transforms typehints (#1875)
+- Fix ci (#1813, #1865, #1877)
+- Update browse dataset script (#1817)
+- Fix convert_to_datasample interface in detector (#1843)
+- Add auto_scale_lr in config (#1807)
+
+#### Bug Fixes
+
+- Fix nuscenes dataset lack of num_pts_feats key (#1882)
+- Fix mono3d detection demo (#1864)
+- Fix visualization bug (#1828, #1839)
+- Fix dbsampler bug (#1812)
+- Fix model not registered bug (#1808)
+
+#### Contributors
+
+A total of 10 developers contributed to this release.
+
+@ZwwWayne, @Tai-Wang, @lianqing11, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @tpoisonooo, @ice-tong, @jshilong
+
+
 ### v1.1.0rc0 (1/9/2022)
 
 We are excited to announce the release of MMDetection3D 1.1.0rc0.
