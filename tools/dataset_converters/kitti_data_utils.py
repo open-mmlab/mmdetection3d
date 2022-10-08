@@ -394,9 +394,18 @@ class WaymoInfoGatherer:
                 self.relative_path,
                 info_type='label_all',
                 use_prefix_id=True)
+            cam_sync_label_path = get_label_path(
+                idx,
+                self.path,
+                self.training,
+                self.relative_path,
+                info_type='cam_sync_label_all',
+                use_prefix_id=True)
             if self.relative_path:
                 label_path = str(root_path / label_path)
+                cam_sync_label_path = str(root_path / cam_sync_label_path)
             annotations = get_label_anno(label_path)
+            cam_sync_annotations = get_label_anno(cam_sync_label_path)
         info['image'] = image_info
         info['point_cloud'] = pc_info
         if self.calib:
@@ -437,8 +446,24 @@ class WaymoInfoGatherer:
             Tr_velo_to_cam = np.array([
                 float(info) for info in lines[6].split(' ')[1:13]
             ]).reshape([3, 4])
+            Tr_velo_to_cam1 = np.array([
+                float(info) for info in lines[7].split(' ')[1:13]
+            ]).reshape([3, 4])
+            Tr_velo_to_cam2 = np.array([
+                float(info) for info in lines[8].split(' ')[1:13]
+            ]).reshape([3, 4])
+            Tr_velo_to_cam3 = np.array([
+                float(info) for info in lines[9].split(' ')[1:13]
+            ]).reshape([3, 4])
+            Tr_velo_to_cam4 = np.array([
+                float(info) for info in lines[10].split(' ')[1:13]
+            ]).reshape([3, 4])
             if self.extend_matrix:
                 Tr_velo_to_cam = _extend_matrix(Tr_velo_to_cam)
+                Tr_velo_to_cam1 = _extend_matrix(Tr_velo_to_cam1)
+                Tr_velo_to_cam2 = _extend_matrix(Tr_velo_to_cam2)
+                Tr_velo_to_cam3 = _extend_matrix(Tr_velo_to_cam3)
+                Tr_velo_to_cam4 = _extend_matrix(Tr_velo_to_cam4)
             calib_info['P0'] = P0
             calib_info['P1'] = P1
             calib_info['P2'] = P2
@@ -446,7 +471,12 @@ class WaymoInfoGatherer:
             calib_info['P4'] = P4
             calib_info['R0_rect'] = rect_4x4
             calib_info['Tr_velo_to_cam'] = Tr_velo_to_cam
+            calib_info['Tr_velo_to_cam1'] = Tr_velo_to_cam1
+            calib_info['Tr_velo_to_cam2'] = Tr_velo_to_cam2
+            calib_info['Tr_velo_to_cam3'] = Tr_velo_to_cam3
+            calib_info['Tr_velo_to_cam4'] = Tr_velo_to_cam4
             info['calib'] = calib_info
+
         if self.pose:
             pose_path = get_pose_path(
                 idx,
@@ -460,6 +490,13 @@ class WaymoInfoGatherer:
             info['annos'] = annotations
             info['annos']['camera_id'] = info['annos'].pop('score')
             add_difficulty_to_annos(info)
+            info['cam_sync_annos'] = cam_sync_annotations
+            # NOTE: the 2D labels do not have strict correspondence with
+            # the projected 2D lidar labels
+            # e.g.: the projected 2D labels can be in camera 2
+            # while the most_visible_camera can have id 4
+            info['cam_sync_annos']['camera_id'] = info['cam_sync_annos'].pop(
+                'score')
 
         sweeps = []
         prev_idx = idx

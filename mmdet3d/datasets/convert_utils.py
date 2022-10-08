@@ -459,14 +459,12 @@ def generate_waymo_mono3d_record(ann_rec, x1, y1, x2, y2, sample_data_token,
     repro_rec['bbox_corners'] = [x1, y1, x2, y2]
     repro_rec['filename'] = filename
 
-    coco_rec['file_name'] = filename
     coco_rec['image_id'] = sample_data_token
     coco_rec['area'] = (y2 - y1) * (x2 - x1)
 
     if repro_rec['category_name'] not in kitti_categories:
         return None
     cat_name = repro_rec['category_name']
-    coco_rec['category_name'] = cat_name
     coco_rec['category_id'] = kitti_categories.index(cat_name)
     coco_rec['bbox_label'] = coco_rec['category_id']
     coco_rec['bbox_label_3d'] = coco_rec['bbox_label']
