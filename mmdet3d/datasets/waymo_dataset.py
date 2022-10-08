@@ -134,19 +134,6 @@ class WaymoDataset(KittiDataset):
 
         ann_info = self._remove_dontcare(ann_info)
 
-        # if 'gt_bboxes' in ann_info:
-        #     gt_bboxes = ann_info['gt_bboxes']
-        #     gt_labels = ann_info['gt_labels']
-        # else:
-        #     gt_bboxes = np.zeros((0, 4), dtype=np.float32)
-        #     gt_labels = np.array([], dtype=np.int64)
-        # if 'centers_2d' in ann_info:
-        #     centers_2d = ann_info['centers_2d']
-        #     depths = ann_info['depths']
-        # else:
-        #     centers_2d = np.zeros((0, 2), dtype=np.float32)
-        #     depths = np.zeros((0), dtype=np.float32)
-
         if self.task == 'mono3d':
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
@@ -162,14 +149,6 @@ class WaymoDataset(KittiDataset):
                 ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
                                                      np.linalg.inv(lidar2cam))
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
-
-        # anns_results = dict(
-        #     gt_bboxes_3d=gt_bboxes_3d,
-        #     gt_labels_3d=ann_info['gt_labels_3d'],
-        #     gt_bboxes=gt_bboxes,
-        #     gt_bboxes_labels=gt_labels,
-        #     centers_2d=centers_2d,
-        #     depths=depths)
 
         return ann_info
 

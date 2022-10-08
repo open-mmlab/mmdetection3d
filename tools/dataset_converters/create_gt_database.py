@@ -610,18 +610,11 @@ class GTDatabaseCreater:
             input_dict['box_mode_3d'] = self.dataset.box_mode_3d
             return input_dict
 
-        multi_db_infos = []
-        from mmengine import ProgressBar
-        progress_bar = ProgressBar(len(self.dataset))
-        for i in range(len(self.dataset)):
-            multi_db_infos.append(self.create_single(loop_dataset(i)))
-            progress_bar.update()
-
-        # multi_db_infos = mmengine.track_parallel_progress(
-        #     self.create_single,
-        #     ((loop_dataset(i)
-        #       for i in range(len(self.dataset))), len(self.dataset)),
-        #     self.num_worker)
+        multi_db_infos = mmengine.track_parallel_progress(
+            self.create_single,
+            ((loop_dataset(i)
+              for i in range(len(self.dataset))), len(self.dataset)),
+            self.num_worker)
         print('Make global unique group id')
         group_counter_offset = 0
         all_db_infos = dict()
