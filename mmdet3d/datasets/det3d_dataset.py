@@ -26,11 +26,11 @@ class Det3DDataset(BaseDataset):
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict, optional): Prefix for training data. Defaults to
-            dict(pts='velodyne', img="").
+            dict(pts='velodyne', img='').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
-            as input, it usually has following keys.
+            as input, it usually has following keys:
 
                 - use_camera: bool
                 - use_lidar: bool
@@ -40,7 +40,7 @@ class Det3DDataset(BaseDataset):
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR'. Available options includes
+            Defaults to 'LiDAR'. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates, usually for
               outdoor point cloud 3d detection.
@@ -49,15 +49,15 @@ class Det3DDataset(BaseDataset):
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
 
-        filter_empty_gt (bool): Whether to filter the data with
+        filter_empty_gt (bool, optional): Whether to filter the data with
             empty GT. Defaults to True.
-        test_mode (bool): Whether the dataset is in test mode.
+        test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        load_eval_anns (bool): Whether to load annotations
-            in test_mode, the annotation will be save in
-            `eval_ann_infos`, which can be use in Evaluator.
-        file_client_args (dict): Configuration of file client.
-            Defaults to `dict(backend='disk')`.
+        load_eval_anns (bool, optional): Whether to load annotations
+            in test_mode, the annotation will be save in `eval_ann_infos`,
+            which can be used in Evaluator. Defaults to True.
+        file_client_args (dict, optional): Configuration of file client.
+            Defaults to dict(backend='disk').
     """
 
     def __init__(self,
@@ -73,7 +73,7 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
-                 **kwargs):
+                 **kwargs) -> None:
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
         self.filter_empty_gt = filter_empty_gt
@@ -125,7 +125,7 @@ class Det3DDataset(BaseDataset):
         self.metainfo['box_type_3d'] = box_type_3d
         self.metainfo['label_mapping'] = self.label_mapping
 
-    def _remove_dontcare(self, ann_info):
+    def _remove_dontcare(self, ann_info: dict) -> dict:
         """Remove annotations that do not need to be cared.
 
         -1 indicate dontcare in MMDet3d.
@@ -291,7 +291,7 @@ class Det3DDataset(BaseDataset):
 
         return info
 
-    def prepare_data(self, index):
+    def prepare_data(self, index: int) -> Optional[dict]:
         """Data preparation for both training and testing stage.
 
         Called by `__getitem__`  of dataset.
@@ -300,7 +300,7 @@ class Det3DDataset(BaseDataset):
             index (int): Index for accessing the target data.
 
         Returns:
-            dict: Data dict of the corresponding index.
+            dict | None: Data dict of the corresponding index.
         """
         input_dict = self.get_data_info(index)
 

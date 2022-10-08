@@ -226,11 +226,12 @@ scannet
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: \[1, 40\], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
 - `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
-  - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
-  - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
-  - info\['lidar_points'\]\['pts_semantic_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
-  - info\['lidar_points'\]\['pts_instance_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
-  - info\['lidar_points'\]\['axis_align_matrix'\]: The transformation matrix to align the axis.
+  - info\['lidar_points'\]: A dict contains all information relate to the the lidar points.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
+    - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
+    - info\['lidar_points'\]\['axis_align_matrix'\]: The transformation matrix to align the axis.
+  - info\['pts_semantic_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
+  - info\['pts_instance_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
   - info\['instances'\]: A list of dict contains all annotations, each dict contains all annotation information of single instance.
     - info\['instances'\]\[i\]\['bbox_3d'\]: List of 6 numbers representing the axis-aligned 3D bounding box of the instance in depth coordinate system, in (x, y, z, l, w, h) order.
     - info\['instances'\]\[i\]\['bbox_label_3d'\]: The label of each 3d bounding boxes.

@@ -104,10 +104,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         ``BaseDataPreprocessor``.
 
         Args:
-            data (List[dict] | List[List[dict]]): data from dataloader.
-                The outer list always represent the batch size, when it is
-                a list[list[dict]], the inter list indicate test time
-                augmentation.
+            data (dict | List[dict]): data from dataloader.
+                The dict contains the whole batch data, when it is
+                a list[dict], the list indicate test time augmentation.
+
             training (bool): Whether to enable training time augmentation.
                 Defaults to False.
 
@@ -293,7 +293,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         else:
             raise TypeError('Output of `cast_data` should be a list of dict '
                             'or a tuple with inputs and data_samples, but got'
-                            f'{type(data)}： {data}')
+                            f'{type(data)}: {data}')
         return batch_pad_shape
 
     @torch.no_grad()

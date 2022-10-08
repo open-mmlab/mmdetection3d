@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from mmcv.cnn import ConvModule
@@ -12,6 +12,7 @@ from torch.nn import functional as F
 from mmdet3d.models.layers import VoteModule, build_sa_module
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 from mmdet.models.utils import multi_apply
 
 
@@ -26,39 +27,42 @@ class PrimitiveHead(BaseModule):
             available mode ['z', 'xy', 'line'].
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
-        train_cfg (dict): Config for training.
-        test_cfg (dict): Config for testing.
-        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
-        vote_aggregation_cfg (dict): Config of vote aggregation layer.
+        train_cfg (dict, optional): Config for training.
+        test_cfg (dict, optional): Config for testing.
+        vote_module_cfg (dict, optional): Config of VoteModule for point-wise
+            votes.
+        vote_aggregation_cfg (dict, optional): Config of vote aggregation
+            layer.
         feat_channels (tuple[int]): Convolution channels of
             prediction layer.
         upper_thresh (float): Threshold for line matching.
         surface_thresh (float): Threshold for surface matching.
-        conv_cfg (dict): Config of convolution in prediction layer.
-        norm_cfg (dict): Config of BN in prediction layer.
-        objectness_loss (dict): Config of objectness loss.
-        center_loss (dict): Config of center loss.
-        semantic_loss (dict): Config of point-wise semantic segmentation loss.
+        conv_cfg (dict, optional): Config of convolution in prediction layer.
+        norm_cfg (dict, optional): Config of BN in prediction layer.
+        objectness_loss (dict, optional): Config of objectness loss.
+        center_loss (dict, optional): Config of center loss.
+        semantic_loss (dict, optional): Config of point-wise semantic
+            segmentation loss.
     """
 
     def __init__(self,
                  num_dims: int,
                  num_classes: int,
                  primitive_mode: str,
-                 train_cfg: dict = None,
-                 test_cfg: dict = None,
-                 vote_module_cfg: dict = None,
-                 vote_aggregation_cfg: dict = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 vote_module_cfg: Optional[dict] = None,
+                 vote_aggregation_cfg: Optional[dict] = None,
                  feat_channels: tuple = (128, 128),
                  upper_thresh: float = 100.0,
                  surface_thresh: float = 0.5,
                  conv_cfg: dict = dict(type='Conv1d'),
                  norm_cfg: dict = dict(type='BN1d'),
-                 objectness_loss: dict = None,
-                 center_loss: dict = None,
-                 semantic_reg_loss: dict = None,
-                 semantic_cls_loss: dict = None,
-                 init_cfg: dict = None):
+                 objectness_loss: Optional[dict] = None,
+                 center_loss: Optional[dict] = None,
+                 semantic_reg_loss: Optional[dict] = None,
+                 semantic_cls_loss: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(PrimitiveHead, self).__init__(init_cfg=init_cfg)
         # bounding boxes centers,  face centers and edge centers
         assert primitive_mode in ['z', 'xy', 'line']
@@ -126,7 +130,7 @@ class PrimitiveHead(BaseModule):
         assert sample_mode in ['vote', 'seed', 'random']
         return sample_mode
 
-    def forward(self, feats_dict):
+    def forward(self, feats_dict: dict) -> dict:
         """Forward pass.
 
         Args:
@@ -255,10 +259,8 @@ class PrimitiveHead(BaseModule):
                 attributes.
             batch_pts_semantic_mask (list[tensor]): Semantic mask
                 of points cloud. Defaults to None.
-            batch_pts_semantic_mask (list[tensor]): Instance mask
+            batch_pts_instance_mask (list[tensor]): Instance mask
                 of points cloud. Defaults to None.
-            batch_input_metas (list[dict]): Contain pcd and img's meta info.
-            ret_target (bool): Return targets or not. Defaults to False.
 
         Returns:
             dict: Losses of Primitive Head.
@@ -392,12 +394,13 @@ class PrimitiveHead(BaseModule):
         return (point_mask, point_offset, gt_primitive_center,
                 gt_primitive_semantic, gt_sem_cls_label, gt_votes_mask)
 
-    def get_targets_single(self,
-                           points,
-                           gt_bboxes_3d,
-                           gt_labels_3d,
-                           pts_semantic_mask=None,
-                           pts_instance_mask=None):
+    def get_targets_single(
+            self,
+            points: torch.Tensor,
+            gt_bboxes_3d: BaseInstance3DBoxes,
+            gt_labels_3d: torch.Tensor,
+            pts_semantic_mask: torch.Tensor = None,
+            pts_instance_mask: torch.Tensor = None) -> Tuple[torch.Tensor]:
         """Generate targets of primitive head for single batch.
 
         Args:
@@ -668,7 +671,8 @@ class PrimitiveHead(BaseModule):
 
         return (point_mask, point_sem, point_offset)
 
-    def primitive_decode_scores(self, predictions, aggregated_points):
+    def primitive_decode_scores(self, predictions: torch.Tensor,
+                                aggregated_points: torch.Tensor) -> dict:
         """Decode predicted parts to primitive head.
 
         Args:
@@ -696,7 +700,7 @@ class PrimitiveHead(BaseModule):
 
         return ret_dict
 
-    def check_horizon(self, points):
+    def check_horizon(self, points: torch.Tensor) -> bool:
         """Check whether is a horizontal plane.
 
         Args:
@@ -709,7 +713,8 @@ class PrimitiveHead(BaseModule):
                (points[1][-1] == points[2][-1]) and \
                (points[2][-1] == points[3][-1])
 
-    def check_dist(self, plane_equ, points):
+    def check_dist(self, plane_equ: torch.Tensor,
+                   points: torch.Tensor) -> tuple:
         """Whether the mean of points to plane distance is lower than thresh.
 
         Args:
@@ -722,7 +727,8 @@ class PrimitiveHead(BaseModule):
         return (points[:, 2] +
                 plane_equ[-1]).sum() / 4.0 < self.train_cfg['lower_thresh']
 
-    def point2line_dist(self, points, pts_a, pts_b):
+    def point2line_dist(self, points: torch.Tensor, pts_a: torch.Tensor,
+                        pts_b: torch.Tensor) -> torch.Tensor:
         """Calculate the distance from point to line.
 
         Args:
@@ -741,7 +747,11 @@ class PrimitiveHead(BaseModule):
 
         return dist
 
-    def match_point2line(self, points, corners, with_yaw, mode='bottom'):
+    def match_point2line(self,
+                         points: torch.Tensor,
+                         corners: torch.Tensor,
+                         with_yaw: bool,
+                         mode: str = 'bottom') -> tuple:
         """Match points to corresponding line.
 
         Args:
@@ -782,7 +792,8 @@ class PrimitiveHead(BaseModule):
             selected_list = [sel1, sel2, sel3, sel4]
         return selected_list
 
-    def match_point2plane(self, plane, points):
+    def match_point2plane(self, plane: torch.Tensor,
+                          points: torch.Tensor) -> tuple:
         """Match points to plane.
 
         Args:
@@ -800,10 +811,14 @@ class PrimitiveHead(BaseModule):
                              min_dist) < self.train_cfg['dist_thresh']
         return point2plane_dist, selected
 
-    def compute_primitive_loss(self, primitive_center, primitive_semantic,
-                               semantic_scores, num_proposal,
-                               gt_primitive_center, gt_primitive_semantic,
-                               gt_sem_cls_label, gt_primitive_mask):
+    def compute_primitive_loss(self, primitive_center: torch.Tensor,
+                               primitive_semantic: torch.Tensor,
+                               semantic_scores: torch.Tensor,
+                               num_proposal: torch.Tensor,
+                               gt_primitive_center: torch.Tensor,
+                               gt_primitive_semantic: torch.Tensor,
+                               gt_sem_cls_label: torch.Tensor,
+                               gt_primitive_mask: torch.Tensor) -> Tuple:
         """Compute loss of primitive module.
 
         Args:
@@ -849,7 +864,8 @@ class PrimitiveHead(BaseModule):
 
         return center_loss, size_loss, sem_cls_loss
 
-    def get_primitive_center(self, pred_flag, center):
+    def get_primitive_center(self, pred_flag: torch.Tensor,
+                             center: torch.Tensor) -> Tuple:
         """Generate primitive center from predictions.
 
         Args:
@@ -869,17 +885,17 @@ class PrimitiveHead(BaseModule):
         return center, pred_indices
 
     def _assign_primitive_line_targets(self,
-                                       point_mask,
-                                       point_offset,
-                                       point_sem,
-                                       coords,
-                                       indices,
-                                       cls_label,
-                                       point2line_matching,
-                                       corners,
-                                       center_axises,
-                                       with_yaw,
-                                       mode='bottom'):
+                                       point_mask: torch.Tensor,
+                                       point_offset: torch.Tensor,
+                                       point_sem: torch.Tensor,
+                                       coords: torch.Tensor,
+                                       indices: torch.Tensor,
+                                       cls_label: int,
+                                       point2line_matching: torch.Tensor,
+                                       corners: torch.Tensor,
+                                       center_axises: torch.Tensor,
+                                       with_yaw: bool,
+                                       mode: str = 'bottom') -> Tuple:
         """Generate targets of line primitive.
 
         Args:
@@ -934,15 +950,15 @@ class PrimitiveHead(BaseModule):
         return point_mask, point_offset, point_sem
 
     def _assign_primitive_surface_targets(self,
-                                          point_mask,
-                                          point_offset,
-                                          point_sem,
-                                          coords,
-                                          indices,
-                                          cls_label,
-                                          corners,
-                                          with_yaw,
-                                          mode='bottom'):
+                                          point_mask: torch.Tensor,
+                                          point_offset: torch.Tensor,
+                                          point_sem: torch.Tensor,
+                                          coords: torch.Tensor,
+                                          indices: torch.Tensor,
+                                          cls_label: int,
+                                          corners: torch.Tensor,
+                                          with_yaw: bool,
+                                          mode: str = 'bottom') -> Tuple:
         """Generate targets for primitive z and primitive xy.
 
         Args:
@@ -1017,7 +1033,9 @@ class PrimitiveHead(BaseModule):
         point_offset[indices] = center - coords
         return point_mask, point_offset, point_sem
 
-    def _get_plane_fomulation(self, vector1, vector2, point):
+    def _get_plane_fomulation(self, vector1: torch.Tensor,
+                              vector2: torch.Tensor,
+                              point: torch.Tensor) -> torch.Tensor:
         """Compute the equation of the plane.
 
         Args:

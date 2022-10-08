@@ -1,16 +1,21 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import torch
+import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks import build_conv_layer
 from mmengine.model import BaseModule, normal_init
-from torch import nn as nn
+from mmengine.structures import InstanceData
+from torch import Tensor
 
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.models.layers.pointnet_modules import build_sa_module
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
+from mmdet3d.utils.typing import InstanceList, SamplingResultList
 from mmdet.models.utils import multi_apply
 
 
@@ -24,17 +29,17 @@ class PointRCNNBboxHead(BaseModule):
         mlp_channels (list[int]): the number of mlp channels
         pred_layer_cfg (dict, optional): Config of classfication and
             regression prediction layers. Defaults to None.
-        num_points (tuple, optional): The number of points which each SA
+        num_points (tuple): The number of points which each SA
             module samples. Defaults to (128, 32, -1).
-        radius (tuple, optional): Sampling radius of each SA module.
+        radius (tuple): Sampling radius of each SA module.
             Defaults to (0.2, 0.4, 100).
-        num_samples (tuple, optional): The number of samples for ball query
+        num_samples (tuple): The number of samples for ball query
             in each SA module. Defaults to (64, 64, 64).
-        sa_channels (tuple, optional): Out channels of each mlp in SA module.
+        sa_channels (tuple): Out channels of each mlp in SA module.
             Defaults to ((128, 128, 128), (128, 128, 256), (256, 256, 512)).
-        bbox_coder (dict, optional): Config dict of box coders.
+        bbox_coder (dict): Config dict of box coders.
             Defaults to dict(type='DeltaXYZWLHRBBoxCoder').
-        sa_cfg (dict, optional): Config of set abstraction module, which may
+        sa_cfg (dict): Config of set abstraction module, which may
             contain the following keys and values:
 
             - pool_mod (str): Pool method ('max' or 'avg') for SA modules.
@@ -43,52 +48,53 @@ class PointRCNNBboxHead(BaseModule):
               each SA module.
             Defaults to dict(type='PointSAModule', pool_mod='max',
                 use_xyz=True).
-        conv_cfg (dict, optional): Config dict of convolutional layers.
+        conv_cfg (dict): Config dict of convolutional layers.
              Defaults to dict(type='Conv1d').
-        norm_cfg (dict, optional): Config dict of normalization layers.
+        norm_cfg (dict): Config dict of normalization layers.
              Defaults to dict(type='BN1d').
-        act_cfg (dict, optional): Config dict of activation layers.
+        act_cfg (dict): Config dict of activation layers.
             Defaults to dict(type='ReLU').
-        bias (str, optional): Type of bias. Defaults to 'auto'.
-        loss_bbox (dict, optional): Config of regression loss function.
+        bias (str): Type of bias. Defaults to 'auto'.
+        loss_bbox (dict): Config of regression loss function.
             Defaults to dict(type='SmoothL1Loss', beta=1.0 / 9.0,
                 reduction='sum', loss_weight=1.0).
-        loss_cls (dict, optional): Config of classification loss function.
+        loss_cls (dict): Config of classification loss function.
              Defaults to dict(type='CrossEntropyLoss', use_sigmoid=True,
                 reduction='sum', loss_weight=1.0).
-        with_corner_loss (bool, optional): Whether using corner loss.
+        with_corner_loss (bool): Whether using corner loss.
             Defaults to True.
         init_cfg (dict, optional): Config of initialization. Defaults to None.
     """
 
-    def __init__(
-            self,
-            num_classes,
-            in_channels,
-            mlp_channels,
-            pred_layer_cfg=None,
-            num_points=(128, 32, -1),
-            radius=(0.2, 0.4, 100),
-            num_samples=(64, 64, 64),
-            sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
-            bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
-            sa_cfg=dict(type='PointSAModule', pool_mod='max', use_xyz=True),
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d'),
-            act_cfg=dict(type='ReLU'),
-            bias='auto',
-            loss_bbox=dict(
-                type='SmoothL1Loss',
-                beta=1.0 / 9.0,
-                reduction='sum',
-                loss_weight=1.0),
-            loss_cls=dict(
-                type='CrossEntropyLoss',
-                use_sigmoid=True,
-                reduction='sum',
-                loss_weight=1.0),
-            with_corner_loss=True,
-            init_cfg=None):
+    def __init__(self,
+                 num_classes: dict,
+                 in_channels: dict,
+                 mlp_channels: dict,
+                 pred_layer_cfg: Optional[dict] = None,
+                 num_points: dict = (128, 32, -1),
+                 radius: dict = (0.2, 0.4, 100),
+                 num_samples: dict = (64, 64, 64),
+                 sa_channels: dict = ((128, 128, 128), (128, 128, 256),
+                                      (256, 256, 512)),
+                 bbox_coder: dict = dict(type='DeltaXYZWLHRBBoxCoder'),
+                 sa_cfg: dict = dict(
+                     type='PointSAModule', pool_mod='max', use_xyz=True),
+                 conv_cfg: dict = dict(type='Conv1d'),
+                 norm_cfg: dict = dict(type='BN1d'),
+                 act_cfg: dict = dict(type='ReLU'),
+                 bias: str = 'auto',
+                 loss_bbox: dict = dict(
+                     type='SmoothL1Loss',
+                     beta=1.0 / 9.0,
+                     reduction='sum',
+                     loss_weight=1.0),
+                 loss_cls: dict = dict(
+                     type='CrossEntropyLoss',
+                     use_sigmoid=True,
+                     reduction='sum',
+                     loss_weight=1.0),
+                 with_corner_loss: bool = True,
+                 init_cfg: Optional[dict] = None) -> None:
         super(PointRCNNBboxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.num_sa = len(sa_channels)
@@ -169,7 +175,8 @@ class PointRCNNBboxHead(BaseModule):
         if init_cfg is None:
             self.init_cfg = dict(type='Xavier', layer=['Conv2d', 'Conv1d'])
 
-    def _add_conv_branch(self, in_channels, conv_channels):
+    def _add_conv_branch(self, in_channels: int,
+                         conv_channels: tuple) -> nn.Sequential:
         """Add shared or separable branch.
 
         Args:
@@ -203,7 +210,7 @@ class PointRCNNBboxHead(BaseModule):
                     nn.init.constant_(m.bias, 0)
         normal_init(self.conv_reg.weight, mean=0, std=0.001)
 
-    def forward(self, feats):
+    def forward(self, feats: Tensor) -> Tuple[Tensor]:
         """Forward pass.
 
         Args:
@@ -239,8 +246,10 @@ class PointRCNNBboxHead(BaseModule):
         rcnn_reg = rcnn_reg.transpose(1, 2).contiguous().squeeze(dim=1)
         return rcnn_cls, rcnn_reg
 
-    def loss(self, cls_score, bbox_pred, rois, labels, bbox_targets,
-             pos_gt_bboxes, reg_mask, label_weights, bbox_weights):
+    def loss(self, cls_score: Tensor, bbox_pred: Tensor, rois: Tensor,
+             labels: Tensor, bbox_targets: Tensor, pos_gt_bboxes: Tensor,
+             reg_mask: Tensor, label_weights: Tensor,
+             bbox_weights: Tensor) -> Dict:
         """Computing losses.
 
         Args:
@@ -302,15 +311,17 @@ class PointRCNNBboxHead(BaseModule):
 
             # calculate corner loss
             loss_corner = self.get_corner_loss_lidar(pred_boxes3d,
-                                                     pos_gt_bboxes)
+                                                     pos_gt_bboxes).mean()
 
             losses['loss_corner'] = loss_corner
         else:
-            losses['loss_corner'] = loss_cls.new_tensor(0)
-
+            losses['loss_corner'] = loss_cls.new_tensor(0) * loss_cls.sum()
         return losses
 
-    def get_corner_loss_lidar(self, pred_bbox3d, gt_bbox3d, delta=1.0):
+    def get_corner_loss_lidar(self,
+                              pred_bbox3d: Tensor,
+                              gt_bbox3d: Tensor,
+                              delta: float = 1.0) -> Tensor:
         """Calculate corner loss of given boxes.
 
         Args:
@@ -340,19 +351,24 @@ class PointRCNNBboxHead(BaseModule):
             torch.norm(pred_box_corners - gt_box_corners_flip, dim=2))
         # huber loss
         abs_error = corner_dist.abs()
-        quadratic = abs_error.clamp(max=delta)
-        linear = (abs_error - quadratic)
-        corner_loss = 0.5 * quadratic**2 + delta * linear
-        return corner_loss.mean(dim=1)
+        # quadratic = abs_error.clamp(max=delta)
+        # linear = (abs_error - quadratic)
+        # corner_loss = 0.5 * quadratic**2 + delta * linear
+        loss = torch.where(abs_error < delta, 0.5 * abs_error**2 / delta,
+                           abs_error - 0.5 * delta)
+        return loss.mean(dim=1)
 
-    def get_targets(self, sampling_results, rcnn_train_cfg, concat=True):
+    def get_targets(self,
+                    sampling_results: SamplingResultList,
+                    rcnn_train_cfg: dict,
+                    concat: bool = True) -> Tuple[Tensor]:
         """Generate targets.
 
         Args:
             sampling_results (list[:obj:`SamplingResult`]):
                 Sampled results from rois.
             rcnn_train_cfg (:obj:`ConfigDict`): Training config of rcnn.
-            concat (bool, optional): Whether to concatenate targets between
+            concat (bool): Whether to concatenate targets between
                 batches. Defaults to True.
 
         Returns:
@@ -385,7 +401,8 @@ class PointRCNNBboxHead(BaseModule):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
 
-    def _get_target_single(self, pos_bboxes, pos_gt_bboxes, ious, cfg):
+    def _get_target_single(self, pos_bboxes: Tensor, pos_gt_bboxes: Tensor,
+                           ious: Tensor, cfg: dict) -> Tuple[Tensor]:
         """Generate training targets for a single sample.
 
         Args:
@@ -449,13 +466,13 @@ class PointRCNNBboxHead(BaseModule):
         return (label, bbox_targets, pos_gt_bboxes, reg_mask, label_weights,
                 bbox_weights)
 
-    def get_bboxes(self,
-                   rois,
-                   cls_score,
-                   bbox_pred,
-                   class_labels,
-                   img_metas,
-                   cfg=None):
+    def get_results(self,
+                    rois: Tensor,
+                    cls_score: Tensor,
+                    bbox_pred: Tensor,
+                    class_labels: Tensor,
+                    input_metas: List[dict],
+                    cfg: dict = None) -> InstanceList:
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -463,12 +480,22 @@ class PointRCNNBboxHead(BaseModule):
             cls_score (torch.Tensor): Scores of bounding boxes.
             bbox_pred (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
-            img_metas (list[dict]): Point cloud and image's meta info.
+            input_metas (list[dict]): Point cloud and image's meta info.
             cfg (:obj:`ConfigDict`, optional): Testing config.
                 Defaults to None.
 
         Returns:
-            list[tuple]: Decoded bbox, scores and labels after nms.
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
         """
         roi_batch_id = rois[..., 0]
         roi_boxes = rois[..., 1:]  # boxes without batch id
@@ -494,25 +521,27 @@ class PointRCNNBboxHead(BaseModule):
             cur_rcnn_boxes3d = rcnn_boxes3d[roi_batch_id == batch_id]
             keep = self.multi_class_nms(cur_box_prob, cur_rcnn_boxes3d,
                                         cfg.score_thr, cfg.nms_thr,
-                                        img_metas[batch_id],
+                                        input_metas[batch_id],
                                         cfg.use_rotate_nms)
             selected_bboxes = cur_rcnn_boxes3d[keep]
             selected_label_preds = cur_class_labels[keep]
             selected_scores = cur_cls_score[keep]
+            results = InstanceData()
+            results.bboxes_3d = input_metas[batch_id]['box_type_3d'](
+                selected_bboxes, selected_bboxes.shape[-1])
+            results.scores_3d = selected_scores
+            results.labels_3d = selected_label_preds
 
-            result_list.append(
-                (img_metas[batch_id]['box_type_3d'](selected_bboxes,
-                                                    self.bbox_coder.code_size),
-                 selected_scores, selected_label_preds))
+            result_list.append(results)
         return result_list
 
     def multi_class_nms(self,
-                        box_probs,
-                        box_preds,
-                        score_thr,
-                        nms_thr,
-                        input_meta,
-                        use_rotate_nms=True):
+                        box_probs: Tensor,
+                        box_preds: Tensor,
+                        score_thr: float,
+                        nms_thr: float,
+                        input_meta: dict,
+                        use_rotate_nms: bool = True) -> Tensor:
         """Multi-class NMS for box head.
 
         Note:
@@ -527,7 +556,7 @@ class PointRCNNBboxHead(BaseModule):
             score_thr (float): Threshold of scores.
             nms_thr (float): Threshold for NMS.
             input_meta (dict): Meta information of the current sample.
-            use_rotate_nms (bool, optional): Whether to use rotated nms.
+            use_rotate_nms (bool): Whether to use rotated nms.
                 Defaults to True.
 
         Returns:

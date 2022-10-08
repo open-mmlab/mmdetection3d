@@ -36,7 +36,7 @@ class ScanNetDataset(Det3DDataset):
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'Depth' in this dataset. Available options includes
+            Defaults to 'Depth' in this dataset. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
@@ -61,13 +61,13 @@ class ScanNetDataset(Det3DDataset):
     def __init__(self,
                  data_root: str,
                  ann_file: str,
-                 metainfo: dict = None,
+                 metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
                      pts='points',
                      pts_instance_mask='instance_mask',
                      pts_semantic_mask='semantic_mask'),
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality=dict(use_camera=False, use_lidar=True),
+                 modality: dict = dict(use_camera=False, use_lidar=True),
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -101,7 +101,7 @@ class ScanNetDataset(Det3DDataset):
         assert self.modality['use_camera'] or self.modality['use_lidar']
 
     @staticmethod
-    def _get_axis_align_matrix(info: dict) -> dict:
+    def _get_axis_align_matrix(info: dict) -> np.ndarray:
         """Get axis_align_matrix from info. If not exist, return identity mat.
 
         Args:
