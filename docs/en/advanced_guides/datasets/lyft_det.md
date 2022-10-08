@@ -78,38 +78,48 @@ mmdetection3d
 │   │   ├── lyft_infos_train.pkl
 │   │   ├── lyft_infos_val.pkl
 │   │   ├── lyft_infos_test.pkl
-│   │   ├── lyft_infos_train_mono3d.coco.json
-│   │   ├── lyft_infos_val_mono3d.coco.json
-│   │   ├── lyft_infos_test_mono3d.coco.json
 ```
 
-Here, .pkl files are generally used for methods involving point clouds, and coco-style .json files are more suitable for image-based methods, such as image-based 2D and 3D detection.
-Different from nuScenes, we only support using the json files for 2D detection experiments. Image-based 3D detection may be further supported in the future.
+- `lyft_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
+  `metainfo` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict ( hereinafter referred to as`info`) contains all the detailed information of single sample as follows:
+  - info\['sample_idx'\]: The index of this sample in the whole dataset.
+  - info\['token'\]: Sample data token.
+  - info\['timestamp'\]: Timestamp of the sample data.
+  - info\['lidar_points'\]: A dict contains all the information related to the lidar points.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
+    - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
+    - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
+  - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
+    - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]: The lidar data path of i-th sweep.
+    - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle in i-th sweep timestamp
+    - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle in i-th sweep timestamp to global coordinates. (4x4 list)
+    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the the lidar (for collecting the i-th sweep data) to the lidar collecting the key/sample data. (4x4 list)
+    - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
+    - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]: The sweep sample data token.
+  - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information related to  corresponding camera.
+    - info\['images'\]\['CAM_XXX'\]\['img_path'\]: Filename of image.
+    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]: The transformation matrix recording the intrinsic parameters when projecting 3D points to each image plane. (3x3 list)
+    - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]: Sample data token of image.
+    - info\['images'\]\['CAM_XXX'\]\['timestamp'\]: Timestamp of the image.
+    - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
+    - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
+  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
+    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in lidar coordinate system of the instance, in (x, y, z, l, w, h, yaw) order.
+    - info\['instances'\]\['bbox_label_3d'\]: A int starting from 0 indicates the label of instance, while the -1 indicates ignore class.
+    - info\['instances'\]\['bbox_3d_isvalid'\]: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
 
 Next, we will elaborate on the difference compared to nuScenes in terms of the details recorded in these info files.
 
 - without `lyft_database/xxxxx.bin`: This folder and `.bin` files are not extracted on the Lyft dataset due to the negligible effect of ground-truth sampling in the experiments.
-- `lyft_infos_train.pkl`: training dataset infos, each frame info has two keys: `metadata` and `infos`.
-  `metadata` contains the basic information for the dataset itself, such as `{'version': 'v1.01-train'}`, while `infos` contains the detailed information the same as nuScenes except for the following details:
-  - info\['sweeps'\]: Sweeps information.
-    - info\['sweeps'\]\[i\]\['type'\]: The sweep data type, e.g., `'lidar'`.
-      Lyft has different LiDAR settings for some samples, but we always take only the points collected by the top LiDAR for the consistency of data distribution.
-  - info\['gt_names'\]: There are 9 categories on the Lyft dataset, and the imbalance of annotations for different categories is even more significant than nuScenes.
-  - without info\['gt_velocity'\]: There is no velocity measurement on Lyft.
-  - info\['num_lidar_pts'\]: Set to -1 by default.
-  - info\['num_radar_pts'\]: Set to 0 by default.
-  - without info\['valid_flag'\]: This flag does recorded due to invalid `num_lidar_pts` and `num_radar_pts`.
-- `nuscenes_infos_train_mono3d.coco.json`: training dataset coco-style info. This file only contains 2D information, without the information required by 3D detection, such as camera intrinsics.
-  - info\['images'\]: A list containing all the image info.
-    - only containing `'file_name'`, `'id'`, `'width'`, `'height'`.
-  - info\['annotations'\]: A list containing all the annotation info.
-    - only containing `'file_name'`, `'image_id'`, `'area'`, `'category_name'`, `'category_id'`, `'bbox'`, `'is_crowd'`, `'segmentation'`, `'id'`, where `'is_crowd'`, `'segmentation'` are set to `0` and `[]` by default.
-      There is no attribute annotation on Lyft.
 
-Here we only explain the data recorded in the training info files. The same applies to the testing set.
+- `lyft_infos_train.pkl`:
 
-The core function to get `lyft_infos_xxx.pkl` is [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/lyft_converter.py#L93).
-Please refer to [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/master/tools/dataset_converters/lyft_converter.py) for more details.
+  - Without info\['instances'\]\['velocity'\], There is no velocity measurement on Lyft.
+  - Without info\['instances'\]\['num_lidar_pts'\] and info\['instances'\]\['num_radar_pts'\]
+
+Here we only explain the data recorded in the training info files. The same applies to the validation set and test set(without instances).
+
+Please refer to [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/lyft_converter.py) for more details about the structure of `lyft_infos_xxx.pkl`.
 
 ## Training pipeline
 
@@ -124,11 +134,11 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        file_client_args=file_client_args),
+        ),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
-        file_client_args=file_client_args),
+        ),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',
@@ -139,8 +149,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 ```
 
@@ -153,7 +164,7 @@ where the first 3 dimensions refer to point coordinates, and the last refers to 
 An example to evaluate PointPillars with 8 GPUs with Lyft metrics is as follows.
 
 ```shell
-bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth 8 --eval bbox
+bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth 8
 ```
 
 ## Metrics
@@ -189,7 +200,7 @@ We employ this official method for evaluation on Lyft. An example of printed eva
 An example to test PointPillars on Lyft with 8 GPUs and generate a submission to the leaderboard is as follows.
 
 ```shell
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py work_dirs/pp-lyft/latest.pth 8 --out work_dirs/pp-lyft/results_challenge.pkl --format-only --eval-options 'jsonfile_prefix=work_dirs/pp-lyft/results_challenge' 'csv_savepath=results/pp-lyft/results_challenge.csv'
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py work_dirs/pp-lyft/latest.pth 8 --cfg-options test_evaluator.jsonfile_prefix=work_dirs/pp-lyft/results_challenge  test_evaluator.csv_savepath=results/pp-lyft/results_challenge.csv
 ```
 
 After generating the `work_dirs/pp-lyft/results_challenge.csv`, you can submit it to the Kaggle evaluation server. Please refer to the [official website](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles) for more information.
