@@ -1221,10 +1221,8 @@ class IndoorPatchPointSample(BaseTransform):
         return points
 
     def _patch_points_sampling(
-        self,
-        points: BasePoints,
-        sem_mask: np.ndarray
-    ) -> Tuple[BasePoints, np.ndarray]:
+            self, points: BasePoints,
+            sem_mask: np.ndarray) -> Tuple[BasePoints, np.ndarray]:
         """Patch points sampling.
 
         First sample a valid patch.
@@ -1470,9 +1468,7 @@ class VoxelBasedPointSampler(BaseTransform):
             self.prev_voxel_generator = None
             self.prev_voxel_num = 0
 
-    def _sample_points(self,
-                       points: np.ndarray,
-                       sampler: VoxelGenerator,
+    def _sample_points(self, points: np.ndarray, sampler: VoxelGenerator,
                        point_dim: int) -> np.ndarray:
         """Sample points for each points subset.
 
