@@ -24,6 +24,7 @@
 - Fix visualization bug (#1828, #1839)
 - Fix dbsampler bug (#1812)
 - Fix model not registered bug (#1808)
+- Fix nuscenes mono3d bug (#1837)
 
 #### Contributors
 
