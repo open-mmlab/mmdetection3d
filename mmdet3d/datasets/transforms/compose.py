@@ -32,7 +32,7 @@ class Compose:
             data (dict): A result dict contains the data to transform.
 
         Returns:
-           dict: Transformed data.
+            dict: Transformed data.
         """
 
         for t in self.transforms:
