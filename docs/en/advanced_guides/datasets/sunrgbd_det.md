@@ -161,11 +161,11 @@ sunrgbd
     - info\['images'\]\['CAM0'\]\['depth2img'\]: Transformation matrix from depth to image with shape (4, 4).
     - info\['images'\]\['CAM0'\]\['height'\]: The height of image.
     - info\['images'\]\['CAM0'\]\['width'\]: The width of image.
-  - info\['instances'\]: A list of dict contains all the annotations of this frame. Each dict corresponds to annotations of single instance.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in depth coordinate system.
-    - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
-    - info\['instances'\]\['bbox_label_3d'\]: An int indicates the 3D label of instance and the -1 indicates ignore class.
-    - info\['instances'\]\['bbox_label'\]: An int indicates the 2D label of instance and the -1 indicates ignore class.
+  - info\['instances'\]: A list of dict contains all the annotations of this frame. Each dict corresponds to annotations of single instance. For the i-th instance:
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in depth coordinate system.
+    - info\['instances'\]\[i\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: An int indicates the 3D label of instance and the -1 indicates ignore class.
+    - info\['instances'\]\[i\]\['bbox_label'\]: An int indicates the 2D label of instance and the -1 indicates ignore class.
 - `sunrgbd_infos_val.pkl`: The val data infos, which shares the same format as `sunrgbd_infos_train.pkl`.
 
 ## Train pipeline
@@ -236,12 +236,12 @@ train_pipeline = [
 ]
 ```
 
-Data augmentation/normalization for images:
+Data augmentation for images:
 
 - `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
 - `RandomFlip`: randomly flip the input image.
 
-The image augmentation and normalization functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines).
+The image augmentation functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/dev-3.x/mmdet/datasets/transforms).
 
 ## Metrics
 

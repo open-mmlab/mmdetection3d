@@ -62,7 +62,7 @@ mmdetection3d
   - info\['timestamp'\]: Timestamp of the sample data.
   - info\['lidar_points'\]: A dict contains all the information related to the lidar points.
     - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
-    - info\['lidar_points'\]\['num_pts_feats'\]: Number of features for each point.
+    - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
     - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
@@ -79,7 +79,7 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]: Timestamp of the image.
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
-  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
+  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance. For the i-th instance:
     - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, w, h, yaw) order.
     - info\['instances'\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
     - info\['instances'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2.).
@@ -87,14 +87,14 @@ mmdetection3d
     - info\['instances'\]\['num_radar_pts'\]: Number of radar points included in each 3D bounding box.
     - info\['instances'\]\['bbox_3d_isvalid'\]: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
   - info\['cam_instances'\]: It is a dict contains keys `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. For vision-based 3D object detection task, we split 3D annotations of the whole scenes according to the camera they belong to.
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_label'\]: Label of instance.
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_label_3d'\]: Label of instance.
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox'\]: 2D bounding box annotation (exterior rectangle of the projected 3D box), a list arrange as \[x1, y1, x2, y2\].
-    - info\['cam_instances'\]\['CAM_XXX'\]\['center_2d'\]: Projected center location on the image, a list has shape (2,), .
-    - info\['cam_instances'\]\['CAM_XXX'\]\['depth'\]: The depth of projected center.
-    - info\['cam_instances'\]\['CAM_XXX'\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2,).
-    - info\['cam_instances'\]\['CAM_XXX'\]\['attr_label'\]: The attr label of instance. We maintain a default attribute collection and mapping for attribute classification.
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, h, w, yaw) order.
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label'\]: Label of instance.
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label_3d'\]: Label of instance.
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox'\]: 2D bounding box annotation (exterior rectangle of the projected 3D box), a list arrange as \[x1, y1, x2, y2\].
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['center_2d'\]: Projected center location on the image, a list has shape (2,), .
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['depth'\]: The depth of projected center.
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2,).
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]: The attr label of instance. We maintain a default attribute collection and mapping for attribute classification.
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, h, w, yaw) order.
 
 Note:
 

@@ -201,7 +201,7 @@ class MyDataset(Det3DDataset):
     }
 
     def parse_ann_info(self, info):
-        """Get annotation info according to the given index.
+        """Get annotation info according to the given info.
 
         Args:
             info (dict): Data information of single data sample.

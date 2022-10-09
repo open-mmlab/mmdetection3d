@@ -98,7 +98,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 注意：
 
-1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c。版本号将保存在训练的模型里。推荐在每一次执行步骤 d 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
+1. Git 的 commit id 在步骤 d 将会被写入到版本号当中，例 0.6.0+2e7045c。版本号将保存在训练的模型里。推荐在每一次执行步骤 4 时，从 github 上获取最新的更新。如果基于 C++/CUDA 的代码被修改了，请执行以下步骤；
 
    > 重要: 如果你重装了不同版本的 CUDA 或者 PyTorch 的 mmdet，请务必移除 `./build` 文件。
 
@@ -146,7 +146,7 @@ pip install -v -e .  # or "python setup.py develop"
 python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
 ```
 
-例：
+例如：
 
 ```shell
 python demo/pcd_demo.py demo/data/kitti/000008.bin configs/second/second_hv-secfpn_8xb6-80e_kitti-3d-car.py checkpoints/second_hv-secfpn_8xb6-80e_kitti-3d-car_20200620_230238-393f000c.pth

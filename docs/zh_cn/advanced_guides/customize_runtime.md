@@ -202,7 +202,7 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
 
 ## 自定义训练规程
 
-默认情况，我们使用阶梯式学习率衰减的 1 倍训练规程。这会调用 MMEngine 中的 [MultiStepLR](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139)。
+默认情况，我们使用阶梯式学习率衰减的 1 倍训练规程。这会调用 MMEngine 中的 [`MultiStepLR`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139)。
 我们在[这里](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py)支持很多其他学习率规划方案，比如`余弦退火`和`多项式衰减`规程。下面是一些样例：
 
 - 多项式衰减规程:
@@ -266,7 +266,9 @@ MMEngine 提供了一些有用的[钩子](https://github.com/open-mmlab/mmengine
 这里我们给出一个在 mmdet3d 中创建并使用新钩子的例子。
 
 ```python
-from mmengine.hooks import HOOKS, Hook
+from mmengine.hooks import Hook
+
+from mmdet3d.registry import HOOKS
 
 
 @HOOKS.register_module()
@@ -350,7 +352,7 @@ custom_hooks = [
 - `CheckpointHook`：钩子用来定期地保存检查点。
 - `DistSamplerSeedHook`：钩子用来设置采样和批采样的种子。
 
-`IterTimerHook`，`ParamSchedulerHook` 和 `DistSamplerSeedHook` 都很简单，通常不需要修改，因此此处我们将介绍如何使用 `LoggerHook`，`CheckpointHook` 和 `DetVisualizationHook`。
+`IterTimerHook`，`ParamSchedulerHook` 和 `DistSamplerSeedHook` 都很简单，通常不需要修改，因此此处我们将介绍如何使用 `LoggerHook`，`CheckpointHook` 和 `Det3DVisualizationHook`。
 
 #### CheckpointHook
 

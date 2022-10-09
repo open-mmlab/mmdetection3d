@@ -81,12 +81,12 @@ kitti
 其中的各项文件的含义如下所示：
 
 - `kitti_gt_database/xxxxx.bin`：训练数据集中包含在 3D 标注框中的点云数据
-- `kitti_infos_train.pkl`：训练数据集，其中每一帧的信息包含 `metainfo` 和 `data_list` 两个键值。`metainfo` 是一个字典，它包含数据集的基本信息，例如 `CLASSES` 和 `version`。`data_list` 是一个列表，它包含了所有需要的数据信息，每一个元素是一个样本的详细信息字典。详细信息如下所示：
+- `kitti_infos_train.pkl`：训练数据集，该字典包含了两个键值：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `CLASSES` 和 `version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的详细信息。
   - info\['sample_idx'\]：样本在整个数据集的索引。
   - info\['images'\]：多个相机捕获的图像信息。是一个字典，包含 5 个键值：`CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`。
     - info\['images'\]\['R0_rect'\]：校准旋转矩阵，是一个 4x4 数组。
     - info\['images'\]\['CAM2'\]：包含 `CAM2` 相机传感器的信息。
-      - info\['images'\]\['CAM2'\]\['img_path'\]：图像文件的路径。
+      - info\['images'\]\['CAM2'\]\['img_path'\]：图像的文件名。
       - info\['images'\]\['CAM2'\]\['height'\]：图像的高。
       - info\['images'\]\['CAM2'\]\['width'\]：图像的宽。
       - info\['images'\]\['CAM2'\]\['cam2img'\]：相机到图像的变换矩阵，是一个 4x4 数组。
@@ -94,21 +94,21 @@ kitti
       - info\['images'\]\['CAM2'\]\['lidar2img'\]：激光雷达到图像的变换矩阵，是一个 4x4 数组。
     - info\['lidar_points'\]：激光雷达捕获的点云信息。是一个字典，包含了激光雷达点云帧的信息。
       - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
-      - info\['lidar_points'\]\['num_pts_feats'\]：每个点的特征数。
+      - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
       - info\['lidar_points'\]\['Tr_velo_to_cam'\]：Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组。
       - info\['lidar_points'\]\['Tr_imu_to_velo'\]：IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组。
-    - info\['instances'\]：目标检测任务所需要的。是一个列表，每个元素是包含了实例信息的字典。每个字典与该帧的一个实例标注相关。
-      - info\['instances'\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
-      - info\['instances'\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, w, h, l, yaw) 的顺序表示实例的 3D 边界框。
-      - info\['instances'\]\['bbox_label'\]：是一个整数，表示实例的 2D 标签，-1 代表忽略。
-      - info\['instances'\]\['bbox_label_3d'\]：是一个整数，表示实例的 3D 标签，-1 代表忽略。
-      - info\['instances'\]\['depth'\]：3D 边界框投影到相关图像平面的中心点的深度。
-      - info\['instances'\]\['num_lidar_pts'\]：3D 边界框内的激光雷达点数。
-      - info\['instances'\]\['center_2d'\]：3D 边界框投影的 2D 中心。
-      - info\['instances'\]\['difficulty'\]：Kitti 官方定义的困难度，包括简单、适中、困难。
-      - info\['instances'\]\['truncated'\]：实例框是否截断。
-      - info\['instances'\]\['occluded'\]：实例框是半遮挡还是全遮挡。
-      - info\['instances'\]\['group_ids'\]：用于多部件的目标。
+    - info\['instances'\]：目标检测任务所需要的。是一个列表，每个元素是包含了实例信息的字典。每个字典与该帧的一个实例标注相关。对于其中的第 i 个实例，我们有：
+      - info\['instances'\]\[i\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
+      - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, w, h, l, yaw) 的顺序表示实例的 3D 边界框。
+      - info\['instances'\]\[i\]\['bbox_label'\]：是一个整数，表示实例的 2D 标签，-1 代表忽略。
+      - info\['instances'\]\[i\]\['bbox_label_3d'\]：是一个整数，表示实例的 3D 标签，-1 代表忽略。
+      - info\['instances'\]\[i\]\['depth'\]：3D 边界框投影到相关图像平面的中心点的深度。
+      - info\['instances'\]\[i\]\['num_lidar_pts'\]：3D 边界框内的激光雷达点数。
+      - info\['instances'\]\[i\]\['center_2d'\]：3D 边界框投影的 2D 中心。
+      - info\['instances'\]\[i\]\['difficulty'\]：KITTI 官方定义的困难度，包括简单、适中、困难。
+      - info\['instances'\]\[i\]\['truncated'\]：从 0（非截断）到 1（截断）的浮点数，其中截断指的是离开检测图像边界的检测目标。
+      - info\['instances'\]\[i\]\['occluded'\]：整数 (0,1,2,3) 表示目标的遮挡状态：0 = 完全可见，1 = 部分遮挡，2 = 大面积遮挡，3 = 未知。
+      - info\['instances'\]\[i\]\['group_ids'\]：用于多部分的物体。
     - info\['plane'\]（可选）：地平面信息。
 
 请参考 [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) 和 [update_infos_to_v2.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/update_infos_to_v2.py) 了解更多细节。
@@ -189,7 +189,7 @@ aos  AP:97.70, 89.11, 87.38
 data_root = 'data/kitti'
 test_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_val.pkl',
+    ann_file=data_root + 'kitti_infos_test.pkl',
     metric='bbox',
     pklfile_prefix='results/kitti-3class/kitti_results',
     submission_prefix='results/kitti-3class/kitti_results')

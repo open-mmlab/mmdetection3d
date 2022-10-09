@@ -232,7 +232,7 @@ scannet
     - info\['lidar_points'\]\['axis_align_matrix'\]: The transformation matrix to align the axis.
   - info\['pts_semantic_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
   - info\['pts_instance_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
-  - info\['instances'\]: A list of dict contains all annotations, each dict contains all annotation information of single instance.
+  - info\['instances'\]: A list of dict contains all annotations, each dict contains all annotation information of single instance. For the i-th instance:
     - info\['instances'\]\[i\]\['bbox_3d'\]: List of 6 numbers representing the axis-aligned 3D bounding box of the instance in depth coordinate system, in (x, y, z, l, w, h) order.
     - info\['instances'\]\[i\]\['bbox_label_3d'\]: The label of each 3d bounding boxes.
 - `scannet_infos_val.pkl`: The val data infos, which shares the same format as `scannet_infos_train.pkl`.

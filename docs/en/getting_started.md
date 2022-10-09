@@ -99,7 +99,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 Note:
 
-1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
+1. The git commit id will be written to the version number with step 4, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
    It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
 
    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.

@@ -34,7 +34,7 @@
 
 **注意**：对于自定义数据集评估目前我们只支持 KITTI 评估方法。
 
-3D 框应存储在同一的 3D 坐标系中。
+3D 框应存储在统一的 3D 坐标系中。
 
 #### 校准格式
 
@@ -59,7 +59,7 @@ lidar2cam4
 
 #### 基于激光雷达的 3D 检测
 
-基于激光雷达的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据训练/验证集，`points` 包含存储成 `.bin` 格式的点云数据，`labels` 包含 3D 检测的标签文件。
+基于激光雷达的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`points` 包含存储成 `.bin` 格式的点云数据，`labels` 包含 3D 检测的标签文件。
 
 ```
 mmdetection3d
@@ -83,7 +83,7 @@ mmdetection3d
 
 ## 基于视觉的 3D 检测
 
-基于视觉的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据训练/验证集，`images` 包含来自不同相机的图像，例如 `camera_x` 获得的图像应放在 `images\images_x` 下，`calibs` 包含校准信息文件，其中存储了每个相机的内参矩阵，`labels` 包含 3D 检测的标签文件。
+基于视觉的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`images` 包含来自不同相机的图像，例如 `camera_x` 获得的图像应放在 `images\images_x` 下，`calibs` 包含校准信息文件，其中存储了每个相机的内参矩阵，`labels` 包含 3D 检测的标签文件。
 
 ```
 mmdetection3d
@@ -151,7 +151,7 @@ mmdetection3d
 
 #### 基于激光雷达的 3D 语义分割
 
-基于激光雷达的 3D 语义分割原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据训练/验证集，`points` 包含点云数据，`semantic_mask` 包含逐点级标签。
+基于激光雷达的 3D 语义分割原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`points` 包含点云数据，`semantic_mask` 包含逐点级标签。
 
 ```
 mmdetection3d
@@ -201,7 +201,7 @@ class MyDataset(Det3DDataset):
     }
 
     def parse_ann_info(self, info):
-        """Get annotation info according to the given index.
+        """Get annotation info according to the given info.
 
         Args:
             info (dict): Data information of single data sample.
@@ -231,7 +231,7 @@ class MyDataset(Det3DDataset):
 数据预处理后，用户可以通过两个步骤来训练自定义数据集：
 
 1. 修改配置文件来使用自定义数据集。
-2. 检测自定义数据集的标注。
+2. 验证自定义数据集的正确性。
 
 这里我们以在自定义数据集上训练 PointPillars 为例：
 

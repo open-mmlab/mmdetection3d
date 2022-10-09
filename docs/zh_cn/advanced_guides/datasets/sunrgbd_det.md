@@ -157,15 +157,15 @@ sunrgbd
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar_path'\]：点云数据 `xxx.bin` 的文件路径。
   - info\['images'\]：字典包含了与图像数据相关的信息。
-    - info\['images'\]\['CAM0'\]\['img_path'\]：图像文件名。
+    - info\['images'\]\['CAM0'\]\['img_path'\]：图像的文件名。
     - info\['images'\]\['CAM0'\]\['depth2img'\]：深度到图像的变换矩阵，形状为 (4, 4)。
     - info\['images'\]\['CAM0'\]\['height'\]：图像的高。
     - info\['images'\]\['CAM0'\]\['width'\]：图像的宽。
-  - info\['instances'\]：由字典组成的列表，包含了该帧的所有标注信息。每个字典与单个实例的标注相关。
-    - info\['instances'\]\['bbox_3d'\]：长度为 7 的列表，表示深度坐标系下的 3D 边界框。
-    - info\['instances'\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
-    - info\['instances'\]\['bbox_label_3d'\]：整数表示实例的 3D 标签，-1 表示忽略该类别。
-    - info\['instances'\]\['bbox_label'\]：整数表示实例的 2D 标签，-1 表示忽略该类别。
+  - info\['instances'\]：由字典组成的列表，包含了该帧的所有标注信息。每个字典与单个实例的标注相关。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，表示深度坐标系下的 3D 边界框。
+    - info\['instances'\]\[i\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]：整数表示实例的 3D 标签，-1 表示忽略该类别。
+    - info\['instances'\]\[i\]\['bbox_label'\]：整数表示实例的 2D 标签，-1 表示忽略该类别。
 - `sunrgbd_infos_val.pkl`：验证集上的数据信息，与 `sunrgbd_infos_train.pkl` 格式完全一致。
 
 ## 训练流程
@@ -236,12 +236,12 @@ train_pipeline = [
 ]
 ```
 
-图像上的数据增强/归一化
+图像上的数据增强
 
 - `Resize`: 改变输入图像的大小, `keep_ratio=True` 意味着图像的比例不改变。
 - `RandomFlip`: 随机地翻折图像。
 
-图像增强和归一化函数的实现取自 [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines)。
+图像增强的实现取自 [MMDetection](https://github.com/open-mmlab/mmdetection/tree/dev-3.x/mmdet/datasets/transforms)。
 
 ## 度量指标
 

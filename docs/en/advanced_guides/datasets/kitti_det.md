@@ -80,14 +80,13 @@ kitti
 ```
 
 - `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
-- `kitti_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
-  `metainfo` is a dict, it contains the essential information for the dataset, such as `CLASSES` and `version`.
-  `data_list` is a list, it has all the needed data information, and each item is detailed information dict for a single sample. Detailed information is as follows:
+- `kitti_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
+  `metainfo` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict (hereinafter referred to as `info`) contains all the detailed information of single sample as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['images'\]: Information of images captured by multiple cameras. A dict contains five keys including: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.
     - info\['images'\]\['R0_rect'\]: Rectifying rotation matrix with shape (4, 4).
     - info\['images'\]\['CAM2'\]: Include some information about the `CAM2` camera sensor.
-      - info\['images'\]\['CAM2'\]\['img_path'\]: The path to the image file.
+      - info\['images'\]\['CAM2'\]\['img_path'\]: Filename of image.
       - info\['images'\]\['CAM2'\]\['height'\]: The height of the image.
       - info\['images'\]\['CAM2'\]\['width'\]: The width of the image.
       - info\['images'\]\['CAM2'\]\['cam2img'\]: Transformation matrix from camera to image with shape (4, 4).
@@ -95,21 +94,21 @@ kitti
       - info\['images'\]\['CAM2'\]\['lidar2img'\]: Transformation matrix from lidar to image with shape (4, 4).
   - info\['lidar_points'\]: Information of point cloud captured by Lidar. A dict contains information of LiDAR point cloud frame.
     - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
-    - info\['lidar_points'\]\['num_pts_feats'\]: Number of features for each point.
+    - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate with shape (4, 4).
     - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate with shape (4, 4).
-  - info\['instances'\]: Required by object detection task. A list contains some dict of instance infos. Each dict corresponds to annotations of one instance in this frame.
-    - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
-    - info\['instances'\]\['bbox_label'\]: An int indicate the 2D label of instance and the -1 indicating ignore.
-    - info\['instances'\]\['bbox_label_3d'\]: An int indicate the 3D label of instance and the -1 indicating ignore.
-    - info\['instances'\]\['depth'\]: Projected center depth of the 3D bounding box with respect to the image plane.
-    - info\['instances'\]\['num_lidar_pts'\]: The number of LiDAR points in the 3D bounding box.
-    - info\['instances'\]\['center_2d'\]: Projected 2D center of the 3D bounding box.
-    - info\['instances'\]\['difficulty'\]: Kitti difficulty, Easy, Moderate, Hard.
-    - info\['instances'\]\['truncated'\]: The instances bbox is truncated.
-    - info\['instances'\]\['occluded'\]: The instances bbox is semi occluded or fully occluded.
-    - info\['instances'\]\['group_ids'\]: Used for multi-part object.
+  - info\['instances'\]: Required by object detection task. A list contains some dict of instance infos. Each dict corresponds to annotations of one instance in this frame. For the i-th instance:
+    - info\['instances'\]\[i\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
+    - info\['instances'\]\[i\]\['bbox_label'\]: An int indicate the 2D label of instance and the -1 indicating ignore.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: An int indicate the 3D label of instance and the -1 indicating ignore.
+    - info\['instances'\]\[i\]\['depth'\]: Projected center depth of the 3D bounding box with respect to the image plane.
+    - info\['instances'\]\[i\]\['num_lidar_pts'\]: The number of LiDAR points in the 3D bounding box.
+    - info\['instances'\]\[i\]\['center_2d'\]: Projected 2D center of the 3D bounding box.
+    - info\['instances'\]\[i\]\['difficulty'\]: KITTI difficulty, Easy, Moderate, Hard.
+    - info\['instances'\]\[i\]\['truncated'\]: Float from 0 (non-truncated) to 1 (truncated), where truncated refers to the object leaving image boundaries.
+    - info\['instances'\]\[i\]\['occluded'\]: Integer (0,1,2,3) indicating occlusion state: 0 = fully visible, 1 = partly occluded, 2 = largely occluded, 3 = unknown.
+    - info\['instances'\]\[i\]\['group_ids'\]: Used for multi-part object.
   - info\['plane'\](optional): Road level information.
 
 Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) and [update_infos_to_v2.py ](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/update_infos_to_v2.py) for more details.
@@ -188,7 +187,7 @@ An example to test PointPillars on KITTI with 8 GPUs and generate a submission t
 data_root = 'data/kitti/'
 test_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_val.pkl',
+    ann_file=data_root + 'kitti_infos_test.pkl',
     metric='bbox',
     pklfile_prefix='results/kitti-3class/kitti_results',
     submission_prefix='results/kitti-3class/kitti_results')

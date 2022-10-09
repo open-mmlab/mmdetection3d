@@ -103,10 +103,10 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]: Timestamp of the image.
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]: The transformation matrix from this camera sensor to ego vehicle. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
-  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in lidar coordinate system of the instance, in (x, y, z, l, w, h, yaw) order.
-    - info\['instances'\]\['bbox_label_3d'\]: A int starting from 0 indicates the label of instance, while the -1 indicates ignore class.
-    - info\['instances'\]\['bbox_3d_isvalid'\]: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
+  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance. For the i-th instance:
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in lidar coordinate system of the instance, in (x, y, z, l, w, h, yaw) order.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: A int starting from 0 indicates the label of instance, while the -1 indicates ignore class.
+    - info\['instances'\]\[i\]\['bbox_3d_isvalid'\]: Whether each bounding box is valid. In general, we only take the 3D boxes that include at least one lidar or radar point as valid boxes.
 
 Next, we will elaborate on the difference compared to nuScenes in terms of the details recorded in these info files.
 
@@ -114,8 +114,8 @@ Next, we will elaborate on the difference compared to nuScenes in terms of the d
 
 - `lyft_infos_train.pkl`:
 
-  - Without info\['instances'\]\['velocity'\], There is no velocity measurement on Lyft.
-  - Without info\['instances'\]\['num_lidar_pts'\] and info\['instances'\]\['num_radar_pts'\]
+  - Without info\['instances'\]\[i\]\['velocity'\], There is no velocity measurement on Lyft.
+  - Without info\['instances'\]\[i\]\['num_lidar_pts'\] and info\['instances'\]\['num_radar_pts'\]
 
 Here we only explain the data recorded in the training info files. The same applies to the validation set and test set (without instances).
 

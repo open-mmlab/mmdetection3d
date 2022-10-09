@@ -233,7 +233,7 @@ scannet
     - info\['lidar_points'\]\['axis_align_matrix'\]：用于对齐坐标轴的变换矩阵。
   - info\['pts_semantic_mask_path'\]：包含语义分割标注的 `xxx.bin` 文件路径。
   - info\['pts_instance_mask_path'\]：包含实例分割标注的 `xxx.bin` 文件路径。
-  - info\['instances'\]：字典组成的列表，每个字典包含一个实例的所有标注信息。
+  - info\['instances'\]：字典组成的列表，每个字典包含一个实例的所有标注信息。对于其中的第 i 个实例，我们有：
     - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 6 的列表，以 (x, y, z, l, w, h) 的顺序表示深度坐标系下与坐标轴平行的 3D 边界框。
     - info\[instances\]\[i\]\['bbox_label_3d'\]：3D 边界框的标签。
 - `scannet_infos_val.pkl`：验证集上的数据信息，与 `scannet_infos_train.pkl` 格式完全一致。

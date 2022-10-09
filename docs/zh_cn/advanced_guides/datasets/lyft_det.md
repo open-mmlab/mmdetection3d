@@ -101,10 +101,10 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]：图像的时间戳。
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]：该相机传感器到自车的变换矩阵。（4x4 列表）
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]：激光雷达传感器到该相机的变换矩阵。（4x4 列表）
-  - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。
-    - info\['instances'\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, w, h, yaw) 的顺序表示实例在激光雷达坐标系下的 3D 边界框。
-    - info\['instances'\]\['bbox_label_3d'\]：整数从 0 开始表示实例的标签，其中 -1 代表忽略该类别。
-    - info\['instances'\]\['bbox_3d_isvalid'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
+  - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, w, h, yaw) 的顺序表示实例在激光雷达坐标系下的 3D 边界框。
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]：整数从 0 开始表示实例的标签，其中 -1 代表忽略该类别。
+    - info\['instances'\]\[i\]\['bbox_3d_isvalid'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
 
 接下来将详细介绍 Lyft 数据集和 nuScenes 数据集之间的数据集信息文件中的不同点：
 
@@ -112,8 +112,8 @@ mmdetection3d
 
 - `lyft_infos_train.pkl`
 
-  - info\['instances'\]\['velocity'\] 不存在，Lyft 数据集中不存在速度评估信息。
-  - info\['instances'\]\['num_lidar_pts'\] 及 info\['instances'\]\['num_radar_pts'\] 不存在。
+  - info\['instances'\]\[i\]\['velocity'\] 不存在，Lyft 数据集中不存在速度评估信息。
+  - info\['instances'\]\[i\]\['num_lidar_pts'\] 及 info\['instances'\]\['num_radar_pts'\] 不存在。
 
 这里仅介绍存储在训练数据文件的数据记录信息。这同样适用于验证集和测试集（没有实例）。
 

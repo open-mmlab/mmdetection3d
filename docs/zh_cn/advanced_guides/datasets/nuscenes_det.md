@@ -62,7 +62,7 @@ mmdetection3d
   - info\['timestamp'\]：样本数据时间戳。
   - info\['lidar_points'\]：是一个字典，包含了所有与激光雷达点相关的信息。
     - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
-    - info\['lidar_points'\]\['num_pts_feats'\]：每个点的特征数。
+    - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
   - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）
@@ -79,22 +79,22 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]：图像的时间戳。
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]：该相机传感器到自车的变换矩阵。（4x4 列表）
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]：激光雷达传感器到该相机的变换矩阵。（4x4 列表）
-  - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。
-    - info\['instances'\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, w, h, yaw) 的顺序表示实例的 3D 边界框。
-    - info\['instances'\]\['bbox_label_3d'\]：整数表示实例的标签，-1 代表忽略。
-    - info\['instances'\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
-    - info\['instances'\]\['num_lidar_pts'\]：每个 3D 边界框内包含的激光雷达点数。
-    - info\['instances'\]\['num_radar_pts'\]：每个 3D 边界框内包含的雷达点数。
-    - info\['instances'\]\['bbox_3d_isvalid'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
+  - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, w, h, yaw) 的顺序表示实例的 3D 边界框。
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]：整数表示实例的标签，-1 代表忽略。
+    - info\['instances'\]\[i\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
+    - info\['instances'\]\[i\]\['num_lidar_pts'\]：每个 3D 边界框内包含的激光雷达点数。
+    - info\['instances'\]\[i\]\['num_radar_pts'\]：每个 3D 边界框内包含的雷达点数。
+    - info\['instances'\]\[i\]\['bbox_3d_isvalid'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
   - info\['cam_instances'\]：是一个字典，包含以下键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。对于基于视觉的 3D 目标检测任务，我们将整个场景的 3D 标注划分至它们所属于的相应相机中。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_label'\]：实例标签。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_label_3d'\]：实例标签。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox'\]：2D 边界框标注（3D 框投影的矩形框），顺序为 \[x1, y1, x2, y2\] 的列表。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['center_2d'\]：投影到图像上的中心点，大小为 (2, ) 的列表。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['depth'\]：投影中心的深度。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
-    - info\['cam_instances'\]\['CAM_XXX'\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射
-    - info\['cam_instances'\]\['CAM_XXX'\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label'\]：实例标签。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label_3d'\]：实例标签。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox'\]：2D 边界框标注（3D 框投影的矩形框），顺序为 \[x1, y1, x2, y2\] 的列表。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['center_2d'\]：3D 框投影到图像上的中心点，大小为 (2, ) 的列表。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['depth'\]：3D 框投影中心的深度。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
 
 注意：
 
