@@ -4,7 +4,7 @@
 
 #### New Features
 
-- Refactor PointRCNN in mmdet3d 1.1.x version (#1819)
+- Refactor PointRCNN in mmdet3d 1.1 version (#1819)
 
 #### Improvements
 
@@ -13,9 +13,9 @@
 - Update customized dataset docs (#1845)
 - Update dataset transforms typehints (#1875)
 - Fix ci (#1813, #1865, #1877)
-- Update browse dataset script (#1817)
-- Fix convert_to_datasample interface in detector (#1843)
-- Add auto_scale_lr in config (#1807)
+- Update `browse_dataset.py` script (#1817)
+- Rename `convert_to_datasample` to `add_pred_to_datasample` in detectors (#1843)
+- Add `auto_scale_lr` in config to support auto-scale learning rate training (#1807)
 
 #### Bug Fixes
 
