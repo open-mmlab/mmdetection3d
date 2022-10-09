@@ -19,10 +19,11 @@
 
 #### Bug Fixes
 
-- Fix nuscenes dataset lack of num_pts_feats key (#1882)
+- Fix the lack of `num_pts_feats` key in nuscenes dataset and complete docstring (#1882)
 - Fix mono3d detection demo (#1864)
-- Fix visualization bug (#1828, #1839)
-- Fix dbsampler bug (#1812)
+- Add visualize output-dir check to make sure it existed (#1828)
+- Fix visualization hook to support different modality visualize (#1839)
+- Fix the dbsampler bug to use ground plane data (#1812)
 - Fix model not registered bug (#1808)
 - Fix nuscenes mono3d bug (#1837)
 
