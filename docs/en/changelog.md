@@ -14,8 +14,8 @@
 
 #### Bug Fixes
 
-- Fix PointRCNN produce Nan loss bug in training (#1874)
-- Fix segmentation visualization bug due to wrong parameter passing (#1858)
+- Fix Nan loss bug during PointRCNN training (#1874)
+- Fix point cloud segmentation visualization bug due to wrong parameter passing (#1858)
 - Fix visualization bug due to empty prediction labels (#1725)
 
 #### Contributors
