@@ -6,7 +6,7 @@ from torch import nn as nn
 
 @ATTENTION.register_module()
 class GroupFree3DMHA(MultiheadAttention):
-    """A warpper for torch.nn.MultiheadAttention for GroupFree3D.
+    """A wrapper for torch.nn.MultiheadAttention for GroupFree3D.
 
     This module implements MultiheadAttention with identity connection,
     and positional encoding used in DETR is also passed as input.

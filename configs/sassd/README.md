@@ -1,6 +1,6 @@
 # Structure Aware Single-stage 3D Object Detection from Point Cloud
 
-> [Structure Aware Single-stage 3D Object Detection from Point Cloud]([https://arxiv.org/abs/2104.02323](https://openaccess.thecvf.com/content_CVPR_2020/papers/He_Structure_Aware_Single-Stage_3D_Object_Detection_From_Point_Cloud_CVPR_2020_paper.pdf))
+> [Structure Aware Single-stage 3D Object Detection from Point Cloud](<[https://arxiv.org/abs/2104.02323](https://openaccess.thecvf.com/content_CVPR_2020/papers/He_Structure_Aware_Single-Stage_3D_Object_Detection_From_Point_Cloud_CVPR_2020_paper.pdf)>)
 
 <!-- [ALGORITHM] -->
 
