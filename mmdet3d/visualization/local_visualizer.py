@@ -2,6 +2,7 @@
 import copy
 from typing import Dict, List, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import mmcv
 import numpy as np
 from matplotlib.collections import PatchCollection
@@ -28,7 +29,7 @@ from mmdet3d.registry import VISUALIZERS
 from mmdet3d.structures import (BaseInstance3DBoxes, CameraInstance3DBoxes,
                                 Coord3DMode, DepthInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
-                                PointData)
+                                PointData, points_cam2img)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode)
 
@@ -318,6 +319,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             markersize=16,
             markeredgecolor='red')
 
+    # TODO: Support bev point cloud visualization
     @master_only
     def draw_bev_bboxes(self,
                         bboxes_3d: BaseInstance3DBoxes,
@@ -333,7 +335,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Draw projected 3D boxes on the image.
 
         Args:
-            bbox3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
+            bboxes_3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
                 3d bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             scale (dict): Value to scale the bev bboxes for better
                 visualization. Defaults to 15.
@@ -384,6 +386,38 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             line_styles=line_styles,
             line_widths=line_widths,
             face_colors=face_colors)
+
+    @master_only
+    def draw_points_on_image(
+            self,
+            points: Union[np.ndarray, Tensor],
+            pts2img: np.ndarray,
+            sizes: Optional[Union[np.ndarray, Tensor, int]] = 10) -> None:
+        """Draw projected points on the image.
+
+        Args:
+            positions (Union[np.ndarray, torch.Tensor]): Positions to draw.
+            pts2imgs (np,ndarray): The transformatino matrix from the
+                coordinate of point cloud to image plane.
+            sizes (Optional[Union[np.ndarray, torch.Tensor, int]]): The
+                marker size. Default to 10.
+        """
+        check_type('points', points, (np.ndarray, Tensor))
+        points = tensor2ndarray(points)
+        assert self._image is not None, 'Please set image using `set_image`'
+        projected_points = points_cam2img(points, pts2img, with_depth=True)
+        depths = projected_points[:, 2]
+        colors = (depths % 20) / 20
+        # use colormap to obtain the render color
+        color_map = plt.get_cmap('jet')
+        self.ax_save.scatter(
+            projected_points[:, 0],
+            projected_points[:, 1],
+            c=colors,
+            cmap=color_map,
+            s=sizes,
+            alpha=0.5,
+            edgecolors='none')
 
     # TODO: set bbox color according to palette
     @master_only

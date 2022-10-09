@@ -2,7 +2,7 @@
 
 MMDetection3D provides a `Det3DLocalVisualizer` to visualize and store the state of the model during training and testing, as well as results, with the following features.
 
-1. Support the basic drawing interface for multi-modality data and multi tasks.
+1. Support the basic drawing interface for multi-modality data and multi-task.
 2. Support multiple backends such as local, TensorBoard, to write training status such as `loss`, `lr`, or performance evaluation metrics and to a specified single or multiple backends.
 3. Support ground truth visualization on multimodal data, and cross-modal visualization of 3D detection results.
 
