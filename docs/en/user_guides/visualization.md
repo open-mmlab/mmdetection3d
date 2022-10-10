@@ -10,6 +10,30 @@ MMDetection3D provides a `Det3DLocalVisualizer` to visualize and store the state
 
 Inherited from `DetLocalVisualizer`, `Det3DLocalVisualizer` provides an interface for drawing common objects on 2D images, such as drawing detection boxes, points, text, lines, circles, polygons, and binary masks. More details about 2D drawing can refer to the [visualization documentation](https://mmengine.readthedocs.io/zh_CN/latest/advanced_tutorials/visualization.html) in MMDetection. Here we introduce the 3D drawing interface:
 
+### Drawing point cloud on the image
+
+We support drawing point cloud on the image by using `draw_points_on_image`.
+
+```python
+import mmcv
+from mmengine import load
+from mmdet3d.visualization import Det3DLocalVisualizer
+import numpy as np
+info_file = load('demo/data/kitti/000008.pkl')
+points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
+points = points.reshape(-1, 4)[:, :3]
+lidar2img = np.array(info_file['data_list'][0]['images']['CAM2']['lidar2img'], dtype=np.float32)
+
+visualizer = Det3DLocalVisualizer()
+img = mmcv.imread('demo/data/kitti/000008.png')
+img = mmcv.imconvert(img, 'bgr', 'rgb')
+visualizer.set_image(img)
+visualizer.draw_points_on_image(points, lidar2img)
+visualizer.show()
+```
+
+![points_on_image](../../../resources/points_on_image.png)
+
 ### Drawing 3D Boxes on Point Cloud
 
 We support drawing 3D boxes on point cloud by using `draw_bboxes_3d`.
