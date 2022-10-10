@@ -25,11 +25,9 @@ class LoadMultiViewImageFromFiles(BaseTransform):
             Defaults to 'unchanged'.
     """
 
-    def __init__(
-        self,
-        to_float32: bool = False,
-        color_type: str = 'unchanged'
-    ) -> None:
+    def __init__(self,
+                 to_float32: bool = False,
+                 color_type: str = 'unchanged') -> None:
         self.to_float32 = to_float32
         self.color_type = color_type
 
@@ -154,16 +152,14 @@ class LoadPointsFromMultiSweeps(BaseTransform):
             Defaults to False.
     """
 
-    def __init__(
-        self,
-        sweeps_num: int = 10,
-        load_dim: int = 5,
-        use_dim: List[int] = [0, 1, 2, 4],
-        file_client_args: dict = dict(backend='disk'),
-        pad_empty_sweeps: bool = False,
-        remove_close: bool = False,
-        test_mode: bool = False
-    ) -> None:
+    def __init__(self,
+                 sweeps_num: int = 10,
+                 load_dim: int = 5,
+                 use_dim: List[int] = [0, 1, 2, 4],
+                 file_client_args: dict = dict(backend='disk'),
+                 pad_empty_sweeps: bool = False,
+                 remove_close: bool = False,
+                 test_mode: bool = False) -> None:
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
         self.use_dim = use_dim
@@ -195,11 +191,9 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                 points = np.fromfile(pts_filename, dtype=np.float32)
         return points
 
-    def _remove_close(
-        self,
-        points: Union[np.ndarray, BasePoints],
-        radius: float = 1.0
-    ) -> Union[np.ndarray, BasePoints]:
+    def _remove_close(self,
+                      points: Union[np.ndarray, BasePoints],
+                      radius: float = 1.0) -> Union[np.ndarray, BasePoints]:
         """Removes point too close within a certain radius from origin.
 
         Args:
