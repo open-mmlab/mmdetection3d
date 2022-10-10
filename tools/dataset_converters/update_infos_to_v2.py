@@ -513,7 +513,7 @@ def update_s3dis_infos(pkl_path, out_dir):
     converted_list = []
     for i, ori_info_dict in enumerate(mmengine.track_iter_progress(data_list)):
         temp_data_info = get_empty_standard_data_info()
-        temp_data_info['sample_id'] = i
+        temp_data_info['sample_idx'] = i
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
@@ -828,7 +828,7 @@ def update_waymo_infos(pkl_path, out_dir):
 
         if 'plane' in ori_info_dict:
             temp_data_info['plane'] = ori_info_dict['plane']
-        temp_data_info['sample_id'] = ori_info_dict['image']['image_idx']
+        temp_data_info['sample_idx'] = ori_info_dict['image']['image_idx']
 
         # calib matrix
         for cam_idx, cam_key in enumerate(camera_types):

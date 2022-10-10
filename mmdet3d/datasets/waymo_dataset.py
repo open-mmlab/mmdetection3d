@@ -200,7 +200,7 @@ class WaymoDataset(KittiDataset):
 
                 # TODO check if need to modify the sample id
                 # TODO check when will use it except for evaluation.
-                camera_info['sample_id'] = info['sample_id']
+                camera_info['sample_idx'] = info['sample_idx']
 
                 if not self.test_mode:
                     # used in training
