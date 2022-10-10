@@ -133,12 +133,12 @@ class DataBaseSampler(object):
         from mmengine.logging import MMLogger
         logger: MMLogger = MMLogger.get_current_instance()
         for k, v in db_infos.items():
-            logger.info(f'load {len(v)} {k} database infos')
+            logger.info(f'load {len(v)} {k} database infos in DataBaseSampler')
         for prep_func, val in prepare.items():
             db_infos = getattr(self, prep_func)(db_infos, val)
         logger.info('After filter database:')
         for k, v in db_infos.items():
-            logger.info(f'load {len(v)} {k} database infos')
+            logger.info(f'load {len(v)} {k} database infos in DataBaseSampler')
 
         self.db_infos = db_infos
 

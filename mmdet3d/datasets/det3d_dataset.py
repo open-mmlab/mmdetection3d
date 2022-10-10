@@ -5,6 +5,7 @@ from typing import Callable, List, Optional, Union
 
 import mmengine
 import numpy as np
+import torch
 from mmengine.dataset import BaseDataset
 from mmengine.logging import MMLogger
 
@@ -54,13 +55,14 @@ class Det3DDataset(BaseDataset):
             empty GT. Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        load_eval_anns (bool): Whether to load annotations
-            in test_mode, the annotation will be save in
-            `eval_ann_infos`, which can be use in Evaluator.
-        file_client_args (dict): Configuration of file client.
-            Defaults to `dict(backend='disk')`.
-        show_ins_statistics (bool, optional): Whether to show the statistics of
-            instances before and after through pipeline. Defaults to False.
+        load_eval_anns (bool, optional): Whether to load annotations
+            in test_mode, the annotation will be save in `eval_ann_infos`,
+            which can be used in Evaluator. Defaults to True.
+        file_client_args (dict, optional): Configuration of file client.
+            Defaults to dict(backend='disk').
+        show_ins_num_var (bool, optional): Whether to show variance of the
+            number of instances before and after through pipeline. Defaults to
+            False.
     """
 
     def __init__(self,
@@ -76,8 +78,8 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
-                 show_ins_statistics: bool = False,
-                 **kwargs):
+                 show_ins_num_var: bool = False,
+                 **kwargs) -> None:
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
         self.filter_empty_gt = filter_empty_gt
@@ -116,6 +118,8 @@ class Det3DDataset(BaseDataset):
             }
             self.label_mapping[-1] = -1
 
+        self.ins_num_per_cat = {name: 0 for name in self.metainfo['CLASSES']}
+
         super().__init__(
             ann_file=ann_file,
             metainfo=metainfo,
@@ -131,7 +135,18 @@ class Det3DDataset(BaseDataset):
 
         # used for statistics of the number of instances before and
         # after processing
-        self.show_ins_statistics = show_ins_statistics
+        self.show_ins_num_var = show_ins_num_var
+
+        # show statistics of this dataset
+        logger: MMLogger = MMLogger.get_current_instance()
+        logger.info('-' * 25 + '\n' +
+                    f'The length of the overall dataset: {len(self)}')
+        content_show = ''
+        for cat_name, num in self.ins_num_per_cat.items():
+            content_show += f'\n{cat_name}'.ljust(25) + f'{num}'
+        logger.info(
+            f'The number of instances per category in the dataset:{content_show}'  # noqa: E501
+            + '\n' + '-' * 25)
 
     def _remove_dontcare(self, ann_info):
         """Remove annotations that do not need to be cared.
@@ -231,6 +246,11 @@ class Det3DDataset(BaseDataset):
 
                 ann_info[mapped_ann_name] = temp_anns
             ann_info['instances'] = info['instances']
+
+            for label in ann_info['gt_labels_3d']:
+                cat_name = self.metainfo['CLASSES'][label]
+                self.ins_num_per_cat[cat_name] += 1
+
         return ann_info
 
     def parse_data_info(self, info: dict) -> dict:
@@ -299,6 +319,31 @@ class Det3DDataset(BaseDataset):
 
         return info
 
+    def _show_ins_num_var(self, old_labels: np.ndarray,
+                          new_labels: torch.Tensor):
+        """Show variance of the number of instances before and after through
+        the pipeline.
+
+        Args:
+            old_labels (np.ndarray): The labels before through the pipeline.
+            new_labels (torch.Tensor): The labels after through the pipeline.
+        """
+        logger: MMLogger = MMLogger.get_current_instance()
+        ori_num_per_cat = dict()
+        for label in old_labels:
+            cat_name = self.metainfo['CLASSES'][label]
+            ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name, 0) + 1
+        new_num_per_cat = dict()
+        for label in new_labels:
+            cat_name = self.metainfo['CLASSES'][label]
+            new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name, 0) + 1
+        content_show = ''
+        for cat_name, num in ori_num_per_cat.items():
+            new_num = new_num_per_cat.get(cat_name, 0)
+            content_show += f'\n{cat_name}'.ljust(25) + f'{new_num}/{num}'
+        logger.info('The number of instances per category after and before '
+                    f'through pipeline: {content_show}')
+
     def prepare_data(self, index: int) -> Optional[dict]:
         """Data preparation for both training and testing stage.
 
@@ -334,25 +379,10 @@ class Det3DDataset(BaseDataset):
                     example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
 
-        if self.show_ins_statistics:
-            logger: MMLogger = MMLogger.get_current_instance()
-            ori_num_per_cat = dict()
-            for label in ori_input_dict['ann_info']['gt_labels_3d']:
-                cat_name = self.metainfo['CLASSES'][label]
-                ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name,
-                                                                0) + 1
-            new_num_per_cat = dict()
-            for label in example['data_samples'].gt_instances_3d.labels_3d:
-                cat_name = self.metainfo['CLASSES'][label]
-                new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name,
-                                                                0) + 1
-            content_show = ''
-            for cat_name, num in ori_num_per_cat.items():
-                new_num = new_num_per_cat.get(cat_name, 0)
-                content_show += f'\n{cat_name}'.ljust(25) + f'{new_num}/{num}'
-            logger.info(
-                'The number of instances per category after and before '
-                f'through pipeline: {content_show}')
+        if self.show_ins_num_var:
+            self._show_ins_num_var(
+                ori_input_dict['ann_info']['gt_labels_3d'],
+                example['data_samples'].gt_instances_3d.labels_3d)
 
         return example
 
