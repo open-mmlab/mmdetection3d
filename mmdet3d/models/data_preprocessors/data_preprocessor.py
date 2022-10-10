@@ -13,7 +13,7 @@ from torch.nn import functional as F
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import OptConfigType
 from mmdet.models import DetDataPreprocessor
-from mmdet.models.utils.misc import samplelist_boxtype2tensor
+from mmdet.models.utils.misc import samplelist_boxlist2tensor
 
 
 @MODELS.register_module()
@@ -170,7 +170,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                     })
 
                 if self.boxtype2tensor:
-                    samplelist_boxtype2tensor(data_samples)
+                    samplelist_boxlist2tensor(data_samples)
 
                 if self.pad_mask:
                     self.pad_gt_masks(data_samples)
