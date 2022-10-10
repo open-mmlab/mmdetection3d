@@ -96,9 +96,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v1.0.0rc4 在 2022.8.8 发布。
-
-- 支持 [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+最新的版本 v1.0.0rc5 在 2022.10.11 发布。
 
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
