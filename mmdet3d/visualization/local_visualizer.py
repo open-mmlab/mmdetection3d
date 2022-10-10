@@ -8,7 +8,6 @@ import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from mmengine import mkdir_or_exist
 from mmengine.dist import master_only
 from torch import Tensor
 
@@ -791,7 +790,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 wait_time=wait_time)
 
         if out_file is not None:
-            mkdir_or_exist(out_file)
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
