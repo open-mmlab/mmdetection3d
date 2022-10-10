@@ -4,9 +4,9 @@ We list some potential troubles encountered by users and developers, along with 
 
 ## MMCV/MMDet/MMDet3D Installation
 
-Compatibility issue between MMEngine, MMCV, MMDetection and MMDetection3D; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
+- Compatibility issue between MMEngine, MMCV, MMDetection and MMDetection3D; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
 
-The required versions of MMEngine, MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMEngine, MMCV and MMDetection to avoid installation issues.
+- The required versions of MMEngine, MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMEngine, MMCV and MMDetection to avoid installation issues.
 
 | MMDetection3D version |     MMEngine version     |        MMCV version        |     MMDetection version     |
 | --------------------- | :----------------------: | :------------------------: | :-------------------------: |

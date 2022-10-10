@@ -33,7 +33,6 @@ A total of 10 developers contributed to this release.
 
 @ZwwWayne, @Tai-Wang, @lianqing11, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @tpoisonooo, @ice-tong, @jshilong
 
-
 ### v1.1.0rc0 (1/9/2022)
 
 We are excited to announce the release of MMDetection3D 1.1.0rc0.
