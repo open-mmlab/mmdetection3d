@@ -111,6 +111,8 @@ class Det3DDataset(BaseDataset):
             for label_idx, name in enumerate(metainfo['CLASSES']):
                 ori_label = self.METAINFO['CLASSES'].index(name)
                 self.label_mapping[ori_label] = label_idx
+
+            self.ins_num_per_cat = {name: 0 for name in metainfo['CLASSES']}
         else:
             self.label_mapping = {
                 i: i
@@ -118,7 +120,10 @@ class Det3DDataset(BaseDataset):
             }
             self.label_mapping[-1] = -1
 
-        self.ins_num_per_cat = {name: 0 for name in self.metainfo['CLASSES']}
+            self.ins_num_per_cat = {
+                name: 0
+                for name in self.METAINFO['CLASSES']
+            }
 
         super().__init__(
             ann_file=ann_file,
@@ -133,20 +138,20 @@ class Det3DDataset(BaseDataset):
         self.metainfo['box_type_3d'] = box_type_3d
         self.metainfo['label_mapping'] = self.label_mapping
 
-        # used for statistics of the number of instances before and
-        # after processing
+        # used for showing variance of the number of instances before and
+        # after through the pipeline
         self.show_ins_num_var = show_ins_num_var
 
         # show statistics of this dataset
         logger: MMLogger = MMLogger.get_current_instance()
-        logger.info('-' * 25 + '\n' +
-                    f'The length of the overall dataset: {len(self)}')
+        logger.info('-' * 30)
+        logger.info(f'The length of the dataset: {len(self)}')
         content_show = ''
         for cat_name, num in self.ins_num_per_cat.items():
             content_show += f'\n{cat_name}'.ljust(25) + f'{num}'
         logger.info(
             f'The number of instances per category in the dataset:{content_show}'  # noqa: E501
-            + '\n' + '-' * 25)
+        )
 
     def _remove_dontcare(self, ann_info):
         """Remove annotations that do not need to be cared.
