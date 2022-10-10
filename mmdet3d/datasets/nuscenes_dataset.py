@@ -22,7 +22,7 @@ class NuScenesDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        task (str, optional): Detection task. Defaults to '3d'.
+        task (str, optional): Detection task. Defaults to 'lidar_det'.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
@@ -56,7 +56,7 @@ class NuScenesDataset(Det3DDataset):
     def __init__(self,
                  data_root: str,
                  ann_file: str,
-                 task: str = '3d',
+                 task: str = 'lidar_det',
                  pipeline: List[Union[dict, Callable]] = [],
                  box_type_3d: str = 'LiDAR',
                  modality: dict = dict(

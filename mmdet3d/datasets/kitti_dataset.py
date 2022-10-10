@@ -52,7 +52,7 @@ class KittiDataset(Det3DDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM2',
-                 task: str = '3d',
+                 task: str = 'lidar_det',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -60,6 +60,7 @@ class KittiDataset(Det3DDataset):
                  **kwargs) -> None:
 
         self.pcd_limit_range = pcd_limit_range
+        assert task in ('lidar_det', 'mono_det')
         self.task = task
         super().__init__(
             data_root=data_root,
