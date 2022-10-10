@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, Tuple
+from typing import Tuple
 
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -18,46 +18,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
     boxes on the output features of the backbone+neck.
     """
 
-    def predict(self,
-                batch_inputs_dict: Dict[str, Tensor],
-                batch_data_samples: SampleList,
-                rescale: bool = True) -> SampleList:
-        """Predict results from a batch of inputs and data samples with post-
-        processing.
-
-        Args:
-            batch_inputs_dict (dict): The model input dict which include
-                'imgs' keys
-
-                - imgs (torch.Tensor: Image of each sample.
-
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
-                Samples. It usually includes information such as
-                `gt_instance_3d`.
-            rescale (bool): Whether to rescale the results.
-                Defaults to True.
-
-        Returns:
-            list[:obj:`Det3DDataSample`]: Detection results of the
-            input. Each Det3DDataSample usually contains
-            'pred_instances_3d'. And the ``pred_instances_3d`` normally
-            contains following keys.
-
-            - scores_3d (Tensor): Classification scores, has a shape
-              (num_instance, )
-            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
-              (num_instances, ).
-            - bboxes_3d (Tensor): Contains a tensor with shape
-              (num_instances, C) where C >=7.
-        """
-        x = self.extract_feat(batch_inputs_dict)
-        results_list = self.bbox_head.predict(
-            x, batch_data_samples, rescale=rescale)
-        batch_data_samples = self.convert_to_datasample(
-            batch_data_samples, results_list)
-        return batch_data_samples
-
-    def convert_to_datasample(
+    def add_pred_to_datasample(
         self,
         data_samples: SampleList,
         data_instances_3d: OptInstanceList = None,

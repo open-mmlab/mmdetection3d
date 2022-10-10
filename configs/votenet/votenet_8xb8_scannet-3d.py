@@ -32,3 +32,8 @@ model = dict(
                         [0.47535285, 0.49249494, 0.5802117]])))
 
 default_hooks = dict(logger=dict(type='LoggerHook', interval=30))
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (8 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=64)

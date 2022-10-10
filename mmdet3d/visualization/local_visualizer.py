@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import mmcv
 import numpy as np
+from mmengine import mkdir_or_exist
 from mmengine.dist import master_only
 from torch import Tensor
 
@@ -355,9 +356,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
 
-        drawn_img = None
-        drawn_points = None
-        drawn_bboxes_3d = None
+        data_3d = dict()
 
         if vis_task in ['lidar_det', 'multi-modality_det']:
             assert 'points' in data_input
@@ -373,8 +372,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(points, pcd_mode=2, vis_task=vis_task)
             self.draw_bboxes_3d(bboxes_3d_depth)
 
-            drawn_bboxes_3d = tensor2ndarray(bboxes_3d_depth.tensor)
-            drawn_points = points
+            data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
+            data_3d['points'] = points
 
         if vis_task in ['mono_det', 'multi-modality_det']:
             assert 'img' in data_input
@@ -388,9 +387,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 centers_2d = instances.centers_2d
                 self.draw_points(centers_2d)
             drawn_img = self.get_image()
+            data_3d['img'] = drawn_img
 
-        data_3d = dict(
-            points=drawn_points, img=drawn_img, bboxes_3d=drawn_bboxes_3d)
         return data_3d
 
     def _draw_pts_sem_seg(self,
@@ -531,14 +529,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     data_input, data_sample.gt_instances_3d,
                     data_sample.metainfo, vis_task, palette)
             if 'gt_instances' in data_sample:
-                assert 'img' in data_input
-                if isinstance(data_input['img'], Tensor):
-                    img = data_input['img'].permute(1, 2, 0).numpy()
-                    img = img[..., [2, 1, 0]]  # bgr to rgb
-                gt_img_data = self._draw_instances(img,
-                                                   data_sample.gt_instances,
-                                                   classes, palette)
-            if 'gt_pts_seg' in data_sample and vis_task == 'lidar_seg':
+                if len(data_sample.gt_instances) > 0:
+                    assert 'img' in data_input
+                    if isinstance(data_input['img'], Tensor):
+                        img = data_input['img'].permute(1, 2, 0).numpy()
+                        img = img[..., [2, 1, 0]]  # bgr to rgb
+                    gt_img_data = self._draw_instances(
+                        img, data_sample.gt_instances, classes, palette)
+            if 'gt_pts_seg' in data_sample and vis_task == 'seg':
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \
@@ -582,13 +580,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                            palette, ignore_index)
 
         # monocular 3d object detection image
-        if gt_data_3d is not None and pred_data_3d is not None:
-            drawn_img_3d = np.concatenate(
-                (gt_data_3d['img'], pred_data_3d['img']), axis=1)
-        elif gt_data_3d is not None:
-            drawn_img_3d = gt_data_3d['img']
-        elif pred_data_3d is not None:
-            drawn_img_3d = pred_data_3d['img']
+        if vis_task in ['mono-det', 'multi_modality-det']:
+            if gt_data_3d is not None and pred_data_3d is not None:
+                drawn_img_3d = np.concatenate(
+                    (gt_data_3d['img'], pred_data_3d['img']), axis=1)
+            elif gt_data_3d is not None:
+                drawn_img_3d = gt_data_3d['img']
+            elif pred_data_3d is not None:
+                drawn_img_3d = pred_data_3d['img']
         else:
             drawn_img_3d = None
 
@@ -612,6 +611,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 wait_time=wait_time)
 
         if out_file is not None:
+            mkdir_or_exist(out_file)
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file + '.jpg')
             if drawn_img is not None:
@@ -622,10 +622,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 write_oriented_bbox(gt_data_3d['bboxes_3d'],
                                     osp.join(out_file, 'gt_bbox.obj'))
             if pred_data_3d is not None:
-                write_obj(pred_data_3d['points'],
-                          osp.join(out_file, 'points.obj'))
-                write_oriented_bbox(pred_data_3d['bboxes_3d'],
-                                    osp.join(out_file, 'pred_bbox.obj'))
+                if 'points' in pred_data_3d:
+                    write_obj(pred_data_3d['points'],
+                              osp.join(out_file, 'points.obj'))
+                    write_oriented_bbox(pred_data_3d['bboxes_3d'],
+                                        osp.join(out_file, 'pred_bbox.obj'))
             if gt_seg_data_3d is not None:
                 write_obj(gt_seg_data_3d['points'],
                           osp.join(out_file, 'points.obj'))

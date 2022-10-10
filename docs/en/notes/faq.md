@@ -8,7 +8,7 @@ We list some potential troubles encountered by users and developers, along with 
 
   The required versions of MMEngine, MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMEngine, MMCV and MMDetection to avoid installation issues.
 
-  | MMDetection3D version |     MMEngine version     |        MMCV version     |   MMDetection version    |
+  | MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
   | :-------------------: | :----------------------: | :---------------------: | :----------------------: |
   |        dev-1.x        | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   |       v1.1.0rc0       | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |

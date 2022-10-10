@@ -22,3 +22,8 @@ model = dict(
         norm_eval=False,
         style='pytorch'),
     pts_neck=dict(in_channels=[64, 160, 384]))
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)

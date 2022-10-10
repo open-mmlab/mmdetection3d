@@ -28,7 +28,7 @@ def _generate_kitti_dataset_config():
                 gt_instances_3d = InstanceData()
                 gt_instances_3d.labels_3d = info['gt_labels_3d']
                 data_sample.gt_instances_3d = gt_instances_3d
-                info['data_sample'] = data_sample
+                info['data_samples'] = data_sample
                 return info
 
     pipeline = [
@@ -82,9 +82,9 @@ def test_getitem():
     assert torch.allclose(ann_info['gt_bboxes_3d'].tensor.sum(),
                           torch.tensor(7.2650))
     assert 'centers_2d' in ann_info
-    assert ann_info['centers_2d'].dtype == np.float64
+    assert ann_info['centers_2d'].dtype == np.float32
     assert 'depths' in ann_info
-    assert ann_info['depths'].dtype == np.float64
+    assert ann_info['depths'].dtype == np.float32
 
     car_kitti_dataset = KittiDataset(
         data_root,

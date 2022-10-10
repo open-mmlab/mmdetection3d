@@ -89,7 +89,7 @@ class Base3DDetector(BaseDetector):
             raise RuntimeError(f'Invalid mode "{mode}". '
                                'Only supports loss, predict and tensor mode')
 
-    def convert_to_datasample(
+    def add_pred_to_datasample(
         self,
         data_samples: SampleList,
         data_instances_3d: OptInstanceList = None,

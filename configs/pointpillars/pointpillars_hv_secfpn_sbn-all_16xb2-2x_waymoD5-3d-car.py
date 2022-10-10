@@ -32,3 +32,8 @@ model = dict(
             code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
             pos_weight=-1,
             debug=False)))
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (16 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=32)

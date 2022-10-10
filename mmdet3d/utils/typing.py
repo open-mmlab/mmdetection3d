@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 from mmengine.config import ConfigDict
 from mmengine.structures import InstanceData
 
+from mmdet3d.structures.det3d_data_sample import Det3DDataSample
 from mmdet.models.task_modules.samplers import SamplingResult
 
 # Type hint of config data
@@ -21,3 +22,4 @@ OptInstanceList = Optional[InstanceList]
 SamplingResultList = List[SamplingResult]
 
 OptSamplingResultList = Optional[SamplingResultList]
+SampleList = List[Det3DDataSample]

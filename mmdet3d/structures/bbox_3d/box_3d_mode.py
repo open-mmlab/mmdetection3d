@@ -41,7 +41,7 @@ class Box3DMode(IntEnum):
              v
         down y
 
-    The relative coordinate of bottom center in a CAM box is [0.5, 1.0, 0.5],
+    The relative coordinate of bottom center in a CAM box is (0.5, 1.0, 0.5),
     and the yaw is around the y axis, thus the rotation axis=1.
 
     Coordinates in Depth mode:
@@ -63,7 +63,7 @@ class Box3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def convert(box, src, dst, rt_mat=None, with_yaw=True):
+    def convert(box, src, dst, rt_mat=None, with_yaw=True, correct_yaw=False):
         """Convert boxes from `src` mode to `dst` mode.
 
         Args:
@@ -81,6 +81,7 @@ class Box3DMode(IntEnum):
             with_yaw (bool, optional): If `box` is an instance of
                 :obj:`BaseInstance3DBoxes`, whether or not it has a yaw angle.
                 Defaults to True.
+            correct_yaw (bool): If the yaw is rotated by rt_mat.
 
         Returns:
             (tuple | list | np.ndarray | torch.Tensor |
@@ -119,41 +120,89 @@ class Box3DMode(IntEnum):
                 rt_mat = arr.new_tensor([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
             if with_yaw:
-                yaw = -yaw - np.pi / 2
-                yaw = limit_period(yaw, period=np.pi * 2)
+                if correct_yaw:
+                    yaw_vector = torch.cat([
+                        torch.cos(yaw),
+                        torch.sin(yaw),
+                        torch.zeros_like(yaw)
+                    ],
+                                           dim=1)
+                else:
+                    yaw = -yaw - np.pi / 2
+                    yaw = limit_period(yaw, period=np.pi * 2)
         elif src == Box3DMode.CAM and dst == Box3DMode.LIDAR:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
             if with_yaw:
-                yaw = -yaw - np.pi / 2
-                yaw = limit_period(yaw, period=np.pi * 2)
+                if correct_yaw:
+                    yaw_vector = torch.cat([
+                        torch.cos(-yaw),
+                        torch.zeros_like(yaw),
+                        torch.sin(-yaw)
+                    ],
+                                           dim=1)
+                else:
+                    yaw = -yaw - np.pi / 2
+                    yaw = limit_period(yaw, period=np.pi * 2)
         elif src == Box3DMode.DEPTH and dst == Box3DMode.CAM:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
             if with_yaw:
-                yaw = -yaw
+                if correct_yaw:
+                    yaw_vector = torch.cat([
+                        torch.cos(yaw),
+                        torch.sin(yaw),
+                        torch.zeros_like(yaw)
+                    ],
+                                           dim=1)
+                else:
+                    yaw = -yaw
         elif src == Box3DMode.CAM and dst == Box3DMode.DEPTH:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
             xyz_size = torch.cat([x_size, z_size, y_size], dim=-1)
             if with_yaw:
-                yaw = -yaw
+                if correct_yaw:
+                    yaw_vector = torch.cat([
+                        torch.cos(-yaw),
+                        torch.zeros_like(yaw),
+                        torch.sin(-yaw)
+                    ],
+                                           dim=1)
+                else:
+                    yaw = -yaw
         elif src == Box3DMode.LIDAR and dst == Box3DMode.DEPTH:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
             xyz_size = torch.cat([x_size, y_size, z_size], dim=-1)
             if with_yaw:
-                yaw = yaw + np.pi / 2
-                yaw = limit_period(yaw, period=np.pi * 2)
+                if correct_yaw:
+                    yaw_vector = torch.cat([
+                        torch.cos(yaw),
+                        torch.sin(yaw),
+                        torch.zeros_like(yaw)
+                    ],
+                                           dim=1)
+                else:
+                    yaw = yaw + np.pi / 2
+                    yaw = limit_period(yaw, period=np.pi * 2)
         elif src == Box3DMode.DEPTH and dst == Box3DMode.LIDAR:
             if rt_mat is None:
                 rt_mat = arr.new_tensor([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
             xyz_size = torch.cat([x_size, y_size, z_size], dim=-1)
             if with_yaw:
-                yaw = yaw - np.pi / 2
-                yaw = limit_period(yaw, period=np.pi * 2)
+                if correct_yaw:
+                    yaw_vector = torch.cat([
+                        torch.cos(yaw),
+                        torch.sin(yaw),
+                        torch.zeros_like(yaw)
+                    ],
+                                           dim=1)
+                else:
+                    yaw = yaw - np.pi / 2
+                    yaw = limit_period(yaw, period=np.pi * 2)
         else:
             raise NotImplementedError(
                 f'Conversion from Box3DMode {src} to {dst} '
@@ -167,6 +216,18 @@ class Box3DMode(IntEnum):
             xyz = extended_xyz @ rt_mat.t()
         else:
             xyz = arr[..., :3] @ rt_mat.t()
+
+        # Note: we only use rotation in rt_mat
+        # so don't need to extend yaw_vector
+        if with_yaw and correct_yaw:
+            rot_yaw_vector = yaw_vector @ rt_mat[:3, :3].t()
+            if dst == Box3DMode.CAM:
+                yaw = torch.atan2(-rot_yaw_vector[:, [2]], rot_yaw_vector[:,
+                                                                          [0]])
+            elif dst in [Box3DMode.LIDAR, Box3DMode.DEPTH]:
+                yaw = torch.atan2(rot_yaw_vector[:, [1]], rot_yaw_vector[:,
+                                                                         [0]])
+            yaw = limit_period(yaw, period=np.pi * 2)
 
         if with_yaw:
             remains = arr[..., 7:]

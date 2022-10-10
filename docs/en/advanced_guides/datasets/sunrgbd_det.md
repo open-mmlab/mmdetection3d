@@ -133,94 +133,7 @@ or (if in a slurm environment)
 bash tools/create_data.sh <job_name> sunrgbd
 ```
 
-The above point cloud data are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for saving annotation and metadata. The core function `process_single_scene` of getting data infos is as follows.
-
-```python
-def process_single_scene(sample_idx):
-    print(f'{self.split} sample_idx: {sample_idx}')
-    # convert depth to points
-    # and downsample the points
-    SAMPLE_NUM = 50000
-    pc_upright_depth = self.get_depth(sample_idx)
-    pc_upright_depth_subsampled = random_sampling(
-        pc_upright_depth, SAMPLE_NUM)
-
-    info = dict()
-    pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
-    info['point_cloud'] = pc_info
-
-    # save point cloud data in `.bin` format
-    mmengine.mkdir_or_exist(osp.join(self.root_dir, 'points'))
-    pc_upright_depth_subsampled.tofile(
-        osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
-
-    # save point cloud file path
-    info['pts_path'] = osp.join('points', f'{sample_idx:06d}.bin')
-
-    # save image file path and metainfo
-    img_path = osp.join('image', f'{sample_idx:06d}.jpg')
-    image_info = {
-        'image_idx': sample_idx,
-        'image_shape': self.get_image_shape(sample_idx),
-        'image_path': img_path
-    }
-    info['image'] = image_info
-
-    # save calibration information
-    K, Rt = self.get_calibration(sample_idx)
-    calib_info = {'K': K, 'Rt': Rt}
-    info['calib'] = calib_info
-
-    # save all annotation
-    if has_label:
-        obj_list = self.get_label_objects(sample_idx)
-        annotations = {}
-        annotations['gt_num'] = len([
-            obj.classname for obj in obj_list
-            if obj.classname in self.cat2label.keys()
-        ])
-        if annotations['gt_num'] != 0:
-            # class name
-            annotations['name'] = np.array([
-                obj.classname for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            # 2D image bounding boxes
-            annotations['bbox'] = np.concatenate([
-                obj.box2d.reshape(1, 4) for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ], axis=0)
-            # 3D bounding box center location (in depth coordinate system)
-            annotations['location'] = np.concatenate([
-                obj.centroid.reshape(1, 3) for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ], axis=0)
-            # 3D bounding box dimension/size (in depth coordinate system)
-            annotations['dimensions'] = 2 * np.array([
-                [obj.l, obj.h, obj.w] for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            # 3D bounding box rotation angle/yaw angle (in depth coordinate system)
-            annotations['rotation_y'] = np.array([
-                obj.heading_angle for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            annotations['index'] = np.arange(
-                len(obj_list), dtype=np.int32)
-            # class label (number)
-            annotations['class'] = np.array([
-                self.cat2label[obj.classname] for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            # 3D bounding box (in depth coordinate system)
-            annotations['gt_boxes_upright_depth'] = np.stack(
-                [
-                    obj.box3d for obj in obj_list
-                    if obj.classname in self.cat2label.keys()
-                ], axis=0)  # (K,8)
-        info['annos'] = annotations
-    return info
-```
+The above point cloud data are further saved in `.bin` format. Meanwhile `.pkl` info files are also generated for saving annotation and metadata.
 
 The directory structure after processing should be as follows.
 
@@ -240,22 +153,19 @@ sunrgbd
 
 - `points/0xxxxx.bin`: The point cloud data after downsample.
 - `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
-  - info\['point_cloud'\]: `·`{'num_features': 6, 'lidar_idx': sample_idx}`, where `sample_idx\` is the index of the scene.
-  - info\['pts_path'\]: The path of `points/0xxxxx.bin`.
-  - info\['image'\]: The image path and metainfo:
-    - image\['image_idx'\]: The index of the image.
-    - image\['image_shape'\]: The shape of the image tensor.
-    - image\['image_path'\]: The path of the image.
-  - info\['annos'\]: The annotations of each scene.
-    - annotations\['gt_num'\]: The number of ground truths.
-    - annotations\['name'\]: The semantic name of all ground truths, e.g. `chair`.
-    - annotations\['location'\]: The gravity center of the 3D bounding boxes in depth coordinate system. Shape: \[K, 3\], K is the number of ground truths.
-    - annotations\['dimensions'\]: The dimensions of the 3D bounding boxes in depth coordinate system, i.e. `(x_size, y_size, z_size)`, shape: \[K, 3\].
-    - annotations\['rotation_y'\]: The yaw angle of the 3D bounding boxes in depth coordinate system. Shape: \[K, \].
-    - annotations\['gt_boxes_upright_depth'\]: The 3D bounding boxes in depth coordinate system, each bounding box is `(x, y, z, x_size, y_size, z_size, yaw)`, shape: \[K, 7\].
-    - annotations\['bbox'\]: The 2D bounding boxes, each bounding box is `(x, y, x_size, y_size)`, shape: \[K, 4\].
-    - annotations\['index'\]: The index of all ground truths, range \[0, K).
-    - annotations\['class'\]: The train class id of the bounding boxes, value range: \[0, 10), shape: \[K, \].
+  - info\['lidar_points'\]: A dict contains all information relate to the the lidar points.
+    - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
+  - info\['images'\]: A dict contains all information relate to the image data.
+    - info\['images'\]\['CAM0'\]\['img_path'\]: The image file name.
+    - info\['images'\]\['CAM0'\]\['depth2img'\]: Transformation matrix from depth to image with shape (4, 4).
+    - info\['images'\]\['CAM0'\]\['height'\]: The height of image.
+    - info\['images'\]\['CAM0'\]\['width'\]: The width of image.
+  - info\['instances'\]: A list of dict contains all the annotations of this frame. Each dict corresponds to annotations of single instance.
+    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in depth coordinate system.
+    - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
+    - info\['instances'\]\['bbox_label_3d'\]: An int indicates the 3D label of instance and the -1 indicates ignore class.
+    - info\['instances'\]\['bbox_label'\]: An int indicates the 2D label of instance and the -1 indicates ignore class.
 - `sunrgbd_infos_val.pkl`: The val data infos, which shares the same format as `sunrgbd_infos_train.pkl`.
 
 ## Train pipeline
@@ -282,8 +192,9 @@ train_pipeline = [
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
     dict(type='PointSample', num_points=20000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 ```
 
@@ -306,9 +217,8 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
+    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.0),
-    dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(
         type='RandomFlip3D',
@@ -320,28 +230,21 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='PointSample', num_points=20000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
-        keys=[
-            'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-            'gt_labels_3d'
-        ])
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d','img', 'gt_bboxes', 'gt_bboxes_labels', ])
 ]
 ```
 
 Data augmentation/normalization for images:
 
 - `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
-- `Normalize`: normalize the RGB channels of the input image.
 - `RandomFlip`: randomly flip the input image.
-- `Pad`: pad the input image with zeros by default.
 
 The image augmentation and normalization functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines).
 
 ## Metrics
 
-Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py).
+Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py).
 
 Since SUN RGB-D consists of image data, detection on image data is also feasible. For instance, in ImVoteNet, we first train an image detector, and we also use mAP for evaluation, e.g. `mAP@0.5`. We use the `eval_map` function from [MMDetection](https://github.com/open-mmlab/mmdetection) to calculate mAP.

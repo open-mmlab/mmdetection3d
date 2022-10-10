@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument(
         '--cam-type',
         type=str,
-        default='CAM_FRONT',
+        default='CAM_BACK',
         help='choose camera type to inference')
     parser.add_argument(
         '--score-thr', type=float, default=0.30, help='bbox score threshold')
@@ -60,7 +60,8 @@ def main(args):
     visualizer.add_datasample(
         'result',
         data_input,
-        pred_sample=result,
+        data_sample=result,
+        draw_gt=False,
         show=True,
         wait_time=0,
         out_file=args.out_dir,

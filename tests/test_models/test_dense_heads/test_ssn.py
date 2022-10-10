@@ -18,6 +18,14 @@ class TestSSN(unittest.TestCase):
         _setup_seed(0)
         ssn_cfg = _get_detector_cfg(
             'ssn/ssn_hv_secfpn_sbn-all_16xb2-2x_nus-3d.py')
+        ssn_cfg.pts_voxel_encoder.feat_channels = [1, 1]
+        ssn_cfg.pts_middle_encoder.in_channels = 1
+        ssn_cfg.pts_backbone.in_channels = 1
+        ssn_cfg.pts_backbone.out_channels = [1, 1, 1]
+        ssn_cfg.pts_neck.in_channels = [1, 1, 1]
+        ssn_cfg.pts_neck.out_channels = [1, 1, 1]
+        ssn_cfg.pts_bbox_head.in_channels = 3
+        ssn_cfg.pts_bbox_head.feat_channels = 1
         model = MODELS.build(ssn_cfg)
         num_gt_instance = 50
         packed_inputs = _create_detector_inputs(
