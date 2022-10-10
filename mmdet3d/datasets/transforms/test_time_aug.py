@@ -46,7 +46,7 @@ class MultiScaleFlipAug3D(BaseTransform):
         self.img_scale = img_scale if isinstance(img_scale,
                                                  list) else [img_scale]
         self.pts_scale_ratio = pts_scale_ratio \
-            if isinstance(pts_scale_ratio, list) else[float(pts_scale_ratio)]
+            if isinstance(pts_scale_ratio, list) else [float(pts_scale_ratio)]
 
         assert mmengine.is_list_of(self.img_scale, tuple)
         assert mmengine.is_list_of(self.pts_scale_ratio, float)
