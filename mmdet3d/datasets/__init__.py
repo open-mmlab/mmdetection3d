@@ -12,6 +12,7 @@ from .scannet_dataset import (ScanNetDataset, ScanNetInstanceSegDataset,
                               ScanNetSegDataset)
 from .seg3d_dataset import Seg3DDataset
 from .semantickitti_dataset import SemanticKITTIDataset
+from .sensaturban_dataset import SensatUrbanDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 # yapf: disable
 from .transforms import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
@@ -40,5 +41,6 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES', 'get_2d_boxes'
+    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES', 'get_2d_boxes',
+    'SensatUrbanDataset'
 ]
