@@ -18,6 +18,8 @@ If you are experienced with PyTorch and have already installed it, just skip thi
 **Step 1.** Create a conda environment and activate it.
 
 ```shell
+# We recommend to install python=3.8 since the waymo-open-dataset-tf-2-6-0 requires python>=3.7
+# If you want to install python<3.7, make sure to install waymo-open-dataset-tf-2-x-0 (x<=4)
 conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
@@ -254,6 +256,8 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 Here is a full script for setting up MMdetection3D with conda.
 
 ```shell
+# We recommend to install python=3.8 since the waymo-open-dataset-tf-2-6-0 requires python>=3.7
+# If you want to install python<3.7, make sure to install waymo-open-dataset-tf-2-x-0 (x<=4)
 conda create -n open-mmlab python=3.8 -y
 conda activate open-mmlab
 

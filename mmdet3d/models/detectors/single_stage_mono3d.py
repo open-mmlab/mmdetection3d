@@ -18,7 +18,7 @@ class SingleStageMono3DDetector(SingleStageDetector):
     boxes on the output features of the backbone+neck.
     """
 
-    def convert_to_datasample(
+    def add_pred_to_datasample(
         self,
         data_samples: SampleList,
         data_instances_3d: OptInstanceList = None,

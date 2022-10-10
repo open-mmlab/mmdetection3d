@@ -17,6 +17,8 @@ MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台�
 **步骤 1.** 使用 conda 新建虚拟环境，并进入该虚拟环境.
 
 ```shell
+# 鉴于 waymo-open-dataset-tf-2-6-0 要求 python>=3.7, 我们推荐安装 python3.8
+# 如果您想要安装 python3.6, 之后须确保安装 waymo-open-dataset-tf-2-x-0 (x<=4)
 conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
@@ -269,7 +271,9 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 以下是一个基于 conda 安装 MMdetection3D 的脚本
 
 ```shell
-conda create -n open-mmlab python=3.7 -y
+# 鉴于 waymo-open-dataset-tf-2-6-0 要求 python>=3.7, 我们推荐安装 python3.8
+# 如果您想要安装 python3.6, 之后须确保安装 waymo-open-dataset-tf-2-x-0 (x<=4)
+conda create -n open-mmlab python=3.8 -y
 conda activate open-mmlab
 
 # install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)

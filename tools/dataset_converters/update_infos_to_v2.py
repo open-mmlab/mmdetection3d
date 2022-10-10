@@ -195,7 +195,7 @@ def clear_data_info_unused_keys(data_info):
     empty_flag = True
     for key in keys:
         # we allow no annotations in datainfo
-        if key == 'instances':
+        if key in ['instances', 'cam_sync_instances', 'cam_instances']:
             empty_flag = False
             continue
         if isinstance(data_info[key], list):
@@ -284,6 +284,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
         temp_data_info['ego2global'] = convert_quaternion_to_matrix(
             ori_info_dict['ego2global_rotation'],
             ori_info_dict['ego2global_translation'])
+        temp_data_info['lidar_points']['num_pts_feats'] = 5
         temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
             'lidar_path'].split('/')[-1]
         temp_data_info['lidar_points'][
@@ -1056,4 +1057,4 @@ if __name__ == '__main__':
     if args.out_dir is None:
         args.out_dir = args.root_dir
     update_pkl_infos(
-        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl_path)
+        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl)

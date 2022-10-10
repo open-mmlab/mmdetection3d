@@ -100,8 +100,9 @@ class TwoStage3DDetector(Base3DDetector):
             keys = rpn_losses.keys()
             for key in keys:
                 if 'loss' in key and 'rpn' not in key:
-                    rpn_losses[f'rpn_{key}'] = rpn_losses.pop(key)
-            losses.update(rpn_losses)
+                    losses[f'rpn_{key}'] = rpn_losses[key]
+                else:
+                    losses[key] = rpn_losses[key]
         else:
             # TODO: Not support currently, should have a check at Fast R-CNN
             assert batch_data_samples[0].get('proposals', None) is not None
@@ -161,8 +162,8 @@ class TwoStage3DDetector(Base3DDetector):
                                              batch_data_samples)
 
         # connvert to Det3DDataSample
-        results_list = self.convert_to_datasample(batch_data_samples,
-                                                  results_list)
+        results_list = self.add_pred_to_datasample(batch_data_samples,
+                                                   results_list)
 
         return results_list
 

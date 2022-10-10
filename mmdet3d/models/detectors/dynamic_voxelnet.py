@@ -10,7 +10,8 @@ from .voxelnet import VoxelNet
 
 @MODELS.register_module()
 class DynamicVoxelNet(VoxelNet):
-    r"""VoxelNet using `dynamic voxelization <https://arxiv.org/abs/1910.06528>`_.
+    r"""VoxelNet using `dynamic voxelization
+    <https://arxiv.org/abs/1910.06528>`_.
     """
 
     def __init__(self,
