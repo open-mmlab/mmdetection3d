@@ -478,7 +478,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        show: bool = False,
                        wait_time: float = 0,
                        out_file: Optional[str] = None,
-                       vis_task: str = 'mono_det',
+                       vis_task: str = 'lidar_det',
                        pred_score_thr: float = 0.3,
                        step: int = 0) -> None:
         """Draw datasample and save to all backends.
@@ -506,7 +506,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 image. Default to False.
             wait_time (float): The interval of show (s). Defaults to 0.
             out_file (str): Path to output file. Defaults to None.
-            vis-task (str): Visualization task. Defaults to 'mono_det'.
+            vis-task (str): Visualization task. Defaults to 'lidar_det'.
             pred_score_thr (float): The threshold to visualize the bboxes
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
