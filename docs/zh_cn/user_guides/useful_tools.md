@@ -102,10 +102,10 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR} --online
 ```
 
-如果您还想显示 2D 图像以及投影的 3D 边界框，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi_modality-det`。一个例子如下所示
+如果您还想显示 2D 图像以及投影的 3D 边界框，则需要找到支持多模态数据加载的配置文件，然后将 `--task` 参数更改为 `multi-modality_det`。一个例子如下所示
 
 ```shell
-python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --task multi_modality-det --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_multi_modality.png)
@@ -121,7 +121,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --tas
 在单目 3D 检测任务中浏览 nuScenes 数据集
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono-det --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../resources/browse_dataset_mono.png)
