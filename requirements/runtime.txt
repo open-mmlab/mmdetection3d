@@ -8,4 +8,5 @@ plyfile
 scikit-image
 # by default we also use tensorboard to log results
 tensorboard
+terminaltables
 trimesh>=2.35.39,<2.35.40

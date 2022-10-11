@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from mmengine.dataset import BaseDataset
 from mmengine.logging import MMLogger
+from terminaltables import AsciiTable
 
 from mmdet3d.datasets import DATASETS
 from mmdet3d.structures import get_box_type
@@ -146,12 +147,12 @@ class Det3DDataset(BaseDataset):
         logger: MMLogger = MMLogger.get_current_instance()
         logger.info('-' * 30)
         logger.info(f'The length of the dataset: {len(self)}')
-        content_show = ''
+        content_show = ['category', 'number']
         for cat_name, num in self.ins_num_per_cat.items():
-            content_show += f'\n{cat_name}'.ljust(25) + '|' + f' {num}'.rjust(
-                10)
+            content_show.append([cat_name, num])
+        table = AsciiTable(content_show)
         logger.info(
-            f'The number of instances per category in the dataset:{content_show}'  # noqa: E501
+            f'The number of instances per category in the dataset:\n{table.table}'  # noqa: E501
         )
 
     def _remove_dontcare(self, ann_info):
@@ -343,13 +344,12 @@ class Det3DDataset(BaseDataset):
         for label in new_labels:
             cat_name = self.metainfo['CLASSES'][label]
             new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name, 0) + 1
-        content_show = ''
+        content_show = ['category', 'new number', 'ori number']
         for cat_name, num in ori_num_per_cat.items():
             new_num = new_num_per_cat.get(cat_name, 0)
-            content_show += f'\n{cat_name} '.ljust(
-                25) + '|' + f' {new_num}/{num}'.rjust(10)
+            content_show.append([cat_name, new_num, num])
         logger.info('The number of instances per category after and before '
-                    f'through pipeline: {content_show}')
+                    f'through pipeline:\n{content_show}')
 
     def prepare_data(self, index: int) -> Optional[dict]:
         """Data preparation for both training and testing stage.
