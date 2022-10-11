@@ -8,15 +8,15 @@
 
 #### Improvements
 
-- Fix docs link and add docs link checker (#1811)
 - Fix the cross-codebase reference problem in metafile README (#1644)
 - Update the Chinese documentation about getting started (#1715)
+- Fix docs link and add docs link checker (#1811)
 
 #### Bug Fixes
 
-- Fix Nan loss bug during PointRCNN training (#1874)
-- Fix point cloud segmentation visualization bug due to wrong parameter passing (#1858)
 - Fix a visualization bug that is potentially triggered by empty prediction labels (#1725)
+- Fix point cloud segmentation visualization bug due to wrong parameter passing (#1858)
+- Fix Nan loss bug during PointRCNN training (#1874)
 
 #### Contributors
 
