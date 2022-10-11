@@ -35,6 +35,10 @@ test_pipeline = [
     dict(type='Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
+eval_pipeline = [
+    dict(type='LoadImageFromFileMono3D'),
+    dict(type='Pack3DDetInputs', keys=['img'])
+]
 
 train_dataloader = dict(
     batch_size=2,

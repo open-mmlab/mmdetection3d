@@ -133,7 +133,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def set_points(self,
                    points: np.ndarray,
                    pcd_mode: int = 0,
-                   vis_task: str = 'det',
+                   vis_task: str = 'lidar_det',
                    points_color: Tuple = (0.5, 0.5, 0.5),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
@@ -146,7 +146,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 0 represents LiDAR, 1 represents CAMERA, 2
                 represents Depth.
             vis_task (str): Visualiztion task, it includes:
-                'det', 'multi_modality-det', 'mono-det', 'seg'.
+                'lidar_det', 'multi-modality_det', 'mono_det', 'lidar_seg'.
             point_color (tuple[float], optional): the color of points.
                 Default: (0.5, 0.5, 0.5).
             points_size (int, optional): the size of points to show
@@ -161,7 +161,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if pcd_mode != Coord3DMode.DEPTH:
             points = Coord3DMode.convert(points, pcd_mode, Coord3DMode.DEPTH)
 
-        if hasattr(self, 'pcd') and vis_task != 'seg':
+        if hasattr(self, 'pcd') and vis_task != 'lidar_seg':
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
@@ -334,7 +334,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         self.o3d_vis.add_geometry(mesh_frame)
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
-        self.set_points(seg_points, vis_task='seg', pcd_mode=2, mode='xyzrgb')
+        self.set_points(
+            seg_points, vis_task='lidar_seg', pcd_mode=2, mode='xyzrgb')
 
     def _draw_instances_3d(self, data_input: dict, instances: InstanceData,
                            input_meta: dict, vis_task: str,
@@ -347,7 +348,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 instance-level annotations or predictions.
             metainfo (dict): Meta information.
             vis_task (str): Visualiztion task, it includes:
-                'det', 'multi_modality-det', 'mono-det'.
+                'lidar_det', 'multi-modality_det', 'mono_det'.
 
         Returns:
             dict: the drawn point cloud and image which channel is RGB.
@@ -357,7 +358,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         data_3d = dict()
 
-        if vis_task in ['det', 'multi_modality-det']:
+        if vis_task in ['lidar_det', 'multi-modality_det']:
             assert 'points' in data_input
             points = data_input['points']
             check_type('points', points, (np.ndarray, Tensor))
@@ -374,7 +375,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
             data_3d['points'] = points
 
-        if vis_task in ['mono-det', 'multi_modality-det']:
+        if vis_task in ['mono_det', 'multi-modality_det']:
             assert 'img' in data_input
             img = data_input['img']
             if isinstance(data_input['img'], Tensor):
@@ -382,6 +383,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 img = img[..., [2, 1, 0]]  # bgr to rgb
             self.set_image(img)
             self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
+            if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
+                centers_2d = instances.centers_2d
+                self.draw_points(centers_2d)
             drawn_img = self.get_image()
             data_3d['img'] = drawn_img
 
@@ -420,7 +424,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pts_color = palette[pts_sem_seg]
         seg_color = np.concatenate([points[:, :3], pts_color], axis=1)
 
-        self.set_points(points, pcd_mode=2, vis_task='seg')
+        self.set_points(points, pcd_mode=2, vis_task='lidar_seg')
         self.draw_seg_mask(seg_color)
 
         seg_data_3d = dict(points=points, seg_color=seg_color)
@@ -439,7 +443,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         Args:
             vis_task (str): Visualiztion task, it includes:
-                'det', 'multi_modality-det', 'mono-det', 'seg'.
+                'lidar_det', 'multi-modality_det', 'mono_det', 'lidar_seg'.
             out_file (str): Output file path.
             drawn_img (np.ndarray, optional): The image to show. If drawn_img
                 is None, it will show the image got by Visualizer. Defaults
@@ -450,13 +454,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             continue_key (str): The key for users to continue. Defaults to
                 the space key.
         """
-        if vis_task in ['det', 'multi_modality-det', 'seg']:
+        if vis_task in ['lidar_det', 'multi-modality_det', 'lidar_seg']:
             self.o3d_vis.run()
             if out_file is not None:
                 self.o3d_vis.capture_screen_image(out_file + '.png')
             self.o3d_vis.destroy_window()
 
-        if vis_task in ['mono-det', 'multi_modality-det']:
+        if vis_task in ['mono_det', 'multi-modality_det']:
             super().show(drawn_img_3d, win_name, wait_time, continue_key)
 
         if drawn_img is not None:
@@ -474,7 +478,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        show: bool = False,
                        wait_time: float = 0,
                        out_file: Optional[str] = None,
-                       vis_task: str = 'mono-det',
+                       vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
                        step: int = 0) -> None:
         """Draw datasample and save to all backends.
@@ -502,7 +506,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 image. Default to False.
             wait_time (float): The interval of show (s). Defaults to 0.
             out_file (str): Path to output file. Defaults to None.
-            vis-task (str): Visualization task. Defaults to 'mono-det'.
+            vis-task (str): Visualization task. Defaults to 'mono_det'.
             pred_score_thr (float): The threshold to visualize the bboxes
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
@@ -564,7 +568,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         img = img[..., [2, 1, 0]]  # bgr to rgb
                     pred_img_data = self._draw_instances(
                         img, pred_instances, classes, palette)
-            if 'pred_pts_seg' in data_sample:
+            if 'pred_pts_seg' in data_sample and vis_task == 'lidar_seg':
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing panoptic ' \

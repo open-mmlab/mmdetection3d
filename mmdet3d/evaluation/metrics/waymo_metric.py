@@ -342,13 +342,13 @@ class WaymoMetric(KittiMetric):
             image_shape = (info['images'][self.default_cam_key]['height'],
                            info['images'][self.default_cam_key]['width'])
 
-            if self.task == 'mono3d':
+            if self.task == 'mono_det':
                 if idx % self.num_cams == 0:
                     box_dict_per_frame = []
                     cam0_idx = idx
             box_dict = self.convert_valid_bboxes(pred_dicts, info)
 
-            if self.task == 'mono3d':
+            if self.task == 'mono_det':
                 box_dict_per_frame.append(box_dict)
                 if (idx + 1) % self.num_cams != 0:
                     continue
