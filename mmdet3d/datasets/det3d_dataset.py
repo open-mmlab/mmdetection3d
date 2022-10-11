@@ -60,9 +60,9 @@ class Det3DDataset(BaseDataset):
             which can be used in Evaluator. Defaults to True.
         file_client_args (dict, optional): Configuration of file client.
             Defaults to dict(backend='disk').
-        show_ins_num_var (bool, optional): Whether to show variance of the
-            number of instances before and after through pipeline. Defaults to
-            False.
+        show_ins_var (bool, optional): For debug purpose. Whether to show
+            variance of the number of instances before and after through
+            pipeline. Defaults to False.
     """
 
     def __init__(self,
@@ -78,7 +78,7 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
-                 show_ins_num_var: bool = False,
+                 show_ins_var: bool = False,
                  **kwargs) -> None:
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
@@ -140,7 +140,7 @@ class Det3DDataset(BaseDataset):
 
         # used for showing variance of the number of instances before and
         # after through the pipeline
-        self.show_ins_num_var = show_ins_num_var
+        self.show_ins_var = show_ins_var
 
         # show statistics of this dataset
         logger: MMLogger = MMLogger.get_current_instance()
@@ -148,7 +148,8 @@ class Det3DDataset(BaseDataset):
         logger.info(f'The length of the dataset: {len(self)}')
         content_show = ''
         for cat_name, num in self.ins_num_per_cat.items():
-            content_show += f'\n{cat_name}'.ljust(25) + f'{num}'
+            content_show += f'\n{cat_name}'.ljust(25) + '|' + f' {num}'.rjust(
+                10)
         logger.info(
             f'The number of instances per category in the dataset:{content_show}'  # noqa: E501
         )
@@ -345,7 +346,8 @@ class Det3DDataset(BaseDataset):
         content_show = ''
         for cat_name, num in ori_num_per_cat.items():
             new_num = new_num_per_cat.get(cat_name, 0)
-            content_show += f'\n{cat_name}'.ljust(25) + f'{new_num}/{num}'
+            content_show += f'\n{cat_name} '.ljust(
+                25) + '|' + f' {new_num}/{num}'.rjust(10)
         logger.info('The number of instances per category after and before '
                     f'through pipeline: {content_show}')
 
@@ -384,7 +386,7 @@ class Det3DDataset(BaseDataset):
                     example['data_samples'].gt_instances_3d.labels_3d) == 0:
                 return None
 
-        if self.show_ins_num_var:
+        if self.show_ins_var:
             self._show_ins_num_var(
                 ori_input_dict['ann_info']['gt_labels_3d'],
                 example['data_samples'].gt_instances_3d.labels_3d)
