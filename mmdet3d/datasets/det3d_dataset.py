@@ -48,7 +48,6 @@ class Det3DDataset(BaseDataset):
               indoor point cloud 3d detection.
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
-
         filter_empty_gt (bool, optional): Whether to filter the data with
             empty GT. Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -168,7 +167,7 @@ class Det3DDataset(BaseDataset):
         return ann_info
 
     def parse_ann_info(self, info: dict) -> Optional[dict]:
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         In `Custom3DDataset`, we simply concatenate all the field
         in `instances` to `np.ndarray`, you can do the specific
@@ -229,15 +228,15 @@ class Det3DDataset(BaseDataset):
         """Process the raw data info.
 
         Convert all relative path of needed modality data file to
-        the absolute path. And process
-        the `instances` field to `ann_info` in training stage.
+        the absolute path. And process the `instances` field to
+        `ann_info` in training stage.
 
         Args:
             info (dict): Raw info dict.
 
         Returns:
             dict: Has `ann_info` in training stage. And
-            all path has been converted to absolute path.
+                all path has been converted to absolute path.
         """
 
         if self.modality['use_lidar']:

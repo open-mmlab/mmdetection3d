@@ -24,7 +24,7 @@ class SUNRGBDDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optiona;): Prefix for data. Defaults to
+        data_prefix (dict, optional): Prefix for data. Defaults to
             dict(pts='points',img='sunrgbd_trainval').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
@@ -58,11 +58,11 @@ class SUNRGBDDataset(Det3DDataset):
                      pts='points', img='sunrgbd_trainval/image'),
                  pipeline: List[Union[dict, Callable]] = [],
                  default_cam_key: str = 'CAM0',
-                 modality=dict(use_camera=True, use_lidar=True),
+                 modality: dict = dict(use_camera=True, use_lidar=True),
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 **kwargs):
+                 **kwargs) -> None:
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -91,7 +91,7 @@ class SUNRGBDDataset(Det3DDataset):
 
         Returns:
             dict: Has `ann_info` in training stage. And
-            all path has been converted to absolute path.
+                all path has been converted to absolute path.
         """
 
         if self.modality['use_lidar']:
@@ -121,7 +121,7 @@ class SUNRGBDDataset(Det3DDataset):
         return info
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Info dict.

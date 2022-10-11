@@ -25,15 +25,15 @@ class ScanNetDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict): Prefix for data. Defaults to
-            `dict(pts='points',
-                pts_isntance_mask='instance_mask',
-                pts_semantic_mask='semantic_mask')`.
-        pipeline (list[dict]): Pipeline used for data processing.
+        data_prefix (dict, optional): Prefix for data. Defaults to
+            dict(pts='points',
+                 pts_isntance_mask='instance_mask',
+                 pts_semantic_mask='semantic_mask').
+        pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict): Modality to specify the sensor data used
-            as input. Defaults to None.
-        box_type_3d (str): Type of 3D box of this dataset.
+        modality (dict, optional): Modality to specify the sensor data used
+            as input. Defaults to dict(use_camera=False, use_lidar=True).
+        box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'Depth' in this dataset. Available options includes:
@@ -41,9 +41,9 @@ class ScanNetDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool): Whether to filter empty GT.
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool): Whether the dataset is in test mode.
+        test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
@@ -71,7 +71,7 @@ class ScanNetDataset(Det3DDataset):
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 **kwargs):
+                 **kwargs) -> None:
 
         # construct seg_label_mapping for semantic mask
         seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
@@ -128,8 +128,8 @@ class ScanNetDataset(Det3DDataset):
             info (dict): Raw info dict.
 
         Returns:
-            dict: Data information that will be passed to the data
-            preprocessing transforms. It includes the following keys:
+            dict: Has `ann_info` in training stage. And
+                all path has been converted to absolute path.
         """
         info['axis_align_matrix'] = self._get_axis_align_matrix(info)
         info['pts_instance_mask_path'] = osp.join(
@@ -152,7 +152,7 @@ class ScanNetDataset(Det3DDataset):
             info (dict): Info dict.
 
         Returns:
-            dict: Processed `ann_info`
+            dict: Processed `ann_info`.
         """
         ann_info = super().parse_ann_info(info)
         # empty gt
@@ -181,24 +181,25 @@ class ScanNetSegDataset(Seg3DDataset):
     for data downloading.
 
     Args:
-        data_root (str): Path of dataset root.
-        ann_file (str): Path of annotation file.
+        data_root (str, optional): Path of dataset root. Defaults to None.
+        ann_file (str, optional): Path of annotation file. Defaults to ''.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        palette (list[list[int]], optional): The palette of segmentation map.
-            Defaults to None.
+        metainfo (dict, optional): Meta information for dataset, such as class
+            information. Defaults to None.
+        data_prefix (dict, optional): Prefix for training data. Defaults to
+            dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
         modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
+            as input. Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
+            unannotated points. If None is given, set to len(self.CLASSES) to
+            be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
+        test_mode (bool, optional): Whether the dataset is in test mode.
+            Defaults to False.
     """
     METAINFO = {
         'CLASSES':
@@ -242,9 +243,9 @@ class ScanNetSegDataset(Seg3DDataset):
                      pts='points', img='', instance_mask='', semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 ignore_index=None,
-                 scene_idxs=None,
-                 test_mode=False,
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[Union[np.ndarray, str]] = None,
+                 test_mode: bool = False,
                  **kwargs) -> None:
         super().__init__(
             data_root=data_root,
@@ -315,10 +316,10 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
                      pts='points', img='', instance_mask='', semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 test_mode=False,
-                 ignore_index=None,
-                 scene_idxs=None,
-                 file_client_args=dict(backend='disk'),
+                 test_mode: bool = False,
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[Union[np.ndarray, str]]=None,
+                 file_client_args: dict = dict(backend='disk'),
                  **kwargs) -> None:
         super().__init__(
             data_root=data_root,

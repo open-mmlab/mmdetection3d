@@ -83,7 +83,7 @@ class KittiDataset(Det3DDataset):
 
         Returns:
             dict: Has `ann_info` in training stage. And
-            all path has been converted to absolute path.
+                all path has been converted to absolute path.
         """
         if self.modality['use_lidar']:
             if 'plane' in info:
@@ -113,21 +113,21 @@ class KittiDataset(Det3DDataset):
         return info
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Data information of single data sample.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
+                  3D ground truth bboxes.
                 - bbox_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
                 - gt_labels (np.ndarray): Labels of ground truths.
                 - difficulty (int): Difficulty defined by KITTI.
-                    0, 1, 2 represent xxxxx respectively.
+                  0, 1, 2 represent xxxxx respectively.
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:

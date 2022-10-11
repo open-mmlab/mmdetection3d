@@ -23,8 +23,8 @@ class WaymoDataset(KittiDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        data_prefix (dict): data prefix for point cloud and
-            camera data dict. Default to dict(
+        data_prefix (dict, optional): data prefix for point cloud and
+            camera data dict. Defaults to dict(
                                     pts='velodyne',
                                     CAM_FRONT='image_0',
                                     CAM_FRONT_RIGHT='image_1',
@@ -59,7 +59,7 @@ class WaymoDataset(KittiDataset):
         task (str, optional): task for 3D detection (lidar, mono3d).
             lidar: take all the ground trurh in the frame.
             mono3d: take the groundtruth that can be seen in the cam.
-            Defaults to 'lidar'.
+            Defaults to 'lidar_det'.
         max_sweeps (int, optional): max sweep for each frame. Defaults to 0.
     """
     METAINFO = {'CLASSES': ('Car', 'Pedestrian', 'Cyclist')}
@@ -75,17 +75,17 @@ class WaymoDataset(KittiDataset):
                      CAM_SIDE_RIGHT='image_3',
                      CAM_SIDE_LEFT='image_4'),
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality: Optional[dict] = dict(use_lidar=True),
+                 modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM_FRONT',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
-                 cam_sync_instances=False,
-                 load_interval=1,
-                 task='lidar',
-                 max_sweeps=0,
-                 **kwargs):
+                 cam_sync_instances: bool = False,
+                 load_interval: int = 1,
+                 task: str = 'lidar_det',
+                 max_sweeps: int = 0,
+                 **kwargs) -> None:
         self.load_interval = load_interval
         # set loading mode for different task settings
         self.cam_sync_instances = cam_sync_instances
@@ -111,7 +111,7 @@ class WaymoDataset(KittiDataset):
             **kwargs)
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Data information of single data sample.
@@ -120,12 +120,12 @@ class WaymoDataset(KittiDataset):
             dict: annotation information consists of the following keys:
 
                 - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
+                  3D ground truth bboxes.
                 - bbox_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
                 - gt_labels (np.ndarray): Labels of ground truths.
                 - difficulty (int): Difficulty defined by KITTI.
-                    0, 1, 2 represent xxxxx respectively.
+                  0, 1, 2 represent xxxxx respectively.
         """
         ann_info = Det3DDataset.parse_ann_info(self, info)
         if ann_info is None:

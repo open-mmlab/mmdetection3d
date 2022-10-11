@@ -71,7 +71,7 @@ class LoadMultiViewImageFromFiles(BaseTransform):
             to_rgb=False)
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(to_float32={self.to_float32}, '
@@ -194,7 +194,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
     def _remove_close(self,
                       points: Union[np.ndarray, BasePoints],
                       radius: float = 1.0) -> Union[np.ndarray, BasePoints]:
-        """Removes point too close within a certain radius from origin.
+        """Remove point too close within a certain radius from origin.
 
         Args:
             points (np.ndarray | :obj:`BasePoints`): Sweep points.
@@ -227,7 +227,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                 Updated key and value are described below.
 
                 - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point
-                    cloud arrays.
+                  cloud arrays.
         """
         points = results['points']
         points.tensor[:, 4] = 0
@@ -272,7 +272,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         results['points'] = points
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         return f'{self.__class__.__name__}(sweeps_num={self.sweeps_num})'
 
@@ -323,7 +323,7 @@ class PointSegClassMapping(BaseTransform):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         return repr_str
@@ -363,7 +363,7 @@ class NormalizePointsColor(BaseTransform):
         input_dict['points'] = points
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(color_mean={self.color_mean})'
@@ -496,7 +496,7 @@ class LoadPointsFromFile(BaseTransform):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__ + '('
         repr_str += f'shift_height={self.shift_height}, '
@@ -546,7 +546,7 @@ class LoadAnnotations3D(LoadAnnotations):
     - pts_instance_mask_path (str): Path of instance mask file.
       Only when `with_mask_3d` is True.
     - pts_semantic_mask_path (str): Path of semantic mask file.
-      Only when
+      Only when `with_seg_3d` is True.
 
     Added Keys:
 
@@ -747,7 +747,8 @@ class LoadAnnotations3D(LoadAnnotations):
         `ignore_flag`
 
         Args:
-            results (dict): Result dict from :obj:``mmcv.BaseDataset``.
+            results (dict): Result dict from :obj:`mmcv.BaseDataset`.
+
         Returns:
             dict: The dict contains loaded bounding box annotations.
         """
@@ -758,7 +759,7 @@ class LoadAnnotations3D(LoadAnnotations):
         """Private function to load label annotations.
 
         Args:
-            results (dict): Result dict from :obj :obj:``mmcv.BaseDataset``.
+            results (dict): Result dict from :obj :obj:`mmcv.BaseDataset`.
 
         Returns:
             dict: The dict contains loaded label annotations.
@@ -773,7 +774,7 @@ class LoadAnnotations3D(LoadAnnotations):
 
         Returns:
             dict: The dict containing loaded 3D bounding box, label, mask and
-            semantic segmentation annotations.
+                semantic segmentation annotations.
         """
         results = super().transform(results)
         if self.with_bbox_3d:
@@ -791,7 +792,7 @@ class LoadAnnotations3D(LoadAnnotations):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         indent_str = '    '
         repr_str = self.__class__.__name__ + '(\n'

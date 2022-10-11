@@ -66,16 +66,16 @@ class LyftDataset(Det3DDataset):
             **kwargs)
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Data information of single data sample.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
+                  3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of 3D ground truths.
         """
         ann_info = super().parse_ann_info(info)

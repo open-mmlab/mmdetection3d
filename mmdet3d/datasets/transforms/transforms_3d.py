@@ -61,7 +61,7 @@ class RandomDropPointsColor(BaseTransform):
             points.color = points.color * 0.0
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(drop_ratio={self.drop_ratio})'
@@ -142,7 +142,7 @@ class RandomFlip3D(RandomFlip):
         Args:
             input_dict (dict): Result dict from loading pipeline.
             direction (str, optional): Flip direction.
-                Default: 'horizontal'.
+                Defaults to 'horizontal'.
 
         Returns:
             dict: Flipped results, 'points', 'bbox3d_fields' keys are
@@ -215,7 +215,7 @@ class RandomFlip3D(RandomFlip):
             input_dict['transformation_3d_flow'].extend(['VF'])
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(sync_2d={self.sync_2d},'
@@ -228,7 +228,7 @@ class RandomJitterPoints(BaseTransform):
     """Randomly jitter point coordinates.
 
     Different from the global translation in ``GlobalRotScaleTrans``, here we
-        apply different noises to each point in a scene.
+    apply different noises to each point in a scene.
 
     Args:
         jitter_std (list[float]): The standard deviation of jittering noise.
@@ -283,7 +283,7 @@ class RandomJitterPoints(BaseTransform):
         points.translate(jitter_noise)
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(jitter_std={self.jitter_std},'
@@ -318,11 +318,11 @@ class ObjectSample(BaseTransform):
 
     Args:
         db_sampler (dict): Config dict of the database sampler.
-        sample_2d (bool): Whether to also paste 2D image patch to the images
-            This should be true when applying multi-modality cut-and-paste.
-            Defaults to False.
-        use_ground_plane (bool): Whether to use ground plane to adjust the
-            3D labels.
+        sample_2d (bool, optional): Whether to also paste 2D image patch
+            to the images. This should be true when applying multi-modality
+            cut-and-paste. Defaults to False.
+        use_ground_plane (bool, optional): Whether to use ground plane to
+            adjust the 3D labels. Defaults to False.
     """
 
     def __init__(self,
@@ -419,12 +419,12 @@ class ObjectSample(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'db_sampler={self.db_sampler},'
+        repr_str += f'(db_sampler={self.db_sampler},'
         repr_str += f' sample_2d={self.sample_2d},'
-        repr_str += f' use_ground_plane={self.use_ground_plane}'
+        repr_str += f' use_ground_plane={self.use_ground_plane})'
         return repr_str
 
 
@@ -493,7 +493,7 @@ class ObjectNoise(BaseTransform):
         input_dict['points'] = points.new_point(numpy_points)
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(num_try={self.num_try},'
@@ -584,7 +584,7 @@ class GlobalAlignment(BaseTransform):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(rotation_axis={self.rotation_axis})'
@@ -621,7 +621,7 @@ class GlobalRotScaleTrans(BaseTransform):
         translation_std (list[float], optional): The standard deviation of
             translation noise applied to a scene, which
             is sampled from a gaussian distribution whose standard deviation
-            is set by ``translation_std``. Defaults to [0, 0, 0]
+            is set by ``translation_std``. Defaults to [0, 0, 0].
         shift_height (bool, optional): Whether to shift height.
             (the fourth dimension of indoor points) when scaling.
             Defaults to False.
@@ -663,8 +663,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after translation, 'points', 'pcd_trans'
-            and `gt_bboxes_3d` is updated
-            in the result dict.
+                and `gt_bboxes_3d` is updated in the result dict.
         """
         translation_std = np.array(self.translation_std, dtype=np.float32)
         trans_factor = np.random.normal(scale=translation_std, size=3).T
@@ -682,8 +681,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after rotation, 'points', 'pcd_rotation'
-            and `gt_bboxes_3d` is updated
-            in the result dict.
+                and `gt_bboxes_3d` is updated in the result dict.
         """
         rotation = self.rot_range
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
@@ -709,8 +707,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after scaling, 'points' and
-            `gt_bboxes_3d` is updated
-            in the result dict.
+                `gt_bboxes_3d` is updated in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
         points = input_dict['points']
@@ -733,7 +730,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after scaling, 'pcd_scale_factor'
-            are updated in the result dict.
+                are updated in the result dict.
         """
         scale_factor = np.random.uniform(self.scale_ratio_range[0],
                                          self.scale_ratio_range[1])
@@ -748,8 +745,8 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after scaling, 'points', 'pcd_rotation',
-            'pcd_scale_factor', 'pcd_trans' and `gt_bboxes_3d` is updated
-            in the result dict.
+            'pcd_scale_factor', 'pcd_trans' and `gt_bboxes_3d` are updated
+                in the result dict.
         """
         if 'transformation_3d_flow' not in input_dict:
             input_dict['transformation_3d_flow'] = []
@@ -765,7 +762,7 @@ class GlobalRotScaleTrans(BaseTransform):
         input_dict['transformation_3d_flow'].extend(['R', 'S', 'T'])
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(rot_range={self.rot_range},'
@@ -803,7 +800,7 @@ class PointShuffle(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         return self.__class__.__name__
 
@@ -824,7 +821,7 @@ class ObjectRangeFilter(BaseTransform):
         point_cloud_range (list[float]): Point cloud range.
     """
 
-    def __init__(self, point_cloud_range: List[float]):
+    def __init__(self, point_cloud_range: List[float]) -> None:
         self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
 
     def transform(self, input_dict: dict) -> dict:
@@ -861,7 +858,7 @@ class ObjectRangeFilter(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(point_cloud_range={self.pcd_range.tolist()})'
@@ -916,7 +913,7 @@ class PointsRangeFilter(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(point_cloud_range={self.pcd_range.tolist()})'
@@ -961,7 +958,7 @@ class ObjectNameFilter(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(classes={self.classes})'
@@ -1087,7 +1084,7 @@ class PointSample(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(num_points={self.num_points},'
@@ -1360,7 +1357,7 @@ class IndoorPatchPointSample(BaseTransform):
 
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(num_points={self.num_points},'
@@ -1432,7 +1429,7 @@ class BackgroundPointsFilter(BaseTransform):
             input_dict['pts_semantic_mask'] = pts_semantic_mask[valid_masks]
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(bbox_enlarge_range={self.bbox_enlarge_range.tolist()})'
@@ -1447,9 +1444,10 @@ class VoxelBasedPointSampler(BaseTransform):
 
     Args:
         cur_sweep_cfg (dict): Config for sampling current points.
-        prev_sweep_cfg (dict): Config for sampling previous points.
-        time_dim (int): Index that indicate the time dimension
-            for input points.
+        prev_sweep_cfg (dict, optional): Config for sampling previous points.
+            Defaults to None.
+        time_dim (int, optional): Index that indicate the time dimension
+            for input points. Defaults to 3.
     """
 
     def __init__(self,
@@ -1476,7 +1474,7 @@ class VoxelBasedPointSampler(BaseTransform):
             points (np.ndarray): Points subset to be sampled.
             sampler (VoxelGenerator): Voxel based sampler for
                 each points subset.
-            point_dim (int): The dimension of each points
+            point_dim (int): The dimension of each points.
 
         Returns:
             np.ndarray: Sampled points.
@@ -1563,7 +1561,7 @@ class VoxelBasedPointSampler(BaseTransform):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
 
         def _auto_indent(repr_str, indent):
@@ -1776,7 +1774,7 @@ class AffineResize(BaseTransform):
         ref_point3 = ref_point2 + np.array([-d[1], d[0]])
         return ref_point3
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(img_scale={self.img_scale}, '
@@ -1836,7 +1834,7 @@ class RandomShiftScale(BaseTransform):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(shift_scale={self.shift_scale}, '

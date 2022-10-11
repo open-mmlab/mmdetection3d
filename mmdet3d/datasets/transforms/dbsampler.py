@@ -90,7 +90,7 @@ class DataBaseSampler(object):
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
         classes (list[str], optional): List of classes. Defaults to None.
-        points_loader(dict, optional): Config of points loader. Defaults to
+        points_loader (dict, optional): Config of points loader. Defaults to
             dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0, 1, 2, 3]).
         file_client_args (dict, optional): Config dict of file clients,
             refer to
@@ -219,9 +219,9 @@ class DataBaseSampler(object):
             dict: Dict of sampled 'pseudo ground truths'.
 
                 - gt_labels_3d (np.ndarray): ground truths labels
-                    of sampled objects.
+                  of sampled objects.
                 - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`):
-                    sampled ground truth 3D bounding boxes
+                  sampled ground truth 3D bounding boxes
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths
         """

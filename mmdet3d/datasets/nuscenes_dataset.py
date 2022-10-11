@@ -108,16 +108,16 @@ class NuScenesDataset(Det3DDataset):
         return filtered_annotations
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Data information of single data sample.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
+                  3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
         """
         ann_info = super().parse_ann_info(info)
@@ -178,7 +178,7 @@ class NuScenesDataset(Det3DDataset):
 
         Returns:
             dict: Has `ann_info` in training stage. And
-            all path has been converted to absolute path.
+                all path has been converted to absolute path.
         """
         if self.task == 'mono3d':
             data_list = []

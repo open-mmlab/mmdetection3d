@@ -112,7 +112,7 @@ class MultiScaleFlipAug3D(BaseTransform):
 
         return aug_data_list
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(transforms={self.transforms}, '
