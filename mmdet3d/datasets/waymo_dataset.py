@@ -83,7 +83,7 @@ class WaymoDataset(KittiDataset):
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  cam_sync_instances=False,
                  load_interval=1,
-                 task='lidar',
+                 task='lidar_det',
                  max_sweeps=0,
                  **kwargs):
         self.load_interval = load_interval
@@ -151,7 +151,7 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
@@ -184,7 +184,7 @@ class WaymoDataset(KittiDataset):
     def parse_data_info(self, info: dict) -> dict:
         """if task is lidar or multiview det, use super() method elif task is
         mono3d, split the info from frame-wise to img-wise."""
-        if self.task != 'mono3d':
+        if self.task != 'mono_det':
             if self.cam_sync_instances:
                 # use the cam sync labels
                 info['instances'] = info['cam_sync_instances']

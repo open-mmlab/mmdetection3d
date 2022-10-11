@@ -51,7 +51,7 @@ def main(args):
         show=True,
         wait_time=0,
         out_file=args.out_dir,
-        vis_task='seg')
+        vis_task='lidar_seg')
 
 
 if __name__ == '__main__':
