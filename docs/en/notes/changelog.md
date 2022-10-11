@@ -8,24 +8,24 @@
 
 #### Improvements
 
-- Add the code of generating cam_sync_labels in waymo dataset (#1870)
-- Update SUN RGB-D and Lyft datasets docs (#1833)
-- Update customized dataset docs (#1845)
-- Update dataset transforms typehints (#1875)
-- Fix ci (#1813, #1865, #1877)
+- Add `auto_scale_lr` in config to support training with auto-scale learning rates (#1807)
+- Fix CI (#1813, #1865, #1877)
 - Update `browse_dataset.py` script (#1817)
+- Update SUN RGB-D and Lyft datasets documentation (#1833)
 - Rename `convert_to_datasample` to `add_pred_to_datasample` in detectors (#1843)
-- Add `auto_scale_lr` in config to support auto-scale learning rate training (#1807)
+- Update customized dataset documentation (#1845)
+- Add the code of generating `cam_sync_labels` for Waymo dataset (#1870)
+- Update dataset transforms typehints (#1875)
 
 #### Bug Fixes
 
+- Fix missing registration of models in [setup_env.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/utils/setup_env.py) (#1808)
+- Fix the data base sampler bugs when using the ground plane data (#1812)
+- Add output directory existing check during visualization (#1828)
+- Fix bugs of nuScenes dataset for monocular 3D detection (#1837)
+- Fix visualization hook to support the visualization of different data modalities (#1839)
+- Fix monocular 3D detection demo (#1864)
 - Fix the lack of `num_pts_feats` key in nuscenes dataset and complete docstring (#1882)
-- Fix mono3d detection demo (#1864)
-- Add visualize output-dir check to make sure it existed (#1828)
-- Fix visualization hook to support different modality visualize (#1839)
-- Fix the dbsampler bug to use ground plane data (#1812)
-- Fix model not registered bug (#1808)
-- Fix nuscenes mono3d bug (#1837)
 
 #### Contributors
 
