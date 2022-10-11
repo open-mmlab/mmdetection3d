@@ -1,10 +1,10 @@
 # Changelog of v1.1
 
-### v1.1.0rc1 (9/10/2022)
+### v1.1.0rc1 (11/10/2022)
 
 #### New Features
 
-- Refactor PointRCNN in mmdet3d 1.1 version (#1819)
+- Refactor PointRCNN in the framework of mmdet3d v1.1 (#1819)
 
 #### Improvements
 
