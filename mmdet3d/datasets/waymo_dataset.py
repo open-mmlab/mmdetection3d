@@ -133,7 +133,6 @@ class WaymoDataset(KittiDataset):
             ann_info = {}
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
-            # return anns_results
 
         ann_info = self._remove_dontcare(ann_info)
 
@@ -144,7 +143,7 @@ class WaymoDataset(KittiDataset):
                 origin=(0.5, 0.5, 0.5))
 
         else:
-            # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
+            # in waymo, lidar2cam = R0_rect @ Tr_velo_to_cam
             # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
             lidar2cam = np.array(
                 info['images'][self.default_cam_key]['lidar2cam'])

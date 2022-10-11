@@ -33,8 +33,10 @@ class Waymo2KITTI(object):
         prefix (str): Prefix of filename. In general, 0 for training, 1 for
             validation and 2 for testing.
         workers (int, optional): Number of workers for the parallel process.
-        test_mode (bool, optional): Whether in the test_mode. Default: False.
-        save_cam_sync_labels (bool, Optional): Whether to save cam sync labels.
+            Defaults to 64.
+        test_mode (bool, optional): Whether in the test_mode.
+            Defaults to False.
+        save_cam_sync_labels (bool, optional): Whether to save cam sync labels.
             Defaults to True.
     """
 

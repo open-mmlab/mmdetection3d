@@ -291,7 +291,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
-            correct_yaw (bool): If convert the yaw angle to the target
+            correct_yaw (bool): Whether to convert the yaw angle to the target
                 coordinate. Defaults to False.
         Returns:
             :obj:`BaseInstance3DBoxes`:
