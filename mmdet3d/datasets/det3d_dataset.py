@@ -147,7 +147,7 @@ class Det3DDataset(BaseDataset):
         logger: MMLogger = MMLogger.get_current_instance()
         logger.info('-' * 30)
         logger.info(f'The length of the dataset: {len(self)}')
-        content_show = ['category', 'number']
+        content_show = [['category', 'number']]
         for cat_name, num in self.ins_num_per_cat.items():
             content_show.append([cat_name, num])
         table = AsciiTable(content_show)
@@ -344,12 +344,13 @@ class Det3DDataset(BaseDataset):
         for label in new_labels:
             cat_name = self.metainfo['CLASSES'][label]
             new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name, 0) + 1
-        content_show = ['category', 'new number', 'ori number']
+        content_show = [['category', 'new number', 'ori number']]
         for cat_name, num in ori_num_per_cat.items():
             new_num = new_num_per_cat.get(cat_name, 0)
             content_show.append([cat_name, new_num, num])
+        table = AsciiTable(content_show)
         logger.info('The number of instances per category after and before '
-                    f'through pipeline:\n{content_show}')
+                    f'through pipeline:\n{table.table}')
 
     def prepare_data(self, index: int) -> Optional[dict]:
         """Data preparation for both training and testing stage.
