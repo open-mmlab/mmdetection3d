@@ -66,7 +66,8 @@ class KittiMetric(BaseMetric):
         self.default_cam_key = default_cam_key
         self.file_client_args = file_client_args
         self.default_cam_key = default_cam_key
-        allowed_metrics = ['bbox', 'img_bbox', 'mAP']
+
+        allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'LET_mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
         for metric in self.metrics:
             if metric not in allowed_metrics:

@@ -17,8 +17,9 @@ import mmengine
 import numpy as np
 from nuscenes.nuscenes import NuScenes
 
-from mmdet3d.datasets.convert_utils import (convert_annos, get_2d_boxes,
-                                            get_waymo_2d_boxes)
+from mmdet3d.datasets.convert_utils import (convert_annos,
+                                            get_kitti_style_2d_boxes,
+                                            get_nuscenes_2d_boxes)
 from mmdet3d.datasets.utils import convert_quaternion_to_matrix
 from mmdet3d.structures import points_cam2img
 
@@ -218,7 +219,7 @@ def clear_data_info_unused_keys(data_info):
     return data_info, empty_flag
 
 
-def generate_camera_instances(info, nusc):
+def generate_nuscenes_camera_instances(info, nusc):
 
     # get bbox annotations for camera
     camera_types = [
@@ -235,7 +236,7 @@ def generate_camera_instances(info, nusc):
     for cam in camera_types:
         cam_info = info['cams'][cam]
         # list[dict]
-        ann_infos = get_2d_boxes(
+        ann_infos = get_nuscenes_2d_boxes(
             nusc,
             cam_info['sample_data_token'],
             visibilities=['', '1', '2', '3', '4'])
@@ -358,7 +359,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
             empty_instance['bbox_3d_isvalid'] = ori_info_dict['valid_flag'][i]
             empty_instance = clear_instance_unused_keys(empty_instance)
             temp_data_info['instances'].append(empty_instance)
-        temp_data_info['cam_instances'] = generate_camera_instances(
+        temp_data_info['cam_instances'] = generate_nuscenes_camera_instances(
             ori_info_dict, nusc)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
@@ -488,6 +489,8 @@ def update_kitti_infos(pkl_path, out_dir):
             empty_instance = clear_instance_unused_keys(empty_instance)
             instance_list.append(empty_instance)
         temp_data_info['instances'] = instance_list
+        cam_instances = generate_kitti_camera_instances(ori_info_dict)
+        temp_data_info['cam_instances'] = cam_instances
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = pkl_path.split('/')[-1]
@@ -998,6 +1001,18 @@ def update_waymo_infos(pkl_path, out_dir):
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
 
+def generate_kitti_camera_instances(ori_info_dict):
+
+    cam_key = 'CAM2'
+    empty_camera_instances = get_empty_multicamera_instances([cam_key])
+    annos = copy.deepcopy(ori_info_dict['annos'])
+    ann_infos = get_kitti_style_2d_boxes(
+        ori_info_dict, occluded=[0, 1, 2, 3], annos=annos)
+    empty_camera_instances[cam_key] = ann_infos
+
+    return empty_camera_instances
+
+
 def generate_waymo_camera_instances(ori_info_dict, cam_keys):
 
     empty_multicamera_instances = get_empty_multicamera_instances(cam_keys)
@@ -1007,8 +1022,8 @@ def generate_waymo_camera_instances(ori_info_dict, cam_keys):
         if cam_idx != 0:
             annos = convert_annos(ori_info_dict, cam_idx)
 
-        ann_infos = get_waymo_2d_boxes(
-            ori_info_dict, cam_idx, occluded=[0], annos=annos)
+        ann_infos = get_kitti_style_2d_boxes(
+            ori_info_dict, cam_idx, occluded=[0], annos=annos, dataset='waymo')
 
         empty_multicamera_instances[cam_key] = ann_infos
     return empty_multicamera_instances
@@ -1020,7 +1035,7 @@ def parse_args():
     parser.add_argument(
         '--dataset', type=str, default='kitti', help='name of dataset')
     parser.add_argument(
-        '--pkl',
+        '--pkl-path',
         type=str,
         default='./data/kitti/kitti_infos_train.pkl ',
         help='specify the root dir of dataset')

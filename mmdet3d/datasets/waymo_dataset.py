@@ -83,7 +83,7 @@ class WaymoDataset(KittiDataset):
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  cam_sync_instances=False,
                  load_interval=1,
-                 task='lidar',
+                 task='lidar_det',
                  max_sweeps=0,
                  **kwargs):
         self.load_interval = load_interval
@@ -135,8 +135,22 @@ class WaymoDataset(KittiDataset):
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
         ann_info = self._remove_dontcare(ann_info)
+        # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
+        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+        if 'gt_bboxes' in ann_info:
+            gt_bboxes = ann_info['gt_bboxes']
+            gt_bboxes_labels = ann_info['gt_bboxes_labels']
+        else:
+            gt_bboxes = np.zeros((0, 4), dtype=np.float32)
+            gt_bboxes_labels = np.zeros(0, dtype=np.int64)
+        if 'centers_2d' in ann_info:
+            centers_2d = ann_info['centers_2d']
+            depths = ann_info['depths']
+        else:
+            centers_2d = np.zeros((0, 2), dtype=np.float32)
+            depths = np.zeros((0), dtype=np.float32)
 
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
@@ -152,7 +166,15 @@ class WaymoDataset(KittiDataset):
                                                      np.linalg.inv(lidar2cam))
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 
-        return ann_info
+        anns_results = dict(
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=ann_info['gt_labels_3d'],
+            gt_bboxes=gt_bboxes,
+            gt_bboxes_labels=gt_bboxes_labels,
+            centers_2d=centers_2d,
+            depths=depths)
+
+        return anns_results
 
     def load_data_list(self) -> List[dict]:
         """Add the load interval."""
@@ -163,7 +185,7 @@ class WaymoDataset(KittiDataset):
     def parse_data_info(self, info: dict) -> dict:
         """if task is lidar or multiview det, use super() method elif task is
         mono3d, split the info from frame-wise to img-wise."""
-        if self.task != 'mono3d':
+        if self.task != 'mono_det':
             if self.cam_sync_instances:
                 # use the cam sync labels
                 info['instances'] = info['cam_sync_instances']
