@@ -280,7 +280,7 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
         overlaps_h = torch.clamp(heighest_of_bottom - lowest_of_top, min=0)
         return overlaps_h
 
-    def convert_to(self, dst, rt_mat=None):
+    def convert_to(self, dst, rt_mat=None, correct_yaw=False):
         """Convert self to ``dst`` mode.
 
         Args:
@@ -291,14 +291,21 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
-
+            correct_yaw (bool): Whether to convert the yaw angle to the target
+                coordinate. Defaults to False.
         Returns:
             :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
+
+        # TODO: always set correct_yaw=True
         return Box3DMode.convert(
-            box=self, src=Box3DMode.CAM, dst=dst, rt_mat=rt_mat)
+            box=self,
+            src=Box3DMode.CAM,
+            dst=dst,
+            rt_mat=rt_mat,
+            correct_yaw=correct_yaw)
 
     def points_in_boxes_part(self, points, boxes_override=None):
         """Find the box in which each point is.

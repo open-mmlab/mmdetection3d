@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .builder import DATASETS, PIPELINES, build_dataset
-from .convert_utils import get_2d_boxes
 from .dataset_wrappers import CBGSDataset
 from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
@@ -22,8 +21,8 @@ from .transforms import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                          ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
                          ObjectSample, PointSample, PointShuffle,
                          PointsRangeFilter, RandomDropPointsColor,
-                         RandomFlip3D, RandomJitterPoints, RandomShiftScale,
-                         VoxelBasedPointSampler)
+                         RandomFlip3D, RandomJitterPoints, RandomResize3D,
+                         RandomShiftScale, Resize3D, VoxelBasedPointSampler)
 from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
@@ -40,5 +39,6 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES', 'get_2d_boxes'
+    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES',
+    'Resize3D', 'RandomResize3D',
 ]

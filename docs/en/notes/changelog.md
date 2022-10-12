@@ -1,5 +1,44 @@
 # Changelog of v1.1
 
+### v1.1.0rc1 (11/10/2022)
+
+#### Highlights
+
+- Support a camera-only 3D detection baseline on Waymo, [MV-FCOS3D++](https://arxiv.org/abs/2207.12716)
+
+#### New Features
+
+- Support a camera-only 3D detection baseline on Waymo, [MV-FCOS3D++](https://arxiv.org/abs/2207.12716), with new evaluation metrics and transformations (#1716)
+- Refactor PointRCNN in the framework of mmdet3d v1.1 (#1819)
+
+#### Improvements
+
+- Add `auto_scale_lr` in config to support training with auto-scale learning rates (#1807)
+- Fix CI (#1813, #1865, #1877)
+- Update `browse_dataset.py` script (#1817)
+- Update SUN RGB-D and Lyft datasets documentation (#1833)
+- Rename `convert_to_datasample` to `add_pred_to_datasample` in detectors (#1843)
+- Update customized dataset documentation (#1845)
+- Update `Det3DLocalVisualization` and visualization documentation (#1857)
+- Add the code of generating `cam_sync_labels` for Waymo dataset (#1870)
+- Update dataset transforms typehints (#1875)
+
+#### Bug Fixes
+
+- Fix missing registration of models in [setup_env.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/utils/setup_env.py) (#1808)
+- Fix the data base sampler bugs when using the ground plane data (#1812)
+- Add output directory existing check during visualization (#1828)
+- Fix bugs of nuScenes dataset for monocular 3D detection (#1837)
+- Fix visualization hook to support the visualization of different data modalities (#1839)
+- Fix monocular 3D detection demo (#1864)
+- Fix the lack of `num_pts_feats` key in nuscenes dataset and complete docstring (#1882)
+
+#### Contributors
+
+A total of 10 developers contributed to this release.
+
+@ZwwWayne, @Tai-Wang, @lianqing11, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @tpoisonooo, @ice-tong, @jshilong
+
 ### v1.1.0rc0 (1/9/2022)
 
 We are excited to announce the release of MMDetection3D 1.1.0rc0.

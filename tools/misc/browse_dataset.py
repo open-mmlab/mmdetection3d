@@ -26,7 +26,10 @@ def parse_args():
     parser.add_argument(
         '--task',
         type=str,
-        choices=['det', 'seg', 'multi_modality-det', 'mono-det'],
+        choices=[
+            'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
+            'multi-modality_det'
+        ],
         help='Determine the visualization method depending on the task.')
     parser.add_argument(
         '--aug',
@@ -107,7 +110,7 @@ def main():
         dataset = DATASETS.build(cfg.train_dataloader.dataset)
 
     # configure visualization mode
-    vis_task = args.task  # 'det', 'seg', 'multi_modality-det', 'mono-det'
+    vis_task = args.task
 
     visualizer = VISUALIZERS.build(cfg.visualizer)
     visualizer.dataset_meta = dataset.metainfo

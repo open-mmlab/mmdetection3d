@@ -6,9 +6,8 @@ r"""Adapted from `Waymo to KITTI converter
 try:
     from waymo_open_dataset import dataset_pb2
 except ImportError:
-    raise ImportError(
-        'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
-        'to install the official devkit first.')
+    raise ImportError('Please run "pip install waymo-open-dataset-tf-2-5-0" '
+                      '>1.4.5 to install the official devkit first.')
 
 from glob import glob
 from os.path import join
@@ -34,7 +33,11 @@ class Waymo2KITTI(object):
         prefix (str): Prefix of filename. In general, 0 for training, 1 for
             validation and 2 for testing.
         workers (int, optional): Number of workers for the parallel process.
-        test_mode (bool, optional): Whether in the test_mode. Default: False.
+            Defaults to 64.
+        test_mode (bool, optional): Whether in the test_mode.
+            Defaults to False.
+        save_cam_sync_labels (bool, optional): Whether to save cam sync labels.
+            Defaults to True.
     """
 
     def __init__(self,
@@ -42,7 +45,8 @@ class Waymo2KITTI(object):
                  save_dir,
                  prefix,
                  workers=64,
-                 test_mode=False):
+                 test_mode=False,
+                 save_cam_sync_labels=True):
         self.filter_empty_3dboxes = True
         self.filter_no_label_zone_points = True
 
@@ -58,6 +62,14 @@ class Waymo2KITTI(object):
         if int(tf.__version__.split('.')[0]) < 2:
             tf.enable_eager_execution()
 
+        # keep the order defined by the official protocol
+        self.cam_list = [
+            '_FRONT',
+            '_FRONT_LEFT',
+            '_FRONT_RIGHT',
+            '_SIDE_LEFT',
+            '_SIDE_RIGHT',
+        ]
         self.lidar_list = [
             '_FRONT', '_FRONT_RIGHT', '_FRONT_LEFT', '_SIDE_RIGHT',
             '_SIDE_LEFT'
@@ -78,6 +90,7 @@ class Waymo2KITTI(object):
         self.prefix = prefix
         self.workers = int(workers)
         self.test_mode = test_mode
+        self.save_cam_sync_labels = save_cam_sync_labels
 
         self.tfrecord_pathnames = sorted(
             glob(join(self.load_dir, '*.tfrecord')))
@@ -89,6 +102,10 @@ class Waymo2KITTI(object):
         self.point_cloud_save_dir = f'{self.save_dir}/velodyne'
         self.pose_save_dir = f'{self.save_dir}/pose'
         self.timestamp_save_dir = f'{self.save_dir}/timestamp'
+        if self.save_cam_sync_labels:
+            self.cam_sync_label_save_dir = f'{self.save_dir}/cam_sync_label_'
+            self.cam_sync_label_all_save_dir = \
+                f'{self.save_dir}/cam_sync_label_all'
 
         self.create_folder()
 
@@ -124,14 +141,17 @@ class Waymo2KITTI(object):
             self.save_timestamp(frame, file_idx, frame_idx)
 
             if not self.test_mode:
+                # TODO save the depth image for waymo challenge solution.
                 self.save_label(frame, file_idx, frame_idx)
+                if self.save_cam_sync_labels:
+                    self.save_label(frame, file_idx, frame_idx, cam_sync=True)
 
     def __len__(self):
         """Length of the filename list."""
         return len(self.tfrecord_pathnames)
 
     def save_image(self, frame, file_idx, frame_idx):
-        """Parse and save the images in png format.
+        """Parse and save the images in jpg format.
 
         Args:
             frame (:obj:`Frame`): Open dataset frame proto.
@@ -141,7 +161,7 @@ class Waymo2KITTI(object):
         for img in frame.images:
             img_path = f'{self.image_save_dir}{str(img.name - 1)}/' + \
                 f'{self.prefix}{str(file_idx).zfill(3)}' + \
-                f'{str(frame_idx).zfill(3)}.png'
+                f'{str(frame_idx).zfill(3)}.jpg'
             img = mmcv.imfrombytes(img.image)
             mmcv.imwrite(img, img_path)
 
@@ -209,7 +229,7 @@ class Waymo2KITTI(object):
             file_idx (int): Current file index.
             frame_idx (int): Current frame index.
         """
-        range_images, camera_projections, range_image_top_pose = \
+        range_images, camera_projections, seg_labels, range_image_top_pose = \
             parse_range_image_and_camera_projection(frame)
 
         # First return
@@ -255,7 +275,7 @@ class Waymo2KITTI(object):
             f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.bin'
         point_cloud.astype(np.float32).tofile(pc_path)
 
-    def save_label(self, frame, file_idx, frame_idx):
+    def save_label(self, frame, file_idx, frame_idx, cam_sync=False):
         """Parse and save the label data in txt format.
         The relation between waymo and kitti coordinates is noteworthy:
         1. x, y, z correspond to l, w, h (waymo) -> l, h, w (kitti)
@@ -267,10 +287,15 @@ class Waymo2KITTI(object):
             frame (:obj:`Frame`): Open dataset frame proto.
             file_idx (int): Current file index.
             frame_idx (int): Current frame index.
+            cam_sync (bool, optional): Whether to save the cam sync labels.
+                Defaults to False.
         """
-        fp_label_all = open(
-            f'{self.label_all_save_dir}/{self.prefix}' +
-            f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt', 'w+')
+        label_all_path = f'{self.label_all_save_dir}/{self.prefix}' + \
+            f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'
+        if cam_sync:
+            label_all_path = label_all_path.replace('label_',
+                                                    'cam_sync_label_')
+        fp_label_all = open(label_all_path, 'w+')
         id_to_bbox = dict()
         id_to_name = dict()
         for labels in frame.projected_lidar_labels:
@@ -296,6 +321,21 @@ class Waymo2KITTI(object):
                     name = str(id_to_name.get(id + lidar))
                     break
 
+            # NOTE: the 2D labels do not have strict correspondence with
+            # the projected 2D lidar labels
+            # e.g.: the projected 2D labels can be in camera 2
+            # while the most_visible_camera can have id 4
+            if cam_sync:
+                if obj.most_visible_camera_name:
+                    name = str(
+                        self.cam_list.index(
+                            f'_{obj.most_visible_camera_name}'))
+                    box3d = obj.camera_synced_box
+                else:
+                    continue
+            else:
+                box3d = obj.box
+
             if bounding_box is None or name is None:
                 name = '0'
                 bounding_box = (0, 0, 0, 0)
@@ -310,20 +350,20 @@ class Waymo2KITTI(object):
 
             my_type = self.waymo_to_kitti_class_map[my_type]
 
-            height = obj.box.height
-            width = obj.box.width
-            length = obj.box.length
+            height = box3d.height
+            width = box3d.width
+            length = box3d.length
 
-            x = obj.box.center_x
-            y = obj.box.center_y
-            z = obj.box.center_z - height / 2
+            x = box3d.center_x
+            y = box3d.center_y
+            z = box3d.center_z - height / 2
 
             # project bounding box to the virtual reference frame
             pt_ref = self.T_velo_to_front_cam @ \
                 np.array([x, y, z, 1]).reshape((4, 1))
             x, y, z, _ = pt_ref.flatten().tolist()
 
-            rotation_y = -obj.box.heading - np.pi / 2
+            rotation_y = -box3d.heading - np.pi / 2
             track_id = obj.id
 
             # not available
@@ -345,9 +385,11 @@ class Waymo2KITTI(object):
             else:
                 line_all = line[:-1] + ' ' + name + '\n'
 
-            fp_label = open(
-                f'{self.label_save_dir}{name}/{self.prefix}' +
-                f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt', 'a')
+            label_path = f'{self.label_save_dir}{name}/{self.prefix}' + \
+                f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'
+            if cam_sync:
+                label_path = label_path.replace('label_', 'cam_sync_label_')
+            fp_label = open(label_path, 'a')
             fp_label.write(line)
             fp_label.close()
 
@@ -398,11 +440,16 @@ class Waymo2KITTI(object):
         """Create folder for data preprocessing."""
         if not self.test_mode:
             dir_list1 = [
-                self.label_all_save_dir, self.calib_save_dir,
-                self.point_cloud_save_dir, self.pose_save_dir,
-                self.timestamp_save_dir
+                self.label_all_save_dir,
+                self.calib_save_dir,
+                self.point_cloud_save_dir,
+                self.pose_save_dir,
+                self.timestamp_save_dir,
             ]
             dir_list2 = [self.label_save_dir, self.image_save_dir]
+            if self.save_cam_sync_labels:
+                dir_list1.append(self.cam_sync_label_all_save_dir)
+                dir_list2.append(self.cam_sync_label_save_dir)
         else:
             dir_list1 = [
                 self.calib_save_dir, self.point_cloud_save_dir,

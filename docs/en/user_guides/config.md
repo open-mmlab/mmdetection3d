@@ -411,7 +411,7 @@ param_scheduler = [
 
 ### Hook config
 
-Users can attach hooks to training, validation, and testing loops to insert some oprations during running. There are two different hook fields, one is `default_hooks` and the other is `custom_hooks`.
+Users can attach hooks to training, validation, and testing loops to insert some operations during running. There are two different hook fields, one is `default_hooks` and the other is `custom_hooks`.
 
 `default_hooks` is a dict of hook configs. `default_hooks` are the hooks must required at runtime. They have default priority which should not be modified. If not set, runner will use the default values. To disable a default hook, users can set its config to `None`.
 

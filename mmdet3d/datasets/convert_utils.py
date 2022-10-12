@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from collections import OrderedDict
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from nuscenes.utils.geometry_utils import view_points
@@ -10,6 +10,11 @@ from shapely.geometry import MultiPoint, box
 
 from mmdet3d.structures import Box3DMode, CameraInstance3DBoxes, points_cam2img
 from mmdet3d.structures.ops import box_np_ops
+
+kitti_categories = ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+                    'Person_sitting', 'Tram', 'Misc')
+
+waymo_categories = ('Car', 'Pedestrian', 'Cyclist')
 
 nus_categories = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
                   'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
@@ -48,8 +53,10 @@ LyftNameMapping = {
 }
 
 
-def get_2d_boxes(nusc, sample_data_token: str, visibilities: List[str]):
-    """Get the 2D annotation records for a given `sample_data_token`.
+def get_nuscenes_2d_boxes(nusc, sample_data_token: str,
+                          visibilities: List[str]):
+    """Get the 2d / mono3d annotation records for a given `sample_data_token of
+    nuscenes dataset.
 
     Args:
         sample_data_token (str): Sample data token belonging to a camera
@@ -57,7 +64,7 @@ def get_2d_boxes(nusc, sample_data_token: str, visibilities: List[str]):
         visibilities (list[str]): Visibility filter.
 
     Return:
-        list[dict]: List of 2D annotation record that belongs to the input
+        list[dict]: List of 2d annotation record that belongs to the input
             `sample_data_token`.
     """
 
@@ -128,7 +135,7 @@ def get_2d_boxes(nusc, sample_data_token: str, visibilities: List[str]):
 
         # Generate dictionary record to be included in the .json file.
         repro_rec = generate_record(ann_rec, min_x, min_y, max_x, max_y,
-                                    sample_data_token, sd_rec['filename'])
+                                    'nuscenes')
 
         # if repro_rec is None, we do not append it into repre_recs
         if repro_rec is not None:
@@ -178,23 +185,36 @@ def get_2d_boxes(nusc, sample_data_token: str, visibilities: List[str]):
     return repro_recs
 
 
-def get_waymo_2d_boxes(info, cam_idx, occluded, annos=None, mono3d=True):
-    """Get the 2D annotation records for a given info.
+def get_kitti_style_2d_boxes(info: dict,
+                             cam_idx: int = 2,
+                             occluded: Tuple[int] = (0, 1, 2, 3),
+                             annos: Optional[dict] = None,
+                             mono3d: bool = True,
+                             dataset: str = 'kitti'):
+    """Get the 2d / mono3d annotation records for a given info.
 
-    This function is used to get 2D annotations when loading annotations from
-    a dataset class. The original version in the data converter will be
-    deprecated in the future.
+    This function is used to get 2D/Mono3D annotations when loading annotations
+    from a kitti-style dataset class, such as KITTI and Waymo dataset.
 
     Args:
-        info: Information of the given sample data.
-        occluded: Integer (0, 1, 2, 3) indicating occlusion state:
+        info (dict): Information of the given sample data.
+        cam_idx (int): Camera id which the 2d / mono3d annotations to obtain
+            belong to. In KITTI, typically only CAM 2 will be used,
+            and in Waymo, multi cameras could be used.
+            Defaults to 2.
+        occluded (tuple[int]): Integer (0, 1, 2, 3) indicating occlusion state:
             0 = fully visible, 1 = partly occluded, 2 = largely occluded,
-            3 = unknown, -1 = DontCare
+            3 = unknown, -1 = DontCare.
+            Defaults to (0, 1, 2, 3).
+        annos (dict, optional): Original annotations.
         mono3d (bool): Whether to get boxes with mono3d annotation.
+            Defaults to True.
+        dataset (str): Dataset name of getting 2d bboxes.
+            Defaults to `kitti`.
 
     Return:
-        list[dict]: List of 2D annotation record that belongs to the input
-            `sample_data_token`.
+        list[dict]: List of 2d / mono3d annotation record that
+            belongs to the input camera id.
     """
     # Get calibration information
     camera_intrinsic = info['calib'][f'P{cam_idx}']
@@ -224,7 +244,6 @@ def get_waymo_2d_boxes(info, cam_idx, occluded, annos=None, mono3d=True):
         ann_rec['sample_annotation_token'] = \
             f"{info['image']['image_idx']}.{ann_idx}"
         ann_rec['sample_data_token'] = info['image']['image_idx']
-        sample_data_token = info['image']['image_idx']
 
         loc = ann_rec['location'][np.newaxis, :]
         dim = ann_rec['dimensions'][np.newaxis, :]
@@ -266,9 +285,8 @@ def get_waymo_2d_boxes(info, cam_idx, occluded, annos=None, mono3d=True):
             min_x, min_y, max_x, max_y = final_coords
 
         # Generate dictionary record to be included in the .json file.
-        repro_rec = generate_waymo_mono3d_record(ann_rec, min_x, min_y, max_x,
-                                                 max_y, sample_data_token,
-                                                 info['image']['image_path'])
+        repro_rec = generate_record(ann_rec, min_x, min_y, max_x, max_y,
+                                    dataset)
 
         # If mono3d=True, add 3D annotations in camera coordinates
         if mono3d and (repro_rec is not None):
@@ -288,11 +306,7 @@ def get_waymo_2d_boxes(info, cam_idx, occluded, annos=None, mono3d=True):
             # samples with depth < 0 will be removed
             if repro_rec['depth'] <= 0:
                 continue
-
-            repro_rec['attribute_name'] = -1  # no attribute in KITTI
-            repro_rec['attribute_id'] = -1
-
-        repro_recs.append(repro_rec)
+            repro_recs.append(repro_rec)
 
     return repro_recs
 
@@ -355,7 +369,7 @@ def post_process_coords(
 
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
-                    sample_data_token: str, filename: str) -> OrderedDict:
+                    dataset: str) -> OrderedDict:
     """Generate one 2D annotation record given various information on top of
     the 2D bounding box coordinates.
 
@@ -365,112 +379,40 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
         y1 (float): Minimum value of the y coordinate.
         x2 (float): Maximum value of the x coordinate.
         y2 (float): Maximum value of the y coordinate.
-        sample_data_token (str): Sample data token.
-        filename (str):The corresponding image file where the annotation
-            is present.
+        dataset (str): Name of dataset.
 
     Returns:
-        dict: A sample mono3D annotation record.
-            - bbox_label (int): 2d box label id
-            - bbox_label_3d (int): 3d box label id
-            - bbox (list[float]): left x, top y, right x, bottom y
-                of 2d box
-            - bbox_3d_isvalid (bool): whether the box is valid
+        dict: A sample 2d annotation record.
+                - bbox_label (int): 2d box label id
+                - bbox_label_3d (int): 3d box label id
+                - bbox (list[float]): left x, top y, right x, bottom y
+                    of 2d box
+                - bbox_3d_isvalid (bool): whether the box is valid
     """
-    repro_rec = OrderedDict()
-    repro_rec['sample_data_token'] = sample_data_token
-    coco_rec = dict()
 
-    relevant_keys = [
-        'attribute_tokens',
-        'category_name',
-        'instance_token',
-        'next',
-        'num_lidar_pts',
-        'num_radar_pts',
-        'prev',
-        'sample_annotation_token',
-        'sample_data_token',
-        'visibility_token',
-    ]
+    if dataset == 'nuscenes':
+        cat_name = ann_rec['category_name']
+        if cat_name not in NuScenesNameMapping:
+            return None
+        else:
+            cat_name = NuScenesNameMapping[cat_name]
+            categories = nus_categories
+    else:
+        cat_name = ann_rec['name']
+        if cat_name not in categories:
+            return None
 
-    for key, value in ann_rec.items():
-        if key in relevant_keys:
-            repro_rec[key] = value
+        if dataset == 'kitti':
+            categories = kitti_categories
+        elif dataset == 'waymo':
+            categories = waymo_categories
+        else:
+            raise NotImplementedError('Unsupported dataset!')
 
-    repro_rec['bbox_corners'] = [x1, y1, x2, y2]
-    repro_rec['filename'] = filename
+    rec = dict()
+    rec['bbox_label'] = categories.index(cat_name)
+    rec['bbox_label_3d'] = rec['bbox_label']
+    rec['bbox'] = [x1, y1, x2, y2]
+    rec['bbox_3d_isvalid'] = True
 
-    if repro_rec['category_name'] not in NuScenesNameMapping:
-        return None
-    cat_name = NuScenesNameMapping[repro_rec['category_name']]
-    coco_rec['bbox_label'] = nus_categories.index(cat_name)
-    coco_rec['bbox_label_3d'] = nus_categories.index(cat_name)
-    coco_rec['bbox'] = [x1, y1, x2, y2]
-    coco_rec['bbox_3d_isvalid'] = True
-
-    return coco_rec
-
-
-def generate_waymo_mono3d_record(ann_rec, x1, y1, x2, y2, sample_data_token,
-                                 filename):
-    """Generate one 2D annotation record given various information on top of
-    the 2D bounding box coordinates.
-
-    The original version in the data converter will be deprecated in the
-    future.
-
-    Args:
-        ann_rec (dict): Original 3d annotation record.
-        x1 (float): Minimum value of the x coordinate.
-        y1 (float): Minimum value of the y coordinate.
-        x2 (float): Maximum value of the x coordinate.
-        y2 (float): Maximum value of the y coordinate.
-        sample_data_token (str): Sample data token.
-        filename (str):The corresponding image file where the annotation
-            is present.
-
-    Returns:
-        dict: A sample 2D annotation record.
-            - file_name (str): file name
-            - image_id (str): sample data token
-            - area (float): 2d box area
-            - category_name (str): category name
-            - category_id (int): category id
-            - bbox (list[float]): left x, top y, x_size, y_size of 2d box
-            - iscrowd (int): whether the area is crowd
-    """
-    kitti_categories = ('Car', 'Pedestrian', 'Cyclist')
-    repro_rec = OrderedDict()
-    repro_rec['sample_data_token'] = sample_data_token
-    coco_rec = dict()
-
-    key_mapping = {
-        'name': 'category_name',
-        'num_points_in_gt': 'num_lidar_pts',
-        'sample_annotation_token': 'sample_annotation_token',
-        'sample_data_token': 'sample_data_token',
-    }
-
-    for key, value in ann_rec.items():
-        if key in key_mapping.keys():
-            repro_rec[key_mapping[key]] = value
-
-    repro_rec['bbox_corners'] = [x1, y1, x2, y2]
-    repro_rec['filename'] = filename
-
-    coco_rec['file_name'] = filename
-    coco_rec['image_id'] = sample_data_token
-    coco_rec['area'] = (y2 - y1) * (x2 - x1)
-
-    if repro_rec['category_name'] not in kitti_categories:
-        return None
-    cat_name = repro_rec['category_name']
-    coco_rec['category_name'] = cat_name
-    coco_rec['category_id'] = kitti_categories.index(cat_name)
-    coco_rec['bbox_label'] = coco_rec['category_id']
-    coco_rec['bbox_label_3d'] = coco_rec['bbox_label']
-    coco_rec['bbox'] = [x1, y1, x2 - x1, y2 - y1]
-    coco_rec['iscrowd'] = 0
-
-    return coco_rec
+    return rec

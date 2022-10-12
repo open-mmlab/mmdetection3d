@@ -7,7 +7,7 @@ from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.bbox_3d import (get_proj_mat_by_coord_type,
-                                        points_cam2img)
+                                        points_cam2img, points_img2cam)
 from . import apply_3d_transformation
 
 
@@ -23,7 +23,8 @@ def point_sample(img_meta,
                  img_shape,
                  aligned=True,
                  padding_mode='zeros',
-                 align_corners=True):
+                 align_corners=True,
+                 valid_flag=False):
     """Obtain image features using points.
 
     Args:
@@ -41,12 +42,15 @@ def point_sample(img_meta,
             padding, this is necessary to obtain features in feature map.
         img_shape (tuple[int]): int tuple indicates the h & w before padding
             after scaling, this is necessary for flipping coordinates.
-        aligned (bool, optional): Whether use bilinear interpolation when
+        aligned (bool): Whether use bilinear interpolation when
             sampling image features for each point. Defaults to True.
-        padding_mode (str, optional): Padding mode when padding values for
+        padding_mode (str): Padding mode when padding values for
             features of out-of-image points. Defaults to 'zeros'.
-        align_corners (bool, optional): Whether to align corners when
+        align_corners (bool): Whether to align corners when
             sampling image features for each point. Defaults to True.
+        valid_flag (bool): Whether to filter out the points that
+            outside the image and with depth smaller than 0. Defaults to
+            False.
 
     Returns:
         torch.Tensor: NxC image features sampled by point coordinates.
@@ -57,7 +61,12 @@ def point_sample(img_meta,
         points, coord_type, img_meta, reverse=True)
 
     # project points to image coordinate
-    pts_2d = points_cam2img(points, proj_mat)
+    if valid_flag:
+        proj_pts = points_cam2img(points, proj_mat, with_depth=True)
+        pts_2d = proj_pts[..., :2]
+        depths = proj_pts[..., 2]
+    else:
+        pts_2d = points_cam2img(points, proj_mat)
 
     # img transformation: scale -> crop -> flip
     # the image is resized by img_scale_factor
@@ -70,13 +79,13 @@ def point_sample(img_meta,
     if img_flip:
         # by default we take it as horizontal flip
         # use img_shape before padding for flip
-        orig_h, orig_w = img_shape
-        coor_x = orig_w - coor_x
+        ori_h, ori_w = img_shape
+        coor_x = ori_w - coor_x
 
     h, w = img_pad_shape
-    coor_y = coor_y / h * 2 - 1
-    coor_x = coor_x / w * 2 - 1
-    grid = torch.cat([coor_x, coor_y],
+    norm_coor_y = coor_y / h * 2 - 1
+    norm_coor_x = coor_x / w * 2 - 1
+    grid = torch.cat([norm_coor_x, norm_coor_y],
                      dim=1).unsqueeze(0).unsqueeze(0)  # Nx2 -> 1x1xNx2
 
     # align_corner=True provides higher performance
@@ -87,6 +96,15 @@ def point_sample(img_meta,
         mode=mode,
         padding_mode=padding_mode,
         align_corners=align_corners)  # 1xCx1xN feats
+
+    if valid_flag:
+        # (N, )
+        valid = (coor_x.squeeze() < w) & (coor_x.squeeze() > 0) & (
+            coor_y.squeeze() < h) & (coor_y.squeeze() > 0) & (
+                depths > 0)
+        valid_features = point_features.squeeze().t()
+        valid_features[~valid] = 0
+        return valid_features, valid  # (N, C), (N,)
 
     return point_features.squeeze().t()
 
@@ -304,3 +322,94 @@ class PointFusion(BaseModule):
             align_corners=self.align_corners,
         )
         return img_pts
+
+
+def voxel_sample(voxel_features,
+                 voxel_range,
+                 voxel_size,
+                 depth_samples,
+                 proj_mat,
+                 downsample_factor,
+                 img_scale_factor,
+                 img_crop_offset,
+                 img_flip,
+                 img_pad_shape,
+                 img_shape,
+                 aligned=True,
+                 padding_mode='zeros',
+                 align_corners=True):
+    """Obtain image features using points.
+
+    Args:
+        voxel_features (torch.Tensor): 1 x C x Nx x Ny x Nz voxel features.
+        voxel_range (list): The range of voxel features.
+        voxel_size (:obj:`ConfigDict` or dict): The voxel size of voxel
+            features.
+        depth_samples (torch.Tensor): N depth samples in LiDAR coordinates.
+        proj_mat (torch.Tensor): ORIGINAL LiDAR2img projection matrix
+            for N views.
+        downsample_factor (int): The downsample factor in rescaling.
+        img_scale_factor (tuple[torch.Tensor]): Scale factor with shape of
+            (w_scale, h_scale).
+        img_crop_offset (tuple[torch.Tensor]): Crop offset used to crop
+            image during data augmentation with shape of (w_offset, h_offset).
+        img_flip (bool): Whether the image is flipped.
+        img_pad_shape (tuple[int]): int tuple indicates the h & w after
+            padding, this is necessary to obtain features in feature map.
+        img_shape (tuple[int]): int tuple indicates the h & w before padding
+            after scaling, this is necessary for flipping coordinates.
+        aligned (bool, optional): Whether use bilinear interpolation when
+            sampling image features for each point. Defaults to True.
+        padding_mode (str, optional): Padding mode when padding values for
+            features of out-of-image points. Defaults to 'zeros'.
+        align_corners (bool, optional): Whether to align corners when
+            sampling image features for each point. Defaults to True.
+
+    Returns:
+        torch.Tensor: 1xCxDxHxW frustum features sampled from voxel features.
+    """
+    # construct frustum grid
+    device = voxel_features.device
+    h, w = img_pad_shape
+    h_out = round(h / downsample_factor)
+    w_out = round(w / downsample_factor)
+    ws = (torch.linspace(0, w_out - 1, w_out) * downsample_factor).to(device)
+    hs = (torch.linspace(0, h_out - 1, h_out) * downsample_factor).to(device)
+    depths = depth_samples[::downsample_factor]
+    num_depths = len(depths)
+    ds_3d, ys_3d, xs_3d = torch.meshgrid(depths, hs, ws)
+    # grid: (D, H_out, W_out, 3) -> (D*H_out*W_out, 3)
+    grid = torch.stack([xs_3d, ys_3d, ds_3d], dim=-1).view(-1, 3)
+    # recover the coordinates in the canonical space
+    # reverse order of augmentations: flip -> crop -> scale
+    if img_flip:
+        # by default we take it as horizontal flip
+        # use img_shape before padding for flip
+        ori_h, ori_w = img_shape
+        grid[:, 0] = ori_w - grid[:, 0]
+    grid[:, :2] += img_crop_offset
+    grid[:, :2] /= img_scale_factor
+    # grid3d: (D*H_out*W_out, 3) in LiDAR coordinate system
+    grid3d = points_img2cam(grid, proj_mat)
+    # convert the 3D point coordinates to voxel coordinates
+    voxel_range = torch.tensor(voxel_range).to(device).view(1, 6)
+    voxel_size = torch.tensor(voxel_size).to(device).view(1, 3)
+    # suppose the voxel grid is generated with AlignedAnchorGenerator
+    # -0.5 given each grid is located at the center of the grid
+    # TODO: study whether here needs -0.5
+    grid3d = (grid3d - voxel_range[:, :3]) / voxel_size - 0.5
+    grid_size = (voxel_range[:, 3:] - voxel_range[:, :3]) / voxel_size
+    # normalize grid3d to (-1, 1)
+    grid3d = grid3d / grid_size * 2 - 1
+    # (x, y, z) -> (z, y, x) for grid_sampling
+    grid3d = grid3d.view(1, num_depths, h_out, w_out, 3)[..., [2, 1, 0]]
+    # align_corner=True provides higher performance
+    mode = 'bilinear' if aligned else 'nearest'
+    frustum_features = F.grid_sample(
+        voxel_features,
+        grid3d,
+        mode=mode,
+        padding_mode=padding_mode,
+        align_corners=align_corners)  # 1xCxDxHxW feats
+
+    return frustum_features

@@ -56,7 +56,7 @@ def main(args):
         wait_time=0,
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
-        vis_task='det')
+        vis_task='lidar_det')
 
 
 if __name__ == '__main__':
