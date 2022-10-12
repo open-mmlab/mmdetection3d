@@ -4,7 +4,7 @@
 
 #### New Features
 
-- Support `waymo challenge` solution with evaluation metrics, transformation, and `DFM` models (#1716)
+- Support `waymo 3D camera-only detection challenge` solution with evaluation metrics, transformation, and `DFM` models (#1716)
 - Refactor PointRCNN in the framework of mmdet3d v1.1 (#1819)
 
 #### Improvements
