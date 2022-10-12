@@ -298,6 +298,8 @@ class CameraInstance3DBoxes(BaseInstance3DBoxes):
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
+
+        # TODO: always set correct_yaw=True
         return Box3DMode.convert(
             box=self,
             src=Box3DMode.CAM,

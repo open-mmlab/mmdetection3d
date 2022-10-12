@@ -445,6 +445,7 @@ class WaymoInfoGatherer:
             else:
                 rect_4x4 = R0_rect
 
+            # TODO: naming Tr_velo_to_cam or Tr_velo_to_cam0
             Tr_velo_to_cam = np.array([
                 float(info) for info in lines[6].split(' ')[1:13]
             ]).reshape([3, 4])
