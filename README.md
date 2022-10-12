@@ -96,9 +96,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc4 was released in 8/8/2022.
-
-- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+v1.0.0rc5 was released in 11/10/2022.
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
