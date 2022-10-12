@@ -2,6 +2,10 @@
 
 ### v1.1.0rc1 (11/10/2022)
 
+#### Highlights
+
+- Support a camera-only 3D detection baseline on Waymo, [MV-FCOS3D++](https://arxiv.org/abs/2207.12716)
+
 #### New Features
 
 - Support a camera-only 3D detection baseline, [MV-FCOS3D++](https://arxiv.org/abs/2207.12716), on Waymo with new evaluation metrics and transformations (#1716)
