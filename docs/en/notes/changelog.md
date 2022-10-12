@@ -8,7 +8,7 @@
 
 #### New Features
 
-- Support a camera-only 3D detection baseline, [MV-FCOS3D++](https://arxiv.org/abs/2207.12716), on Waymo with new evaluation metrics and transformations (#1716)
+- Support a camera-only 3D detection baseline on Waymo, [MV-FCOS3D++](https://arxiv.org/abs/2207.12716), with new evaluation metrics and transformations (#1716)
 - Refactor PointRCNN in the framework of mmdet3d v1.1 (#1819)
 
 #### Improvements
