@@ -165,7 +165,8 @@ class Det3DVisualizationHook(Hook):
 
             out_file = None
             if self.test_out_dir is not None:
-                out_file = self.test_out_dir
+                out_file = osp.basename(img_path)
+                out_file = osp.join(self.test_out_dir, out_file)
 
             self._visualizer.add_datasample(
                 'test sample',
