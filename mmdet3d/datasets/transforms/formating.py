@@ -63,6 +63,7 @@ class Pack3DDetInputs(BaseTransform):
 
     def __init__(
         self,
+        keys: tuple,
         meta_keys: tuple = ('img_path', 'ori_shape', 'img_shape', 'lidar2img',
                             'depth2img', 'cam2img', 'pad_shape',
                             'scale_factor', 'flip', 'pcd_horizontal_flip',
@@ -74,7 +75,8 @@ class Pack3DDetInputs(BaseTransform):
                             'affine_aug', 'sweep_img_metas', 'ori_cam2img',
                             'cam2global', 'crop_offset', 'img_crop_offset',
                             'resize_img_shape', 'lidar2cam', 'ori_lidar2img',
-                            'num_ref_frames', 'num_views', 'ego2global')) -> None:
+                            'num_ref_frames', 'num_views', 'ego2global')
+    ) -> None:
         self.keys = keys
         self.meta_keys = meta_keys
 

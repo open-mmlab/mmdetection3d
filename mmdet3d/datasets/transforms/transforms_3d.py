@@ -2245,7 +2245,7 @@ class PhotoMetricDistortion3D(PhotoMetricDistortion):
 
 
 @TRANSFORMS.register_module()
-class MultiViewWrapper(object):
+class MultiViewWrapper(BaseTransform):
     """Wrap transformation from single-view into multi-view.
 
     The wrapper processes the images from multi-view one by one. For each
@@ -2290,7 +2290,7 @@ class MultiViewWrapper(object):
                      'scale', 'scale_factor', 'crop_size', 'img_crop_offset',
                      'flip', 'flip_direction', 'photometric_param'
                  ]):
-        self.transform = Compose(transforms)
+        self.transforms = Compose(transforms)
         self.override_aug_config = override_aug_config
         self.collected_keys = collected_keys
         self.process_fields = process_fields
@@ -2325,7 +2325,7 @@ class MultiViewWrapper(object):
             for key in self.process_fields:
                 if key in input_dict:
                     process_dict[key] = input_dict[key][img_id]
-            process_dict = self.transform(process_dict)
+            process_dict = self.transforms(process_dict)
             # store the randomness variable in transformation.
             prev_process_dict = process_dict
 
