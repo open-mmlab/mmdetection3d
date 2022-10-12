@@ -124,3 +124,7 @@ test_evaluator = dict(
     type='LyftMetric',
     ann_file=data_root + 'lyft_infos_val.pkl',
     metric='bbox')
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

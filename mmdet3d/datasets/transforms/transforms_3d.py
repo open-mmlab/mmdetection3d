@@ -4,6 +4,7 @@ import warnings
 from typing import List, Optional, Tuple, Union
 
 import cv2
+import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform, RandomResize, Resize
 from mmengine import is_tuple_of
@@ -14,7 +15,9 @@ from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 LiDARInstance3DBoxes)
 from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
-from mmdet.datasets.transforms import RandomFlip
+from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
+                                       RandomFlip)
+from .compose import Compose
 from .data_augment_utils import noise_per_object_v3_
 
 
@@ -95,20 +98,25 @@ class RandomFlip3D(RandomFlip):
     - pcd_scale_factor (np.float32)
 
     Args:
-        sync_2d (bool, optional): Whether to apply flip according to the 2D
+        sync_2d (bool): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
             to that of 2D images. Defaults to True.
-        flip_ratio_bev_horizontal (float, optional): The flipping probability
+        flip_ratio_bev_horizontal (float): The flipping probability
             in horizontal direction. Defaults to 0.0.
-        flip_ratio_bev_vertical (float, optional): The flipping probability
+        flip_ratio_bev_vertical (float): The flipping probability
             in vertical direction. Defaults to 0.0.
+        flip_box3d (bool): Whether to flip bounding box. In most of the case,
+            the box should be fliped. In cam-based bev detection, this is set
+            to false, since the flip of 2D images does not influence the 3D
+            box. Default to True.
     """
 
     def __init__(self,
                  sync_2d: bool = True,
                  flip_ratio_bev_horizontal: float = 0.0,
                  flip_ratio_bev_vertical: float = 0.0,
+                 flip_box3d: bool = True,
                  **kwargs) -> None:
         # `flip_ratio_bev_horizontal` is equal to
         # for flip prob of 2d image when
@@ -118,6 +126,7 @@ class RandomFlip3D(RandomFlip):
         self.sync_2d = sync_2d
         self.flip_ratio_bev_horizontal = flip_ratio_bev_horizontal
         self.flip_ratio_bev_vertical = flip_ratio_bev_vertical
+        self.flip_box3d = flip_box3d
         if flip_ratio_bev_horizontal is not None:
             assert isinstance(
                 flip_ratio_bev_horizontal,
@@ -149,16 +158,16 @@ class RandomFlip3D(RandomFlip):
                 updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
-
-        if 'gt_bboxes_3d' in input_dict:
-            if 'points' in input_dict:
-                input_dict['points'] = input_dict['gt_bboxes_3d'].flip(
-                    direction, points=input_dict['points'])
+        if self.flip_box3d:
+            if 'gt_bboxes_3d' in input_dict:
+                if 'points' in input_dict:
+                    input_dict['points'] = input_dict['gt_bboxes_3d'].flip(
+                        direction, points=input_dict['points'])
+                else:
+                    # vision-only detection
+                    input_dict['gt_bboxes_3d'].flip(direction)
             else:
-                # vision-only detection
-                input_dict['gt_bboxes_3d'].flip(direction)
-        else:
-            input_dict['points'].flip(direction)
+                input_dict['points'].flip(direction)
 
         if 'centers_2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
@@ -172,6 +181,25 @@ class RandomFlip3D(RandomFlip):
             # see more details and examples at
             # https://github.com/open-mmlab/mmdetection3d/pull/744
             input_dict['cam2img'][0][2] = w - input_dict['cam2img'][0][2]
+
+    def _flip_on_direction(self, results: dict) -> None:
+        """Function to flip images, bounding boxes, semantic segmentation map
+        and keypoints.
+
+        Add the override feature that if 'flip' is already in results, use it
+        to do the augmentation.
+        """
+        if 'flip' not in results:
+            cur_dir = self._choose_direction()
+        else:
+            cur_dir = results['flip_direction']
+        if cur_dir is None:
+            results['flip'] = False
+            results['flip_direction'] = None
+        else:
+            results['flip'] = True
+            results['flip_direction'] = cur_dir
+            self._flip(results)
 
     def transform(self, input_dict: dict) -> dict:
         """Call function to flip points, values in the ``bbox3d_fields`` and
@@ -1890,14 +1918,13 @@ class RandomResize3D(RandomResize):
         results['cam2img'][1] *= np.array(results['scale_factor'][1])
 
     def transform(self, results):
-        """Call function to resize images, bounding boxes, masks, semantic
-        segmentation map.
-
-        Compared to RandomResize, this function would further
+        """Transform function to resize images, bounding boxes, masks, semantic
+        segmentation map. Compared to RandomResize, this function would further
         check if scale is already set in results.
 
         Args:
             results (dict): Result dict from loading pipeline.
+
         Returns:
             dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor', \
                 'keep_ratio' keys are added into result dict.
@@ -1909,3 +1936,412 @@ class RandomResize3D(RandomResize):
         self._resize_3d(results)
 
         return results
+
+
+@TRANSFORMS.register_module()
+class RandomCrop3D(RandomCrop):
+    """3D version of RandomCrop. RamdomCrop3D supports the modifications of
+    camera intrinsic matrix and using predefined randomness variable to do the
+    augmentation.
+
+    The absolute ``crop_size`` is sampled based on ``crop_type`` and
+    ``image_size``, then the cropped results are generated.
+
+    Required Keys:
+
+    - img
+    - gt_bboxes (np.float32) (optional)
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_masks (BitmapMasks | PolygonMasks) (optional)
+    - gt_ignore_flags (np.bool) (optional)
+    - gt_seg_map (np.uint8) (optional)
+
+    Modified Keys:
+
+    - img
+    - img_shape
+    - gt_bboxes (optional)
+    - gt_bboxes_labels (optional)
+    - gt_masks (optional)
+    - gt_ignore_flags (optional)
+    - gt_seg_map (optional)
+
+    Added Keys:
+
+    - homography_matrix
+
+    Args:
+        crop_size (tuple): The relative ratio or absolute pixels of
+            height and width.
+        crop_type (str): One of "relative_range", "relative",
+            "absolute", "absolute_range". "relative" randomly crops
+            (h * crop_size[0], w * crop_size[1]) part from an input of size
+            (h, w). "relative_range" uniformly samples relative crop size from
+            range [crop_size[0], 1] and [crop_size[1], 1] for height and width
+            respectively. "absolute" crops from an input with absolute size
+            (crop_size[0], crop_size[1]). "absolute_range" uniformly samples
+            crop_h in range [crop_size[0], min(h, crop_size[1])] and crop_w
+            in range [crop_size[0], min(w, crop_size[1])].
+            Defaults to "absolute".
+        allow_negative_crop (bool): Whether to allow a crop that does
+            not contain any bbox area. Defaults to False.
+        recompute_bbox (bool): Whether to re-compute the boxes based
+            on cropped instance masks. Defaults to False.
+        bbox_clip_border (bool): Whether clip the objects outside
+            the border of the image. Defaults to True.
+        rel_offset_h (tuple): The cropping interval of image height. Default
+            to (0., 1.).
+        rel_offset_w (tuple): The cropping interval of image width. Default
+            to (0., 1.).
+
+    Note:
+        - If the image is smaller than the absolute crop size, return the
+            original image.
+        - The keys for bboxes, labels and masks must be aligned. That is,
+          ``gt_bboxes`` corresponds to ``gt_labels`` and ``gt_masks``, and
+          ``gt_bboxes_ignore`` corresponds to ``gt_labels_ignore`` and
+          ``gt_masks_ignore``.
+        - If the crop does not contain any gt-bbox region and
+          ``allow_negative_crop`` is set to False, skip this image.
+    """
+
+    def __init__(self,
+                 crop_size,
+                 crop_type='absolute',
+                 allow_negative_crop=False,
+                 recompute_bbox=False,
+                 bbox_clip_border=True,
+                 rel_offset_h=(0., 1.),
+                 rel_offset_w=(0., 1.)):
+        super().__init__(
+            crop_size=crop_size,
+            crop_type=crop_type,
+            allow_negative_crop=allow_negative_crop,
+            recompute_bbox=recompute_bbox,
+            bbox_clip_border=bbox_clip_border)
+        # rel_offset specifies the relative offset range of cropping origin
+        # [0., 1.] means starting from 0*margin to 1*margin + 1
+        self.rel_offset_h = rel_offset_h
+        self.rel_offset_w = rel_offset_w
+
+    def _crop_data(self, results, crop_size, allow_negative_crop):
+        """Function to randomly crop images, bounding boxes, masks, semantic
+        segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            crop_size (tuple): Expected absolute size after cropping, (h, w).
+            allow_negative_crop (bool): Whether to allow a crop that does not
+                contain any bbox area. Default to False.
+
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        assert crop_size[0] > 0 and crop_size[1] > 0
+        for key in results.get('img_fields', ['img']):
+            img = results[key]
+            if 'img_crop_offset' not in results:
+                margin_h = max(img.shape[0] - crop_size[0], 0)
+                margin_w = max(img.shape[1] - crop_size[1], 0)
+                # TOCHECK: a little different from LIGA implementation
+                offset_h = np.random.randint(
+                    self.rel_offset_h[0] * margin_h,
+                    self.rel_offset_h[1] * margin_h + 1)
+                offset_w = np.random.randint(
+                    self.rel_offset_w[0] * margin_w,
+                    self.rel_offset_w[1] * margin_w + 1)
+            else:
+                offset_w, offset_h = results['img_crop_offset']
+
+            crop_h = min(crop_size[0], img.shape[0])
+            crop_w = min(crop_size[1], img.shape[1])
+            crop_y1, crop_y2 = offset_h, offset_h + crop_h
+            crop_x1, crop_x2 = offset_w, offset_w + crop_w
+
+            # crop the image
+            img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+            img_shape = img.shape
+            results[key] = img
+        results['img_shape'] = img_shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        for key in results.get('bbox_fields', []):
+            # e.g. gt_bboxes and gt_bboxes_ignore
+            bbox_offset = np.array([offset_w, offset_h, offset_w, offset_h],
+                                   dtype=np.float32)
+            bboxes = results[key] - bbox_offset
+            if self.bbox_clip_border:
+                bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
+                bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
+            valid_inds = (bboxes[:, 2] > bboxes[:, 0]) & (
+                bboxes[:, 3] > bboxes[:, 1])
+            # If the crop does not contain any gt-bbox area and
+            # allow_negative_crop is False, skip this image.
+            if (key == 'gt_bboxes' and not valid_inds.any()
+                    and not allow_negative_crop):
+                return None
+            results[key] = bboxes[valid_inds, :]
+            # label fields. e.g. gt_labels and gt_labels_ignore
+            label_key = self.bbox2label.get(key)
+            if label_key in results:
+                results[label_key] = results[label_key][valid_inds]
+
+            # mask fields, e.g. gt_masks and gt_masks_ignore
+            mask_key = self.bbox2mask.get(key)
+            if mask_key in results:
+                results[mask_key] = results[mask_key][
+                    valid_inds.nonzero()[0]].crop(
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+                if self.recompute_bbox:
+                    results[key] = results[mask_key].get_bboxes()
+
+        # crop semantic seg
+        for key in results.get('seg_fields', []):
+            results[key] = results[key][crop_y1:crop_y2, crop_x1:crop_x2]
+
+        # manipulate camera intrinsic matrix
+        # needs to apply offset to K instead of P2 (on KITTI)
+        if isinstance(results['cam2img'], list):
+            # TODO ignore this, but should handle it in the future
+            pass
+        else:
+            K = results['cam2img'][:3, :3].copy()
+            inv_K = np.linalg.inv(K)
+            T = np.matmul(inv_K, results['cam2img'][:3])
+            K[0, 2] -= crop_x1
+            K[1, 2] -= crop_y1
+            offset_cam2img = np.matmul(K, T)
+            results['cam2img'][:offset_cam2img.shape[0], :offset_cam2img.
+                               shape[1]] = offset_cam2img
+
+        results['img_crop_offset'] = [offset_w, offset_h]
+
+        return results
+
+    def transform(self, results):
+        """Transform function to randomly crop images, bounding boxes, masks,
+        semantic segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Randomly cropped results, 'img_shape' key in result dict is
+                updated according to crop size.
+        """
+        image_size = results['img'].shape[:2]
+        if 'crop_size' not in results:
+            crop_size = self._get_crop_size(image_size)
+            results['crop_size'] = crop_size
+        else:
+            crop_size = results['crop_size']
+        results = self._crop_data(results, crop_size, self.allow_negative_crop)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(crop_size={self.crop_size}, '
+        repr_str += f'crop_type={self.crop_type}, '
+        repr_str += f'allow_negative_crop={self.allow_negative_crop}, '
+        repr_str += f'bbox_clip_border={self.bbox_clip_border}), '
+        repr_str += f'rel_offset_h={self.rel_offset_h}), '
+        repr_str += f'rel_offset_w={self.rel_offset_w})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class PhotoMetricDistortion3D(PhotoMetricDistortion):
+    """Apply photometric distortion to image sequentially, every transformation
+    is applied with a probability of 0.5. The position of random contrast is in
+    second or second to last.
+
+    PhotoMetricDistortion3D further support using predefined randomness
+    variable to do the augmentation.
+
+    1. random brightness
+    2. random contrast (mode 0)
+    3. convert color from BGR to HSV
+    4. random saturation
+    5. random hue
+    6. convert color from HSV to BGR
+    7. random contrast (mode 1)
+    8. randomly swap channels
+
+    Required Keys:
+
+    - img (np.uint8)
+
+    Modified Keys:
+
+    - img (np.float32)
+
+    Args:
+        brightness_delta (int): delta of brightness.
+        contrast_range (sequence): range of contrast.
+        saturation_range (sequence): range of saturation.
+        hue_delta (int): delta of hue.
+    """
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to perform photometric distortion on images.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Result dict with images distorted.
+        """
+        assert 'img' in results, '`img` is not found in results'
+        img = results['img']
+        img = img.astype(np.float32)
+        if 'photometric_param' not in results:
+            photometric_param = self._random_flags()
+            results['photometric_param'] = photometric_param
+        else:
+            photometric_param = results['photometric_param']
+
+        (mode, brightness_flag, contrast_flag, saturation_flag, hue_flag,
+         swap_flag, delta_value, alpha_value, saturation_value, hue_value,
+         swap_value) = photometric_param
+
+        # random brightness
+        if brightness_flag:
+            img += delta_value
+
+        # mode == 0 --> do random contrast first
+        # mode == 1 --> do random contrast last
+        if mode == 1:
+            if contrast_flag:
+                img *= alpha_value
+
+        # convert color from BGR to HSV
+        img = mmcv.bgr2hsv(img)
+
+        # random saturation
+        if saturation_flag:
+            img[..., 1] *= saturation_value
+
+        # random hue
+        if hue_flag:
+            img[..., 0] += hue_value
+            img[..., 0][img[..., 0] > 360] -= 360
+            img[..., 0][img[..., 0] < 0] += 360
+
+        # convert color from HSV to BGR
+        img = mmcv.hsv2bgr(img)
+
+        # random contrast
+        if mode == 0:
+            if contrast_flag:
+                img *= alpha_value
+
+        # randomly swap channels
+        if swap_flag:
+            img = img[..., swap_value]
+
+        results['img'] = img
+        return results
+
+
+@TRANSFORMS.register_module()
+class MultiViewWrapper(object):
+    """Wrap transformation from single-view into multi-view.
+
+    The wrapper processes the images from multi-view one by one. For each
+    image, it constructs a pseudo dict according to the keys specified by the
+    'process_fields' parameter. After the transformation is finished, desired
+    information can be collected by specifying the keys in the 'collected_keys'
+    parameter. Multi-view images share the same transformation parameters
+    but do not share the same magnitude when a random transformation is
+    conducted.
+
+    Args:
+        transforms (list[dict]): A list of dict specifying the transformations
+            for the monocular situation.
+        override_aug_config (bool): flag of whether to use the same aug config
+            for multiview image. Default to True.
+        process_fields (list): Desired keys that the transformations should
+            be conducted on. Default to ['img', 'cam2img', 'lidar2cam'],
+
+        collected_keys (list): Collect information in transformation
+            like rotate angles, crop roi, and flip state. Default to
+                ['scale', 'scale_factor', 'crop',
+                 'crop_offset', 'ori_shape',
+                 'pad_shape', 'img_shape',
+                 'pad_fixed_size', 'pad_size_divisor',
+                 'flip', 'flip_direction', 'rotate'],
+        randomness_keys (list): The keys that related to the randomness
+            in transformation Default to
+                    ['scale', 'scale_factor', 'crop_size', 'flip',
+                     'flip_direction', 'photometric_param']
+    """
+
+    def __init__(self,
+                 transforms: dict,
+                 override_aug_config: bool = True,
+                 process_fields: list = ['img', 'cam2img', 'lidar2cam'],
+                 collected_keys: list = [
+                     'scale', 'scale_factor', 'crop', 'img_crop_offset',
+                     'ori_shape', 'pad_shape', 'img_shape', 'pad_fixed_size',
+                     'pad_size_divisor', 'flip', 'flip_direction', 'rotate'
+                 ],
+                 randomness_keys: list = [
+                     'scale', 'scale_factor', 'crop_size', 'img_crop_offset',
+                     'flip', 'flip_direction', 'photometric_param'
+                 ]):
+        self.transform = Compose(transforms)
+        self.override_aug_config = override_aug_config
+        self.collected_keys = collected_keys
+        self.process_fields = process_fields
+        self.randomness_keys = randomness_keys
+
+    def transform(self, input_dict):
+        """Transform function to do the transform for multiview image.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: output dict after transformtaion
+        """
+        # store the augmentation related keys for each image.
+        for key in self.collected_keys:
+            if key not in input_dict or \
+                    not isinstance(input_dict[key], list):
+                input_dict[key] = []
+        prev_process_dict = {}
+        for img_id in range(len(input_dict['img'])):
+            process_dict = {}
+
+            # override the process dict (e.g. scale in random scale,
+            # crop_size in random crop, flip, flip_direction in
+            # random flip)
+            if img_id != 0 and self.override_aug_config:
+                for key in self.randomness_keys:
+                    if key in prev_process_dict:
+                        process_dict[key] = prev_process_dict[key]
+
+            for key in self.process_fields:
+                if key in input_dict:
+                    process_dict[key] = input_dict[key][img_id]
+            process_dict = self.transform(process_dict)
+            # store the randomness variable in transformation.
+            prev_process_dict = process_dict
+
+            # store the related results to results_dict
+            for key in self.process_fields:
+                if key in process_dict:
+                    input_dict[key][img_id] = process_dict[key]
+            # update the keys
+            for key in self.collected_keys:
+                if key in process_dict:
+                    if len(input_dict[key]) == img_id + 1:
+                        input_dict[key][img_id] = process_dict[key]
+                    else:
+                        input_dict[key].append(process_dict[key])
+
+        for key in self.collected_keys:
+            if len(input_dict[key]) == 0:
+                input_dict.pop(key)
+        return input_dict
