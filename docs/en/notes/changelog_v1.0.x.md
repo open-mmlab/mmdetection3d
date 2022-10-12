@@ -1,5 +1,29 @@
 # Changelog of v1.0.x
 
+### v1.0.0rc5 (11/10/2022)
+
+#### New Features
+
+- Support ImVoxelNet on SUN RGB-D (#1738)
+
+#### Improvements
+
+- Fix the cross-codebase reference problem in metafile README (#1644)
+- Update the Chinese documentation about getting started (#1715)
+- Fix docs link and add docs link checker (#1811)
+
+#### Bug Fixes
+
+- Fix a visualization bug that is potentially triggered by empty prediction labels (#1725)
+- Fix point cloud segmentation visualization bug due to wrong parameter passing (#1858)
+- Fix Nan loss bug during PointRCNN training (#1874)
+
+#### Contributors
+
+A total of 9 developers contributed to this release.
+
+@ZwwWayne, @Tai-Wang, @filaPro, @VVsssssk, @ZCMax, @Xiangxu-0103, @holtvogt, @tpoisonooo, @lianqing01
+
 ### v1.0.0rc4 (8/8/2022)
 
 #### Highlights
