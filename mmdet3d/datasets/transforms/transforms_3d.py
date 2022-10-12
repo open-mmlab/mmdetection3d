@@ -98,18 +98,18 @@ class RandomFlip3D(RandomFlip):
     - pcd_scale_factor (np.float32)
 
     Args:
-        sync_2d (bool): Whether to apply flip according to the 2D
+        sync_2d (bool, optional): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
             to that of 2D images. Defaults to True.
-        flip_ratio_bev_horizontal (float): The flipping probability
+        flip_ratio_bev_horizontal (float, optional): The flipping probability
             in horizontal direction. Defaults to 0.0.
-        flip_ratio_bev_vertical (float): The flipping probability
+        flip_ratio_bev_vertical (float, optional): The flipping probability
             in vertical direction. Defaults to 0.0.
-        flip_box3d (bool): Whether to flip bounding box. In most of the case,
-            the box should be fliped. In cam-based bev detection, this is set
-            to false, since the flip of 2D images does not influence the 3D
-            box. Default to True.
+        flip_box3d (bool, optional): Whether to flip bounding box.
+            In most of the case, the box should be fliped. In cam-based bev
+            detection, this is set to False, since the flip of 2D images
+            does not influence the 3D box. Defaults to True.
     """
 
     def __init__(self,
@@ -1872,7 +1872,7 @@ class RandomShiftScale(BaseTransform):
 @TRANSFORMS.register_module()
 class Resize3D(Resize):
 
-    def _resize_3d(self, results):
+    def _resize_3d(self, results: dict) -> None:
         """Resize centers_2d and modify camera intrinisc with
         ``results['scale']``."""
         if 'centers_2d' in results:
@@ -1886,10 +1886,11 @@ class Resize3D(Resize):
 
         Args:
             results (dict): Result dict from loading pipeline.
+
         Returns:
             dict: Resized results, 'img', 'gt_bboxes', 'gt_seg_map',
-            'gt_keypoints', 'scale', 'scale_factor', 'img_shape',
-            and 'keep_ratio' keys are updated in result dict.
+                'gt_keypoints', 'scale', 'scale_factor', 'img_shape',
+                and 'keep_ratio' keys are updated in result dict.
         """
 
         super(Resize3D, self).transform(results)
@@ -1907,7 +1908,7 @@ class RandomResize3D(RandomResize):
         and cam2img with ``results['scale']``.
     """
 
-    def _resize_3d(self, results):
+    def _resize_3d(self, results: dict) -> None:
         """Resize centers_2d and modify camera intrinisc with
         ``results['scale']``."""
         if 'centers_2d' in results:
@@ -1915,7 +1916,7 @@ class RandomResize3D(RandomResize):
         results['cam2img'][0] *= np.array(results['scale_factor'][0])
         results['cam2img'][1] *= np.array(results['scale_factor'][1])
 
-    def transform(self, results):
+    def transform(self, results: dict) -> dict:
         """Transform function to resize images, bounding boxes, masks, semantic
         segmentation map. Compared to RandomResize, this function would further
         check if scale is already set in results.
@@ -1924,7 +1925,7 @@ class RandomResize3D(RandomResize):
             results (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor', \
+            dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor',
                 'keep_ratio' keys are added into result dict.
         """
         if 'scale' not in results:
@@ -1971,7 +1972,7 @@ class RandomCrop3D(RandomCrop):
     Args:
         crop_size (tuple): The relative ratio or absolute pixels of
             height and width.
-        crop_type (str): One of "relative_range", "relative",
+        crop_type (str, optional): One of "relative_range", "relative",
             "absolute", "absolute_range". "relative" randomly crops
             (h * crop_size[0], w * crop_size[1]) part from an input of size
             (h, w). "relative_range" uniformly samples relative crop size from
@@ -1981,20 +1982,20 @@ class RandomCrop3D(RandomCrop):
             crop_h in range [crop_size[0], min(h, crop_size[1])] and crop_w
             in range [crop_size[0], min(w, crop_size[1])].
             Defaults to "absolute".
-        allow_negative_crop (bool): Whether to allow a crop that does
+        allow_negative_crop (bool, optional): Whether to allow a crop that does
             not contain any bbox area. Defaults to False.
-        recompute_bbox (bool): Whether to re-compute the boxes based
+        recompute_bbox (bool, optional): Whether to re-compute the boxes based
             on cropped instance masks. Defaults to False.
-        bbox_clip_border (bool): Whether clip the objects outside
+        bbox_clip_border (bool, optional): Whether clip the objects outside
             the border of the image. Defaults to True.
-        rel_offset_h (tuple): The cropping interval of image height. Default
-            to (0., 1.).
-        rel_offset_w (tuple): The cropping interval of image width. Default
-            to (0., 1.).
+        rel_offset_h (tuple, optional): The cropping interval of image height.
+            Defaults to (0., 1.).
+        rel_offset_w (tuple, optional): The cropping interval of image width.
+            Defaults to (0., 1.).
 
     Note:
         - If the image is smaller than the absolute crop size, return the
-            original image.
+          original image.
         - The keys for bboxes, labels and masks must be aligned. That is,
           ``gt_bboxes`` corresponds to ``gt_labels`` and ``gt_masks``, and
           ``gt_bboxes_ignore`` corresponds to ``gt_labels_ignore`` and
@@ -2004,13 +2005,13 @@ class RandomCrop3D(RandomCrop):
     """
 
     def __init__(self,
-                 crop_size,
-                 crop_type='absolute',
-                 allow_negative_crop=False,
-                 recompute_bbox=False,
-                 bbox_clip_border=True,
-                 rel_offset_h=(0., 1.),
-                 rel_offset_w=(0., 1.)):
+                 crop_size: tuple,
+                 crop_type: str = 'absolute',
+                 allow_negative_crop: bool = False,
+                 recompute_bbox: bool = False,
+                 bbox_clip_border: bool = True,
+                 rel_offset_h: tuple = (0., 1.),
+                 rel_offset_w: tuple = (0., 1.)) -> None:
         super().__init__(
             crop_size=crop_size,
             crop_type=crop_type,
@@ -2022,7 +2023,8 @@ class RandomCrop3D(RandomCrop):
         self.rel_offset_h = rel_offset_h
         self.rel_offset_w = rel_offset_w
 
-    def _crop_data(self, results, crop_size, allow_negative_crop):
+    def _crop_data(self, results: dict, crop_size: tuple,
+                   allow_negative_crop: bool = False) -> dict:
         """Function to randomly crop images, bounding boxes, masks, semantic
         segmentation maps.
 
@@ -2030,7 +2032,7 @@ class RandomCrop3D(RandomCrop):
             results (dict): Result dict from loading pipeline.
             crop_size (tuple): Expected absolute size after cropping, (h, w).
             allow_negative_crop (bool): Whether to allow a crop that does not
-                contain any bbox area. Default to False.
+                contain any bbox area. Defaults to False.
 
         Returns:
             dict: Randomly cropped results, 'img_shape' key in result dict is
@@ -2117,7 +2119,7 @@ class RandomCrop3D(RandomCrop):
 
         return results
 
-    def transform(self, results):
+    def transform(self, results: dict) -> dict:
         """Transform function to randomly crop images, bounding boxes, masks,
         semantic segmentation maps.
 
@@ -2137,7 +2139,8 @@ class RandomCrop3D(RandomCrop):
         results = self._crop_data(results, crop_size, self.allow_negative_crop)
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> dict:
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(crop_size={self.crop_size}, '
         repr_str += f'crop_type={self.crop_type}, '
@@ -2257,20 +2260,20 @@ class MultiViewWrapper(BaseTransform):
     Args:
         transforms (list[dict]): A list of dict specifying the transformations
             for the monocular situation.
-        override_aug_config (bool): flag of whether to use the same aug config
-            for multiview image. Default to True.
-        process_fields (list): Desired keys that the transformations should
-            be conducted on. Default to ['img', 'cam2img', 'lidar2cam'],
-
-        collected_keys (list): Collect information in transformation
-            like rotate angles, crop roi, and flip state. Default to
+        override_aug_config (bool, optional): flag of whether to use the same
+            aug config for multiview image. Defaults to True.
+        process_fields (list, optional): Desired keys that the transformations
+            should be conducted on. Defaults to
+            ['img', 'cam2img', 'lidar2cam'],
+        collected_keys (list, optional): Collect information in transformation
+            like rotate angles, crop roi, and flip state. Defaults to
                 ['scale', 'scale_factor', 'crop',
                  'crop_offset', 'ori_shape',
                  'pad_shape', 'img_shape',
                  'pad_fixed_size', 'pad_size_divisor',
-                 'flip', 'flip_direction', 'rotate'],
-        randomness_keys (list): The keys that related to the randomness
-            in transformation Default to
+                 'flip', 'flip_direction', 'rotate'].
+        randomness_keys (list, optional): The keys that related to the
+            randomness in transformation. Defaults to
                     ['scale', 'scale_factor', 'crop_size', 'flip',
                      'flip_direction', 'photometric_param']
     """
@@ -2287,14 +2290,14 @@ class MultiViewWrapper(BaseTransform):
                  randomness_keys: list = [
                      'scale', 'scale_factor', 'crop_size', 'img_crop_offset',
                      'flip', 'flip_direction', 'photometric_param'
-                 ]):
+                 ]) -> None:
         self.transforms = Compose(transforms)
         self.override_aug_config = override_aug_config
         self.collected_keys = collected_keys
         self.process_fields = process_fields
         self.randomness_keys = randomness_keys
 
-    def transform(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Transform function to do the transform for multiview image.
 
         Args:
