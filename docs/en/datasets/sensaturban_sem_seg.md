@@ -60,6 +60,40 @@ a total of 13 categories, they are:
 
 ## Create dataset
 
+Due to the problem of python multithreading, it is recommended to use the following methods to process data to speed up the processing speed.
+First create a `create_sensaturban_dataset.py`
+
+```python
+import argparse
+from sensaturban_converter import SensatUrbanConverter
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--id', default=0, type=int)
+    converter = SensatUrbanConverter(
+        root_path, # the path to the original dataset
+        info_prefix, # prefix for info files
+        out_dir, # the path to the output dataset
+        workers, # Number of threads processing datasets concurrently
+        to_image=False, # Whether to generate a 2D dataset, if true, the slicing method must be specified
+        subsample_method='none', # Whether and how to generate a downsampled dataset
+        crop_method='sliding', # Whether to generate tiled datasets and how to generate tiled datasets
+        crop_size=12.5, # The side length of the sliced dataset is 2*crop_size, used with crop_method
+        crop_scale=0.05, # In a 2D dataset, how many meters does each pixel represent
+        subsample_rate=0.5, # Parameters in the downsampled dataset, the input is points when downsampling at random, and voxel size when downsampling voxels
+        random_crop_ratio=1.0, # In the random slicing mode, the number of cuts is calculated according to the file size, and the default is random_crop_ratio times per MB.
+    )
+    args, opts = parser.parse_known_args()
+    converter._convert2potsdam_one(args.id)
+```
+
+Then you can perform parallel processing by executing the following commands, please select the number of simultaneous processing according to the configuration of the running device.
+
+```shell
+python create_sensaturban_dataset.py --id 0 &
+python create_sensaturban_dataset.py --id 1 &
+...
+```
+
 Similar to other datasets, we can also generate use`python tools/create_data.py sensaturban --root-path ./data/sensaturban --out-dir ./data/sensaturban`,
 But before that, we need to modify the parameters in the `create_data.py` file according to our own needs. In order to better understand how to generate a dataset, the following briefly introduces the parameters that affect the generated dataset:
 
@@ -267,3 +301,36 @@ train_pipeline = [
 Usually we use mean Intersection over Union (mIoU) as a metric for ScanNet semantic segmentation tasks.
 Specifically, we first calculate the IoU for all classes, and then take the average as mIoU.
 For more implementation details, please refer to [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
+
+In addition, a tool class `SensatUrbanEvaluator` for projecting from 2D datasets back to 3D datasets is provided. Due to the problems of python multithreading,
+We propose to perform parallel processing in the following ways to speed up the reprojection process,
+You can do this by creating a new `reproject.py` file and adding the following code and adjusting the parameter settings according to your dataset:
+
+```python
+import argparse
+from sensaturban_data_utils import SensatUrbanEvaluator
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--id', default=0, type=int)
+    evaluater = SensatUrbanEvaluator(
+        split='test',
+        dataset_path='./sensaturban',
+        pred_path='./pred',
+        crop_method='random',
+        out_path='./ply_out',
+        crop_size=12.5,
+        bev_size=500,
+        bev_scale=0.05,
+        out_ply=False,
+        out_label=True)
+    args, opts = parser.parse_known_args()
+    evaluater.generate(args.id)
+```
+
+Finally by executing the commands to process reprojection in parallel, note that random reprojection requires a large amount of memory. Please choose how many processes to execute according to the operating device.
+
+```shell
+python reproject.py --id 0 &
+python reproject.py --id 1 &
+python reproject.py --id 2 &
+```

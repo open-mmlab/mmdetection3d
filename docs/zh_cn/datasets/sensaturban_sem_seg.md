@@ -54,6 +54,40 @@ SensatUrban数据集有37个train文件和6个test文件，每个ply文件有`x,
 
 ## 创建数据集
 
+由于python多线程的问题，建议使用如下的方式对数据进行处理以加快处理速度。
+首先创建一个`create_sensaturban_dataset.py`
+
+```python
+import argparse
+from sensaturban_converter import SensatUrbanConverter
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--id', default=0, type=int)
+    converter = SensatUrbanConverter(
+            root_path='./', # 原始数据集的路径
+            info_prefix='sensaturban', # info文件的前缀
+            out_dir='./', # 输出数据集的路径
+            workers=1, # 同时处理数据集的线程数
+            to_image=False, # 是否生成2D数据集,如果为true则必须指定切片方式
+            subsample_method='none', # 是否生成以及如何生成降采样数据集
+            crop_method='sliding', # 是否生成切片数据集以及如何生成切片数据集
+            crop_size=12.5, # 切片数据集的边长为2 * crop_size，与crop_method一起使用
+            crop_scale=0.05, # 2D数据集中，每个像素代表实际多少米
+            subsample_rate=0.5, # 降采样数据集中的参数，当随机随机降采样时输入为点，当体素降采样时为体素大小
+            random_crop_ratio=1.0, # 随机切片方式时，根据文件大小计算切割次数，默认每MB切 random_crop_ratio次
+        )
+    args, opts = parser.parse_known_args()
+    converter._convert2potsdam_one(args.id)
+```
+
+然后就可以通过执行如下命令并行处理，请根据运行设备的配置情况自行选择同时处理的数量
+
+```shell
+python create_sensaturban_dataset.py --id 0 &
+python create_sensaturban_dataset.py --id 1 &
+...
+```
+
 与其他数据集生成方式类似，我们也可以通过`python tools/create_data.py sensaturban --root-path ./data/sensaturban --out-dir ./data/sensaturban`命令生成，但在此之前，
 我们需要根据自己的需求修改`create_data.py`文件中的参数，为了更好的了解如何生成数据集，下面简单介绍一下影响生成数据集的参数：
 
@@ -258,6 +292,41 @@ train_pipeline = [
 
 ## 度量指标
 
-通常我们使用平均交并比 (mean Intersection over Union, mIoU) 作为 ScanNet 语义分割任务的度量指标。
+通常我们使用平均交并比 (mean Intersection over Union, mIoU) 作为 SensatUrban 语义分割任务的度量指标。
 具体而言，我们先计算所有类别的 IoU，然后取平均值作为 mIoU。
 更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py)。
+
+另外提供了由2D数据集投影回3D数据集的工具类 `SensatUrbanEvaluator`，由于python多线程存在的问题，
+我们建议采用如下方式进行并行的处理以加速重投影过程，
+你可以通过创建一个新`reproject.py`文件并添加如下代码并根据自己数据集的情况调整参数设置：
+
+```python
+import argparse
+from sensaturban_data_utils import SensatUrbanEvaluator
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--id', default=0, type=int)
+    evaluater = SensatUrbanEvaluator(
+        split='test',
+        dataset_path='./sensaturban',
+        pred_path='./pred',
+        crop_method='random',
+        out_path='./ply_out',
+        crop_size=12.5,
+        bev_size=500,
+        bev_scale=0.05,
+        out_ply=False,
+        out_label=True)
+    args, opts = parser.parse_known_args()
+    evaluater.generate(args.id)
+```
+
+最后通过执行命令
+
+```python
+python reproject.py --id 0 &
+python reproject.py --id 1 &
+python reproject.py --id 2 &
+```
+
+来并行处理重投影，注意随机方式的重投影需要耗费较大的内存，请根据运行设备情况选择执行多少进程。
