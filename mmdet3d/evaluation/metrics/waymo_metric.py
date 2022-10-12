@@ -93,7 +93,7 @@ class WaymoMetric(KittiMetric):
         """Compute the metrics from processed results.
 
         Args:
-            results (list): The processed results of each batch.
+            results (list): The processed results of the whole dataset.
 
         Returns:
             Dict[str, float]: The computed metrics. The keys are the names of
@@ -360,7 +360,7 @@ class WaymoMetric(KittiMetric):
             for cam_idx in range(self.num_cams):
                 box_dict[key].append(box_dict_per_frame[cam_idx][key])
         # merge each elements
-        box_dict['sample_id'] = cam0_info['image_id']
+        box_dict['sample_idx'] = cam0_info['image_id']
         for key in ['bbox', 'box3d_lidar', 'scores', 'label_preds']:
             box_dict[key] = np.concatenate(box_dict[key])
 

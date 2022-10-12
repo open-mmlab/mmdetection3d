@@ -9,8 +9,6 @@ from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
-from mmdet.models.detectors import BaseDetector
-
 
 
 @MODELS.register_module()
