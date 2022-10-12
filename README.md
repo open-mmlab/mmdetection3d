@@ -84,8 +84,6 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 **1.1.0rc1** was released in 11/10/2022.
 
-- We released `waymo 3D camera-only detection challenge` solution with evaluation metrics, transformation, and `DFM` models in 1.1.0rc1 version.
-
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 
 ## Benchmark and model zoo
@@ -181,7 +179,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
           <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
-          <li><a href="configs/dfm">DFM (ECCV'2022)</a></li>
         </ul>
       </td>
       <td>
