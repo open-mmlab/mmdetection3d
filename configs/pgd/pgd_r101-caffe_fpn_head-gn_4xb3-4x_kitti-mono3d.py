@@ -113,7 +113,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # optimizer
 optim_wrapper = dict(
-    optimizer=dict(lr=0.01),
+    optimizer=dict(lr=0.001),
     paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.),
     clip_grad=dict(max_norm=35, norm_type=2))
 
@@ -134,4 +134,4 @@ param_scheduler = [
         gamma=0.1)
 ]
 
-train_cfg = dict(max_epochs=48)
+train_cfg = dict(max_epochs=48, val_interval=2)

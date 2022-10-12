@@ -444,7 +444,7 @@ class WaymoMetric(KittiMetric):
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
 
-            if self.task == 'mono3d':
+            if self.task == 'mono_det':
                 if idx % self.num_cams == 0:
                     box_dict_per_frame = []
                     cam0_key = list(info['images'].keys())[0]

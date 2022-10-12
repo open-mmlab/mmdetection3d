@@ -6,8 +6,8 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import mmcv
 import numpy as np
-from mmcv import is_tuple_of
-from mmcv.transforms import BaseTransform, RandomResize
+from mmcv.transforms import BaseTransform, RandomResize, Resize
+from mmengine import is_tuple_of
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
@@ -172,9 +172,7 @@ class RandomFlip3D(RandomFlip):
         if 'centers_2d' in input_dict:
             assert self.sync_2d is True and direction == 'horizontal', \
                 'Only support sync_2d=True and horizontal flip with images'
-            # TODO fix this ori_shape and other keys in vision based model
-            # TODO ori_shape to img_shape
-            w = input_dict['ori_shape'][1]
+            w = input_dict['img_shape'][1]
             input_dict['centers_2d'][..., 0] = \
                 w - input_dict['centers_2d'][..., 0]
             # need to modify the horizontal position of camera center
@@ -1699,8 +1697,9 @@ class AffineResize(BaseTransform):
 
             if 'gt_bboxes' in results:
                 results['gt_bboxes'] = results['gt_bboxes'][valid_index]
-                if 'gt_labels' in results:
-                    results['gt_labels'] = results['gt_labels'][valid_index]
+                if 'gt_bboxes_labels' in results:
+                    results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                        valid_index]
                 if 'gt_masks' in results:
                     raise NotImplementedError(
                         'AffineResize only supports bbox.')
@@ -1870,6 +1869,34 @@ class RandomShiftScale(BaseTransform):
         repr_str += f'(shift_scale={self.shift_scale}, '
         repr_str += f'aug_prob={self.aug_prob}) '
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class Resize3D(Resize):
+
+    def _resize_3d(self, results):
+        """Resize centers_2d and modify camera intrinisc with
+        ``results['scale']``."""
+        if 'centers_2d' in results:
+            results['centers_2d'] *= results['scale_factor'][:2]
+        results['cam2img'][0] *= np.array(results['scale_factor'][0])
+        results['cam2img'][1] *= np.array(results['scale_factor'][1])
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to resize images, bounding boxes, semantic
+        segmentation map and keypoints.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Resized results, 'img', 'gt_bboxes', 'gt_seg_map',
+            'gt_keypoints', 'scale', 'scale_factor', 'img_shape',
+            and 'keep_ratio' keys are updated in result dict.
+        """
+
+        super(Resize3D, self).transform(results)
+        self._resize_3d(results)
+        return results
 
 
 @TRANSFORMS.register_module()
