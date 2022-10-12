@@ -84,7 +84,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 **1.1.0rc1** was released in 11/10/2022.
 
-We released `waymo challenge` solution with evaluation metrics, transformation, and `DFM` models in 1.1.0rc1 version.
+- We released `waymo challenge` solution with evaluation metrics, transformation, and `DFM` models in 1.1.0rc1 version.
 
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 
