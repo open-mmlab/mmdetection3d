@@ -4,6 +4,7 @@
 
 #### New Features
 
+- Support `waymo challenge` solution with evaluation metrics, transformation, and `DFM` models (#1716)
 - Refactor PointRCNN in the framework of mmdet3d v1.1 (#1819)
 
 #### Improvements
@@ -14,6 +15,7 @@
 - Update SUN RGB-D and Lyft datasets documentation (#1833)
 - Rename `convert_to_datasample` to `add_pred_to_datasample` in detectors (#1843)
 - Update customized dataset documentation (#1845)
+- Update `Det3DLocalVisualization` and visualization documentation (#1857)
 - Add the code of generating `cam_sync_labels` for Waymo dataset (#1870)
 - Update dataset transforms typehints (#1875)
 
