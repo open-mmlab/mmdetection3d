@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Union
 
 import numpy as np
 
