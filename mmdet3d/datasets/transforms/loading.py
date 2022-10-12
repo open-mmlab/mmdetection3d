@@ -165,7 +165,7 @@ class LoadMultiViewImageFromFiles(BaseTransform):
         results['ori_cam2img'] = copy.deepcopy(results['cam2img'])
 
         if self.file_client is None:
-            self.file_client = mmcv.FileClient(**self.file_client_args)
+            self.file_client = mmengine.FileClient(**self.file_client_args)
 
         # img is of shape (h, w, c, num_views)
         # h and w can be different for different views

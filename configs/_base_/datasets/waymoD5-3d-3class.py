@@ -88,7 +88,8 @@ train_dataloader = dict(
             type=dataset_type,
             data_root=data_root,
             ann_file='waymo_infos_train.pkl',
-            data_prefix=dict(pts='training/velodyne'),
+            data_prefix=dict(
+                pts='training/velodyne', sweeps='training/velodyne'),
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
@@ -107,7 +108,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(pts='training/velodyne'),
+        data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         ann_file='waymo_infos_val.pkl',
         pipeline=eval_pipeline,
         modality=input_modality,
@@ -124,7 +125,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(pts='training/velodyne'),
+        data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         ann_file='waymo_infos_val.pkl',
         pipeline=eval_pipeline,
         modality=input_modality,
