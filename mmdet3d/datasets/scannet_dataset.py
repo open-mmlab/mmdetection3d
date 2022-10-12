@@ -146,7 +146,7 @@ class ScanNetDataset(Det3DDataset):
         return info
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Info dict.
@@ -318,7 +318,7 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  test_mode: bool = False,
                  ignore_index: Optional[int] = None,
-                 scene_idxs: Optional[Union[np.ndarray, str]]=None,
+                 scene_idxs: Optional[Union[np.ndarray, str]] = None,
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs) -> None:
         super().__init__(
