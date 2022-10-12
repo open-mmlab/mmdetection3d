@@ -181,6 +181,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
           <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
+          <li><a href="configs/dfm">DFM (ECCV'2022)</a></li>
         </ul>
       </td>
       <td>

@@ -181,6 +181,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
           <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
+          <li><a href="configs/dfm">DFM (ECCV'2022)</a></li>
         </ul>
       </td>
       <td>
