@@ -675,7 +675,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        show: bool = False,
                        wait_time: float = 0,
                        out_file: Optional[str] = None,
-                       save_path: Optional[str] = None,
+                       o3d_save_path: Optional[str] = None,
                        vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
                        step: int = 0) -> None:
@@ -686,9 +686,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ground truth and the right image is the prediction.
         - If ``show`` is True, all storage backends are ignored, and
         the images will be displayed in a local window.
-        - If ``out_file`` is specified, the drawn point cloud or
-        image will be saved to ``out_file``. It is usually used when
-        the display is not available.
+        - If ``out_file`` is specified, the drawn image will be saved to
+        ``out_file``. It is usually used when the display is not available.
 
         Args:
             name (str): The image identifier.
@@ -704,8 +703,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 image. Default to False.
             wait_time (float): The interval of show (s). Defaults to 0.
             out_file (str): Path to output file. Defaults to None.
-            save_path (str, optional): Path to save open3d visualized results.
-                Default: None.
+            o3d_save_path (str, optional): Path to save open3d visualized
+                results Default: None.
             vis-task (str): Visualization task. Defaults to 'mono_det'.
             pred_score_thr (float): The threshold to visualize the bboxes
                 and masks. Defaults to 0.3.
@@ -799,15 +798,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if show:
             self.show(
-                save_path,
+                o3d_save_path,
                 drawn_img_3d,
                 drawn_img,
                 win_name=name,
                 wait_time=wait_time)
 
         if out_file is not None:
-            if not out_file.endswith(('.jpg', '.png')):
-                out_file = out_file + '.jpg'
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
