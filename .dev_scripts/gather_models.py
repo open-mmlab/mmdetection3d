@@ -5,9 +5,7 @@ Usage:
 python gather_models.py ${root_path} ${out_dir}
 
 Example:
-python gather_models.py \
-work_dirs/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d \
-work_dirs/pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d
+python gather_models.py ./work_dirs ./gather
 
 Note that before running the above command, rename the directory with the
 config name if you did not use the default directory name, create
@@ -47,8 +45,10 @@ SCHEDULES_LUT = {
 RESULTS_LUT = {
     'coco': ['bbox_mAP', 'segm_mAP'],
     'nus': ['pts_bbox_NuScenes/NDS', 'NDS'],
-    'kitti-3d-3class': ['KITTI/Overall_3D_moderate', 'Overall_3D_moderate'],
-    'kitti-3d-car': ['KITTI/Car_3D_moderate_strict', 'Car_3D_moderate_strict'],
+    'kitti-3d-3class':
+    ['KITTI/Overall_3D_AP11_moderate', 'Overall_3D_AP11_moderate'],
+    'kitti-3d-car':
+    ['KITTI/Car_3D_AP11_moderate_strict', 'Car_3D_AP11_moderate_strict'],
     'lyft': ['score'],
     'scannet_seg': ['miou'],
     's3dis_seg': ['miou'],
@@ -158,13 +158,15 @@ def main():
     # and parse the best performance
     model_infos = []
     for used_config in used_configs:
-        # get logs
-        log_json_path = glob.glob(osp.join(models_root, '*.log.json'))[0]
-        log_txt_path = glob.glob(osp.join(models_root, '*.log'))[0]
+        exp_dir = osp.join(models_root, used_config)
+        # get the latest logs
+        log_json_path = list(
+            sorted(glob.glob(osp.join(exp_dir, '*.log.json'))))[-1]
+        log_txt_path = list(sorted(glob.glob(osp.join(exp_dir, '*.log'))))[-1]
         model_performance = get_best_results(log_json_path)
         final_epoch = model_performance['epoch']
         final_model = 'epoch_{}.pth'.format(final_epoch)
-        model_path = osp.join(models_root, final_model)
+        model_path = osp.join(exp_dir, final_model)
 
         # skip if the model is still training
         if not osp.exists(model_path):
@@ -193,7 +195,7 @@ def main():
         model_name = model['config'].split('/')[-1].rstrip(
             '.py') + '_' + model['model_time']
         publish_model_path = osp.join(model_publish_dir, model_name)
-        trained_model_path = osp.join(models_root,
+        trained_model_path = osp.join(models_root, model['config'],
                                       'epoch_{}.pth'.format(model['epochs']))
 
         # convert model
@@ -202,10 +204,11 @@ def main():
 
         # copy log
         shutil.copy(
-            osp.join(models_root, model['log_json_path']),
+            osp.join(models_root, model['config'], model['log_json_path']),
             osp.join(model_publish_dir, f'{model_name}.log.json'))
         shutil.copy(
-            osp.join(models_root, model['log_json_path'].rstrip('.json')),
+            osp.join(models_root, model['config'],
+                     model['log_json_path'].rstrip('.json')),
             osp.join(model_publish_dir, f'{model_name}.log'))
 
         # copy config to guarantee reproducibility
