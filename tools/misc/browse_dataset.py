@@ -117,13 +117,13 @@ def main():
 
     progress_bar = ProgressBar(len(dataset))
 
-    for item in dataset:
+    for i, item in enumerate(dataset):
         # the 3D Boxes in input could be in any of three coordinates
         data_input = item['inputs']
         data_sample = item['data_samples'].numpy()
 
-        out_file = osp.join(
-            args.output_dir) if args.output_dir is not None else None
+        out_file = osp.join(args.output_dir,
+                            f'{i}') if args.output_dir is not None else None
 
         visualizer.add_datasample(
             '3d visualzier',

@@ -571,7 +571,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             else:
                 bboxes_3d_depth = bboxes_3d.clone()
 
-            self.set_points(points, pcd_mode=2, vis_task=vis_task)
+            self.set_points(points, pcd_mode=2)
             self.draw_bboxes_3d(bboxes_3d_depth)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -687,7 +687,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         - If ``show`` is True, all storage backends are ignored, and
         the images will be displayed in a local window.
         - If ``out_file`` is specified, the drawn point cloud or
-        image will be saved to ``out_file``. t is usually used when
+        image will be saved to ``out_file``. It is usually used when
         the display is not available.
 
         Args:
@@ -799,7 +799,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if show:
             self.show(
-                vis_task,
                 save_path,
                 drawn_img_3d,
                 drawn_img,
@@ -807,6 +806,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 wait_time=wait_time)
 
         if out_file is not None:
+            if not out_file.endswith(('.jpg', '.png')):
+                out_file = out_file + '.jpg'
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
