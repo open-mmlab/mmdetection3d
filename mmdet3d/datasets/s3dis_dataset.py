@@ -323,7 +323,6 @@ class S3DISSegDataset(_S3DISSegDataset):
 
         # data_list and scene_idxs need to be concat
         self.concat_data_list([dst.data_list for dst in datasets])
-        self.concat_scene_idxs([dst.scene_idxs for dst in datasets])
 
         # set group flag for the sampler
         if not self.test_mode:
@@ -338,21 +337,6 @@ class S3DISSegDataset(_S3DISSegDataset):
         self.data_list = [
             data for data_list in data_lists for data in data_list
         ]
-
-    def concat_scene_idxs(self, scene_idxs: List[np.ndarray]) -> np.ndarray:
-        """Concat scene_idxs from several datasets to form self.scene_idxs.
-
-        Needs to manually add offset to scene_idxs[1, 2, ...].
-
-        Args:
-            scene_idxs (list[np.ndarray])
-        """
-        self.scene_idxs = np.array([], dtype=np.int32)
-        offset = 0
-        for one_scene_idxs in scene_idxs:
-            self.scene_idxs = np.concatenate(
-                [self.scene_idxs, one_scene_idxs + offset]).astype(np.int32)
-            offset = np.unique(self.scene_idxs).max() + 1
 
     @staticmethod
     def _duplicate_to_list(x, num):
