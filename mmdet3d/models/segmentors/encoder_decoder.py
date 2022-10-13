@@ -490,7 +490,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             seg_map = seg_map.cpu()
             seg_pred_list.append(seg_map)
 
-        return self.postprocess_result(seg_pred_list, batch_input_metas)
+        return self.postprocess_result(seg_pred_list, batch_data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,
