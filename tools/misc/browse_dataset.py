@@ -71,7 +71,7 @@ def build_data_cfg(config_path, aug, cfg_options):
     if aug:
         show_pipeline = cfg.train_pipeline
     else:
-        show_pipeline = cfg.eval_pipeline
+        show_pipeline = cfg.test_pipeline
         for i in range(len(cfg.train_pipeline)):
             if cfg.train_pipeline[i]['type'] == 'LoadAnnotations3D':
                 show_pipeline.insert(i, cfg.train_pipeline[i])
