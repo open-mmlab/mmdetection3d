@@ -28,10 +28,10 @@ class LoadMultiViewImageFromFiles(BaseTransform):
             refer to
             https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
-        num_views (int, optional): Num of view in a frame. Default to 5.
-        num_ref_frames (int, optional): Num of frame in loading. Default to -1.
+        num_views (int, optional): Num of view in a frame. Defaults to 5.
+        num_ref_frames (int, optional): Num of frame in loading. Defaults to -1.
         test_mode (bool, optional): Whether is test mode in loading.
-            Default to False.
+            Defaults to False.
         set_default_scale (bool, optional): Whether to set default scale.
             Defaults to True.
     """
