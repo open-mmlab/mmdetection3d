@@ -111,3 +111,7 @@ test_dataloader = dict(
         box_type_3d='Depth'))
 val_evaluator = dict(type='IndoorMetric')
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

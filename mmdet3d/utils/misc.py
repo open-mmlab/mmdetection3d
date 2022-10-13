@@ -58,6 +58,11 @@ def replace_ceph_backend(cfg):
         'LoadImageFromFileMono3D\'',
         'LoadImageFromFileMono3D\',' + replace_strs)
 
+    # replace LoadMultiViewImageFromFiles
+    cfg_pretty_text = cfg_pretty_text.replace(
+        'LoadMultiViewImageFromFiles\'',
+        'LoadMultiViewImageFromFiles\',' + replace_strs)
+
     # replace LoadPointsFromFile
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadPointsFromFile\'', 'LoadPointsFromFile\',' + replace_strs)
