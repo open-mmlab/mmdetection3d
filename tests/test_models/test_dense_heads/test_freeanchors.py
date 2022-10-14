@@ -17,8 +17,16 @@ class TestFreeAnchor(unittest.TestCase):
         DefaultScope.get_instance('test_freeanchor', scope_name='mmdet3d')
         _setup_seed(0)
         freeanchor_cfg = _get_detector_cfg(
-            'free_anchor/hv_pointpillars_fpn_sbn-all_free-'
-            'anchor_4x8_2x_nus-3d.py')
+            'free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor'
+            '_sbn-all_8xb4-2x_nus-3d.py')
+        # decrease channels to reduce cuda memory.
+        freeanchor_cfg.pts_voxel_encoder.feat_channels = [1, 1]
+        freeanchor_cfg.pts_middle_encoder.in_channels = 1
+        freeanchor_cfg.pts_backbone.base_channels = 1
+        freeanchor_cfg.pts_backbone.stem_channels = 1
+        freeanchor_cfg.pts_neck.out_channels = 1
+        freeanchor_cfg.pts_bbox_head.feat_channels = 1
+        freeanchor_cfg.pts_bbox_head.in_channels = 1
         model = MODELS.build(freeanchor_cfg)
         num_gt_instance = 3
         packed_inputs = _create_detector_inputs(

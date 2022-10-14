@@ -63,15 +63,20 @@ class Pack3DDetInputs(BaseTransform):
 
     def __init__(
         self,
-        keys: dict,
-        meta_keys: dict = ('img_path', 'ori_shape', 'img_shape', 'lidar2img',
-                           'depth2img', 'cam2img', 'pad_shape', 'scale_factor',
-                           'flip', 'pcd_horizontal_flip', 'pcd_vertical_flip',
-                           'box_mode_3d', 'box_type_3d', 'img_norm_cfg',
-                           'pcd_trans', 'sample_idx', 'pcd_scale_factor',
-                           'pcd_rotation', 'pcd_rotation_angle', 'lidar_path',
-                           'transformation_3d_flow', 'trans_mat',
-                           'affine_aug')):
+        keys: tuple,
+        meta_keys: tuple = ('img_path', 'ori_shape', 'img_shape', 'lidar2img',
+                            'depth2img', 'cam2img', 'pad_shape',
+                            'scale_factor', 'flip', 'pcd_horizontal_flip',
+                            'pcd_vertical_flip', 'box_mode_3d', 'box_type_3d',
+                            'img_norm_cfg', 'num_pts_feats', 'pcd_trans',
+                            'sample_idx', 'pcd_scale_factor', 'pcd_rotation',
+                            'pcd_rotation_angle', 'lidar_path',
+                            'transformation_3d_flow', 'trans_mat',
+                            'affine_aug', 'sweep_img_metas', 'ori_cam2img',
+                            'cam2global', 'crop_offset', 'img_crop_offset',
+                            'resize_img_shape', 'lidar2cam', 'ori_lidar2img',
+                            'num_ref_frames', 'num_views', 'ego2global')
+    ) -> None:
         self.keys = keys
         self.meta_keys = meta_keys
 
@@ -98,7 +103,7 @@ class Pack3DDetInputs(BaseTransform):
                 - img
 
             - 'data_samples' (obj:`Det3DDataSample`): The annotation info of
-                the sample.
+              the sample.
         """
         # augtest
         if isinstance(results, list):
@@ -115,7 +120,7 @@ class Pack3DDetInputs(BaseTransform):
         else:
             raise NotImplementedError
 
-    def pack_single_results(self, results):
+    def pack_single_results(self, results: dict) -> dict:
         """Method to pack the single input data. when the value in this dict is
         a list, it usually is in Augmentations Testing.
 
@@ -131,7 +136,7 @@ class Pack3DDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_samples' (obj:`Det3DDataSample`): The annotation info
+            - 'data_samples' (:obj:`Det3DDataSample`): The annotation info
               of the sample.
         """
         # Format 3D data
@@ -219,6 +224,7 @@ class Pack3DDetInputs(BaseTransform):
         return packed_results
 
     def __repr__(self) -> str:
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(keys={self.keys})'
         repr_str += f'(meta_keys={self.meta_keys})'

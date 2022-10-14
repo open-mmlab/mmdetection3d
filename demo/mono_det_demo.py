@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument(
         '--cam-type',
         type=str,
-        default='CAM_FRONT',
+        default='CAM_BACK',
         help='choose camera type to inference')
     parser.add_argument(
         '--score-thr', type=float, default=0.30, help='bbox score threshold')
@@ -66,7 +66,7 @@ def main(args):
         wait_time=0,
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
-        vis_task='mono-det')
+        vis_task='mono_det')
 
 
 if __name__ == '__main__':

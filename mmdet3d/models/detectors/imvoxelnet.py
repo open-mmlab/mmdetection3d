@@ -2,16 +2,17 @@
 from typing import List, Tuple, Union
 
 import torch
+from mmengine.structures import InstanceData
 
+from mmdet3d.models.detectors import Base3DDetector
 from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import ConfigType, InstanceList, OptConfigType
-from mmdet.models.detectors import BaseDetector
+from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
 
 
 @MODELS.register_module()
-class ImVoxelNet(BaseDetector):
+class ImVoxelNet(Base3DDetector):
     r"""`ImVoxelNet <https://arxiv.org/abs/2106.01178>`_.
 
     Args:
@@ -56,31 +57,6 @@ class ImVoxelNet(BaseDetector):
         self.anchor_generator = TASK_UTILS.build(anchor_generator)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-
-    def convert_to_datasample(self, data_samples: SampleList,
-                              data_instances: InstanceList) -> SampleList:
-        """ Convert results list to `Det3DDataSample`.
-        Args:
-            inputs (list[:obj:`Det3DDataSample`]): The input data.
-            data_instances (list[:obj:`InstanceData`]): 3D Detection
-                results of each image.
-        Returns:
-            list[:obj:`Det3DDataSample`]: 3D Detection results of the
-            input images. Each Det3DDataSample usually contain
-            'pred_instances_3d'. And the ``pred_instances_3d`` usually
-            contains following keys.
-
-                - scores_3d (Tensor): Classification scores, has a shape
-                    (num_instance, )
-                - labels_3d (Tensor): Labels of bboxes, has a shape
-                    (num_instances, ).
-                - bboxes_3d (Tensor): Contains a tensor with shape
-                    (num_instances, C) where C >=7.
-            """
-        for data_sample, pred_instances_3d in zip(data_samples,
-                                                  data_instances):
-            data_sample.pred_instances_3d = pred_instances_3d
-        return data_samples
 
     def extract_feat(self, batch_inputs_dict: dict,
                      batch_data_samples: SampleList):
@@ -185,8 +161,8 @@ class ImVoxelNet(BaseDetector):
         """
         x = self.extract_feat(batch_inputs_dict, batch_data_samples)
         results_list = self.bbox_head.predict(x, batch_data_samples, **kwargs)
-        predictions = self.convert_to_datasample(batch_data_samples,
-                                                 results_list)
+        predictions = self.add_pred_to_datasample(batch_data_samples,
+                                                  results_list)
         return predictions
 
     def _forward(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
@@ -209,3 +185,64 @@ class ImVoxelNet(BaseDetector):
         x = self.extract_feat(batch_inputs_dict, batch_data_samples)
         results = self.bbox_head.forward(x)
         return results
+
+    def convert_to_datasample(
+        self,
+        data_samples: SampleList,
+        data_instances_3d: OptInstanceList = None,
+        data_instances_2d: OptInstanceList = None,
+    ) -> SampleList:
+        """Convert results list to `Det3DDataSample`.
+
+        Subclasses could override it to be compatible for some multi-modality
+        3D detectors.
+
+        Args:
+            data_samples (list[:obj:`Det3DDataSample`]): The input data.
+            data_instances_3d (list[:obj:`InstanceData`], optional): 3D
+                Detection results of each sample.
+            data_instances_2d (list[:obj:`InstanceData`], optional): 2D
+                Detection results of each sample.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input. Each Det3DDataSample usually contains
+            'pred_instances_3d'. And the ``pred_instances_3d`` normally
+            contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instance, )
+            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+              (num_instances, C) where C >=7.
+
+            When there are image prediction in some models, it should
+            contains  `pred_instances`, And the ``pred_instances`` normally
+            contains following keys.
+
+            - scores (Tensor): Classification scores of image, has a shape
+              (num_instance, )
+            - labels (Tensor): Predict Labels of 2D bboxes, has a shape
+              (num_instances, ).
+            - bboxes (Tensor): Contains a tensor with shape
+              (num_instances, 4).
+        """
+
+        assert (data_instances_2d is not None) or \
+               (data_instances_3d is not None),\
+               'please pass at least one type of data_samples'
+
+        if data_instances_2d is None:
+            data_instances_2d = [
+                InstanceData() for _ in range(len(data_instances_3d))
+            ]
+        if data_instances_3d is None:
+            data_instances_3d = [
+                InstanceData() for _ in range(len(data_instances_2d))
+            ]
+
+        for i, data_sample in enumerate(data_samples):
+            data_sample.pred_instances_3d = data_instances_3d[i]
+            data_sample.pred_instances = data_instances_2d[i]
+        return data_samples

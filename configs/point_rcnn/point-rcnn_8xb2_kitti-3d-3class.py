@@ -6,7 +6,8 @@ _base_ = [
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Car', 'Pedestrian', 'Cyclist']
+class_names = ['Pedestrian', 'Cyclist', 'Car']
+metainfo = dict(CLASSES=class_names)
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
 
@@ -42,8 +43,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointSample', num_points=16384, sample_range=40.0),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -61,36 +63,67 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='PointSample', num_points=16384, sample_range=40.0),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+            dict(type='PointSample', num_points=16384, sample_range=40.0)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
-    train=dict(
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=2,
+    dataset=dict(
         type='RepeatDataset',
         times=2,
-        dataset=dict(pipeline=train_pipeline, classes=class_names)),
-    val=dict(pipeline=test_pipeline, classes=class_names),
-    test=dict(pipeline=test_pipeline, classes=class_names))
+        dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 
-# optimizer
 lr = 0.001  # max learning rate
-optimizer = dict(lr=lr, betas=(0.95, 0.85))
-# runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=80)
-evaluation = dict(interval=2)
-# yapf:disable
-log_config = dict(
-    interval=30,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
+optim_wrapper = dict(optimizer=dict(lr=lr, betas=(0.95, 0.85)))
+train_cfg = dict(by_epoch=True, max_epochs=80, val_interval=2)
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)
+param_scheduler = [
+    # learning rate scheduler
+    # During the first 35 epochs, learning rate increases from 0 to lr * 10
+    # during the next 45 epochs, learning rate decreases from lr * 10 to
+    # lr * 1e-4
+    dict(
+        type='CosineAnnealingLR',
+        T_max=35,
+        eta_min=lr * 10,
+        begin=0,
+        end=35,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=45,
+        eta_min=lr * 1e-4,
+        begin=35,
+        end=80,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    # momentum scheduler
+    # During the first 35 epochs, momentum increases from 0 to 0.85 / 0.95
+    # during the next 45 epochs, momentum increases from 0.85 / 0.95 to 1
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=35,
+        eta_min=0.85 / 0.95,
+        begin=0,
+        end=35,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=45,
+        eta_min=1,
+        begin=35,
+        end=80,
+        by_epoch=True,
+        convert_to_iter_based=True)
+]

@@ -14,7 +14,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
 
     .. code-block:: none
 
-                    up z    y front (yaw=-0.5*pi)
+                    up z    y front (yaw=0.5*pi)
                        ^   ^
                        |  /
                        | /

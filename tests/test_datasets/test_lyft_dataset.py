@@ -21,12 +21,12 @@ def _generate_nus_dataset_config():
         class Identity(BaseTransform):
 
             def transform(self, info):
-                packed_input = dict(data_sample=Det3DDataSample())
+                packed_input = dict(data_samples=Det3DDataSample())
                 if 'ann_info' in info:
-                    packed_input['data_sample'].gt_instances_3d = InstanceData(
-                    )
                     packed_input[
-                        'data_sample'].gt_instances_3d.labels_3d = info[
+                        'data_samples'].gt_instances_3d = InstanceData()
+                    packed_input[
+                        'data_samples'].gt_instances_3d.labels_3d = info[
                             'ann_info']['gt_labels_3d']
                 return packed_input
 

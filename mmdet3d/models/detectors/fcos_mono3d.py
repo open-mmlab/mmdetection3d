@@ -95,6 +95,7 @@ class FCOSMono3D(SingleStageMono3DDetector):
         x = self.extract_feat(batch_inputs_dict)
         results_list, results_list_2d = self.bbox_head.predict(
             x, batch_data_samples, rescale=rescale)
-        predictions = self.convert_to_datasample(batch_data_samples,
-                                                 results_list, results_list_2d)
+        predictions = self.add_pred_to_datasample(batch_data_samples,
+                                                  results_list,
+                                                  results_list_2d)
         return predictions

@@ -66,7 +66,8 @@ class KittiMetric(BaseMetric):
         self.default_cam_key = default_cam_key
         self.file_client_args = file_client_args
         self.default_cam_key = default_cam_key
-        allowed_metrics = ['bbox', 'img_bbox', 'mAP']
+
+        allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'LET_mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
         for metric in self.metrics:
             if metric not in allowed_metrics:
@@ -168,7 +169,7 @@ class KittiMetric(BaseMetric):
         """Compute the metrics from processed results.
 
         Args:
-            results (list): The processed results of each batch.
+            results (list): The processed results of the whole dataset.
 
         Returns:
             Dict[str, float]: The computed metrics. The keys are the names of
@@ -575,7 +576,7 @@ class KittiMetric(BaseMetric):
         box_preds = box_dict['bboxes_3d']
         scores = box_dict['scores_3d']
         labels = box_dict['labels_3d']
-        sample_idx = info['sample_id']
+        sample_idx = info['sample_idx']
         box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
 
         if len(box_preds) == 0:

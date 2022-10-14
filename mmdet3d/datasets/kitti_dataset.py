@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Union
 
 import numpy as np
 
@@ -22,11 +22,12 @@ class KittiDataset(Det3DDataset):
             Defaults to None.
         modality (dict, optional): Modality to specify the sensor data used
             as input. Defaults to `dict(use_lidar=True)`.
-
+        default_cam_key (str, optional): The default camera name adopted.
+            Defaults to 'CAM2'.
         box_type_3d (str, optional): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes
+            Defaults to 'LiDAR' in this dataset. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
@@ -35,9 +36,9 @@ class KittiDataset(Det3DDataset):
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list, optional): The range of point cloud used to
-            filter invalid predicted boxes.
-            Default: [0, -40, -3, 70.4, 40, 0.0].
+        pcd_limit_range (list[float], optional): The range of point cloud
+            used to filter invalid predicted boxes.
+            Defaults to [0, -40, -3, 70.4, 40, 0.0].
     """
     # TODO: use full classes of kitti
     METAINFO = {
@@ -49,15 +50,18 @@ class KittiDataset(Det3DDataset):
                  data_root: str,
                  ann_file: str,
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality: Optional[dict] = dict(use_lidar=True),
+                 modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM2',
+                 task: str = 'lidar_det',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
-                 **kwargs):
+                 **kwargs) -> None:
 
         self.pcd_limit_range = pcd_limit_range
+        assert task in ('lidar_det', 'mono_det')
+        self.task = task
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -107,11 +111,14 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
+        if self.task == 'mono_det':
+            info['instances'] = info['cam_instances'][self.default_cam_key]
+
         info = super().parse_data_info(info)
 
         return info
 
-    def parse_ann_info(self, info):
+    def parse_ann_info(self, info: dict) -> dict:
         """Get annotation info according to the given index.
 
         Args:
@@ -134,6 +141,12 @@ class KittiDataset(Det3DDataset):
             # empty instance
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
+
+            if self.task == 'mono_det':
+                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
+                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
+                ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         ann_info = self._remove_dontcare(ann_info)
         # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam

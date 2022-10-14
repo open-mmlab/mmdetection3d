@@ -67,7 +67,7 @@ test_pipeline = [
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
-    dict(type='Pack3DDetInputs', keys=['points']),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
     batch_size=6,
@@ -126,3 +126,7 @@ val_evaluator = dict(
     ann_file=data_root + 'kitti_infos_val.pkl',
     metric='bbox')
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

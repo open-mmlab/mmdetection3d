@@ -13,7 +13,7 @@ from torch.nn import functional as F
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import OptConfigType
 from mmdet.models import DetDataPreprocessor
-from mmdet.models.utils.misc import samplelist_boxlist2tensor
+from .utils import multiview_img_stack_batch
 
 
 @MODELS.register_module()
@@ -75,7 +75,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  seg_pad_value: int = 255,
                  bgr_to_rgb: bool = False,
                  rgb_to_bgr: bool = False,
-                 boxlist2tensor: bool = True,
+                 boxtype2tensor: bool = True,
                  batch_augments: Optional[List[dict]] = None):
         super().__init__(
             mean=mean,
@@ -88,7 +88,6 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             seg_pad_value=seg_pad_value,
             bgr_to_rgb=bgr_to_rgb,
             rgb_to_bgr=rgb_to_bgr,
-            boxlist2tensor=boxlist2tensor,
             batch_augments=batch_augments)
         self.voxel = voxel
         self.voxel_type = voxel_type
@@ -104,10 +103,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         ``BaseDataPreprocessor``.
 
         Args:
-            data (List[dict] | List[List[dict]]): data from dataloader.
-                The outer list always represent the batch size, when it is
-                a list[list[dict]], the inter list indicate test time
-                augmentation.
+            data (dict | List[dict]): data from dataloader.
+                The dict contains the whole batch data, when it is
+                a list[dict], the list indicate test time augmentation.
+
             training (bool): Whether to enable training time augmentation.
                 Defaults to False.
 
@@ -144,7 +143,6 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         data = self.collate_data(data)
         inputs, data_samples = data['inputs'], data['data_samples']
-
         batch_inputs = dict()
 
         if 'points' in inputs:
@@ -169,9 +167,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                         'pad_shape': pad_shape
                     })
 
-                if self.boxlist2tensor:
+                if hasattr(self, 'boxtype2tensor') and self.boxtype2tensor:
+                    from mmdet.models.utils.misc import \
+                        samplelist_boxtype2tensor
+                    samplelist_boxtype2tensor(data_samples)
+                elif hasattr(self, 'boxlist2tensor') and self.boxlist2tensor:
+                    from mmdet.models.utils.misc import \
+                        samplelist_boxlist2tensor
                     samplelist_boxlist2tensor(data_samples)
-
                 if self.pad_mask:
                     self.pad_gt_masks(data_samples)
 
@@ -184,6 +187,23 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             batch_inputs['imgs'] = imgs
 
         return {'inputs': batch_inputs, 'data_samples': data_samples}
+
+    def preprocess_img(self, _batch_img):
+        # channel transform
+        if self._channel_conversion:
+            _batch_img = _batch_img[[2, 1, 0], ...]
+        # Convert to float after channel conversion to ensure
+        # efficiency
+        _batch_img = _batch_img.float()
+        # Normalization.
+        if self._enable_normalize:
+            if self.mean.shape[0] == 3:
+                assert _batch_img.dim() == 3 and _batch_img.shape[0] == 3, (
+                    'If the mean has 3 values, the input tensor '
+                    'should in shape of (3, H, W), but got the '
+                    f'tensor with shape {_batch_img.shape}')
+            _batch_img = (_batch_img - self.mean) / self.std
+        return _batch_img
 
     def collate_data(self, data: dict) -> dict:
         """Copying data to the target device and Performs normalization、
@@ -203,30 +223,30 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         if 'img' in data['inputs']:
             _batch_imgs = data['inputs']['img']
-
             # Process data with `pseudo_collate`.
             if is_list_of(_batch_imgs, torch.Tensor):
                 batch_imgs = []
+                img_dim = _batch_imgs[0].dim()
                 for _batch_img in _batch_imgs:
-                    # channel transform
-                    if self._channel_conversion:
-                        _batch_img = _batch_img[[2, 1, 0], ...]
-                    # Convert to float after channel conversion to ensure
-                    # efficiency
-                    _batch_img = _batch_img.float()
-                    # Normalization.
-                    if self._enable_normalize:
-                        if self.mean.shape[0] == 3:
-                            assert _batch_img.dim(
-                            ) == 3 and _batch_img.shape[0] == 3, (
-                                'If the mean has 3 values, the input tensor '
-                                'should in shape of (3, H, W), but got the '
-                                f'tensor with shape {_batch_img.shape}')
-                        _batch_img = (_batch_img - self.mean) / self.std
+                    if img_dim == 3:  # standard img
+                        _batch_img = self.preprocess_img(_batch_img)
+                    elif img_dim == 4:
+                        _batch_img = [
+                            self.preprocess_img(_img) for _img in _batch_img
+                        ]
+
+                        _batch_img = torch.stack(_batch_img, dim=0)
+
                     batch_imgs.append(_batch_img)
+
                 # Pad and stack Tensor.
-                batch_imgs = stack_batch(batch_imgs, self.pad_size_divisor,
-                                         self.pad_value)
+                if img_dim == 3:
+                    batch_imgs = stack_batch(batch_imgs, self.pad_size_divisor,
+                                             self.pad_value)
+                elif img_dim == 4:
+                    batch_imgs = multiview_img_stack_batch(
+                        batch_imgs, self.pad_size_divisor, self.pad_value)
+
             # Process data with `default_collate`.
             elif isinstance(_batch_imgs, torch.Tensor):
                 assert _batch_imgs.dim() == 4, (
@@ -270,6 +290,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         if is_list_of(_batch_inputs, torch.Tensor):
             batch_pad_shape = []
             for ori_input in _batch_inputs:
+                if ori_input.dim() == 4:
+                    # mean multiivew input, select ont of the
+                    # image to calculate the pad shape
+                    ori_input = ori_input[0]
                 pad_h = int(
                     np.ceil(ori_input.shape[1] /
                             self.pad_size_divisor)) * self.pad_size_divisor
@@ -293,7 +317,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         else:
             raise TypeError('Output of `cast_data` should be a list of dict '
                             'or a tuple with inputs and data_samples, but got'
-                            f'{type(data)}： {data}')
+                            f'{type(data)}: {data}')
         return batch_pad_shape
 
     @torch.no_grad()

@@ -140,3 +140,8 @@ test_dataloader = dict(
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR'))
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (16 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=32)

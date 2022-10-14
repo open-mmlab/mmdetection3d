@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Dict, List
+from typing import Callable, List, Union
 
 import numpy as np
 
@@ -22,25 +22,26 @@ class NuScenesDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
+        task (str, optional): Detection task. Defaults to 'lidar_det'.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes.
+            Defaults to 'LiDAR' in this dataset. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
         modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_camera=False,use_lidar=True).
-        filter_empty_gt (bool): Whether to filter empty GT.
+            as input. Defaults to dict(use_camera=False, use_lidar=True).
+        filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool): Whether the dataset is in test mode.
+        test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
-        with_velocity (bool): Whether include velocity prediction
+        with_velocity (bool, optional): Whether to include velocity prediction
             into the experiments. Defaults to True.
-        use_valid_flag (bool): Whether to use `use_valid_flag` key
+        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
             in the info file as mask to filter gt_boxes and gt_names.
             Defaults to False.
     """
@@ -55,10 +56,10 @@ class NuScenesDataset(Det3DDataset):
     def __init__(self,
                  data_root: str,
                  ann_file: str,
-                 task: str = '3d',
-                 pipeline: List[dict] = None,
+                 task: str = 'lidar_det',
+                 pipeline: List[Union[dict, Callable]] = [],
                  box_type_3d: str = 'LiDAR',
-                 modality: Dict = dict(
+                 modality: dict = dict(
                      use_camera=False,
                      use_lidar=True,
                  ),
@@ -66,12 +67,12 @@ class NuScenesDataset(Det3DDataset):
                  test_mode: bool = False,
                  with_velocity: bool = True,
                  use_valid_flag: bool = False,
-                 **kwargs):
+                 **kwargs) -> None:
         self.use_valid_flag = use_valid_flag
         self.with_velocity = with_velocity
 
         # TODO: Redesign multi-view data process in the future
-        assert task in ('3d', 'mono3d', 'multi-view')
+        assert task in ('lidar_det', 'mono_det', 'multi-view_det')
         self.task = task
 
         assert box_type_3d.lower() in ('lidar', 'camera')
@@ -84,6 +85,27 @@ class NuScenesDataset(Det3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
             **kwargs)
+
+    def _filter_with_mask(self, ann_info: dict) -> dict:
+        """Remove annotations that do not need to be cared.
+
+        Args:
+            ann_info (dict): Dict of annotation infos.
+
+        Returns:
+            dict: Annotations after filtering.
+        """
+        filtered_annotations = {}
+        if self.use_valid_flag:
+            filter_mask = ann_info['bbox_3d_isvalid']
+        else:
+            filter_mask = ann_info['num_lidar_pts'] > 0
+        for key in ann_info.keys():
+            if key != 'instances':
+                filtered_annotations[key] = (ann_info[key][filter_mask])
+            else:
+                filtered_annotations[key] = ann_info[key]
+        return filtered_annotations
 
     def parse_ann_info(self, info: dict) -> dict:
         """Get annotation info according to the given index.
@@ -99,66 +121,51 @@ class NuScenesDataset(Det3DDataset):
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
         """
         ann_info = super().parse_ann_info(info)
-        if ann_info is None:
+        if ann_info is not None:
+
+            ann_info = self._filter_with_mask(ann_info)
+
+            if self.with_velocity:
+                gt_bboxes_3d = ann_info['gt_bboxes_3d']
+                gt_velocities = ann_info['velocities']
+                nan_mask = np.isnan(gt_velocities[:, 0])
+                gt_velocities[nan_mask] = [0.0, 0.0]
+                gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocities],
+                                              axis=-1)
+                ann_info['gt_bboxes_3d'] = gt_bboxes_3d
+        else:
             # empty instance
-            anns_results = dict()
-            anns_results['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
-            anns_results['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
-            return anns_results
+            ann_info = dict()
+            if self.with_velocity:
+                ann_info['gt_bboxes_3d'] = np.zeros((0, 9), dtype=np.float32)
+            else:
+                ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
+            ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-        if self.use_valid_flag:
-            mask = ann_info['bbox_3d_isvalid']
-        else:
-            mask = ann_info['num_lidar_pts'] > 0
-        gt_bboxes_3d = ann_info['gt_bboxes_3d'][mask]
-        gt_labels_3d = ann_info['gt_labels_3d'][mask]
-
-        if 'gt_bboxes' in ann_info:
-            gt_bboxes = ann_info['gt_bboxes'][mask]
-            gt_labels = ann_info['gt_labels'][mask]
-            attr_labels = ann_info['attr_labels'][mask]
-        else:
-            gt_bboxes = np.zeros((0, 4), dtype=np.float32)
-            gt_labels = np.array([], dtype=np.int64)
-            attr_labels = np.array([], dtype=np.int64)
-
-        if 'centers_2d' in ann_info:
-            centers_2d = ann_info['centers_2d'][mask]
-            depths = ann_info['depths'][mask]
-        else:
-            centers_2d = np.zeros((0, 2), dtype=np.float32)
-            depths = np.zeros((0), dtype=np.float32)
-
-        if self.with_velocity:
-            gt_velocity = ann_info['velocity'][mask]
-            nan_mask = np.isnan(gt_velocity[:, 0])
-            gt_velocity[nan_mask] = [0.0, 0.0]
-            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
+            if self.task == 'mono3d':
+                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
+                ann_info['attr_labels'] = np.array(0, dtype=np.int64)
+                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
+                ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
         # TODO: Unify the coordinates
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             gt_bboxes_3d = CameraInstance3DBoxes(
-                gt_bboxes_3d,
-                box_dim=gt_bboxes_3d.shape[-1],
+                ann_info['gt_bboxes_3d'],
+                box_dim=ann_info['gt_bboxes_3d'].shape[-1],
                 origin=(0.5, 0.5, 0.5))
         else:
             gt_bboxes_3d = LiDARInstance3DBoxes(
-                gt_bboxes_3d,
-                box_dim=gt_bboxes_3d.shape[-1],
+                ann_info['gt_bboxes_3d'],
+                box_dim=ann_info['gt_bboxes_3d'].shape[-1],
                 origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
-        anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            gt_bboxes=gt_bboxes,
-            gt_labels=gt_labels,
-            attr_labels=attr_labels,
-            centers_2d=centers_2d,
-            depths=depths)
+        ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 
-        return anns_results
+        return ann_info
 
     def parse_data_info(self, info: dict) -> dict:
         """Process the raw data info.
@@ -173,7 +180,7 @@ class NuScenesDataset(Det3DDataset):
             dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             data_list = []
             if self.modality['use_lidar']:
                 info['lidar_points']['lidar_path'] = \

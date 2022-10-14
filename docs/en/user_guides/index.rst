@@ -11,3 +11,4 @@
    index.rst
    model_deployment.md
    useful_tools.md
+   visualization.md

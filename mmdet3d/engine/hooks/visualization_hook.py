@@ -4,6 +4,7 @@ import warnings
 from typing import Optional, Sequence
 
 import mmcv
+import numpy as np
 from mmengine.fileio import FileClient
 from mmengine.hooks import Hook
 from mmengine.runner import Runner
@@ -95,15 +96,27 @@ class Det3DVisualizationHook(Hook):
         # is visualized for each evaluation.
         total_curr_iter = runner.iter + batch_idx
 
+        data_input = dict()
+
         # Visualize only the first data
-        img_path = outputs[0].img_path
-        img_bytes = self.file_client.get(img_path)
-        img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+        if 'img_path' in outputs[0]:
+            img_path = outputs[0].img_path
+            img_bytes = self.file_client.get(img_path)
+            img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+            data_input['img'] = img
+
+        if 'lidar_path' in outputs[0]:
+            lidar_path = outputs[0].lidar_path
+            num_pts_feats = outputs[0].num_pts_feats
+            pts_bytes = self.file_client.get(lidar_path)
+            points = np.frombuffer(pts_bytes, dtype=np.float32)
+            points = points.reshape(-1, num_pts_feats)
+            data_input['points'] = points
 
         if total_curr_iter % self.interval == 0:
             self._visualizer.add_datasample(
-                osp.basename(img_path) if self.show else 'val_img',
-                img,
+                'val sample',
+                data_input,
                 data_sample=outputs[0],
                 show=self.show,
                 wait_time=self.wait_time,
@@ -135,9 +148,20 @@ class Det3DVisualizationHook(Hook):
         for data_sample in outputs:
             self._test_index += 1
 
-            img_path = data_sample.img_path
-            img_bytes = self.file_client.get(img_path)
-            img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+            data_input = dict()
+            if 'img_path' in data_sample:
+                img_path = data_sample.img_path
+                img_bytes = self.file_client.get(img_path)
+                img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+                data_input['img'] = img
+
+            if 'lidar_path' in data_sample:
+                lidar_path = data_sample.lidar_path
+                num_pts_feats = data_sample.num_pts_feats
+                pts_bytes = self.file_client.get(lidar_path)
+                points = np.frombuffer(pts_bytes, dtype=np.float32)
+                points = points.reshape(-1, num_pts_feats)
+                data_input['points'] = points
 
             out_file = None
             if self.test_out_dir is not None:
@@ -145,8 +169,8 @@ class Det3DVisualizationHook(Hook):
                 out_file = osp.join(self.test_out_dir, out_file)
 
             self._visualizer.add_datasample(
-                osp.basename(img_path) if self.show else 'test_img',
-                img,
+                'test sample',
+                data_input,
                 data_sample=data_sample,
                 show=self.show,
                 wait_time=self.wait_time,

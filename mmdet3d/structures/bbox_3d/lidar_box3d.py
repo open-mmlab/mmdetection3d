@@ -174,7 +174,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def convert_to(self, dst, rt_mat=None):
+    def convert_to(self, dst, rt_mat=None, correct_yaw=False):
         """Convert self to ``dst`` mode.
 
         Args:
@@ -185,14 +185,19 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
-
+            correct_yaw (bool): If convert the yaw angle to the target
+                coordinate. Defaults to False.
         Returns:
             :obj:`BaseInstance3DBoxes`:
                 The converted box of the same type in the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
-            box=self, src=Box3DMode.LIDAR, dst=dst, rt_mat=rt_mat)
+            box=self,
+            src=Box3DMode.LIDAR,
+            dst=dst,
+            rt_mat=rt_mat,
+            correct_yaw=correct_yaw)
 
     def enlarged_box(self, extra_width):
         """Enlarge the length, width and height boxes.
