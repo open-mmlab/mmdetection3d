@@ -98,19 +98,21 @@ class DataBaseSampler(object):
             for more details. Defaults to dict(backend='disk').
     """
 
-    def __init__(self,
-                 info_path: str,
-                 data_root: str,
-                 rate: float,
-                 prepare: dict,
-                 sample_groups: dict,
-                 classes: Optional[List[str]] = None,
-                 points_loader: dict = dict(
-                     type='LoadPointsFromFile',
-                     coord_type='LIDAR',
-                     load_dim=4,
-                     use_dim=[0, 1, 2, 3]),
-                 file_client_args: dict = dict(backend='disk')) -> None:
+    def __init__(
+        self,
+        info_path: str,
+        data_root: str,
+        rate: float,
+        prepare: dict,
+        sample_groups: dict,
+        classes: Optional[List[str]] = None,
+        points_loader: dict = dict(
+            type='LoadPointsFromFile',
+            coord_type='LIDAR',
+            load_dim=4,
+            use_dim=[0, 1, 2, 3]),
+        file_client_args: dict = dict(backend='disk')
+    ) -> None:
         super().__init__()
         self.data_root = data_root
         self.info_path = info_path
@@ -304,9 +306,7 @@ class DataBaseSampler(object):
 
         return ret
 
-    def sample_class_v2(self,
-                        name: str,
-                        num: int,
+    def sample_class_v2(self, name: str, num: int,
                         gt_bboxes: np.ndarray) -> List[dict]:
         """Sampling specific categories of bounding boxes.
 

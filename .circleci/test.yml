@@ -105,8 +105,8 @@ jobs:
           name: Install mmdet3d dependencies
           command: |
             docker exec mmdet3d pip install -e /mmengine
-            docker exec pip install -U openmim
-            docker exec mim install 'mmcv >= 2.0.0rc1'
+            docker exec mmdet3d pip install -U openmim
+            docker exec mmdet3d mim install 'mmcv >= 2.0.0rc1'
             docker exec mmdet3d pip install -e /mmdetection
             docker exec mmdet3d pip install -r requirements.txt
       - run:

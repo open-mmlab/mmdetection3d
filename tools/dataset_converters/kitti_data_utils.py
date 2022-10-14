@@ -46,8 +46,9 @@ def get_image_path(idx,
                    relative_path=True,
                    exist_check=True,
                    info_type='image_2',
+                   file_tail='.png',
                    use_prefix_id=False):
-    return get_kitti_info_path(idx, prefix, info_type, '.png', training,
+    return get_kitti_info_path(idx, prefix, info_type, file_tail, training,
                                relative_path, exist_check, use_prefix_id)
 
 
@@ -378,6 +379,7 @@ class WaymoInfoGatherer:
             self.training,
             self.relative_path,
             info_type='image_0',
+            file_tail='.jpg',
             use_prefix_id=True)
         if self.with_imageshape:
             img_path = image_info['image_path']
@@ -443,6 +445,7 @@ class WaymoInfoGatherer:
             else:
                 rect_4x4 = R0_rect
 
+            # TODO: naming Tr_velo_to_cam or Tr_velo_to_cam0
             Tr_velo_to_cam = np.array([
                 float(info) for info in lines[6].split(' ')[1:13]
             ]).reshape([3, 4])
@@ -521,6 +524,14 @@ class WaymoInfoGatherer:
                             relative_path=False,
                             use_prefix_id=True)) as f:
                     prev_info['timestamp'] = np.int64(f.read())
+                prev_info['image_path'] = get_image_path(
+                    prev_idx,
+                    self.path,
+                    self.training,
+                    self.relative_path,
+                    info_type='image_0',
+                    file_tail='.jpg',
+                    use_prefix_id=True)
                 prev_pose_path = get_pose_path(
                     prev_idx,
                     self.path,
