@@ -78,9 +78,7 @@ kitti
 ├── kitti_infos_trainval.pkl
 ```
 
-其中的各项文件的含义如下所示：
-
-- `kitti_gt_database/xxxxx.bin`：训练数据集中包含在 3D 标注框中的点云数据
+- `kitti_gt_database/xxxxx.bin`：训练数据集中包含在 3D 标注框中的点云数据。
 - `kitti_infos_train.pkl`：训练数据集，该字典包含了两个键值：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `CLASSES` 和 `version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的详细信息。
   - info\['sample_idx'\]：样本在整个数据集的索引。
   - info\['images'\]：多个相机捕获的图像信息。是一个字典，包含 5 个键值：`CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`。
@@ -92,8 +90,8 @@ kitti
       - info\['images'\]\['CAM2'\]\['cam2img'\]：相机到图像的变换矩阵，是一个 4x4 数组。
       - info\['images'\]\['CAM2'\]\['lidar2cam'\]：激光雷达到相机的变换矩阵，是一个 4x4 数组。
       - info\['images'\]\['CAM2'\]\['lidar2img'\]：激光雷达到图像的变换矩阵，是一个 4x4 数组。
-    - info\['lidar_points'\]：激光雷达捕获的点云信息。是一个字典，包含了激光雷达点云帧的信息。
-      - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
+    - info\['lidar_points'\]：是一个字典，包含了激光雷达点相关的信息。
+      - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
       - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
       - info\['lidar_points'\]\['Tr_velo_to_cam'\]：Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组。
       - info\['lidar_points'\]\['Tr_imu_to_velo'\]：IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组。

@@ -87,13 +87,14 @@ mmdetection3d
   - info\['timestamp'\]: Timestamp of the sample data.
   - info\['lidar_points'\]: A dict contains all the information related to the lidar points.
     - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
+    - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
     - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]: The lidar data path of i-th sweep.
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle in i-th sweep timestamp
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle in i-th sweep timestamp to global coordinates. (4x4 list)
-    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the lidar (for collecting the i-th sweep data) to the lidar collecting the key/sample data. (4x4 list)
+    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]: The transformation matrix from the keyframe lidar to the i-th frame lidar. (4x4 list)
     - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]: The sweep sample data token.
   - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information related to  corresponding camera.

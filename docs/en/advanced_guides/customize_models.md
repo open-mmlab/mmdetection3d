@@ -571,8 +571,8 @@ The decorator `weighted_loss` enable the loss to be weighted for each element.
 import torch
 import torch.nn as nn
 
-from ..builder import LOSSES
-from .utils import weighted_loss
+from mmdet3d.registry import MODELS
+from mmdet.models.losses.utils import weighted_loss
 
 @weighted_loss
 def my_loss(pred, target):
@@ -580,7 +580,7 @@ def my_loss(pred, target):
     loss = torch.abs(pred - target)
     return loss
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class MyLoss(nn.Module):
 
     def __init__(self, reduction='mean', loss_weight=1.0):

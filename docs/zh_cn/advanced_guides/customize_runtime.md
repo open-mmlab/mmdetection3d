@@ -159,9 +159,9 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
 
   ```python
   param_scheduler = [
-      # learning rate scheduler
-      # During the first 8 epochs, learning rate increases from 0 to lr * 10
-      # during the next 12 epochs, learning rate decreases from lr * 10 to lr * 1e-4
+      # 学习率调整策略
+      #在前 8 轮，学习率从 0 升到 lr * 10
+      # 在接下来 12 轮，学习率从 lr * 10 降到 lr * 1e-4
       dict(
           type='CosineAnnealingLR',
           T_max=8,
@@ -178,9 +178,9 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
           end=20,
           by_epoch=True,
           convert_to_iter_based=True),
-      # momentum scheduler
-      # During the first 8 epochs, momentum increases from 0 to 0.85 / 0.95
-      # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
+      # 动量调整策略
+      # 在前 8 轮，动量从 0 升到 0.85 / 0.95
+      # 在接下来 12 轮，动量从 0.85 / 0.95 升到 1
       dict(
           type='CosineAnnealingMomentum',
           T_max=8,
@@ -242,9 +242,9 @@ train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_begin=1, val_int
 事实上，[`IterBasedTrainLoop`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/loops.py#L183%5D) 和 [`EpochBasedTrainLoop`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/loops.py#L18) 都支持动态间隔验证，如下所示：
 
 ```python
-# Before 365001th iteration, we do evaluation every 5000 iterations.
-# After 365000th iteration, we do evaluation every 368750 iteraions,
-# which means that we do evaluation at the end of training.
+# 在第 365001 个迭代之前，我们每隔 5000 个迭代验证一次
+# 在第 365000 个迭代之后，我们每隔 368750 个迭代验证一次
+# 这意味着我们在训练结束后验证一次。
 
 interval = 5000
 max_iters = 368750
@@ -300,7 +300,7 @@ class MyHook(Hook):
                          outputs: Optional[dict] = None) -> None:
 ```
 
-取决于钩子的功能，用户需要指定钩子在每个训练阶段时的行为，具体包括如下阶段：`before_run`，`after_run`，`before_train`，`after_train`，`before_train_epoch`，`after_train_epoch`，`before_train_iter`，和 `after_train_iter`。有更多的点可以插入钩子，详情可参考 [base hook class](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/hook.py#L9)。
+取决于钩子的功能，用户需要指定钩子在每个训练阶段时的行为，具体包括如下阶段：`before_run`，`after_run`，`before_train`，`after_train`，`before_train_epoch`，`after_train_epoch`，`before_train_iter`，和 `after_train_iter`。有更多的位点可以插入钩子，详情可参考 [base hook class](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/hook.py#L9)。
 
 #### 2. 注册新钩子
 
@@ -314,7 +314,7 @@ class MyHook(Hook):
 from .my_hook import MyHook
 ```
 
-- 在配置中使用 `custom_imports` 来人为地引入之
+- 在配置中使用 `custom_imports` 来人为地引入之：
 
 ```python
 custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
@@ -328,7 +328,7 @@ custom_hooks = [
 ]
 ```
 
-您可以将字段 `priority` 设置为 `'NORMAL'` 或者 `'HIGHEST'`，来设置钩子的优先级，如下所示：
+您可以将字段 `priority` 设置为 `'NORMAL'` 或者 `'HIGHEST'` 来设置钩子的优先级，如下所示：
 
 ```python
 custom_hooks = [
@@ -336,7 +336,7 @@ custom_hooks = [
 ]
 ```
 
-默认情况，在注册阶段钩子的优先级被设置为 `NORMAL`。
+注册阶段钩子的优先级默认设置为 `NORMAL`。
 
 ### 使用 MMEngine 中实现的钩子
 
@@ -346,11 +346,11 @@ custom_hooks = [
 
 有一些常用的钩子通过 `default_hooks` 注册，它们是：
 
-- `IterTimerHook`：钩子用来记录加载数据的时间 'data_time' 和模型训练一步的时间 'time' 。
-- `LoggerHook`：钩子用来从 `Runner` 的不同组件收集日志并将其写入终端，Json 文件，tensorboard 和 wandb 等。
-- `ParamSchedulerHook`：钩子用来更新优化器中的一些超参数，例如学习率和动量。
-- `CheckpointHook`：钩子用来定期地保存检查点。
-- `DistSamplerSeedHook`：钩子用来设置采样和批采样的种子。
+- `IterTimerHook`：该钩子用来记录加载数据的时间 'data_time' 和模型训练一步的时间 'time' 。
+- `LoggerHook`：该钩子用来从`执行器（Runner）`的不同组件收集日志并将其写入终端，Json 文件，tensorboard 和 wandb 等。
+- `ParamSchedulerHook`：该钩子用来更新优化器中的一些超参数，例如学习率和动量。
+- `CheckpointHook`：该钩子用来定期地保存检查点。
+- `DistSamplerSeedHook`：该钩子用来设置采样和批采样的种子。
 
 `IterTimerHook`，`ParamSchedulerHook` 和 `DistSamplerSeedHook` 都很简单，通常不需要修改，因此此处我们将介绍如何使用 `LoggerHook`，`CheckpointHook` 和 `Det3DVisualizationHook`。
 

@@ -43,7 +43,6 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
 
-
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
 ```
 
@@ -79,7 +78,7 @@ kitti
 ├── kitti_infos_trainval.pkl
 ```
 
-- `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
+- `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset.
 - `kitti_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
   `metainfo` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict (hereinafter referred to as `info`) contains all the detailed information of single sample as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
@@ -92,8 +91,8 @@ kitti
       - info\['images'\]\['CAM2'\]\['cam2img'\]: Transformation matrix from camera to image with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2cam'\]: Transformation matrix from lidar to camera with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2img'\]: Transformation matrix from lidar to image with shape (4, 4).
-  - info\['lidar_points'\]: Information of point cloud captured by Lidar. A dict contains information of LiDAR point cloud frame.
-    - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
+  - info\['lidar_points'\]: A dict contains all the information related to the lidar points
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate with shape (4, 4).
     - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate with shape (4, 4).

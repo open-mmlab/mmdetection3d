@@ -12,3 +12,4 @@
    model_deployment.md
    train_test.md
    useful_tools.md
+   visualization.md

@@ -151,7 +151,7 @@ sunrgbd
 ├── sunrgbd_infos_val.pkl
 ```
 
-- `points/0xxxxx.bin`：降采样后的点云数据。
+- `points/xxxxxx.bin`：降采样后的点云数据。
 - `sunrgbd_infos_train.pkl`：训练集数据信息（标注与元信息），每个场景所含数据信息具体如下：
   - info\['lidar_points'\]：字典包含了与激光雷达点相关的信息。
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。

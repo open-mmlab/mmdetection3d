@@ -83,7 +83,7 @@ mmdetection3d
 
 ## 基于视觉的 3D 检测
 
-基于视觉的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`images` 包含来自不同相机的图像，例如 `camera_x` 获得的图像应放在 `images\images_x` 下，`calibs` 包含校准信息文件，其中存储了每个相机的内参矩阵，`labels` 包含 3D 检测的标签文件。
+基于视觉的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`images` 包含来自不同相机的图像，例如 `camera_x` 获得的图像应放在 `images/images_x` 下，`calibs` 包含校准信息文件，其中存储了每个相机的内参矩阵，`labels` 包含 3D 检测的标签文件。
 
 ```
 mmdetection3d
@@ -195,33 +195,28 @@ from mmdet3d.registry import DATASETS
 @DATASETS.register_module()
 class MyDataset(Det3DDataset):
 
-    # replace with all the classes in customized pkl info file
+    # 替换成自定义 pkl 信息文件里的所有类别
     METAINFO = {
        'CLASSES': ('Pedestrian', 'Cyclist', 'Car')
     }
 
     def parse_ann_info(self, info):
-        """Get annotation info according to the given info.
+        """Process the `instances` in data info to `ann_info`
 
         Args:
-            info (dict): Data information of single data sample.
+            info (dict): Info dict.
 
         Returns:
-            dict: annotation information consists of the following keys:
-
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
-                - bbox_labels_3d (np.ndarray): Labels of ground truths.
-
+            dict | None: Processed `ann_info`
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:
             ann_info = dict()
-            # empty instance
+            # 空实例
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-        # filter the gt classes not used in training
+        # 过滤掉没有在训练中使用的类别
         ann_info = self._remove_dontcare(ann_info)
         gt_bboxes_3d = LiDARInstance3DBoxes(ann_info['gt_bboxes_3d'])
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
@@ -244,11 +239,11 @@ class MyDataset(Det3DDataset):
 在 `configs/_base_/datasets/custom.py` 中：
 
 ```python
-# dataset settings
+# 数据集设置
 dataset_type = 'MyDataset'
 data_root = 'data/custom/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']  # replace with your dataset class
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # adjust according to your dataset
+class_names = ['Pedestrian', 'Cyclist', 'Car']  # 替换成自己的数据集类别
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # 根据你的数据集进行调整
 input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(CLASSES=class_names)
 
@@ -256,8 +251,8 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,  # replace with your point cloud data dimension
-        use_dim=4),  # replace with the actual dimension used in training and inference
+        load_dim=4,  # 替换成你的点云数据维度
+        use_dim=4),  # 替换成在训练和推理时实际使用的维度
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=True,
@@ -284,11 +279,11 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,  # replace with your point cloud data dimension
+        load_dim=4,  # 替换成你的点云数据维度
         use_dim=4),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-# construct a pipeline for data and gt loading in show function
+# 为可视化阶段的数据和 GT 加载构造流水线
 eval_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(type='Pack3DDetInputs', keys=['points']),
@@ -304,7 +299,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='custom_infos_train.pkl', # specify your training pkl info
+            ann_file='custom_infos_train.pkl', # 指定你的训练 pkl 信息
             data_prefix=dict(pts='points'),
             pipeline=train_pipeline,
             modality=input_modality,
@@ -321,7 +316,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='points'),
-        ann_file='custom_infos_val.pkl', # specify your validation pkl info
+        ann_file='custom_infos_val.pkl', # 指定你的验证 pkl 信息
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
@@ -329,7 +324,7 @@ val_dataloader = dict(
         box_type_3d='LiDAR'))
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # specify your validation pkl info
+    ann_file=data_root + 'custom_infos_val.pkl', # 指定你的验证 pkl 信息
     metric='bbox')
 ```
 
@@ -340,15 +335,15 @@ val_evaluator = dict(
 
 如果将 `point_cloud_range` 和 `voxel_size` 分别设置成 `[0, -40, -3, 70.4, 40, 1]` 和 `[0.05, 0.05, 0.1]`，则中间特征图的形状为 `[(1-(-3))/0.1+1, (40-(-40))/0.05, (70.4-0)/0.05]=[41, 1600, 1408]`。更改 `point_cloud_range` 时，请记得依据 `voxel_size` 更改 `middle_encoder` 里中间特征图的形状。
 
-关于 `anchor_range` 的设置，一般需要根据数据集做调整。需要注意的是，`z` 值需要根据点云的位置做相应调整，请参考此 [issue](https://github.com/open-mmlab/mmdetection3d/issues/986)。
+关于 `anchor_range` 的设置，一般需要根据数据集做调整。需要注意的是，`z` 值需要根据点云的位置做相应调整，具体请参考此 [issue](https://github.com/open-mmlab/mmdetection3d/issues/986)。
 
 关于 `anchor_size` 的设置，通常需要计算整个训练集中目标的长、宽、高的平均值作为 `anchor_size`，以获得最好的结果。
 
 `configs/_base_/models/pointpillars_hv_secfpn_custom.py`：
 
 ```python
-voxel_size = [0.16, 0.16, 4]  # adjust according to your dataset
-point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]  # adjust according to your dataset
+voxel_size = [0.16, 0.16, 4]  # 根据你的数据集做调整
+point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]  # 根据你的数据集做调整
 model = dict(
     type='VoxelNet',
     data_preprocessor=dict(
@@ -366,8 +361,7 @@ model = dict(
         with_distance=False,
         voxel_size=voxel_size,
         point_cloud_range=point_cloud_range),
-    # the `output_shape` should be adjusted according to `point_cloud_range`
-    # and `voxel_size`
+    # `output_shape` 需要根据 `point_cloud_range` 和 `voxel_size` 做相应调整
     middle_encoder=dict(
         type='PointPillarsScatter', in_channels=64, output_shape=[496, 432]),
     backbone=dict(
@@ -388,7 +382,7 @@ model = dict(
         feat_channels=384,
         use_direction_classifier=True,
         assign_per_class=True,
-        # adjust the `ranges` and `sizes` according to your dataset
+        # 根据你的数据集调整 `ranges` 和 `sizes`
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[
@@ -412,7 +406,7 @@ model = dict(
         loss_dir=dict(
             type='mmdet.CrossEntropyLoss', use_sigmoid=False,
             loss_weight=0.2)),
-    # model training and testing settings
+    # 模型训练和测试设置
     train_cfg=dict(
         assigner=[
             dict(  # for Pedestrian
@@ -452,7 +446,7 @@ model = dict(
 
 #### 准备整体配置
 
-我们将上诉的所有配置组合在 `configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py` 中：
+我们将上诉的所有配置组合在 `configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py` 文件中：
 
 ```python
 _base_ = [
@@ -475,6 +469,6 @@ _base_ = [
 ```python
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # specify your validation pkl info
+    ann_file=data_root + 'custom_infos_val.pkl', # 指定你的 验证 pkl 信息
     metric='bbox')
 ```

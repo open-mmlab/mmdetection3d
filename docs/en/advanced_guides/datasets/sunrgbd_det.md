@@ -151,7 +151,7 @@ sunrgbd
 ├── sunrgbd_infos_val.pkl
 ```
 
-- `points/0xxxxx.bin`: The point cloud data after downsample.
+- `points/xxxxxx.bin`: The point cloud data after downsample.
 - `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
   - info\['lidar_points'\]: A dict contains all information relate to the the lidar points.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.

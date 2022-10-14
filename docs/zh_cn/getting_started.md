@@ -7,6 +7,7 @@ MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台�
 - PyTorch 1.6+
 - CUDA 9.2+ (如果你从源码编译 PyTorch, CUDA 9.0 也是兼容的。)
 - GCC 5+
+- [MMEngine](https://mmengine.readthedocs.io/en/latest/#installation)
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 ```{note}
@@ -172,7 +173,7 @@ def convert_ply(input_path, output_path):
     data_np.astype(np.float32).tofile(output_path)
 ```
 
-例：
+例如：
 
 ```python
 convert_ply('./test.ply', './test.bin')
@@ -188,7 +189,7 @@ def to_ply(input_path, output_path, original_type):
     mesh.export(output_path, file_type='ply')  # convert to ply
 ```
 
-例：
+例如：
 
 ```python
 to_ply('./test.obj', './test.ply', 'obj')
@@ -302,5 +303,5 @@ pip install -e .
 
 ## 故障排除
 
-如果在安装过程中遇到什么问题，可以先参考 [FAQ](faq.md) 页面.
+如果在安装过程中遇到什么问题，可以先参考 [FAQ](notes/faq.md) 页面.
 如果没有找到对应的解决方案，你也可以在 Github [提一个 issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose)。

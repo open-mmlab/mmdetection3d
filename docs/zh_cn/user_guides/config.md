@@ -9,7 +9,7 @@ MMDetection3D 使用模块化的设计，所有具有不同功能的模块都可
 
 ### 模型配置
 
-在 mmdetection3d 配置中，我们使用 `model` 设置检测算法组件。除了神经网络组件，如 `voxel_encoder`，`backbone` 等，它还需要 `data_preprocessor`，`train_cfg` 和 `test_cfg`。`data_preprocessor` 负责处理 dataloader 输出的一个批次的数据。模型配置中的 `train_cfg` 和 `test_cfg` 用于训练和测试组件的超参数。
+在 mmdetection3d 配置中，我们使用 `model` 设置检测算法组件。除了神经网络组件，如 `voxel_encoder`，`backbone` 等，它还需要 `data_preprocessor`，`train_cfg` 和 `test_cfg`。`data_preprocessor` 负责处理 dataloader 输出的一个批次的数据。模型配置中的 `train_cfg` 和 `test_cfg` 用于设置训练和测试组件的超参数。
 
 ```python
 model = dict(
@@ -111,7 +111,7 @@ model = dict(
 
 ### 数据集和评估器配置
 
-[Runner](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/runner.html) 的训练，验证和测试需要 [dataloaders](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader)。构建数据加载器需要数据集和数据流水线。由于这一部分的复杂性，我们使用中间变量简化数据加载配置文件的编写。
+[执行器（Runner）](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/runner.html)的训练，验证和测试需要[数据加载器（dataloaders）](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader)。构建数据加载器需要数据集和数据流水线。由于这一部分的复杂性，我们使用中间变量简化数据加载配置文件的编写。
 
 ```python
 dataset_type = 'KittiDataset'

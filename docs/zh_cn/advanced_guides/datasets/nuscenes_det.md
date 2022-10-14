@@ -65,7 +65,7 @@ mmdetection3d
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
-  - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）
+  - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]：第 i 次扫描的激光雷达数据的文件路径。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\[lidar2ego''\]：当前激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）

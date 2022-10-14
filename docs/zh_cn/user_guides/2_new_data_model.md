@@ -67,7 +67,7 @@ KITTI 官方提供的目标检测开发[工具包](https://s3.eu-central-1.amazo
 
 假定我们使用 Waymo 数据集。
 
-在下载好数据集后，我们需要实现一个函数用来将输入数据和标注文件转换成 KITTI 风格。然后我们可以通过继承 `KittiDataset` 实现 `WaymoDataset`，用来加载数据以及训练模型，继承 `KittiMetric` 实现 `WaymoMetric` 用来评估。
+在下载好数据集后，我们需要实现一个函数用来将输入数据和标注文件转换成 KITTI 风格。然后我们可以通过继承 `KittiDataset` 实现 `WaymoDataset`，用来加载数据以及训练模型，通过继承 `KittiMetric` 实现 `WaymoMetric` 来做模型的评估。
 
 具体来说，首先使用[数据转换器](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/waymo_converter.py)将 Waymo 数据集转换成 KITTI 数据集的格式，并定义 [Waymo 类](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/datasets/waymo_dataset.py)对转换的数据进行处理。此外需要添加 waymo [评估类](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/metrics/waymo_metric.py)来评估结果。因为我们将 Waymo 原始数据集进行预处理并重新组织成 KITTI 数据集的格式，因此可以比较容易通过继承 KittiDataset 类来实现 WaymoDataset 类。需要注意的是，由于 Waymo 数据集有相应的官方评估方法，我们需要进一步实现新的 Waymo 评估方法，更多关于评估方法参考[评估文档](https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/metric_and_evaluator.md)。最后，用户可以成功地转换数据并使用 `WaymoDataset` 训练以及 `WaymoMetric` 评估模型。
 

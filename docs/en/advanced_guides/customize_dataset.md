@@ -83,7 +83,7 @@ mmdetection3d
 
 #### Vision-Based 3D Detection
 
-The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images\images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
+The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images/images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
 
 ```
 mmdetection3d
@@ -201,18 +201,13 @@ class MyDataset(Det3DDataset):
     }
 
     def parse_ann_info(self, info):
-        """Get annotation info according to the given info.
+        """Process the `instances` in data info to `ann_info`
 
         Args:
-            info (dict): Data information of single data sample.
+            info (dict): Info dict.
 
         Returns:
-            dict: annotation information consists of the following keys:
-
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
-                - bbox_labels_3d (np.ndarray): Labels of ground truths.
-
+            dict | None: Processed `ann_info`
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:

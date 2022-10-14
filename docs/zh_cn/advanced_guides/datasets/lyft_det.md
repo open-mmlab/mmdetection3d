@@ -36,7 +36,7 @@ mmdetection3d
 其中 `v1.01-train` 和 `v1.01-test` 包含与 nuScenes 数据集相同的元文件，`.txt` 文件包含数据划分的信息。
 Lyft 不提供训练集和验证集的官方划分方案，因此 MMDetection3D 对不同场景下的不同类别的目标数量进行分析，并提供了一个数据集划分方案。
 `sample_submission.csv` 是用于提交到 Kaggle 评估服务器的基本文件。
-需要注意的是，我们遵循了 Lyft 最初的文件夹命名以实现更清楚的文件组织。请将下载下来的原始文件夹重命名按照上述组织结构重新命名。
+需要注意的是，我们遵循了 Lyft 最初的文件夹命名以实现更清楚的文件组织。请将下载下来的原始文件夹按照上述组织结构重新命名。
 
 ## 数据准备
 
@@ -85,13 +85,14 @@ mmdetection3d
   - info\['timestamp'\]：样本数据时间戳。
   - info\['lidar_points'\]：是一个字典，包含了所有与激光雷达点相关的信息。
     - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
+    - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
   - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]：第 i 次扫描的激光雷达数据的文件路径。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\[lidar2ego''\]：当前激光雷达传感器到自车在第 i 次扫描的变换矩阵。（4x4 列表）
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]：自车在第 i 次扫描到全局坐标的变换矩阵。（4x4 列表）
-    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]：从激光雷达传感器（用于收集第 i 次扫描数据）到收集关键/样本数据的激光雷达的变换矩阵。（4x4 列表）
+    - info\['lidar_sweeps'\]\[i\]\['lidar2sensor'\]：从当前帧主激光雷达到第 i 帧扫描激光雷达的变换矩阵。（4x4 列表）
     - info\['lidar_sweeps'\]\[i\]\['timestamp'\]：扫描数据的时间戳。
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]：扫描样本数据标记。
   - info\['images'\]：是一个字典，包含与每个相机对应的六个键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。每个字典包含了对应相机的所有数据信息。
@@ -113,7 +114,7 @@ mmdetection3d
 - `lyft_infos_train.pkl`
 
   - info\['instances'\]\[i\]\['velocity'\] 不存在，Lyft 数据集中不存在速度评估信息。
-  - info\['instances'\]\[i\]\['num_lidar_pts'\] 及 info\['instances'\]\['num_radar_pts'\] 不存在。
+  - info\['instances'\]\[i\]\['num_lidar_pts'\] 及 info\['instances'\]\[i\]\['num_radar_pts'\] 不存在。
 
 这里仅介绍存储在训练数据文件的数据记录信息。这同样适用于验证集和测试集（没有实例）。
 
