@@ -26,7 +26,11 @@
 
 **News**:
 
-**v1.1.0rc0** was released in 1/9/2022:
+### 💎 Stable version
+
+**v1.1.0rc1** was released in 11/10/2022
+
+### 🌟 **v1.1.0rc0** was released in 1/9/2022
 
 - Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
 - A standard data protocol defines and unifies the common keys across different datasets.
