@@ -99,7 +99,7 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 In an environment using slurm, users may run the following command instead
 
 ```
-sh tools/create_data.sh <partition> kitti
+sh tools/create_data.sh <partition> <job_name> kitti
 ```
 
 ### Waymo

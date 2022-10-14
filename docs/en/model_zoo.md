@@ -104,7 +104,7 @@ Please refer to [MonoFlex](https://github.com/open-mmlab/mmdetection3d/blob/mast
 
 Please refer to [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/sassd) for details. We provide SA-SSD baselines on the KITTI dataset.
 
-## FCAF3D
+### FCAF3D
 
 Please refer to [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcaf3d) for details. We provide FCAF3D baselines on the ScanNet, S3DIS and SUN RGB-D dataset.
 
