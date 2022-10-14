@@ -56,8 +56,8 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
         self.voxel_size = bbox_head['voxel_size']
-        # TODO: unify the keys
-        self.head = self.bbox_head
+        # # TODO: unify the keys
+        # self.head = self.bbox_head
 
     def extract_feat(
         self, batch_inputs_dict: Dict[str, Tensor]
