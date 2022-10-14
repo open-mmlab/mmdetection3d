@@ -72,7 +72,8 @@ class Pack3DDetInputs(BaseTransform):
                             'sample_idx', 'pcd_scale_factor', 'pcd_rotation',
                             'pcd_rotation_angle', 'lidar_path',
                             'transformation_3d_flow', 'trans_mat',
-                            'affine_aug')) -> None:
+                            'affine_aug')
+    ) -> None:
         self.keys = keys
         self.meta_keys = meta_keys
 

@@ -92,4 +92,3 @@ data = dict(
         classes=class_names,
         test_mode=True,
         box_type_3d='Depth'))
-Footer
