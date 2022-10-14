@@ -24,11 +24,11 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**新闻**: 我们发布了版本 v1.0.0rc4.
+**新闻**: 我们发布了版本 v1.0.0rc5.
 
 ### 💎 稳定版本
 
-最新的 **1.0.0rc4** 版本已经在 2022.8.8 发布。
+最新的 **1.0.0rc5** 版本已经在 2022.8.8 发布。
 
 ### 🌟 1.1.x 预览版本
 
