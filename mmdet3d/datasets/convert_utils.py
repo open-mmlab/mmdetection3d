@@ -206,11 +206,11 @@ def get_kitti_style_2d_boxes(info: dict,
             0 = fully visible, 1 = partly occluded, 2 = largely occluded,
             3 = unknown, -1 = DontCare.
             Defaults to (0, 1, 2, 3).
-        annos (dict, optional): Original annotations.
+        annos (dict, optional): Original annotations. Defaults to None.
         mono3d (bool): Whether to get boxes with mono3d annotation.
             Defaults to True.
         dataset (str): Dataset name of getting 2d bboxes.
-            Defaults to `kitti`.
+            Defaults to 'kitti'.
 
     Return:
         list[dict]: List of 2d / mono3d annotation record that
@@ -345,9 +345,10 @@ def post_process_coords(
         corner_coords (list[int]): Corner coordinates of reprojected
             bounding box.
         imsize (tuple[int]): Size of the image canvas.
+            Defaults to (1600, 900).
 
     Return:
-        tuple [float]: Intersection of the convex hull of the 2D box
+        tuple[float]: Intersection of the convex hull of the 2D box
             corners and the image canvas.
     """
     polygon_from_2d_box = MultiPoint(corner_coords).convex_hull
@@ -383,11 +384,11 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
 
     Returns:
         dict: A sample 2d annotation record.
-                - bbox_label (int): 2d box label id
-                - bbox_label_3d (int): 3d box label id
-                - bbox (list[float]): left x, top y, right x, bottom y
-                    of 2d box
-                - bbox_3d_isvalid (bool): whether the box is valid
+
+            - bbox_label (int): 2d box label id
+            - bbox_label_3d (int): 3d box label id
+            - bbox (list[float]): left x, top y, right x, bottom y of 2d box
+            - bbox_3d_isvalid (bool): whether the box is valid
     """
 
     if dataset == 'nuscenes':
@@ -398,16 +399,16 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
             cat_name = NuScenesNameMapping[cat_name]
             categories = nus_categories
     else:
-        cat_name = ann_rec['name']
-        if cat_name not in categories:
-            return None
-
         if dataset == 'kitti':
             categories = kitti_categories
         elif dataset == 'waymo':
             categories = waymo_categories
         else:
             raise NotImplementedError('Unsupported dataset!')
+
+        cat_name = ann_rec['name']
+        if cat_name not in categories:
+            return None
 
     rec = dict()
     rec['bbox_label'] = categories.index(cat_name)

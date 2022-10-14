@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from os import path as osp
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Set, Union
 
 import mmengine
 import numpy as np
@@ -28,22 +28,22 @@ class Det3DDataset(BaseDataset):
         ann_file (str): Annotation file path. Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input, it usually has following keys:
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used as input,
+            it usually has following keys:
 
                 - use_camera: bool
                 - use_lidar: bool
             Defaults to `dict(use_lidar=True, use_camera=False)`
         default_cam_key (str, optional): The default camera name adopted.
             Defaults to None.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR'. Available options includes:
+            Defaults to 'LiDAR' in this dataset. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates, usually for
               outdoor point cloud 3d detection.
@@ -51,19 +51,20 @@ class Det3DDataset(BaseDataset):
               indoor point cloud 3d detection.
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
-
-        filter_empty_gt (bool, optional): Whether to filter the data with
-            empty GT. Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        load_eval_anns (bool, optional): Whether to load annotations
-            in test_mode, the annotation will be save in `eval_ann_infos`,
-            which can be used in Evaluator. Defaults to True.
-        file_client_args (dict, optional): Configuration of file client.
+        load_eval_anns (bool): Whether to load annotations in test_mode,
+            the annotation will be save in `eval_ann_infos`, which can be
+            used in Evaluator. Defaults to True.
+        file_client_args (dict): Configuration of file client.
             Defaults to dict(backend='disk').
-        show_ins_var (bool, optional): For debug purpose. Whether to show
-            variation of the number of instances before and after through
-            pipeline. Defaults to False.
+        show_ins_var (bool): For debug purpose. Whether to show variation
+            of the number of instances before and after through pipeline.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -154,7 +155,7 @@ class Det3DDataset(BaseDataset):
             f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
             'current')
 
-    def _remove_dontcare(self, ann_info):
+    def _remove_dontcare(self, ann_info: dict) -> dict:
         """Remove annotations that do not need to be cared.
 
         -1 indicate dontcare in MMDet3d.
@@ -197,7 +198,7 @@ class Det3DDataset(BaseDataset):
         return ann_info
 
     def parse_ann_info(self, info: dict) -> Optional[dict]:
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         In `Custom3DDataset`, we simply concatenate all the field
         in `instances` to `np.ndarray`, you can do the specific
@@ -263,8 +264,8 @@ class Det3DDataset(BaseDataset):
         """Process the raw data info.
 
         Convert all relative path of needed modality data file to
-        the absolute path. And process
-        the `instances` field to `ann_info` in training stage.
+        the absolute path. And process the `instances` field to
+        `ann_info` in training stage.
 
         Args:
             info (dict): Raw info dict.
@@ -392,7 +393,7 @@ class Det3DDataset(BaseDataset):
 
         return example
 
-    def get_cat_ids(self, idx: int) -> List[int]:
+    def get_cat_ids(self, idx: int) -> Set[int]:
         """Get category ids by index. Dataset wrapped by ClassBalancedDataset
         must implement this method.
 

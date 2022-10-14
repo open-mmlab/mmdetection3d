@@ -16,24 +16,20 @@ class Seg3DDataset(BaseDataset):
     This is the base dataset of ScanNet, S3DIS and SemanticKITTI dataset.
 
     Args:
-        data_root (str): Path of dataset root.
-        ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        data_root (str, optional): Path of dataset root. Defaults to None.
+        ann_file (str): Path of annotation file. Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input, it usually has following keys.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used
+            as input, it usually has following keys:
 
                 - use_camera: bool
                 - use_lidar: bool
-            Defaults to `dict(use_lidar=True, use_camera=False)`
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. If None is given, set to len(self.CLASSES) to
             be consistent with PointSegClassMapping function in pipeline.
@@ -41,11 +37,13 @@ class Seg3DDataset(BaseDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        load_eval_anns (bool): Whether to load annotations
-            in test_mode, the annotation will be save in
-            `eval_ann_infos`, which can be use in Evaluator.
+        test_mode (bool): Whether the dataset is in test mode.
+            Defaults to False.
+        load_eval_anns (bool): Whether to load annotations in test_mode,
+            the annotation will be save in `eval_ann_infos`, which can be used
+            in Evaluator. Defaults to True.
         file_client_args (dict): Configuration of file client.
-            Defaults to `dict(backend='disk')`.
+            Defaults to dict(backend='disk').
     """
     METAINFO = {
         'CLASSES': None,  # names of all classes data used for the task
@@ -66,7 +64,7 @@ class Seg3DDataset(BaseDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,
-                 scene_idxs: Optional[str] = None,
+                 scene_idxs: Optional[Union[str, np.ndarray]] = None,
                  test_mode: bool = False,
                  load_eval_anns: bool = True,
                  file_client_args: dict = dict(backend='disk'),
@@ -121,6 +119,7 @@ class Seg3DDataset(BaseDataset):
 
         self.metainfo['seg_label_mapping'] = self.seg_label_mapping
         self.scene_idxs = self.get_scene_idxs(scene_idxs)
+        self.data_list = [self.data_list[i] for i in self.scene_idxs]
 
         # set group flag for the sampler
         if not self.test_mode:
@@ -141,10 +140,9 @@ class Seg3DDataset(BaseDataset):
             new_classes (list, tuple, optional): The new classes name from
                 metainfo. Default to None.
 
-
         Returns:
             tuple: The mapping from old classes in cls.METAINFO to
-                new classes in metainfo
+            new classes in metainfo
         """
         old_classes = self.METAINFO.get('CLASSES', None)
         if (new_classes is not None and old_classes is not None
