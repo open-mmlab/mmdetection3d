@@ -1,29 +1,46 @@
 Collections:
   - Name: ImVoxelNet
     Metadata:
-      Training Data: KITTI
       Training Techniques:
         - AdamW
-      Training Resources: 8x Tesla P40
       Architecture:
-        - Anchor3DHead
+        - ResNet
     Paper:
       URL: https://arxiv.org/abs/2106.01178
       Title: 'ImVoxelNet: Image to Voxels Projection for Monocular and Multi-View General-Purpose 3D Object Detection'
     README: configs/imvoxelnet/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/detectors/imvoxelnet.py#L11
-      Version: v0.15.0
+      Version: v1.0.0
 
 Models:
   - Name: imvoxelnet_4x8_kitti-3d-car
     In Collection: ImVoxelNet
     Config: configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py
     Metadata:
-      Training Memory (GB): 15.0
+      Training Data: KITTI
+      Training Resources: 8x Tesla V100
+      Training Memory (GB): 14.8
+      Architecture:
+        - Anchor3DHead
     Results:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
           mAP: 17.26
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth
+
+  - Name: imvoxelnet_4x2_sunrgbd-3d-10class
+    In Collection: ImVoxelNet
+    Config: configs/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class.py
+    Metadata:
+      Training Data: SUNRGBD
+      Training Resources: 2x Tesla P40
+      Training Memory (GB): 7.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: SUNRGBD
+        Metrics:
+          mAP@0.25: 40.96
+          mAP@0.5: 13.50
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416-29ca7d2e.pth

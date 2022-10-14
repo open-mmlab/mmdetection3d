@@ -271,9 +271,13 @@ class PointRPNHead(BaseModule):
         for b in range(batch_size):
             bbox3d = self.bbox_coder.decode(bbox_preds[b], points[b, ..., :3],
                                             object_class[b])
+            mask = ~bbox3d.sum(dim=1).isinf()
             bbox_selected, score_selected, labels, cls_preds_selected = \
-                self.class_agnostic_nms(obj_scores[b], sem_scores[b], bbox3d,
-                                        points[b, ..., :3], input_metas[b])
+                self.class_agnostic_nms(obj_scores[b][mask],
+                                        sem_scores[b][mask, :],
+                                        bbox3d[mask, :],
+                                        points[b, ..., :3][mask, :],
+                                        input_metas[b])
             bbox = input_metas[b]['box_type_3d'](
                 bbox_selected.clone(),
                 box_dim=bbox_selected.shape[-1],

@@ -47,7 +47,7 @@ def test_centerpoint_fpn():
     assert second_output[0].shape == torch.Size([4, 384, 256, 256])
 
 
-def test_imvoxel_neck():
+def test_outdoor_imvoxel_neck():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 
@@ -57,6 +57,24 @@ def test_imvoxel_neck():
     inputs = torch.rand([1, 64, 216, 248, 12], device='cuda')
     outputs = neck(inputs)
     assert outputs[0].shape == (1, 256, 248, 216)
+
+
+def test_indoor_imvoxel_neck():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+
+    neck_cfg = dict(
+        type='IndoorImVoxelNeck',
+        in_channels=64,
+        out_channels=256,
+        n_blocks=[1, 1, 1])
+    neck = build_neck(neck_cfg).cuda()
+    inputs = torch.rand([1, 64, 40, 40, 16], device='cuda')
+    outputs = neck(inputs)
+    assert len(outputs) == 3
+    assert outputs[0].shape == (1, 256, 40, 40, 16)
+    assert outputs[1].shape == (1, 256, 20, 20, 8)
+    assert outputs[2].shape == (1, 256, 10, 10, 4)
 
 
 def test_fp_neck():

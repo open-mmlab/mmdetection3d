@@ -24,9 +24,21 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**新闻**: 我们发布了版本 v1.0.0rc4.
+**新闻**: 我们发布了版本 v1.0.0rc5.
 
-说明：我们正在进行大规模的重构，以提供对许多模块更简单、更统一的使用。
+### 💎 稳定版本
+
+最新的 **1.0.0rc5** 版本已经在 2022.8.8 发布。
+
+### 🌟 1.1.x 预览版本
+
+全新的 **v1.1.0rc0** 版本已经在 2022.9.1 发布：
+
+- 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 和 [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
+- 通过一个标准的数据格式定义和统一了不同数据集的通用内容。
+- 实现了更快的训练和测试速度，并提供了更多强大的基准模型。
+
+请在 [1.1.x 分支](https://github.com/open-mmlab/mmdetection3d/tree/1.1) 中发现更多新功能。 欢迎提出 issue 和 PR！
 
 由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在这个版本中，我们更新了部分坐标系重构后的模型权重文件。您可以在 [变更日志](docs/en/changelog.md) 中查看更多详细信息。
 
@@ -84,9 +96,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v1.0.0rc4 在 2022.8.8 发布。
-
-- 支持 [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+最新的版本 v1.0.0rc5 在 2022.10.11 发布。
 
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
@@ -184,6 +194,10 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
         </ul>
+        <li><b>室内</b></li>
+        <ul>
+          <li><a href="configs/imvoxelnet">ImVoxelNet (WACV'2022)</a></li>
+        </ul>
       </td>
       <td>
         <li><b>室外</b></li>
@@ -243,7 +257,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 快速入门
 
-请参考[快速入门文档](docs/zh_cn/getting_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/zh_cn/1_exist_data_model.md)和[新数据集](docs/zh_cn/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/tutorials/config.md), [增加数据集支持](docs/zh_cn/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/zh_cn/tutorials/data_pipeline.md), [增加自定义模型](docs/zh_cn/tutorials/customize_models.md), [增加自定义的运行时配置](docs/zh_cn/tutorials/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/tutorials/waymo.md).
+请参考[快速入门文档](docs/zh_cn/getting_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/zh_cn/1_exist_data_model.md)和[新数据集](docs/zh_cn/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/tutorials/config.md), [增加数据集支持](docs/zh_cn/tutorials/customize_dataset.md), [设计新的数据预处理流程](docs/zh_cn/tutorials/data_pipeline.md), [增加自定义模型](docs/zh_cn/tutorials/customize_models.md), [增加自定义的运行时配置](docs/zh_cn/tutorials/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/datasets/waymo_det.md).
 
 请参考 [FAQ](docs/zh_cn/faq.md) 查看一些常见的问题与解答。在升级 MMDetection3D 的版本时，请查看[兼容性文档](docs/zh_cn/compatibility.md)以知晓每个版本引入的不与之前版本兼容的更新。
 

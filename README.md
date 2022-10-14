@@ -24,9 +24,21 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**News**: We released the codebase v1.0.0rc4.
+**News**:
 
-Note: We are going through large refactoring to provide simpler and more unified usage of many modules.
+### 💎 Stable version
+
+**v1.0.0rc5** was released in 8/8/2022
+
+### 🌟 Preview of 1.1.x version
+
+A brand new version of **MMDetection v1.1.0rc0** was released in 1/9/2022:
+
+- Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
+- A standard data protocol defines and unifies the common keys across different datasets.
+- Faster training and testing speed with more strong baselines.
+
+Find more new features in [1.1.x branch](https://github.com/open-mmlab/mmdetection3d/tree/1.1). Issues and PRs are welcome!
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In this version, we update some of the model checkpoints after the refactor of coordinate systems. See more details in the [Changelog](docs/en/changelog.md).
 
@@ -84,9 +96,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc4 was released in 8/8/2022.
-
-- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+v1.0.0rc5 was released in 11/10/2022.
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
@@ -183,6 +193,10 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
           <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
+        </ul>
+        <li><b>Indoor</b></li>
+        <ul>
+          <li><a href="configs/imvoxelnet">ImVoxelNet (WACV'2022)</a></li>
         </ul>
       </td>
       <td>
