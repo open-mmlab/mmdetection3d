@@ -28,7 +28,7 @@
 
 ### 💎 Stable version
 
-**v1.0.0rc5** was released in 8/8/2022
+**v1.0.0rc5** was released in 11/10/2022
 
 ### 🌟 Preview of 1.1.x version
 
