@@ -384,7 +384,7 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
 
     Returns:
         dict: A sample 2d annotation record.
-            
+
             - bbox_label (int): 2d box label id
             - bbox_label_3d (int): 3d box label id
             - bbox (list[float]): left x, top y, right x, bottom y of 2d box
