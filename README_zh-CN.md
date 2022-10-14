@@ -26,7 +26,11 @@
 
 **新闻**:
 
-**v1.1.0rc0** 版本已经在 2022.9.1 发布：
+### 💎 稳定版本
+
+最新的 **1.0.0rc5** 版本已经在 2022.10.11 发布。
+
+### 🌟 **v1.1.0rc0** 版本已经在 2022.9.1 发布
 
 - 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 和 [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 通过一个标准的数据格式定义和统一了不同数据集的通用内容。
