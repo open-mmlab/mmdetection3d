@@ -3,6 +3,11 @@ _base_ = [
     '../_base_/datasets/scannet-3d.py'
 ]
 n_points = 100000
+file_client_args = dict(
+    backend='petrel',
+    path_mapping=dict({
+        './data/scannet/': 's3://scannet/',
+    }))
 
 train_pipeline = [
     dict(
@@ -11,7 +16,8 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(type='LoadAnnotations3D'),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(type='PointSample', num_points=n_points),
@@ -40,7 +46,8 @@ test_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        file_client_args=file_client_args),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='MultiScaleFlipAug3D',
@@ -76,6 +83,10 @@ train_dataloader = dict(
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=12)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
 # optimizer = dict(type='AdamW', lr=0.001, weight_decay=0.0001)
 # optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
 
@@ -85,7 +96,6 @@ optim_wrapper = dict(
     clip_grad=dict(max_norm=10, norm_type=2))
 
 # lr_config = dict(policy='step', warmup=None, step=[8, 11])
-
 # learning rate
 param_scheduler = dict(
     type='MultiStepLR',
