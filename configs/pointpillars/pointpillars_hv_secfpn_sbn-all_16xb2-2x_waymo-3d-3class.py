@@ -6,7 +6,7 @@ _base_ = [
 ]
 
 # data settings
-data = dict(train=dict(dataset=dict(load_interval=1)))
+train_dataloader = dict(dataset=dict(dataset=dict(load_interval=1)))
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.

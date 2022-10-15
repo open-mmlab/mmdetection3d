@@ -65,7 +65,7 @@ train_dataloader = dict(
             CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
             CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         ann_file='nuscenes_infos_train.pkl',
-        task='mono3d',
+        task='mono_det',
         pipeline=train_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -92,7 +92,7 @@ val_dataloader = dict(
             CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
             CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         ann_file='nuscenes_infos_val.pkl',
-        task='mono3d',
+        task='mono_det',
         pipeline=test_pipeline,
         modality=input_modality,
         metainfo=metainfo,
@@ -108,3 +108,7 @@ val_evaluator = dict(
     metric='bbox')
 
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

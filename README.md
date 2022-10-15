@@ -82,9 +82,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-We are excited to announce the release of MMDetection3D 1.1.0rc0.
-
-MMDet3D 1.1 unifies the interfaces of dataset, models, evaluation, and visualization with faster training and testing speed.
+**1.1.0rc1** was released in 11/10/2022.
 
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 

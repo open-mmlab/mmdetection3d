@@ -35,6 +35,10 @@ test_pipeline = [
     dict(type='Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
+eval_pipeline = [
+    dict(type='LoadImageFromFileMono3D'),
+    dict(type='Pack3DDetInputs', keys=['img'])
+]
 
 train_dataloader = dict(
     batch_size=2,
@@ -78,3 +82,7 @@ val_evaluator = dict(
     pred_box_type_3d='Camera')
 
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
