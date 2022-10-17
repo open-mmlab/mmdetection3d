@@ -343,13 +343,13 @@ class SparseEncoderSASSD(SparseEncoder):
 
     def get_auxiliary_targets(self,
                               nxyz: Tensor,
-                              gt_boxes3d: List[BaseInstance3DBoxes],
+                              gt_boxes_3d: List[BaseInstance3DBoxes],
                               enlarge: int = 1.0) -> Tuple[Tensor, Tensor]:
         """Get auxiliary target.
 
         Args:
             nxyz (torch.Tensor): Mean features of the points.
-            gt_boxes3d (list[:obj:`BaseInstance3DBoxes`]):  Ground truth
+            gt_boxes_3d (list[:obj:`BaseInstance3DBoxes`]):  Ground truth
                 boxes for each sample.
             enlarge (int, optional): Enlaged scale. Defaults to 1.0.
 
@@ -359,8 +359,8 @@ class SparseEncoderSASSD(SparseEncoder):
         """
         center_offsets = list()
         pts_labels = list()
-        for i in range(len(gt_boxes3d)):
-            boxes3d = gt_boxes3d[i].tensor.cpu()
+        for i in range(len(gt_boxes_3d)):
+            boxes3d = gt_boxes_3d[i].tensor.cpu()
             idx = torch.nonzero(nxyz[:, 0] == i).view(-1)
             new_xyz = nxyz[idx, 1:].cpu()
 
@@ -378,13 +378,13 @@ class SparseEncoderSASSD(SparseEncoder):
         return pts_labels, center_offsets
 
     def calculate_pts_offsets(self, points: Tensor,
-                              boxes: Tensor) -> Tuple[Tensor, Tensor]:
+                              bboxes_3d: Tensor) -> Tuple[Tensor, Tensor]:
         """Find all boxes in which each point is, as well as the offsets from
         the box centers.
 
         Args:
             points (torch.Tensor): [M, 3], [x, y, z] in LiDAR/DEPTH coordinate
-            boxes (torch.Tensor): [T, 7],
+            bboxes_3d (torch.Tensor): [T, 7],
                 num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
                 (x, y, z) is the bottom center.
 
@@ -395,13 +395,13 @@ class SparseEncoderSASSD(SparseEncoder):
                 if it belows to the box, with the shape of (M, 3).
                 Default background = 0.
         """
-        boxes_num = len(boxes)
+        boxes_num = len(bboxes_3d)
         pts_num = len(points)
         points = points.cuda()
-        boxes = boxes.to(points.device)
+        bboxes_3d = bboxes_3d.to(points.device)
 
-        box_idxs_of_pts = points_in_boxes_all(points[None, ...], boxes[None,
-                                                                       ...])
+        box_idxs_of_pts = points_in_boxes_all(points[None, ...],
+                                              bboxes_3d[None, ...])
 
         pts_indices = box_idxs_of_pts.squeeze(0).transpose(0, 1)
 
@@ -410,10 +410,11 @@ class SparseEncoderSASSD(SparseEncoder):
         for i in range(boxes_num):
             for j in range(pts_num):
                 if pts_indices[i][j] == 1:
-                    center_offsets[j][0] = points[j][0] - boxes[i][0]
-                    center_offsets[j][1] = points[j][1] - boxes[i][1]
+                    center_offsets[j][0] = points[j][0] - bboxes_3d[i][0]
+                    center_offsets[j][1] = points[j][1] - bboxes_3d[i][1]
                     center_offsets[j][2] = (
-                        points[j][2] - (boxes[i][2] + boxes[i][2] / 2.0))
+                        points[j][2] -
+                        (bboxes_3d[i][2] + bboxes_3d[i][2] / 2.0))
         return pts_indices.cpu(), center_offsets.cpu()
 
     def aux_loss(self, points: Tensor, point_cls: Tensor, point_reg: Tensor,

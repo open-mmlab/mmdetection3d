@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple, Union
+from typing import Tuple
 
 from torch import Tensor
 
@@ -54,12 +54,12 @@ class SASSD(SingleStage3DDetector):
         return x, point_misc
 
     def loss(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
-             **kwargs) -> Union[dict, list]:
+             **kwargs) -> dict:
         """Calculate losses from a batch of inputs dict and data samples.
 
         Args:
             batch_inputs_dict (dict): The model input dict which include
-                'points', 'img' keys.
+                'points' keys.
 
                     - points (list[torch.Tensor]): Point cloud of each sample.
                     - imgs (torch.Tensor, optional): Image of each sample.
