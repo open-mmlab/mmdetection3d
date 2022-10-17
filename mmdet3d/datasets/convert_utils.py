@@ -198,8 +198,8 @@ def get_kitti_style_2d_boxes(info: dict,
 
     Args:
         info (dict): Information of the given sample data.
-        cam_idx (int, optional): Camera id which the 2d / mono3d annotations to
-            obtain belong to. In KITTI, typically only CAM 2 will be used,
+        cam_idx (int): Camera id which the 2d / mono3d annotations to obtain
+            belong to. In KITTI, typically only CAM 2 will be used,
             and in Waymo, multi cameras could be used.
             Defaults to 2.
         occluded (tuple[int], optional): Integer (0, 1, 2, 3) indicating
