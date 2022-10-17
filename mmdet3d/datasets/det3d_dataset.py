@@ -153,7 +153,7 @@ class Det3DDataset(BaseDataset):
             f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
             'current')
 
-    def _remove_dontcare(self, ann_info):
+    def _remove_dontcare(self, ann_info: dict) -> dict:
         """Remove annotations that do not need to be cared.
 
         -1 indicate dontcare in MMDet3d.
