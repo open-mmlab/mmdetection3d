@@ -26,11 +26,7 @@
 
 **News**:
 
-**v1.1.0rc0** was released in 1/9/2022:
-
-- Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
-- A standard data protocol defines and unifies the common keys across different datasets.
-- Faster training and testing speed with more strong baselines.
+**v1.1.0rc1** was released in 11/10/2022
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
 
