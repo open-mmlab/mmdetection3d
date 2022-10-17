@@ -120,7 +120,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(points, pcd_mode=pcd_mode, frame_cfg=frame_cfg)
         self.pts_seg_num = 0
 
-    def _initialize_o3d_vis(self, frame_cfg) -> tuple:
+    def _clear_o3d_vis(self) -> None:
+        """Clear open3d vis."""
+
+        if hasattr(self, 'o3d_vis'):
+            del self.o3d_vis
+            del self.pcd
+            del self.points_colors
+
+    def _initialize_o3d_vis(self, frame_cfg) -> o3d.visualization.Visualizer:
         """Initialize open3d vis according to frame_cfg.
 
         Args:
@@ -141,8 +149,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def set_points(self,
                    points: np.ndarray,
                    pcd_mode: int = 0,
+                   vis_mode: str = 'replace',
                    frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                   vis_task: str = 'lidar_det',
                    points_color: Tuple = (0.5, 0.5, 0.5),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
@@ -154,11 +162,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             pcd_mode (int): The point cloud mode (coordinates):
                 0 represents LiDAR, 1 represents CAMERA, 2
                 represents Depth. Defaults to 0.
+            vis_mode (str): The visualization mode in Open3D:
+                'replace': Replace the existing point cloud with
+                    input point cloud.
+                'add': Add input point cloud into existing point
+                    cloud.
+                Defaults to 'replace'.
             frame_cfg (dict): The coordinate frame config while Open3D
                 visualization initialization.
                 Defaults to dict(size=1, origin=[0, 0, 0]).
-            vis_task (str): Visualiztion task, it includes:
-                'lidar_det', 'multi-modality_det', 'mono_det', 'lidar_seg'.
             point_color (tuple[float], optional): the color of points.
                 Default: (0.5, 0.5, 0.5).
             points_size (int, optional): the size of points to show
@@ -167,6 +179,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 available mode ['xyz', 'xyzrgb']. Default: 'xyz'.
         """
         assert points is not None
+        assert vis_mode in ('replace', 'add')
         check_type('points', points, np.ndarray)
 
         if not hasattr(self, 'o3d_vis'):
@@ -176,7 +189,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if pcd_mode != Coord3DMode.DEPTH:
             points = Coord3DMode.convert(points, pcd_mode, Coord3DMode.DEPTH)
 
-        if hasattr(self, 'pcd') and vis_task != 'lidar_seg':
+        if hasattr(self, 'pcd') and vis_mode != 'add':
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
@@ -524,8 +537,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         self.o3d_vis.add_geometry(mesh_frame)
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
-        self.set_points(
-            seg_points, vis_task='lidar_seg', pcd_mode=2, mode='xyzrgb')
+        self.set_points(seg_points, pcd_mode=2, vis_mode='add', mode='xyzrgb')
 
     def _draw_instances_3d(self, data_input: dict, instances: InstanceData,
                            input_meta: dict, vis_task: str,
@@ -559,7 +571,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             else:
                 bboxes_3d_depth = bboxes_3d.clone()
 
-            self.set_points(points, pcd_mode=2, vis_task=vis_task)
+            self.set_points(points, pcd_mode=2)
             self.draw_bboxes_3d(bboxes_3d_depth)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -614,7 +626,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pts_color = palette[pts_sem_seg]
         seg_color = np.concatenate([points[:, :3], pts_color], axis=1)
 
-        self.set_points(points, pcd_mode=2, vis_task='lidar_seg')
+        self.set_points(points, pcd_mode=2, vis_mode='add')
         self.draw_seg_mask(seg_color)
 
     @master_only
@@ -644,6 +656,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if save_path is not None:
                 self.o3d_vis.capture_screen_image(save_path)
             self.o3d_vis.destroy_window()
+            self._clear_o3d_vis()
 
         if hasattr(self, '_image'):
             if drawn_img_3d is None:
@@ -662,7 +675,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        show: bool = False,
                        wait_time: float = 0,
                        out_file: Optional[str] = None,
-                       save_path: Optional[str] = None,
+                       o3d_save_path: Optional[str] = None,
                        vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
                        step: int = 0) -> None:
@@ -673,9 +686,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ground truth and the right image is the prediction.
         - If ``show`` is True, all storage backends are ignored, and
         the images will be displayed in a local window.
-        - If ``out_file`` is specified, the drawn point cloud or
-        image will be saved to ``out_file``. t is usually used when
-        the display is not available.
+        - If ``out_file`` is specified, the drawn image will be saved to
+        ``out_file``. It is usually used when the display is not available.
 
         Args:
             name (str): The image identifier.
@@ -691,8 +703,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 image. Default to False.
             wait_time (float): The interval of show (s). Defaults to 0.
             out_file (str): Path to output file. Defaults to None.
-            save_path (str, optional): Path to save open3d visualized results.
-                Default: None.
+            o3d_save_path (str, optional): Path to save open3d visualized
+                results Default: None.
             vis-task (str): Visualization task. Defaults to 'mono_det'.
             pred_score_thr (float): The threshold to visualize the bboxes
                 and masks. Defaults to 0.3.
@@ -786,8 +798,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if show:
             self.show(
-                vis_task,
-                save_path,
+                o3d_save_path,
                 drawn_img_3d,
                 drawn_img,
                 win_name=name,
