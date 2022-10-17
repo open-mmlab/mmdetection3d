@@ -86,7 +86,8 @@ train_dataloader = dict(
             type=dataset_type,
             data_root=data_root,
             ann_file='waymo_infos_train.pkl',
-            data_prefix=dict(pts='training/velodyne'),
+            data_prefix=dict(
+                pts='training/velodyne', sweeps='training/velodyne'),
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
@@ -105,7 +106,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(pts='training/velodyne'),
+        data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         ann_file='waymo_infos_val.pkl',
         pipeline=eval_pipeline,
         modality=input_modality,
@@ -122,7 +123,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(pts='training/velodyne'),
+        data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         ann_file='waymo_infos_val.pkl',
         pipeline=eval_pipeline,
         modality=input_modality,
@@ -136,3 +137,7 @@ val_evaluator = dict(
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
     data_root='./data/waymo/waymo_format')
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

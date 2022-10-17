@@ -6,14 +6,15 @@ We list some potential troubles encountered by users and developers, along with 
 
 - Compatibility issue between MMEngine, MMCV, MMDetection and MMDetection3D; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
 
-  The required versions of MMEngine, MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMEngine, MMCV and MMDetection to avoid installation issues.
+- The required versions of MMEngine, MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMEngine, MMCV and MMDetection to avoid installation issues.
 
-  | MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
-  | :-------------------: | :----------------------: | :---------------------: | :----------------------: |
-  |        dev-1.x        | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-  |       v1.1.0rc0       | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+| MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
+| --------------------- | :----------------------: | :---------------------: | :----------------------: |
+| dev-1.x               | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+| v1.1.0rc1             | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+| v1.1.0rc0             | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 
-  **Note:** If you want to install mmdet3d-v1.0.0x, the compatible MMDetection, MMSegmentation and MMCV versions table can be found at [here](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation). Please choose the correct version of MMCV to avoid installation issues.
+**Note:** If you want to install mmdet3d-v1.0.0x, the compatible MMDetection, MMSegmentation and MMCV versions table can be found at [here](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation). Please choose the correct version of MMCV to avoid installation issues.
 
 - If you faced the error shown below when importing open3d:
 
