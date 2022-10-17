@@ -215,14 +215,14 @@ def waymo_data_prep(root_path,
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
-    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_train_path)
-    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_val_path)
-    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_trainval_path)
+    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_trainval_path)
     GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
         info_prefix,
-        f'{out_dir}/{info_prefix}_infos_train.pkl',
+        f'{info_prefix}_infos_train.pkl',
         relative_path=False,
         with_mask=False,
         num_worker=workers).create()

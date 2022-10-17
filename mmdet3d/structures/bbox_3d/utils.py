@@ -333,3 +333,25 @@ def yaw2local(yaw, loc):
         local_yaw[small_idx] += 2 * np.pi
 
     return local_yaw
+
+
+def get_lidar2img(cam2img, lidar2cam):
+    """Get the projection matrix of lidar2img.
+
+    Args:
+        cam2img (torch.Tensor): A 3x3 or 4x4 projection matrix.
+        lidar2cam (torch.Tensor): A 3x3 or 4x4 projection matrix.
+
+    Returns:
+        torch.Tensor: transformation matrix with shape 4x4.
+    """
+    if cam2img.shape == (3, 3):
+        temp = cam2img.new_zeros(4, 4)
+        temp[:3, :3] = cam2img
+        cam2img = temp
+
+    if lidar2cam.shape == (3, 3):
+        temp = lidar2cam.new_zeros(4, 4)
+        temp[:3, :3] = lidar2cam
+        lidar2cam = temp
+    return torch.matmul(cam2img, lidar2cam)
