@@ -129,7 +129,7 @@ class ScanNetDataset(Det3DDataset):
 
         Returns:
             dict: Has `ann_info` in training stage. And
-                all path has been converted to absolute path.
+            all path has been converted to absolute path.
         """
         info['axis_align_matrix'] = self._get_axis_align_matrix(info)
         info['pts_instance_mask_path'] = osp.join(

@@ -224,7 +224,7 @@ class Seg3DDataset(BaseDataset):
 
         Returns:
             dict: Has `ann_info` in training stage. And
-                all path has been converted to absolute path.
+            all path has been converted to absolute path.
         """
         if self.modality['use_lidar']:
             info['lidar_points']['lidar_path'] = \
