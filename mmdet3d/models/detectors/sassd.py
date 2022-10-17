@@ -44,7 +44,9 @@ class SASSD(SingleStage3DDetector):
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
-        # point_misc is only used in training mode
+        # `point_misc` is a tuple containing the mean features of points and
+        # the targets of clssification and regression. It's only used in
+        # training mode
         x, point_misc = self.middle_encoder(voxel_features,
                                             voxel_dict['coors'], batch_size,
                                             test_mode)
