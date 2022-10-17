@@ -3,14 +3,13 @@ from typing import Tuple
 
 from torch import Tensor
 
+from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
-from mmdet.models.builder import DETECTORS
-from mmdet.registry import MODELS
 from ...structures.det3d_data_sample import SampleList
 from .single_stage import SingleStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SASSD(SingleStage3DDetector):
     r"""`SASSD <https://github.com/skyhehe123/SA-SSD>` _ for 3D detection."""
 
@@ -38,20 +37,22 @@ class SASSD(SingleStage3DDetector):
 
     def extract_feat(self,
                      batch_inputs_dict: dict,
-                     test_mode: bool = False) -> Tuple[Tensor]:
+                     test_mode: bool = True) -> Tuple[Tensor]:
         """Extract features from points."""
         voxel_dict = batch_inputs_dict['voxels']
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
+        # point_misc is only used in training mode
         x, point_misc = self.middle_encoder(voxel_features,
                                             voxel_dict['coors'], batch_size,
                                             test_mode)
         x = self.backbone(x)
         if self.with_neck:
             x = self.neck(x)
-        return x, point_misc
+
+        return (x, point_misc) if not test_mode else x
 
     def loss(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
              **kwargs) -> dict:
@@ -71,12 +72,13 @@ class SASSD(SingleStage3DDetector):
         Returns:
             dict: A dictionary of loss components.
         """
-        x, point_misc = self.extract_feat(batch_inputs_dict)
-        batch_gt_instances_3d = [
-            data_sample.gt_instances_3d for data_sample in batch_data_samples
+        x, point_misc = self.extract_feat(batch_inputs_dict, test_mode=False)
+        batch_gt_bboxes_3d = [
+            data_sample.gt_instances_3d.bboxes_3d
+            for data_sample in batch_data_samples
         ]
         aux_loss = self.middle_encoder.aux_loss(*point_misc,
-                                                batch_gt_instances_3d)
+                                                batch_gt_bboxes_3d)
         losses = self.bbox_head.loss(x, batch_data_samples)
         losses.update(aux_loss)
         return losses

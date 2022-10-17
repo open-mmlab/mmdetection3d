@@ -418,23 +418,22 @@ class SparseEncoderSASSD(SparseEncoder):
         return pts_indices.cpu(), center_offsets.cpu()
 
     def aux_loss(self, points: Tensor, point_cls: Tensor, point_reg: Tensor,
-                 gt_bboxes: Tensor) -> dict:
+                 gt_bboxes_3d: Tensor) -> dict:
         """Calculate auxiliary loss.
 
         Args:
             points (torch.Tensor): Mean feature value of the points.
             point_cls (torch.Tensor): Classification result of the points.
             point_reg (torch.Tensor): Regression offsets of the points.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
                 boxes for each sample.
 
         Returns:
             dict: Auxiliary loss.
         """
-        num_boxes = len(gt_bboxes)
-
+        num_boxes = len(gt_bboxes_3d)
         pts_labels, center_targets = self.get_auxiliary_targets(
-            points, gt_bboxes)
+            points, gt_bboxes_3d)
 
         rpn_cls_target = pts_labels.long()
         pos = (pts_labels > 0).float()
