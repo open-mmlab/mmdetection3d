@@ -93,7 +93,6 @@ class WaymoDataset(KittiDataset):
         self.cat_ids = range(len(self.METAINFO['CLASSES']))
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.max_sweeps = max_sweeps
-        self.task = task
         # we do not provide file_client_args to custom_3d init
         # because we want disk loading for info
         # while ceph loading for KITTI2Waymo
@@ -108,6 +107,7 @@ class WaymoDataset(KittiDataset):
             default_cam_key=default_cam_key,
             data_prefix=data_prefix,
             test_mode=test_mode,
+            task=task,
             **kwargs)
 
     def parse_ann_info(self, info: dict) -> dict:
@@ -221,7 +221,7 @@ class WaymoDataset(KittiDataset):
 
                 # TODO check if need to modify the sample id
                 # TODO check when will use it except for evaluation.
-                camera_info['sample_idx'] = info['sample_idx']
+                camera_info['sample_id'] = info['sample_id']
 
                 if not self.test_mode:
                     # used in training
