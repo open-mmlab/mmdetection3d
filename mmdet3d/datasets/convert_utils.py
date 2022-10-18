@@ -202,14 +202,14 @@ def get_kitti_style_2d_boxes(info: dict,
             belong to. In KITTI, typically only CAM 2 will be used,
             and in Waymo, multi cameras could be used.
             Defaults to 2.
-        occluded (tuple[int], optional): Integer (0, 1, 2, 3) indicating
-            occlusion state: 0 = fully visible, 1 = partly occluded,
-            2 = largely occluded, 3 = unknown, -1 = DontCare.
+        occluded (tuple[int]): Integer (0, 1, 2, 3) indicating occlusion state:
+            0 = fully visible, 1 = partly occluded, 2 = largely occluded,
+            3 = unknown, -1 = DontCare.
             Defaults to (0, 1, 2, 3).
         annos (dict, optional): Original annotations. Defaults to None.
         mono3d (bool, optional): Whether to get boxes with mono3d annotation.
             Defaults to True.
-        dataset (str, optional): Dataset name of getting 2d bboxes.
+        dataset (str): Dataset name of getting 2d bboxes.
             Defaults to 'kitti'.
 
     Return:
@@ -344,8 +344,7 @@ def post_process_coords(
     Args:
         corner_coords (list[int]): Corner coordinates of reprojected
             bounding box.
-        imsize (tuple[int], optional): Size of the image canvas.
-            Defaults to (1600, 900).
+        imsize (tuple[int]): Size of the image canvas.
 
     Return:
         tuple[float]: Intersection of the convex hull of the 2D box
