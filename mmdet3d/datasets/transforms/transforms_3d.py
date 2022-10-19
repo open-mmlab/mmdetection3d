@@ -98,18 +98,18 @@ class RandomFlip3D(RandomFlip):
     - pcd_scale_factor (np.float32)
 
     Args:
-        sync_2d (bool, optional): Whether to apply flip according to the 2D
+        sync_2d (bool): Whether to apply flip according to the 2D
             images. If True, it will apply the same flip as that to 2D images.
             If False, it will decide whether to flip randomly and independently
             to that of 2D images. Defaults to True.
-        flip_ratio_bev_horizontal (float, optional): The flipping probability
+        flip_ratio_bev_horizontal (float): The flipping probability
             in horizontal direction. Defaults to 0.0.
-        flip_ratio_bev_vertical (float, optional): The flipping probability
+        flip_ratio_bev_vertical (float): The flipping probability
             in vertical direction. Defaults to 0.0.
-        flip_box3d (bool, optional): Whether to flip bounding box.
-            In most of the case, the box should be fliped. In cam-based bev
-            detection, this is set to False, since the flip of 2D images
-            does not influence the 3D box. Defaults to True.
+        flip_box3d (bool): Whether to flip bounding box. In most of the case,
+            the box should be fliped. In cam-based bev detection, this is set
+            to False, since the flip of 2D images does not influence the 3D
+            box. Defaults to True.
     """
 
     def __init__(self,
@@ -344,11 +344,11 @@ class ObjectSample(BaseTransform):
 
     Args:
         db_sampler (dict): Config dict of the database sampler.
-        sample_2d (bool, optional): Whether to also paste 2D image patch
-            to the images. This should be true when applying multi-modality
-            cut-and-paste. Defaults to False.
-        use_ground_plane (bool, optional): Whether to use ground plane to
-            adjust the 3D labels. Defaults to False.
+        sample_2d (bool): Whether to also paste 2D image patch to the images.
+            This should be true when applying multi-modality cut-and-paste.
+            Defaults to False.
+        use_ground_plane (bool): Whether to use ground plane to adjust the
+            3D labels. Defaults to False.
     """
 
     def __init__(self,
@@ -689,7 +689,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after translation, 'points', 'pcd_trans'
-                and `gt_bboxes_3d` is updated in the result dict.
+            and `gt_bboxes_3d` is updated in the result dict.
         """
         translation_std = np.array(self.translation_std, dtype=np.float32)
         trans_factor = np.random.normal(scale=translation_std, size=3).T
@@ -707,7 +707,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after rotation, 'points', 'pcd_rotation'
-                and `gt_bboxes_3d` is updated in the result dict.
+            and `gt_bboxes_3d` is updated in the result dict.
         """
         rotation = self.rot_range
         noise_rotation = np.random.uniform(rotation[0], rotation[1])
@@ -733,7 +733,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after scaling, 'points' and
-                `gt_bboxes_3d` is updated in the result dict.
+            `gt_bboxes_3d` is updated in the result dict.
         """
         scale = input_dict['pcd_scale_factor']
         points = input_dict['points']
@@ -756,7 +756,7 @@ class GlobalRotScaleTrans(BaseTransform):
 
         Returns:
             dict: Results after scaling, 'pcd_scale_factor'
-                are updated in the result dict.
+            are updated in the result dict.
         """
         scale_factor = np.random.uniform(self.scale_ratio_range[0],
                                          self.scale_ratio_range[1])
@@ -772,7 +772,7 @@ class GlobalRotScaleTrans(BaseTransform):
         Returns:
             dict: Results after scaling, 'points', 'pcd_rotation',
             'pcd_scale_factor', 'pcd_trans' and `gt_bboxes_3d` are updated
-                in the result dict.
+            in the result dict.
         """
         if 'transformation_3d_flow' not in input_dict:
             input_dict['transformation_3d_flow'] = []
@@ -1472,7 +1472,7 @@ class VoxelBasedPointSampler(BaseTransform):
         cur_sweep_cfg (dict): Config for sampling current points.
         prev_sweep_cfg (dict, optional): Config for sampling previous points.
             Defaults to None.
-        time_dim (int, optional): Index that indicate the time dimension
+        time_dim (int): Index that indicate the time dimension
             for input points. Defaults to 3.
     """
 
@@ -1889,8 +1889,8 @@ class Resize3D(Resize):
 
         Returns:
             dict: Resized results, 'img', 'gt_bboxes', 'gt_seg_map',
-                'gt_keypoints', 'scale', 'scale_factor', 'img_shape',
-                and 'keep_ratio' keys are updated in result dict.
+            'gt_keypoints', 'scale', 'scale_factor', 'img_shape',
+            and 'keep_ratio' keys are updated in result dict.
         """
 
         super(Resize3D, self).transform(results)
@@ -1926,7 +1926,7 @@ class RandomResize3D(RandomResize):
 
         Returns:
             dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor',
-                'keep_ratio' keys are added into result dict.
+            'keep_ratio' keys are added into result dict.
         """
         if 'scale' not in results:
             results['scale'] = self._random_scale()
@@ -1972,7 +1972,7 @@ class RandomCrop3D(RandomCrop):
     Args:
         crop_size (tuple): The relative ratio or absolute pixels of
             height and width.
-        crop_type (str, optional): One of "relative_range", "relative",
+        crop_type (str): One of "relative_range", "relative",
             "absolute", "absolute_range". "relative" randomly crops
             (h * crop_size[0], w * crop_size[1]) part from an input of size
             (h, w). "relative_range" uniformly samples relative crop size from
@@ -1982,16 +1982,16 @@ class RandomCrop3D(RandomCrop):
             crop_h in range [crop_size[0], min(h, crop_size[1])] and crop_w
             in range [crop_size[0], min(w, crop_size[1])].
             Defaults to "absolute".
-        allow_negative_crop (bool, optional): Whether to allow a crop that does
+        allow_negative_crop (bool): Whether to allow a crop that does
             not contain any bbox area. Defaults to False.
-        recompute_bbox (bool, optional): Whether to re-compute the boxes based
+        recompute_bbox (bool): Whether to re-compute the boxes based
             on cropped instance masks. Defaults to False.
-        bbox_clip_border (bool, optional): Whether clip the objects outside
+        bbox_clip_border (bool): Whether clip the objects outside
             the border of the image. Defaults to True.
-        rel_offset_h (tuple, optional): The cropping interval of image height.
-            Defaults to (0., 1.).
-        rel_offset_w (tuple, optional): The cropping interval of image width.
-            Defaults to (0., 1.).
+        rel_offset_h (tuple): The cropping interval of image height. Defaults
+            to (0., 1.).
+        rel_offset_w (tuple): The cropping interval of image width. Defaults
+            to (0., 1.).
 
     Note:
         - If the image is smaller than the absolute crop size, return the
@@ -2260,20 +2260,19 @@ class MultiViewWrapper(BaseTransform):
     Args:
         transforms (list[dict]): A list of dict specifying the transformations
             for the monocular situation.
-        override_aug_config (bool, optional): flag of whether to use the same
-            aug config for multiview image. Defaults to True.
-        process_fields (list, optional): Desired keys that the transformations
-            should be conducted on. Defaults to
-            ['img', 'cam2img', 'lidar2cam'],
-        collected_keys (list, optional): Collect information in transformation
+        override_aug_config (bool): flag of whether to use the same aug config
+            for multiview image. Defaults to True.
+        process_fields (list): Desired keys that the transformations should
+            be conducted on. Defaults to ['img', 'cam2img', 'lidar2cam'].
+        collected_keys (list): Collect information in transformation
             like rotate angles, crop roi, and flip state. Defaults to
                 ['scale', 'scale_factor', 'crop',
                  'crop_offset', 'ori_shape',
                  'pad_shape', 'img_shape',
                  'pad_fixed_size', 'pad_size_divisor',
                  'flip', 'flip_direction', 'rotate'].
-        randomness_keys (list, optional): The keys that related to the
-            randomness in transformation. Defaults to
+        randomness_keys (list): The keys that related to the randomness
+            in transformation. Defaults to
                     ['scale', 'scale_factor', 'crop_size', 'flip',
                      'flip_direction', 'photometric_param']
     """

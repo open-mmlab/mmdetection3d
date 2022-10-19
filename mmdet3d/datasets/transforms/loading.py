@@ -915,7 +915,7 @@ class LoadAnnotations3D(LoadAnnotations):
 
         Returns:
             dict: The dict containing loaded 3D bounding box, label, mask and
-                semantic segmentation annotations.
+            semantic segmentation annotations.
         """
         results = super().transform(results)
         if self.with_bbox_3d:
