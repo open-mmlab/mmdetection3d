@@ -24,13 +24,13 @@ class SUNRGBDDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for data. Defaults to
+        data_prefix (dict): Prefix for data. Defaults to
             dict(pts='points',img='sunrgbd_trainval').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_camera=True, use_lidar=True).
-        default_cam_key (str, optional): The default camera name adopted.
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_camera=True, use_lidar=True).
+        default_cam_key (str): The default camera name adopted.
             Defaults to 'CAM0'.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
@@ -40,9 +40,9 @@ class SUNRGBDDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
+        filter_empty_gt (bool): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {

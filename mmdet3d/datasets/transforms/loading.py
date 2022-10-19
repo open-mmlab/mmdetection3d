@@ -20,21 +20,18 @@ class LoadMultiViewImageFromFiles(BaseTransform):
     Expects results['img_filename'] to be a list of filenames.
 
     Args:
-        to_float32 (bool, optional): Whether to convert the img to float32.
+        to_float32 (bool): Whether to convert the img to float32.
             Defaults to False.
-        color_type (str, optional): Color type of the file.
+        color_type (str): Color type of the file.
             Defaults to 'unchanged'.
-        file_client_args (dict, optional): Config dict of file clients,
+        file_client_args (dict): Config dict of file clients,
             refer to
             https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
             for more details. Defaults to dict(backend='disk').
-        num_views (int, optional): Number of view in a frame. Defaults to 5.
-        num_ref_frames (int, optional): Number of frame in loading.
-            Defaults to -1.
-        test_mode (bool, optional): Whether is test mode in loading.
-            Defaults to False.
-        set_default_scale (bool, optional): Whether to set default scale.
-            Defaults to True.
+        num_views (int): Number of view in a frame. Defaults to 5.
+        num_ref_frames (int): Number of frame in loading. Defaults to -1.
+        test_mode (bool): Whether is test mode in loading. Defaults to False.
+        set_default_scale (bool): Whether to set default scale. Defaults to True.
     """
 
     def __init__(self,

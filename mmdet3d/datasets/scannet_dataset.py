@@ -25,15 +25,15 @@ class ScanNetDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for data. Defaults to
+        data_prefix (dict): Prefix for data. Defaults to
             dict(pts='points',
                  pts_isntance_mask='instance_mask',
                  pts_semantic_mask='semantic_mask').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_camera=False, use_lidar=True).
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_camera=False, use_lidar=True).
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'Depth' in this dataset. Available options includes:
@@ -41,9 +41,9 @@ class ScanNetDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
+        filter_empty_gt (bool): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
@@ -182,15 +182,15 @@ class ScanNetSegDataset(Seg3DDataset):
 
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
-        ann_file (str, optional): Path of annotation file. Defaults to ''.
+        ann_file (str): Path of annotation file. Defaults to ''.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_lidar=True, use_camera=False).
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. If None is given, set to len(self.CLASSES) to
             be consistent with PointSegClassMapping function in pipeline.
@@ -198,7 +198,7 @@ class ScanNetSegDataset(Seg3DDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {

@@ -20,11 +20,11 @@ class KittiDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to `dict(use_lidar=True)`.
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to `dict(use_lidar=True)`.
         default_cam_key (str, optional): The default camera name adopted.
             Defaults to 'CAM2'.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes:

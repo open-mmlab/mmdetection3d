@@ -167,15 +167,15 @@ class _S3DISSegDataset(Seg3DDataset):
 
     Args:
         data_root (str, optional): Path of dataset root, Defaults to None.
-        ann_file (str, optional): Path of annotation file. Defaults to ''.
+        ann_file (str): Path of annotation file. Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', instance_mask='', semantic_mask='').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_lidar=True, use_camera=False).
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. If None is given, set to len(self.CLASSES) to
             be consistent with PointSegClassMapping function in pipeline.
@@ -183,7 +183,7 @@ class _S3DISSegDataset(Seg3DDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
@@ -252,16 +252,16 @@ class S3DISSegDataset(_S3DISSegDataset):
 
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
-        ann_files (list[str], optional): Path of several annotation files.
+        ann_files (list[str]): Path of several annotation files.
             Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', instance_mask='', semantic_mask='').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_lidar=True, use_camera=False).
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
             unannotated points. If None is given, set to len(self.CLASSES) to
             be consistent with PointSegClassMapping function in pipeline.
@@ -269,7 +269,7 @@ class S3DISSegDataset(_S3DISSegDataset):
         scene_idxs (list[np.ndarray] | list[str], optional): Precomputed index
             to load data. For scenes with many points, we may sample it
             several times. Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
 

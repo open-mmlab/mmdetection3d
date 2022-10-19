@@ -17,14 +17,14 @@ class Seg3DDataset(BaseDataset):
 
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
-        ann_file (str, optional): Path of annotation file. Defaults to ''.
+        ann_file (str): Path of annotation file. Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
+        modality (dict): Modality to specify the sensor data used
             as input, it usually has following keys:
 
                 - use_camera: bool
@@ -37,12 +37,12 @@ class Seg3DDataset(BaseDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        load_eval_anns (bool, optional): Whether to load annotations
-            in test_mode, the annotation will be save in
-            `eval_ann_infos`, which can be use in Evaluator.
-        file_client_args (dict, optional): Configuration of file client.
+        load_eval_anns (bool): Whether to load annotations in test_mode,
+            the annotation will be save in `eval_ann_infos`, which can be used
+            in Evaluator. Defaults to True.
+        file_client_args (dict): Configuration of file client.
             Defaults to dict(backend='disk').
     """
     METAINFO = {
@@ -142,7 +142,7 @@ class Seg3DDataset(BaseDataset):
 
         Returns:
             tuple: The mapping from old classes in cls.METAINFO to
-                new classes in metainfo
+            new classes in metainfo
         """
         old_classes = self.METAINFO.get('CLASSES', None)
         if (new_classes is not None and old_classes is not None

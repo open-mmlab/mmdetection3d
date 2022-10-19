@@ -17,15 +17,15 @@ class SemanticKITTIDataset(Seg3DDataset):
 
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
-        ann_file (str, optional): Path of annotation file. Defaults to ''.
+        ann_file (str): Path of annotation file. Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
+        data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', img='', instance_mask='', semantic_mask='').
         pipeline (list[dict], optional): Pipeline used for data processing.
             Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input, it usually has following keys:
+        modality (dict): Modality to specify the sensor data used as input,
+            it usually has following keys:
 
                 - use_camera: bool
                 - use_lidar: bool
@@ -37,7 +37,7 @@ class SemanticKITTIDataset(Seg3DDataset):
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {

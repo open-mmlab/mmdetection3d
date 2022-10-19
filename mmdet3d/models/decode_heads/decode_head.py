@@ -41,17 +41,16 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
     Args:
         channels (int): Channels after modules, before conv_seg.
         num_classes (int): Number of classes.
-        dropout_ratio (float, optional): Ratio of dropout layer.
-            Defaults to 0.5.
-        conv_cfg (dict, optional): Config of conv layers.
+        dropout_ratio (float): Ratio of dropout layer. Defaults to 0.5.
+        conv_cfg (dict): Config of conv layers.
             Defaults to dict(type='Conv1d').
-        norm_cfg (dict, optional): Config of norm layers.
+        norm_cfg (dict): Config of norm layers.
             Defaults to dict(type='BN1d').
-        act_cfg (dict, optional): Config of activation layers.
+        act_cfg (dict): Config of activation layers.
             Defaults to dict(type='ReLU').
-        loss_decode (dict, optional): Config of decode loss.
+        loss_decode (dict): Config of decode loss.
             Defaults to dict(type='CrossEntropyLoss').
-        ignore_index (int, optional): The label index to be ignored.
+        ignore_index (int): The label index to be ignored.
             When using masked BCE loss, ignore_index should be set to None.
             Defaults to 255.
         init_cfg (dict or list[dict], optional): Initialization config dict.
