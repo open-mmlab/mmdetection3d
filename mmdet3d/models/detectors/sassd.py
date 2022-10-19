@@ -49,8 +49,8 @@ class SASSD(SingleStage3DDetector):
         Returns:
             Union[Tuple[Tuple[Tensor], Tuple], Tuple[Tensor]]: In test mode, it
             returns the features of points from multiple levels. In training
-            mode, it returns the features of points multiple levels and a tuple
-            containing the mean features of points and the targets of
+            mode, it returns the features of points from multiple levels and a
+            tuple containing the mean features of points and the targets of
             clssification and regression.
         """
         voxel_dict = batch_inputs_dict['voxels']

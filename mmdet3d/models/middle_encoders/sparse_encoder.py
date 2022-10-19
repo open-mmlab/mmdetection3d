@@ -344,14 +344,14 @@ class SparseEncoderSASSD(SparseEncoder):
     def get_auxiliary_targets(self,
                               points_feats: Tensor,
                               gt_bboxes_3d: List[BaseInstance3DBoxes],
-                              enlarge: int = 1.0) -> Tuple[Tensor, Tensor]:
+                              enlarge: float = 1.0) -> Tuple[Tensor, Tensor]:
         """Get auxiliary target.
 
         Args:
             points_feats (torch.Tensor): Mean features of the points.
             gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]):  Ground truth
                 boxes for each sample.
-            enlarge (int, optional): Enlaged scale. Defaults to 1.0.
+            enlarge (float, optional): Enlaged scale. Defaults to 1.0.
 
         Returns:
             tuple[torch.Tensor]: Label of the points and
