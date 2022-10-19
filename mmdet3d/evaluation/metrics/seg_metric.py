@@ -12,11 +12,13 @@ from mmdet3d.registry import METRICS
 @METRICS.register_module()
 class SegMetric(MeanIoU):
     """A wrapper of ``mmeval.MeanIoU`` for 3D semantic segmentation.
+
     This wrapper implements the `process` method that parses predictions and
     labels from inputs. This enables ``mmengine.Evaluator`` to handle the data
     flow of different tasks through a unified interface.
     In addition, this wrapper also implements the ``evaluate`` method that
     parses metric results and print pretty table of metrics per class.
+
     Args:
         dist_backend (str | None): The name of the distributed communication
             backend. Refer to :class:`mmeval.BaseMetric`.
@@ -70,6 +72,7 @@ class SegMetric(MeanIoU):
         This method would be invoked by ``mmengine.Evaluator``.
         """
         metric_results = self.compute(*args, **kwargs)
+        self.reset()
 
         classwise_results = metric_results['classwise_results']
         del metric_results['classwise_results']
