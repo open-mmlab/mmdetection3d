@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import Tuple, Union
 
 from torch import Tensor
 
@@ -35,10 +35,24 @@ class SASSD(SingleStage3DDetector):
         self.voxel_encoder = MODELS.build(voxel_encoder)
         self.middle_encoder = MODELS.build(middle_encoder)
 
-    def extract_feat(self,
-                     batch_inputs_dict: dict,
-                     test_mode: bool = True) -> Tuple[Tensor]:
-        """Extract features from points."""
+    def extract_feat(
+        self,
+        batch_inputs_dict: dict,
+        test_mode: bool = True
+    ) -> Union[Tuple[Tuple[Tensor], Tuple], Tuple[Tensor]]:
+        """Extract features from points.
+
+        Args:
+            batch_inputs_dict (dict): The batch inputs.
+            test_mode (bool, optional): Whether test mode. Defaults to True.
+
+        Returns:
+            Union[Tuple[Tuple[Tensor], Tuple], Tuple[Tensor]]: In test mode, it
+            returns the features of points from multiple levels. In training
+            mode, it returns the features of points multiple levels and a tuple
+            containing the mean features of points and the targets of
+            clssification and regression.
+        """
         voxel_dict = batch_inputs_dict['voxels']
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
@@ -63,9 +77,7 @@ class SASSD(SingleStage3DDetector):
         Args:
             batch_inputs_dict (dict): The model input dict which include
                 'points' keys.
-
                     - points (list[torch.Tensor]): Point cloud of each sample.
-                    - imgs (torch.Tensor, optional): Image of each sample.
 
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 Samples. It usually includes information such as

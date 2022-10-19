@@ -272,7 +272,7 @@ class SparseEncoderSASSD(SparseEncoder):
                 voxel_features: Tensor,
                 coors: Tensor,
                 batch_size: Tensor,
-                test_mode: bool = False) -> Tuple[dict, tuple]:
+                test_mode: bool = False) -> Tuple[Tensor, tuple]:
         """Forward of SparseEncoder.
 
         Args:
@@ -284,7 +284,7 @@ class SparseEncoderSASSD(SparseEncoder):
                 Defaults to False.
 
         Returns:
-            dict: Backbone features.
+            Tensor: Backbone features.
             tuple[torch.Tensor]: Mean feature value of the points,
                 Classification result of the points,
                 Regression offsets of the points.
@@ -342,14 +342,14 @@ class SparseEncoderSASSD(SparseEncoder):
         return spatial_features, point_misc
 
     def get_auxiliary_targets(self,
-                              nxyz: Tensor,
-                              gt_boxes_3d: List[BaseInstance3DBoxes],
+                              points_feats: Tensor,
+                              gt_bboxes_3d: List[BaseInstance3DBoxes],
                               enlarge: int = 1.0) -> Tuple[Tensor, Tensor]:
         """Get auxiliary target.
 
         Args:
-            nxyz (torch.Tensor): Mean features of the points.
-            gt_boxes_3d (list[:obj:`BaseInstance3DBoxes`]):  Ground truth
+            points_feats (torch.Tensor): Mean features of the points.
+            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]):  Ground truth
                 boxes for each sample.
             enlarge (int, optional): Enlaged scale. Defaults to 1.0.
 
@@ -359,20 +359,20 @@ class SparseEncoderSASSD(SparseEncoder):
         """
         center_offsets = list()
         pts_labels = list()
-        for i in range(len(gt_boxes_3d)):
-            boxes3d = gt_boxes_3d[i].tensor.cpu()
-            idx = torch.nonzero(nxyz[:, 0] == i).view(-1)
-            new_xyz = nxyz[idx, 1:].cpu()
+        for i in range(len(gt_bboxes_3d)):
+            boxes3d = gt_bboxes_3d[i].tensor.detach().clone()
+            idx = torch.nonzero(points_feats[:, 0] == i).view(-1)
+            point_xyz = points_feats[idx, 1:].detach().clone()
 
             boxes3d[:, 3:6] *= enlarge
 
             pts_in_flag, center_offset = self.calculate_pts_offsets(
-                new_xyz, boxes3d)
+                point_xyz, boxes3d)
             pts_label = pts_in_flag.max(0)[0].byte()
             pts_labels.append(pts_label)
             center_offsets.append(center_offset)
 
-        center_offsets = torch.cat(center_offsets).cuda()
+        center_offsets = torch.cat(center_offsets)
         pts_labels = torch.cat(pts_labels).to(center_offsets.device)
 
         return pts_labels, center_offsets
@@ -383,7 +383,7 @@ class SparseEncoderSASSD(SparseEncoder):
         the box centers.
 
         Args:
-            points (torch.Tensor): [M, 3], [x, y, z] in LiDAR/DEPTH coordinate
+            points (torch.Tensor): [M, 3], [x, y, z] in LiDAR coordinate
             bboxes_3d (torch.Tensor): [T, 7],
                 num_valid_boxes <= T, [x, y, z, x_size, y_size, z_size, rz],
                 (x, y, z) is the bottom center.
@@ -397,14 +397,10 @@ class SparseEncoderSASSD(SparseEncoder):
         """
         boxes_num = len(bboxes_3d)
         pts_num = len(points)
-        points = points.cuda()
-        bboxes_3d = bboxes_3d.to(points.device)
 
-        box_idxs_of_pts = points_in_boxes_all(points[None, ...],
-                                              bboxes_3d[None, ...])
-
-        pts_indices = box_idxs_of_pts.squeeze(0).transpose(0, 1)
-
+        box_indices = points_in_boxes_all(points[None, ...], bboxes_3d[None,
+                                                                       ...])
+        pts_indices = box_indices.squeeze(0).transpose(0, 1)
         center_offsets = torch.zeros_like(points).to(points.device)
 
         for i in range(boxes_num):
@@ -415,7 +411,7 @@ class SparseEncoderSASSD(SparseEncoder):
                     center_offsets[j][2] = (
                         points[j][2] -
                         (bboxes_3d[i][2] + bboxes_3d[i][2] / 2.0))
-        return pts_indices.cpu(), center_offsets.cpu()
+        return pts_indices, center_offsets
 
     def aux_loss(self, points: Tensor, point_cls: Tensor, point_reg: Tensor,
                  gt_bboxes_3d: Tensor) -> dict:
