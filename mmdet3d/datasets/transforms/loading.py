@@ -31,7 +31,8 @@ class LoadMultiViewImageFromFiles(BaseTransform):
         num_views (int): Number of view in a frame. Defaults to 5.
         num_ref_frames (int): Number of frame in loading. Defaults to -1.
         test_mode (bool): Whether is test mode in loading. Defaults to False.
-        set_default_scale (bool): Whether to set default scale. Defaults to True.
+        set_default_scale (bool): Whether to set default scale.
+            Defaults to True.
     """
 
     def __init__(self,
