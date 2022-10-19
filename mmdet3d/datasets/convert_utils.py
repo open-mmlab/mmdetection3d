@@ -207,7 +207,7 @@ def get_kitti_style_2d_boxes(info: dict,
             3 = unknown, -1 = DontCare.
             Defaults to (0, 1, 2, 3).
         annos (dict, optional): Original annotations. Defaults to None.
-        mono3d (bool, optional): Whether to get boxes with mono3d annotation.
+        mono3d (bool): Whether to get boxes with mono3d annotation.
             Defaults to True.
         dataset (str): Dataset name of getting 2d bboxes.
             Defaults to 'kitti'.
@@ -345,6 +345,7 @@ def post_process_coords(
         corner_coords (list[int]): Corner coordinates of reprojected
             bounding box.
         imsize (tuple[int]): Size of the image canvas.
+            Defaults to (1600, 900).
 
     Return:
         tuple[float]: Intersection of the convex hull of the 2D box
