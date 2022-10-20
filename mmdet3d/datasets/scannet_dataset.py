@@ -47,7 +47,7 @@ class ScanNetDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
@@ -194,19 +194,19 @@ class ScanNetSegDataset(Seg3DDataset):
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
+            unannotated points. If None is given, set to len(self.classes).
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
          'window', 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
          'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
          'otherfurniture'),
-        'PALETTE': [
+        'palette': [
             [174, 199, 232],
             [152, 223, 138],
             [31, 119, 180],
@@ -275,7 +275,7 @@ class ScanNetSegDataset(Seg3DDataset):
 class ScanNetInstanceSegDataset(Seg3DDataset):
 
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),

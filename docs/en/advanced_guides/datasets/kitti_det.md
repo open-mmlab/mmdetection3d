@@ -81,7 +81,7 @@ kitti
 
 - `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
 - `kitti_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
-  `metainfo` is a dict, it contains the essential information for the dataset, such as `CLASSES` and `version`.
+  `metainfo` is a dict, it contains the essential information for the dataset, such as `classes` and `version`.
   `data_list` is a list, it has all the needed data information, and each item is detailed information dict for a single sample. Detailed information is as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['images'\]: Information of images captured by multiple cameras. A dict contains five keys including: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.

@@ -3,7 +3,7 @@ class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
                'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
                'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
                'bathtub', 'otherfurniture')
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 dataset_type = 'ScanNetSegDataset'
 data_root = 'data/scannet/'
 input_modality = dict(use_lidar=True, use_camera=False)

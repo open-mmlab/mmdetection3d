@@ -77,7 +77,7 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')
 
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 train_pipeline = [
     dict(

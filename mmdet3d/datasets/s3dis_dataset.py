@@ -43,7 +43,7 @@ class S3DISDataset(Det3DDataset):
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
     """
-    CLASSES = ('table', 'chair', 'sofa', 'bookcase', 'board')
+    classes = ('table', 'chair', 'sofa', 'bookcase', 'board')
 
     def __init__(self,
                  data_root,
@@ -146,7 +146,7 @@ class S3DISDataset(Det3DDataset):
                 use_dim=[0, 1, 2, 3, 4, 5]),
             dict(
                 type='DefaultFormatBundle3D',
-                class_names=self.CLASSES,
+                class_names=self.classes,
                 with_label=False),
             dict(type='Collect3D', keys=['points'])
         ]
@@ -179,17 +179,17 @@ class _S3DISSegDataset(Seg3DDataset):
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
+            unannotated points. If None is given, set to len(self.classes).
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
          'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter'),
-        'PALETTE': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
+        'palette': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
                     [255, 0, 255], [100, 100, 255], [200, 200, 100],
                     [170, 120, 200], [255, 0, 0], [200, 100, 100],
                     [10, 200, 100], [200, 200, 200], [50, 50, 50]],
@@ -263,7 +263,7 @@ class S3DISSegDataset(_S3DISSegDataset):
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
+            unannotated points. If None is given, set to len(self.classes).
             Defaults to None.
         scene_idxs (list[np.ndarray] | list[str], optional): Precomputed index
             to load data. For scenes with many points, we may sample it several
