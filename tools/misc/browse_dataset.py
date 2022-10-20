@@ -71,7 +71,7 @@ def build_data_cfg(config_path, aug, cfg_options):
     if aug:
         show_pipeline = cfg.train_pipeline
     else:
-        show_pipeline = cfg.eval_pipeline
+        show_pipeline = cfg.test_pipeline
         for i in range(len(cfg.train_pipeline)):
             if cfg.train_pipeline[i]['type'] == 'LoadAnnotations3D':
                 show_pipeline.insert(i, cfg.train_pipeline[i])
@@ -117,13 +117,20 @@ def main():
 
     progress_bar = ProgressBar(len(dataset))
 
-    for item in dataset:
+    for i, item in enumerate(dataset):
         # the 3D Boxes in input could be in any of three coordinates
         data_input = item['inputs']
         data_sample = item['data_samples'].numpy()
 
         out_file = osp.join(
-            args.output_dir) if args.output_dir is not None else None
+            args.output_dir,
+            f'{i}.jpg') if args.output_dir is not None else None
+
+        # o3d_save_path is valid when args.not_show is False
+        o3d_save_path = osp.join(args.output_dir, f'pc_{i}.png') if (
+            args.output_dir is not None
+            and vis_task in ['lidar_det', 'lidar_seg', 'multi-modality_det']
+            and not args.not_show) else None
 
         visualizer.add_datasample(
             '3d visualzier',
@@ -132,6 +139,7 @@ def main():
             show=not args.not_show,
             wait_time=args.show_interval,
             out_file=out_file,
+            o3d_save_path=o3d_save_path,
             vis_task=vis_task)
 
         progress_bar.update()

@@ -67,7 +67,7 @@ class WaymoMetric(KittiMetric):
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
                  submission_prefix: str = None,
-                 task='lidar',
+                 task='lidar_det',
                  default_cam_key: str = 'CAM_FRONT',
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
@@ -106,7 +106,7 @@ class WaymoMetric(KittiMetric):
         self.data_infos = load(self.ann_file)['data_list']
         # different from kitti, waymo do not need to convert the ann file
         # handle the mono3d task
-        if self.task == 'mono3d':
+        if self.task == 'mono_det':
             new_data_infos = []
             for info in self.data_infos:
                 height = info['images'][self.default_cam_key]['height']
@@ -461,7 +461,7 @@ class WaymoMetric(KittiMetric):
                 # If you want to use another camera, please modify it.
                 image_shape = (info['images'][self.default_cam_key]['height'],
                                info['images'][self.default_cam_key]['width'])
-            if self.task == 'mono3d':
+            if self.task == 'mono_det':
                 box_dict_per_frame.append(box_dict)
                 if (idx + 1) % self.num_cams != 0:
                     continue
@@ -600,9 +600,9 @@ class WaymoMetric(KittiMetric):
                 sample_idx=sample_idx)
         # Here default used 'CAM2' to compute metric. If you want to
         # use another camera, please modify it.
-        if self.task in ['mv3d', 'lidar']:
+        if self.task in ['mv3d_det', 'lidar_det']:
             cam_key = self.default_cam_key
-        elif self.task == 'mono3d':
+        elif self.task == 'mono_det':
             cam_key = list(info['images'].keys())[0]
         else:
             raise NotImplementedError
@@ -635,12 +635,12 @@ class WaymoMetric(KittiMetric):
                           (box_2d_preds[:, 1] < image_shape[0]) &
                           (box_2d_preds[:, 2] > 0) & (box_2d_preds[:, 3] > 0))
         # check box_preds_lidar
-        if self.task in ['lidar', 'mono3d']:
+        if self.task in ['mv3d_det', 'lidar_det']:
             limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
             valid_pcd_inds = ((box_preds_lidar.center > limit_range[:3]) &
                               (box_preds_lidar.center < limit_range[3:]))
             valid_inds = valid_pcd_inds.all(-1)
-        elif self.task == 'mono3d':
+        elif self.task == 'mono_det':
             valid_inds = valid_cam_inds
 
         if valid_inds.sum() > 0:
