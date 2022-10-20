@@ -733,8 +733,7 @@ def update_sunrgbd_infos(pkl_path, out_dir):
     metainfo['dataset'] = 'sunrgbd'
     metainfo['info_version'] = '1.1'
 
-    converted_data_info = dict(
-        metainfo={'DATASET': 'SUNRGBD'}, data_list=converted_list)
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
