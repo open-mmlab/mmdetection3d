@@ -3,14 +3,14 @@ import warnings
 from typing import Sequence
 
 from mmengine.logging import print_log
-from mmeval.metrics import MeanIoU
+# from mmeval.metrics import MeanIoU
 from terminaltables import AsciiTable
 
 from mmdet3d.registry import METRICS
 
 
 @METRICS.register_module()
-class SegMetric(MeanIoU):
+class SegMetric(object):
     """A wrapper of ``mmeval.MeanIoU`` for 3D semantic segmentation.
 
     This wrapper implements the `process` method that parses predictions and

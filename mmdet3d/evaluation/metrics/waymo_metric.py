@@ -403,7 +403,7 @@ class WaymoMetric(KittiMetric):
         lidar2cam = cam0_info['images'][self.default_cam_key]['lidar2img']
         lidar2cam = np.array(lidar2cam).astype(np.float32)
         box_preds_camera = box_preds_lidar.convert_to(
-            Box3DMode.CAM, np.linalg.inv(lidar2cam), correct_yaw=True)
+            Box3DMode.CAM, lidar2cam, correct_yaw=True)
         # Note: bbox is meaningless in final evaluation, set to 0
         merged_box_dict = dict(
             bbox=np.zeros([box_preds_lidar.tensor.shape[0], 4]),

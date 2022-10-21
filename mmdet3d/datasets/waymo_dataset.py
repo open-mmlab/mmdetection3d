@@ -189,10 +189,17 @@ class WaymoDataset(KittiDataset):
     def parse_data_info(self, info: dict) -> dict:
         """if task is lidar or multiview det, use super() method elif task is
         mono3d, split the info from frame-wise to img-wise."""
-        if self.task != 'mv_image_based':
-            if self.cam_sync_instances:
-                # use the cam sync labels
-                info['instances'] = info['cam_sync_instances']
+
+        if self.cam_sync_instances:
+            info['instances'] = info['cam_sync_instances']
+
+        if self.load_type == 'frame_based':
+            return super().parse_data_info(info)
+        elif self.load_type == 'fov_image_based':
+            new_image_info = {}
+            new_image_info[self.default_cam_key] = \
+                info['images'][self.default_cam_key]
+            info['images'] = new_image_info
             return super().parse_data_info(info)
         else:
             # in the mono3d, the instances is from cam sync.
