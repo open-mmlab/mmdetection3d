@@ -122,7 +122,7 @@ def show_det_data(input, out_dir, show=False):
         snapshot=True)
 
 
-def show_seg_data(input, out_dir, show=False):
+def show_seg_data(input, out_dir, ignore_index, palette, show=False):
     """Visualize 3D point cloud and segmentation mask."""
     img_metas = input['img_metas']._data
     points = input['points']._data.numpy()
@@ -134,8 +134,8 @@ def show_seg_data(input, out_dir, show=False):
         None,
         out_dir,
         filename,
-        np.array(img_metas['PALETTE']),
-        img_metas['ignore_index'],
+        np.array(palette),
+        ignore_index,
         show=show,
         snapshot=True)
 
@@ -224,7 +224,12 @@ def main():
                 is_nus_mono=(dataset_type == 'NuScenesMonoDataset'))
         elif vis_task in ['seg']:
             # show 3D segmentation mask on 3D point clouds
-            show_seg_data(input, args.output_dir, show=args.online)
+            show_seg_data(
+                input,
+                args.output_dir,
+                dataset.ignore_index,
+                dataset.PALETTE,
+                show=args.online)
         progress_bar.update()
 
 
