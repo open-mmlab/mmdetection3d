@@ -1,6 +1,7 @@
 _base_ = [
-    '../_base_/datasets/waymoD5-mono3d-3class.py', '../_base_/models/pgd.py',
-    '../_base_/schedules/mmdet-schedule-1x.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/waymoD5-mono3d-mv-3class.py',
+    '../_base_/models/pgd.py', '../_base_/schedules/mmdet-schedule-1x.py',
+    '../_base_/default_runtime.py'
 ]
 # model settings
 model = dict(

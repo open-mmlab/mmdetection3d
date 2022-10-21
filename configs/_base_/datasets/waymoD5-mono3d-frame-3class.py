@@ -81,7 +81,7 @@ train_dataloader = dict(
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
-        load_type='fov_image_based',
+        load_type='mv_image_based',
         # load one frame every three frames
         load_interval=5))
 
@@ -109,7 +109,7 @@ val_dataloader = dict(
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
-        load_type='fov_image_based',
+        load_type='mv_image_based',
     ))
 
 test_dataloader = dict(
@@ -136,7 +136,7 @@ test_dataloader = dict(
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
-        load_type='fov_image_based',
+        load_type='mv_image_based',
     ))
 
 val_evaluator = dict(
@@ -145,6 +145,6 @@ val_evaluator = dict(
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
     data_root='./data/waymo/waymo_format',
     metric='LET_mAP',
-    load_type='fov_image_based',
+    load_type='mv_image_based',
 )
 test_evaluator = val_evaluator

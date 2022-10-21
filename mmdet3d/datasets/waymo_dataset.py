@@ -45,6 +45,14 @@ class WaymoDataset(KittiDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
+        load_type (str, optional): Type of loading mode.
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_base': Only load the instances inside the default cam,
+                and need to convert to the FOV-based data type to support
+                image-based detector.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
             Defaults to True.
         test_mode (bool, optional): Whether the dataset is in test mode.
@@ -56,10 +64,6 @@ class WaymoDataset(KittiDataset):
             supported from waymo version 1.3.1. Defaults to False.
         load_interval (int, optional): load frame interval.
             Defaults to 1.
-        task (str, optional): task for 3D detection (lidar, mono3d).
-            lidar: take all the ground trurh in the frame.
-            mono3d: take the groundtruth that can be seen in the cam.
-            Defaults to 'lidar'.
         max_sweeps (int, optional): max sweep for each frame. Defaults to 0.
     """
     METAINFO = {'CLASSES': ('Car', 'Pedestrian', 'Cyclist')}
@@ -78,12 +82,12 @@ class WaymoDataset(KittiDataset):
                  modality: Optional[dict] = dict(use_lidar=True),
                  default_cam_key: str = 'CAM_FRONT',
                  box_type_3d: str = 'LiDAR',
+                 load_type: str = 'frame_based',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  cam_sync_instances=False,
                  load_interval=1,
-                 task='lidar_det',
                  max_sweeps=0,
                  **kwargs):
         self.load_interval = load_interval
@@ -107,7 +111,7 @@ class WaymoDataset(KittiDataset):
             default_cam_key=default_cam_key,
             data_prefix=data_prefix,
             test_mode=test_mode,
-            task=task,
+            load_type=load_type,
             **kwargs)
 
     def parse_ann_info(self, info: dict) -> dict:
@@ -150,7 +154,7 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        if self.task == 'mono_det':
+        if self.load_type in ['fov_img_based', 'mv_image_based']:
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
@@ -185,7 +189,7 @@ class WaymoDataset(KittiDataset):
     def parse_data_info(self, info: dict) -> dict:
         """if task is lidar or multiview det, use super() method elif task is
         mono3d, split the info from frame-wise to img-wise."""
-        if self.task != 'mono_det':
+        if self.task != 'mv_image_based':
             if self.cam_sync_instances:
                 # use the cam sync labels
                 info['instances'] = info['cam_sync_instances']
@@ -221,7 +225,7 @@ class WaymoDataset(KittiDataset):
 
                 # TODO check if need to modify the sample id
                 # TODO check when will use it except for evaluation.
-                camera_info['sample_id'] = info['sample_id']
+                camera_info['sample_idx'] = info['sample_idx']
 
                 if not self.test_mode:
                     # used in training
