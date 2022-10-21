@@ -22,8 +22,8 @@ class Seg3DDataset(BaseDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         modality (dict): Modality to specify the sensor data used
             as input, it usually has following keys:
 

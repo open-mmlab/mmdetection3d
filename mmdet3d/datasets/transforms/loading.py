@@ -22,12 +22,10 @@ class LoadMultiViewImageFromFiles(BaseTransform):
     Args:
         to_float32 (bool): Whether to convert the img to float32.
             Defaults to False.
-        color_type (str): Color type of the file.
-            Defaults to 'unchanged'.
-        file_client_args (dict): Config dict of file clients,
-            refer to
-            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
-            for more details. Defaults to dict(backend='disk').
+        color_type (str): Color type of the file. Defaults to 'unchanged'.
+        file_client_args (dict): Arguments to instantiate a FileClient.
+            See :class:`mmengine.fileio.FileClient` for details.
+            Defaults to dict(backend='disk').
         num_views (int): Number of view in a frame. Defaults to 5.
         num_ref_frames (int): Number of frame in loading. Defaults to -1.
         test_mode (bool): Whether is test mode in loading. Defaults to False.
@@ -63,7 +61,7 @@ class LoadMultiViewImageFromFiles(BaseTransform):
 
         Returns:
             dict: The result dict containing the multi-view image data.
-                Added keys and values are described below.
+            Added keys and values are described below.
 
                 - filename (str): Multi-view image filenames.
                 - img (np.ndarray): Multi-view image arrays.
@@ -276,22 +274,17 @@ class LoadPointsFromMultiSweeps(BaseTransform):
     This is usually used for nuScenes dataset to utilize previous sweeps.
 
     Args:
-        sweeps_num (int, optional): Number of sweeps. Defaults to 10.
-        load_dim (int, optional): Dimension number of the loaded points.
-            Defaults to 5.
-        use_dim (list[int], optional): Which dimension to use.
-            Defaults to [0, 1, 2, 4].
-        file_client_args (dict, optional): Config dict of file clients,
-            refer to
-            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
-            for more details. Defaults to dict(backend='disk').
-        pad_empty_sweeps (bool, optional): Whether to repeat keyframe when
+        sweeps_num (int): Number of sweeps. Defaults to 10.
+        load_dim (int): Dimension number of the loaded points. Defaults to 5.
+        use_dim (list[int]): Which dimension to use. Defaults to [0, 1, 2, 4].
+        file_client_args (dict): Arguments to instantiate a FileClient.
+            See :class:`mmengine.fileio.FileClient` for details.
+            Defaults to dict(backend='disk').
+        pad_empty_sweeps (bool): Whether to repeat keyframe when
             sweeps is empty. Defaults to False.
-        remove_close (bool, optional): Whether to remove close points.
-            Defaults to False.
-        test_mode (bool, optional): If `test_mode=True`, it will not
-            randomly sample sweeps but select the nearest N frames.
-            Defaults to False.
+        remove_close (bool): Whether to remove close points. Defaults to False.
+        test_mode (bool): If `test_mode=True`, it will not randomly sample
+            sweeps but select the nearest N frames. Defaults to False.
     """
 
     def __init__(self,
@@ -340,7 +333,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
 
         Args:
             points (np.ndarray | :obj:`BasePoints`): Sweep points.
-            radius (float, optional): Radius below which points are removed.
+            radius (float): Radius below which points are removed.
                 Defaults to 1.0.
 
         Returns:
@@ -366,7 +359,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
 
         Returns:
             dict: The result dict containing the multi-sweep points data.
-                Updated key and value are described below.
+            Updated key and value are described below.
 
                 - points (np.ndarray | :obj:`BasePoints`): Multi-sweep point
                   cloud arrays.
@@ -444,7 +437,7 @@ class PointSegClassMapping(BaseTransform):
 
         Returns:
             dict: The result dict containing the mapped category ids.
-                Updated key and value are described below.
+            Updated key and value are described below.
 
                 - pts_semantic_mask (np.ndarray): Mapped semantic masks.
         """
@@ -490,7 +483,7 @@ class NormalizePointsColor(BaseTransform):
 
         Returns:
             dict: The result dict containing the normalized points.
-                Updated key and value are described below.
+            Updated key and value are described below.
 
                 - points (:obj:`BasePoints`): Points after color normalization.
         """
@@ -533,19 +526,15 @@ class LoadPointsFromFile(BaseTransform):
             - 'LIDAR': Points in LiDAR coordinates.
             - 'DEPTH': Points in depth coordinates, usually for indoor dataset.
             - 'CAMERA': Points in camera coordinates.
-        load_dim (int, optional): The dimension of the loaded points.
-            Defaults to 6.
-        use_dim (list[int] | int, optional): Which dimensions of the points
-            to use. Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
+        load_dim (int): The dimension of the loaded points. Defaults to 6.
+        use_dim (list[int] | int): Which dimensions of the points to use.
+            Defaults to [0, 1, 2]. For KITTI dataset, set use_dim=4
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
-        shift_height (bool, optional): Whether to use shifted height.
-            Defaults to False.
-        use_color (bool, optional): Whether to use color features.
-            Defaults to False.
-        file_client_args (dict, optional): Config dict of file clients,
-            refer to
-            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
-            for more details. Defaults to dict(backend='disk').
+        shift_height (bool): Whether to use shifted height. Defaults to False.
+        use_color (bool): Whether to use color features. Defaults to False.
+        file_client_args (dict): Arguments to instantiate a FileClient.
+            See :class:`mmengine.fileio.FileClient` for details.
+            Defaults to dict(backend='disk').
     """
 
     def __init__(
@@ -602,7 +591,7 @@ class LoadPointsFromFile(BaseTransform):
 
         Returns:
             dict: The result dict containing the point clouds data.
-                Added key and value are described below.
+            Added key and value are described below.
 
                 - points (:obj:`BasePoints`): Point clouds data.
         """
@@ -713,33 +702,25 @@ class LoadAnnotations3D(LoadAnnotations):
       Only when `with_seg_3d` is True.
 
     Args:
-        with_bbox_3d (bool, optional): Whether to load 3D boxes.
+        with_bbox_3d (bool): Whether to load 3D boxes. Defaults to True.
+        with_label_3d (bool): Whether to load 3D labels. Defaults to True.
+        with_attr_label (bool): Whether to load attribute label.
+            Defaults to False.
+        with_mask_3d (bool): Whether to load 3D instance masks for points.
+            Defaults to False.
+        with_seg_3d (bool): Whether to load 3D semantic masks for points.
+            Defaults to False.
+        with_bbox (bool): Whether to load 2D boxes. Defaults to False.
+        with_label (bool): Whether to load 2D labels. Defaults to False.
+        with_mask (bool): Whether to load 2D instance masks. Defaults to False.
+        with_seg (bool): Whether to load 2D semantic masks. Defaults to False.
+        with_bbox_depth (bool): Whether to load 2.5D boxes. Defaults to False.
+        poly2mask (bool): Whether to convert polygon annotations to bitmasks.
             Defaults to True.
-        with_label_3d (bool, optional): Whether to load 3D labels.
-            Defaults to True.
-        with_attr_label (bool, optional): Whether to load attribute label.
-            Defaults to False.
-        with_mask_3d (bool, optional): Whether to load 3D instance masks.
-            for points. Defaults to False.
-        with_seg_3d (bool, optional): Whether to load 3D semantic masks.
-            for points. Defaults to False.
-        with_bbox (bool, optional): Whether to load 2D boxes.
-            Defaults to False.
-        with_label (bool, optional): Whether to load 2D labels.
-            Defaults to False.
-        with_mask (bool, optional): Whether to load 2D instance masks.
-            Defaults to False.
-        with_seg (bool, optional): Whether to load 2D semantic masks.
-            Defaults to False.
-        with_bbox_depth (bool, optional): Whether to load 2.5D boxes.
-            Defaults to False.
-        poly2mask (bool, optional): Whether to convert polygon annotations
-            to bitmasks. Defaults to True.
-        seg_3d_dtype (dtype, optional): Dtype of 3D semantic masks.
-            Defaults to int64.
-        file_client_args (dict): Config dict of file clients, refer to
-            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
-            for more details.
+        seg_3d_dtype (dtype): Dtype of 3D semantic masks. Defaults to int64.
+        file_client_args (dict): Arguments to instantiate a FileClient.
+            See :class:`mmengine.fileio.FileClient` for details.
+            Defaults to dict(backend='disk').
     """
 
     def __init__(

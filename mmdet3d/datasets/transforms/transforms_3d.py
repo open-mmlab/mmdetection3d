@@ -30,7 +30,7 @@ class RandomDropPointsColor(BaseTransform):
     util/transform.py#L223>`_ for more details.
 
     Args:
-        drop_ratio (float, optional): The probability of dropping point colors.
+        drop_ratio (float): The probability of dropping point colors.
             Defaults to 0.2.
     """
 
@@ -46,8 +46,8 @@ class RandomDropPointsColor(BaseTransform):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after color dropping,
-                'points' key is updated in the result dict.
+            dict: Results after color dropping, 'points' key is updated
+            in the result dict.
         """
         points = input_dict['points']
         assert points.attribute_dims is not None and \
@@ -150,12 +150,11 @@ class RandomFlip3D(RandomFlip):
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
-            direction (str, optional): Flip direction.
-                Defaults to 'horizontal'.
+            direction (str): Flip direction. Defaults to 'horizontal'.
 
         Returns:
             dict: Flipped results, 'points', 'bbox3d_fields' keys are
-                updated in the result dict.
+            updated in the result dict.
         """
         assert direction in ['horizontal', 'vertical']
         if self.flip_box3d:
@@ -210,8 +209,8 @@ class RandomFlip3D(RandomFlip):
 
         Returns:
             dict: Flipped results, 'flip', 'flip_direction',
-                'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added
-                into result dict.
+            'pcd_horizontal_flip' and 'pcd_vertical_flip' keys are added
+            into result dict.
         """
         # flip 2D image and its annotations
         if 'img' in input_dict:
@@ -267,7 +266,7 @@ class RandomJitterPoints(BaseTransform):
 
     Note:
         This transform should only be used in point cloud segmentation tasks
-            because we don't transform ground-truth bboxes accordingly.
+        because we don't transform ground-truth bboxes accordingly.
         For similar transform in detection task, please refer to `ObjectNoise`.
     """
 
@@ -296,7 +295,7 @@ class RandomJitterPoints(BaseTransform):
 
         Returns:
             dict: Results after adding noise to each point,
-                'points' key is updated in the result dict.
+            'points' key is updated in the result dict.
         """
         points = input_dict['points']
         jitter_std = np.array(self.jitter_std, dtype=np.float32)
@@ -386,8 +385,8 @@ class ObjectSample(BaseTransform):
 
         Returns:
             dict: Results after object sampling augmentation,
-                'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated
-                in the result dict.
+            'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated
+            in the result dict.
         """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
@@ -469,15 +468,15 @@ class ObjectNoise(BaseTransform):
     - gt_bboxes_3d
 
     Args:
-        translation_std (list[float], optional): Standard deviation of the
+        translation_std (list[float]): Standard deviation of the
             distribution where translation noise are sampled from.
             Defaults to [0.25, 0.25, 0.25].
-        global_rot_range (list[float], optional): Global rotation to the scene.
+        global_rot_range (list[float]): Global rotation to the scene.
             Defaults to [0.0, 0.0].
-        rot_range (list[float], optional): Object rotation range.
+        rot_range (list[float]): Object rotation range.
             Defaults to [-0.15707963267, 0.15707963267].
-        num_try (int, optional): Number of times to try if the noise applied is
-            invalid. Defaults to 100.
+        num_try (int): Number of times to try if the noise applied is invalid.
+            Defaults to 100.
     """
 
     def __init__(self,
@@ -498,7 +497,7 @@ class ObjectNoise(BaseTransform):
 
         Returns:
             dict: Results after adding noise to each object,
-                'points', 'gt_bboxes_3d' keys are updated in the result dict.
+            'points', 'gt_bboxes_3d' keys are updated in the result dict.
         """
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         points = input_dict['points']
@@ -538,10 +537,10 @@ class GlobalAlignment(BaseTransform):
 
     Note:
         We do not record the applied rotation and translation as in
-            GlobalRotScaleTrans. Because usually, we do not need to reverse
-            the alignment step.
+        GlobalRotScaleTrans. Because usually, we do not need to reverse
+        the alignment step.
         For example, ScanNet 3D detection task uses aligned ground-truth
-            bounding boxes for evaluation.
+        bounding boxes for evaluation.
     """
 
     def __init__(self, rotation_axis: int) -> None:
@@ -593,7 +592,7 @@ class GlobalAlignment(BaseTransform):
 
         Returns:
             dict: Results after global alignment, 'points' and keys in
-                input_dict['bbox3d_fields'] are updated in the result dict.
+            input_dict['bbox3d_fields'] are updated in the result dict.
         """
         assert 'axis_align_matrix' in results, \
             'axis_align_matrix is not provided in GlobalAlignment'
@@ -640,15 +639,15 @@ class GlobalRotScaleTrans(BaseTransform):
     - pcd_scale_factor (np.float32)
 
     Args:
-        rot_range (list[float], optional): Range of rotation angle.
+        rot_range (list[float]): Range of rotation angle.
             Defaults to [-0.78539816, 0.78539816] (close to [-pi/4, pi/4]).
-        scale_ratio_range (list[float], optional): Range of scale ratio.
+        scale_ratio_range (list[float]): Range of scale ratio.
             Defaults to [0.95, 1.05].
-        translation_std (list[float], optional): The standard deviation of
+        translation_std (list[float]): The standard deviation of
             translation noise applied to a scene, which
             is sampled from a gaussian distribution whose standard deviation
             is set by ``translation_std``. Defaults to [0, 0, 0].
-        shift_height (bool, optional): Whether to shift height.
+        shift_height (bool): Whether to shift height.
             (the fourth dimension of indoor points) when scaling.
             Defaults to False.
     """
@@ -810,7 +809,7 @@ class PointShuffle(BaseTransform):
 
         Returns:
             dict: Results after filtering, 'points', 'pts_instance_mask'
-                and 'pts_semantic_mask' keys are updated in the result dict.
+            and 'pts_semantic_mask' keys are updated in the result dict.
         """
         idx = input_dict['points'].shuffle()
         idx = idx.numpy()
@@ -858,7 +857,7 @@ class ObjectRangeFilter(BaseTransform):
 
         Returns:
             dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d'
-                keys are updated in the result dict.
+            keys are updated in the result dict.
         """
         # Check points instance type and initialise bev_range
         if isinstance(input_dict['gt_bboxes_3d'],
@@ -920,7 +919,7 @@ class PointsRangeFilter(BaseTransform):
 
         Returns:
             dict: Results after filtering, 'points', 'pts_instance_mask'
-                and 'pts_semantic_mask' keys are updated in the result dict.
+            and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         points_mask = points.in_range_3d(self.pcd_range)
@@ -974,7 +973,7 @@ class ObjectNameFilter(BaseTransform):
 
         Returns:
             dict: Results after filtering, 'gt_bboxes_3d', 'gt_labels_3d'
-                keys are updated in the result dict.
+            keys are updated in the result dict.
         """
         gt_labels_3d = input_dict['gt_labels_3d']
         gt_bboxes_mask = np.array([n in self.labels for n in gt_labels_3d],
@@ -1014,8 +1013,8 @@ class PointSample(BaseTransform):
         sample_range (float, optional): The range where to sample points.
             If not None, the points with depth larger than `sample_range` are
             prior to be sampled. Defaults to None.
-        replace (bool, optional): Whether the sampling is with or without
-            replacement. Defaults to False.
+        replace (bool): Whether the sampling is with or without replacement.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -1043,10 +1042,9 @@ class PointSample(BaseTransform):
             num_samples (int): Number of samples to be sampled.
             sample_range (float, optional): Indicating the range where the
                 points will be sampled. Defaults to None.
-            replace (bool, optional): Sampling with or without replacement.
+            replace (bool): Sampling with or without replacement.
                 Defaults to False.
-            return_choices (bool, optional): Whether return choice.
-                Defaults to False.
+            return_choices (bool): Whether return choice. Defaults to False.
 
         Returns:
             tuple[:obj:`BasePoints`, np.ndarray] | :obj:`BasePoints`:
@@ -1086,7 +1084,7 @@ class PointSample(BaseTransform):
 
         Returns:
             dict: Results after sampling, 'points', 'pts_instance_mask'
-                and 'pts_semantic_mask' keys are updated in the result dict.
+            and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         points, choices = self._points_random_sampling(
@@ -1146,7 +1144,7 @@ class IndoorPatchPointSample(BaseTransform):
 
     Args:
         num_points (int): Number of points to be sampled.
-        block_size (float, optional): Size of a block to sample points from.
+        block_size (float): Size of a block to sample points from.
             Defaults to 1.5.
         sample_rate (float, optional): Stride used in sliding patch generation.
             This parameter is unused in `IndoorPatchPointSample` and thus has
@@ -1156,24 +1154,24 @@ class IndoorPatchPointSample(BaseTransform):
             segmentation task. This is set in PointSegClassMapping as neg_cls.
             If not None, will be used as a patch selection criterion.
             Defaults to None.
-        use_normalized_coord (bool, optional): Whether to use normalized xyz as
+        use_normalized_coord (bool): Whether to use normalized xyz as
             additional features. Defaults to False.
-        num_try (int, optional): Number of times to try if the patch selected
-            is invalid. Defaults to 10.
-        enlarge_size (float, optional): Enlarge the sampled patch to
+        num_try (int): Number of times to try if the patch selected is invalid.
+            Defaults to 10.
+        enlarge_size (float): Enlarge the sampled patch to
             [-block_size / 2 - enlarge_size, block_size / 2 + enlarge_size] as
             an augmentation. If None, set it as 0. Defaults to 0.2.
         min_unique_num (int, optional): Minimum number of unique points
             the sampled patch should contain. If None, use PointNet++'s method
             to judge uniqueness. Defaults to None.
-        eps (float, optional): A value added to patch boundary to guarantee
+        eps (float): A value added to patch boundary to guarantee
             points coverage. Defaults to 1e-2.
 
     Note:
         This transform should only be used in the training process of point
-            cloud segmentation tasks. For the sliding patch generation and
-            inference process in testing, please refer to the `slide_inference`
-            function of `EncoderDecoder3D` class.
+        cloud segmentation tasks. For the sliding patch generation and
+        inference process in testing, please refer to the `slide_inference`
+        function of `EncoderDecoder3D` class.
     """
 
     def __init__(self,
@@ -1353,7 +1351,7 @@ class IndoorPatchPointSample(BaseTransform):
 
         Returns:
             dict: Results after sampling, 'points', 'pts_instance_mask'
-                and 'pts_semantic_mask' keys are updated in the result dict.
+            and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
 
@@ -1402,7 +1400,7 @@ class BackgroundPointsFilter(BaseTransform):
     """Filter background points near the bounding box.
 
     Args:
-        bbox_enlarge_range (tuple[float], float): Bbox enlarge range.
+        bbox_enlarge_range (tuple[float] | float): Bbox enlarge range.
     """
 
     def __init__(self, bbox_enlarge_range: Union[Tuple[float], float]) -> None:
@@ -1424,7 +1422,7 @@ class BackgroundPointsFilter(BaseTransform):
 
         Returns:
             dict: Results after filtering, 'points', 'pts_instance_mask'
-                and 'pts_semantic_mask' keys are updated in the result dict.
+            and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = input_dict['points']
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
@@ -1527,7 +1525,7 @@ class VoxelBasedPointSampler(BaseTransform):
 
         Returns:
             dict: Results after sampling, 'points', 'pts_instance_mask'
-                and 'pts_semantic_mask' keys are updated in the result dict.
+            and 'pts_semantic_mask' keys are updated in the result dict.
         """
         points = results['points']
         original_dim = points.shape[1]
@@ -1623,7 +1621,7 @@ class AffineResize(BaseTransform):
         img_scale (tuple): Images scales for resizing.
         down_ratio (int): The down ratio of feature map.
             Actually the arg should be >= 1.
-        bbox_clip_border (bool, optional): Whether clip the objects
+        bbox_clip_border (bool): Whether clip the objects
             outside the border of the image. Defaults to True.
     """
 
@@ -1644,7 +1642,7 @@ class AffineResize(BaseTransform):
 
         Returns:
             dict: Results after affine resize, 'affine_aug', 'trans_mat'
-                keys are added in the result dict.
+            keys are added in the result dict.
         """
         # The results have gone through RandomShiftScale before AffineResize
         if 'center' not in results:
@@ -1836,7 +1834,7 @@ class RandomShiftScale(BaseTransform):
 
         Returns:
             dict: Results after random shift and scale, 'center', 'size'
-                and 'affine_aug' keys are added in the result dict.
+            and 'affine_aug' keys are added in the result dict.
         """
         img = results['img']
 
@@ -2036,7 +2034,7 @@ class RandomCrop3D(RandomCrop):
 
         Returns:
             dict: Randomly cropped results, 'img_shape' key in result dict is
-                updated according to crop size.
+            updated according to crop size.
         """
         assert crop_size[0] > 0 and crop_size[1] > 0
         for key in results.get('img_fields', ['img']):
@@ -2128,7 +2126,7 @@ class RandomCrop3D(RandomCrop):
 
         Returns:
             dict: Randomly cropped results, 'img_shape' key in result dict is
-                updated according to crop size.
+            updated according to crop size.
         """
         image_size = results['img'].shape[:2]
         if 'crop_size' not in results:

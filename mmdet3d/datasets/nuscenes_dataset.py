@@ -23,8 +23,8 @@ class NuScenesDataset(Det3DDataset):
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
         task (str): Detection task. Defaults to 'lidar_det'.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -35,8 +35,10 @@ class NuScenesDataset(Det3DDataset):
             - 'Camera': Box in camera coordinates.
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).
-        filter_empty_gt (bool): Whether to filter empty GT.
-            Defaults to True.
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
         with_velocity (bool): Whether to include velocity prediction

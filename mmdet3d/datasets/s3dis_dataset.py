@@ -172,8 +172,8 @@ class _S3DISSegDataset(Seg3DDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', instance_mask='', semantic_mask='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
@@ -258,8 +258,8 @@ class S3DISSegDataset(_S3DISSegDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', instance_mask='', semantic_mask='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.

@@ -21,8 +21,8 @@ class LyftDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).
         box_type_3d (str): Type of 3D box of this dataset.
@@ -33,8 +33,10 @@ class LyftDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool): Whether to filter empty GT.
-            Defaults to True.
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """

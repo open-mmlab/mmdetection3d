@@ -23,7 +23,7 @@ class WaymoDataset(KittiDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        data_prefix (dict, optional): data prefix for point cloud and
+        data_prefix (dict): data prefix for point cloud and
             camera data dict. Defaults to dict(
                                     pts='velodyne',
                                     CAM_FRONT='image_0',
@@ -31,13 +31,13 @@ class WaymoDataset(KittiDataset):
                                     CAM_FRONT_LEFT='image_2',
                                     CAM_SIDE_RIGHT='image_3',
                                     CAM_SIDE_LEFT='image_4')
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used
             as input. Defaults to dict(use_lidar=True).
-        default_cam_key (str, optional): Default camera key for lidar2img
+        default_cam_key (str): Default camera key for lidar2img
             association. Defaults to 'CAM_FRONT'.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes:
@@ -45,22 +45,23 @@ class WaymoDataset(KittiDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float], optional): The range of point cloud
+        pcd_limit_range (list[float]): The range of point cloud
             used to filter invalid predicted boxes.
             Defaults to [-85, -85, -5, 85, 85, 5].
-        cam_sync_instances (bool, optional): If use the camera sync label
+        cam_sync_instances (bool): If use the camera sync label
             supported from waymo version 1.3.1. Defaults to False.
-        load_interval (int, optional): load frame interval.
-            Defaults to 1.
-        task (str, optional): task for 3D detection (lidar, mono3d).
+        load_interval (int): load frame interval. Defaults to 1.
+        task (str): task for 3D detection (lidar, mono3d).
             lidar: take all the ground trurh in the frame.
             mono3d: take the groundtruth that can be seen in the cam.
             Defaults to 'lidar_det'.
-        max_sweeps (int, optional): max sweep for each frame. Defaults to 0.
+        max_sweeps (int): max sweep for each frame. Defaults to 0.
     """
     METAINFO = {'CLASSES': ('Car', 'Pedestrian', 'Cyclist')}
 

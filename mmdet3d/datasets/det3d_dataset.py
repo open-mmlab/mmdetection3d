@@ -30,8 +30,8 @@ class Det3DDataset(BaseDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         modality (dict): Modality to specify the sensor data used as input,
             it usually has following keys:
 
@@ -52,7 +52,9 @@ class Det3DDataset(BaseDataset):
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
         filter_empty_gt (bool): Whether to filter the data with empty GT.
-            Defaults to True.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
         load_eval_anns (bool): Whether to load annotations in test_mode,
