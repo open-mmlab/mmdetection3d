@@ -159,7 +159,7 @@ def get_empty_standard_data_info(
 
     data_info = dict(
         # (str): Sample id of the frame.
-        sample_id=None,
+        sample_idx=None,
         # (str, optional): '000010'
         token=None,
         **get_single_image_sweep(camera_types),
