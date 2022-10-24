@@ -1,135 +1,98 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import torch
-from mmcv.ops import Voxelization
-from torch.nn import functional as F
+from typing import Tuple, Union
 
-from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
-from mmdet3d.structures.ops import bbox3d2result
-from mmdet.models.builder import DETECTORS
-from mmdet.registry import MODELS
+from torch import Tensor
+
+from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from ...structures.det3d_data_sample import SampleList
 from .single_stage import SingleStage3DDetector
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SASSD(SingleStage3DDetector):
     r"""`SASSD <https://github.com/skyhehe123/SA-SSD>` _ for 3D detection."""
 
     def __init__(self,
-                 voxel_layer,
-                 voxel_encoder,
-                 middle_encoder,
-                 backbone,
-                 neck=None,
-                 bbox_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None,
-                 pretrained=None):
+                 voxel_encoder: ConfigType,
+                 middle_encoder: ConfigType,
+                 backbone: ConfigType,
+                 neck: OptConfigType = None,
+                 bbox_head: OptConfigType = None,
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None):
         super(SASSD, self).__init__(
             backbone=backbone,
             neck=neck,
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            init_cfg=init_cfg,
-            pretrained=pretrained)
+            data_preprocessor=data_preprocessor,
+            init_cfg=init_cfg)
 
-        self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = MODELS.build(voxel_encoder)
         self.middle_encoder = MODELS.build(middle_encoder)
 
-    def extract_feat(self, points, img_metas=None, test_mode=False):
-        """Extract features from points."""
-        voxels, num_points, coors = self.voxelize(points)
-        voxel_features = self.voxel_encoder(voxels, num_points, coors)
-        batch_size = coors[-1, 0].item() + 1
-        x, point_misc = self.middle_encoder(voxel_features, coors, batch_size,
+    def extract_feat(
+        self,
+        batch_inputs_dict: dict,
+        test_mode: bool = True
+    ) -> Union[Tuple[Tuple[Tensor], Tuple], Tuple[Tensor]]:
+        """Extract features from points.
+
+        Args:
+            batch_inputs_dict (dict): The batch inputs.
+            test_mode (bool, optional): Whether test mode. Defaults to True.
+
+        Returns:
+            Union[Tuple[Tuple[Tensor], Tuple], Tuple[Tensor]]: In test mode, it
+            returns the features of points from multiple levels. In training
+            mode, it returns the features of points from multiple levels and a
+            tuple containing the mean features of points and the targets of
+            clssification and regression.
+        """
+        voxel_dict = batch_inputs_dict['voxels']
+        voxel_features = self.voxel_encoder(voxel_dict['voxels'],
+                                            voxel_dict['num_points'],
+                                            voxel_dict['coors'])
+        batch_size = voxel_dict['coors'][-1, 0].item() + 1
+        # `point_misc` is a tuple containing the mean features of points and
+        # the targets of clssification and regression. It's only used for
+        # calculating auxiliary loss in training mode.
+        x, point_misc = self.middle_encoder(voxel_features,
+                                            voxel_dict['coors'], batch_size,
                                             test_mode)
         x = self.backbone(x)
         if self.with_neck:
             x = self.neck(x)
-        return x, point_misc
 
-    @torch.no_grad()
-    def voxelize(self, points):
-        """Apply hard voxelization to points."""
-        voxels, coors, num_points = [], [], []
-        for res in points:
-            res_voxels, res_coors, res_num_points = self.voxel_layer(res)
-            voxels.append(res_voxels)
-            coors.append(res_coors)
-            num_points.append(res_num_points)
-        voxels = torch.cat(voxels, dim=0)
-        num_points = torch.cat(num_points, dim=0)
-        coors_batch = []
-        for i, coor in enumerate(coors):
-            coor_pad = F.pad(coor, (1, 0), mode='constant', value=i)
-            coors_batch.append(coor_pad)
-        coors_batch = torch.cat(coors_batch, dim=0)
-        return voxels, num_points, coors_batch
+        return (x, point_misc) if not test_mode else x
 
-    def forward_train(self,
-                      points,
-                      img_metas,
-                      gt_bboxes_3d,
-                      gt_labels_3d,
-                      gt_bboxes_ignore=None):
-        """Training forward function.
+    def loss(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
+             **kwargs) -> dict:
+        """Calculate losses from a batch of inputs dict and data samples.
 
         Args:
-            points (list[torch.Tensor]): Point cloud of each sample.
-            img_metas (list[dict]): Meta information of each sample
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                boxes for each sample.
-            gt_labels_3d (list[torch.Tensor]): Ground truth labels for
-                boxes of each sampole
-            gt_bboxes_ignore (list[torch.Tensor], optional): Ground truth
-                boxes to be ignored. Defaults to None.
+            batch_inputs_dict (dict): The model input dict which include
+                'points' keys.
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
 
         Returns:
-            dict: Losses of each branch.
+            dict: A dictionary of loss components.
         """
-
-        x, point_misc = self.extract_feat(points, img_metas, test_mode=False)
-        aux_loss = self.middle_encoder.aux_loss(*point_misc, gt_bboxes_3d)
-
-        outs = self.bbox_head(x)
-        loss_inputs = outs + (gt_bboxes_3d, gt_labels_3d, img_metas)
-        losses = self.bbox_head.loss(
-            *loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
+        x, point_misc = self.extract_feat(batch_inputs_dict, test_mode=False)
+        batch_gt_bboxes_3d = [
+            data_sample.gt_instances_3d.bboxes_3d
+            for data_sample in batch_data_samples
+        ]
+        aux_loss = self.middle_encoder.aux_loss(*point_misc,
+                                                batch_gt_bboxes_3d)
+        losses = self.bbox_head.loss(x, batch_data_samples)
         losses.update(aux_loss)
         return losses
-
-    def simple_test(self, points, img_metas, imgs=None, rescale=False):
-        """Test function without augmentaiton."""
-        x, _ = self.extract_feat(points, img_metas, test_mode=True)
-        outs = self.bbox_head(x)
-        bbox_list = self.bbox_head.get_bboxes(
-            *outs, img_metas, rescale=rescale)
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
-        return bbox_results
-
-    def aug_test(self, points, img_metas, imgs=None, rescale=False):
-        """Test function with augmentaiton."""
-        feats = self.extract_feats(points, img_metas, test_mode=True)
-
-        # only support aug_test for one sample
-        aug_bboxes = []
-        for x, img_meta in zip(feats, img_metas):
-            outs = self.bbox_head(x)
-            bbox_list = self.bbox_head.get_bboxes(
-                *outs, img_meta, rescale=rescale)
-            bbox_list = [
-                dict(boxes_3d=bboxes, scores_3d=scores, labels_3d=labels)
-                for bboxes, scores, labels in bbox_list
-            ]
-            aug_bboxes.append(bbox_list[0])
-
-        # after merging, bboxes will be rescaled to the original image size
-        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, img_metas,
-                                            self.bbox_head.test_cfg)
-
-        return [merged_bboxes]
