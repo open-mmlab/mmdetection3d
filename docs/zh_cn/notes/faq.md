@@ -14,7 +14,7 @@
 | v1.1.0rc1        | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 | v1.1.0rc0        | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 
-**注意：**如果你想安装 mmdet3d-v1.0.0rcx，可以在[此处](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation)找到 MMDetection，MMSegmentation 和 MMCV 的兼容版本。请选择正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免安装问题。
+**注意**：如果你想安装 mmdet3d-v1.0.0rcx，可以在[此处](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation)找到 MMDetection，MMSegmentation 和 MMCV 的兼容版本。请选择正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免安装问题。
 
 - 如果您在 `import open3d` 时遇到下面的问题：
 
