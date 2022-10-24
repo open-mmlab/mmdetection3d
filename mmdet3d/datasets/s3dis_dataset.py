@@ -273,20 +273,19 @@ class S3DISSegDataset(_S3DISSegDataset):
             Defaults to False.
     """
 
-    def __init__(
-        self,
-        data_root: Optional[str] = None,
-        ann_files: List[str] = '',
-        metainfo: Optional[dict] = None,
-        data_prefix: dict = dict(
-            pts='points', img='', instance_mask='', semantic_mask=''),
-        pipeline: List[Union[dict, Callable]] = [],
-        modality: dict = dict(use_lidar=True, use_camera=False),
-        ignore_index: Optional[int] = None,
-        scene_idxs: Optional[Union[List[np.ndarray], List[str]]] = None,
-        test_mode: bool = False,
-        **kwargs
-    ) -> None:
+    def __init__(self,
+                 data_root: Optional[str] = None,
+                 ann_files: List[str] = '',
+                 metainfo: Optional[dict] = None,
+                 data_prefix: dict = dict(
+                     pts='points', img='', instance_mask='', semantic_mask=''),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: dict = dict(use_lidar=True, use_camera=False),
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[Union[List[np.ndarray],
+                                            List[str]]] = None,
+                 test_mode: bool = False,
+                 **kwargs) -> None:
 
         # make sure that ann_files and scene_idxs have same length
         ann_files = self._check_ann_files(ann_files)
