@@ -301,6 +301,7 @@ class FCAF3DHead(Base3DDenseHead):
             pos_points = points[pos_inds]
             center_loss = self.center_loss(
                 pos_center_preds, pos_center_targets, avg_factor=n_pos)
+
             bbox_loss = self.bbox_loss(
                 self._bbox_to_loss(
                     self._bbox_pred_to_bbox(pos_points, pos_bbox_preds)),
@@ -313,7 +314,8 @@ class FCAF3DHead(Base3DDenseHead):
         return center_loss, bbox_loss, cls_loss
 
     def loss_by_feat(self, center_preds, bbox_preds, cls_preds, points,
-                     gt_bboxes, gt_labels, input_metas):
+                     batch_gt_instances_3d, batch_input_metas,
+                     batch_gt_instances_ignore, **kwargs):
         """Per scene loss function.
 
         Args:
@@ -324,23 +326,24 @@ class FCAF3DHead(Base3DDenseHead):
                 scenes.
             points (list[list[Tensor]]): Final location coordinates for all
                 scenes.
-            gt_bboxes (list[BaseInstance3DBoxes]): Ground truth boxes for all
+            gt_bboxes (list[:obj:`InstanceData`]): Ground truth for all
                 scenes.
             gt_labels (list[Tensor]): Ground truth labels for all scenes.
-            input_metas (list[dict]): Meta infos for all scenes.
+            batch_input_metas (list[dict]): Meta infos for all scenes.
+
         Returns:
             dict: Centerness, bbox, and classification loss values.
         """
         center_losses, bbox_losses, cls_losses = [], [], []
-        for i in range(len(input_metas)):
+        for i in range(len(batch_input_metas)):
             center_loss, bbox_loss, cls_loss = self._loss_by_feat_single(
                 center_preds=[x[i] for x in center_preds],
                 bbox_preds=[x[i] for x in bbox_preds],
                 cls_preds=[x[i] for x in cls_preds],
                 points=[x[i] for x in points],
-                input_meta=input_metas[i],
-                gt_bboxes=gt_bboxes[i],
-                gt_labels=gt_labels[i])
+                input_meta=batch_input_metas[i],
+                gt_bboxes=batch_gt_instances_3d[i].bboxes_3d,
+                gt_labels=batch_gt_instances_3d[i].labels_3d)
             center_losses.append(center_loss)
             bbox_losses.append(bbox_loss)
             cls_losses.append(cls_loss)
@@ -384,7 +387,12 @@ class FCAF3DHead(Base3DDenseHead):
         bboxes, scores, labels = self._single_scene_multiclass_nms(
             bboxes, scores, input_meta)
 
-        bboxes = input_meta['box_type_3d'](bboxes, box_dim=bboxes.shape[1])
+        bboxes = input_meta['box_type_3d'](
+            bboxes,
+            box_dim=bboxes.shape[1],
+            with_yaw=bboxes.shape[1] == 7,
+            origin=(.5, .5, .5))
+
         results = InstanceData()
         results.bboxes_3d = bboxes
         results.scores_3d = scores

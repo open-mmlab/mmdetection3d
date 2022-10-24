@@ -9,28 +9,26 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from mmengine.dist import master_only
-from torch import Tensor
-
-from mmdet3d.structures.bbox_3d.box_3d_mode import Box3DMode
-from mmdet.visualization import DetLocalVisualizer
-
-try:
-    import open3d as o3d
-    from open3d import geometry
-except ImportError:
-    raise ImportError(
-        'Please run "pip install open3d" to install open3d first.')
-
 from mmengine.structures import InstanceData
 from mmengine.visualization.utils import check_type, tensor2ndarray
+from torch import Tensor
 
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.structures import (BaseInstance3DBoxes, CameraInstance3DBoxes,
                                 Coord3DMode, DepthInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
                                 PointData, points_cam2img)
+from mmdet3d.structures.bbox_3d.box_3d_mode import Box3DMode
+from mmdet.visualization import DetLocalVisualizer
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode)
+
+# try:
+#     import open3d as o3d
+#     from open3d import geometry
+# except ImportError:
+#     raise ImportError(
+#         'Please run "pip install open3d" to install open3d first.')
 
 
 @VISUALIZERS.register_module()

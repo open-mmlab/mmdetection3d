@@ -1,5 +1,6 @@
 model = dict(
     type='MinkSingleStage3DDetector',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(type='MinkResNet', in_channels=3, depth=34),
     bbox_head=dict(
         type='FCAF3DHead',
