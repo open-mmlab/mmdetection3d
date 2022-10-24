@@ -24,7 +24,7 @@ model = dict(
         _delete_=True,
         assigner=dict(
             type='Max3DIoUAssigner',
-            iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
             pos_iou_thr=0.6,
             neg_iou_thr=0.45,
             min_pos_iou=0.45,

@@ -19,7 +19,8 @@ model = dict(
             (),  # velo
             (256, )  # bbox2d
         ),
-        loss_depth=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_depth=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         bbox_coder=dict(
             type='PGDBBoxCoder',
             base_depths=((31.99, 21.12), (37.15, 24.63), (39.69, 23.97),

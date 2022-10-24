@@ -174,7 +174,7 @@ model = dict(
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
                 dict(  # animal
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.55,
                     neg_iou_thr=0.4,
