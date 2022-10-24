@@ -2002,14 +2002,16 @@ class RandomCrop3D(RandomCrop):
           ``allow_negative_crop`` is set to False, skip this image.
     """
 
-    def __init__(self,
-                 crop_size: tuple,
-                 crop_type: str = 'absolute',
-                 allow_negative_crop: bool = False,
-                 recompute_bbox: bool = False,
-                 bbox_clip_border: bool = True,
-                 rel_offset_h: tuple = (0., 1.),
-                 rel_offset_w: tuple = (0., 1.)) -> None:
+    def __init__(
+        self,
+        crop_size: tuple,
+        crop_type: str = 'absolute',
+        allow_negative_crop: bool = False,
+        recompute_bbox: bool = False,
+        bbox_clip_border: bool = True,
+        rel_offset_h: tuple = (0., 1.),
+        rel_offset_w: tuple = (0., 1.)
+    ) -> None:
         super().__init__(
             crop_size=crop_size,
             crop_type=crop_type,
@@ -2021,7 +2023,9 @@ class RandomCrop3D(RandomCrop):
         self.rel_offset_h = rel_offset_h
         self.rel_offset_w = rel_offset_w
 
-    def _crop_data(self, results: dict, crop_size: tuple,
+    def _crop_data(self,
+                   results: dict,
+                   crop_size: tuple,
                    allow_negative_crop: bool = False) -> dict:
         """Function to randomly crop images, bounding boxes, masks, semantic
         segmentation maps.
@@ -2275,19 +2279,21 @@ class MultiViewWrapper(BaseTransform):
                      'flip_direction', 'photometric_param']
     """
 
-    def __init__(self,
-                 transforms: dict,
-                 override_aug_config: bool = True,
-                 process_fields: list = ['img', 'cam2img', 'lidar2cam'],
-                 collected_keys: list = [
-                     'scale', 'scale_factor', 'crop', 'img_crop_offset',
-                     'ori_shape', 'pad_shape', 'img_shape', 'pad_fixed_size',
-                     'pad_size_divisor', 'flip', 'flip_direction', 'rotate'
-                 ],
-                 randomness_keys: list = [
-                     'scale', 'scale_factor', 'crop_size', 'img_crop_offset',
-                     'flip', 'flip_direction', 'photometric_param'
-                 ]) -> None:
+    def __init__(
+        self,
+        transforms: dict,
+        override_aug_config: bool = True,
+        process_fields: list = ['img', 'cam2img', 'lidar2cam'],
+        collected_keys: list = [
+            'scale', 'scale_factor', 'crop', 'img_crop_offset', 'ori_shape',
+            'pad_shape', 'img_shape', 'pad_fixed_size', 'pad_size_divisor',
+            'flip', 'flip_direction', 'rotate'
+        ],
+        randomness_keys: list = [
+            'scale', 'scale_factor', 'crop_size', 'img_crop_offset', 'flip',
+            'flip_direction', 'photometric_param'
+        ]
+    ) -> None:
         self.transforms = Compose(transforms)
         self.override_aug_config = override_aug_config
         self.collected_keys = collected_keys
