@@ -140,7 +140,7 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
 
     def postprocess_result(self, seg_pred_list: List[dict],
                            batch_img_metas: List[dict]) -> list:
-        """ Convert results list to `Det3DDataSample`.
+        """Convert results list to `Det3DDataSample`.
 
         Args:
             seg_logits_list (List[dict]): List of segmentation results,
