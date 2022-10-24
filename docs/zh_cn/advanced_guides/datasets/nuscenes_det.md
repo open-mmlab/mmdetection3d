@@ -101,7 +101,7 @@ mmdetection3d
 1. `instances` 和 `cam_instances` 中 `bbox_3d` 的区别。
    `bbox_3d` 都被转换到 MMDet3D 定义的坐标系下，`instances` 中的 `bbox_3d` 是在激光雷达坐标系下，而 `cam_instances` 是在相机坐标系下。注意它们 3D 框中表示的不同（'l, w, h' 和 'l, h, w'）。
 
-  2. 这里我们只解释训练信息文件中记录的数据。这同样适用于验证集和测试集（测试集的 pkl 文件中不包含 `instances` 以及 `cam_instances`）。
+2. 这里我们只解释训练信息文件中记录的数据。这同样适用于验证集和测试集（测试集的 pkl 文件中不包含 `instances` 以及 `cam_instances`）。
 
 获取 `nuscenes_infos_xxx.pkl` 的核心函数为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py)。
 
