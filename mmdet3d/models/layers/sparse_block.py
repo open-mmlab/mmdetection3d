@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn import build_conv_layer, build_norm_layer
+from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 from torch import nn
 
-from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 from .spconv import IS_SPCONV2_AVAILABLE
 
 if IS_SPCONV2_AVAILABLE:

@@ -3,13 +3,13 @@ from collections import OrderedDict
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
+from mmdet.evaluation import eval_map
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 
 from mmdet3d.evaluation import indoor_eval
 from mmdet3d.registry import METRICS
 from mmdet3d.structures import get_box_type
-from mmdet.evaluation import eval_map
 
 
 @METRICS.register_module()

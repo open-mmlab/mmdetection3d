@@ -2,9 +2,9 @@
 from typing import Dict, List, Optional, Tuple, Union
 
 import torch
+from mmdet.structures import DetDataSample
 from mmengine.structures import InstanceData
 
-from mmdet.structures import DetDataSample
 from .point_data import PointData
 
 

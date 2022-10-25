@@ -8,11 +8,11 @@ import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+from mmdet.visualization import DetLocalVisualizer
 from mmengine.dist import master_only
 from torch import Tensor
 
 from mmdet3d.structures.bbox_3d.box_3d_mode import Box3DMode
-from mmdet.visualization import DetLocalVisualizer
 
 try:
     import open3d as o3d
