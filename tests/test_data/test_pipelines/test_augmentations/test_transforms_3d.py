@@ -10,12 +10,12 @@ from mmdet3d.core.bbox import Coord3DMode
 from mmdet3d.core.points import DepthPoints, LiDARPoints
 # yapf: disable
 from mmdet3d.datasets import (AffineResize, BackgroundPointsFilter,
-                              GlobalAlignment, GlobalRotScaleTrans,
-                              MultiViewWrapper, ObjectNameFilter, ObjectNoise,
-                              ObjectRangeFilter, ObjectSample, PointSample,
-                              PointShuffle, PointsRangeFilter,
-                              RandomDropPointsColor, RandomFlip3D,
-                              RandomJitterPoints, RandomRotate,
+                              GetBEVDetInputs, GlobalAlignment,
+                              GlobalRotScaleTrans, MultiViewWrapper,
+                              ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
+                              ObjectSample, PointSample, PointShuffle,
+                              PointsRangeFilter, RandomDropPointsColor,
+                              RandomFlip3D, RandomJitterPoints, RandomRotate,
                               RandomShiftScale, RangeLimitedRandomCrop,
                               VoxelBasedPointSampler)
 
@@ -909,3 +909,34 @@ def test_multiview_wrapper():
     for key in collected_keys:
         assert key in results
         assert len(results[key]) == num_imgs
+
+
+def test_get_bevdet_inputs():
+    results = dict()
+    results['img'] = [np.random.rand(256, 704, 3)]
+    results['cam2lidar'] = [np.eye(4)]
+    results['cam_intrinsic'] = [np.zeros((3, 3))]
+    results['crop'] = [[0, 0, 256, 704]]
+    results['pad_shape'] = [(256, 704)]
+    results['flip'] = [True]
+    results['rotate'] = [0]
+    results['scale_factor'] = [[0.0]]
+    results['pcd_rotation'] = torch.eye(3).float()
+    results['pcd_scale_factor'] = 1.0
+    results['pcd_trans'] = np.zeros(3)
+    results['pcd_horizontal_flip'] = True
+    results['pcd_vertical_flip'] = True
+
+    get_bevdet_input = GetBEVDetInputs()
+
+    results = get_bevdet_input(results)
+
+    assert 'img_inputs' in results
+    assert len(results['img_inputs']) == 6
+    imgs, rots, trans, intrins, post_rots, post_trans = results['img_inputs']
+    assert len(imgs.shape) == 4 and imgs.shape == (1, 3, 256, 704)
+    assert len(rots.shape) == 3 and rots.shape == (1, 3, 3)
+    assert len(trans.shape) == 2 and trans.shape == (1, 3)
+    assert len(post_rots.shape) == 3 and post_rots.shape == (1, 3, 3)
+    assert len(post_trans.shape) == 2 and post_trans.shape == (1, 3)
+    assert len(intrins.shape) == 3 and intrins.shape == (1, 3, 3)

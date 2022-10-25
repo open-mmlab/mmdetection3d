@@ -211,3 +211,43 @@ def test_lss_view_transformer():
     assert torch.sum(
         (feats_bev - feats_bev_acc).abs() < 0.0001).float() / (64 * 128 *
                                                                128) > 0.99
+
+
+def test_lss_fpn():
+    cfg = dict(
+        type='LSSFPN',
+        in_channels=3,
+        out_channels=5,
+        upsampling_scale_output=None,
+        input_feat_indexes=(0, 1),
+        upsampling_scale=2)
+
+    lssfpn = build_neck(cfg)
+    x = [torch.rand(1, 1, 44, 16), torch.rand(1, 2, 22, 8)]
+    if torch.cuda.is_available():
+        lssfpn = lssfpn.cuda()
+        x = [t.cuda() for t in x]
+    y = lssfpn(x)[0]
+    assert y.shape == (1, 5, 44, 16)
+
+    cfg['use_input_conv'] = True
+
+    lssfpn = build_neck(cfg)
+    if torch.cuda.is_available():
+        lssfpn = lssfpn.cuda()
+    y = lssfpn(x)[0]
+    assert y.shape == (1, 5, 44, 16)
+
+    cfg = dict(type='LSSFPN', in_channels=4, out_channels=4)
+
+    lssfpn = build_neck(cfg)
+    x = [
+        torch.rand(1, 1, 64, 64),
+        torch.rand(1, 2, 32, 32),
+        torch.rand(1, 3, 16, 16)
+    ]
+    if torch.cuda.is_available():
+        lssfpn = lssfpn.cuda()
+        x = [t.cuda() for t in x]
+    y = lssfpn(x)[0]
+    assert y.shape == (1, 4, 128, 128)

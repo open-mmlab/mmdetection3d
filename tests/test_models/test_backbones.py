@@ -405,3 +405,33 @@ def test_mink_resnet():
     assert y[0].tensor_stride[0] == 4
     assert y[1].F.shape == torch.Size([900, 128])
     assert y[1].tensor_stride[0] == 8
+
+
+def test_custom_resnet():
+    cfg = dict(
+        type='CustomResNet',
+        depth=18,
+        num_stages=3,
+        stem_channels=64,
+        base_channels=128,
+        out_indices=(0, 1, 2),
+        strides=(2, 2, 2),
+        dilations=(1, 1, 1),
+        frozen_stages=-1,
+        with_cp=False,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=False,
+        style='pytorch')
+    custom_resnet = build_backbone(cfg)
+
+    x = torch.rand(1, 64, 128, 128)
+
+    if torch.cuda.is_available():
+        x = x.cuda()
+        custom_resnet = custom_resnet.cuda()
+
+    y = custom_resnet(x)
+    assert len(y) == 3
+    assert y[0].shape == (1, 128, 64, 64)
+    assert y[1].shape == (1, 256, 32, 32)
+    assert y[2].shape == (1, 512, 16, 16)
