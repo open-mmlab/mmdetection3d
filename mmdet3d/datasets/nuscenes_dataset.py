@@ -76,6 +76,7 @@ class NuScenesDataset(Det3DDataset):
         self.task = task
 
         assert box_type_3d.lower() in ('lidar', 'camera')
+
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -86,8 +87,35 @@ class NuScenesDataset(Det3DDataset):
             test_mode=test_mode,
             **kwargs)
 
+    def filter_data(self) -> List[dict]:
+        """Filter the data that has no annotations of the required categories.
+        This function will probably change the length of dataset and the
+        iteration number during training. For now, this function is only used
+        in monocular 3d object detection task. We'll unify the filter
+        approaches between different tasks.
+
+        Returns:
+            List[dict]: Filtered results.
+        """
+
+        if self.task != 'mono_det':
+            return self.data_list
+
+        if self.test_mode:
+            return self.data_list
+
+        valid_data_infos = []
+        for data_info in self.data_list:
+            gt_labels_3d = data_info['ann_info']['gt_labels_3d']
+            if self.filter_empty_gt and len(gt_labels_3d) == 0:
+                continue
+            valid_data_infos.append(data_info)
+
+        return valid_data_infos
+
     def _filter_with_mask(self, ann_info: dict) -> dict:
-        """Remove annotations that do not need to be cared.
+        """Filter out bbox containing no points, this function is currently
+        only used in 3D point cloud detection task.
 
         Args:
             ann_info (dict): Dict of annotation infos.
@@ -95,17 +123,17 @@ class NuScenesDataset(Det3DDataset):
         Returns:
             dict: Annotations after filtering.
         """
-        filtered_annotations = {}
+        valid_annotations = {}
         if self.use_valid_flag:
-            filter_mask = ann_info['bbox_3d_isvalid']
+            valid_mask = ann_info['bbox_3d_isvalid']
         else:
-            filter_mask = ann_info['num_lidar_pts'] > 0
+            valid_mask = ann_info['num_lidar_pts'] > 0
         for key in ann_info.keys():
             if key != 'instances':
-                filtered_annotations[key] = (ann_info[key][filter_mask])
+                valid_annotations[key] = (ann_info[key][valid_mask])
             else:
-                filtered_annotations[key] = ann_info[key]
-        return filtered_annotations
+                valid_annotations[key] = ann_info[key]
+        return valid_annotations
 
     def parse_ann_info(self, info: dict) -> dict:
         """Get annotation info according to the given index.
@@ -121,9 +149,11 @@ class NuScenesDataset(Det3DDataset):
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
         """
         ann_info = super().parse_ann_info(info)
-        if ann_info is not None:
 
-            ann_info = self._filter_with_mask(ann_info)
+        if ann_info is not None:
+            if self.task == 'lidar_det':
+                # filter out bbox containing no points
+                ann_info = self._filter_with_mask(ann_info)
 
             if self.with_velocity:
                 gt_bboxes_3d = ann_info['gt_bboxes_3d']
@@ -133,6 +163,9 @@ class NuScenesDataset(Det3DDataset):
                 gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocities],
                                               axis=-1)
                 ann_info['gt_bboxes_3d'] = gt_bboxes_3d
+
+            # remove the annotations which are not the required categories
+            ann_info = self._remove_dontcare(ann_info)
         else:
             # empty instance
             ann_info = dict()
@@ -141,13 +174,6 @@ class NuScenesDataset(Det3DDataset):
             else:
                 ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
-
-            if self.task == 'mono3d':
-                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
-                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
-                ann_info['attr_labels'] = np.array(0, dtype=np.int64)
-                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
-                ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)

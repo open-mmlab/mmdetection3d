@@ -166,14 +166,14 @@ class Det3DDataset(BaseDataset):
         Returns:
             dict: Annotations after filtering.
         """
-        img_filtered_annotations = {}
-        filter_mask = ann_info['gt_labels_3d'] > -1
+        valid_annotations = {}
+        valid_mask = ann_info['gt_labels_3d'] > -1
         for key in ann_info.keys():
             if key != 'instances':
-                img_filtered_annotations[key] = (ann_info[key][filter_mask])
+                valid_annotations[key] = (ann_info[key][valid_mask])
             else:
-                img_filtered_annotations[key] = ann_info[key]
-        return img_filtered_annotations
+                valid_annotations[key] = ann_info[key]
+        return valid_annotations
 
     def get_ann_info(self, index: int) -> dict:
         """Get annotation info according to the given index.
