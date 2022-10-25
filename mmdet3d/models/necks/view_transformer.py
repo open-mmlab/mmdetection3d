@@ -222,7 +222,7 @@ class LSSViewTransformer(BaseModule):
                 self.grid_interval.to(coor))
         coor = coor.long().view(num_points, 3)
         batch_idx = torch.range(0, B-1).reshape(B, 1).\
-            expand(B, num_points // B).view(num_points, 1).to(coor)
+            expand(B, num_points // B).reshape(num_points, 1).to(coor)
         coor = torch.cat((coor, batch_idx), 1)
 
         # filter out points that are outside box
