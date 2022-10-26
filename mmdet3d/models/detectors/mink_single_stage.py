@@ -65,11 +65,10 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
         """Directly extract features from the backbone+neck.
 
         Args:
-            batch_inputs_dict (dict): The model input dict which include
-                'points', 'img' keys.
+            batch_inputs_dict (dict): The model input dict which includes
+                'points' keys.
 
                     - points (list[torch.Tensor]): Point cloud of each sample.
-                    - imgs (torch.Tensor, optional): Image of each sample.
 
         Returns:
             tuple[Tensor] | dict:  For outside 3D object detection, we

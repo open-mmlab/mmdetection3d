@@ -57,7 +57,7 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    samples_per_gpu=8,
+    batch_size=8,
     dataset=dict(
         type='RepeatDataset',
         times=3,
