@@ -27,8 +27,6 @@ train_pipeline = [
         translation_std=[.1, .1, .1],
         shift_height=False),
     dict(type='NormalizePointsColor', color_mean=None),
-    # dict(type='DefaultFormatBundle3D', class_names=class_names),
-    # dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -71,15 +69,10 @@ train_dataloader = dict(
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
-# optimizer = dict(type='AdamW', lr=0.001, weight_decay=0.0001)
-# optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
-
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=0.001, weight_decay=0.0001),
     clip_grad=dict(max_norm=10, norm_type=2))
-
-# lr_config = dict(policy='step', warmup=None, step=[8, 11])
 
 # learning rate
 param_scheduler = dict(
@@ -92,7 +85,7 @@ param_scheduler = dict(
 
 custom_hooks = [dict(type='EmptyCacheHook', after_iter=True)]
 
-# training schedule for 2x
+# training schedule for 1x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=12)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')

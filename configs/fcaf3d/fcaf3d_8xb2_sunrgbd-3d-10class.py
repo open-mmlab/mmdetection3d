@@ -1,14 +1,13 @@
-_base_ = ['fcaf3d_8x2_scannet-3d-18class.py']
+_base_ = [
+    '../_base_/models/fcaf3d.py', '../_base_/default_runtime.py',
+    '../_base_/datasets/sunrgbd-3d.py'
+]
 n_points = 100000
 
 model = dict(
-    head=dict(
+    bbox_head=dict(
         n_classes=10, n_reg_outs=8, bbox_loss=dict(type='RotatedIoU3DLoss')))
 
-dataset_type = 'SUNRGBDDataset'
-data_root = 'data/sunrgbd/'
-class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
-               'night_stand', 'bookshelf', 'bathtub')
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -25,8 +24,9 @@ train_pipeline = [
         scale_ratio_range=[0.85, 1.15],
         translation_std=[.1, .1, .1],
         shift_height=False),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -51,44 +51,37 @@ test_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.5,
                 flip_ratio_bev_vertical=0.5),
-            dict(type='PointSample', num_points=n_points),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+            dict(type='PointSample', num_points=n_points)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-data = dict(
+
+train_dataloader = dict(
     samples_per_gpu=8,
-    workers_per_gpu=4,
-    train=dict(
+    dataset=dict(
         type='RepeatDataset',
         times=3,
-        dataset=dict(
-            type=dataset_type,
-            modality=dict(use_camera=False, use_lidar=True),
-            data_root=data_root,
-            ann_file=data_root + 'sunrgbd_infos_train.pkl',
-            pipeline=train_pipeline,
-            filter_empty_gt=True,
-            classes=class_names,
-            box_type_3d='Depth')),
-    val=dict(
-        type=dataset_type,
-        modality=dict(use_camera=False, use_lidar=True),
-        data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='Depth'),
-    test=dict(
-        type=dataset_type,
-        modality=dict(use_camera=False, use_lidar=True),
-        data_root=data_root,
-        ann_file=data_root + 'sunrgbd_infos_val.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
-        box_type_3d='Depth'))
+        dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = val_dataloader
+
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=0.001, weight_decay=0.0001),
+    clip_grad=dict(max_norm=10, norm_type=2))
+
+# learning rate
+param_scheduler = dict(
+    type='MultiStepLR',
+    begin=0,
+    end=12,
+    by_epoch=True,
+    milestones=[8, 11],
+    gamma=0.1)
+
+custom_hooks = [dict(type='EmptyCacheHook', after_iter=True)]
+
+# training schedule for 1x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=12)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
