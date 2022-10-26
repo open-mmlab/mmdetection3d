@@ -1073,4 +1073,4 @@ if __name__ == '__main__':
     if args.out_dir is None:
         args.out_dir = args.root_dir
     update_pkl_infos(
-        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl)
+        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl_path)
