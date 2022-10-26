@@ -16,6 +16,6 @@ model = dict(
         use_normalized_coord=True,
         batch_size=24))
 
-default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=2), )
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=2))
 train_dataloader = dict(batch_size=32)
-val_cfg = dict(interval=2)
+train_cfg = dict(val_interval=2)
