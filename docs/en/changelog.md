@@ -20,9 +20,9 @@
 
 #### Contributors
 
-A total of 9 developers contributed to this release.
+A total of 11 developers contributed to this release.
 
-@ZwwWayne, @Tai-Wang, @filaPro, @VVsssssk, @ZCMax, @Xiangxu-0103, @holtvogt, @tpoisonooo, @lianqing01
+@ZwwWayne, @Tai-Wang, @filaPro, @VVsssssk, @ZCMax, @Xiangxu-0103, @holtvogt, @tpoisonooo, @lianqing01, @TommyZihao, @aditya9710
 
 ### v1.0.0rc4 (8/8/2022)
 
