@@ -99,7 +99,7 @@ class NuScenesDataset(Det3DDataset):
         """
         filtered_annotations = {}
         if self.use_valid_flag:
-            filter_mask = ann_info['bbox_3d_isvalid']
+            filter_mask = ann_info['bbox_3d_isvalid'] > 0
         else:
             filter_mask = ann_info['num_lidar_pts'] > 0
         for key in ann_info.keys():
