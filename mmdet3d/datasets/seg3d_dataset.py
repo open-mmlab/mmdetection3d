@@ -39,6 +39,10 @@ class Seg3DDataset(BaseDataset):
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
+        serialize_data (bool, optional): Whether to hold memory using
+            serialized objects, when enabled, data loader workers can use
+            shared RAM from master process instead of making a copy. Defaults
+            to False for 3D Segmentation datasets.
         load_eval_anns (bool): Whether to load annotations in test_mode,
             the annotation will be save in `eval_ann_infos`, which can be used
             in Evaluator. Defaults to True.
@@ -66,6 +70,7 @@ class Seg3DDataset(BaseDataset):
                  ignore_index: Optional[int] = None,
                  scene_idxs: Optional[Union[str, np.ndarray]] = None,
                  test_mode: bool = False,
+                 serialize_data=False,
                  load_eval_anns: bool = True,
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs) -> None:
@@ -115,6 +120,7 @@ class Seg3DDataset(BaseDataset):
             data_prefix=data_prefix,
             pipeline=pipeline,
             test_mode=test_mode,
+            serialize_data=serialize_data,
             **kwargs)
 
         self.metainfo['seg_label_mapping'] = self.seg_label_mapping
