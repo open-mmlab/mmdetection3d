@@ -2,7 +2,14 @@
 import pytest
 import torch
 from mmcv import Config
-from mmcv.ops import SubMConv3d
+
+from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+
+if IS_SPCONV2_AVAILABLE:
+    from spconv.pytorch import SubMConv3d
+else:
+    from mmcv.ops import SubMConv3d
+
 from torch.nn import BatchNorm1d, ReLU
 
 from mmdet3d.core.bbox import Box3DMode, LiDARInstance3DBoxes
