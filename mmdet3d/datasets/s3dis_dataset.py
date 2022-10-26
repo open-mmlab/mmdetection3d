@@ -166,24 +166,25 @@ class _S3DISSegDataset(Seg3DDataset):
     wrapper to concat all the provided data in different areas.
 
     Args:
-        data_root (str): Path of dataset root.
-        ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        palette (list[list[int]], optional): The palette of segmentation map.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
+        data_root (str, optional): Path of dataset root, Defaults to None.
+        ann_file (str): Path of annotation file. Defaults to ''.
+        metainfo (dict, optional): Meta information for dataset, such as class
+            information. Defaults to None.
+        data_prefix (dict): Prefix for training data. Defaults to
+            dict(pts='points', instance_mask='', semantic_mask='').
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
+            unannotated points. If None is given, set to len(self.CLASSES) to
+            be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
+        test_mode (bool): Whether the dataset is in test mode.
+            Defaults to False.
     """
     METAINFO = {
         'CLASSES':
@@ -207,9 +208,9 @@ class _S3DISSegDataset(Seg3DDataset):
                      pts='points', img='', instance_mask='', semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 ignore_index=None,
-                 scene_idxs=None,
-                 test_mode=False,
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[Union[np.ndarray, str]] = None,
+                 test_mode: bool = False,
                  **kwargs) -> None:
         super().__init__(
             data_root=data_root,
@@ -250,37 +251,40 @@ class S3DISSegDataset(_S3DISSegDataset):
     data downloading.
 
     Args:
-        data_root (str): Path of dataset root.
+        data_root (str, optional): Path of dataset root. Defaults to None.
         ann_files (list[str]): Path of several annotation files.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        palette (list[list[int]], optional): The palette of segmentation map.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
+            Defaults to ''.
+        metainfo (dict, optional): Meta information for dataset, such as class
+            information. Defaults to None.
+        data_prefix (dict): Prefix for training data. Defaults to
+            dict(pts='points', instance_mask='', semantic_mask='').
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES).
+            unannotated points. If None is given, set to len(self.CLASSES) to
+            be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
         scene_idxs (list[np.ndarray] | list[str], optional): Precomputed index
-            to load data. For scenes with many points, we may sample it several
-            times. Defaults to None.
+            to load data. For scenes with many points, we may sample it
+            several times. Defaults to None.
+        test_mode (bool): Whether the dataset is in test mode.
+            Defaults to False.
     """
 
     def __init__(self,
                  data_root: Optional[str] = None,
-                 ann_files: str = '',
+                 ann_files: List[str] = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
                      pts='points', img='', instance_mask='', semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 ignore_index=None,
-                 scene_idxs=None,
-                 test_mode=False,
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[Union[List[np.ndarray],
+                                            List[str]]] = None,
+                 test_mode: bool = False,
                  **kwargs) -> None:
 
         # make sure that ann_files and scene_idxs have same length
@@ -318,13 +322,12 @@ class S3DISSegDataset(_S3DISSegDataset):
 
         # data_list and scene_idxs need to be concat
         self.concat_data_list([dst.data_list for dst in datasets])
-        self.concat_scene_idxs([dst.scene_idxs for dst in datasets])
 
         # set group flag for the sampler
         if not self.test_mode:
             self._set_group_flag()
 
-    def concat_data_list(self, data_lists):
+    def concat_data_list(self, data_lists: List[List[dict]]) -> List[dict]:
         """Concat data_list from several datasets to form self.data_list.
 
         Args:
@@ -333,21 +336,6 @@ class S3DISSegDataset(_S3DISSegDataset):
         self.data_list = [
             data for data_list in data_lists for data in data_list
         ]
-
-    def concat_scene_idxs(self, scene_idxs):
-        """Concat scene_idxs from several datasets to form self.scene_idxs.
-
-        Needs to manually add offset to scene_idxs[1, 2, ...].
-
-        Args:
-            scene_idxs (list[np.ndarray])
-        """
-        self.scene_idxs = np.array([], dtype=np.int32)
-        offset = 0
-        for one_scene_idxs in scene_idxs:
-            self.scene_idxs = np.concatenate(
-                [self.scene_idxs, one_scene_idxs + offset]).astype(np.int32)
-            offset = np.unique(self.scene_idxs).max() + 1
 
     @staticmethod
     def _duplicate_to_list(x, num):

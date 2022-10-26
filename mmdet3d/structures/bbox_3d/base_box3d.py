@@ -360,7 +360,7 @@ class BaseInstance3DBoxes(object):
             with_yaw=boxes_list[0].with_yaw)
         return cat_boxes
 
-    def to(self, device):
+    def to(self, device, *args, **kwargs):
         """Convert current boxes to a specific device.
 
         Args:
@@ -372,7 +372,7 @@ class BaseInstance3DBoxes(object):
         """
         original_type = type(self)
         return original_type(
-            self.tensor.to(device),
+            self.tensor.to(device, *args, **kwargs),
             box_dim=self.box_dim,
             with_yaw=self.with_yaw)
 
