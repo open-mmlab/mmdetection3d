@@ -100,10 +100,7 @@ class NuScenesDataset(Det3DDataset):
             List[dict]: Filtered results.
         """
 
-        if self.task != 'mono_det':
-            return self.data_list
-
-        if self.test_mode:
+        if self.test_mode or self.task != 'mono_det':
             return self.data_list
 
         valid_data_infos = []
@@ -167,7 +164,7 @@ class NuScenesDataset(Det3DDataset):
                 ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 
             # remove the annotations which are not the required categories
-            # (label is -1) for now, we only use it monocular 3d object
+            # (label is -1) for now, we only use it on monocular 3d object
             # detection task, TODO: we will validate the perfomrmance of
             # lidar 3d object detection performance influence if removing
             # bboxes which label is -1
