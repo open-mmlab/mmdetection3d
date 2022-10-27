@@ -302,7 +302,6 @@ class S3DISSegDataset(_S3DISSegDataset):
             ignore_index=ignore_index,
             scene_idxs=scene_idxs[0],
             test_mode=test_mode,
-            serialize_data=False,
             **kwargs)
 
         datasets = [
