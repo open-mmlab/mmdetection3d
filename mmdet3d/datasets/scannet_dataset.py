@@ -282,7 +282,7 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
-        'PLATTE': [
+        'palette': [
             [174, 199, 232],
             [152, 223, 138],
             [31, 119, 180],

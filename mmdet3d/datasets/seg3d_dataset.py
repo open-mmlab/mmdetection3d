@@ -215,7 +215,7 @@ class Seg3DDataset(BaseDataset):
         if len(palette) == len(new_classes):
             return palette
         else:
-            raise ValueError('Once PLATTE in set in metainfo, it should'
+            raise ValueError('Once palette in set in metainfo, it should'
                              'match classes in metainfo')
 
     def parse_data_info(self, info: dict) -> dict:
