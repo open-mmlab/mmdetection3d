@@ -4,8 +4,10 @@ from typing import List, Optional, Tuple
 
 try:
     import MinkowskiEngine as ME
+    from MinkowskiEngine import SparseTensor
 except ImportError:
     # Please follow getting_started.md to install MinkowskiEngine.
+    SparseTensor = None
     pass
 
 import torch
@@ -183,7 +185,7 @@ class FCAF3DHead(Base3DDenseHead):
         return center_preds[::-1], bbox_preds[::-1], cls_preds[::-1], \
             points[::-1]
 
-    def _prune(self, x, scores):
+    def _prune(self, x: SparseTensor, scores: SparseTensor) -> SparseTensor:
         """Prunes the tensor by score thresholding.
 
         Args:
@@ -208,7 +210,8 @@ class FCAF3DHead(Base3DDenseHead):
         x = self.pruning(x, prune_mask)
         return x
 
-    def _forward_single(self, x, scale: Scale) -> Tuple[Tensor, ...]:
+    def _forward_single(self, x: SparseTensor,
+                        scale: Scale) -> Tuple[Tensor, ...]:
         """Forward pass per level.
 
         Args:
