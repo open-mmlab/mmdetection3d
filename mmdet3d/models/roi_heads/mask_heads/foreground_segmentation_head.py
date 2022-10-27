@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict
+from typing import Dict, Optional
 
 import torch
 from mmcv.cnn.bricks import build_norm_layer
@@ -9,6 +9,7 @@ from torch import nn as nn
 
 from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import InstanceList
 from mmdet.models.utils import multi_apply
 
 
@@ -20,7 +21,7 @@ class ForegroundSegmentationHead(BaseModule):
         in_channels (int): The number of input channel.
         mlp_channels (list[int]): Specify of mlp channels. Default
             used (256, 256).
-        extra_width (float): Boxes enlarge width.
+        extra_width (float): Boxes enlarge width. Default used 0.1.
         norm_cfg (dict): Type of normalization method.
         init_cfg (dict, optional): Initialize config of
             model. Defaults to None.
@@ -33,7 +34,7 @@ class ForegroundSegmentationHead(BaseModule):
         mlp_channels: list = (256, 256),
         extra_width: int = 0.1,
         norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
-        init_cfg: dict = None,
+        init_cfg: Optional[dict] = None,
         loss_seg: dict = dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -75,7 +76,7 @@ class ForegroundSegmentationHead(BaseModule):
         """Forward head.
 
         Args:
-            feats (torch.Tensor): Points features from the points encoder.
+            feats (torch.Tensor): Point-wise features.
 
         Returns:
             dict: Segment predictions.
@@ -115,8 +116,9 @@ class ForegroundSegmentationHead(BaseModule):
             gt_box_of_fg_points.long()
         return point_cls_labels_single
 
-    def get_targets(self, points_bxyz, batch_gt_instances_3d):
-        """generate segmentation targets.
+    def get_targets(self, points_bxyz: torch.Tensor,
+                    batch_gt_instances_3d: InstanceList) -> dict:
+        """Generate segmentation targets.
 
         Args:
             points_bxyz (torch.Tensor): The coordinates of point in shape
@@ -127,7 +129,6 @@ class ForegroundSegmentationHead(BaseModule):
 
         Returns:
             dict: Prediction targets
-
                 - seg_targets (torch.Tensor): Segmentation targets.
         """
         batch_size = len(batch_gt_instances_3d)

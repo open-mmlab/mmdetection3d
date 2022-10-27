@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -29,10 +29,14 @@ class PVRCNNBBoxHead(BaseModule):
         class_agnostic (bool): Whether generate class agnostic prediction.
             Default to True.
         shared_fc_channels (list(int)): Out channels of each shared fc layer.
+            Default to (256, 256).
         cls_channels (list(int)): Out channels of each classification layer.
+            Default to (256, 256).
         reg_channels (list(int)): Out channels of each regression layer.
+            Default to (256, 256).
         dropout_ratio (float): Ratio of dropout layer. Default: 0.5.
         with_corner_loss (bool): Whether to use corner loss or not.
+            Default to True.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for box head.
         norm_cfg (dict): Type of normalization method.
         loss_bbox (dict): Config dict of box regression loss.
@@ -60,7 +64,7 @@ class PVRCNNBBoxHead(BaseModule):
                      use_sigmoid=True,
                      reduction='none',
                      loss_weight=1.0),
-                 init_cfg: dict = None) -> None:
+                 init_cfg: Optional[dict] = None) -> None:
         super(PVRCNNBBoxHead, self).__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
         self.with_corner_loss = with_corner_loss
@@ -119,7 +123,7 @@ class PVRCNNBBoxHead(BaseModule):
         return fc_layers
 
     def forward(self, feats: torch.Tensor) -> Tuple[torch.Tensor]:
-        """Forward pass.
+        """Forward pvrcnn bbox head.
 
         Args:
             feats (torch.Tensor): Batch point-wise features.

@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Optional
 
 import torch
 import torch.nn as nn
@@ -55,10 +55,11 @@ class VoxelSetAbstraction(BaseModule):
             Used to gather key points features from raw points. Default to
             None.
         voxel_sa_configs_list (List[dict or ConfigDict], optional): List of SA
-            module cfg. Used to gather key points features from multi-level
+            module cfg. Used to gather key points features from multi-wise
             voxel features. Default to None.
-        bev_features_channels (int, optional): Bev features channel num.
-            Default to None.
+        bev_features_channels (int): Bev features channels num.
+            Default to 256.
+        bev_scale_factor (int): Bev features scale factor. Default to 8.
         norm_cfg (dict[str]): Config of normalization layer. Default
             used dict(type='BN2d', eps=1e-5, momentum=0.1).
         bias (bool | str, optional): If specified as `auto`, it will be
@@ -67,16 +68,17 @@ class VoxelSetAbstraction(BaseModule):
     """
 
     def __init__(self,
-                 num_keypoints,
-                 fused_out_channels=128,
-                 voxel_size=[0.05, 0.05, 0.1],
-                 point_cloud_range=[0, -40, -3, 70.4, 40, 1],
-                 voxel_sa_configs_list=None,
-                 rawpoints_sa_config=None,
-                 bev_features_channels=None,
-                 voxel_center_as_source=False,
-                 norm_cfg=dict(type='BN2d', eps=1e-5, momentum=0.1),
-                 bias='auto'):
+                 num_keypoints: int,
+                 fused_out_channels: int = 128,
+                 voxel_size: list = [0.05, 0.05, 0.1],
+                 point_cloud_range: list = [0, -40, -3, 70.4, 40, 1],
+                 voxel_sa_configs_list: Optional[list] = None,
+                 rawpoints_sa_config: Optional[dict] = None,
+                 bev_features_channels: int = 256,
+                 bev_scale_factor: int = 8,
+                 voxel_center_as_source: bool = False,
+                 norm_cfg: dict = dict(type='BN2d', eps=1e-5, momentum=0.1),
+                 bias: str = 'auto') -> None:
         super().__init__()
         self.num_keypoints = num_keypoints
         self.fused_out_channels = fused_out_channels
@@ -104,10 +106,12 @@ class VoxelSetAbstraction(BaseModule):
             self.voxel_sa_layers = None
 
         if bev_features_channels is not None:
-            self.used_bev_features = True
+            self.bev_cfg = dict(
+                bev_features_channels=bev_features_channels,
+                bev_scale_factor=bev_scale_factor)
             gathered_channels += bev_features_channels
         else:
-            self.used_bev_features = None
+            self.bev_cfg = None
 
         self.point_feature_fusion_layer = nn.Sequential(
             ConvModule(
@@ -222,7 +226,7 @@ class VoxelSetAbstraction(BaseModule):
 
     def forward(self, batch_inputs_dict: dict, feats_dict: dict,
                 rpn_results_list: InstanceList) -> dict:
-        """Extract point-level features from multi-input.
+        """Extract point-wise features from multi-input.
 
         Args:
             batch_inputs_dict (dict): The model input dict which include
@@ -236,7 +240,7 @@ class VoxelSetAbstraction(BaseModule):
                 of rpn head.
 
         Returns:
-            dict: Contain Point-level features, include:
+            dict: Contain Point-wise features, include:
                 - keypoints (torch.Tensor): Sampled key points.
                 - keypoint_features (torch.Tensor): Gather key points features
                     from multi input.
@@ -254,17 +258,19 @@ class VoxelSetAbstraction(BaseModule):
 
         point_features_list = []
         batch_size = len(points)
-        if self.bev_sa:
+
+        if self.bev_cfg is not None:
             point_bev_features = self.interpolate_from_bev_features(
                 keypoints, bev_encode_features, batch_size,
-                self.bev_sa_config.scale_factor)
+                self.bev_cfg.bev_scale_factor)
             point_features_list.append(point_bev_features.contiguous())
+
         batch_size, num_keypoints, _ = keypoints.shape
         key_xyz = keypoints.view(-1, 3)
         key_xyz_batch_cnt = key_xyz.new_zeros(batch_size).int().fill_(
             num_keypoints)
 
-        if self.rawpoints_sa:
+        if self.rawpoints_sa_layer is not None:
             batch_points = torch.cat(points, dim=0)
             batch_cnt = [len(p) for p in points]
             xyz = batch_points[:, :3].contiguous()
@@ -280,28 +286,29 @@ class VoxelSetAbstraction(BaseModule):
                 new_xyz_batch_cnt=key_xyz_batch_cnt,
                 features=features.contiguous(),
             )
+
             point_features_list.append(pooled_features.contiguous().view(
                 batch_size, num_keypoints, -1))
+        if self.voxel_sa_layers is not None:
+            for k, voxel_sa_layer in enumerate(self.voxel_sa_layers):
+                cur_coords = voxel_encode_features[k].indices
+                xyz = self.get_voxel_centers(
+                    coors=cur_coords,
+                    scale_factor=self.voxel_sa_configs[k].scale_factor
+                ).contiguous()
+                xyz_batch_cnt = xyz.new_zeros(batch_size).int()
+                for bs_idx in range(batch_size):
+                    xyz_batch_cnt[bs_idx] = (cur_coords[:, 0] == bs_idx).sum()
 
-        for k, voxel_sa_layer in enumerate(self.voxel_sa_layers):
-            cur_coords = voxel_encode_features[k].indices
-            xyz = self.get_voxel_centers(
-                coors=cur_coords,
-                scale_factor=self.voxel_sa_configs[k].scale_factor).contiguous(
+                pooled_points, pooled_features = voxel_sa_layer(
+                    xyz=xyz.contiguous(),
+                    xyz_batch_cnt=xyz_batch_cnt,
+                    new_xyz=key_xyz.contiguous(),
+                    new_xyz_batch_cnt=key_xyz_batch_cnt,
+                    features=voxel_encode_features[k].features.contiguous(),
                 )
-            xyz_batch_cnt = xyz.new_zeros(batch_size).int()
-            for bs_idx in range(batch_size):
-                xyz_batch_cnt[bs_idx] = (cur_coords[:, 0] == bs_idx).sum()
-
-            pooled_points, pooled_features = voxel_sa_layer(
-                xyz=xyz.contiguous(),
-                xyz_batch_cnt=xyz_batch_cnt,
-                new_xyz=key_xyz.contiguous(),
-                new_xyz_batch_cnt=key_xyz_batch_cnt,
-                features=voxel_encode_features[k].features.contiguous(),
-            )
-            point_features_list.append(pooled_features.contiguous().view(
-                batch_size, num_keypoints, -1))
+                point_features_list.append(pooled_features.contiguous().view(
+                    batch_size, num_keypoints, -1))
 
         point_features = torch.cat(
             point_features_list, dim=-1).view(batch_size * num_keypoints, -1)

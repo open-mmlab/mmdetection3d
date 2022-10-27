@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Optional
 
 import torch
 from torch.nn import functional as F
@@ -18,11 +18,12 @@ class PVRCNNROIHead(Base3DRoIHead):
     """RoI head for PV-RCNN.
 
     Args:
-        semantic_head (ConfigDict): Config of semantic head.
         num_classes (int): The number of classes.
-        bbox_roi_extractor (ConfigDict): Config of roi_extractor.
+        semantic_head (dict, optional): Config of semantic head.
             Defaults to None.
-        bbox_head (ConfigDict): Config of bbox_head. Defaults to None.
+        bbox_roi_extractor (dict, optional): Config of roi_extractor.
+            Defaults to None.
+        bbox_head (dict, optional): Config of bbox_head. Defaults to None.
         train_cfg (dict, optional): Train config of model.
             Defaults to None.
         test_cfg (dict, optional): Train config of model.
@@ -32,13 +33,13 @@ class PVRCNNROIHead(Base3DRoIHead):
     """
 
     def __init__(self,
-                 semantic_head,
                  num_classes=3,
-                 bbox_roi_extractor=None,
-                 bbox_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None):
+                 semantic_head: Optional[dict] = None,
+                 bbox_roi_extractor: Optional[dict] = None,
+                 bbox_head: Optional[dict] = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(PVRCNNROIHead, self).__init__(
             bbox_head=bbox_head,
             bbox_roi_extractor=bbox_roi_extractor,
@@ -61,8 +62,7 @@ class PVRCNNROIHead(Base3DRoIHead):
         """Training forward function of PartAggregationROIHead.
 
         Args:
-            feats_dict (dict): Contains features from the first
-                stage and the points encoder.
+            feats_dict (dict): Contains point-wise features.
             rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
@@ -72,8 +72,10 @@ class PVRCNNROIHead(Base3DRoIHead):
         Returns:
             dict: losses from each head.
 
-                - loss_semantic (torch.Tensor): loss of semantic head
-                - loss_bbox (torch.Tensor): loss of bboxes
+                - loss_semantic (torch.Tensor): loss of semantic head.
+                - loss_bbox (torch.Tensor): loss of bboxes.
+                - loss_cls (torch.Tensor): loss of object classification.
+                - loss_corner (torch.Tensor): loss of bboxes corners.
         """
         losses = dict()
         batch_gt_instances_3d = []
@@ -111,8 +113,7 @@ class PVRCNNROIHead(Base3DRoIHead):
         results on the features of the upstream network.
 
         Args:
-            feats_dict (dict): Contains features from the first stage and the
-                points encoder.
+            feats_dict (dict): Contains point-wise features.
             rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data

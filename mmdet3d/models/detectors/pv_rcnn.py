@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-from typing import Dict, Optional
+from typing import Optional
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils import InstanceList
 from .two_stage import TwoStage3DDetector
 
 
@@ -14,16 +15,14 @@ class PointVoxelRCNN(TwoStage3DDetector):
     Please refer to the `PointVoxelRCNN <https://arxiv.org/abs/1912.13192>`
 
     Args:
-        voxel_encoder (dict, optional): Point voxelization
-            encoder layer. Defaults to None.
-        middle_encoder (dict, optional): Middle encoder layer
-            of points cloud modality. Defaults to None.
-        backbone (dict, optional): Backbone of extracting
-            points features. Defaults to None.
-        neck (dict, optional): Neck of extracting
-            points features. Defaults to None.
+        voxel_encoder (dict): Point voxelization encoder layer.
+        middle_encoder (dict): Middle encoder layer
+            of points cloud modality.
+        backbone (dict): Backbone of extracting points features.
+        neck (dict, optional): Neck of extracting points features.
+            Defaults to None.
         rpn_head (dict, optional): Config of RPN head. Defaults to None.
-        points_encoder (dict, optional): Points encoder to extract point-level
+        points_encoder (dict, optional): Points encoder to extract point-wise
             features. Defaults to None.
         roi_head (dict, optional): Config of ROI head. Defaults to None.
         train_cfg (dict, optional): Train config of model.
@@ -40,13 +39,13 @@ class PointVoxelRCNN(TwoStage3DDetector):
                  voxel_encoder: dict,
                  middle_encoder: dict,
                  backbone: dict,
-                 neck: dict = None,
-                 rpn_head: dict = None,
-                 points_encoder: dict = None,
-                 roi_head: dict = None,
-                 train_cfg: dict = None,
-                 test_cfg: dict = None,
-                 init_cfg: dict = None,
+                 neck: Optional[dict] = None,
+                 rpn_head: Optional[dict] = None,
+                 points_encoder: Optional[dict] = None,
+                 roi_head: Optional[dict] = None,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None,
                  data_preprocessor: Optional[dict] = None) -> None:
         super().__init__(
             backbone=backbone,
@@ -114,8 +113,8 @@ class PointVoxelRCNN(TwoStage3DDetector):
 
         return results_list
 
-    def extract_feat(self, batch_inputs_dict: Dict):
-        """Extract features from the voxels.
+    def extract_feat(self, batch_inputs_dict: dict) -> dict:
+        """Extract features from the input voxels.
 
         Args:
             batch_inputs_dict (dict): The model input dict which include
@@ -125,10 +124,9 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 - voxels (dict[torch.Tensor]): Voxels of each sample.
 
         Returns:
-            tuple[Tensor] | dict:  For outside 3D object detection, we
-                typically obtain a tuple of features from the backbone + neck,
-                and for inside 3D object detection, usually a dict containing
-                features will be obtained.
+            dict:  For outside 3D object detection, we typically obtain a tuple
+                of features from the backbone + neck, and for inside 3D object
+                detection, usually a dict containing features will be obtained.
         """
         feats_dict = dict()
         voxel_dict = batch_inputs_dict['voxels']
@@ -145,9 +143,9 @@ class PointVoxelRCNN(TwoStage3DDetector):
             feats_dict['neck_feats'] = neck_feats
         return feats_dict
 
-    def extract_points_feat(self, batch_inputs_dict, feats_dict,
-                            rpn_results_list):
-        """Extract features from the points and voxel features.
+    def extract_points_feat(self, batch_inputs_dict: dict, feats_dict: dict,
+                            rpn_results_list: InstanceList) -> dict:
+        """Extract point-wise features from the raw points and voxel features.
 
         Args:
             batch_inputs_dict (dict): The model input dict which include
@@ -156,12 +154,16 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 - points (list[torch.Tensor]): Point cloud of each sample.
                 - voxels (dict[torch.Tensor]): Voxels of each sample.
             feats_dict (dict): Contains features from the first stage.
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
+                of rpn head.
 
         Returns:
-            tuple[Tensor] | dict:  For outside 3D object detection, we
-                typically obtain a tuple of features from the backbone + neck,
-                and for inside 3D object detection, usually a dict containing
-                features will be obtained.
+            dict: Contain Point-wise features, include:
+                - keypoints (torch.Tensor): Sampled key points.
+                - keypoint_features (torch.Tensor): Gather key points features
+                    from multi input.
+                - fusion_keypoint_features (torch.Tensor): Fusion
+                    keypoint_features by point_feature_fusion_layer.
         """
         return self.keypoints_encoder(batch_inputs_dict, feats_dict,
                                       rpn_results_list)

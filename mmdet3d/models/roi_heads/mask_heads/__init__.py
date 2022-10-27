@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .Foreground_segmentation_head import ForegroundSegmentationHead
+from .foreground_segmentation_head import ForegroundSegmentationHead
 from .pointwise_semantic_head import PointwiseSemanticHead
 from .primitive_head import PrimitiveHead
 

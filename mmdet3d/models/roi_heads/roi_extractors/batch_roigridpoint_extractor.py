@@ -10,12 +10,11 @@ from mmdet3d.structures.bbox_3d import rotation_3d_in_axis
 class Batch3DRoIGridExtractor(BaseModule):
     """Grid point wise roi-aware Extractor.
 
-    Extract grid point wise roi features.
-
     Args:
-        grid_size (int): The number of grid points in roi bbox.
-        sa_module_cfg (dict): Config of sa module to get grid points features.
-            Defaults to None.
+        grid_size (int): The number of grid points in a roi bbox.
+            Defaults to 6.
+        sa_module_cfg (dict, optional): Config of sa module to get
+            grid points features. Defaults to None.
         init_cfg (dict, optional): Initialize config of
             model. Defaults to None.
     """
@@ -30,7 +29,8 @@ class Batch3DRoIGridExtractor(BaseModule):
 
     def forward(self, feats: torch.Tensor, coordinate: torch.Tensor,
                 batch_inds: torch.Tensor, rois: torch.Tensor) -> torch.Tensor:
-        """
+        """Forward roi extractor to extract grid points feature.
+
         Args:
             feats (torch.Tensor): Key points features.
             coordinate (torch.Tensor): Key points coordinates.
