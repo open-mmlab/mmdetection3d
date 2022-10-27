@@ -74,25 +74,19 @@ class KittiMetric(BaseMetric):
                 raise KeyError("metric should be one of 'bbox', 'img_bbox', "
                                'but got {metric}.')
 
-    def convert_annos_to_kitti_annos(
-        self,
-        data_annos: list,
-        classes: list = [
-            'Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck', 'Person_sitting',
-            'Tram', 'Misc'
-        ]
-    ) -> list:
+    def convert_annos_to_kitti_annos(self, data_infos: dict) -> list:
         """Convert loading annotations to Kitti annotations.
 
         Args:
-            data_annos (list[dict]): Annotations loaded from ann_file.
-            classes (list[str]): Classes used in the dataset. Default used
-                ['Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
-                'Person_sitting', 'Tram', 'Misc'].
+            data_infos (dict): Data infos including metainfo and annotations
+                loaded from ann_file.
 
         Returns:
             List[dict]: List of Kitti annotations.
         """
+        cat2label = data_infos['metainfo']['categories']
+        data_annos = data_infos['data_list']
+        label2cat = dict((v, k) for (k, v) in cat2label.items())
         assert 'instances' in data_annos[0]
         for i, annos in enumerate(data_annos):
             if len(annos['instances']) == 0:
@@ -120,11 +114,8 @@ class KittiMetric(BaseMetric):
                     'score': []
                 }
                 for instance in annos['instances']:
-                    labels = instance['bbox_label']
-                    if labels == -1:
-                        kitti_annos['name'].append('DontCare')
-                    else:
-                        kitti_annos['name'].append(classes[labels])
+                    label = instance['bbox_label']
+                    kitti_annos['name'].append(label2cat[label])
                     kitti_annos['truncated'].append(instance['truncated'])
                     kitti_annos['occluded'].append(instance['occluded'])
                     kitti_annos['alpha'].append(instance['alpha'])
@@ -179,9 +170,8 @@ class KittiMetric(BaseMetric):
         self.classes = self.dataset_meta['CLASSES']
 
         # load annotations
-        pkl_annos = load(
-            self.ann_file, file_client_args=self.file_client_args)['data_list']
-        self.data_infos = self.convert_annos_to_kitti_annos(pkl_annos)
+        pkl_infos = load(self.ann_file, file_client_args=self.file_client_args)
+        self.data_infos = self.convert_annos_to_kitti_annos(pkl_infos)
         result_dict, tmp_dir = self.format_results(
             results,
             pklfile_prefix=self.pklfile_prefix,
