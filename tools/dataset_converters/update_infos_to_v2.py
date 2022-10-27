@@ -264,10 +264,6 @@ def update_nuscenes_infos(pkl_path, out_dir):
         'CLASSES':
         ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
          'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
-        'DATASET':
-        'Nuscenes',
-        'version':
-        data_list['metadata']['version']
     }
     nusc = NuScenes(
         version=data_list['metadata']['version'],
@@ -367,7 +363,16 @@ def update_nuscenes_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(metainfo=METAINFO, data_list=converted_list)
+
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 'nuscenes'
+    metainfo['version'] = data_list['metadata']['version']
+    metainfo['info_version'] = '1.1'
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
@@ -497,8 +502,16 @@ def update_kitti_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(
-        metainfo={'DATASET': 'KITTI'}, data_list=converted_list)
+
+    # dataset metainfo
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 'kitti'
+    metainfo['info_version'] = '1.1'
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
@@ -558,8 +571,17 @@ def update_s3dis_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(
-        metainfo={'DATASET': 'S3DIS'}, data_list=converted_list)
+
+    # dataset metainfo
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 's3dis'
+    metainfo['info_version'] = '1.1'
+
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
@@ -623,8 +645,17 @@ def update_scannet_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(
-        metainfo={'DATASET': 'SCANNET'}, data_list=converted_list)
+
+    # dataset metainfo
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 'scannet'
+    metainfo['info_version'] = '1.1'
+
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
@@ -692,8 +723,17 @@ def update_sunrgbd_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(
-        metainfo={'DATASET': 'SUNRGBD'}, data_list=converted_list)
+
+    # dataset metainfo
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 'sunrgbd'
+    metainfo['info_version'] = '1.1'
+
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
@@ -709,10 +749,6 @@ def update_lyft_infos(pkl_path, out_dir):
         'CLASSES':
         ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
          'motorcycle', 'bicycle', 'pedestrian', 'animal'),
-        'DATASET':
-        'Nuscenes',
-        'version':
-        data_list['metadata']['version']
     }
     print('Start updating:')
     converted_list = []
@@ -797,7 +833,16 @@ def update_lyft_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(metainfo=METAINFO, data_list=converted_list)
+
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 'lyft'
+    metainfo['version'] = data_list['metadata']['version']
+    metainfo['info_version'] = '1.1'
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
@@ -995,8 +1040,18 @@ def update_waymo_infos(pkl_path, out_dir):
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
-    converted_data_info = dict(
-        metainfo={'DATASET': 'Waymo'}, data_list=converted_list)
+
+    # dataset metainfo
+    metainfo = dict()
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    if ignore_class_name:
+        for ignore_class in ignore_class_name:
+            metainfo['categories'][ignore_class] = -1
+    metainfo['dataset'] = 'waymo'
+    metainfo['version'] = '1.2'
+    metainfo['info_version'] = '1.1'
+
+    converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
 
     mmengine.dump(converted_data_info, out_path, 'pkl')
 
