@@ -78,19 +78,20 @@ class Batch3DRoIGridExtractor(BaseModule):
         Returns:
             torch.Tensor: Grid points coordinates.
         """
-        rois[:, 2] += rois[:, 5] / 2
-        faked_features = rois.new_ones(
+        rois_bbox = rois.clone()
+        rois_bbox[:, 2] += rois_bbox[:, 5] / 2
+        faked_features = rois_bbox.new_ones(
             (self.grid_size, self.grid_size, self.grid_size))
         dense_idx = faked_features.nonzero()
-        dense_idx = dense_idx.repeat(rois.size(0), 1, 1).float()
+        dense_idx = dense_idx.repeat(rois_bbox.size(0), 1, 1).float()
         dense_idx = ((dense_idx + 0.5) / self.grid_size)
         dense_idx[..., :3] -= 0.5
 
-        roi_ctr = rois[:, :3]
-        roi_dim = rois[:, 3:6]
+        roi_ctr = rois_bbox[:, :3]
+        roi_dim = rois_bbox[:, 3:6]
         roi_grid_points = dense_idx * roi_dim.view(-1, 1, 3)
         roi_grid_points = rotation_3d_in_axis(
-            roi_grid_points, rois[:, 6], axis=2)
+            roi_grid_points, rois_bbox[:, 6], axis=2)
         roi_grid_points += roi_ctr.view(-1, 1, 3)
 
         return roi_grid_points
