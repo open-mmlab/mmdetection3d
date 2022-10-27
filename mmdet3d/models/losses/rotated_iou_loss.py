@@ -11,7 +11,7 @@ from mmdet.models.losses.utils import weighted_loss
 
 
 @weighted_loss
-def rotated_iou_3d_loss(pred, target):
+def rotated_iou_3d_loss(pred, target: Tensor) -> Tensor:
     """Calculate the IoU loss (1-IoU) of two sets of rotated bounding boxes.
 
     Note that predictions and targets are one-to-one corresponded.

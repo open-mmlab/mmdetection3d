@@ -6,7 +6,9 @@ n_points = 100000
 
 model = dict(
     bbox_head=dict(
-        n_classes=10, n_reg_outs=8, bbox_loss=dict(type='RotatedIoU3DLoss')))
+        num_classes=10,
+        num_reg_outs=8,
+        bbox_loss=dict(type='RotatedIoU3DLoss')))
 
 train_pipeline = [
     dict(

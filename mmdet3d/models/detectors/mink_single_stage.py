@@ -18,7 +18,7 @@ from .single_stage import SingleStage3DDetector
 
 @MODELS.register_module()
 class MinkSingleStage3DDetector(SingleStage3DDetector):
-    """MinkSingleStage3DDetector.
+    r"""MinkSingleStage3DDetector.
 
     This class serves as a base class for single-stage 3D detectors based on
     MinkowskiEngine `GSDN <https://arxiv.org/abs/2006.12356>`_.
