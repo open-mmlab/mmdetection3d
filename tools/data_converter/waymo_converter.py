@@ -130,7 +130,9 @@ class Waymo2KITTI(object):
         return len(self.tfrecord_pathnames)
 
     def save_image(self, frame, file_idx, frame_idx):
-        """Parse and save the images in png format.
+        """Parse and save the images in jpg format. Jpg is the original format
+        used by Waymo Open dataset. Saving in png format will cause huge (~3x)
+        unnesssary storage waste.
 
         Args:
             frame (:obj:`Frame`): Open dataset frame proto.
@@ -140,9 +142,9 @@ class Waymo2KITTI(object):
         for img in frame.images:
             img_path = f'{self.image_save_dir}{str(img.name - 1)}/' + \
                 f'{self.prefix}{str(file_idx).zfill(3)}' + \
-                f'{str(frame_idx).zfill(3)}.png'
-            img = mmcv.imfrombytes(img.image)
-            mmcv.imwrite(img, img_path)
+                f'{str(frame_idx).zfill(3)}.jpg'
+            with open(img_path, 'wb') as fp:
+                fp.write(img.image)
 
     def save_calib(self, frame, file_idx, frame_idx):
         """Parse and save the calibration data.
