@@ -4,7 +4,7 @@
 Example:
     python tools/dataset_converters/update_infos_to_v2.py
         --dataset kitti
-        --pkl ./data/kitti/kitti_infos_train.pkl
+        --pkl-path ./data/kitti/kitti_infos_train.pkl
         --out-dir ./kitti_v2/
 """
 
@@ -1073,4 +1073,4 @@ if __name__ == '__main__':
     if args.out_dir is None:
         args.out_dir = args.root_dir
     update_pkl_infos(
-        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl)
+        dataset=args.dataset, out_dir=args.out_dir, pkl_path=args.pkl_path)
