@@ -36,7 +36,7 @@ Models:
           mIoU: 40.68
     Weights: https://download.openmmlab.com/mmdetection3d/v0.17.0_models/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class/area2/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class_20210731_144648-aea9ecb6.pth
 
-- Name: dgcnn_4xb32-cosine-100e_s3dis-seg-area3.py
+  - Name: dgcnn_4xb32-cosine-100e_s3dis-seg-area3.py
     In Collection: DGCNN
     Config: configs/dgcnn/dgcnn_4xb32-cosine-100e_s3dis-seg-area3.py
     Metadata:
@@ -49,7 +49,7 @@ Models:
           mIoU: 69.38
     Weights: https://download.openmmlab.com/mmdetection3d/v0.17.0_models/dgcnn/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class/area3/dgcnn_32x4_cosine_100e_s3dis_seg-3d-13class_20210801_154629-2ff50ee0.pth
 
-- Name: dgcnn_4xb32-cosine-100e_s3dis-seg-area4.py
+  - Name: dgcnn_4xb32-cosine-100e_s3dis-seg-area4.py
     In Collection: DGCNN
     Config: configs/dgcnn/dgcnn_4xb32-cosine-100e_s3dis-seg-area4.py
     Metadata:
