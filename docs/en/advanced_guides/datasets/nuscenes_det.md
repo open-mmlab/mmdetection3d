@@ -56,7 +56,7 @@ mmdetection3d
 
 - `nuscenes_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
 - `nuscenes_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
-  `metadata` contains the basic information for the dataset itself, such as `CLASSES` and `version`, while `data_list` is a list of dict, each dict (hereinafter referred to as `info`) contains all the detailed information of single sample as follows:
+  `metainfo` contains the basic information for the dataset itself, such as `categories`, `dataset` and `info_version`, while `data_list` is a list of dict, each dict (hereinafter referred to as `info`) contains all the detailed information of single sample as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['token'\]: Sample data token.
   - info\['timestamp'\]: Timestamp of the sample data.

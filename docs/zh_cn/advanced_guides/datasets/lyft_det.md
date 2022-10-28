@@ -79,7 +79,7 @@ mmdetection3d
 │   │   ├── lyft_infos_test.pkl
 ```
 
-- `lyft_infos_train.pkl`：训练数据集信息，该字典包含两个关键字：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基础信息，例如 `CLASSES` 和 `version`，`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的详细信息，如下所示：
+- `lyft_infos_train.pkl`：训练数据集信息，该字典包含两个关键字：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `categories`, `dataset` 和 `info_version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的所有详细信息。
   - info\['sample_idx'\]：样本在整个数据集的索引。
   - info\['token'\]：样本数据标记。
   - info\['timestamp'\]：样本数据时间戳。

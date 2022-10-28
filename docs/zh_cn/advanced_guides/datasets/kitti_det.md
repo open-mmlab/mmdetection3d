@@ -37,7 +37,7 @@ mmdetection3d
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
 
-# Download data split
+# 下载数据划分
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/test.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/test.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/train.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/train.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
@@ -46,7 +46,7 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
 ```
 
-需要注意的是，如果您的本地磁盘没有充足的存储空间来存储转换后的数据，您可以通过改变 `out-dir` 来指定其他任意的存储路径。如果您没有准备 `planes` 数据，您需要移除 `--with-plane` 标志。
+需要注意的是，如果您的本地磁盘没有充足的存储空间来存储转换后的数据，您可以通过改变 `--out-dir` 来指定其他任意的存储路径。如果您没有准备 `planes` 数据，您需要移除 `--with-plane` 标志。
 
 处理后的文件夹结构应该如下：
 
@@ -79,8 +79,8 @@ kitti
 ```
 
 - `kitti_gt_database/xxxxx.bin`：训练数据集中包含在 3D 标注框中的点云数据。
-- `kitti_infos_train.pkl`：训练数据集，该字典包含了两个键值：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `CLASSES` 和 `version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的详细信息。
-  - info\['sample_idx'\]：样本在整个数据集的索引。
+- `kitti_infos_train.pkl`：训练数据集，该字典包含了两个键值：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `categories`, `dataset` 和 `info_version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的所有详细信息。
+  - info\['sample_idx'\]：该样本在整个数据集的索引。
   - info\['images'\]：多个相机捕获的图像信息。是一个字典，包含 5 个键值：`CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`。
     - info\['images'\]\['R0_rect'\]：校准旋转矩阵，是一个 4x4 数组。
     - info\['images'\]\['CAM2'\]：包含 `CAM2` 相机传感器的信息。
@@ -95,7 +95,7 @@ kitti
       - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
       - info\['lidar_points'\]\['Tr_velo_to_cam'\]：Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组。
       - info\['lidar_points'\]\['Tr_imu_to_velo'\]：IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组。
-    - info\['instances'\]：目标检测任务所需要的。是一个列表，每个元素是包含了实例信息的字典。每个字典与该帧的一个实例标注相关。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。对于其中的第 i 个实例，我们有：
       - info\['instances'\]\[i\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
       - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, w, h, l, yaw) 的顺序表示实例的 3D 边界框。
       - info\['instances'\]\[i\]\['bbox_label'\]：是一个整数，表示实例的 2D 标签，-1 代表忽略。
