@@ -183,8 +183,8 @@ class VoxelSetAbstraction(BaseModule):
         voxel_centers = (voxel_centers + 0.5) * voxel_size + pc_range
         return voxel_centers
 
-    def get_sampled_points(self, points: List[torch.Tensor],
-                           coors: torch.Tensor) -> torch.Tensor:
+    def sample_key_points(self, points: List[torch.Tensor],
+                          coors: torch.Tensor) -> torch.Tensor:
         """Sample key points from raw points cloud.
 
         Args:
@@ -254,7 +254,7 @@ class VoxelSetAbstraction(BaseModule):
             voxels_coors = batch_inputs_dict['voxels']['coors']
         else:
             voxels_coors = None
-        keypoints = self.get_sampled_points(points, voxels_coors)
+        keypoints = self.sample_key_points(points, voxels_coors)
 
         point_features_list = []
         batch_size = len(points)

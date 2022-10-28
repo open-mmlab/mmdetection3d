@@ -12,7 +12,7 @@ from .two_stage import TwoStage3DDetector
 class PointVoxelRCNN(TwoStage3DDetector):
     r"""PointVoxelRCNN detector.
 
-    Please refer to the `PointVoxelRCNN <https://arxiv.org/abs/1912.13192>`
+    Please refer to the `PointVoxelRCNN <https://arxiv.org/abs/1912.13192>`_.
 
     Args:
         voxel_encoder (dict): Point voxelization encoder layer.
@@ -165,8 +165,8 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 - fusion_keypoint_features (torch.Tensor): Fusion
                     keypoint_features by point_feature_fusion_layer.
         """
-        return self.keypoints_encoder(batch_inputs_dict, feats_dict,
-                                      rpn_results_list)
+        return self.points_encoder(batch_inputs_dict, feats_dict,
+                                   rpn_results_list)
 
     def loss(self, batch_inputs_dict: dict, batch_data_samples: SampleList,
              **kwargs):

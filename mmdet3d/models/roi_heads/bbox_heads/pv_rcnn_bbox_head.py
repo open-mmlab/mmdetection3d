@@ -58,9 +58,11 @@ class PVRCNNBBoxHead(BaseModule):
                  bbox_coder: dict = dict(type='DeltaXYZWLHRBBoxCoder'),
                  norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
                  loss_bbox: dict = dict(
-                     type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+                     type='mmdet.SmoothL1Loss',
+                     beta=1.0 / 9.0,
+                     loss_weight=2.0),
                  loss_cls: dict = dict(
-                     type='CrossEntropyLoss',
+                     type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
                      reduction='none',
                      loss_weight=1.0),
@@ -88,15 +90,15 @@ class PVRCNNBBoxHead(BaseModule):
         in_channels *= (self.grid_size**3)
         self.in_channels = in_channels
 
-        self.shared_fc_layer = self.make_fc_layers(
+        self.shared_fc_layer = self._make_fc_layers(
             in_channels, shared_fc_channels,
             range(len(shared_fc_channels) - 1))
-        self.cls_layers = self.make_fc_layers(shared_fc_channels[-1],
-                                              cls_channels, range(1))
+        self.cls_layers = self._make_fc_layers(shared_fc_channels[-1],
+                                               cls_channels, range(1))
         self.cls_out = nn.Conv1d(
             cls_channels[-1], self.cls_out_channels, 1, bias=True)
-        self.reg_layers = self.make_fc_layers(shared_fc_channels[-1],
-                                              reg_channels, range(1))
+        self.reg_layers = self._make_fc_layers(shared_fc_channels[-1],
+                                               reg_channels, range(1))
         self.reg_out = nn.Conv1d(
             reg_channels[-1], self.reg_out_channels, 1, bias=True)
 
@@ -106,8 +108,8 @@ class PVRCNNBBoxHead(BaseModule):
                 layer=['Conv2d', 'Conv1d'],
                 distribution='uniform')
 
-    def make_fc_layers(self, in_channels: int, fc: list,
-                       apply_dropout_indices: list) -> torch.nn.Module:
+    def _make_fc_layers(self, in_channels: int, fc: list,
+                        apply_dropout_indices: list) -> torch.nn.Module:
         fc_layers = []
         pre_channel = in_channels
         for k, fck in enumerate(fc):

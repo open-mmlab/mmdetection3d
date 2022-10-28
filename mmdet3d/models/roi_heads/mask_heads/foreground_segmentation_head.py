@@ -84,9 +84,9 @@ class ForegroundSegmentationHead(BaseModule):
         seg_preds = self.seg_cls_layer(feats)  # (N, 1)
         return dict(seg_preds=seg_preds)
 
-    def get_targets_single(self, point_xyz: torch.Tensor,
-                           gt_bboxes_3d: InstanceData,
-                           gt_labels_3d: torch.Tensor) -> torch.Tensor:
+    def _get_targets_single(self, point_xyz: torch.Tensor,
+                            gt_bboxes_3d: InstanceData,
+                            gt_labels_3d: torch.Tensor) -> torch.Tensor:
         """generate segmentation targets for a single sample.
 
         Args:
@@ -140,7 +140,7 @@ class ForegroundSegmentationHead(BaseModule):
             points_xyz_list.append(points_bxyz[coords_idx][..., 1:])
             gt_bboxes_3d.append(batch_gt_instances_3d[idx].bboxes_3d)
             gt_labels_3d.append(batch_gt_instances_3d[idx].labels_3d)
-        seg_targets = multi_apply(self.get_targets_single, points_xyz_list,
+        seg_targets = multi_apply(self._get_targets_single, points_xyz_list,
                                   gt_bboxes_3d, gt_labels_3d)
         seg_targets = torch.cat(seg_targets, dim=0)
         return dict(seg_targets=seg_targets)

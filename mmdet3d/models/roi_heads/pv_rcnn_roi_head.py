@@ -161,14 +161,14 @@ class PVRCNNROIHead(Base3DRoIHead):
         return results_list
 
     def _bbox_forward_train(self, seg_preds: torch.Tensor,
-                            keypoints_feats: torch.Tensor,
+                            keypoint_features: torch.Tensor,
                             keypoints: torch.Tensor,
                             sampling_results: SamplingResult) -> dict:
         """Forward training function of roi_extractor and bbox_head.
 
         Args:
             seg_preds (torch.Tensor): Point-wise semantic features.
-            keypoints_feats (torch.Tensor): key points features
+            keypoint_features (torch.Tensor): key points features
                 from points encoder.
             keypoints (torch.Tensor): Coordinate of key points.
             sampling_results (:obj:`SamplingResult`): Sampled results used
@@ -178,9 +178,9 @@ class PVRCNNROIHead(Base3DRoIHead):
             dict: Forward results including losses and predictions.
         """
         rois = bbox3d2roi([res.bboxes for res in sampling_results])
-        keypoints_feats = keypoints_feats * seg_preds.sigmoid().max(
+        keypoint_features = keypoint_features * seg_preds.sigmoid().max(
             dim=-1, keepdim=True).values
-        bbox_results = self._bbox_forward(keypoints_feats, keypoints, rois)
+        bbox_results = self._bbox_forward(keypoint_features, keypoints, rois)
 
         bbox_targets = self.bbox_head.get_targets(sampling_results,
                                                   self.train_cfg)
@@ -191,14 +191,14 @@ class PVRCNNROIHead(Base3DRoIHead):
         bbox_results.update(loss_bbox=loss_bbox)
         return bbox_results
 
-    def _bbox_forward(self, keypoints_feats: torch.Tensor,
+    def _bbox_forward(self, keypoint_features: torch.Tensor,
                       keypoints: torch.Tensor, rois: torch.Tensor) -> dict:
         """Forward function of roi_extractor and bbox_head used in both
         training and testing.
 
         Args:
             rois (Tensor): Roi boxes.
-            keypoints_feats (torch.Tensor): key points features
+            keypoint_features (torch.Tensor): key points features
                 from points encoder.
             keypoints (torch.Tensor): Coordinate of key points.
             rois (Tensor): Roi boxes.
@@ -207,9 +207,10 @@ class PVRCNNROIHead(Base3DRoIHead):
             dict: Contains predictions of bbox_head and
                 features of roi_extractor.
         """
-        pooled_keypoints_feats = self.bbox_roi_extractor(
-            keypoints_feats, keypoints[..., 1:], keypoints[..., 0].int(), rois)
-        bbox_score, bbox_reg = self.bbox_head(pooled_keypoints_feats)
+        pooled_keypoint_features = self.bbox_roi_extractor(
+            keypoint_features, keypoints[..., 1:], keypoints[..., 0].int(),
+            rois)
+        bbox_score, bbox_reg = self.bbox_head(pooled_keypoint_features)
 
         bbox_results = dict(bbox_scores=bbox_score, bbox_reg=bbox_reg)
         return bbox_results
@@ -298,7 +299,7 @@ class PVRCNNROIHead(Base3DRoIHead):
         """Train semantic head.
 
         Args:
-            keypoints_feats (torch.Tensor): key points features
+            keypoint_features (torch.Tensor): key points features
                 from points encoder.
             keypoints (torch.Tensor): Coordinate of key points.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
