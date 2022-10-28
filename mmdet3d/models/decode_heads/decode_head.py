@@ -87,8 +87,6 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         else:
             self.dropout = None
 
-        self.fp16_enabled = False
-
     def init_weights(self):
         """Initialize weights of classification layer."""
         super().init_weights()
