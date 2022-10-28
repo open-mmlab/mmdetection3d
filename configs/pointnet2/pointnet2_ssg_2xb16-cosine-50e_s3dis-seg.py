@@ -17,8 +17,8 @@ model = dict(
         batch_size=24))
 
 # data settings
-train_dataloader = dict(batch_size=6)
+train_dataloader = dict(batch_size=16)
 
 # runtime settings
-default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=2), )
-val_cfg = dict(interval=2)
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=2))
+train_cfg = dict(val_interval=2)
