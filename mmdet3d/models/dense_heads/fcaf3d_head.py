@@ -176,8 +176,6 @@ class FCAF3DHead(Base3DDenseHead):
             out = self.__getattr__(f'out_block_{i}')(x)
             center_pred, bbox_pred, cls_pred, point, prune_score = \
                 self._forward_single(out, self.scales[i])
-            import pdb
-            pdb.set_trace()
             center_preds.append(center_pred)
             bbox_preds.append(bbox_pred)
             cls_preds.append(cls_pred)
