@@ -459,7 +459,7 @@ _base_ = [
 
 #### Visualize your dataset (optional)
 
-To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/browse_dataest.py` script
+To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/misc/browse_dataest.py` script
 to visualize your dataset and annotations before training and validation, more details refer to the [visualization](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/user_guides/visualization.md) doc.
 
 ## Evaluation

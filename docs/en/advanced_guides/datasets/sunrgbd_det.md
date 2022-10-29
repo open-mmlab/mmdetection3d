@@ -153,11 +153,11 @@ sunrgbd
 
 - `points/xxxxxx.bin`: The point cloud data after downsample.
 - `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
-  - info\['lidar_points'\]: A dict contains all information relate to the the lidar points.
+  - info\['lidar_points'\]: A dict containing all information relate to the the lidar points.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
-  - info\['images'\]: A dict contains all information relate to the image data.
-    - info\['images'\]\['CAM0'\]\['img_path'\]: The image file name.
+  - info\['images'\]: A dict containing all information relate to the image data.
+    - info\['images'\]\['CAM0'\]\['img_path'\]: The filename of the image.
     - info\['images'\]\['CAM0'\]\['depth2img'\]: Transformation matrix from depth to image with shape (4, 4).
     - info\['images'\]\['CAM0'\]\['height'\]: The height of image.
     - info\['images'\]\['CAM0'\]\['width'\]: The width of image.

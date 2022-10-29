@@ -85,7 +85,7 @@ mmdetection3d
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['token'\]: Sample data token.
   - info\['timestamp'\]: Timestamp of the sample data.
-  - info\['lidar_points'\]: A dict contains all the information related to the lidar points.
+  - info\['lidar_points'\]: A dict containing all the information related to the lidar points.
     - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
@@ -98,7 +98,7 @@ mmdetection3d
     - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]: The sweep sample data token.
   - info\['images'\]: A dict contains six keys corresponding to each camera: `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`. Each dict contains all data information related to  corresponding camera.
-    - info\['images'\]\['CAM_XXX'\]\['img_path'\]: Filename of image.
+    - info\['images'\]\['CAM_XXX'\]\['img_path'\]: The filename of the image.
     - info\['images'\]\['CAM_XXX'\]\['cam2img'\]: The transformation matrix recording the intrinsic parameters when projecting 3D points to each image plane. (3x3 list)
     - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]: Sample data token of image.
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]: Timestamp of the image.

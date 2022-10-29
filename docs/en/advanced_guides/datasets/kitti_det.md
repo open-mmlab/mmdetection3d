@@ -85,13 +85,13 @@ kitti
   - info\['images'\]: Information of images captured by multiple cameras. A dict contains five keys including: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.
     - info\['images'\]\['R0_rect'\]: Rectifying rotation matrix with shape (4, 4).
     - info\['images'\]\['CAM2'\]: Include some information about the `CAM2` camera sensor.
-      - info\['images'\]\['CAM2'\]\['img_path'\]: Filename of image.
+      - info\['images'\]\['CAM2'\]\['img_path'\]: The filename of the image.
       - info\['images'\]\['CAM2'\]\['height'\]: The height of the image.
       - info\['images'\]\['CAM2'\]\['width'\]: The width of the image.
       - info\['images'\]\['CAM2'\]\['cam2img'\]: Transformation matrix from camera to image with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2cam'\]: Transformation matrix from lidar to camera with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2img'\]: Transformation matrix from lidar to image with shape (4, 4).
-  - info\['lidar_points'\]: A dict contains all the information related to the lidar points
+  - info\['lidar_points'\]: A dict containing all the information related to the lidar points.
     - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate with shape (4, 4).
@@ -104,7 +104,7 @@ kitti
     - info\['instances'\]\[i\]\['depth'\]: Projected center depth of the 3D bounding box with respect to the image plane.
     - info\['instances'\]\[i\]\['num_lidar_pts'\]: The number of LiDAR points in the 3D bounding box.
     - info\['instances'\]\[i\]\['center_2d'\]: Projected 2D center of the 3D bounding box.
-    - info\['instances'\]\[i\]\['difficulty'\]: KITTI difficulty, Easy, Moderate, Hard.
+    - info\['instances'\]\[i\]\['difficulty'\]: KITTI difficulty: 'Easy', 'Moderate', 'Hard'.
     - info\['instances'\]\[i\]\['truncated'\]: Float from 0 (non-truncated) to 1 (truncated), where truncated refers to the object leaving image boundaries.
     - info\['instances'\]\[i\]\['occluded'\]: Integer (0,1,2,3) indicating occlusion state: 0 = fully visible, 1 = partly occluded, 2 = largely occluded, 3 = unknown.
     - info\['instances'\]\[i\]\['group_ids'\]: Used for multi-part object.

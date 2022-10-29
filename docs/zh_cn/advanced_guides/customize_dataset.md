@@ -458,7 +458,7 @@ _base_ = [
 
 #### 可视化数据集（可选）
 
-为了验证准备的数据和配置是否正确，我们建议在训练和验证前使用 `tools/browse_dataest.py` 脚本可视化数据集和标注，更多细节请参考[可视化](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/user_guides/visualization.md)文档。
+为了验证准备的数据和配置是否正确，我们建议在训练和验证前使用 `tools/misc/browse_dataest.py` 脚本可视化数据集和标注，更多细节请参考[可视化](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/user_guides/visualization.md)文档。
 
 ## 评估
 
