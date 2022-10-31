@@ -8,6 +8,7 @@ from .groupfree3dnet import GroupFree3DNet
 from .h3dnet import H3DNet
 from .imvotenet import ImVoteNet
 from .imvoxelnet import ImVoxelNet
+from .mink_single_stage import MinkSingleStage3DDetector
 from .multiview_dfm import MultiViewDfM
 from .mvx_faster_rcnn import DynamicMVXFasterRCNN, MVXFasterRCNN
 from .mvx_two_stage import MVXTwoStageDetector
@@ -21,25 +22,9 @@ from .votenet import VoteNet
 from .voxelnet import VoxelNet
 
 __all__ = [
-    'Base3DDetector',
-    'DfM',
-    'VoxelNet',
-    'DynamicVoxelNet',
-    'MVXTwoStageDetector',
-    'DynamicMVXFasterRCNN',
-    'MVXFasterRCNN',
-    'MultiViewDfM',
-    'PartA2',
-    'VoteNet',
-    'H3DNet',
-    'CenterPoint',
-    'SSD3DNet',
-    'ImVoteNet',
-    'SingleStageMono3DDetector',
-    'FCOSMono3D',
-    'ImVoxelNet',
-    'GroupFree3DNet',
-    'PointRCNN',
-    'SMOKEMono3D',
-    'SASSD',
+    'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
+    'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',
+    'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
+    'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'PointRCNN', 'SMOKEMono3D',
+    'SASSD', 'MinkSingleStage3DDetector', 'MultiViewDfM', 'DfM'
 ]
