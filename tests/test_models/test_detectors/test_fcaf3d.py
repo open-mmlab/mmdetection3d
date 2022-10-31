@@ -10,9 +10,13 @@ from tests.utils.model_utils import (_create_detector_inputs,
 
 class TestFCAF3d(unittest.TestCase):
 
-    def test_3dssd(self):
-        import mmdet3d.models
+    def test_fcaf3d(self):
+        try:
+            import MinkowskiEngine  # noqa: F401
+        except ImportError:
+            return
 
+        import mmdet3d.models
         assert hasattr(mmdet3d.models, 'MinkSingleStage3DDetector')
         DefaultScope.get_instance('test_fcaf3d', scope_name='mmdet3d')
         _setup_seed(0)
