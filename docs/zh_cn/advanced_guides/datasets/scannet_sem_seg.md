@@ -2,7 +2,7 @@
 
 ## 数据集的准备
 
-ScanNet 3D 语义分割数据集的准备和 3D 检测任务的准备很相似，请查看[此文档](https://github.com/open-mmlab/mmdetection3d/blob/master/docs_zh-CN/datasets/scannet_det.md#dataset-preparation)以获取更多细节。
+ScanNet 3D 语义分割数据集的准备和 3D 检测任务的准备很相似，请查看[此文档](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/datasets/scannet_det.md#%E6%95%B0%E6%8D%AE%E9%9B%86%E5%87%86%E5%A4%87)以获取更多细节。
 以下我们只罗列部分 3D 语义分割特有的处理步骤和数据信息。
 
 ### 提取 ScanNet 数据
@@ -102,8 +102,7 @@ train_pipeline = [
         enlarge_size=0.2,
         min_unique_num=None),
     dict(type='NormalizePointsColor', color_mean=None),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 ```
 
@@ -115,7 +114,7 @@ train_pipeline = [
 
 通常我们使用平均交并比 (mean Intersection over Union, mIoU) 作为 ScanNet 语义分割任务的度量指标。
 具体而言，我们先计算所有类别的 IoU，然后取平均值作为 mIoU。
-更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py)。
+更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py)。
 
 ## 在测试集上测试并提交结果
 

@@ -8,7 +8,7 @@ metainfo = dict(
              'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
              'garbagebin'))
 
-file_client_args = dict(backend='disk')
+# file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.

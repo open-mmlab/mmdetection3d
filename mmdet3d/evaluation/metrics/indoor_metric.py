@@ -78,8 +78,9 @@ class IndoorMetric(BaseMetric):
             ann_infos.append(eval_ann)
             pred_results.append(sinlge_pred_results)
 
+        # some checkpoints may not record the key "box_type_3d"
         box_type_3d, box_mode_3d = get_box_type(
-            self.dataset_meta['box_type_3d'])
+            self.dataset_meta.get('box_type_3d', 'depth'))
 
         ret_dict = indoor_eval(
             ann_infos,

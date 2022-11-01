@@ -26,7 +26,7 @@ optim_wrapper = dict(
     clip_grad=dict(max_norm=0.01, norm_type=2))
 ```
 
-### Customize optimizer supported by Pytorch
+### Customize optimizer supported by PyTorch
 
 We already support to use all the optimizers implemented by PyTorch, and the only modification is to change the `optimizer` field in `optim_wrapper` field of config files. For example, if you want to use `ADAM` (note that the performance could drop a lot), the modification could be as the following.
 
@@ -192,7 +192,7 @@ Tricks not implemented by the optimizer should be implemented through optimizer 
 
 ## Customize training schedules
 
-By default we use step learning rate with 1x schedule, this calls [MultiStepLR](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139) in MMEngine.
+By default we use step learning rate with 1x schedule, this calls [`MultiStepLR`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139) in MMEngine.
 We support many other learning rate schedule [here](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py), such as `CosineAnnealingLR` and `PolyLR` schedules. Here are some examples
 
 - Poly schedule:
@@ -219,7 +219,6 @@ We support many other learning rate schedule [here](https://github.com/open-mmla
           begin=0,
           end=8,
           by_epoch=True)]
-
   ```
 
 ## Customize train loop
@@ -257,7 +256,9 @@ MMEngine provides many useful [hooks](https://github.com/open-mmlab/mmengine/blo
 Here we give an example of creating a new hook in mmdet3d and using it in training.
 
 ```python
-from mmengine.hooks import HOOKS, Hook
+from mmengine.hooks import Hook
+
+from mmdet3d.registry import HOOKS
 
 
 @HOOKS.register_module()
@@ -341,7 +342,7 @@ There are some common hooks that are registered through `default_hooks`, they ar
 - `CheckpointHook`: A hook that saves checkpoints periodically.
 - `DistSamplerSeedHook`: A hook that sets the seed for sampler and batch_sampler.
 
-`IterTimerHook`, `ParamSchedulerHook` and `DistSamplerSeedHook` are simple and no need to be modified usually, so here we reveals how what we can do with `LoggerHook`, `CheckpointHook` and `DetVisualizationHook`.
+`IterTimerHook`, `ParamSchedulerHook` and `DistSamplerSeedHook` are simple and no need to be modified usually, so here we reveals how what we can do with `LoggerHook`, `CheckpointHook` and `Det3DVisualizationHook`.
 
 #### CheckpointHook
 
