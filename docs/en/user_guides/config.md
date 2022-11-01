@@ -1,11 +1,11 @@
 # Learn about Configs
 
-MMDetection3D and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.md). It has a modular and inheritance design, which is convenient to conduct various experiments.
+MMDetection3D and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.html). It has a modular and inheritance design, which is convenient to conduct various experiments.
 If you wish to inspect the config file, you may run `python tools/misc/print_config.py /PATH/TO/CONFIG` to see the complete config.
 
 ## Config File Content
 
-MMDetection3D uses a modular design, all modules with different functions can be configured through the config. Taking PointPillars as an example, we will introduce each field in the config according to different function modules:
+MMDetection3D uses a modular design, all modules with different functions can be configured through the config. Taking PointPillars as an example, we will introduce each field in the config according to different function modules.
 
 ### Model config
 
@@ -446,7 +446,7 @@ resume = False
 
 ## Config file inheritance
 
-There are 4 basic component types under `config/_base_`, dataset, model, schedule, default_runtime.
+There are 4 basic component types under `configs/_base_`, dataset, model, schedule, default_runtime.
 Many methods could be easily constructed with one of each like SECOND, PointPillars, PartA2, and VoteNet.
 The configs that are composed by components from `_base_` are called _primitive_.
 

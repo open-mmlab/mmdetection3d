@@ -24,13 +24,13 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**新闻**:
+**新闻**：
 
 **v1.1.0rc1** 版本已经在 2022.10.11 发布。
 
-由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在 [变更日志](docs/en/changelog.md) 和 [v1.0.x版本变更日志](docs/en/notes/changelog_v1.0.x.md) 中查看更多详细信息。
+由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在[变更日志](docs/zh_cn/notes/changelog.md)和 [v1.0.x版本变更日志](docs/zh_cn/notes/changelog_v1.0.x.md)中查看更多详细信息。
 
-文档: https://mmdetection3d.readthedocs.io/
+文档：https://mmdetection3d.readthedocs.io/
 
 ## 简介
 
@@ -38,7 +38,7 @@
 
 主分支代码目前支持 PyTorch 1.6 以上的版本。
 
-MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代面向3D检测的平台. 它是 OpenMMlab 项目的一部分，这个项目由香港中文大学多媒体实验室和商汤科技联合发起.
+MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代面向 3D 检测的平台。它是 OpenMMlab 项目的一部分，这个项目由香港中文大学多媒体实验室和商汤科技联合发起。
 
 ![demo image](resources/mmdet3d_outdoor_demo.gif)
 
@@ -50,17 +50,17 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 - **支持户内/户外的数据集**
 
-  支持室内/室外的3D检测数据集，包括 ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, KITTI.
+  支持室内/室外的3D检测数据集，包括 ScanNet，SUNRGB-D，Waymo，nuScenes，Lyft，KITTI。
 
-  对于 nuScenes 数据集, 我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/1.1/configs/nuimages).
+  对于 nuScenes 数据集，我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/1.1/configs/nuimages)。
 
 - **与 2D 检测器的自然整合**
 
-  [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/zh_cn/model_zoo.md) 支持的**300+个模型 , 40+的论文算法**, 和相关模块都可以在此代码库中训练或使用。
+  [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/zh_cn/model_zoo.md) 支持的 **300+ 个模型，40+ 的论文算法**，和相关模块都可以在此代码库中训练或使用。
 
 - **性能高**
 
-  训练速度比其他代码库更快。下表可见主要的对比结果。更多的细节可见[基准测评文档](./docs/zh_cn/benchmarks.md)。我们对比了每秒训练的样本数（值越高越好）。其他代码库不支持的模型被标记为 `×`。
+  训练速度比其他代码库更快。下表可见主要的对比结果。更多的细节可见[基准测评文档](./docs/zh_cn/notes/benchmarks.md)。我们对比了每秒训练的样本数（值越高越好）。其他代码库不支持的模型被标记为 `×`。
 
   |       Methods       | MMDetection3D | [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) | [votenet](https://github.com/facebookresearch/votenet) | [Det3D](https://github.com/poodarchu/Det3D) |
   | :-----------------: | :-----------: | :--------------------------------------------------: | :----------------------------------------------------: | :-----------------------------------------: |
@@ -70,7 +70,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
   |       SECOND        |      40       |                          30                          |                           ×                            |                      ×                      |
   |       Part-A2       |      17       |                          14                          |                           ×                            |                      ×                      |
 
-和 [MMDetection](https://github.com/open-mmlab/mmdetection)，[MMCV](https://github.com/open-mmlab/mmcv) 一样, MMDetection3D 也可以作为一个库去支持各式各样的项目.
+和 [MMDetection](https://github.com/open-mmlab/mmdetection)，[MMCV](https://github.com/open-mmlab/mmcv) 一样，MMDetection3D 也可以作为一个库去支持各式各样的项目。
 
 ## 开源许可证
 
@@ -80,7 +80,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 我们在 2022.10.11 发布了 **1.1.0rc1** 版本.
 
-更多细节和版本发布历史可以参考[changelog.md](docs/en/notes/changelog.md).
+更多细节和版本发布历史可以参考 [changelog.md](docs/zh_cn/notes/changelog.md)。
 
 ## 基准测试和模型库
 
@@ -226,7 +226,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 | MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
 | SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
 
-**注意：** [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/zh_cn/model_zoo.md) 支持的基于2D检测的**300+个模型 , 40+的论文算法**在 MMDetection3D 中都可以被训练或使用。
+**注意：**[MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/zh_cn/model_zoo.md) 支持的基于 2D 检测的 **300+ 个模型，40+ 的论文算法**在 MMDetection3D 中都可以被训练或使用。
 
 ## 安装
 
@@ -234,7 +234,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 快速入门
 
-请参考[快速入门文档](docs/zh_cn/getting_started.md)学习 MMDetection3D 的基本使用。 我们为新手提供了分别针对[已有数据集](docs/zh_cn/user_guides/1_exist_data_model.md)和[新数据集](docs/zh_cn/user_guides/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/user_guides/config.md), [增加数据集支持](docs/zh_cn/advanced_guides/customize_dataset.md), [设计新的数据预处理流程](docs/zh_cn/user_guides/data_pipeline.md), [增加自定义模型](docs/zh_cn/advanced_guides/customize_models.md), [增加自定义的运行时配置](docs/zh_cn/advanced_guides/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/advanced_guides/datasets/waymo.md).
+请参考[快速入门文档](docs/zh_cn/getting_started.md)学习 MMDetection3D 的基本使用。我们为新手提供了分别针对[已有数据集](docs/zh_cn/user_guides/train_test.md)和[新数据集](docs/zh_cn/user_guides/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/user_guides/config.md)，[增加数据集支持](docs/zh_cn/advanced_guides/customize_dataset.md)，[设计新的数据预处理流程](docs/zh_cn/user_guides/data_pipeline.md)，[增加自定义模型](docs/zh_cn/advanced_guides/customize_models.md)，[增加自定义的运行时配置](docs/zh_cn/advanced_guides/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/advanced_guides/datasets/waymo_det.md)。
 
 请参考 [FAQ](docs/zh_cn/notes/faq.md) 查看一些常见的问题与解答。在升级 MMDetection3D 的版本时，请查看[兼容性文档](docs/zh_cn/notes/compatibility.md)以知晓每个版本引入的不与之前版本兼容的更新。
 

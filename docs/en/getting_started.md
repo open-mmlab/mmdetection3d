@@ -7,7 +7,8 @@ MMDection3D works on Linux, Windows (experimental support) and macOS and require
 - PyTorch 1.6+
 - CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
 - GCC 5+
-- [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
+- [MMEngine](https://mmengine.readthedocs.io/zh_CN/latest/#installation)
+- [MMCV](https://mmcv.readthedocs.io/zh_CN/latest/#installation)
 
 ```{note}
 If you are experienced with PyTorch and have already installed it, just skip this part and jump to the [next section](#installation). Otherwise, you can follow these steps for the preparation.
@@ -99,7 +100,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 Note:
 
-1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
+1. The git commit id will be written to the version number with step 4, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
    It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
 
    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
@@ -197,7 +198,7 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](user_guides/inference.md).
 
 ## Customize Installation
 
@@ -216,7 +217,7 @@ Installing CUDA runtime libraries is enough if you follow our best practices, be
 
 ### Install MMEngine without MIM
 
-To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmcv.readthedocs.io/en/latest/get_started/installation.html).
+To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmengine.readthedocs.io/en/latest/get_started/installation.html).
 
 For example, you can install MMEngine by the following command.
 
@@ -280,5 +281,5 @@ pip install -e .
 
 ## Trouble shooting
 
-If you have some issues during the installation, please first view the [FAQ](faq.md) page.
+If you have some issues during the installation, please first view the [FAQ](notes/faq.md) page.
 You may [open an issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose) on GitHub if no solution is found.

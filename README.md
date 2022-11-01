@@ -60,7 +60,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 
 - **High efficiency**
 
-  It trains faster than other codebases. The main results are as below. Details can be found in [benchmark.md](./docs/en/benchmarks.md). We compare the number of samples trained per second (the higher, the better). The models that are not supported by other codebases are marked by `×`.
+  It trains faster than other codebases. The main results are as below. Details can be found in [benchmark.md](./docs/en/notes/benchmarks.md). We compare the number of samples trained per second (the higher, the better). The models that are not supported by other codebases are marked by `×`.
 
   |       Methods       | MMDetection3D | [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) | [votenet](https://github.com/facebookresearch/votenet) | [Det3D](https://github.com/poodarchu/Det3D) |
   | :-----------------: | :-----------: | :--------------------------------------------------: | :----------------------------------------------------: | :-----------------------------------------: |
@@ -226,7 +226,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 | MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
 | SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
 
-**Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
+**Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
 
@@ -234,7 +234,7 @@ Please refer to [getting_started.md](docs/en/getting_started.md) for installatio
 
 ## Get Started
 
-Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/user_guides/1_exist_data_model.md) and [with customized dataset](docs/en/user_guides/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/user_guides/config.md), [adding new dataset](docs/en/advanced_guides/customize_dataset.md), [designing data pipeline](docs/en/user_guides/data_pipeline.md), [customizing models](docs/en/advanced_guides/customize_models.md), [customizing runtime settings](docs/en/advanced_guides/customize_runtime.md) and [Waymo dataset](docs/en/advanced_guides/datasets/waymo_det.md).
+Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/user_guides/train_test.md) and [with customized dataset](docs/en/user_guides/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/user_guides/config.md), [adding new dataset](docs/en/advanced_guides/customize_dataset.md), [designing data pipeline](docs/en/user_guides/data_pipeline.md), [customizing models](docs/en/advanced_guides/customize_models.md), [customizing runtime settings](docs/en/advanced_guides/customize_runtime.md) and [Waymo dataset](docs/en/advanced_guides/datasets/waymo_det.md).
 
 Please refer to [FAQ](docs/en/notes/faq.md) for frequently asked questions. When updating the version of MMDetection3D, please also check the [compatibility doc](docs/en/notes/compatibility.md) to be aware of the BC-breaking updates introduced in each version.
 
