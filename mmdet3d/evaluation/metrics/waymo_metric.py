@@ -593,7 +593,7 @@ class WaymoMetric(KittiMetric):
         box_preds = box_dict['bboxes_3d']
         scores = box_dict['scores_3d']
         labels = box_dict['labels_3d']
-        sample_idx = info['sample_id']
+        sample_idx = info['sample_idx']
         box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
 
         if len(box_preds) == 0:
