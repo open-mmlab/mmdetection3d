@@ -70,7 +70,7 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 'points', 'voxels' keys.
 
                     - points (list[torch.Tensor]): Point cloud of each sample.
-                    - voxels (dict[torch.Tensor]): Voxels of each sample.
+                    - voxels (dict[torch.Tensor]): Voxels of the batch sample.
 
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -121,12 +121,17 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 'points', 'voxels' keys.
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
-                - voxels (dict[torch.Tensor]): Voxels of each sample.
+                - voxels (dict[torch.Tensor]): Voxels of the batch sample.
 
         Returns:
-            dict:  For outside 3D object detection, we typically obtain a tuple
-                of features from the backbone + neck, and for inside 3D object
-                detection, usually a dict containing features will be obtained.
+            dict: We typically obtain a dict of features from the backbone +
+                neck, it includes:
+
+                - spatial_feats (torch.Tensor): Spatial feats from middle
+                    encoder.
+                - multi_scale_3d_feats (list[torch.Tensor]): Multi scale
+                    middle feats from middle encoder.
+                - neck_feats (torch.Tensor): Neck feats from neck.
         """
         feats_dict = dict()
         voxel_dict = batch_inputs_dict['voxels']
@@ -152,7 +157,7 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 'points', 'voxels' keys.
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
-                - voxels (dict[torch.Tensor]): Voxels of each sample.
+                - voxels (dict[torch.Tensor]): Voxels of the batch sample.
             feats_dict (dict): Contains features from the first stage.
             rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
@@ -177,7 +182,7 @@ class PointVoxelRCNN(TwoStage3DDetector):
                 'points', 'voxels' keys.
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
-                - voxels (dict[torch.Tensor]): Voxels of each sample.
+                - voxels (dict[torch.Tensor]): Voxels of the batch sample.
 
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as

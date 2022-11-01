@@ -18,7 +18,7 @@ class PVRCNNROIHead(Base3DRoIHead):
     """RoI head for PV-RCNN.
 
     Args:
-        num_classes (int): The number of classes.
+        num_classes (int): The number of classes. Defaults to 3.
         semantic_head (dict, optional): Config of semantic head.
             Defaults to None.
         bbox_roi_extractor (dict, optional): Config of roi_extractor.
@@ -33,7 +33,7 @@ class PVRCNNROIHead(Base3DRoIHead):
     """
 
     def __init__(self,
-                 num_classes=3,
+                 num_classes: int = 3,
                  semantic_head: Optional[dict] = None,
                  bbox_roi_extractor: Optional[dict] = None,
                  bbox_head: Optional[dict] = None,
@@ -59,7 +59,7 @@ class PVRCNNROIHead(Base3DRoIHead):
 
     def loss(self, feats_dict: dict, rpn_results_list: InstanceList,
              batch_data_samples: SampleList, **kwargs) -> dict:
-        """Training forward function of PartAggregationROIHead.
+        """Training forward function of PVRCNNROIHead.
 
         Args:
             feats_dict (dict): Contains point-wise features.

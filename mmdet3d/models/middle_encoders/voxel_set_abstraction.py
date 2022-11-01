@@ -51,13 +51,13 @@ class VoxelSetAbstraction(BaseModule):
             [0.05, 0.05, 0.1].
         point_cloud_range (list[float]): Point cloud range. Defaults to
             [0, -40, -3, 70.4, 40, 1].
-        rawpoints_sa_config (dict or ConfigDict, optional): SA module cfg.
-            Used to gather key points features from raw points. Default to
-            None.
         voxel_sa_configs_list (List[dict or ConfigDict], optional): List of SA
             module cfg. Used to gather key points features from multi-wise
             voxel features. Default to None.
-        bev_features_channels (int): Bev features channels num.
+        rawpoints_sa_config (dict or ConfigDict, optional): SA module cfg.
+            Used to gather key points features from raw points. Default to
+            None.
+        bev_feat_channels (int): Bev features channels num.
             Default to 256.
         bev_scale_factor (int): Bev features scale factor. Default to 8.
         norm_cfg (dict[str]): Config of normalization layer. Default
@@ -74,7 +74,7 @@ class VoxelSetAbstraction(BaseModule):
                  point_cloud_range: list = [0, -40, -3, 70.4, 40, 1],
                  voxel_sa_configs_list: Optional[list] = None,
                  rawpoints_sa_config: Optional[dict] = None,
-                 bev_features_channels: int = 256,
+                 bev_feat_channels: int = 256,
                  bev_scale_factor: int = 8,
                  voxel_center_as_source: bool = False,
                  norm_cfg: dict = dict(type='BN2d', eps=1e-5, momentum=0.1),
@@ -105,11 +105,11 @@ class VoxelSetAbstraction(BaseModule):
         else:
             self.voxel_sa_layers = None
 
-        if bev_features_channels is not None:
+        if bev_feat_channels is not None:
             self.bev_cfg = dict(
-                bev_features_channels=bev_features_channels,
+                bev_feat_channels=bev_feat_channels,
                 bev_scale_factor=bev_scale_factor)
-            gathered_channels += bev_features_channels
+            gathered_channels += bev_feat_channels
         else:
             self.bev_cfg = None
 
@@ -130,15 +130,16 @@ class VoxelSetAbstraction(BaseModule):
         """Gather key points features from bev feature map by interpolate.
 
         Args:
-            keypoints (torch.Tensor): Sampled key points (N1 + N2 + ..., NDim)
+            keypoints (torch.Tensor): Sampled key points with shape
+                (N1 + N2 + ..., NDim).
             bev_features (torch.Tensor): Bev feature map from the first
-                stage (B, C, H, W).
+                stage with shape (B, C, H, W).
             batch_size (int): Input batch size.
             bev_scale_factor (int): Bev feature map scale factor.
 
         Returns:
             torch.Tensor: Key points features gather from bev feature
-                map (N1 + N2 + ..., C)
+                map with shape (N1 + N2 + ..., C)
         """
         x_idxs = (keypoints[..., 0] -
                   self.point_cloud_range[0]) / self.voxel_size[0]
@@ -171,7 +172,7 @@ class VoxelSetAbstraction(BaseModule):
             scale_factor (float): Scale factor.
 
         Returns:
-            torch.Tensor: Voxel centers coordinate shape is (N, 3).
+            torch.Tensor: Voxel centers coordinate with shape (N, 3).
         """
         assert coors.shape[1] == 4
         voxel_centers = coors[:, [3, 2, 1]].float()  # (xyz)
@@ -233,7 +234,7 @@ class VoxelSetAbstraction(BaseModule):
                 'points', 'voxels' keys.
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
-                - voxels (dict[torch.Tensor]): Voxels of each sample.
+                - voxels (dict[torch.Tensor]): Voxels of the batch sample.
             feats_dict (dict): Contains features from the first
                 stage.
             rpn_results_list (List[:obj:`InstanceData`]): Detection results
@@ -315,13 +316,13 @@ class VoxelSetAbstraction(BaseModule):
 
         fusion_point_features = self.point_feature_fusion_layer(point_features)
 
-        bid = torch.arange(
-            batch_size * num_keypoints,
-            device=keypoints.device) // num_keypoints
-        key_bxyz = torch.cat(
-            (bid.to(key_xyz.dtype).unsqueeze(dim=-1), key_xyz), dim=-1)
+        batch_idxs = torch.arange(
+            batch_size * num_keypoints, device=keypoints.device
+        ) // num_keypoints  # batch indexes of each key points
+        batch_keypoints_xyz = torch.cat(
+            (batch_idxs.to(key_xyz.dtype).unsqueeze(dim=-1), key_xyz), dim=-1)
 
         return dict(
             keypoint_features=point_features,
             fusion_keypoint_features=fusion_point_features,
-            keypoints=key_bxyz)
+            keypoints=batch_keypoints_xyz)

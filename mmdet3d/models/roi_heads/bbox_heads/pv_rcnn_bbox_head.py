@@ -27,17 +27,18 @@ class PVRCNNBBoxHead(BaseModule):
         grid_size (int): The number of grid points in roi bbox.
         num_classes (int): The number of classes.
         class_agnostic (bool): Whether generate class agnostic prediction.
-            Default to True.
-        shared_fc_channels (list(int)): Out channels of each shared fc layer.
-            Default to (256, 256).
-        cls_channels (list(int)): Out channels of each classification layer.
-            Default to (256, 256).
-        reg_channels (list(int)): Out channels of each regression layer.
-            Default to (256, 256).
-        dropout_ratio (float): Ratio of dropout layer. Default: 0.5.
+            Defaults to True.
+        shared_fc_channels (tuple(int)): Out channels of each shared fc layer.
+            Defaults to (256, 256).
+        cls_channels (tuple(int)): Out channels of each classification layer.
+            Defaults to (256, 256).
+        reg_channels (tuple(int)): Out channels of each regression layer.
+            Defaults to (256, 256).
+        dropout_ratio (float): Ratio of dropout layer. Defaults to 0.5.
         with_corner_loss (bool): Whether to use corner loss or not.
-            Default to True.
+            Defaults to True.
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for box head.
+            Defaults to dict(type='DeltaXYZWLHRBBoxCoder').
         norm_cfg (dict): Type of normalization method.
         loss_bbox (dict): Config dict of box regression loss.
         loss_cls (dict): Config dict of classifacation loss.
@@ -50,9 +51,9 @@ class PVRCNNBBoxHead(BaseModule):
                  grid_size: int,
                  num_classes: int,
                  class_agnostic: bool = True,
-                 shared_fc_channels: List[int] = (256, 256),
-                 cls_channels: List[int] = (256, 256),
-                 reg_channels: List[int] = (256, 256),
+                 shared_fc_channels: Tuple[int] = (256, 256),
+                 cls_channels: Tuple[int] = (256, 256),
+                 reg_channels: Tuple[int] = (256, 256),
                  dropout_ratio: float = 0.3,
                  with_corner_loss: bool = True,
                  bbox_coder: dict = dict(type='DeltaXYZWLHRBBoxCoder'),
@@ -87,18 +88,20 @@ class PVRCNNBBoxHead(BaseModule):
         self.grid_size = grid_size
         self.norm_cfg = norm_cfg
 
+        # PVRCNNBBoxHead model in_channels is num of grid points in roi box.
         in_channels *= (self.grid_size**3)
+
         self.in_channels = in_channels
 
         self.shared_fc_layer = self._make_fc_layers(
             in_channels, shared_fc_channels,
             range(len(shared_fc_channels) - 1))
-        self.cls_layers = self._make_fc_layers(shared_fc_channels[-1],
-                                               cls_channels, range(1))
+        self.conv_cls = self._make_fc_layers(shared_fc_channels[-1],
+                                             cls_channels, range(1))
         self.cls_out = nn.Conv1d(
             cls_channels[-1], self.cls_out_channels, 1, bias=True)
-        self.reg_layers = self._make_fc_layers(shared_fc_channels[-1],
-                                               reg_channels, range(1))
+        self.conv_reg = self._make_fc_layers(shared_fc_channels[-1],
+                                             reg_channels, range(1))
         self.reg_out = nn.Conv1d(
             reg_channels[-1], self.reg_out_channels, 1, bias=True)
 
@@ -108,18 +111,25 @@ class PVRCNNBBoxHead(BaseModule):
                 layer=['Conv2d', 'Conv1d'],
                 distribution='uniform')
 
-    def _make_fc_layers(self, in_channels: int, fc: list,
-                        apply_dropout_indices: list) -> torch.nn.Module:
+    def _make_fc_layers(self, in_channels: int, fc_channels: list,
+                        dropout_indices: list) -> torch.nn.Module:
+        """Initial a full connection layer.
+
+        Args:
+            in_channels (int): Module in channels.
+            fc_channels (list): Full connection layer channels.
+            dropout_indices (list): Dropout indices.
+        """
         fc_layers = []
         pre_channel = in_channels
-        for k, fck in enumerate(fc):
+        for k, fck in enumerate(fc_channels):
             fc_layers.extend([
                 nn.Conv1d(pre_channel, fck, 1, bias=False),
                 build_norm_layer(self.norm_cfg, fck)[1],
                 nn.ReLU()
             ])
             pre_channel = fck
-            if self.dropout_ratio >= 0 and k in apply_dropout_indices:
+            if self.dropout_ratio >= 0 and k in dropout_indices:
                 fc_layers.append(nn.Dropout(self.dropout_ratio))
         fc_layers = nn.Sequential(*fc_layers)
         return fc_layers
@@ -138,15 +148,15 @@ class PVRCNNBBoxHead(BaseModule):
                               3).contiguous().view(rcnn_batch_size, -1, 1)
         # (BxN, C*6*6*6)
         shared_feats = self.shared_fc_layer(feats)
-        cls_feats = self.cls_layers(shared_feats)
-        reg_feats = self.reg_layers(shared_feats)
-        bbox_score = self.cls_out(cls_feats).transpose(1,
-                                                       2).contiguous().squeeze(
-                                                           dim=1)  # (B, 1)
-        bbox_reg = self.reg_out(reg_feats).transpose(1,
-                                                     2).contiguous().squeeze(
-                                                         dim=1)  # (B, C)
-        return bbox_score, bbox_reg
+        cls_feats = self.conv_cls(shared_feats)
+        reg_feats = self.conv_reg(shared_feats)
+        cls_score = self.cls_out(cls_feats).transpose(1,
+                                                      2).contiguous().squeeze(
+                                                          dim=1)  # (B, 1)
+        bbox_pred = self.reg_out(reg_feats).transpose(1,
+                                                      2).contiguous().squeeze(
+                                                          dim=1)  # (B, C)
+        return cls_score, bbox_pred
 
     def loss(self, cls_score: torch.Tensor, bbox_pred: torch.Tensor,
              rois: torch.Tensor, labels: torch.Tensor,
@@ -167,11 +177,11 @@ class PVRCNNBBoxHead(BaseModule):
             bbox_weights (torch.Tensor): Weights of bbox loss.
 
         Returns:
-            dict: Computed losses.
+             dict: Computed losses.
 
-                - loss_cls (torch.Tensor): Loss of classes.
-                - loss_bbox (torch.Tensor): Loss of bboxes.
-                - loss_corner (torch.Tensor): Loss of corners.
+             - loss_cls (torch.Tensor): Loss of classes.
+             - loss_bbox (torch.Tensor): Loss of bboxes.
+             - loss_corner (torch.Tensor): Loss of corners.
         """
         losses = dict()
         rcnn_batch_size = cls_score.shape[0]
@@ -444,13 +454,13 @@ class PVRCNNBBoxHead(BaseModule):
             result_list.append(results)
         return result_list
 
-    def class_agnostic_nms(self, obj_scores_ori: torch.Tensor,
+    def class_agnostic_nms(self, scores: torch.Tensor,
                            bbox_preds: torch.Tensor, nms_cfg: dict,
                            input_meta: dict) -> Tuple[torch.Tensor]:
-        """Class agnostic nms.
+        """Class agnostic NMS for box head.
 
         Args:
-            obj_scores_ori (torch.Tensor): Object score of bounding boxes.
+            scores (torch.Tensor): Object score of bounding boxes.
             bbox_preds (torch.Tensor): Predicted bounding boxes.
             nms_cfg (dict): NMS config dict.
             input_meta (dict): Contain pcd and img's meta info.
@@ -458,7 +468,7 @@ class PVRCNNBBoxHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Bounding boxes, scores and labels.
         """
-        obj_scores = obj_scores_ori.clone()
+        obj_scores = scores.clone()
         if nms_cfg.use_rotate_nms:
             nms_func = nms_bev
         else:

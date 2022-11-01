@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import torch
 from mmcv.cnn.bricks import build_norm_layer
@@ -19,10 +19,11 @@ class ForegroundSegmentationHead(BaseModule):
 
     Args:
         in_channels (int): The number of input channel.
-        mlp_channels (list[int]): Specify of mlp channels. Default
-            used (256, 256).
+        mlp_channels (tuple[int]): Specify of mlp channels. Defaults
+            to (256, 256).
         extra_width (float): Boxes enlarge width. Default used 0.1.
-        norm_cfg (dict): Type of normalization method.
+        norm_cfg (dict): Type of normalization method. Defaults to
+            dict(type='BN1d', eps=1e-5, momentum=0.1).
         init_cfg (dict, optional): Initialize config of
             model. Defaults to None.
         loss_seg (dict): Config of segmentation loss.
@@ -31,12 +32,12 @@ class ForegroundSegmentationHead(BaseModule):
     def __init__(
         self,
         in_channels: int,
-        mlp_channels: list = (256, 256),
-        extra_width: int = 0.1,
+        mlp_channels: Tuple[int] = (256, 256),
+        extra_width: float = 0.1,
         norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
         init_cfg: Optional[dict] = None,
         loss_seg: dict = dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             reduction='sum',
             gamma=2.0,
