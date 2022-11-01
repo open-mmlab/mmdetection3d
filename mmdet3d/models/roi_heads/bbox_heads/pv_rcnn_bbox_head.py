@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-from mmcv.cnn.bricks import build_norm_layer
+from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import nn as nn
@@ -40,35 +40,38 @@ class PVRCNNBBoxHead(BaseModule):
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for box head.
             Defaults to dict(type='DeltaXYZWLHRBBoxCoder').
         norm_cfg (dict): Type of normalization method.
+            Defaults to dict(type='BN1d', eps=1e-5, momentum=0.1)
         loss_bbox (dict): Config dict of box regression loss.
         loss_cls (dict): Config dict of classifacation loss.
         init_cfg (dict, optional): Initialize config of
-            model. Defaults to None.
+            model.
     """
 
-    def __init__(self,
-                 in_channels: int,
-                 grid_size: int,
-                 num_classes: int,
-                 class_agnostic: bool = True,
-                 shared_fc_channels: Tuple[int] = (256, 256),
-                 cls_channels: Tuple[int] = (256, 256),
-                 reg_channels: Tuple[int] = (256, 256),
-                 dropout_ratio: float = 0.3,
-                 with_corner_loss: bool = True,
-                 bbox_coder: dict = dict(type='DeltaXYZWLHRBBoxCoder'),
-                 norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
-                 loss_bbox: dict = dict(
-                     type='mmdet.SmoothL1Loss',
-                     beta=1.0 / 9.0,
-                     loss_weight=2.0),
-                 loss_cls: dict = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='none',
-                     loss_weight=1.0),
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        in_channels: int,
+        grid_size: int,
+        num_classes: int,
+        class_agnostic: bool = True,
+        shared_fc_channels: Tuple[int] = (256, 256),
+        cls_channels: Tuple[int] = (256, 256),
+        reg_channels: Tuple[int] = (256, 256),
+        dropout_ratio: float = 0.3,
+        with_corner_loss: bool = True,
+        bbox_coder: dict = dict(type='DeltaXYZWLHRBBoxCoder'),
+        norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
+        loss_bbox: dict = dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+        loss_cls: dict = dict(
+            type='mmdet.CrossEntropyLoss',
+            use_sigmoid=True,
+            reduction='none',
+            loss_weight=1.0),
+        init_cfg: Optional[dict] = dict(
+            type='Xavier', layer=['Conv2d', 'Conv1d'], distribution='uniform')
+    ) -> None:
         super(PVRCNNBBoxHead, self).__init__(init_cfg=init_cfg)
+        self.init_cfg = init_cfg
         self.num_classes = num_classes
         self.with_corner_loss = with_corner_loss
         self.class_agnostic = class_agnostic
@@ -86,7 +89,6 @@ class PVRCNNBBoxHead(BaseModule):
 
         self.dropout_ratio = dropout_ratio
         self.grid_size = grid_size
-        self.norm_cfg = norm_cfg
 
         # PVRCNNBBoxHead model in_channels is num of grid points in roi box.
         in_channels *= (self.grid_size**3)
@@ -97,38 +99,37 @@ class PVRCNNBBoxHead(BaseModule):
             in_channels, shared_fc_channels,
             range(len(shared_fc_channels) - 1))
         self.conv_cls = self._make_fc_layers(shared_fc_channels[-1],
-                                             cls_channels, range(1))
+                                             cls_channels, range(1), norm_cfg)
         self.cls_out = nn.Conv1d(
             cls_channels[-1], self.cls_out_channels, 1, bias=True)
         self.conv_reg = self._make_fc_layers(shared_fc_channels[-1],
-                                             reg_channels, range(1))
+                                             reg_channels, range(1), norm_cfg)
         self.reg_out = nn.Conv1d(
             reg_channels[-1], self.reg_out_channels, 1, bias=True)
 
-        if init_cfg is None:
-            self.init_cfg = dict(
-                type='Xavier',
-                layer=['Conv2d', 'Conv1d'],
-                distribution='uniform')
-
     def _make_fc_layers(self, in_channels: int, fc_channels: list,
-                        dropout_indices: list) -> torch.nn.Module:
+                        dropout_indices: list,
+                        norm_cfg: dict) -> torch.nn.Module:
         """Initial a full connection layer.
 
         Args:
             in_channels (int): Module in channels.
             fc_channels (list): Full connection layer channels.
             dropout_indices (list): Dropout indices.
+            norm_cfg (dict): Type of normalization method.
         """
         fc_layers = []
         pre_channel = in_channels
-        for k, fck in enumerate(fc_channels):
-            fc_layers.extend([
-                nn.Conv1d(pre_channel, fck, 1, bias=False),
-                build_norm_layer(self.norm_cfg, fck)[1],
-                nn.ReLU()
-            ])
-            pre_channel = fck
+        for k in range(len(fc_channels)):
+            fc_layers.append(
+                ConvModule(
+                    pre_channel,
+                    fc_channels[k],
+                    1,
+                    padding=0,
+                    norm_cfg=norm_cfg,
+                    inplace=True))
+            pre_channel = fc_channels[k]
             if self.dropout_ratio >= 0 and k in dropout_indices:
                 fc_layers.append(nn.Dropout(self.dropout_ratio))
         fc_layers = nn.Sequential(*fc_layers)
