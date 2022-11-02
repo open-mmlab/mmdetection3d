@@ -14,24 +14,26 @@ Recently, promising applications in robotics and augmented reality have attracte
 
 ## Introduction
 
-We implement FCAF3D and provide the result and checkpoints on the ScanNet dataset.
-`Max` and `mean` metrics are copied from the paper and `ours` is for provided checkpoint.
-`Mean` value is averaged across 5 train runs followed by 5 test runs.
-Inference time is given for a single NVidia GTX1080ti GPU. All models are trained on 2 GPUs.
+We implement FCAF3D and provide the result and checkpoints on the ScanNet and SUN RGB-D dataset.
 
 ## Results and models
 
 ### ScanNet
 
-|                      Backbone                      | Mem (GB) | Inf time (fps) | AP@0.25 <br> max \| mean \| ours | AP@0.5 <br> max \| mean \| ours |                                                                                                                                                          Download                                                                                                                                                           |
-| :------------------------------------------------: | :------: | :------------: | :------------------------------: | :-----------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [MinkResNet34](./fcaf3d_8x2_scannet-3d-18class.py) |   10.5   |      8.0       |       71.5 \| 70.7 \| 69.7       |      57.3 \| 56.0 \| 55.2       | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_scannet-3d-18class/fcaf3d_8x2_scannet-3d-18class_20220805_084956.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_scannet-3d-18class/fcaf3d_8x2_scannet-3d-18class_20220805_084956.log.json) |
+|                      Backbone                      | Mem (GB) | Inf time (fps) |   AP@0.25    |    AP@0.5    |                                                                                                                                                          Download                                                                                                                                                           |
+| :------------------------------------------------: | :------: | :------------: | :----------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [MinkResNet34](./fcaf3d_8x2_scannet-3d-18class.py) |   10.5   |      8.0       | 69.7(70.7\*) | 55.2(56.0\*) | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_scannet-3d-18class/fcaf3d_8x2_scannet-3d-18class_20220805_084956.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_scannet-3d-18class/fcaf3d_8x2_scannet-3d-18class_20220805_084956.log.json) |
 
 ### SUN RGB-D
 
-|                      Backbone                      | Mem (GB) | Inf time (fps) | AP@0.25 <br> max \| mean \| ours | AP@0.5 <br> max \| mean \| ours |                                                                                                                                                          Download                                                                                                                                                           |
-| :------------------------------------------------: | :------: | :------------: | :------------------------------: | :-----------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [MinkResNet34](./fcaf3d_8x2_sunrgbd-3d-10class.py) |   6.3    |      15.6      |       64.2 \| 63.8 \| 63.8       |      48.9 \| 48.2 \| 47.3       | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.log.json) |
+|                      Backbone                      | Mem (GB) | Inf time (fps) |   AP@0.25    |    AP@0.5    |                                                                                                                                                          Download                                                                                                                                                           |
+| :------------------------------------------------: | :------: | :------------: | :----------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [MinkResNet34](./fcaf3d_8x2_sunrgbd-3d-10class.py) |   6.3    |      15.6      | 63.8(63.8\*) | 47.3(48.2\*) | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.log.json) |
+
+**Note**
+
+- We report the results across 5 train runs followed by 5 test runs. * means the results reported in the paper.
+- Inference time is given for a single NVidia GeForce GTX 1080 Ti GPU. All models are trained on 2 GPUs.
 
 ## Citation
 

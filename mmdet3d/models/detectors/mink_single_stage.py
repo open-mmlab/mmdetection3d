@@ -113,7 +113,7 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
                 list, and will be reported together in
                 :meth:`~torch.nn.Module.load_state_dict`
         """
-        # The names of some parameters in FCAF3d has been changed
+        # The names of some parameters in FCAF3D has been changed
         # since 2022.10.
         version = local_metadata.get('version', None)
         if (version is None or
