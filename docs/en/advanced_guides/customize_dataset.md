@@ -23,13 +23,13 @@ Currently, we only support '.bin' format point cloud for training and inference.
 - You can install pypcd with the following command:
 
 ```bash
-pip install pytest-runner
 pip install git+https://github.com/DanielPollithy/pypcd.git
 ```
 
 - You can use the following command to read the pcd file and convert it to bin format and save it:
 
 ```python
+import numpy as np
 from pypcd import pypcd
 
 pcd_data = pypcd.PointCloud.from_path('point_cloud_data.pcd')
@@ -38,7 +38,7 @@ points[:, 0] = pcd_data.pc_data['x'].copy()
 points[:, 1] = pcd_data.pc_data['y'].copy()
 points[:, 2] = pcd_data.pc_data['z'].copy()
 points[:, 3] = pcd_data.pc_data['intensity'].copy().astype(np.float32)
-with open('point_cloud_data.bin', 'rb') as f:
+with open('point_cloud_data.bin', 'wb') as f:
     f.write(points.tobytes())
 ```
 
