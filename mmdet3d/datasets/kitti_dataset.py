@@ -32,7 +32,7 @@ class KittiDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        load_type (str, optional): Type of loading mode. Defaults to 'frame_based'.
+        load_type (str): Type of loading mode. Defaults to 'frame_based'.
 
             - 'frame_based': Load all of the instances in the frame.
             - 'mv_image_based': Load all of the instances in the frame and need
