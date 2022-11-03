@@ -32,7 +32,8 @@ class KittiDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        load_type (str, optional): Type of loading mode.
+        load_type (str, optional): Type of loading mode. Defaults to 'frame_based'.
+
             - 'frame_based': Load all of the instances in the frame.
             - 'mv_image_based': Load all of the instances in the frame and need
                 to convert to the FOV-based data type to support image-based
@@ -60,7 +61,7 @@ class KittiDataset(Det3DDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM2',
-                 load_type: str = 'lidar_det',
+                 load_type: str = 'frame_based',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
