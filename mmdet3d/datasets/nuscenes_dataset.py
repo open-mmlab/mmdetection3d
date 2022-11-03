@@ -38,7 +38,7 @@ class NuScenesDataset(Det3DDataset):
             - 'mv_image_based': Load all of the instances in the frame and need
                 to convert to the FOV-based data type to support image-based
                 detector.
-            - 'fov_image_base': Only load the instances inside the default cam,
+            - 'fov_image_based': Only load the instances inside the default cam,
                 and need to convert to the FOV-based data type to support
                 image-based detector.
         modality (dict, optional): Modality to specify the sensor data used
@@ -151,7 +151,7 @@ class NuScenesDataset(Det3DDataset):
                 ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.load_type in ['fov_img_based', 'mv_image_based']:
+            if self.load_type in ['fov_image_based', 'mv_image_based']:
                 ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
                 ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
                 ann_info['attr_labels'] = np.array(0, dtype=np.int64)
@@ -161,7 +161,7 @@ class NuScenesDataset(Det3DDataset):
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
         # TODO: Unify the coordinates
-        if self.load_type in ['fov_img_based', 'mv_image_based']:
+        if self.load_type in ['fov_image_based', 'mv_image_based']:
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
