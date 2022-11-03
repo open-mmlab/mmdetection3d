@@ -18,7 +18,30 @@ The ideal situation is that we can reorganize the customized raw data and conver
 
 Currently, we only support '.bin' format point cloud for training and inference. Before training on your own datasets, you need to convert your point cloud files with other formats to '.bin' files. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
 
-1. Convert pcd to bin: https://github.com/leofansq/Tools_RosBag2KITTI
+1. Convert pcd to bin: https://github.com/DanielPollithy/pypcd
+
+- You can install pypcd with the following command:
+
+```bash
+pip install git+https://github.com/DanielPollithy/pypcd.git
+```
+
+- You can use the following command to read the pcd file and convert it to bin format and save it:
+
+```python
+import numpy as np
+from pypcd import pypcd
+
+pcd_data = pypcd.PointCloud.from_path('point_cloud_data.pcd')
+points = np.zeros([pcd_data.width, 4], dtype=np.float32)
+points[:, 0] = pcd_data.pc_data['x'].copy()
+points[:, 1] = pcd_data.pc_data['y'].copy()
+points[:, 2] = pcd_data.pc_data['z'].copy()
+points[:, 3] = pcd_data.pc_data['intensity'].copy().astype(np.float32)
+with open('point_cloud_data.bin', 'wb') as f:
+    f.write(points.tobytes())
+```
+
 2. Convert las to bin: The common conversion path is las -> pcd -> bin, and the conversion from las -> pcd can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
 
 #### Label Format
@@ -83,7 +106,7 @@ mmdetection3d
 
 #### Vision-Based 3D Detection
 
-The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images\images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
+The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images/images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
 
 ```
 mmdetection3d
@@ -201,18 +224,13 @@ class MyDataset(Det3DDataset):
     }
 
     def parse_ann_info(self, info):
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`
 
         Args:
-            info (dict): Data information of single data sample.
+            info (dict): Info dict.
 
         Returns:
-            dict: annotation information consists of the following keys:
-
-                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
-                - bbox_labels_3d (np.ndarray): Labels of ground truths.
-
+            dict | None: Processed `ann_info`
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:
@@ -464,9 +482,8 @@ _base_ = [
 
 #### Visualize your dataset (optional)
 
-To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/browse_dataest.py` script
-to visualize your dataset and annotations before training and validation, more details refer to the [visualization](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/user_guides/visualization.md/) doc.
-s
+To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/misc/browse_dataest.py` script
+to visualize your dataset and annotations before training and validation, more details refer to the [visualization](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/user_guides/visualization.md) doc.
 
 ## Evaluation
 

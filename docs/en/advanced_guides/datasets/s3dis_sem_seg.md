@@ -195,8 +195,7 @@ train_pipeline = [
         jitter_std=[0.01, 0.01, 0.01],
         clip_range=[-0.05, 0.05]),
     dict(type='RandomDropPointsColor', drop_ratio=0.2),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 ```
 
@@ -210,7 +209,7 @@ train_pipeline = [
 
 ## Metrics
 
-Typically mean intersection over union (mIoU) is used for evaluation on S3DIS. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
+Typically mean intersection over union (mIoU) is used for evaluation on S3DIS. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py).
 
 As introduced in section `Export S3DIS data`, S3DIS trains on 5 areas and evaluates on the remaining 1 area. But there are also other area split schemes in different papers.
 To enable flexible combination of train-val splits, we use sub-dataset to represent one area, and concatenate them to form a larger training set. An example of training on area 1, 2, 3, 4, 6 and evaluating on area 5 is shown as below:
@@ -222,31 +221,42 @@ class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
                'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
-data = dict(
-    train=dict(
+train_dataloader = dict(
+    batch_size=8,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_files=[
-            data_root + f's3dis_infos_Area_{i}.pkl' for i in train_area
-        ],
+        ann_files=[f's3dis_infos_Area_{i}.pkl' for i in train_area],
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=train_pipeline,
-        classes=class_names,
-        test_mode=False,
+        modality=input_modality,
         ignore_index=len(class_names),
         scene_idxs=[
-            data_root + f'seg_info/Area_{i}_resampled_scene_idxs.npy'
-            for i in train_area
-        ]),
-    val=dict(
+            f'seg_info/Area_{i}_resampled_scene_idxs.npy' for i in train_area
+        ],
+        test_mode=False))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_files=data_root + f's3dis_infos_Area_{test_area}.pkl',
+        ann_files=f's3dis_infos_Area_{test_area}.pkl',
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
+        modality=input_modality,
         ignore_index=len(class_names),
-        scene_idxs=data_root +
-        f'seg_info/Area_{test_area}_resampled_scene_idxs.npy'))
+        scene_idxs=f'seg_info/Area_{test_area}_resampled_scene_idxs.npy',
+        test_mode=True))
+val_dataloader = test_dataloader
 ```
 
 where we specify the areas used for training/validation by setting `ann_files` and `scene_idxs` with lists that include corresponding paths. The train-val split can be simply modified via changing the `train_area` and `test_area` variables.

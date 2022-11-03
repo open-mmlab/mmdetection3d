@@ -149,6 +149,6 @@ You can also delete the local training log after backing up to the specified Cep
 log_config = dict(
     interval=50,
     hooks=[
-        dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d'', keep_local=False),
+        dict(type='TextLoggerHook', out_dir='s3://openmmlab/mmdetection3d', keep_local=False),
     ])
 ```

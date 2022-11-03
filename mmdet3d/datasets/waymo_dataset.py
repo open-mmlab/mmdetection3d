@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Union
 
 import numpy as np
 
@@ -24,20 +24,20 @@ class WaymoDataset(KittiDataset):
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
         data_prefix (dict): data prefix for point cloud and
-            camera data dict. Default to dict(
+            camera data dict. Defaults to dict(
                                     pts='velodyne',
                                     CAM_FRONT='image_0',
                                     CAM_FRONT_RIGHT='image_1',
                                     CAM_FRONT_LEFT='image_2',
                                     CAM_SIDE_RIGHT='image_3',
                                     CAM_SIDE_LEFT='image_4')
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used
             as input. Defaults to dict(use_lidar=True).
-        default_cam_key (str, optional): Default camera key for lidar2img
+        default_cam_key (str): Default camera key for lidar2img
             association. Defaults to 'CAM_FRONT'.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
             Defaults to 'LiDAR' in this dataset. Available options includes:
@@ -54,14 +54,16 @@ class WaymoDataset(KittiDataset):
             - 'fov_image_based': Only load the instances inside the default cam,
                 and need to convert to the FOV-based data type to support
                 image-based detector.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float], optional): The range of point cloud
+        pcd_limit_range (list[float]): The range of point cloud
             used to filter invalid predicted boxes.
             Defaults to [-85, -85, -5, 85, 85, 5].
-        cam_sync_instances (bool, optional): If use the camera sync label
+        cam_sync_instances (bool): If use the camera sync label
             supported from waymo version 1.3.1. Defaults to False.
         load_interval (int, optional): load frame interval.
             Defaults to 1.
@@ -80,17 +82,18 @@ class WaymoDataset(KittiDataset):
                      CAM_SIDE_RIGHT='image_3',
                      CAM_SIDE_LEFT='image_4'),
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality: Optional[dict] = dict(use_lidar=True),
+                 modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM_FRONT',
                  box_type_3d: str = 'LiDAR',
                  load_type: str = 'frame_based',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
-                 cam_sync_instances=False,
-                 load_interval=1,
-                 max_sweeps=0,
-                 **kwargs):
+                 cam_sync_instances: bool = False,
+                 load_interval: int = 1,
+                 task: str = 'lidar_det',
+                 max_sweeps: int = 0,
+                 **kwargs) -> None:
         self.load_interval = load_interval
         # set loading mode for different task settings
         self.cam_sync_instances = cam_sync_instances
@@ -116,7 +119,7 @@ class WaymoDataset(KittiDataset):
             **kwargs)
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Data information of single data sample.
@@ -125,12 +128,12 @@ class WaymoDataset(KittiDataset):
             dict: annotation information consists of the following keys:
 
                 - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
+                  3D ground truth bboxes.
                 - bbox_labels_3d (np.ndarray): Labels of ground truths.
                 - gt_bboxes (np.ndarray): 2D ground truth bboxes.
                 - gt_labels (np.ndarray): Labels of ground truths.
                 - difficulty (int): Difficulty defined by KITTI.
-                    0, 1, 2 represent xxxxx respectively.
+                  0, 1, 2 represent xxxxx respectively.
         """
         ann_info = Det3DDataset.parse_ann_info(self, info)
         if ann_info is None:

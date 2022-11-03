@@ -179,9 +179,7 @@ train_pipeline = [
         with_mask_3d=False,
         with_seg_3d=True),
     dict(
-        type='PointSegClassMapping',
-        valid_cat_ids=tuple(range(len(class_names))),
-        max_cat_id=13),
+        type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
         num_points=num_points,
@@ -202,8 +200,7 @@ train_pipeline = [
         jitter_std=[0.01, 0.01, 0.01],
         clip_range=[-0.05, 0.05]),
     dict(type='RandomDropPointsColor', drop_ratio=0.2),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 ```
 
@@ -219,7 +216,7 @@ train_pipeline = [
 
 通常我们使用平均交并比 (mean Intersection over Union, mIoU) 作为 ScanNet 语义分割任务的度量指标。
 具体而言，我们先计算所有类别的 IoU，然后取平均值作为 mIoU。
-更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py)。
+更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py)。
 
 正如在 `提取 S3DIS 数据` 一节中所提及的，S3DIS 通常在 5 个区域上进行训练，然后在余下的 1 个区域上进行测试。但是在其他论文中，也有不同的划分方式。
 为了便于灵活划分训练和测试的子集，我们首先定义子数据集 (sub-dataset) 来表示每一个区域，然后根据区域划分对其进行合并，以得到完整的训练集。
@@ -232,31 +229,42 @@ class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
                'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
-data = dict(
-    train=dict(
+train_dataloader = dict(
+    batch_size=8,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_files=[
-            data_root + f's3dis_infos_Area_{i}.pkl' for i in train_area
-        ],
+        ann_files=[f's3dis_infos_Area_{i}.pkl' for i in train_area],
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=train_pipeline,
-        classes=class_names,
-        test_mode=False,
+        modality=input_modality,
         ignore_index=len(class_names),
         scene_idxs=[
-            data_root + f'seg_info/Area_{i}_resampled_scene_idxs.npy'
-            for i in train_area
-        ]),
-    val=dict(
+            f'seg_info/Area_{i}_resampled_scene_idxs.npy' for i in train_area
+        ],
+        test_mode=False))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_files=data_root + f's3dis_infos_Area_{test_area}.pkl',
+        ann_files=f's3dis_infos_Area_{test_area}.pkl',
+        metainfo=metainfo,
+        data_prefix=data_prefix,
         pipeline=test_pipeline,
-        classes=class_names,
-        test_mode=True,
+        modality=input_modality,
         ignore_index=len(class_names),
-        scene_idxs=data_root +
-        f'seg_info/Area_{test_area}_resampled_scene_idxs.npy'))
+        scene_idxs=f'seg_info/Area_{test_area}_resampled_scene_idxs.npy',
+        test_mode=True))
+val_dataloader = test_dataloader
 ```
 
 可以看到，我们通过将多个相应路径构成的列表 (list) 输入 `ann_files` 和 `scene_idxs` 以实现训练测试集的划分。
