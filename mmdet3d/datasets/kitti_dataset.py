@@ -152,7 +152,7 @@ class KittiDataset(Det3DDataset):
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.load_type in ['fov_img_based', 'mv_image_based']:
+            if self.load_type in ['fov_image_based', 'mv_image_based']:
                 ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
                 ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
                 ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
