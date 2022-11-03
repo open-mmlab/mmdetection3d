@@ -21,7 +21,10 @@ class SemanticKITTIDataset(Seg3DDataset):
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
-            dict(pts='points', img='', instance_mask='', semantic_mask='').
+            dict(pts='points',
+                 img='',
+                 pts_instance_mask='',
+                 pts_semantic_mask='').
         pipeline (list[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input,
@@ -56,7 +59,10 @@ class SemanticKITTIDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                     pts='points',
+                     img='',
+                     pts_instance_mask='',
+                     pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,

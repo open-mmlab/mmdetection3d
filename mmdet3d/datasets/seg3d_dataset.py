@@ -21,7 +21,10 @@ class Seg3DDataset(BaseDataset):
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
-            dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
+            dict(pts='points',
+                 img='',
+                 pts_instance_mask='',
+                 pts_semantic_mask='').
         pipeline (list[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used
@@ -39,10 +42,10 @@ class Seg3DDataset(BaseDataset):
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        serialize_data (bool, optional): Whether to hold memory using
-            serialized objects, when enabled, data loader workers can use
-            shared RAM from master process instead of making a copy. Defaults
-            to False for 3D Segmentation datasets.
+        serialize_data (bool): Whether to hold memory using serialized objects,
+            when enabled, data loader workers can use shared RAM from master
+            process instead of making a copy.
+            Defaults to False for 3D Segmentation datasets.
         load_eval_anns (bool): Whether to load annotations in test_mode,
             the annotation will be save in `eval_ann_infos`, which can be used
             in Evaluator. Defaults to True.
@@ -64,13 +67,13 @@ class Seg3DDataset(BaseDataset):
                      pts='points',
                      img='',
                      pts_instance_mask='',
-                     pts_emantic_mask=''),
+                     pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,
                  scene_idxs: Optional[Union[str, np.ndarray]] = None,
                  test_mode: bool = False,
-                 serialize_data=False,
+                 serialize_data: bool = False,
                  load_eval_anns: bool = True,
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs) -> None:
