@@ -65,9 +65,8 @@ class WaymoDataset(KittiDataset):
             Defaults to [-85, -85, -5, 85, 85, 5].
         cam_sync_instances (bool): If use the camera sync label
             supported from waymo version 1.3.1. Defaults to False.
-        load_interval (int, optional): load frame interval.
-            Defaults to 1.
-        max_sweeps (int, optional): max sweep for each frame. Defaults to 0.
+        load_interval (int): load frame interval. Defaults to 1.
+        max_sweeps (int): max sweep for each frame. Defaults to 0.
     """
     METAINFO = {'CLASSES': ('Car', 'Pedestrian', 'Cyclist')}
 
