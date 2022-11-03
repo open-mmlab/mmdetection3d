@@ -59,7 +59,7 @@ class PVRCNNBBoxHead(BaseModule):
         dropout_ratio: float = 0.3,
         with_corner_loss: bool = True,
         bbox_coder: dict = dict(type='DeltaXYZWLHRBBoxCoder'),
-        norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
+        norm_cfg: dict = dict(type='BN2d', eps=1e-5, momentum=0.1),
         loss_bbox: dict = dict(
             type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_cls: dict = dict(
@@ -97,19 +97,26 @@ class PVRCNNBBoxHead(BaseModule):
 
         self.shared_fc_layer = self._make_fc_layers(
             in_channels, shared_fc_channels,
-            range(len(shared_fc_channels) - 1))
-        self.conv_cls = self._make_fc_layers(shared_fc_channels[-1],
-                                             cls_channels, range(1), norm_cfg)
-        self.cls_out = nn.Conv1d(
-            cls_channels[-1], self.cls_out_channels, 1, bias=True)
-        self.conv_reg = self._make_fc_layers(shared_fc_channels[-1],
-                                             reg_channels, range(1), norm_cfg)
-        self.reg_out = nn.Conv1d(
-            reg_channels[-1], self.reg_out_channels, 1, bias=True)
+            range(len(shared_fc_channels) - 1), norm_cfg)
+        self.cls_layer = self._make_fc_layers(
+            shared_fc_channels[-1],
+            cls_channels,
+            range(1),
+            norm_cfg,
+            out_channels=self.cls_out_channels)
+        self.reg_layer = self._make_fc_layers(
+            shared_fc_channels[-1],
+            reg_channels,
+            range(1),
+            norm_cfg,
+            out_channels=self.reg_out_channels)
 
-    def _make_fc_layers(self, in_channels: int, fc_channels: list,
+    def _make_fc_layers(self,
+                        in_channels: int,
+                        fc_channels: list,
                         dropout_indices: list,
-                        norm_cfg: dict) -> torch.nn.Module:
+                        norm_cfg: dict,
+                        out_channels: Optional[int] = None) -> torch.nn.Module:
         """Initial a full connection layer.
 
         Args:
@@ -117,6 +124,7 @@ class PVRCNNBBoxHead(BaseModule):
             fc_channels (list): Full connection layer channels.
             dropout_indices (list): Dropout indices.
             norm_cfg (dict): Type of normalization method.
+            out_channels (int, optional): Module out channels.
         """
         fc_layers = []
         pre_channel = in_channels
@@ -125,13 +133,18 @@ class PVRCNNBBoxHead(BaseModule):
                 ConvModule(
                     pre_channel,
                     fc_channels[k],
-                    1,
-                    padding=0,
+                    kernel_size=(1, 1),
+                    stride=(1, 1),
                     norm_cfg=norm_cfg,
+                    conv_cfg=dict(type='Conv2d'),
+                    bias=False,
                     inplace=True))
             pre_channel = fc_channels[k]
             if self.dropout_ratio >= 0 and k in dropout_indices:
                 fc_layers.append(nn.Dropout(self.dropout_ratio))
+        if out_channels is not None:
+            fc_layers.append(
+                nn.Conv2d(fc_channels[-1], out_channels, 1, bias=True))
         fc_layers = nn.Sequential(*fc_layers)
         return fc_layers
 
@@ -144,19 +157,16 @@ class PVRCNNBBoxHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Score of class and bbox predictions.
         """
+        # (B * N, 6, 6, 6, C)
         rcnn_batch_size = feats.shape[0]
         feats = feats.permute(0, 4, 1, 2,
-                              3).contiguous().view(rcnn_batch_size, -1, 1)
+                              3).contiguous().view(rcnn_batch_size, -1, 1, 1)
         # (BxN, C*6*6*6)
         shared_feats = self.shared_fc_layer(feats)
-        cls_feats = self.conv_cls(shared_feats)
-        reg_feats = self.conv_reg(shared_feats)
-        cls_score = self.cls_out(cls_feats).transpose(1,
-                                                      2).contiguous().squeeze(
-                                                          dim=1)  # (B, 1)
-        bbox_pred = self.reg_out(reg_feats).transpose(1,
-                                                      2).contiguous().squeeze(
-                                                          dim=1)  # (B, C)
+        cls_score = self.cls_layer(shared_feats).transpose(
+            1, 2).contiguous().view(-1, self.cls_out_channels)  # (B, 1)
+        bbox_pred = self.reg_layer(shared_feats).transpose(
+            1, 2).contiguous().view(-1, self.reg_out_channels)  # (B, C)
         return cls_score, bbox_pred
 
     def loss(self, cls_score: torch.Tensor, bbox_pred: torch.Tensor,
@@ -389,7 +399,7 @@ class PVRCNNBBoxHead(BaseModule):
                     bbox_reg: torch.Tensor,
                     class_labels: torch.Tensor,
                     input_metas: List[dict],
-                    cfg: dict = None) -> InstanceList:
+                    test_cfg: dict = None) -> InstanceList:
         """Generate bboxes from bbox head predictions.
 
         Args:
@@ -398,7 +408,7 @@ class PVRCNNBBoxHead(BaseModule):
             bbox_reg (torch.Tensor): Bounding boxes predictions
             class_labels (torch.Tensor): Label of classes
             input_metas (list[dict]): Point cloud meta info.
-            cfg (:obj:`ConfigDict`): Testing config.
+            test_cfg (:obj:`ConfigDict`): Testing config.
 
         Returns:
             list[:obj:`InstanceData`]: Detection results of each sample
@@ -437,10 +447,10 @@ class PVRCNNBBoxHead(BaseModule):
             cls_preds = cls_preds.sigmoid()
             cls_preds, _ = torch.max(cls_preds, dim=-1)
             selected = self.class_agnostic_nms(
-                obj_scores_ori=cls_preds,
-                bbox=box_preds,
+                scores=cls_preds,
+                bbox_preds=box_preds,
                 input_meta=input_metas[batch_id],
-                cfg=cfg)
+                nms_cfg=test_cfg)
 
             selected_bboxes = box_preds[selected]
             selected_label_preds = label_preds[selected]

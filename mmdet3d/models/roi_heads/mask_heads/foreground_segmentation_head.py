@@ -82,7 +82,7 @@ class ForegroundSegmentationHead(BaseModule):
         Returns:
             dict: Segment predictions.
         """
-        seg_preds = self.seg_cls_layer(feats)  # (N, 1)
+        seg_preds = self.seg_cls_layer(feats)
         return dict(seg_preds=seg_preds)
 
     def _get_targets_single(self, point_xyz: torch.Tensor,
@@ -115,7 +115,7 @@ class ForegroundSegmentationHead(BaseModule):
         point_cls_labels_single[
             fg_flag] = 1 if self.num_classes == 1 else\
             gt_box_of_fg_points.long()
-        return point_cls_labels_single
+        return point_cls_labels_single,
 
     def get_targets(self, points_bxyz: torch.Tensor,
                     batch_gt_instances_3d: InstanceList) -> dict:
@@ -141,13 +141,13 @@ class ForegroundSegmentationHead(BaseModule):
             points_xyz_list.append(points_bxyz[coords_idx][..., 1:])
             gt_bboxes_3d.append(batch_gt_instances_3d[idx].bboxes_3d)
             gt_labels_3d.append(batch_gt_instances_3d[idx].labels_3d)
-        seg_targets = multi_apply(self._get_targets_single, points_xyz_list,
-                                  gt_bboxes_3d, gt_labels_3d)
+        seg_targets, = multi_apply(self._get_targets_single, points_xyz_list,
+                                   gt_bboxes_3d, gt_labels_3d)
         seg_targets = torch.cat(seg_targets, dim=0)
         return dict(seg_targets=seg_targets)
 
     def loss(self, semantic_results: dict,
-             semantic_targets: dict) -> Dict[torch.Tensor]:
+             semantic_targets: dict) -> Dict[str, torch.Tensor]:
         """Calculate point-wise segmentation losses.
 
         Args:

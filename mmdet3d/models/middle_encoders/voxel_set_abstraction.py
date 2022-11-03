@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Optional
 
+import mmengine
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
@@ -61,7 +62,7 @@ class VoxelSetAbstraction(BaseModule):
             Default to 256.
         bev_scale_factor (int): Bev features scale factor. Default to 8.
         norm_cfg (dict[str]): Config of normalization layer. Default
-            used dict(type='BN2d', eps=1e-5, momentum=0.1).
+            used dict(type='BN1d', eps=1e-5, momentum=0.1).
         bias (bool | str, optional): If specified as `auto`, it will be
             decided by `norm_cfg`. `bias` will be set as True if
             `norm_cfg` is None, otherwise False. Default: 'auto'.
@@ -96,6 +97,7 @@ class VoxelSetAbstraction(BaseModule):
             self.rawpoints_sa_layer = None
 
         if voxel_sa_configs_list is not None:
+            self.voxel_sa_configs_list = voxel_sa_configs_list
             self.voxel_sa_layers = nn.ModuleList()
             for voxel_sa_config in voxel_sa_configs_list:
                 cur_layer = MODELS.build(voxel_sa_config)
@@ -105,14 +107,14 @@ class VoxelSetAbstraction(BaseModule):
         else:
             self.voxel_sa_layers = None
 
-        if bev_feat_channels is not None:
-            self.bev_cfg = dict(
-                bev_feat_channels=bev_feat_channels,
-                bev_scale_factor=bev_scale_factor)
+        if bev_feat_channels is not None and bev_scale_factor is not None:
+            self.bev_cfg = mmengine.Config(
+                dict(
+                    bev_feat_channels=bev_feat_channels,
+                    bev_scale_factor=bev_scale_factor))
             gathered_channels += bev_feat_channels
         else:
             self.bev_cfg = None
-
         self.point_feature_fusion_layer = nn.Sequential(
             ConvModule(
                 gathered_channels,
@@ -295,7 +297,7 @@ class VoxelSetAbstraction(BaseModule):
                 cur_coords = voxel_encode_features[k].indices
                 xyz = self.get_voxel_centers(
                     coors=cur_coords,
-                    scale_factor=self.voxel_sa_configs[k].scale_factor
+                    scale_factor=self.voxel_sa_configs_list[k].scale_factor
                 ).contiguous()
                 xyz_batch_cnt = xyz.new_zeros(batch_size).int()
                 for bs_idx in range(batch_size):
@@ -312,9 +314,11 @@ class VoxelSetAbstraction(BaseModule):
                     batch_size, num_keypoints, -1))
 
         point_features = torch.cat(
-            point_features_list, dim=-1).view(batch_size * num_keypoints, -1)
+            point_features_list, dim=-1).view(batch_size * num_keypoints, -1,
+                                              1)
 
-        fusion_point_features = self.point_feature_fusion_layer(point_features)
+        fusion_point_features = self.point_feature_fusion_layer(
+            point_features.unsqueeze(dim=-1)).squeeze(dim=-1)
 
         batch_idxs = torch.arange(
             batch_size * num_keypoints, device=keypoints.device
@@ -323,6 +327,6 @@ class VoxelSetAbstraction(BaseModule):
             (batch_idxs.to(key_xyz.dtype).unsqueeze(dim=-1), key_xyz), dim=-1)
 
         return dict(
-            keypoint_features=point_features,
-            fusion_keypoint_features=fusion_point_features,
+            keypoint_features=point_features.squeeze(dim=-1),
+            fusion_keypoint_features=fusion_point_features.squeeze(dim=-1),
             keypoints=batch_keypoints_xyz)
