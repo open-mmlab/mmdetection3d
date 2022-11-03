@@ -51,7 +51,7 @@ class WaymoDataset(KittiDataset):
             - 'mv_image_based': Load all of the instances in the frame and need
                 to convert to the FOV-based data type to support image-based
                 detector.
-            - 'fov_image_base': Only load the instances inside the default cam,
+            - 'fov_image_based': Only load the instances inside the default cam,
                 and need to convert to the FOV-based data type to support
                 image-based detector.
         filter_empty_gt (bool, optional): Whether to filter empty GT.
@@ -155,7 +155,7 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        if self.load_type in ['fov_img_based', 'mv_image_based']:
+        if self.load_type in ['fov_image_based', 'mv_image_based']:
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
