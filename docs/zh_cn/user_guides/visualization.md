@@ -1,18 +1,18 @@
-# Visualization
+# 可视化
 
-MMDetection3D provides a `Det3DLocalVisualizer` to visualize and store the state of the model during training and testing, as well as results, with the following features.
+MMDetection3D 提供了 `Det3DLocalVisualizer` 用来在训练及测试阶段可视化和存储模型的状态以及结果，其具有以下特性：
 
-1. Support the basic drawing interface for multi-modality data and multi-task.
-2. Support multiple backends such as local, TensorBoard, to write training status such as `loss`, `lr`, or performance evaluation metrics and to a specified single or multiple backends.
-3. Support ground truth visualization on multimodal data, and cross-modal visualization of 3D detection results.
+1. 支持多模态数据和多任务的基本绘图界面。
+2. 支持多个后端（如 local，TensorBoard），将训练状态（如 `loss`，`lr`）或模型评估指标写入指定的一个或多个后端中。
+3. 支持多模态数据真实标签的可视化，3D 检测结果的跨模态可视化。
 
-## Basic Drawing Interface
+## 基本绘制界面
 
-Inherited from `DetLocalVisualizer`, `Det3DLocalVisualizer` provides an interface for drawing common objects on 2D images, such as drawing detection boxes, points, text, lines, circles, polygons, and binary masks. More details about 2D drawing can refer to the [visualization documentation](https://mmengine.readthedocs.io/zh_CN/latest/advanced_tutorials/visualization.html) in MMDetection. Here we introduce the 3D drawing interface:
+继承自 `DetLocalVisualizer`，`Det3DLocalVisualizer` 提供了在 2D 图像上绘制常见目标的界面，例如绘制检测框、点、文本、线、圆、多边形、二进制掩码等。关于 2D 绘制的更多细节，请参考 MMDetection 中的[可视化文档](https://mmengine.readthedocs.io/zh_CN/latest/advanced_tutorials/visualization.html)。这里我们介绍 3D 绘制界面。
 
-### Drawing point cloud on the image
+### 在图像上绘制点云
 
-We support drawing point cloud on the image by using `draw_points_on_image`.
+通过使用 `draw_points_on_image`，我们支持在图像上绘制点云。
 
 ```python
 import mmcv
@@ -36,9 +36,9 @@ visualizer.show()
 
 ![points_on_image](../../../resources/points_on_image.png)
 
-### Drawing 3D Boxes on Point Cloud
+### 在点云上绘制 3D 框
 
-We support drawing 3D boxes on point cloud by using `draw_bboxes_3d`.
+通过使用 `draw_bboxes_3d`，我们支持在点云上绘制 3D 框。
 
 ```python
 import torch
@@ -61,9 +61,9 @@ visualizer.show()
 
 ![mono3d](../../../resources/pcd.png)
 
-### Drawing Projected 3D Boxes on Image
+### 在图像上绘制投影的 3D 框
 
-We support drawing projected 3D boxes on image by using `draw_proj_bboxes_3d`.
+通过使用 `draw_proj_bboxes_3d`，我们支持在图像上绘制投影的 3D 框。
 
 ```python
 import mmcv
@@ -94,9 +94,9 @@ visualizer.show()
 
 ![mono3d](../../../resources/mono3d.png)
 
-### Drawing BEV Boxes
+### 绘制 BEV 视角的框
 
-We support drawing BEV boxes by using `draw_bev_bboxes`.
+通过使用 `draw_bev_bboxes`，我们支持绘制 BEV 视角下的框。
 
 ```python
 import numpy as np
@@ -122,9 +122,9 @@ visualizer.show()
 
 <img src="../../../resources/bev.png" width = "50%" />
 
-### Drawing 3D Semantic Mask
+### 绘制 3D 分割掩码
 
-We support draw segmentation mask via per-point colorization by using `draw_seg_mask`.
+通过使用 `draw_seg_mask`，我们支持通过逐点着色来绘制分割掩码。
 
 ```python
 import torch
@@ -141,19 +141,19 @@ visualizer.draw_seg_mask(points_with_mask)
 visualizer.show()
 ```
 
-## Results
+## 结果
 
-To see the prediction results of trained models, you can run the following command:
+如果想要可视化训练模型的预测结果，你可以运行如下指令：
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 ```
 
-After running this command, plotted results including input data and the output of networks visualized on the input will be saved in `${SHOW_DIR}`.
+运行该指令后，绘制的结果（包括输入数据和网络输出在输入上的可视化）将会被保存在 `${SHOW_DIR}` 中。
 
-After running this command, you will obtain the input data, the output of networks and ground-truth labels visualized on the input (e.g. `***_gt.png` and `***_pred.png` in multi-modality detection task and vision-based detection task) in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. If you are running test in remote server without GUI, the online visualization is not supported. You can download the `results.pkl` from the remote server, and visualize the prediction results offline in your local machine.
+运行该指令后，你将在 `${SHOW_DIR}` 中获得输入数据，网络输出和真是标签在输入上的可视化（如在多模态检测任务和基于视觉的检测任务中的 `***_gt.png` 和 `***_pred.png`）。当启用 `show` 时，[Open3D](http://www.open3d.org/) 将会用于在线可视化结果。如果你是在没有 GUI 的远程服务器上测试时，在线可视化是不被支持的。你可以从远程服务器中下载 `results.pkl`，并在本地机器上离线可视化预测结果。
 
-To visualize the results with `Open3D` backend offline, you can run the following command:
+使用 `Open3D` 后端离线可视化结果，你可以运行如下指令：
 
 ```bash
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
@@ -161,25 +161,25 @@ python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} -
 
 ![](../../../resources/open3d_visual.gif)
 
-This allows the inference and results generation to be done in remote server and the users can open them on their host with GUI.
+这需要在远程服务器中能够推理并生成结果，然后用户在主机中使用 GUI 打开。
 
-## Dataset
+## 数据集
 
-We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, multi-modality 3D detection on KITTI and SUN RGB-D, as well as monocular 3D detection on nuScenes. To browse the KITTI dataset, you can run the following command:
-
-```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --output-dir ${OUTPUT_DIR}
-```
-
-**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window.
-
-To verify the data consistency and the effect of data augmentation, you can also add `--aug` flag to visualize the data after data augmentation using the command as below:
+我们也提供了脚本来可视化数据集而无需推理。你可以使用 `tools/misc/browse_dataset.py` 来在线可视化加载的数据的真实标签，并保存在硬盘中。目前我们支持所有数据集的单模态 3D 检测和 3D 分割，KITTI 和 SUN RGB-D 的多模态 3D 检测，以及 nuScenes 的单目 3D 检测。如果想要浏览 KITTI 数据集，你可以运行如下指令：
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task lidar_det --aug --output-dir ${OUTPUT_DIR}
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task lidar_det --output-dir ${OUTPUT_DIR}
 ```
 
-If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi-modality_det`. An example is showed below:
+**注意**：一旦指定了 `--output-dir`，当在 open3d 窗口中按下 `_ESC_` 时，用户指定的视图图像将会被保存下来。
+
+为了验证数据的一致性和数据增强的效果，你可以加上 `--aug` 来可视化数据增强后的数据，指令如下所示：
+
+```shell
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR}
+```
+
+如果你想显示带有投影的 3D 边界框的 2D 图像，你需要一个支持多模态数据加载的配置文件，并将 `--task` 参数改为 `multi-modality_det`。示例如下：
 
 ```shell
 python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR}
@@ -187,7 +187,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 
 ![](../../../resources/browse_dataset_multi_modality.png)
 
-You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task:
+你可以使用不同的配置浏览不同的数据集，例如在 3D 语义分割任务中可视化 ScanNet 数据集：
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task lidar_seg --output-dir ${OUTPUT_DIR} --online
@@ -195,7 +195,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20cla
 
 ![](../../../resources/browse_dataset_seg.png)
 
-And browsing the nuScenes dataset in monocular 3D detection task:
+在单目 3D 检测任务中浏览 nuScenes 数据集：
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR} --online
