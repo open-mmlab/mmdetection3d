@@ -604,7 +604,7 @@ class WaymoMetric(KittiMetric):
                 scores=np.zeros([0]),
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
-        # Here default used 'CAM2' to compute metric. If you want to
+        # Here default used 'CAM_FRONT' to compute metric. If you want to
         # use another camera, please modify it.
         if self.load_type in ['frame_based', 'fov_image_based']:
             cam_key = self.default_cam_key
