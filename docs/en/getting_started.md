@@ -7,8 +7,8 @@ MMDection3D works on Linux, Windows (experimental support) and macOS and require
 - PyTorch 1.6+
 - CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
 - GCC 5+
-- [MMEngine](https://mmengine.readthedocs.io/zh_CN/latest/#installation)
-- [MMCV](https://mmcv.readthedocs.io/zh_CN/latest/#installation)
+- [MMEngine](https://mmengine.readthedocs.io/en/latest/#installation)
+- [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 ```{note}
 If you are experienced with PyTorch and have already installed it, just skip this part and jump to the [next section](#installation). Otherwise, you can follow these steps for the preparation.

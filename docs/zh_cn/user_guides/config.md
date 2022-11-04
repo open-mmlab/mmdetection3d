@@ -363,11 +363,11 @@ test_cfg = dict(type='TestLoop')
 `optim_wrapper` 字段用来配置优化器相关设置。优化器包装器不仅提供优化器的功能，用时也支持其它功能，如梯度裁剪、混合精度训练等。更多内容参考[优化器包装器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optimizer.html)。
 
 ```python
-optim_wrapper = dict(  # Optimizer wrapper config
-    type='OptimWrapper',  # Optimizer wrapper type, switch to AmpOptimWrapper to enable mixed precision training.
-    optimizer=dict(  # Optimizer config. Support all kinds of optimizers in PyTorch. Refer to https://pytorch.org/docs/stable/optim.html#algorithms
+optim_wrapper = dict(  # 优化器封装配置
+    type='OptimWrapper',  # 优化器封装类型，切换成 AmpOptimWrapper 使用混合精度训练
+    optimizer=dict(  # 优化器配置。支持 PyTorch 中所有类型的优化器。参考 https://pytorch.org/docs/stable/optim.html#algorithms
         type='AdamW', lr=0.001, betas=(0.95, 0.99), weight_decay=0.01),
-    clip_grad=dict(max_norm=35, norm_type=2))  # Gradient clip option. Set None to disable gradient clip. Find usage in https://mmengine.readthedocs.io/en/latest/tutorials
+    clip_grad=dict(max_norm=35, norm_type=2))  # 梯度裁剪选项。设置 None 禁用梯度裁剪。在 https://mmengine.readthedocs.io/zh_CN/latest/tutorials 中查看用法
 ```
 
 `param_scheduler` 字段用来配置调整优化器超参数，例如学习率和动量。用户可以组合多个调度程序来创建所需要的参数调整策略。更多内容参考[参数调度器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/param_scheduler.html)和[参数调度器 API 文档](TODO)。
@@ -426,13 +426,13 @@ default_hooks = dict(
 ### 运行配置
 
 ```python
-default_scope = 'mmdet3d'  # The default registry scope to find modules. Refer to https://mmengine.readthedocs.io/en/latest/tutorials/registry.html
+default_scope = 'mmdet3d'  # 寻找模块的默认注册域。参考 https://mmengine.readthedocs.io/zh_CN/latest/tutorials/registry.html
 
 env_cfg = dict(
-    cudnn_benchmark=False,  # Whether to enable cudnn benchmark
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),   # Use fork to start multi-processing threads. 'fork' usually faster than 'spawn' but maybe unsafe. See discussion in https://github.com/pytorch/pytorch/issues/1355
-    dist_cfg=dict(backend='nccl'))  # Distribution configs
-vis_backends = [dict(type='LocalVisBackend')]  # Visualization backends.
+    cudnn_benchmark=False,  # 是否使用 cudnn benchmark
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),  # 使用 fork 开启多线程。'fork' 通常比 'spawn' 快，但可能不安全。可参考 https://github.com/pytorch/pytorch/issues/1355
+    dist_cfg=dict(backend='nccl'))  # 分布式配置
+vis_backends = [dict(type='LocalVisBackend')]  # 可视化后端
 visualizer = dict(
     type='Det3DLocalVisualizer',
     vis_backends=[dict(type='LocalVisBackend')],
@@ -566,7 +566,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 ```python
 _base_ = './pointpillars_hv_secfpn_8xb6_160e_kitti-3d-3class.py'
 
-a = {{_base_.model}} # variable `a` is equal to the `model` defined in `_base_`
+a = {{_base_.model}} # 变量 `a` 和 `_base_` 中定义的 `model` 相同
 ```
 
 ### 通过脚本参数修改配置

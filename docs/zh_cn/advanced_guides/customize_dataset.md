@@ -18,15 +18,38 @@
 
 目前，我们只支持 '.bin' 格式的点云用于训练和推理。在训练自己的数据集之前，需要将其他格式的点云文件转换成 '.bin' 文件。常见的点云数据格式包括 `.pcd` 和 `.las`，我们列出一些开源工具作为参考。
 
-1. pcd 转换成 bin：https://github.com/leofansq/Tools_RosBag2KITTI
+1. pcd 转换成 bin：https://github.com/DanielPollithy/pypcd
+
+- 您可以通过以下指令安装 `pypcd`：
+
+  ```bash
+  pip install git+https://github.com/DanielPollithy/pypcd.git
+  ```
+
+- 您可以使用以下脚本读取 pcd 文件，将其转换成 bin 格式并保存。
+
+  ```python
+  import numpy as np
+  from pypcd import pypcd
+
+  pcd_data = pypcd.PointCloud.from_path('point_cloud_data.pcd')
+  points = np.zeros([pcd_data.width, 4], dtype=np.float32)
+  points[:, 0] = pcd_data.pc_data['x'].copy()
+  points[:, 1] = pcd_data.pc_data['y'].copy()
+  points[:, 2] = pcd_data.pc_data['z'].copy()
+  points[:, 3] = pcd_data.pc_data['intensity'].copy().astype(np.float32)
+  with open('point_cloud_data.bin', 'wb') as f:
+      f.write(points.tobytes())
+  ```
+
 2. las 转换成 bin：常见的转换流程为 las -> pcd -> bin，las -> pcd 的转换可以用该[工具](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor)。
 
 #### 标签格式
 
 最基本的信息：每个场景的 3D 边界框和类别标签应该包含在标注 `.txt` 文件中。每一行代表特定场景的一个 3D 框，如下所示：
 
-```python
-# format: [x, y, z, dx, dy, dz, yaw, category_name]
+```
+# 格式：[x, y, z, dx, dy, dz, yaw, category_name]
 1.23 1.42 0.23 3.96 1.65 1.55 1.56 Car
 3.51 2.15 0.42 1.05 0.87 1.86 1.23 Pedestrian
 ...
@@ -55,7 +78,7 @@ lidar2cam4
 ...
 ```
 
-### 原始数据格式
+### 原始数据结构
 
 #### 基于激光雷达的 3D 检测
 
@@ -469,6 +492,6 @@ _base_ = [
 ```python
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # 指定你的 验证 pkl 信息
+    ann_file=data_root + 'custom_infos_val.pkl', # 指定你的验证 pkl 信息
     metric='bbox')
 ```

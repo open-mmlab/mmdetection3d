@@ -40,7 +40,7 @@ Lyft 不提供训练集和验证集的官方划分方案，因此 MMDetection3D 
 
 ## 数据准备
 
-组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 和 .json 文件，接着需要重点关注这两个数据集之间的不同点，请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/master/docs_zh-CN/datasets/nuscenes_det.md)获取更加详细的数据集信息文件结构的说明。
+组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 文件，接着需要重点关注这两个数据集之间的不同点，请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/datasets/nuscenes_det.md)获取更加详细的数据集信息文件结构的说明。
 
 请通过运行下面的命令来生成 Lyft 的数据集信息文件：
 
@@ -84,11 +84,11 @@ mmdetection3d
   - info\['token'\]：样本数据标记。
   - info\['timestamp'\]：样本数据时间戳。
   - info\['lidar_points'\]：是一个字典，包含了所有与激光雷达点相关的信息。
-    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
+    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
-  - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）
+  - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]：第 i 次扫描的激光雷达数据的文件路径。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\[lidar2ego''\]：当前激光雷达传感器到自车在第 i 次扫描的变换矩阵。（4x4 列表）
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]：自车在第 i 次扫描到全局坐标的变换矩阵。（4x4 列表）
@@ -97,7 +97,7 @@ mmdetection3d
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]：扫描样本数据标记。
   - info\['images'\]：是一个字典，包含与每个相机对应的六个键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。每个字典包含了对应相机的所有数据信息。
     - info\['images'\]\['CAM_XXX'\]\['img_path'\]：图像的文件名。
-    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]：当 3D 投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
+    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]：当 3D 点投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
     - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]：图像样本数据标记。
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]：图像的时间戳。
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]：该相机传感器到自车的变换矩阵。（4x4 列表）
@@ -113,7 +113,7 @@ mmdetection3d
 
 - `lyft_infos_train.pkl`
 
-  - info\['instances'\]\[i\]\['velocity'\] 不存在，Lyft 数据集中不存在速度评估信息。
+  - info\['instances'\]\[i\]\['velocity'\] 不存在：Lyft 数据集中不存在速度评估信息。
   - info\['instances'\]\[i\]\['num_lidar_pts'\] 及 info\['instances'\]\[i\]\['num_radar_pts'\] 不存在。
 
 这里仅介绍存储在训练数据文件的数据记录信息。这同样适用于验证集和测试集（没有实例）。

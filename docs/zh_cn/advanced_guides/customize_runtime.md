@@ -2,12 +2,12 @@
 
 ## 自定义优化器设置
 
-优化器相关的配置是由 `optim_wrapper` 管理的，其通常有三个字段：`optimizer`，`paramwise_cfg`，`clip_grad`。请参考 [OptimWrapper](https://mmengine.readthedocs.io/en/latest/tutorials/optim_wrapper.md) 了解更多细节。如下所示，使用 `AdamW` 作为`优化器`，骨干网络的学习率降低 10 倍，并添加了梯度裁剪。
+优化器相关的配置是由 `optim_wrapper` 管理的，其通常有三个字段：`optimizer`，`paramwise_cfg`，`clip_grad`。请参考 [OptimWrapper](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optim_wrapper.html) 了解更多细节。如下所示，使用 `AdamW` 作为`优化器`，骨干网络的学习率降低 10 倍，并添加了梯度裁剪。
 
 ```python
 optim_wrapper = dict(
     type='OptimWrapper',
-    # optimizer
+    # 优化器
     optimizer=dict(
         type='AdamW',
         lr=0.0001,
@@ -15,21 +15,21 @@ optim_wrapper = dict(
         eps=1e-8,
         betas=(0.9, 0.999)),
 
-    # Parameter-level learning rate and weight decay settings
+    # 参数级学习率及权重衰减系数设置
     paramwise_cfg=dict(
         custom_keys={
             'backbone': dict(lr_mult=0.1, decay_mult=1.0),
         },
         norm_decay_mult=0.0),
 
-    # gradient clipping
+    # 梯度裁剪
     clip_grad=dict(max_norm=0.01, norm_type=2))
 ```
 
 ### 自定义 PyTorch 支持的优化器
 
 我们已经支持使用所有 PyTorch 实现的优化器，且唯一需要修改的地方就是改变配置文件中的 `optim_wrapper` 字段中的 `optimizer` 字段。
-举个例子，如果您想使用 `ADAM` （注意到这样可能会使性能大幅下降），您可以这样修改：
+举个例子，如果您想使用 `ADAM`（注意到这样可能会使性能大幅下降），您可以这样修改：
 
 ```python
 optim_wrapper = dict(
@@ -37,7 +37,7 @@ optim_wrapper = dict(
     optimizer=dict(type='Adam', lr=0.0003, weight_decay=0.0001))
 ```
 
-为了修改模型的学习率，用户只需要修改 `optimizer` 中的 `lr` 字段。用户可以根据 PyTorch 的 [API 文档](https://pytorch.org/docs/stable/optim.html?highlight=optim#module-torch.optim) 直接设置参数。
+为了修改模型的学习率，用户只需要修改 `optimizer` 中的 `lr` 字段。用户可以根据 PyTorch 的 [API 文档](https://pytorch.org/docs/stable/optim.html?highlight=optim#module-torch.optim)直接设置参数。
 
 ### 自定义并实现优化器
 
@@ -68,25 +68,19 @@ class MyOptimizer(Optimizer):
 
   新定义的模块应该在 `mmdet3d/engine/optimizers/__init__.py` 中被引入，使得注册器可以找到新模块并注册之：
 
-```python
-from .my_optimizer import MyOptimizer
-```
-
-您也需要通过添加如下语句在 `mmdet3d/core/__init__.py` 中引入 `optimizer`：
-
-```python
-from .optimizer import *
-```
+  ```python
+  from .my_optimizer import MyOptimizer
+  ```
 
 - 在配置中使用 `custom_imports` 来人工引入新优化器：
 
-```python
-custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_failed_imports=False)
-```
+  ```python
+  custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_failed_imports=False)
+  ```
 
 模块 `mmdet3d.engine.optimizers.my_optimizer` 会在程序伊始被引入，且 `MyOptimizer` 类在那时会自动被注册。
 注意到只有包含 `MyOptimizer` 类的包应该被引入。
-`mmdet3d.engine.optimizers.my_optimizer.MyOptimizer` **不能** 被直接引入。
+`mmdet3d.engine.optimizers.my_optimizer.MyOptimizer`**不能**被直接引入。
 
 事实上，用户可以在这种引入的方法中使用完全不同的文件目录结构，只要保证根目录能在 `PYTHONPATH` 中被定位。
 
@@ -138,7 +132,7 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
 
 ### 额外的设置
 
-没有在优化器部分实现的技巧应该通过优化器构造器或者钩子来实现 （比如逐参数的学习率设置）。我们列举了一些常用的可以稳定训练过程或者加速训练的设置。我们欢迎提供更多类似设置的 PR 和 issue。
+没有在优化器部分实现的技巧应该通过优化器构造器或者钩子来实现（比如逐参数的学习率设置）。我们列举了一些常用的可以稳定训练过程或者加速训练的设置。我们欢迎提供更多类似设置的 PR 和 issue。
 
 - __使用梯度裁剪 (gradient clip) 来稳定训练过程__：
 
@@ -310,15 +304,15 @@ class MyHook(Hook):
 
   新定义的模块应在 `mmdet3d/engine/hooks/__init__.py` 中引入，以使得注册器可以找到新模块并注册之：
 
-```python
-from .my_hook import MyHook
-```
+  ```python
+  from .my_hook import MyHook
+  ```
 
 - 在配置中使用 `custom_imports` 来人为地引入之：
 
-```python
-custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
-```
+  ```python
+  custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
+  ```
 
 #### 3. 更改配置文件
 

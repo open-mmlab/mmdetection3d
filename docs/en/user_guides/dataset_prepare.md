@@ -92,13 +92,13 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 
 Then generate info files by running
 
-```
+```bash
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
 ```
 
 In an environment using slurm, users may run the following command instead
 
-```
+```bash
 sh tools/create_data.sh <partition> kitti
 ```
 
@@ -110,7 +110,7 @@ Download Waymo open dataset V1.2 [HERE](https://waymo.com/open/download/) and it
 python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
 ```
 
-Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
+Note that if your local disk does not have enough space for saving converted data, you can change the `--out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
 
 ### NuScenes
 
@@ -133,11 +133,11 @@ Note that we follow the original folder names for clear organization. Please ren
 
 ### S3DIS, ScanNet and SUN RGB-D
 
-To prepare S3DIS data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md/).
+To prepare S3DIS data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md).
 
-To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/).
+To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md).
 
-To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md/).
+To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md).
 
 ### Customized Datasets
 
@@ -148,15 +148,15 @@ For using custom datasets, please refer to [Customize Datasets](https://github.c
 If you have used v1.0.0rc1-v1.0.0rc4 mmdetection3d to create data infos before, and now you want to use the newest v1.1.0 mmdetection3d, you need to update the data infos file.
 
 ```bash
-python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl ${PKL_PATH} --out-dir ${OUT_DIR}
+python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl-path ${PKL_PATH} --out-dir ${OUT_DIR}
 ```
 
 - `dataset` : Name of dataset.
-- `pkl` : Specify the data infos pkl file path.
+- `pkl-path` : Specify the data infos pkl file path.
 - `out-dir` : Output direction of the data infos pkl file.
 
 Example
 
 ```bash
-python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
+python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl-path ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
 ```

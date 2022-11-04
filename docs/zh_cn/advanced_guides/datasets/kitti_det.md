@@ -183,30 +183,30 @@ aos  AP:97.70, 89.11, 87.38
 
 - 首先，你需要在你的配置文件中修改 `test_evaluator` 字典，并加上 `pklfile_prefix` 和 `submission_prefix`，如下所示：
 
-```python
-data_root = 'data/kitti'
-test_evaluator = dict(
-    type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_test.pkl',
-    metric='bbox',
-    pklfile_prefix='results/kitti-3class/kitti_results',
-    submission_prefix='results/kitti-3class/kitti_results')
-```
+  ```python
+  data_root = 'data/kitti'
+  test_evaluator = dict(
+      type='KittiMetric',
+      ann_file=data_root + 'kitti_infos_test.pkl',
+      metric='bbox',
+      pklfile_prefix='results/kitti-3class/kitti_results',
+      submission_prefix='results/kitti-3class/kitti_results')
+  ```
 
 - 接下来，你可以运行如下测试脚本。
 
-```shell
-mkdir -p results/kitti-3class
+  ```shell
+  mkdir -p results/kitti-3class
 
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
-```
+  ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+  ```
 
 - 或者你可以在测试指令中使用 `--cfg-options "test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results" "test_evaluator.submission_prefix=results/kitti-3class/kitti_results"`，然后直接运行如下测试脚本。
 
-```shell
-mkdir -p results/kitti-3class
+  ```shell
+  mkdir -p results/kitti-3class
 
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
-```
+  ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
+  ```
 
-在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](<(http://www.cvlibs.net/datasets/kitti/index.php)>)获取更多细节。
+在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](http://www.cvlibs.net/datasets/kitti/index.php)获取更多细节。

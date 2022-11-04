@@ -1,6 +1,6 @@
 # FAQ
 
-We list some potential troubles encountered by users and developers, along with their corresponding solutions. Feel free to enrich the list if you find any frequent issues and contribute your solutions to solve them. If you have any trouble with environment configuration, model training, etc, please create an issue using the [provided templates](https://github.com/open-mmlab/mmdetection3d/blob/master/.github/ISSUE_TEMPLATE/error-report.md/) and fill in all required information in the template.
+We list some potential troubles encountered by users and developers, along with their corresponding solutions. Feel free to enrich the list if you find any frequent issues and contribute your solutions to solve them. If you have any trouble with environment configuration, model training, etc, please create an issue using the [provided templates](https://github.com/open-mmlab/mmdetection3d/blob/master/.github/ISSUE_TEMPLATE/error-report.md) and fill in all required information in the template.
 
 ## MMEngine/MMCV/MMDet/MMDet3D Installation
 
@@ -8,13 +8,13 @@ We list some potential troubles encountered by users and developers, along with 
 
 - The required versions of MMEngine, MMCV and MMDetection for different versions of MMDetection3D are as below. Please install the correct version of MMEngine, MMCV and MMDetection to avoid installation issues.
 
-| MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
-| --------------------- | :----------------------: | :---------------------: | :----------------------: |
-| dev-1.x               | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-| v1.1.0rc1             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-| v1.1.0rc0             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
+  | --------------------- | :----------------------: | :---------------------: | :----------------------: |
+  | dev-1.x               | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc1             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc0             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 
-**Note:** If you want to install mmdet3d-v1.0.0rcx, the compatible MMDetection, MMSegmentation and MMCV versions table can be found at [here](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation). Please choose the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
+  **Note:** If you want to install mmdet3d-v1.0.0rcx, the compatible MMDetection, MMSegmentation and MMCV versions table can be found at [here](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation). Please choose the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
 
 - If you faced the error shown below when importing open3d:
 

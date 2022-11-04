@@ -7,11 +7,11 @@ MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台�
 - PyTorch 1.6+
 - CUDA 9.2+ (如果你从源码编译 PyTorch, CUDA 9.0 也是兼容的。)
 - GCC 5+
-- [MMEngine](https://mmengine.readthedocs.io/en/latest/#installation)
-- [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
+- [MMEngine](https://mmengine.readthedocs.io/zh_CN/latest/#installation)
+- [MMCV](https://mmcv.readthedocs.io/zh_CN/latest/#installation)
 
 ```{note}
-如果你已经装了 pytorch, 可以跳过这一部分，然后转到[下一章节](#安装). 如果没有，可以参照以下步骤安装环境。
+如果你已经装了 pytorch，可以跳过这一部分，然后转到[下一章节](#安装)。如果没有，可以参照以下步骤安装环境。
 ```
 
 **步骤 0.** 从[官网](https://docs.conda.io/en/latest/miniconda.html)下载并安装 Miniconda。
@@ -19,8 +19,8 @@ MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台�
 **步骤 1.** 使用 conda 新建虚拟环境，并进入该虚拟环境。
 
 ```shell
-# 鉴于 waymo-open-dataset-tf-2-6-0 要求 python>=3.7, 我们推荐安装 python3.8
-# 如果您想要安装 python3.6, 之后须确保安装 waymo-open-dataset-tf-2-x-0 (x<=4)
+# 鉴于 waymo-open-dataset-tf-2-6-0 要求 python>=3.7，我们推荐安装 python3.8
+# 如果您想要安装 python<3.7，之后须确保安装 waymo-open-dataset-tf-2-x-0 (x<=4)
 conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
@@ -41,7 +41,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 # 安装
 
-我们建议用户参照我们的最佳实践 MMDetection3D。不过，整个过程也是可定制化的，具体可参照[自定义安装章节](#customize-installation)
+我们建议用户参照我们的最佳实践 MMDetection3D。不过，整个过程也是可定制化的，具体可参照[自定义安装章节](#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%AE%89%E8%A3%85)
 
 ## 最佳实践
 
@@ -75,26 +75,26 @@ mim install 'mmdet>=3.0.0rc0'
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git -b dev-3.x
-# "-b dev-3.x" means checkout to the `dev-3.x` branch.
+# "-b dev-3.x" 表示切换到 `dev-3.x` 分支。
 cd mmdetection
 pip install -v -e .
-# "-v" means verbose, or more output
-# "-e" means installing a project in editable mode,
-# thus any local modifications made to the code will take effect without reinstallation.
+# "-v" 表示更详细的信息输出
+# "-e" 表示以可编辑的模式安装项目
+# 因此本地对代码做的任何修改都会生效，而无需重新安装。
 ```
 
 **步骤 2.** 克隆 MMDetection3D 代码仓库。
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
-# "-b dev-1.x" means checkout to the `dev-1.x` branch.
+# "-b dev-1.x" 表示切换到 `dev-1.x` 分支。
 cd mmdetection3d
 ```
 
 **步骤 4.** 安装依赖包和 MMDetection3D。
 
 ```shell
-pip install -v -e .  # or "python setup.py develop"
+pip install -v -e .  # 或者 "python setup.py develop"
 ```
 
 注意：
@@ -162,13 +162,13 @@ import pandas as pd
 from plyfile import PlyData
 
 def convert_ply(input_path, output_path):
-    plydata = PlyData.read(input_path)  # read file
-    data = plydata.elements[0].data  # read data
-    data_pd = pd.DataFrame(data)  # convert to DataFrame
-    data_np = np.zeros(data_pd.shape, dtype=np.float)  # initialize array to store data
-    property_names = data[0].dtype.names  # read names of properties
+    plydata = PlyData.read(input_path)  # 读取文件
+    data = plydata.elements[0].data  # 读取数据
+    data_pd = pd.DataFrame(data)  # 转换成 DataFrame
+    data_np = np.zeros(data_pd.shape, dtype=np.float)  # 初始化数组来存储数据
+    property_names = data[0].dtype.names  # 读取属性名称
     for i, name in enumerate(
-            property_names):  # read data by property
+            property_names):  # 通过属性读取数据
         data_np[:, i] = data_pd[name]
     data_np.astype(np.float32).tofile(output_path)
 ```
@@ -185,8 +185,8 @@ convert_ply('./test.ply', './test.bin')
 import trimesh
 
 def to_ply(input_path, output_path, original_type):
-    mesh = trimesh.load(input_path, file_type=original_type)  # read file
-    mesh.export(output_path, file_type='ply')  # convert to ply
+    mesh = trimesh.load(input_path, file_type=original_type)  # 读取文件
+    mesh.export(output_path, file_type='ply')  # 转换成 ply
 ```
 
 例如：
@@ -279,23 +279,23 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 以下是一个基于 conda 安装 MMdetection3D 的脚本
 
 ```shell
-# 鉴于 waymo-open-dataset-tf-2-6-0 要求 python>=3.7, 我们推荐安装 python3.8
-# 如果您想要安装 python3.6, 之后须确保安装 waymo-open-dataset-tf-2-x-0 (x<=4)
+# 鉴于 waymo-open-dataset-tf-2-6-0 要求 python>=3.7，我们推荐安装 python3.8
+# 如果您想要安装 python<3.7，之后须确保安装 waymo-open-dataset-tf-2-x-0 (x<=4)
 conda create -n open-mmlab python=3.8 -y
 conda activate open-mmlab
 
-# install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
+# 使用默认的预编译 CUDA 版本（通常是最新的）安装最新的 PyTorch
 conda install -c pytorch pytorch torchvision -y
 
-# install mmengine and mmcv
+# 安装 mmengine and mmcv
 pip install openmim
 mim install mmengine
 mim install 'mmcv>=2.0.0rc0'
 
-# install mmdetection
+# 安装 mmdetection
 mim install 'mmdet>=3.0.0rc0'
 
-# install mmdetection3d
+# 安装 mmdetection3d
 git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
 cd mmdetection3d
 pip install -e .

@@ -2,7 +2,7 @@
 
 ## 数据集的准备
 
-对于数据集准备的整体流程，请参考 SUN RGB-D 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/)。
+对于数据集准备的整体流程，请参考 SUN RGB-D 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md)。
 
 ### 下载 SUN RGB-D 数据与工具包
 
@@ -155,7 +155,7 @@ sunrgbd
 - `sunrgbd_infos_train.pkl`：训练集数据信息（标注与元信息），每个场景所含数据信息具体如下：
   - info\['lidar_points'\]：字典包含了与激光雷达点相关的信息。
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
-    - info\['lidar_points'\]\['lidar_path'\]：点云数据 `xxx.bin` 的文件路径。
+    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
   - info\['images'\]：字典包含了与图像数据相关的信息。
     - info\['images'\]\['CAM0'\]\['img_path'\]：图像的文件名。
     - info\['images'\]\['CAM0'\]\['depth2img'\]：深度到图像的变换矩阵，形状为 (4, 4)。
@@ -201,7 +201,7 @@ train_pipeline = [
 点云上的数据增强
 
 - `RandomFlip3D`：随机左右或前后翻转输入点云。
-- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 \[-30, 30\] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 \[0.85, 1.15\] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0（即不做位移）。
+- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 \[-30, 30\]（度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 \[0.85, 1.15\] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0（即不做位移）。
 - `PointSample`：降采样输入点云。
 
 SUN RGB-D 上多模态（点云和图像）3D 物体检测的典型流程如下：
@@ -238,8 +238,8 @@ train_pipeline = [
 
 图像上的数据增强
 
-- `Resize`: 改变输入图像的大小, `keep_ratio=True` 意味着图像的比例不改变。
-- `RandomFlip`: 随机地翻折图像。
+- `Resize`：改变输入图像的大小，`keep_ratio=True` 意味着图像的比例不改变。
+- `RandomFlip`：随机地翻折图像。
 
 图像增强的实现取自 [MMDetection](https://github.com/open-mmlab/mmdetection/tree/dev-3.x/mmdet/datasets/transforms)。
 

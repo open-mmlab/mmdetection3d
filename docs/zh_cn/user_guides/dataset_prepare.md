@@ -88,13 +88,23 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/train.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/train.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
+```
 
+然后通过运行以下指令生成信息文件
+
+```bash
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
+```
+
+在使用 slurm 的环境下，用户需要使用下面的指令
+
+```bash
+sh tools/create_data.sh <partition> kitti
 ```
 
 ### Waymo
 
-在[这里](https://waymo.com/open/download/)下载 Waymo 公开数据集1.2版本，在[这里](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing)下载其数据划分文件。
+在[这里](https://waymo.com/open/download/)下载 Waymo 公开数据集 1.2 版本，在[这里](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing)下载其数据划分文件。
 然后，将 tfrecord 文件置于 `data/waymo/waymo_format/` 目录下的相应位置，并将数据划分的 txt 文件置于 `data/waymo/kitti_format/ImageSets` 目录下。
 在[这里](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects)下载验证集的真实标签 (bin 文件) 并将其置于 `data/waymo/waymo_format/`。
 提示，你可以使用 `gsutil` 来用命令下载大规模的数据集。你可以参考这个[工具](https://github.com/RalphMao/Waymo-Dataset-Tool)来获取更多实现细节。
@@ -104,7 +114,7 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
 ```
 
-注意，如果你的硬盘空间大小不足以存储转换后的数据，你可以将 `out-dir` 参数设定为别的路径。
+注意，如果你的硬盘空间大小不足以存储转换后的数据，你可以将 `--out-dir` 参数设定为别的路径。
 你只需要记得在那个路径下创建文件夹并下载数据，然后在数据预处理完成后将其链接回 `data/waymo/kitti_format` 即可。
 
 ### NuScenes
@@ -129,11 +139,11 @@ python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./d
 
 ### S3DIS、ScanNet 和 SUN RGB-D
 
-请参考 S3DIS [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md/) 文件以对其进行数据预处理。
+请参考 S3DIS [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md) 文件以对其进行数据预处理。
 
-请参考 ScanNet [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/) 文件以对其进行数据预处理。
+请参考 ScanNet [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md) 文件以对其进行数据预处理。
 
-请参考 SUN RGB-D [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md/) 文件以对其进行数据预处理。
+请参考 SUN RGB-D [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md) 文件以对其进行数据预处理。
 
 ### 自定义数据集
 
@@ -144,15 +154,15 @@ python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./d
 如果你之前已经使用 v1.0.0rc1-v1.0.0rc4 版的 mmdetection3d 创建数据信息，现在你想使用最新的 v1.1.0 版 mmdetection3d，你需要更新数据信息文件。
 
 ```bash
-python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl ${PKL_PATH} --out-dir ${OUT_DIR}
+python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl-path ${PKL_PATH} --out-dir ${OUT_DIR}
 ```
 
 - `dataset`：数据集名。
-- `pkl`：指定数据信息 pkl 文件路径。
+- `pkl-path`：指定数据信息 pkl 文件路径。
 - `out-dir`：输出数据信息 pkl 文件目录。
 
 例如
 
 ```bash
-python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
+python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl-path ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
 ```

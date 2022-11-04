@@ -26,14 +26,14 @@ mmdetection3d
 
 ## 数据准备
 
-我们通常需要通过特定样式来使用 .pkl 或 .json 文件组织有用的数据信息，例如用于组织图像及其标注的 coco 样式。
+我们通常需要通过特定样式来使用 .pkl 文件组织有用的数据信息，例如用于组织图像及其标注的 coco 样式。
 要为 nuScenes 准备这些文件，请运行以下命令：
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
-处理后的文件夹结构应该如下
+处理后的文件夹结构应该如下。
 
 ```
 mmdetection3d
@@ -61,7 +61,7 @@ mmdetection3d
   - info\['token'\]：样本数据标记。
   - info\['timestamp'\]：样本数据时间戳。
   - info\['lidar_points'\]：是一个字典，包含了所有与激光雷达点相关的信息。
-    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
+    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
@@ -74,7 +74,7 @@ mmdetection3d
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]：扫描样本数据标记。
   - info\['images'\]：是一个字典，包含与每个相机对应的六个键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。每个字典包含了对应相机的所有数据信息。
     - info\['images'\]\['CAM_XXX'\]\['img_path'\]：图像的文件名。
-    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]：当 3D 投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
+    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]：当 3D 点投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
     - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]：图像样本数据标记。
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]：图像的时间戳。
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]：该相机传感器到自车的变换矩阵。（4x4 列表）
@@ -86,14 +86,14 @@ mmdetection3d
     - info\['instances'\]\[i\]\['num_lidar_pts'\]：每个 3D 边界框内包含的激光雷达点数。
     - info\['instances'\]\[i\]\['num_radar_pts'\]：每个 3D 边界框内包含的雷达点数。
     - info\['instances'\]\[i\]\['bbox_3d_isvalid'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
-  - info\['cam_instances'\]：是一个字典，包含以下键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。对于基于视觉的 3D 目标检测任务，我们将整个场景的 3D 标注划分至它们所属于的相应相机中。
+  - info\['cam_instances'\]：是一个字典，包含以下键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。对于基于视觉的 3D 目标检测任务，我们将整个场景的 3D 标注划分至它们所属于的相应相机中。对于其中的第 i 个实例，我们有：
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label'\]：实例标签。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label_3d'\]：实例标签。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox'\]：2D 边界框标注（3D 框投影的矩形框），顺序为 \[x1, y1, x2, y2\] 的列表。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['center_2d'\]：3D 框投影到图像上的中心点，大小为 (2, ) 的列表。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['depth'\]：3D 框投影中心的深度。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
-    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
 
 注意：
@@ -103,7 +103,7 @@ mmdetection3d
 
 2. 这里我们只解释训练信息文件中记录的数据。这同样适用于验证集和测试集（测试集的 pkl 文件中不包含 `instances` 以及 `cam_instances`）。
 
-获取 `nuscenes_infos_xxx.pkl` 的核心函数为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py)。
+获取 `nuscenes_infos_xxx.pkl` 的核心函数为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py)。
 
 ## 训练流程
 
@@ -158,7 +158,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
+    dict(type='mmdet.Resize', img_scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
