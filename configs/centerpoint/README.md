@@ -126,7 +126,7 @@ data = dict(
 |      [SECFPN](./centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus.py)       |      pillar (0.2)       |  ✓  |      ✗       |   4.9    |                | 48.38  | 59.79 |                       [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20220811_045458-808e69ad.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20220811_045458.log)                       |
 |                                 above w/ circle nms                                 |      pillar (0.2)       |  ✓  |      ✓       |          |                | 48.79 | 59.65 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
-**Note:** The model perfomance after coordinate refactor is slightly different (+/- 0.5 - 1 mAP/NDS) from the performance before coordinate refactor in v0.x branch. We are exploring the reason behind.
+**Note:** The model performance after coordinate refactor is slightly different (+/- 0.5 - 1 mAP/NDS) from the performance before coordinate refactor in v0.x branch. We are exploring the reason behind.
 
 ## Citation
 
