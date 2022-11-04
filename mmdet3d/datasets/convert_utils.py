@@ -65,7 +65,7 @@ def get_nuscenes_2d_boxes(nusc, sample_data_token: str,
 
     Return:
         list[dict]: List of 2d annotation record that belongs to the input
-            `sample_data_token`.
+        `sample_data_token`.
     """
 
     # Get the sample data and the sample corresponding to that sample data.
@@ -214,7 +214,7 @@ def get_kitti_style_2d_boxes(info: dict,
 
     Return:
         list[dict]: List of 2d / mono3d annotation record that
-            belongs to the input camera id.
+        belongs to the input camera id.
     """
     # Get calibration information
     camera_intrinsic = info['calib'][f'P{cam_idx}']
@@ -336,7 +336,7 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
 
 
 def post_process_coords(
-    corner_coords: List, imsize: Tuple[int, int] = (1600, 900)
+    corner_coords: List[int], imsize: Tuple[int, int] = (1600, 900)
 ) -> Union[Tuple[float, float, float, float], None]:
     """Get the intersection of the convex hull of the reprojected bbox corners
     and the image canvas, return None if no intersection.
@@ -349,7 +349,7 @@ def post_process_coords(
 
     Return:
         tuple[float]: Intersection of the convex hull of the 2D box
-            corners and the image canvas.
+        corners and the image canvas.
     """
     polygon_from_2d_box = MultiPoint(corner_coords).convex_hull
     img_canvas = box(0, 0, imsize[0], imsize[1])
