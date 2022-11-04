@@ -43,6 +43,7 @@ class WaymoMetric(KittiMetric):
             If not specified, the submission data will not be generated.
             Default: None.
         load_type (str, optional): Type of loading mode during training.
+
             - 'frame_based': Load all of the instances in the frame.
             - 'mv_image_based': Load all of the instances in the frame and need
                 to convert to the FOV-based data type to support image-based
