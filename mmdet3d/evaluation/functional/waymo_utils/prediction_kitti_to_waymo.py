@@ -12,6 +12,7 @@ except ImportError:
 
 from glob import glob
 from os.path import join
+from typing import List, Optional
 
 import mmengine
 import numpy as np
@@ -27,7 +28,7 @@ class KITTI2Waymo(object):
     Waymo format.
 
     Args:
-        kitti_result_files (list[dict]): Predictions in KITTI format.
+        results (list[dict]): Predictions in KITTI format.
         waymo_tfrecords_dir (str): Directory to load waymo raw data.
         waymo_results_save_dir (str): Directory to save converted predictions
             in waymo format (.bin files).
@@ -39,29 +40,35 @@ class KITTI2Waymo(object):
     """
 
     def __init__(self,
-                 kitti_result_files,
-                 waymo_tfrecords_dir,
-                 waymo_results_save_dir,
-                 waymo_results_final_path,
-                 prefix,
-                 workers=64,
-                 file_client_args=dict(backend='disk')):
+                 results: List[dict],
+                 waymo_tfrecords_dir: str,
+                 waymo_results_save_dir: str,
+                 waymo_results_final_path: str,
+                 prefix: str,
+                 classes: dict,
+                 workers: int = 64,
+                 file_client_args: dict = dict(backend='disk'),
+                 from_kitti_format: bool = False,
+                 idx2contextname: Optional[str] = None,
+                 idx2timestamp: Optional[str] = None):
 
-        self.kitti_result_files = kitti_result_files
+        self.results = results
         self.waymo_tfrecords_dir = waymo_tfrecords_dir
         self.waymo_results_save_dir = waymo_results_save_dir
         self.waymo_results_final_path = waymo_results_final_path
         self.prefix = prefix
+        self.classes = classes
         self.workers = int(workers)
         self.file_client_args = file_client_args
-        self.name2idx = {}
-        for idx, result in enumerate(kitti_result_files):
-            if len(result['sample_id']) > 0:
-                self.name2idx[str(result['sample_id'][0])] = idx
+        self.from_kitti_format = from_kitti_format
+        if idx2contextname and idx2timestamp:
+            self.idx2contextname = idx2contextname
+            self.idx2timestamp = idx2timestamp
+            self.fast_eval = True
+        else:
+            self.fast_eval = False
 
-        # turn on eager execution for older tensorflow versions
-        if int(tf.__version__.split('.')[0]) < 2:
-            tf.enable_eager_execution()
+        self.name2idx = {}
 
         self.k2w_cls_map = {
             'Car': label_pb2.Label.TYPE_VEHICLE,
@@ -70,12 +77,28 @@ class KITTI2Waymo(object):
             'Cyclist': label_pb2.Label.TYPE_CYCLIST,
         }
 
-        self.T_ref_to_front_cam = np.array([[0.0, 0.0, 1.0, 0.0],
-                                            [-1.0, 0.0, 0.0, 0.0],
-                                            [0.0, -1.0, 0.0, 0.0],
-                                            [0.0, 0.0, 0.0, 1.0]])
+        if self.from_kitti_format:
+            self.T_ref_to_front_cam = np.array([[0.0, 0.0, 1.0, 0.0],
+                                                [-1.0, 0.0, 0.0, 0.0],
+                                                [0.0, -1.0, 0.0, 0.0],
+                                                [0.0, 0.0, 0.0, 1.0]])
+            # ``sample_idx`` of the sample in kitti-format is an array
+            for idx, result in enumerate(results):
+                if len(result['sample_idx']) > 0:
+                    self.name2idx[str(result['sample_idx'][0])] = idx
+        else:
+            # ``sample_idx`` of the sample in the original prediction
+            # is an int value.
+            for idx, result in enumerate(results):
+                self.name2idx[str(result['sample_idx'])] = idx
 
-        self.get_file_names()
+        if not self.fast_eval:
+            # need to read original '.tfrecord' file
+            self.get_file_names()
+            # turn on eager execution for older tensorflow versions
+            if int(tf.__version__.split('.')[0]) < 2:
+                tf.enable_eager_execution()
+
         self.create_folder()
 
     def get_file_names(self):
@@ -207,22 +230,30 @@ class KITTI2Waymo(object):
 
             filename = f'{self.prefix}{file_idx:03d}{frame_num:03d}'
 
-            for camera in frame.context.camera_calibrations:
-                # FRONT = 1, see dataset.proto for details
-                if camera.name == 1:
-                    T_front_cam_to_vehicle = np.array(
-                        camera.extrinsic.transform).reshape(4, 4)
-
-            T_k2w = T_front_cam_to_vehicle @ self.T_ref_to_front_cam
-
             context_name = frame.context.name
             frame_timestamp_micros = frame.timestamp_micros
 
             if filename in self.name2idx:
-                kitti_result = \
-                    self.kitti_result_files[self.name2idx[filename]]
-                objects = self.parse_objects(kitti_result, T_k2w, context_name,
-                                             frame_timestamp_micros)
+                if self.from_kitti_format:
+                    for camera in frame.context.camera_calibrations:
+                        # FRONT = 1, see dataset.proto for details
+                        if camera.name == 1:
+                            T_front_cam_to_vehicle = np.array(
+                                camera.extrinsic.transform).reshape(4, 4)
+
+                    T_k2w = T_front_cam_to_vehicle @ self.T_ref_to_front_cam
+
+                    kitti_result = \
+                        self.results[self.name2idx[filename]]
+                    objects = self.parse_objects(kitti_result, T_k2w,
+                                                 context_name,
+                                                 frame_timestamp_micros)
+                else:
+                    index = self.name2idx[filename]
+                    objects = self.parse_objects_from_origin(
+                        self.results[index], context_name,
+                        frame_timestamp_micros)
+
             else:
                 print(filename, 'not found.')
                 objects = metrics_pb2.Objects()
@@ -232,10 +263,66 @@ class KITTI2Waymo(object):
                     'wb') as f:
                 f.write(objects.SerializeToString())
 
+    def convert_one_fast(self, res_index):
+        if len(self.results[res_index]) > 0:
+            sample_idx = self.results[res_index][0]['sample_idx']
+            objects = self.parse_objects_from_origin(
+                self.results[res_index], self.idx2contextname[sample_idx],
+                self.idx2timestamp[sample_idx])
+        else:
+            print('one sample is not found.')
+            objects = metrics_pb2.Objects()
+
+        with open(
+                join(self.waymo_results_save_dir, f'{sample_idx}.bin'),
+                'wb') as f:
+            f.write(objects.SerializeToString())
+
+    def parse_objects_from_origin(self, result, contextname, timestamp):
+        lidar_boxes = result['boxes_3d'].tensor
+        scores = result['scores_3d']
+        labels = result['labels_3d']
+
+        objects = metrics_pb2.Objects()
+        for i in range(len(lidar_boxes)):
+            class_name = self.classes[labels[i].item()]
+
+            box = label_pb2.Label.Box()
+            height = lidar_boxes[i][5].item()
+            heading = lidar_boxes[i][6].item()
+
+            heading = -heading - 0.5 * np.pi
+
+            while heading < -np.pi:
+                heading += 2 * np.pi
+            while heading > np.pi:
+                heading -= 2 * np.pi
+
+            box.center_x = lidar_boxes[i][0].item()
+            box.center_y = lidar_boxes[i][1].item()
+            box.center_z = lidar_boxes[i][2].item() + height / 2
+            box.length = lidar_boxes[i][4].item()
+            box.width = lidar_boxes[i][3].item()
+            box.height = height
+            box.heading = heading
+
+            o = metrics_pb2.Object()
+            o.object.box.CopyFrom(box)
+            o.object.type = self.k2w_cls_map[class_name]
+            o.score = scores[i].item()
+            o.context_name = contextname
+            o.frame_timestamp_micros = timestamp
+
+            objects.objects.append(o)
+
+        return objects
+
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmengine.track_parallel_progress(self.convert_one, range(len(self)),
+        convert_func = self.convert_one_fast if self.fast_eval else \
+            self.convert_one
+        mmengine.track_parallel_progress(convert_func, range(len(self)),
                                          self.workers)
         print('\nFinished ...')
 
@@ -248,7 +335,8 @@ class KITTI2Waymo(object):
 
     def __len__(self):
         """Length of the filename list."""
-        return len(self.waymo_tfrecord_pathnames)
+        return len(self.results) if self.fast_eval else len(
+            self.waymo_tfrecord_pathnames)
 
     def transform(self, T, x, y, z):
         """Transform the coordinates with matrix T.
