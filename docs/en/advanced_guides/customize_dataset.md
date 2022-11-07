@@ -16,9 +16,9 @@ The ideal situation is that we can reorganize the customized raw data and conver
 
 #### Point cloud Format
 
-Currently, we only support '.bin' format point cloud for training and inference. Before training on your own datasets, you need to convert your point cloud files with other formats to '.bin' files. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
+Currently, we only support `.bin` format point cloud for training and inference. Before training on your own datasets, you need to convert your point cloud files with other formats to `.bin` files. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
 
-1. Convert pcd to bin: https://github.com/DanielPollithy/pypcd
+1. Convert `.pcd` to `.bin`: https://github.com/DanielPollithy/pypcd
 
 - You can install `pypcd` with the following command:
 
@@ -26,7 +26,7 @@ Currently, we only support '.bin' format point cloud for training and inference.
   pip install git+https://github.com/DanielPollithy/pypcd.git
   ```
 
-- You can use the following script to read the pcd file and convert it to bin format and save it:
+- You can use the following script to read the `.pcd` file and convert it to `.bin` format and save it:
 
   ```python
   import numpy as np
@@ -42,7 +42,7 @@ Currently, we only support '.bin' format point cloud for training and inference.
       f.write(points.tobytes())
   ```
 
-2. Convert las to bin: The common conversion path is las -> pcd -> bin, and the conversion from las -> pcd can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
+2. Convert `.las` to `.bin`: The common conversion path is `.las -> .pcd -> .bin`, and the conversion from `.las -> .pcd` can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
 
 #### Label Format
 

@@ -26,7 +26,7 @@ mmdetection3d
 
 ## Dataset Preparation
 
-We typically need to organize the useful data information with a .pkl file in a specific style, e.g., coco-style for organizing images and their annotations.
+We typically need to organize the useful data information with a `.pkl` file in a specific style, e.g., coco-style for organizing images and their annotations.
 To prepare these files for nuScenes, run the following command:
 
 ```bash

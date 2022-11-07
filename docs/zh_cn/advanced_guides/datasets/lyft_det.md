@@ -33,14 +33,11 @@ mmdetection3d
 │   │   ├── sample_submission.csv
 ```
 
-其中 `v1.01-train` 和 `v1.01-test` 包含与 nuScenes 数据集相同的元文件，`.txt` 文件包含数据划分的信息。
-Lyft 不提供训练集和验证集的官方划分方案，因此 MMDetection3D 对不同场景下的不同类别的目标数量进行分析，并提供了一个数据集划分方案。
-`sample_submission.csv` 是用于提交到 Kaggle 评估服务器的基本文件。
-需要注意的是，我们遵循了 Lyft 最初的文件夹命名以实现更清楚的文件组织。请将下载下来的原始文件夹按照上述组织结构重新命名。
+其中 `v1.01-train` 和 `v1.01-test` 包含与 nuScenes 数据集相同的元文件，`.txt` 文件包含数据划分的信息。Lyft 不提供训练集和验证集的官方划分方案，因此 MMDetection3D 对不同场景下的不同类别的目标数量进行分析，并提供了一个数据集划分方案。`sample_submission.csv` 是用于提交到 Kaggle 评估服务器的基本文件。需要注意的是，我们遵循了 Lyft 最初的文件夹命名以实现更清楚的文件组织。请将下载下来的原始文件夹按照上述组织结构重新命名。
 
 ## 数据准备
 
-组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 文件，接着需要重点关注这两个数据集之间的不同点，请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/datasets/nuscenes_det.md)获取更加详细的数据集信息文件结构的说明。
+组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 文件，接着需要重点关注这两个数据集之间的不同点，更多关于数据集信息文件结构的说明请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/datasets/nuscenes_det.md)。
 
 请通过运行下面的命令来生成 Lyft 的数据集信息文件：
 
@@ -49,7 +46,7 @@ python tools/create_data.py lyft --root-path ./data/lyft --out-dir ./data/lyft -
 python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./data/lyft
 ```
 
-请注意，上面的第二行命令用于修复损坏的 lidar 数据文件，请参考[此处](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000)获取更多细节。
+请注意，上面的第二行命令用于修复损坏的 lidar 数据文件，更多细节请参考此处[讨论](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000)。
 
 处理后的文件夹结构应该如下：
 
@@ -118,7 +115,7 @@ mmdetection3d
 
 这里仅介绍存储在训练数据文件的数据记录信息。这同样适用于验证集和测试集（没有实例）。
 
-请参考 [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/lyft_converter.py) 获取更多关于 `lyft_infos_xxx.pkl` 结构的细节。
+更多关于 `lyft_infos_xxx.pkl` 的结构信息请参考 [lyft_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/lyft_converter.py)。
 
 ## 训练流程
 
@@ -152,8 +149,7 @@ train_pipeline = [
 ]
 ```
 
-与 nuScenes 相似，在 Lyft 上进行训练的模型也需要 `LoadPointsFromMultiSweeps` 步骤来从连续帧中加载点云数据。
-另外，考虑到 Lyft 中所收集的激光雷达点的强度是无效的，因此将 `LoadPointsFromMultiSweeps` 中的 `use_dim` 默认值设置为 `[0, 1, 2, 4]`，其中前三个维度表示点的坐标，最后一个维度表示时间戳的差异。
+与 nuScenes 相似，在 Lyft 上进行训练的模型也需要 `LoadPointsFromMultiSweeps` 步骤来从连续帧中加载点云数据。另外，考虑到 Lyft 中所收集的激光雷达点的强度是无效的，因此将 `LoadPointsFromMultiSweeps` 中的 `use_dim` 默认值设置为 `[0, 1, 2, 4]`，其中前三个维度表示点的坐标，最后一个维度表示时间戳的差异。
 
 ## 评估
 
@@ -165,11 +161,7 @@ bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-
 
 ## 度量指标
 
-Lyft 提出了一个更加严格的用以评估所预测的 3D 检测框的度量指标。
-判断一个预测框是否是正类的基本评判标准和 KITTI 一样，如基于 3D 交并比进行评估，然而，Lyft 采用与 COCO 相似的方式来计算平均精度 -- 计算 3D 交并比在 0.5-0.95 之间的不同阈值下的平均精度。
-实际上，重叠部分大于 0.7 的 3D 交并比是一项对于 3D 检测方法比较严格的标准，因此整体的性能似乎会偏低。
-相比于其他数据集，Lyft 上不同类别的标注不平衡是导致最终结果偏低的另一个重要原因。
-请参考[官方网址](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/overview/evaluation)获取更多关于度量指标的定义的细节。
+Lyft 提出了一个更加严格的用以评估所预测的 3D 检测框的度量指标。判断一个预测框是否是正类的基本评判标准和 KITTI 一样，如基于 3D 交并比进行评估，然而，Lyft 采用与 COCO 相似的方式来计算平均精度 -- 计算 3D 交并比在 0.5-0.95 之间的不同阈值下的平均精度。实际上，重叠部分大于 0.7 的 3D 交并比是一项对于 3D 检测方法比较严格的标准，因此整体的性能似乎会偏低。相比于其他数据集，Lyft 上不同类别的标注不平衡是导致最终结果偏低的另一个重要原因。更多关于度量指标的定义请参考[官方网址](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/overview/evaluation)。
 
 这里将采用官方方法对 Lyft 进行评估，下面展示了一个评估结果的例子：
 
@@ -200,4 +192,4 @@ Lyft 提出了一个更加严格的用以评估所预测的 3D 检测框的度�
 
 在生成 `work_dirs/pp-lyft/results_challenge.csv`，您可以将生成的文件提交到 Kaggle 评估服务器，请参考[官方网址](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles)获取更多细节。
 
-同时还可以使用可视化工具将预测结果进行可视化，请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#visualization)获取更多细节。
+同时还可以使用可视化工具将预测结果进行可视化，更多细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#visualization)。

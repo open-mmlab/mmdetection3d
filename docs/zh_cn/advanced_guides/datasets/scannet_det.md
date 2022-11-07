@@ -1,4 +1,4 @@
-# 3D 目标检测 Scannet 数据集
+# 3D 目标检测 ScanNet 数据集
 
 ## 数据集准备
 
@@ -288,6 +288,6 @@ train_pipeline = [
 
 ## 评估指标
 
-通常 mAP（全类平均精度）被用于 ScanNet 的检测任务的评估，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时一个通用的计算 3D 物体检测多个类别的精度和召回率的函数被调用，可以参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py)。
+通常使用 mAP（全类平均精度）来评估 ScanNet 的检测任务的性能，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时调用一个通用的计算 3D 物体检测多个类别的精度和召回率的函数。更多细节请参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py)。
 
 与在章节`提取 ScanNet 数据`中介绍的那样，所有真实物体的三维包围框是与坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于与坐标轴平行的包围框的非极大值抑制（NMS），该过程不会考虑包围框的旋转。

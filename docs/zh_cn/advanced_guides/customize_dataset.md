@@ -16,9 +16,9 @@
 
 #### 点云格式
 
-目前，我们只支持 '.bin' 格式的点云用于训练和推理。在训练自己的数据集之前，需要将其他格式的点云文件转换成 '.bin' 文件。常见的点云数据格式包括 `.pcd` 和 `.las`，我们列出一些开源工具作为参考。
+目前，我们只支持 `.bin` 格式的点云用于训练和推理。在训练自己的数据集之前，需要将其他格式的点云文件转换成 `.bin` 文件。常见的点云数据格式包括 `.pcd` 和 `.las`，我们列出一些开源工具作为参考。
 
-1. pcd 转换成 bin：https://github.com/DanielPollithy/pypcd
+1. `.pcd` 转换成 `.bin`：https://github.com/DanielPollithy/pypcd
 
 - 您可以通过以下指令安装 `pypcd`：
 
@@ -26,7 +26,7 @@
   pip install git+https://github.com/DanielPollithy/pypcd.git
   ```
 
-- 您可以使用以下脚本读取 pcd 文件，将其转换成 bin 格式并保存。
+- 您可以使用以下脚本读取 `.pcd` 文件，将其转换成 `.bin` 格式并保存。
 
   ```python
   import numpy as np
@@ -42,7 +42,7 @@
       f.write(points.tobytes())
   ```
 
-2. las 转换成 bin：常见的转换流程为 las -> pcd -> bin，las -> pcd 的转换可以用该[工具](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor)。
+2. `.las` 转换成 `.bin`：常见的转换流程为 `.las -> .pcd -> .bin`，`.las -> .pcd` 的转换可以用该[工具](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor)。
 
 #### 标签格式
 
@@ -353,8 +353,7 @@ val_evaluator = dict(
 
 #### 准备模型配置
 
-对于基于体素化的检测器如 SECOND，PointPillars 及 CenterPoint，点云范围（point cloud range）和体素大小（voxel size）应该根据你的数据集做调整。
-理论上，`voxel_size` 和 `point_cloud_range` 的设置是相关联的。设置较小的 `voxel_size` 将增加体素数以及相应的内存消耗。此外，需要注意以下问题：
+对于基于体素化的检测器如 SECOND，PointPillars 及 CenterPoint，点云范围（point cloud range）和体素大小（voxel size）应该根据你的数据集做调整。理论上，`voxel_size` 和 `point_cloud_range` 的设置是相关联的。设置较小的 `voxel_size` 将增加体素数以及相应的内存消耗。此外，需要注意以下问题：
 
 如果将 `point_cloud_range` 和 `voxel_size` 分别设置成 `[0, -40, -3, 70.4, 40, 1]` 和 `[0.05, 0.05, 0.1]`，则中间特征图的形状为 `[(1-(-3))/0.1+1, (40-(-40))/0.05, (70.4-0)/0.05]=[41, 1600, 1408]`。更改 `point_cloud_range` 时，请记得依据 `voxel_size` 更改 `middle_encoder` 里中间特征图的形状。
 

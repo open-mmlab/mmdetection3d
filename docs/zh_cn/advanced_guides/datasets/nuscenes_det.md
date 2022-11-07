@@ -26,8 +26,7 @@ mmdetection3d
 
 ## 数据准备
 
-我们通常需要通过特定样式来使用 .pkl 文件组织有用的数据信息，例如用于组织图像及其标注的 coco 样式。
-要为 nuScenes 准备这些文件，请运行以下命令：
+我们通常需要通过特定样式来使用 `.pkl` 文件组织有用的数据信息，例如用于组织图像及其标注的 coco 样式。要为 nuScenes 准备这些文件，请运行以下命令：
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
@@ -98,8 +97,7 @@ mmdetection3d
 
 注意：
 
-1. `instances` 和 `cam_instances` 中 `bbox_3d` 的区别。
-   `bbox_3d` 都被转换到 MMDet3D 定义的坐标系下，`instances` 中的 `bbox_3d` 是在激光雷达坐标系下，而 `cam_instances` 是在相机坐标系下。注意它们 3D 框中表示的不同（'l, w, h' 和 'l, h, w'）。
+1. `instances` 和 `cam_instances` 中 `bbox_3d` 的区别。`bbox_3d` 都被转换到 MMDet3D 定义的坐标系下，`instances` 中的 `bbox_3d` 是在激光雷达坐标系下，而 `cam_instances` 是在相机坐标系下。注意它们 3D 框中表示的不同（'l, w, h' 和 'l, h, w'）。
 
 2. 这里我们只解释训练信息文件中记录的数据。这同样适用于验证集和测试集（测试集的 pkl 文件中不包含 `instances` 以及 `cam_instances`）。
 
@@ -138,10 +136,7 @@ train_pipeline = [
 ]
 ```
 
-与一般情况相比，nuScenes 有一个特定的 `'LoadPointsFromMultiSweeps'` 流水线来从连续帧加载点云。这是此设置中使用的常见做法。
-更多细节请参考 nuScenes [原始论文](https://arxiv.org/abs/1903.11027)。
-`'LoadPointsFromMultiSweeps'` 中的默认 `use_dim` 是 `[0, 1, 2, 4]`，其中前 3 个维度是指点坐标，最后一个是指时间戳差异。
-由于在拼接来自不同帧的点时使用点云的强度信息会产生噪声，因此默认情况下不使用点云的强度信息。
+与一般情况相比，nuScenes 有一个特定的 `'LoadPointsFromMultiSweeps'` 流水线来从连续帧加载点云。这是此设置中使用的常见做法。更多细节请参考 nuScenes [原始论文](https://arxiv.org/abs/1903.11027)。`'LoadPointsFromMultiSweeps'` 中的默认 `use_dim` 是 `[0, 1, 2, 4]`，其中前 3 个维度是指点坐标，最后一个是指时间戳差异。由于在拼接来自不同帧的点时使用点云的强度信息会产生噪声，因此默认情况下不使用点云的强度信息。
 
 ### 基于视觉的方法
 
@@ -173,8 +168,7 @@ train_pipeline = [
 
 - 它使用单目流水线加载图像，其中包括额外的必需信息，如相机内参矩阵。
 - 它需要加载 3D 标注。
-- 一些数据增强技术需要调整，例如`RandomFlip3D`。
-  目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
+- 一些数据增强技术需要调整，例如`RandomFlip3D`。目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
 
 ## 评估
 
@@ -186,9 +180,7 @@ bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-
 
 ## 指标
 
-NuScenes 提出了一个综合指标，即 nuScenes 检测分数（NDS），以评估不同的方法并设置基准测试。
-它由平均精度（mAP）、平均平移误差（ATE）、平均尺度误差（ASE）、平均方向误差（AOE）、平均速度误差（AVE）和平均属性误差（AAE）组成。
-更多细节请参考其[官方网站](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)。
+NuScenes 提出了一个综合指标，即 nuScenes 检测分数（NDS），以评估不同的方法并设置基准测试。它由平均精度（mAP）、平均平移误差（ATE）、平均尺度误差（ASE）、平均方向误差（AOE）、平均速度误差（AVE）和平均属性误差（AAE）组成。更多细节请参考其[官方网站](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)。
 
 我们也采用这种方法对 nuScenes 进行评估。打印的评估结果示例如下：
 
