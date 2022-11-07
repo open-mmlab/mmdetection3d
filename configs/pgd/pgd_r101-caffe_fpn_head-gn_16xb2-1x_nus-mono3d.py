@@ -58,8 +58,6 @@ train_pipeline = [
         with_bbox_depth=True),
     dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
     dict(
         type='Pack3DDetInputs',
         keys=[
@@ -75,10 +73,8 @@ test_pipeline = [
         flip=False,
         transforms=[
             dict(type='RandomFlip3D'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
         ]),
-        dict(type='Pack3DDetInputs', keys=['img']),
+    dict(type='Pack3DDetInputs', keys=['img']),
 ]
 data = dict(
     samples_per_gpu=2,
