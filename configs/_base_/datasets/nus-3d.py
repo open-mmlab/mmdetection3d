@@ -1,6 +1,6 @@
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
-point_cloud_range = [-50, -50, -5, 50, 50, 3]
+point_cloud_range = [-50, -50.8, -5, 50, 49.1, 3]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',

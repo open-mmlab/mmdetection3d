@@ -3,7 +3,7 @@ _base_ = ['./centerpoint_voxel01_second_secfpn_8xb4-cyclic-20e_nus-3d.py']
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
 voxel_size = [0.075, 0.075, 0.2]
-point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
+point_cloud_range = [-54, -54.8, -5.0, 54, 53.1, 3.0]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
