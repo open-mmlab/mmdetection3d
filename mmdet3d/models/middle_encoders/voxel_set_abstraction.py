@@ -46,21 +46,23 @@ class VoxelSetAbstraction(BaseModule):
     Args:
         num_keypoints (int): The number of key points sampled from
             raw points cloud.
-        fused_out_channels (int): Key points feature output channels
+        fused_out_channel (int): Key points feature output channels
             num after fused. Default to 128.
         voxel_size (list[float]): Size of voxels. Defaults to
             [0.05, 0.05, 0.1].
         point_cloud_range (list[float]): Point cloud range. Defaults to
             [0, -40, -3, 70.4, 40, 1].
-        voxel_sa_configs_list (List[dict or ConfigDict], optional): List of SA
+        voxel_sa_cfgs_list (List[dict or ConfigDict], optional): List of SA
             module cfg. Used to gather key points features from multi-wise
             voxel features. Default to None.
-        rawpoints_sa_config (dict or ConfigDict, optional): SA module cfg.
+        rawpoints_sa_cfgs (dict or ConfigDict, optional): SA module cfg.
             Used to gather key points features from raw points. Default to
             None.
-        bev_feat_channels (int): Bev features channels num.
+        bev_feat_channel (int): Bev features channels num.
             Default to 256.
         bev_scale_factor (int): Bev features scale factor. Default to 8.
+        voxel_center_as_source (bool): Whether used voxel centers as points
+            cloud key points. Defaults to False.
         norm_cfg (dict[str]): Config of normalization layer. Default
             used dict(type='BN1d', eps=1e-5, momentum=0.1).
         bias (bool | str, optional): If specified as `auto`, it will be
@@ -70,55 +72,55 @@ class VoxelSetAbstraction(BaseModule):
 
     def __init__(self,
                  num_keypoints: int,
-                 fused_out_channels: int = 128,
+                 fused_out_channel: int = 128,
                  voxel_size: list = [0.05, 0.05, 0.1],
                  point_cloud_range: list = [0, -40, -3, 70.4, 40, 1],
-                 voxel_sa_configs_list: Optional[list] = None,
-                 rawpoints_sa_config: Optional[dict] = None,
-                 bev_feat_channels: int = 256,
+                 voxel_sa_cfgs_list: Optional[list] = None,
+                 rawpoints_sa_cfgs: Optional[dict] = None,
+                 bev_feat_channel: int = 256,
                  bev_scale_factor: int = 8,
                  voxel_center_as_source: bool = False,
                  norm_cfg: dict = dict(type='BN2d', eps=1e-5, momentum=0.1),
                  bias: str = 'auto') -> None:
         super().__init__()
         self.num_keypoints = num_keypoints
-        self.fused_out_channels = fused_out_channels
+        self.fused_out_channel = fused_out_channel
         self.voxel_size = voxel_size
         self.point_cloud_range = point_cloud_range
         self.voxel_center_as_source = voxel_center_as_source
 
-        gathered_channels = 0
+        gathered_channel = 0
 
-        if rawpoints_sa_config is not None:
-            self.rawpoints_sa_layer = MODELS.build(rawpoints_sa_config)
-            gathered_channels += sum(
-                [x[-1] for x in rawpoints_sa_config.mlp_channels])
+        if rawpoints_sa_cfgs is not None:
+            self.rawpoints_sa_layer = MODELS.build(rawpoints_sa_cfgs)
+            gathered_channel += sum(
+                [x[-1] for x in rawpoints_sa_cfgs.mlp_channels])
         else:
             self.rawpoints_sa_layer = None
 
-        if voxel_sa_configs_list is not None:
-            self.voxel_sa_configs_list = voxel_sa_configs_list
+        if voxel_sa_cfgs_list is not None:
+            self.voxel_sa_configs_list = voxel_sa_cfgs_list
             self.voxel_sa_layers = nn.ModuleList()
-            for voxel_sa_config in voxel_sa_configs_list:
+            for voxel_sa_config in voxel_sa_cfgs_list:
                 cur_layer = MODELS.build(voxel_sa_config)
                 self.voxel_sa_layers.append(cur_layer)
-                gathered_channels += sum(
+                gathered_channel += sum(
                     [x[-1] for x in voxel_sa_config.mlp_channels])
         else:
             self.voxel_sa_layers = None
 
-        if bev_feat_channels is not None and bev_scale_factor is not None:
+        if bev_feat_channel is not None and bev_scale_factor is not None:
             self.bev_cfg = mmengine.Config(
                 dict(
-                    bev_feat_channels=bev_feat_channels,
+                    bev_feat_channels=bev_feat_channel,
                     bev_scale_factor=bev_scale_factor))
-            gathered_channels += bev_feat_channels
+            gathered_channel += bev_feat_channel
         else:
             self.bev_cfg = None
         self.point_feature_fusion_layer = nn.Sequential(
             ConvModule(
-                gathered_channels,
-                fused_out_channels,
+                gathered_channel,
+                fused_out_channel,
                 kernel_size=(1, 1),
                 stride=(1, 1),
                 conv_cfg=dict(type='Conv2d'),
@@ -245,8 +247,8 @@ class VoxelSetAbstraction(BaseModule):
         Returns:
             dict: Contain Point-wise features, include:
                 - keypoints (torch.Tensor): Sampled key points.
-                - keypoint_features (torch.Tensor): Gather key points features
-                    from multi input.
+                - keypoint_features (torch.Tensor): Gathered key points
+                    features from multi input.
                 - fusion_keypoint_features (torch.Tensor): Fusion
                     keypoint_features by point_feature_fusion_layer.
         """

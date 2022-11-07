@@ -36,11 +36,11 @@ class StackQueryAndGroup(nn.Module):
         Args:
             xyz (Tensor): Tensor of the xyz coordinates
                 of the features shape with (N1 + N2 ..., 3).
-            xyz_batch_cnt: (batch_size): Stacked input xyz coordinates nums in
+            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates nums in
                 each batch, just like (N1, N2, ...).
             new_xyz (Tensor): New coords of the outputs shape with
                 (M1 + M2 ..., 3).
-            new_xyz_batch_cnt: (batch_size): Stacked new xyz coordinates nums
+            new_xyz_batch_cnt: (Tensor): Stacked new xyz coordinates nums
                 in each batch, just like (M1, M2, ...).
             features (Tensor, optional): Features of each point with shape
                 (N1 + N2 ..., C). C is features channel number. Default: None.
@@ -88,8 +88,9 @@ class StackedSAModuleMSG(nn.Module):
         in_channels (int): Input channels.
         radii (list[float]): List of radius in each ball query.
         sample_nums (list[int]): Number of samples in each ball query.
-        mlp_channels (list[list[int]]): Specify of the pointnet before
-            the global pooling for each scale.
+        mlp_channels (list[list[int]]): Specify mlp channels of the
+            pointnet before the global pooling for each scale to encode
+            point features.
         use_xyz (bool): Whether to use xyz. Default: True.
         pool_mod (str, optional): Type of pooling method.
             Default: 'max_pool'.
@@ -110,7 +111,7 @@ class StackedSAModuleMSG(nn.Module):
         assert len(radii) == len(sample_nums) == len(mlp_channels)
 
         self.groupers = nn.ModuleList()
-        self.mlp_channels = nn.ModuleList()
+        self.mlps = nn.ModuleList()
         for i in range(len(radii)):
             cin = in_channels
             if use_xyz:
@@ -136,7 +137,7 @@ class StackedSAModuleMSG(nn.Module):
                         norm_cfg=norm_cfg,
                         bias=False))
                 cin = cout
-            self.mlp_channels.append(mlp)
+            self.mlps.append(mlp)
         self.pool_mod = pool_mod
         self.init_weights()
 
@@ -162,11 +163,11 @@ class StackedSAModuleMSG(nn.Module):
         Args:
             xyz (Tensor): Tensor of the xyz coordinates
                 of the features shape with (N1 + N2 ..., 3).
-            xyz_batch_cnt: (batch_size): Stacked input xyz coordinates nums in
+            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates nums in
                 each batch, just like (N1, N2, ...).
             new_xyz (Tensor): New coords of the outputs shape with
                 (M1 + M2 ..., 3).
-            new_xyz_batch_cnt: (batch_size): Stacked new xyz coordinates nums
+            new_xyz_batch_cnt: (Tensor): Stacked new xyz coordinates nums
                 in each batch, just like (M1, M2, ...).
             features (Tensor, optional): Features of each point with shape
                 (N1 + N2 ..., C). C is features channel number. Default: None.
@@ -180,11 +181,12 @@ class StackedSAModuleMSG(nn.Module):
         """
         new_features_list = []
         for k in range(len(self.groupers)):
-            new_features, ball_idxs = self.groupers[k](
+            grouped_features, ball_idxs = self.groupers[k](
                 xyz, xyz_batch_cnt, new_xyz, new_xyz_batch_cnt,
                 features)  # (M1 + M2, Cin, nsample)
-            new_features = new_features.permute(1, 0, 2).unsqueeze(dim=0)
-            new_features = self.mlp_channels[k](new_features)
+            grouped_features = grouped_features.permute(1, 0,
+                                                        2).unsqueeze(dim=0)
+            new_features = self.mlps[k](grouped_features)
             # (M1 + M2 ..., Cout, nsample)
             if self.pool_mod == 'max':
                 new_features = new_features.max(-1).values

@@ -75,14 +75,14 @@ model = dict(
         order=('conv', 'norm', 'act'),
         encoder_paddings=((0, 0, 0), ((1, 1, 1), 0, 0), ((1, 1, 1), 0, 0),
                           ((0, 1, 1), 0, 0)),
-        mlvl_outputs=True),
+        return_middle_feats=True),
     points_encoder=dict(
         type='VoxelSetAbstraction',
         num_keypoints=2048,
-        fused_out_channels=128,
+        fused_out_channel=128,
         voxel_size=voxel_size,
         point_cloud_range=point_cloud_range,
-        voxel_sa_configs_list=[
+        voxel_sa_cfgs_list=[
             dict(
                 type='StackedSAModuleMSG',
                 in_channels=16,
@@ -116,14 +116,14 @@ model = dict(
                 mlp_channels=((64, 64), (64, 64)),
                 use_xyz=True)
         ],
-        rawpoints_sa_config=dict(
+        rawpoints_sa_cfgs=dict(
             type='StackedSAModuleMSG',
             in_channels=1,
             radii=(0.4, 0.8),
             sample_nums=(16, 16),
             mlp_channels=((16, 16), (16, 16)),
             use_xyz=True),
-        bev_feat_channels=256,
+        bev_feat_channel=256,
         bev_scale_factor=8),
     backbone=dict(
         type='SECOND',
