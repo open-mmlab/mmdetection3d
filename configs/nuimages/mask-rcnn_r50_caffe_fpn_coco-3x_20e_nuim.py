@@ -29,7 +29,7 @@ test_pipeline = [
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
         ]),
-    dict(type='PackDetInputs',  
+    dict(type='PackDetInputs',
          meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor')),
 ]

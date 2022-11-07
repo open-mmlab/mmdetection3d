@@ -125,7 +125,7 @@ test_pipeline = [
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
         ]),
-        dict(type='Pack3DDetInputs', keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
