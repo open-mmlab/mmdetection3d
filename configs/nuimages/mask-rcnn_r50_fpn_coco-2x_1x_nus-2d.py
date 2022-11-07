@@ -25,8 +25,8 @@ test_pipeline = [
             dict(type='RandomFlip'),
         ]),
     dict(type='PackDetInputs',
-         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor')),
+         meta_keys=('img_id', 'img_path', 'ori_shape',
+                    'img_shape', 'scale_factor')),
 ]
 data_root = 'data/nuimages/'
 # data = dict(

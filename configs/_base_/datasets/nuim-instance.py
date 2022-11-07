@@ -34,8 +34,8 @@ test_pipeline = [
             dict(type='RandomFlip'),
         ]),
     dict(type='PackDetInputs',
-         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor')),
+         meta_keys=('img_id', 'img_path', 'ori_shape',
+                    'img_shape', 'scale_factor')),
 ]
 data = dict(
     samples_per_gpu=2,
