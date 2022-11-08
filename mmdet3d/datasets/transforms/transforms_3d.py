@@ -8,6 +8,7 @@ import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform, RandomResize, Resize
 from mmengine import is_tuple_of
+from mmengine.dataset import Compose
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
@@ -17,7 +18,6 @@ from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
 from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
                                        RandomFlip)
-from .compose import Compose
 from .data_augment_utils import noise_per_object_v3_
 
 
