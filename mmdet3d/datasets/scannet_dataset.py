@@ -197,7 +197,7 @@ class ScanNetSegDataset(Seg3DDataset):
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES) to
+            unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
