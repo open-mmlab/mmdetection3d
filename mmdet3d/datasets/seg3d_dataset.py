@@ -146,8 +146,8 @@ class Seg3DDataset(BaseDataset):
         None, `label_mapping` is not None.
 
         Args:
-            new_classes (list, tuple, optional): The new classes name from
-                metainfo. Default to None.
+            new_classes (list | tuple, optional): The new classes name from
+                metainfo. Defaults to None.
 
         Returns:
             tuple: The mapping from old classes in cls.METAINFO to
@@ -193,7 +193,8 @@ class Seg3DDataset(BaseDataset):
 
         return label_mapping, label2cat, valid_class_ids
 
-    def _update_palette(self, new_classes, palette) -> list:
+    def _update_palette(self, new_classes: list, palette: Union[None,
+                                                                list]) -> list:
         """Update palette according to metainfo.
 
         If length of palette is equal to classes, just return the palette.
@@ -267,7 +268,8 @@ class Seg3DDataset(BaseDataset):
 
         return info
 
-    def get_scene_idxs(self, scene_idxs):
+    def get_scene_idxs(self, scene_idxs: Union[None, str,
+                                               np.ndarray]) -> np.ndarray:
         """Compute scene_idxs for data sampling.
 
         We sample more times for scenes with more points.
@@ -289,7 +291,7 @@ class Seg3DDataset(BaseDataset):
 
         return scene_idxs.astype(np.int32)
 
-    def _set_group_flag(self):
+    def _set_group_flag(self) -> None:
         """Set flag according to image aspect ratio.
 
         Images with aspect ratio greater than 1 will be set as group 1,
