@@ -255,8 +255,9 @@ class Det3DDataset(BaseDataset):
             ann_info['instances'] = info['instances']
 
             for label in ann_info['gt_labels_3d']:
-                cat_name = self.metainfo['CLASSES'][label]
-                self.num_ins_per_cat[cat_name] += 1
+                if label != -1:
+                    cat_name = self.metainfo['CLASSES'][label]
+                    self.num_ins_per_cat[cat_name] += 1
 
         return ann_info
 
