@@ -19,8 +19,8 @@ class CBGSDataset(object):
     def __init__(self, dataset):
         self.dataset = DATASETS.build(dataset)
         self.metainfo = self.dataset.metainfo
-        self.CLASSES = self.metainfo['CLASSES']
-        self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
+        self.classes = self.metainfo['classes']
+        self.cat2id = {name: i for i, name in enumerate(self.classes)}
         self.sample_indices = self._get_sample_indices()
         # self.dataset.data_infos = self.data_infos
         if hasattr(self.dataset, 'flag'):
@@ -54,7 +54,7 @@ class CBGSDataset(object):
 
         sample_indices = []
 
-        frac = 1.0 / len(self.CLASSES)
+        frac = 1.0 / len(self.classes)
         ratios = [frac / v for v in class_distribution.values()]
         for cls_inds, ratio in zip(list(class_sample_idxs.values()), ratios):
             sample_indices += np.random.choice(cls_inds,
