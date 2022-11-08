@@ -28,7 +28,7 @@ Models:
         Metrics:
           mAP: 43.82
           NDS: 54.86
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210816_163441-ae0897e7.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth
 
   - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
@@ -41,7 +41,7 @@ Models:
         Metrics:
           mAP: 48.3
           NDS: 58.65
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210827_213939-a2dd3fff.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210816_163441-ae0897e7.pth
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
@@ -54,7 +54,7 @@ Models:
         Metrics:
           mAP: 52.04
           NDS: 61.49
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210828_025608-bfbd506e.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d_20200620_230239-c694dce7.pth
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
     In Collection: FreeAnchor
@@ -67,7 +67,7 @@ Models:
         Metrics:
           mAP: 52.69
           NDS: 62.45
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20210827_184909-14d2dbd1.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210827_213939-a2dd3fff.pth
 
   - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
@@ -80,7 +80,7 @@ Models:
         Metrics:
           mAP: 52.4
           NDS: 61.94
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210827_181237-e385c35a.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210828_025608-bfbd506e.pth
 
   - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
     In Collection: FreeAnchor
@@ -93,4 +93,4 @@ Models:
         Metrics:
           mAP: 54.23
           NDS: 63.41
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20210828_030816-06708918.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20210827_184909-14d2dbd1.pth

@@ -27,8 +27,7 @@ Models:
         Metrics:
           mAP: 56.19
           NDS: 64.43
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20201001_135205-5db91e00.pth
-
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210815_085857-9ba7f3a5.pth
   - Name: centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
     Config: configs/centerpoint/centerpoint_voxel01_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py
@@ -40,7 +39,7 @@ Models:
         Metrics:
           mAP: 56.34
           NDS: 64.81
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20201004_075317-26d8176c.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_01voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20210814_060754-c9d535d2.pth
 
   - Name: centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
@@ -53,7 +52,7 @@ Models:
         Metrics:
           mAP: 57.34
           NDS: 65.23
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20200925_230905-358fbe3b.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210814_113418-76ae0cf0.pth
 
   - Name: centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
@@ -66,7 +65,7 @@ Models:
         Metrics:
           mAP: 57.27
           NDS: 65.58
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20200930_201619-67c8496f.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus/centerpoint_0075voxel_second_secfpn_dcn_circlenms_4x8_cyclic_20e_nus_20210827_161135-1782af3e.pth
 
   - Name: centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus
     In Collection: CenterPoint
@@ -79,7 +78,7 @@ Models:
         Metrics:
           mAP: 49.07
           NDS: 59.66
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20201004_170716-a134a233.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_circlenms_4x8_cyclic_20e_nus_20210816_064624-0f3299c0.pth
 
   - Name: centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus
     In Collection: CenterPoint
@@ -92,4 +91,4 @@ Models:
         Metrics:
           mAP: 48.8
           NDS: 59.67
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20200930_103722-3bb135f2.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/centerpoint/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus/centerpoint_02pillar_second_secfpn_dcn_4x8_cyclic_20e_nus_20210815_202702-f03ab9e4.pth
