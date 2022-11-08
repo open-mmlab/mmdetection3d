@@ -5,7 +5,7 @@ _base_ = [
 dataset_type = 'S3DISDataset'
 data_root = 'data/s3dis/'
 
-metainfo = dict(CLASSES=('table', 'chair', 'sofa', 'bookcase', 'board'))
+metainfo = dict(classes=('table', 'chair', 'sofa', 'bookcase', 'board'))
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
 n_points = 100000
