@@ -54,6 +54,10 @@ class WaymoMetric(KittiMetric):
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
         file_client_args (dict): file client for reading gt in waymo format.
+        idx2metainfo (Optional[str], optional): The file path of the metainfo
+            in waymmo. It stores the mapping from sample_idx to metainfo.
+            The metainfo must contain the keys: 'idx2contextname' and
+            'idx2timestamp'.
     """
     num_cams = 5
 
@@ -73,8 +77,7 @@ class WaymoMetric(KittiMetric):
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
                  file_client_args: dict = dict(backend='disk'),
-                 idx2contextname: Optional[str] = None,
-                 idx2timestamp: Optional[str] = None):
+                 idx2metainfo: Optional[str] = None):
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
         self.split = split
@@ -82,11 +85,10 @@ class WaymoMetric(KittiMetric):
         self.use_pred_sample_idx = use_pred_sample_idx
         self.convert_kitti_format = convert_kitti_format
 
-        if idx2contextname and idx2timestamp:
-            self.idx2contextname = mmengine.load(idx2contextname)
-            self.idx2timestamp = mmengine.load(idx2timestamp)
+        if idx2metainfo is not None:
+            self.idx2metainfo = mmengine.load(idx2metainfo)
         else:
-            self.idx2contextname = self.idx2timestamp = None
+            self.idx2metainfo = None
 
         super().__init__(
             ann_file=ann_file,
@@ -333,15 +335,13 @@ class WaymoMetric(KittiMetric):
                 results, pklfile_prefix, submission_prefix, classes)
             final_results = results_kitti_format['pred_instances_3d']
         else:
-            # try:
-            #     idx2timestamp = mmengine.load(osp.join('idx2timestamp.pkl'))
-            #     idx2contextname = mmengine.load(osp.join('idx2contextname.pkl')) # noqa
-            # except ImportError:
-
-            # result_files, waymo_save_tmp_dir = self.bbox2result_waymo(
-            #     results, waymo_results_final_path, idx2timestamp,
-            #     idx2contextname)
             final_results = results
+            for i,res in enumerate(final_results):
+                # Actually, `sample_idx` here is the filename without suffix.
+                # It's for identitying the sample in formating.
+                res['sample_idx'] = self.data_infos[i]['sample_idx']
+                res['pred_instances_3d']['bboxes_3d'].limit_yaw(offset=0.5,
+                    period=np.pi * 2)
 
         waymo_root = self.data_root
         if self.split == 'training':
@@ -355,8 +355,6 @@ class WaymoMetric(KittiMetric):
 
         from ..functional.waymo_utils.prediction_kitti_to_waymo import \
             KITTI2Waymo
-
-        # TODO: merge idx2contextname and idx2timestamp into one file.
         converter = KITTI2Waymo(
             final_results,
             waymo_tfrecords_dir,
@@ -366,83 +364,11 @@ class WaymoMetric(KittiMetric):
             classes,
             file_client_args=self.file_client_args,
             from_kitti_format=self.convert_kitti_format,
-            idx2contextname=self.idx2contextname,
-            idx2timestamp=self.idx2timestamp)
+            idx2metainfo=self.idx2metainfo)
         converter.convert()
         waymo_save_tmp_dir.cleanup()
 
         return final_results, waymo_save_tmp_dir
-
-    # def bbox2result_waymo(self, results: List[dict], res_file_path: str,
-    #                       idx2timestamp: dict, idx2contextname: dict):
-    #     """Format the original results to bin file directly.
-
-    #     Args:
-    #         results (List[dict]): Testing results of the
-    #             dataset.
-    #         res_file_path (str): The path of the result file.
-
-    #     """
-    #     try:
-    #         from waymo_open_dataset import label_pb2
-    #         from waymo_open_dataset.protos import metrics_pb2
-    #     except ImportError:
-    #         raise ImportError(
-    #             'Please run "pip install waymo-open-dataset-tf-2-6-0==1.4.9" ' # noqa
-    #             'to install the official devkit first.')
-
-    #     bin_file = metrics_pb2.Objects()
-
-    #     k2w_cls_map = {
-    #         'Car': label_pb2.Label.TYPE_VEHICLE,
-    #         'Pedestrian': label_pb2.Label.TYPE_PEDESTRIAN,
-    #         'Sign': label_pb2.Label.TYPE_SIGN,
-    #         'Cyclist': label_pb2.Label.TYPE_CYCLIST,
-    #     }
-
-    #     print('\nStarting fast convert to waymo ...')
-    #     for idx in mmengine.progressbar(range(len(results))):
-    #         info = self.data_infos[idx]
-    #         sample_idx = info['image']['image_idx']
-    #         sample_idx = f'{sample_idx:07d}'
-
-    #         lidar_boxes = results[idx]['boxes_3d'].tensor
-    #         scores = results[idx]['scores_3d']
-    #         labels = results[idx]['labels_3d']
-    #         for i in range(len(lidar_boxes)):
-    #             class_name = self.CLASSES[labels[i].item()]
-
-    #             box = label_pb2.Label.Box()
-    #             height = lidar_boxes[i][5].item()
-    #             heading = lidar_boxes[i][6].item()
-
-    #             heading = -heading - 0.5 * 3.1415926
-
-    #             while heading < -3.141593:
-    #                 heading += 2 * 3.141592
-    #             while heading > 3.141593:
-    #                 heading -= 2 * 3.141592
-
-    #             box.center_x = lidar_boxes[i][0].item()
-    #             box.center_y = lidar_boxes[i][1].item()
-    #             box.center_z = lidar_boxes[i][2].item() + height / 2
-    #             box.length = lidar_boxes[i][4].item()
-    #             box.width = lidar_boxes[i][3].item()
-    #             box.height = height
-    #             box.heading = heading
-
-    #             obj = metrics_pb2.Object()
-    #             obj.object.box.CopyFrom(box)
-    #             obj.object.type = k2w_cls_map[class_name]
-    #             obj.score = scores[i].item()
-    #             obj.context_name = idx2contextname[sample_idx]
-    #             obj.frame_timestamp_micros = idx2timestamp[sample_idx]
-
-    #             bin_file.objects.append(obj)
-
-    #     with open(res_file_path, 'wb') as f:
-    #         f.write(bin_file.SerializeToString())
-    #     print('\nConvert finished.')
 
     def merge_multi_view_boxes(self, box_dict_per_frame: List[dict],
                                cam0_info: dict):
@@ -666,7 +592,7 @@ class WaymoMetric(KittiMetric):
         Args:
             box_dict (dict): Box dictionaries to be converted.
 
-                - boxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
+                - bboxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
                 - scores_3d (torch.Tensor): Scores of boxes.
                 - labels_3d (torch.Tensor): Class labels of boxes.
             info (dict): Data info.
