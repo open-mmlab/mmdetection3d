@@ -220,7 +220,7 @@ class MyDataset(Det3DDataset):
 
     # 替换成自定义 pkl 信息文件里的所有类别
     METAINFO = {
-       'CLASSES': ('Pedestrian', 'Cyclist', 'Car')
+       'classes': ('Pedestrian', 'Cyclist', 'Car')
     }
 
     def parse_ann_info(self, info):
@@ -268,7 +268,7 @@ data_root = 'data/custom/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']  # 替换成自己的数据集类别
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # 根据你的数据集进行调整
 input_modality = dict(use_lidar=True, use_camera=False)
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 train_pipeline = [
     dict(
