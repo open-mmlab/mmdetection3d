@@ -136,7 +136,7 @@ class TestScanNetDataset(unittest.TestCase):
             ann_file,
             data_prefix=data_prefix,
             pipeline=pipeline,
-            metainfo=dict(CLASSES=classes),
+            metainfo=dict(classes=classes),
             modality=modality)
 
         scannet_dataset.prepare_data(0)
@@ -163,7 +163,7 @@ class TestScanNetDataset(unittest.TestCase):
                               torch.tensor([107.7353]))
 
         no_class_scannet_dataset = ScanNetDataset(
-            data_root, ann_file, metainfo=dict(CLASSES=['cabinet']))
+            data_root, ann_file, metainfo=dict(classes=['cabinet']))
 
         input_dict = no_class_scannet_dataset.get_data_info(0)
         ann_info = no_class_scannet_dataset.parse_ann_info(input_dict)
@@ -175,7 +175,7 @@ class TestScanNetDataset(unittest.TestCase):
         self.assertEqual(ann_info['gt_labels_3d'].dtype, np.int64)
         # all instance have been filtered by classes
         self.assertEqual(len(ann_info['gt_labels_3d']), 27)
-        self.assertEqual(len(no_class_scannet_dataset.metainfo['CLASSES']), 1)
+        self.assertEqual(len(no_class_scannet_dataset.metainfo['classes']), 1)
 
     def test_scannet_seg(self):
         data_root, ann_file, classes, palette, scene_idxs, data_prefix, \
@@ -186,7 +186,7 @@ class TestScanNetDataset(unittest.TestCase):
         scannet_seg_dataset = ScanNetSegDataset(
             data_root,
             ann_file,
-            metainfo=dict(CLASSES=classes, PALETTE=palette),
+            metainfo=dict(classes=classes, palette=palette),
             data_prefix=data_prefix,
             pipeline=pipeline,
             modality=modality,
