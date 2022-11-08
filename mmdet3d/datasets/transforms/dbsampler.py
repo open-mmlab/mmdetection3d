@@ -18,9 +18,8 @@ class BatchSampler:
         sample_list (list[dict]): List of samples.
         name (str, optional): The category of samples. Defaults to None.
         epoch (int, optional): Sampling epoch. Defaults to None.
-        shuffle (bool, optional): Whether to shuffle indices.
-            Defaults to False.
-        drop_reminder (bool, optional): Drop reminder. Defaults to False.
+        shuffle (bool): Whether to shuffle indices. Defaults to False.
+        drop_reminder (bool): Drop reminder. Defaults to False.
     """
 
     def __init__(self,
@@ -90,12 +89,11 @@ class DataBaseSampler(object):
         prepare (dict): Name of preparation functions and the input value.
         sample_groups (dict): Sampled classes and numbers.
         classes (list[str], optional): List of classes. Defaults to None.
-        points_loader(dict, optional): Config of points loader. Defaults to
+        points_loader (dict): Config of points loader. Defaults to
             dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0, 1, 2, 3]).
-        file_client_args (dict, optional): Config dict of file clients,
-            refer to
-            https://github.com/open-mmlab/mmengine/blob/main/mmengine/fileio/file_client.py
-            for more details. Defaults to dict(backend='disk').
+        file_client_args (dict): Arguments to instantiate a FileClient.
+            See :class:`mmengine.fileio.FileClient` for details.
+            Defaults to dict(backend='disk').
     """
 
     def __init__(
@@ -219,9 +217,9 @@ class DataBaseSampler(object):
             dict: Dict of sampled 'pseudo ground truths'.
 
                 - gt_labels_3d (np.ndarray): ground truths labels
-                    of sampled objects.
+                  of sampled objects.
                 - gt_bboxes_3d (:obj:`BaseInstance3DBoxes`):
-                    sampled ground truth 3D bounding boxes
+                  sampled ground truth 3D bounding boxes
                 - points (np.ndarray): sampled points
                 - group_ids (np.ndarray): ids of sampled ground truths
         """

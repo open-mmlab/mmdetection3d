@@ -129,12 +129,30 @@ python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./d
 
 ### S3DIS、ScanNet 和 SUN RGB-D
 
-请参考 S3DIS [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/s3dis/README.md/) 文件以对其进行数据预处理。
+请参考 S3DIS [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md/) 文件以对其进行数据预处理。
 
-请参考 ScanNet [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/) 文件以对其进行数据预处理。
+请参考 ScanNet [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/) 文件以对其进行数据预处理。
 
-请参考 SUN RGB-D [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) 文件以对其进行数据预处理。
+请参考 SUN RGB-D [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md/) 文件以对其进行数据预处理。
 
 ### 自定义数据集
 
-关于如何使用自定义数据集，请参考[教程 2: 自定义数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/tutorials/customize_dataset.html)。
+关于如何使用自定义数据集，请参考[自定义数据集](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/customize_dataset.md)。
+
+### 更新数据信息
+
+如果你之前已经使用 v1.0.0rc1-v1.0.0rc4 版的 mmdetection3d 创建数据信息，现在你想使用最新的 v1.1.0 版 mmdetection3d，你需要更新数据信息文件。
+
+```bash
+python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pkl ${PKL_PATH} --out-dir ${OUT_DIR}
+```
+
+- `dataset`：数据集名。
+- `pkl`：指定数据信息 pkl 文件路径。
+- `out-dir`：输出数据信息 pkl 文件目录。
+
+例如
+
+```bash
+python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
+```
