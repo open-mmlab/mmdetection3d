@@ -49,7 +49,7 @@ class S3DISDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES': ('table', 'chair', 'sofa', 'bookcase', 'board'),
+        'classes': ('table', 'chair', 'sofa', 'bookcase', 'board'),
         # the valid ids of segmentation annotations
         'seg_valid_class_ids': tuple(range(13)),
         'seg_all_class_ids': tuple(range(14))  # possibly with 'stair' class
@@ -180,10 +180,10 @@ class _S3DISSegDataset(Seg3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
          'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter'),
-        'PALETTE': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
+        'palette': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
                     [255, 0, 255], [100, 100, 255], [200, 200, 100],
                     [170, 120, 200], [255, 0, 0], [200, 100, 100],
                     [10, 200, 100], [200, 200, 200], [50, 50, 50]],
