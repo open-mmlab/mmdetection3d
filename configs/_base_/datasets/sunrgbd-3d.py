@@ -3,7 +3,7 @@ data_root = 'data/sunrgbd/'
 class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
                'night_stand', 'bookshelf', 'bathtub')
 
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.

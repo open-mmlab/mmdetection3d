@@ -4,7 +4,7 @@ _base_ = './pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py'
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Car']
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 

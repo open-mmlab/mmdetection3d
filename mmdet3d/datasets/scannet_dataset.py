@@ -49,7 +49,7 @@ class ScanNetDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
@@ -204,12 +204,12 @@ class ScanNetSegDataset(Seg3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
          'window', 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
          'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
          'otherfurniture'),
-        'PALETTE': [
+        'palette': [
             [174, 199, 232],
             [152, 223, 138],
             [31, 119, 180],
@@ -278,11 +278,11 @@ class ScanNetSegDataset(Seg3DDataset):
 class ScanNetInstanceSegDataset(Seg3DDataset):
 
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
-        'PLATTE': [
+        'palette': [
             [174, 199, 232],
             [152, 223, 138],
             [31, 119, 180],
