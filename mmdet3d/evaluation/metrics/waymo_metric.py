@@ -336,12 +336,12 @@ class WaymoMetric(KittiMetric):
             final_results = results_kitti_format['pred_instances_3d']
         else:
             final_results = results
-            for i,res in enumerate(final_results):
+            for i, res in enumerate(final_results):
                 # Actually, `sample_idx` here is the filename without suffix.
                 # It's for identitying the sample in formating.
                 res['sample_idx'] = self.data_infos[i]['sample_idx']
-                res['pred_instances_3d']['bboxes_3d'].limit_yaw(offset=0.5,
-                    period=np.pi * 2)
+                res['pred_instances_3d']['bboxes_3d'].limit_yaw(
+                    offset=0.5, period=np.pi * 2)
 
         waymo_root = self.data_root
         if self.split == 'training':

@@ -153,7 +153,7 @@ val_evaluator = dict(
     data_root='./data/waymo/waymo_format',
     file_client_args=file_client_args,
     convert_kitti_format=True)
-    # idx2metainfo='data/waymo/waymo_format/idx2metainfo.pkl')
+# idx2metainfo='data/waymo/waymo_format/idx2metainfo.pkl')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

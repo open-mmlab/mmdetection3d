@@ -126,7 +126,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             del self.pcd
             del self.points_colors
 
-    def _initialize_o3d_vis(self, frame_cfg): #-> o3d.visualization.Visualizer:
+    def _initialize_o3d_vis(self,
+                            frame_cfg):  #-> o3d.visualization.Visualizer:
         """Initialize open3d vis according to frame_cfg.
 
         Args:

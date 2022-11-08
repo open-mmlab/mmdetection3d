@@ -23,7 +23,6 @@ import numpy as np
 import tensorflow as tf
 
 
-
 class Prediction2Waymo(object):
     """Predictions to Waymo converter. The format of prediction results could
     be original format or kitti-format.
@@ -283,7 +282,8 @@ class Prediction2Waymo(object):
         sample_idx = self.results[res_index]['sample_idx']
         if len(self.results[res_index]['pred_instances_3d']) > 0:
             objects = self.parse_objects_from_origin(
-                self.results[res_index], self.idx2metainfo[str(sample_idx)]['contextname'],
+                self.results[res_index],
+                self.idx2metainfo[str(sample_idx)]['contextname'],
                 self.idx2metainfo[str(sample_idx)]['timestamp'])
         else:
             print(sample_idx, 'not found.')
@@ -295,7 +295,7 @@ class Prediction2Waymo(object):
             f.write(objects.SerializeToString())
 
     def parse_objects_from_origin(self, result: dict, contextname: str,
-        timestamp: str) -> Objects:
+                                  timestamp: str) -> Objects:
         """_summary_
 
         Args:
@@ -304,7 +304,7 @@ class Prediction2Waymo(object):
             timestamp (str): _description_
 
         Returns:
-            metrics_pb2.Objects: 
+            metrics_pb2.Objects:
         """
         lidar_boxes = result['pred_instances_3d']['bboxes_3d'].tensor
         scores = result['pred_instances_3d']['scores_3d']
