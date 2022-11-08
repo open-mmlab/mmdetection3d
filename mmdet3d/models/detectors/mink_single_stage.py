@@ -38,6 +38,7 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
         init_cfg (dict or ConfigDict, optional): the config to control the
             initialization. Defaults to None.
     """
+    _version = 2
 
     def __init__(self,
                  backbone: ConfigType,
