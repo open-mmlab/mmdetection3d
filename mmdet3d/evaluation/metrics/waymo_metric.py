@@ -353,9 +353,9 @@ class WaymoMetric(KittiMetric):
         else:
             raise ValueError('Not supported split value.')
 
-        from ..functional.waymo_utils.prediction_kitti_to_waymo import \
-            KITTI2Waymo
-        converter = KITTI2Waymo(
+        from ..functional.waymo_utils.prediction_to_waymo import \
+            Prediction2Waymo
+        converter = Prediction2Waymo(
             final_results,
             waymo_tfrecords_dir,
             waymo_results_save_dir,

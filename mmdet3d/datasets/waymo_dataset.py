@@ -96,7 +96,7 @@ class WaymoDataset(KittiDataset):
         self.max_sweeps = max_sweeps
         # we do not provide file_client_args to custom_3d init
         # because we want disk loading for info
-        # while ceph loading for KITTI2Waymo
+        # while ceph loading for Prediction2Waymo
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
