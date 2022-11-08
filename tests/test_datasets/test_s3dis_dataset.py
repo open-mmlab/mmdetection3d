@@ -114,7 +114,7 @@ class TestS3DISDataset(unittest.TestCase):
             ann_file,
             data_prefix=data_prefix,
             pipeline=pipeline,
-            metainfo=dict(CLASSES=classes),
+            metainfo=dict(classes=classes),
             modality=modality)
 
         s3dis_dataset.prepare_data(0)
@@ -138,7 +138,7 @@ class TestS3DISDataset(unittest.TestCase):
                               torch.tensor([63.0455]))
 
         no_class_s3dis_dataset = S3DISDataset(
-            data_root, ann_file, metainfo=dict(CLASSES=['table']))
+            data_root, ann_file, metainfo=dict(classes=['table']))
 
         input_dict = no_class_s3dis_dataset.get_data_info(0)
         ann_info = no_class_s3dis_dataset.parse_ann_info(input_dict)
@@ -150,7 +150,7 @@ class TestS3DISDataset(unittest.TestCase):
         self.assertEqual(ann_info['gt_labels_3d'].dtype, np.int64)
         # all instance have been filtered by classes
         self.assertEqual(len(ann_info['gt_labels_3d']), 9)
-        self.assertEqual(len(no_class_s3dis_dataset.metainfo['CLASSES']), 1)
+        self.assertEqual(len(no_class_s3dis_dataset.metainfo['classes']), 1)
 
     def test_s3dis_seg(self):
         data_root, ann_file, classes, palette, scene_idxs, data_prefix, \
