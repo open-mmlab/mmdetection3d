@@ -149,11 +149,10 @@ test_dataloader = dict(
 val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/validation_laser_gt_objects.bin',
+    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
     data_root='./data/waymo/waymo_format',
     file_client_args=file_client_args,
     convert_kitti_format=True)
-# idx2metainfo='data/waymo/waymo_format/idx2metainfo.pkl')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

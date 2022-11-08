@@ -42,7 +42,7 @@ class Prediction2Waymo(object):
         classes (dict): A list of class name.
         workers (str): Number of parallel processes.
         file_client_args (str): File client for reading gt in waymo format.
-        from_kitti_format (bool, optional): Whether the reuslts is from kitti
+        from_kitti_format (bool, optional): Whether the reuslts are kitti
             format. Defaults to False.
         idx2metainfo (Optional[dict], optional): The mapping from sample_idx to
             metainfo. The metainfo must contain the keys: 'idx2contextname' and
