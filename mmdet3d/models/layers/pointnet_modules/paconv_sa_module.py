@@ -1,8 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional, Tuple, Union
+
 import torch
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.models.layers.paconv import PAConv, PAConvCUDA
+from mmdet3d.utils import ConfigType
 from .builder import SA_MODULES
 from .point_sa_module import BasePointSAModule
 
@@ -16,52 +20,81 @@ class PAConvSAModuleMSG(BasePointSAModule):
     See the `paper <https://arxiv.org/abs/2103.14635>`_ for more details.
 
     Args:
-        paconv_num_kernels (list[list[int]]): Number of kernel weights in the
+        num_point (int): Number of points.
+        radii (List[float]): List of radius in each ball query.
+        sample_nums (List[int]): Number of samples in each ball query.
+        mlp_channels (List[List[int]]): Specify of the pointnet before
+            the global pooling for each scale.
+        paconv_num_kernels (List[List[int]]): Number of kernel weights in the
             weight banks of each layer's PAConv.
-        paconv_kernel_input (str, optional): Input features to be multiplied
+        fps_mod (List[str]): Type of FPS method, valid mod
+            ['F-FPS', 'D-FPS', 'FS']. Defaults to ['D-FPS'].
+
+            - F-FPS: Using feature distances for FPS.
+            - D-FPS: Using Euclidean distances of points for FPS.
+            - FS: Using F-FPS and D-FPS simultaneously.
+        fps_sample_range_list (List[int]): Range of points to apply FPS.
+            Defaults to [-1].
+        dilated_group (bool): Whether to use dilated ball query.
+            Defaults to False.
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN2d', momentum=0.1).
+        use_xyz (bool): Whether to use xyz. Defaults to True.
+        pool_mod (str): Type of pooling method. Defaults to 'max'.
+        normalize_xyz (bool): Whether to normalize local XYZ with radius.
+            Defaults to False.
+        bias (bool or str): If specified as `auto`, it will be decided by
+            `norm_cfg`. `bias` will be set as True if `norm_cfg` is None,
+            otherwise False. Defaults to 'auto'.
+        paconv_kernel_input (str): Input features to be multiplied
             with kernel weights. Can be 'identity' or 'w_neighbor'.
             Defaults to 'w_neighbor'.
-        scorenet_input (str, optional): Type of the input to ScoreNet.
+        scorenet_input (str): Type of the input to ScoreNet.
             Defaults to 'w_neighbor_dist'. Can be the following values:
 
             - 'identity': Use xyz coordinates as input.
             - 'w_neighbor': Use xyz coordinates and the difference with center
-                points as input.
+              points as input.
             - 'w_neighbor_dist': Use xyz coordinates, the difference with
-                center points and the Euclidean distance as input.
-
-        scorenet_cfg (dict, optional): Config of the ScoreNet module, which
+              center points and the Euclidean distance as input.
+        scorenet_cfg (dict): Config of the ScoreNet module, which
             may contain the following keys and values:
 
             - mlp_channels (List[int]): Hidden units of MLPs.
             - score_norm (str): Normalization function of output scores.
-                Can be 'softmax', 'sigmoid' or 'identity'.
+              Can be 'softmax', 'sigmoid' or 'identity'.
             - temp_factor (float): Temperature factor to scale the output
-                scores before softmax.
+              scores before softmax.
             - last_bn (bool): Whether to use BN on the last output of mlps.
+            Defaults to dict(mlp_channels=[16, 16, 16],
+                             score_norm='softmax',
+                             temp_factor=1.0,
+                             last_bn=False).
     """
 
-    def __init__(self,
-                 num_point,
-                 radii,
-                 sample_nums,
-                 mlp_channels,
-                 paconv_num_kernels,
-                 fps_mod=['D-FPS'],
-                 fps_sample_range_list=[-1],
-                 dilated_group=False,
-                 norm_cfg=dict(type='BN2d', momentum=0.1),
-                 use_xyz=True,
-                 pool_mod='max',
-                 normalize_xyz=False,
-                 bias='auto',
-                 paconv_kernel_input='w_neighbor',
-                 scorenet_input='w_neighbor_dist',
-                 scorenet_cfg=dict(
-                     mlp_channels=[16, 16, 16],
-                     score_norm='softmax',
-                     temp_factor=1.0,
-                     last_bn=False)):
+    def __init__(
+        self,
+        num_point: int,
+        radii: List[float],
+        sample_nums: List[int],
+        mlp_channels: List[List[int]],
+        paconv_num_kernels: List[List[int]],
+        fps_mod: List[str] = ['D-FPS'],
+        fps_sample_range_list: List[int] = [-1],
+        dilated_group: bool = False,
+        norm_cfg: ConfigType = dict(type='BN2d', momentum=0.1),
+        use_xyz: bool = True,
+        pool_mod: str = 'max',
+        normalize_xyz: bool = False,
+        bias: Union[bool, str] = 'auto',
+        paconv_kernel_input: str = 'w_neighbor',
+        scorenet_input: str = 'w_neighbor_dist',
+        scorenet_cfg: dict = dict(
+            mlp_channels=[16, 16, 16],
+            score_norm='softmax',
+            temp_factor=1.0,
+            last_bn=False)
+    ) -> None:
         super(PAConvSAModuleMSG, self).__init__(
             num_point=num_point,
             radii=radii,
@@ -114,25 +147,27 @@ class PAConvSAModule(PAConvSAModuleMSG):
     <https://arxiv.org/abs/2103.14635>`_ for more details.
     """
 
-    def __init__(self,
-                 mlp_channels,
-                 paconv_num_kernels,
-                 num_point=None,
-                 radius=None,
-                 num_sample=None,
-                 norm_cfg=dict(type='BN2d', momentum=0.1),
-                 use_xyz=True,
-                 pool_mod='max',
-                 fps_mod=['D-FPS'],
-                 fps_sample_range_list=[-1],
-                 normalize_xyz=False,
-                 paconv_kernel_input='w_neighbor',
-                 scorenet_input='w_neighbor_dist',
-                 scorenet_cfg=dict(
-                     mlp_channels=[16, 16, 16],
-                     score_norm='softmax',
-                     temp_factor=1.0,
-                     last_bn=False)):
+    def __init__(
+        self,
+        mlp_channels: List[int],
+        paconv_num_kernels: List[int],
+        num_point: Optional[int] = None,
+        radius: Optional[float] = None,
+        num_sample: Optional[int] = None,
+        norm_cfg: ConfigType = dict(type='BN2d', momentum=0.1),
+        use_xyz: bool = True,
+        pool_mod: str = 'max',
+        fps_mod: List[str] = ['D-FPS'],
+        fps_sample_range_list: List[int] = [-1],
+        normalize_xyz: bool = False,
+        paconv_kernel_input: str = 'w_neighbor',
+        scorenet_input: str = 'w_neighbor_dist',
+        scorenet_cfg: dict = dict(
+            mlp_channels=[16, 16, 16],
+            score_norm='softmax',
+            temp_factor=1.0,
+            last_bn=False)
+    ) -> None:
         super(PAConvSAModule, self).__init__(
             mlp_channels=[mlp_channels],
             paconv_num_kernels=[paconv_num_kernels],
@@ -160,27 +195,29 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
     for more details.
     """
 
-    def __init__(self,
-                 num_point,
-                 radii,
-                 sample_nums,
-                 mlp_channels,
-                 paconv_num_kernels,
-                 fps_mod=['D-FPS'],
-                 fps_sample_range_list=[-1],
-                 dilated_group=False,
-                 norm_cfg=dict(type='BN2d', momentum=0.1),
-                 use_xyz=True,
-                 pool_mod='max',
-                 normalize_xyz=False,
-                 bias='auto',
-                 paconv_kernel_input='w_neighbor',
-                 scorenet_input='w_neighbor_dist',
-                 scorenet_cfg=dict(
-                     mlp_channels=[8, 16, 16],
-                     score_norm='softmax',
-                     temp_factor=1.0,
-                     last_bn=False)):
+    def __init__(
+        self,
+        num_point: int,
+        radii: List[float],
+        sample_nums: List[int],
+        mlp_channels: List[List[int]],
+        paconv_num_kernels: List[List[int]],
+        fps_mod: List[str] = ['D-FPS'],
+        fps_sample_range_list: List[int] = [-1],
+        dilated_group: bool = False,
+        norm_cfg: ConfigType = dict(type='BN2d', momentum=0.1),
+        use_xyz: bool = True,
+        pool_mod: str = 'max',
+        normalize_xyz: bool = False,
+        bias: Union[bool, str] = 'auto',
+        paconv_kernel_input: str = 'w_neighbor',
+        scorenet_input: str = 'w_neighbor_dist',
+        scorenet_cfg: dict = dict(
+            mlp_channels=[8, 16, 16],
+            score_norm='softmax',
+            temp_factor=1.0,
+            last_bn=False)
+    ) -> None:
         super(PAConvCUDASAModuleMSG, self).__init__(
             num_point=num_point,
             radii=radii,
@@ -230,29 +267,31 @@ class PAConvCUDASAModuleMSG(BasePointSAModule):
 
     def forward(
         self,
-        points_xyz,
-        features=None,
-        indices=None,
-        target_xyz=None,
-    ):
-        """forward.
+        points_xyz: Tensor,
+        features: Optional[Tensor] = None,
+        indices: Optional[Tensor] = None,
+        target_xyz: Optional[Tensor] = None,
+    ) -> Tuple[Tensor]:
+        """Forward.
 
         Args:
             points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
             features (Tensor, optional): (B, C, N) features of each point.
-                Default: None.
+                Defaults to None.
             indices (Tensor, optional): (B, num_point) Index of the features.
-                Default: None.
+                Defaults to None.
             target_xyz (Tensor, optional): (B, M, 3) new coords of the outputs.
-                Default: None.
+                Defaults to None.
 
         Returns:
-            Tensor: (B, M, 3) where M is the number of points.
-                New features xyz.
-            Tensor: (B, M, sum_k(mlps[k][-1])) where M is the number
-                of points. New feature descriptors.
-            Tensor: (B, M) where M is the number of points.
-                Index of the features.
+            Tuple[Tensor]:
+
+                - new_xyz: (B, M, 3) where M is the number of points.
+                  New features xyz.
+                - new_features: (B, M, sum_k(mlps[k][-1])) where M is the
+                  number of points. New feature descriptors.
+                - indices: (B, M) where M is the number of points.
+                  Index of the features.
         """
         new_features_list = []
 
@@ -306,25 +345,27 @@ class PAConvCUDASAModule(PAConvCUDASAModuleMSG):
     for more details.
     """
 
-    def __init__(self,
-                 mlp_channels,
-                 paconv_num_kernels,
-                 num_point=None,
-                 radius=None,
-                 num_sample=None,
-                 norm_cfg=dict(type='BN2d', momentum=0.1),
-                 use_xyz=True,
-                 pool_mod='max',
-                 fps_mod=['D-FPS'],
-                 fps_sample_range_list=[-1],
-                 normalize_xyz=False,
-                 paconv_kernel_input='w_neighbor',
-                 scorenet_input='w_neighbor_dist',
-                 scorenet_cfg=dict(
-                     mlp_channels=[8, 16, 16],
-                     score_norm='softmax',
-                     temp_factor=1.0,
-                     last_bn=False)):
+    def __init__(
+        self,
+        mlp_channels: List[int],
+        paconv_num_kernels: List[int],
+        num_point: Optional[int] = None,
+        radius: Optional[float] = None,
+        num_sample: Optional[int] = None,
+        norm_cfg: ConfigType = dict(type='BN2d', momentum=0.1),
+        use_xyz: bool = True,
+        pool_mod: str = 'max',
+        fps_mod: List[str] = ['D-FPS'],
+        fps_sample_range_list: List[int] = [-1],
+        normalize_xyz: bool = False,
+        paconv_kernel_input: str = 'w_neighbor',
+        scorenet_input: str = 'w_neighbor_dist',
+        scorenet_cfg: dict = dict(
+            mlp_channels=[8, 16, 16],
+            score_norm='softmax',
+            temp_factor=1.0,
+            last_bn=False)
+    ) -> None:
         super(PAConvCUDASAModule, self).__init__(
             mlp_channels=[mlp_channels],
             paconv_num_kernels=[paconv_num_kernels],

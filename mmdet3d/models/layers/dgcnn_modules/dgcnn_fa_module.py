@@ -1,8 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import torch
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
+
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 class DGCNNFAModule(BaseModule):
@@ -11,21 +16,21 @@ class DGCNNFAModule(BaseModule):
     Aggregate all the features of points.
 
     Args:
-        mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict, optional): Type of normalization method.
-            Defaults to dict(type='BN1d').
-        act_cfg (dict, optional): Type of activation method.
+        mlp_channels (List[int]): List of mlp channels.
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN1d').
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Defaults to dict(type='ReLU').
-        init_cfg (dict, optional): Initialization config. Defaults to None.
+        init_cfg (:obj:`ConfigDict` or dict or List[:obj:`Contigdict` or dict],
+            optional): Initialization config dict. Defaults to None.
     """
 
     def __init__(self,
-                 mlp_channels,
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
-        self.fp16_enabled = False
+                 mlp_channels: List[int],
+                 norm_cfg: ConfigType = dict(type='BN1d'),
+                 act_cfg: ConfigType = dict(type='ReLU'),
+                 init_cfg: OptMultiConfig = None) -> None:
+        super(DGCNNFAModule, self).__init__(init_cfg=init_cfg)
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
             self.mlps.add_module(
@@ -39,14 +44,14 @@ class DGCNNFAModule(BaseModule):
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg))
 
-    def forward(self, points):
+    def forward(self, points: List[Tensor]) -> Tensor:
         """forward.
 
         Args:
-            points (List[Tensor]): tensor of the features to be aggregated.
+            points (List[Tensor]): Tensor of the features to be aggregated.
 
         Returns:
-            Tensor: (B, N, M) M = mlp[-1], tensor of the output points.
+            Tensor: (B, N, M) M = mlp[-1]. Tensor of the output points.
         """
 
         if len(points) > 1:

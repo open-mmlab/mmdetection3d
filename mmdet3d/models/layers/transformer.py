@@ -1,7 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional
+
 from mmcv.cnn.bricks.transformer import MultiheadAttention
 from mmengine.registry import MODELS
+from torch import Tensor
 from torch import nn as nn
+
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 @MODELS.register_module()
@@ -15,40 +20,42 @@ class GroupFree3DMHA(MultiheadAttention):
         embed_dims (int): The embedding dimension.
         num_heads (int): Parallel attention heads. Same as
             `nn.MultiheadAttention`.
-        attn_drop (float, optional): A Dropout layer on attn_output_weights.
+        attn_drop (float): A Dropout layer on attn_output_weights.
             Defaults to 0.0.
-        proj_drop (float, optional): A Dropout layer. Defaults to 0.0.
-        dropout_layer (obj:`ConfigDict`, optional): The dropout_layer used
-            when adding the shortcut.
-        init_cfg (obj:`mmengine.ConfigDict`, optional): The Config for
-            initialization. Default: None.
-        batch_first (bool, optional): Key, Query and Value are shape of
-            (batch, n, embed_dim)
-            or (n, batch, embed_dim). Defaults to False.
+        proj_drop (float): A Dropout layer. Defaults to 0.0.
+        dropout_layer (ConfigType): The dropout_layer used when adding
+            the shortcut. Defaults to dict(type='DropOut', drop_prob=0.).
+        init_cfg (:obj:`ConfigDict` or dict or List[:obj:`Contigdict` or dict],
+            optional): Initialization config dict. Defaults to None.
+        batch_first (bool): Key, Query and Value are shape of
+            (batch, n, embed_dim) or (n, batch, embed_dim).
+            Defaults to False.
     """
 
     def __init__(self,
-                 embed_dims,
-                 num_heads,
-                 attn_drop=0.,
-                 proj_drop=0.,
-                 dropout_layer=dict(type='DropOut', drop_prob=0.),
-                 init_cfg=None,
-                 batch_first=False,
-                 **kwargs):
-        super().__init__(embed_dims, num_heads, attn_drop, proj_drop,
-                         dropout_layer, init_cfg, batch_first, **kwargs)
+                 embed_dims: int,
+                 num_heads: int,
+                 attn_drop: float = 0.,
+                 proj_drop: float = 0.,
+                 dropout_layer: ConfigType = dict(
+                     type='DropOut', drop_prob=0.),
+                 init_cfg: OptMultiConfig = None,
+                 batch_first: bool = False,
+                 **kwargs) -> None:
+        super(GroupFree3DMHA,
+              self).__init__(embed_dims, num_heads, attn_drop, proj_drop,
+                             dropout_layer, init_cfg, batch_first, **kwargs)
 
     def forward(self,
-                query,
-                key,
-                value,
-                identity,
-                query_pos=None,
-                key_pos=None,
-                attn_mask=None,
-                key_padding_mask=None,
-                **kwargs):
+                query: Tensor,
+                key: Tensor,
+                value: Tensor,
+                identity: Tensor,
+                query_pos: Optional[Tensor] = None,
+                key_pos: Optional[Tensor] = None,
+                attn_mask: Optional[Tensor] = None,
+                key_padding_mask: Optional[Tensor] = None,
+                **kwargs) -> Tensor:
         """Forward function for `GroupFree3DMHA`.
 
         **kwargs allow passing a more general data flow when combining
@@ -81,7 +88,7 @@ class GroupFree3DMHA(MultiheadAttention):
                 Defaults to None.
 
         Returns:
-            Tensor: forwarded results with shape [num_queries, bs, embed_dims].
+            Tensor: Forwarded results with shape [num_queries, bs, embed_dims].
         """
 
         if hasattr(self, 'operation_name'):
@@ -113,26 +120,26 @@ class ConvBNPositionalEncoding(nn.Module):
     """Absolute position embedding with Conv learning.
 
     Args:
-        input_channel (int): input features dim.
-        num_pos_feats (int, optional): output position features dim.
+        input_channel (int): Input features dim.
+        num_pos_feats (int): Output position features dim.
             Defaults to 288 to be consistent with seed features dim.
     """
 
-    def __init__(self, input_channel, num_pos_feats=288):
-        super().__init__()
+    def __init__(self, input_channel: int, num_pos_feats: int = 288) -> None:
+        super(ConvBNPositionalEncoding, self).__init__()
         self.position_embedding_head = nn.Sequential(
             nn.Conv1d(input_channel, num_pos_feats, kernel_size=1),
             nn.BatchNorm1d(num_pos_feats), nn.ReLU(inplace=True),
             nn.Conv1d(num_pos_feats, num_pos_feats, kernel_size=1))
 
-    def forward(self, xyz):
+    def forward(self, xyz: Tensor) -> Tensor:
         """Forward pass.
 
         Args:
-            xyz (Tensor)： (B, N, 3) the coordinates to embed.
+            xyz (Tensor): (B, N, 3) The coordinates to embed.
 
         Returns:
-            Tensor: (B, num_pos_feats, N) the embedded position features.
+            Tensor: (B, num_pos_feats, N) The embedded position features.
         """
         xyz = xyz.permute(0, 2, 1)
         position_embedding = self.position_embedding_head(xyz)
