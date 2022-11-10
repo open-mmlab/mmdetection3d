@@ -92,7 +92,7 @@ class StackedSAModuleMSG(BaseModule):
 
     Args:
         in_channels (int): Input channels.
-        radii (list[float]): List of radius in each ball query.
+        radius (list[float]): List of radius in each ball query.
         sample_nums (list[int]): Number of samples in each ball query.
         mlp_channels (list[list[int]]): Specify mlp channels of the
             pointnet before the global pooling for each scale to encode
@@ -108,7 +108,7 @@ class StackedSAModuleMSG(BaseModule):
 
     def __init__(self,
                  in_channels: int,
-                 radii: List[float],
+                 radius: List[float],
                  sample_nums: List[int],
                  mlp_channels: List[List[int]],
                  use_xyz: bool = True,
@@ -117,15 +117,15 @@ class StackedSAModuleMSG(BaseModule):
                  init_cfg: dict = None,
                  **kwargs) -> None:
         super(StackedSAModuleMSG, self).__init__(init_cfg=init_cfg)
-        assert len(radii) == len(sample_nums) == len(mlp_channels)
+        assert len(radius) == len(sample_nums) == len(mlp_channels)
 
         self.groupers = nn.ModuleList()
         self.mlps = nn.ModuleList()
-        for i in range(len(radii)):
+        for i in range(len(radius)):
             cin = in_channels
             if use_xyz:
                 cin += 3
-            radius = radii[i]
+            radius = radius[i]
             nsample = sample_nums[i]
             mlp_spec = mlp_channels[i]
 
