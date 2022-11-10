@@ -31,7 +31,7 @@ class Prediction2Waymo(object):
     Waymo format.
 
     Args:
-        results (list[dict]): Predictions in KITTI format.
+        results (list[dict]): Prediction results.
         waymo_tfrecords_dir (str): Directory to load waymo raw data.
         waymo_results_save_dir (str): Directory to save converted predictions
             in waymo format (.bin files).
@@ -40,8 +40,9 @@ class Prediction2Waymo(object):
         prefix (str): Prefix of filename. In general, 0 for training, 1 for
             validation and 2 for testing.
         classes (dict): A list of class name.
-        workers (str): Number of parallel processes.
+        workers (str): Number of parallel processes. Defaults to 2.
         file_client_args (str): File client for reading gt in waymo format.
+            Defaults to ``dict(backend='disk')``.
         from_kitti_format (bool, optional): Whether the reuslts are kitti
             format. Defaults to False.
         idx2metainfo (Optional[dict], optional): The mapping from sample_idx to

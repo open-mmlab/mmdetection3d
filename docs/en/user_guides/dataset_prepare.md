@@ -128,7 +128,7 @@ Note that:
       )
   ```
 
-  Experimently, this will reduce evalaution time by around 6 min. Now, this trick is only used in methods based in point cloud.
+  Experimently, this will reduce evalaution time by around 6 min. Now, this trick is only used in point cloud detection model.
 
 ### NuScenes
 
