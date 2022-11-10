@@ -26,7 +26,8 @@ class ForegroundSegmentationHead(BaseModule):
             dict(type='BN1d', eps=1e-5, momentum=0.1).
         init_cfg (dict, optional): Initialize config of
             model. Defaults to None.
-        loss_seg (dict): Config of segmentation loss.
+        loss_seg (dict): Config of segmentation loss. Defaults to
+            dict(type='mmdet.FocalLoss')
     """
 
     def __init__(

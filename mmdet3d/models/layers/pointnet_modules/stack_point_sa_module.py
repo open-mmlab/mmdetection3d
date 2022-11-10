@@ -4,24 +4,30 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
-from mmcv.cnn.bricks import is_norm
 from mmcv.ops import ball_query, grouping_operation
+from mmengine.model import BaseModule
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
 
 
-class StackQueryAndGroup(nn.Module):
+class StackQueryAndGroup(BaseModule):
     """Find nearby points in spherical space.
 
     Args:
-        radius (list[float]): List of radius in each ball query.
-        sample_nums (list[int]): Number of samples in each ball query.
+        radius (float): List of radius in each ball query.
+        sample_nums (int): Number of samples in each ball query.
         use_xyz (bool): Whether to use xyz. Default: True.
+        init_cfg (dict, optional): Initialize config of
+            model. Defaults to None.
     """
 
-    def __init__(self, radius: float, sample_nums: int, use_xyz: bool = True):
-        super().__init__()
+    def __init__(self,
+                 radius: float,
+                 sample_nums: int,
+                 use_xyz: bool = True,
+                 init_cfg: dict = None):
+        super().__init__(init_cfg=init_cfg)
         self.radius, self.sample_nums, self.use_xyz = \
             radius, sample_nums, use_xyz
 
@@ -81,7 +87,7 @@ class StackQueryAndGroup(nn.Module):
 
 
 @MODELS.register_module()
-class StackedSAModuleMSG(nn.Module):
+class StackedSAModuleMSG(BaseModule):
     """Stack point set abstraction module.
 
     Args:
@@ -96,6 +102,8 @@ class StackedSAModuleMSG(nn.Module):
             Default: 'max_pool'.
         norm_cfg (dict): Type of normalization method. Defaults to
             dict(type='BN2d', eps=1e-5, momentum=0.01).
+        init_cfg (dict, optional): Initialize config of
+            model. Defaults to None.
     """
 
     def __init__(self,
@@ -106,8 +114,9 @@ class StackedSAModuleMSG(nn.Module):
                  use_xyz: bool = True,
                  pool_mod='max',
                  norm_cfg: dict = dict(type='BN2d', eps=1e-5, momentum=0.01),
+                 init_cfg: dict = None,
                  **kwargs) -> None:
-        super().__init__()
+        super(StackedSAModuleMSG, self).__init__(init_cfg=init_cfg)
         assert len(radii) == len(sample_nums) == len(mlp_channels)
 
         self.groupers = nn.ModuleList()
@@ -139,18 +148,6 @@ class StackedSAModuleMSG(nn.Module):
                 cin = cout
             self.mlps.append(mlp)
         self.pool_mod = pool_mod
-        self.init_weights()
-
-    def init_weights(self):
-        """Initialize weights of StackedSAModuleMSG."""
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.kaiming_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            if is_norm(m):
-                nn.init.constant_(m.weight, 1.0)
-                nn.init.constant_(m.bias, 0)
 
     def forward(self,
                 xyz: Tensor,

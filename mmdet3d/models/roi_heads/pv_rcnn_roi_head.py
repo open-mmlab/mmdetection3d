@@ -7,10 +7,10 @@ from torch.nn import functional as F
 from mmdet3d.models.roi_heads.base_3droi_head import Base3DRoIHead
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import bbox3d2roi
+from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import InstanceList
 from mmdet.models.task_modules import AssignResult
 from mmdet.models.task_modules.samplers import SamplingResult
-from ...structures.det3d_data_sample import SampleList
 
 
 @MODELS.register_module()
@@ -72,10 +72,10 @@ class PVRCNNROIHead(Base3DRoIHead):
         Returns:
             dict: losses from each head.
 
-                - loss_semantic (torch.Tensor): loss of semantic head.
-                - loss_bbox (torch.Tensor): loss of bboxes.
-                - loss_cls (torch.Tensor): loss of object classification.
-                - loss_corner (torch.Tensor): loss of bboxes corners.
+            - loss_semantic (torch.Tensor): loss of semantic head.
+            - loss_bbox (torch.Tensor): loss of bboxes.
+            - loss_cls (torch.Tensor): loss of object classification.
+            - loss_corner (torch.Tensor): loss of bboxes corners.
         """
         losses = dict()
         batch_gt_instances_3d = []
@@ -103,12 +103,8 @@ class PVRCNNROIHead(Base3DRoIHead):
 
         return losses
 
-    def predict(self,
-                feats_dict: dict,
-                rpn_results_list: InstanceList,
-                batch_data_samples: SampleList,
-                rescale: bool = False,
-                **kwargs) -> SampleList:
+    def predict(self, feats_dict: dict, rpn_results_list: InstanceList,
+                batch_data_samples: SampleList, **kwargs) -> SampleList:
         """Perform forward propagation of the roi head and predict detection
         results on the features of the upstream network.
 
@@ -119,8 +115,6 @@ class PVRCNNROIHead(Base3DRoIHead):
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
                 `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
-            rescale (bool): If True, return boxes in original image space.
-                Defaults to False.
 
         Returns:
             list[:obj:`InstanceData`]: Detection results of each sample

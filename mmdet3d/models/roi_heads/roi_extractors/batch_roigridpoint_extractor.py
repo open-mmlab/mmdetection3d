@@ -13,7 +13,7 @@ class Batch3DRoIGridExtractor(BaseModule):
     Args:
         grid_size (int): The number of grid points in a roi bbox.
             Defaults to 6.
-        sa_module_cfg (dict, optional): Config of sa module to get
+        roi_layer (dict, optional): Config of sa module to get
             grid points features. Defaults to None.
         init_cfg (dict, optional): Initialize config of
             model. Defaults to None.
@@ -21,10 +21,10 @@ class Batch3DRoIGridExtractor(BaseModule):
 
     def __init__(self,
                  grid_size: int = 6,
-                 sa_module_cfg: dict = None,
+                 roi_layer: dict = None,
                  init_cfg: dict = None) -> None:
         super(Batch3DRoIGridExtractor, self).__init__(init_cfg=init_cfg)
-        self.roi_grid_pool_layer = MODELS.build(sa_module_cfg)
+        self.roi_grid_pool_layer = MODELS.build(roi_layer)
         self.grid_size = grid_size
 
     def forward(self, feats: torch.Tensor, coordinate: torch.Tensor,
