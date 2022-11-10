@@ -114,7 +114,7 @@ Note that:
 
 - If your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
 
-- If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](<>) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/`. Then, the dataset config is modified like the following:
+- If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/`. Then, the dataset config is modified like the following:
 
   ```python
   val_evaluator = dict(

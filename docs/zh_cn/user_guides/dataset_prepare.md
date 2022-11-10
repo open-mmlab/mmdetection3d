@@ -108,7 +108,7 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 
 - 如果你的硬盘空间大小不足以存储转换后的数据，你可以将 `out-dir` 参数设定为别的路径。
   你只需要记得在那个路径下创建文件夹并下载数据，然后在数据预处理完成后将其链接回 `data/waymo/kitti_format` 即可
-- 如果你想在 Waymo 上进行更快的评估，你可以下载已经预处理好的[元信息文件](<>) 并将其放置在 `data/waymo/waymo_format/` 目录下. 接着，你可以按照下方来更改数据集的配置：
+- 如果你想在 Waymo 上进行更快的评估，你可以下载已经预处理好的[元信息文件](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) 并将其放置在 `data/waymo/waymo_format/` 目录下. 接着，你可以按照下方来更改数据集的配置：
   ```python
   val_evaluator = dict(
       type='WaymoMetric',
