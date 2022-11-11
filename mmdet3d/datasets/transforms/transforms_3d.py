@@ -6,9 +6,8 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import mmcv
 import numpy as np
-from mmcv.transforms import BaseTransform, RandomResize, Resize
+from mmcv.transforms import BaseTransform, Compose, RandomResize, Resize
 from mmengine import is_tuple_of
-from mmengine.dataset import Compose
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
