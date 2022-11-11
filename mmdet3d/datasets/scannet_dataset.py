@@ -29,7 +29,7 @@ class ScanNetDataset(Det3DDataset):
             dict(pts='points',
                  pts_instance_mask='instance_mask',
                  pts_semantic_mask='semantic_mask').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).
@@ -185,7 +185,7 @@ class ScanNetSegDataset(Seg3DDataset):
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
         ann_file (str): Path of annotation file. Defaults to ''.
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
@@ -200,7 +200,7 @@ class ScanNetSegDataset(Seg3DDataset):
             unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
@@ -267,7 +267,8 @@ class ScanNetSegDataset(Seg3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def get_scene_idxs(self, scene_idxs):
+    def get_scene_idxs(self, scene_idxs: Union[np.ndarray, str,
+                                               None]) -> np.ndarray:
         """Compute scene_idxs for data sampling.
 
         We sample more times for scenes with more points.

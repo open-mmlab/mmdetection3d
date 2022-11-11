@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Callable, Dict, List, Optional, Sequence, Union
+from typing import Callable, List, Optional, Sequence, Union
 
 import mmengine
 import numpy as np
@@ -25,7 +25,7 @@ class Seg3DDataset(BaseDataset):
                  img='',
                  pts_instance_mask='',
                  pts_semantic_mask='').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used
             as input, it usually has following keys:
@@ -37,7 +37,7 @@ class Seg3DDataset(BaseDataset):
             unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
@@ -135,8 +135,7 @@ class Seg3DDataset(BaseDataset):
             self._set_group_flag()
 
     def get_label_mapping(self,
-                          new_classes: Optional[Sequence] = None
-                          ) -> Union[Dict, None]:
+                          new_classes: Optional[Sequence] = None) -> tuple:
         """Get label mapping.
 
         The ``label_mapping`` is a dictionary, its keys are the old label ids
@@ -146,7 +145,7 @@ class Seg3DDataset(BaseDataset):
         None, `label_mapping` is not None.
 
         Args:
-            new_classes (list | tuple, optional): The new classes name from
+            new_classes (list or tuple, optional): The new classes name from
                 metainfo. Defaults to None.
 
         Returns:

@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class S3DISDataset(Det3DDataset):
             dict(pts='points',
                  pts_instance_mask='instance_mask',
                  pts_semantic_mask='semantic_mask').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).
@@ -165,7 +165,7 @@ class _S3DISSegDataset(Seg3DDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', pts_instance_mask='', pts_semantic_mask='').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
@@ -173,7 +173,7 @@ class _S3DISSegDataset(Seg3DDataset):
             unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
@@ -217,7 +217,8 @@ class _S3DISSegDataset(Seg3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def get_scene_idxs(self, scene_idxs):
+    def get_scene_idxs(self, scene_idxs: Union[np.ndarray, str,
+                                               None]) -> np.ndarray:
         """Compute scene_idxs for data sampling.
 
         We sample more times for scenes with more points.
@@ -245,13 +246,13 @@ class S3DISSegDataset(_S3DISSegDataset):
 
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
-        ann_files (list[str]): Path of several annotation files.
+        ann_files (List[str]): Path of several annotation files.
             Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='points', pts_instance_mask='', pts_semantic_mask='').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
@@ -259,7 +260,7 @@ class S3DISSegDataset(_S3DISSegDataset):
             unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (list[np.ndarray] | list[str], optional): Precomputed index
+        scene_idxs (List[np.ndarray] | List[str], optional): Precomputed index
             to load data. For scenes with many points, we may sample it
             several times. Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
@@ -318,29 +319,33 @@ class S3DISSegDataset(_S3DISSegDataset):
         if not self.test_mode:
             self._set_group_flag()
 
-    def concat_data_list(self, data_lists: List[List[dict]]) -> List[dict]:
+    def concat_data_list(self, data_lists: List[List[dict]]) -> None:
         """Concat data_list from several datasets to form self.data_list.
 
         Args:
-            data_lists (list[list[dict]])
+            data_lists (List[List[dict]])
         """
         self.data_list = [
             data for data_list in data_lists for data in data_list
         ]
 
     @staticmethod
-    def _duplicate_to_list(x, num):
+    def _duplicate_to_list(x: Any, num: int) -> list:
         """Repeat x `num` times to form a list."""
         return [x for _ in range(num)]
 
-    def _check_ann_files(self, ann_file):
+    def _check_ann_files(
+            self, ann_file: Union[List[str], Tuple[str], str]) -> List[str]:
         """Make ann_files as list/tuple."""
         # ann_file could be str
         if not isinstance(ann_file, (list, tuple)):
             ann_file = self._duplicate_to_list(ann_file, 1)
         return ann_file
 
-    def _check_scene_idxs(self, scene_idx, num):
+    def _check_scene_idxs(self, scene_idx: Union[str, List[list, tuple,
+                                                           np.ndarray],
+                                                 List[str], None],
+                          num: int) -> List[np.ndarray]:
         """Make scene_idxs as list/tuple."""
         if scene_idx is None:
             return self._duplicate_to_list(scene_idx, num)

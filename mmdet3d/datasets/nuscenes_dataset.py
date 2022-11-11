@@ -23,7 +23,7 @@ class NuScenesDataset(Det3DDataset):
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
         task (str): Detection task. Defaults to 'lidar_det'.
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
@@ -169,7 +169,7 @@ class NuScenesDataset(Det3DDataset):
 
         return ann_info
 
-    def parse_data_info(self, info: dict) -> dict:
+    def parse_data_info(self, info: dict) -> Union[List[dict], dict]:
         """Process the raw data info.
 
         The only difference with it in `Det3DDataset`
@@ -179,7 +179,7 @@ class NuScenesDataset(Det3DDataset):
             info (dict): Raw info dict.
 
         Returns:
-            dict: Has `ann_info` in training stage. And
+            List[dict] or dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
         if self.task == 'mono_det':
