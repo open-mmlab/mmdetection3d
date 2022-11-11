@@ -365,7 +365,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
     print(f'ignore classes: {ignore_class_name}')
 
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -505,7 +505,7 @@ def update_kitti_infos(pkl_path, out_dir):
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -574,7 +574,7 @@ def update_s3dis_infos(pkl_path, out_dir):
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -648,7 +648,7 @@ def update_scannet_infos(pkl_path, out_dir):
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -726,7 +726,7 @@ def update_sunrgbd_infos(pkl_path, out_dir):
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -835,7 +835,7 @@ def update_lyft_infos(pkl_path, out_dir):
     print(f'ignore classes: {ignore_class_name}')
 
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -1043,7 +1043,7 @@ def update_waymo_infos(pkl_path, out_dir):
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
