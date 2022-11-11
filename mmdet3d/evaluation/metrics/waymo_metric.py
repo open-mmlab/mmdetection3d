@@ -54,10 +54,11 @@ class WaymoMetric(KittiMetric):
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
         file_client_args (dict): file client for reading gt in waymo format.
+            Defaults to ``dict(backend='disk')``.
         idx2metainfo (Optional[str], optional): The file path of the metainfo
             in waymmo. It stores the mapping from sample_idx to metainfo.
             The metainfo must contain the keys: 'idx2contextname' and
-            'idx2timestamp'.
+            'idx2timestamp'. Defaults to None.
     """
     num_cams = 5
 

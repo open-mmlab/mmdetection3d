@@ -275,7 +275,8 @@ class Prediction2Waymo(object):
                 f.write(objects.SerializeToString())
 
     def convert_one_fast(self, res_index: int):
-        """_summary_
+        """Convert action for single file. It read the metainfo from the
+        preprocessed file offline and will be faster.
 
         Args:
             res_index (int): The indices of the results.
@@ -297,15 +298,15 @@ class Prediction2Waymo(object):
 
     def parse_objects_from_origin(self, result: dict, contextname: str,
                                   timestamp: str) -> Objects:
-        """_summary_
+        """Parse obejcts from the original prediction results.
 
         Args:
-            result (dict): _description_
-            contextname (str): _description_
-            timestamp (str): _description_
+            result (dict): The original prediction results.
+            contextname (str): The ``contextname`` of sample in waymo.
+            timestamp (str): The ``timestamp`` of sample in waymo.
 
         Returns:
-            metrics_pb2.Objects:
+            metrics_pb2.Objects: The parsed object.
         """
         lidar_boxes = result['pred_instances_3d']['bboxes_3d'].tensor
         scores = result['pred_instances_3d']['scores_3d']
