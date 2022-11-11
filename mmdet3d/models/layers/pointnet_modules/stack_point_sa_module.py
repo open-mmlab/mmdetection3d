@@ -125,12 +125,12 @@ class StackedSAModuleMSG(BaseModule):
             cin = in_channels
             if use_xyz:
                 cin += 3
-            radius = radius[i]
+            cur_radius = radius[i]
             nsample = sample_nums[i]
             mlp_spec = mlp_channels[i]
 
             self.groupers.append(
-                StackQueryAndGroup(radius, nsample, use_xyz=use_xyz))
+                StackQueryAndGroup(cur_radius, nsample, use_xyz=use_xyz))
 
             mlp = nn.Sequential()
             for i in range(len(mlp_spec)):
