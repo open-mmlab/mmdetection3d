@@ -37,7 +37,7 @@ mmdetection3d
 
 ## 数据准备
 
-组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 .pkl 文件，接着需要重点关注这两个数据集之间的不同点，更多关于数据集信息文件结构的说明请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/datasets/nuscenes_det.md)。
+组织 Lyft 数据集的方式和组织 nuScenes 的方式相同，首先会生成几乎具有相同结构的 `.pkl` 文件，接着需要重点关注这两个数据集之间的不同点，更多关于数据集信息文件结构的说明请参考 [nuScenes 教程](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/advanced_guides/datasets/nuscenes_det.md)。
 
 请通过运行下面的命令来生成 Lyft 的数据集信息文件：
 

@@ -139,7 +139,7 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
 
   如果您的配置继承了一个已经设置了 `optim_wrapper` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。更多细节请参考[说明文档](https://mmdetection3d.readthedocs.io/en/latest/tutorials/config.html)。
 
-- __使用动量调度器器 (momentum scheduler) 来加速模型收敛__：
+- __使用动量调度器 (momentum scheduler) 来加速模型收敛__：
 
   我们支持用动量调度器来根据学习率更改模型的动量，这样可以使模型更快地收敛。动量调度器通常和学习率调度器一起使用，例如，如下配置文件在 [3D 检测](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/schedules/cyclic_20e.py)中被用于加速模型收敛。更多细节请参考 [CosineAnnealingLR](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L43) 和 [CosineAnnealingMomentum](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/momentum_scheduler.py#L71) 的实现方法。
 
