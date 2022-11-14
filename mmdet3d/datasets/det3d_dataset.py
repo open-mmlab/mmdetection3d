@@ -78,7 +78,7 @@ class Det3DDataset(BaseDataset):
                  box_type_3d: dict = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 load_eval_anns=True,
+                 load_eval_anns: bool = True,
                  file_client_args: dict = dict(backend='disk'),
                  show_ins_var: bool = False,
                  **kwargs) -> None:
