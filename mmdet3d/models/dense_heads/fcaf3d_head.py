@@ -13,6 +13,7 @@ except ImportError:
 import torch
 from mmcv.cnn import Scale
 from mmcv.ops import nms3d, nms3d_normal
+from mmdet.utils import reduce_mean
 from mmengine.model import bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
@@ -20,7 +21,6 @@ from torch import Tensor, nn
 from mmdet3d.models import HEADS, build_loss
 from mmdet3d.structures import BaseInstance3DBoxes, rotation_3d_in_axis
 from mmdet3d.utils import InstanceList, OptInstanceList
-from mmdet.utils import reduce_mean
 from .base_3d_dense_head import Base3DDenseHead
 
 

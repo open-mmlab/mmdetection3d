@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models.backbones import SSDVGG, HRNet, ResNet, ResNetV1d, ResNeXt
+
 from .dgcnn import DGCNNBackbone
 from .dla import DLANet
 from .mink_resnet import MinkResNet

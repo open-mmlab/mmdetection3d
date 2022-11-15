@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmdet.models.detectors import BaseDetector
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.ops import bbox3d2result
 from mmdet3d.utils import ConfigType
-from mmdet.models.detectors import BaseDetector
 from ..builder import build_backbone, build_head, build_neck
 
 

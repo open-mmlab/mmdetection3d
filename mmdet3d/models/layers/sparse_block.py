@@ -2,10 +2,10 @@
 from typing import Tuple, Union
 
 from mmcv.cnn import build_conv_layer, build_norm_layer
+from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 from torch import nn
 
 from mmdet3d.utils import OptConfigType
-from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 from .spconv import IS_SPCONV2_AVAILABLE
 
 if IS_SPCONV2_AVAILABLE:
