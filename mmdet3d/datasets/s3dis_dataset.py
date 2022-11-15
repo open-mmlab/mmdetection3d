@@ -43,7 +43,7 @@ class S3DISDataset(Det3DDataset):
         test_mode (bool, optional): Whether the dataset is in test mode.
             Defaults to False.
     """
-    CLASSES = ('table', 'chair', 'sofa', 'bookcase', 'board')
+    classes = ('table', 'chair', 'sofa', 'bookcase', 'board')
 
     def __init__(self,
                  data_root,
@@ -146,7 +146,7 @@ class S3DISDataset(Det3DDataset):
                 use_dim=[0, 1, 2, 3, 4, 5]),
             dict(
                 type='DefaultFormatBundle3D',
-                class_names=self.CLASSES,
+                class_names=self.classes,
                 with_label=False),
             dict(type='Collect3D', keys=['points'])
         ]
@@ -187,10 +187,10 @@ class _S3DISSegDataset(Seg3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
          'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter'),
-        'PALETTE': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
+        'palette': [[0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 255, 0],
                     [255, 0, 255], [100, 100, 255], [200, 200, 100],
                     [170, 120, 200], [255, 0, 0], [200, 100, 100],
                     [10, 200, 100], [200, 200, 200], [50, 50, 50]],

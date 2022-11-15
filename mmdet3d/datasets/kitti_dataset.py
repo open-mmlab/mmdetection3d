@@ -44,7 +44,7 @@ class KittiDataset(Det3DDataset):
     """
     # TODO: use full classes of kitti
     METAINFO = {
-        'CLASSES': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+        'classes': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
                     'Person_sitting', 'Tram', 'Misc')
     }
 

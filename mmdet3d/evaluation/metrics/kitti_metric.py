@@ -167,7 +167,7 @@ class KittiMetric(BaseMetric):
             the metrics, and the values are corresponding results.
         """
         logger: MMLogger = MMLogger.get_current_instance()
-        self.classes = self.dataset_meta['CLASSES']
+        self.classes = self.dataset_meta['classes']
 
         # load annotations
         pkl_infos = load(self.ann_file, file_client_args=self.file_client_args)
