@@ -191,7 +191,7 @@ class Det3DDataset(BaseDataset):
         """Parse `self.merge_cfg`.
 
         Sometimes we want to merge certain classes into target class
-        to increate groundtruth number and improve training performance.
+        to increase ground truth number and improve training performance.
 
         Returns:
             dict: Processed `merge_mapping`
@@ -203,17 +203,17 @@ class Det3DDataset(BaseDataset):
         merge_mapping = dict()
         for merge_name, names in self.merge_cfg['class_merge'].items():
             merge_label = self.METAINFO['classes'].index(merge_name)
-            if isinstance(names, tuple):
+            if isinstance(names, (list, tuple)):
                 for name in names:
                     ori_label = self.METAINFO['classes'].index(name)
                     merge_mapping[ori_label] = merge_label
             elif isinstance(names, str):
-                ori_label = self.METAINFO['classes'].index(name)
+                ori_label = self.METAINFO['classes'].index(names)
                 merge_mapping[ori_label] = merge_label
             else:
                 raise TypeError(
-                    f'class names to be merged should be a tuple or str,'
-                    f'but got {type(names)}')
+                    f'class names to be merged should be a list, tuple'
+                    f'or str, but got {type(names)}')
 
         return merge_mapping
 
