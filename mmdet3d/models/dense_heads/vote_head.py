@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 from mmcv.ops import furthest_point_sample
+from mmdet.models.utils import multi_apply
 from mmengine import ConfigDict
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
@@ -14,7 +15,6 @@ from mmdet3d.models.layers import VoteModule, aligned_3d_nms, build_sa_module
 from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import Det3DDataSample
-from mmdet.models.utils import multi_apply
 from .base_conv_bbox_head import BaseConvBboxHead
 
 

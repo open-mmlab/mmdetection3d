@@ -3,11 +3,11 @@ from typing import Optional
 
 import torch
 from mmcv.ops import diff_iou_rotated_3d
+from mmdet.models.losses.utils import weighted_loss
 from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
-from mmdet.models.losses.utils import weighted_loss
 
 
 @weighted_loss

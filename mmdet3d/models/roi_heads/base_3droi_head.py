@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.models.roi_heads import BaseRoIHead
+
+from mmdet3d.registry import MODELS, TASK_UTILS
 
 
 class Base3DRoIHead(BaseRoIHead):
