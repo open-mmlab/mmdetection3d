@@ -36,6 +36,9 @@ class WaymoMetric(KittiMetric):
             names to disambiguate homonymous metrics of different evaluators.
             If prefix is not provided in the argument, self.default_prefix
             will be used instead. Defaults to None.
+        convert_kitti_format (bool, optional): Whether convert the reuslts to
+            kitti format. Now, in order to be compatible with camera-based
+            methods, defaults to True.
         pklfile_prefix (str, optional): The prefix of pkl files, including
             the file path and the prefix of filename, e.g., "a/b/prefix".
             If not specified, a temp file will be created. Default: None.
@@ -69,7 +72,7 @@ class WaymoMetric(KittiMetric):
                  split: str = 'training',
                  metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
-                 convert_kitti_format: bool = False,
+                 convert_kitti_format: bool = True,
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
                  submission_prefix: str = None,
@@ -200,11 +203,7 @@ class WaymoMetric(KittiMetric):
                 f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
             print(eval_str)
-            ret_bytes = subprocess.check_output(
-                'mmdet3d/evaluation/functional/waymo_utils/' +
-                f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
-                f'{self.waymo_bin_file}',
-                shell=True)
+            ret_bytes = subprocess.check_output(eval_str, shell=True)
             ret_texts = ret_bytes.decode('utf-8')
             print_log(ret_texts, logger=logger)
 
