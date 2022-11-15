@@ -62,6 +62,12 @@ class Det3DDataset(BaseDataset):
             used in Evaluator. Defaults to True.
         file_client_args (dict): Configuration of file client.
             Defaults to dict(backend='disk').
+        merge_cfg (dict, optional): Config for merge dataset classes.
+            Defaults to None.
+            A typical merge config should be like:
+                If we want to merge classes `Truck` and `Van` into
+                `Car`, it should be:
+                dict(class_merge=dict(Car=('Truck','Van')))
         show_ins_var (bool): For debug purpose. Whether to show variation
             of the number of instances before and after through pipeline.
             Defaults to False.
