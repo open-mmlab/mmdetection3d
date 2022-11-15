@@ -42,7 +42,7 @@ class LyftDataset(Det3DDataset):
     """
 
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
          'motorcycle', 'bicycle', 'pedestrian', 'animal')
     }

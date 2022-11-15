@@ -8,7 +8,7 @@ _base_ = [
 dataset_type = 'WaymoDataset'
 data_root = 'data/waymo/kitti_format/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 point_cloud_range = [-76.8, -51.2, -2, 76.8, 51.2, 4]
 input_modality = dict(use_lidar=True, use_camera=False)

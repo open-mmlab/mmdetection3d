@@ -46,7 +46,7 @@ class SUNRGBDDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+        'classes': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                     'dresser', 'night_stand', 'bookshelf', 'bathtub')
     }
 

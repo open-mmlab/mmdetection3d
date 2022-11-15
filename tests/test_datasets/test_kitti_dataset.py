@@ -54,7 +54,7 @@ def test_getitem():
             img='training/image_2',
         ),
         pipeline=pipeline,
-        metainfo=dict(CLASSES=classes),
+        metainfo=dict(classes=classes),
         modality=modality)
 
     kitti_dataset.prepare_data(0)
@@ -94,7 +94,7 @@ def test_getitem():
             img='training/image_2',
         ),
         pipeline=pipeline,
-        metainfo=dict(CLASSES=['Car']),
+        metainfo=dict(classes=['Car']),
         modality=modality)
 
     input_dict = car_kitti_dataset.get_data_info(0)
@@ -105,4 +105,4 @@ def test_getitem():
     assert ann_info['gt_labels_3d'].dtype == np.int64
     # all instance have been filtered by classes
     assert len(ann_info['gt_labels_3d']) == 0
-    assert len(car_kitti_dataset.metainfo['CLASSES']) == 1
+    assert len(car_kitti_dataset.metainfo['classes']) == 1

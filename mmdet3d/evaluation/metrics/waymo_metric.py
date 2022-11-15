@@ -100,7 +100,7 @@ class WaymoMetric(KittiMetric):
             the metrics, and the values are corresponding results.
         """
         logger: MMLogger = MMLogger.get_current_instance()
-        self.classes = self.dataset_meta['CLASSES']
+        self.classes = self.dataset_meta['classes']
 
         # load annotations
         self.data_infos = load(self.ann_file)['data_list']
@@ -379,7 +379,7 @@ class WaymoMetric(KittiMetric):
             torch.from_numpy(box_dict['box3d_lidar']).cuda())
         scores = torch.from_numpy(box_dict['scores']).cuda()
         labels = torch.from_numpy(box_dict['label_preds']).long().cuda()
-        nms_scores = scores.new_zeros(scores.shape[0], len(self.CLASSES) + 1)
+        nms_scores = scores.new_zeros(scores.shape[0], len(self.classes) + 1)
         indices = labels.new_tensor(list(range(scores.shape[0])))
         nms_scores[indices, labels] = scores
         lidar_boxes3d_for_nms = xywhr2xyxyr(lidar_boxes3d.bev)

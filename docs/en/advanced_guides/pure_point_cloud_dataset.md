@@ -143,7 +143,7 @@ from .custom_3d import Custom3DDataset
 
 @DATASETS.register_module()
 class MyDataset(Custom3DDataset):
-    CLASSES = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+    classes = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')

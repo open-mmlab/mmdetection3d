@@ -4,6 +4,7 @@ from typing import List, Optional, Sequence, Tuple
 import numpy as np
 import torch
 from mmcv.cnn import Scale
+from mmdet.models.utils import multi_apply, select_single_mlvl
 from mmengine.model import normal_init
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -14,7 +15,6 @@ from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import limit_period, points_img2cam, xywhr2xyxyr
 from mmdet3d.utils import (ConfigType, InstanceList, OptConfigType,
                            OptInstanceList)
-from mmdet.models.utils import multi_apply, select_single_mlvl
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 RangeType = Sequence[Tuple[int, int]]

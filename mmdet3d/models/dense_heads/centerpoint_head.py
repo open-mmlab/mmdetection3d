@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
@@ -12,7 +13,6 @@ from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
                                   gaussian_radius)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
-from mmdet.models.utils import multi_apply
 from .. import builder
 from ..layers import circle_nms, nms_bev
 
