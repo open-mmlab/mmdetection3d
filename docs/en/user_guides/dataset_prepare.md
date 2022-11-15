@@ -128,7 +128,7 @@ Note that:
       )
   ```
 
-  Experimently, this will reduce evalaution time by around 6 min. Now, this trick is only used in point cloud detection model.
+  Now, this trick is only used for LiDAR-based detection methods.
 
 ### NuScenes
 
