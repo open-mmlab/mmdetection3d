@@ -9,6 +9,7 @@ try:
     import MinkowskiEngine as ME
 except ImportError:
     # Please follow getting_started.md to install MinkowskiEngine.
+    ME = None
     pass
 
 from mmdet3d.registry import MODELS
@@ -56,9 +57,11 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
             test_cfg=test_cfg,
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
         self.voxel_size = bbox_head['voxel_size']
-        # # TODO: unify the keys
-        # self.head = self.bbox_head
 
     def extract_feat(
         self, batch_inputs_dict: Dict[str, Tensor]
