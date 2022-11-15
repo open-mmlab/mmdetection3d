@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
+
 import torch
 
 from mmdet3d.registry import TASK_UTILS
@@ -77,9 +78,9 @@ class IoUNegPiecewiseSampler(RandomSampler):
                     # the same number in the current piece.
                     piece_expected_num = min(
                         num_expected,
-                        math.ceil(
-                            num_expected *
-                            self.neg_piece_fractions[piece_inds]) + extend_num)
+                        math.ceil(num_expected *
+                                  self.neg_piece_fractions[piece_inds]) +
+                        extend_num)
                     min_iou_thr = self.neg_iou_thr[piece_inds + 1]
                 max_iou_thr = self.neg_iou_thr[piece_inds]
                 piece_neg_inds = torch.nonzero(
