@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Adapted from https://github.com/SamsungLabs/fcaf3d/blob/master/mmdet3d/models/detectors/single_stage_sparse.py # noqa
-from typing import Dict, Tuple, Union
+from typing import Dict, List, OrderedDict, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -38,6 +38,7 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
         init_cfg (dict or ConfigDict, optional): the config to control the
             initialization. Defaults to None.
     """
+    _version = 2
 
     def __init__(self,
                  backbone: ConfigType,
@@ -87,3 +88,47 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
         if self.with_neck:
             x = self.neck(x)
         return x
+
+    def _load_from_state_dict(self, state_dict: OrderedDict, prefix: str,
+                              local_metadata: Dict, strict: bool,
+                              missing_keys: List[str],
+                              unexpected_keys: List[str],
+                              error_msgs: List[str]) -> None:
+        """Load checkpoint.
+
+        Args:
+            state_dict (dict): a dict containing parameters and
+                persistent buffers.
+            prefix (str): the prefix for parameters and buffers used in this
+                module
+            local_metadata (dict): a dict containing the metadata for this
+                module.
+            strict (bool): whether to strictly enforce that the keys in
+                :attr:`state_dict` with :attr:`prefix` match the names of
+                parameters and buffers in this module
+            missing_keys (list of str): if ``strict=True``, add missing keys to
+                this list
+            unexpected_keys (list of str): if ``strict=True``, add unexpected
+                keys to this list
+            error_msgs (list of str): error messages should be added to this
+                list, and will be reported together in
+                :meth:`~torch.nn.Module.load_state_dict`
+        """
+        # The names of some parameters in FCAF3D has been changed
+        # since 2022.10.
+        version = local_metadata.get('version', None)
+        if (version is None or
+                version < 2) and self.__class__ is MinkSingleStage3DDetector:
+            convert_dict = {'head.': 'bbox_head.'}
+            state_dict_keys = list(state_dict.keys())
+            for k in state_dict_keys:
+                for ori_key, convert_key in convert_dict.items():
+                    if ori_key in k:
+                        convert_key = k.replace(ori_key, convert_key)
+                        state_dict[convert_key] = state_dict[k]
+                        del state_dict[k]
+
+        super(MinkSingleStage3DDetector,
+              self)._load_from_state_dict(state_dict, prefix, local_metadata,
+                                          strict, missing_keys,
+                                          unexpected_keys, error_msgs)

@@ -6,7 +6,7 @@ class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
 # Input modality for nuScenes dataset, this is consistent with the submission

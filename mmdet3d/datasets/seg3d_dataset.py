@@ -31,7 +31,7 @@ class Seg3DDataset(BaseDataset):
                 - use_lidar: bool
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES) to
+            unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
         scene_idxs (np.ndarray | str, optional): Precomputed index to load
@@ -50,8 +50,8 @@ class Seg3DDataset(BaseDataset):
             Defaults to dict(backend='disk').
     """
     METAINFO = {
-        'CLASSES': None,  # names of all classes data used for the task
-        'PALETTE': None,  # official color for visualization
+        'classes': None,  # names of all classes data used for the task
+        'palette': None,  # official color for visualization
         'seg_valid_class_ids': None,  # class_ids used for training
         'seg_all_class_ids': None,  # all possible class_ids in loaded seg mask
     }
@@ -81,11 +81,11 @@ class Seg3DDataset(BaseDataset):
 
         # TODO: We maintain the ignore_index attributes,
         # but we may consider to remove it in the future.
-        self.ignore_index = len(self.METAINFO['CLASSES']) if \
+        self.ignore_index = len(self.METAINFO['classes']) if \
             ignore_index is None else ignore_index
 
         # Get label mapping for custom classes
-        new_classes = metainfo.get('CLASSES', None)
+        new_classes = metainfo.get('classes', None)
 
         self.label_mapping, self.label2cat, seg_valid_class_ids = \
             self.get_label_mapping(new_classes)
@@ -98,10 +98,10 @@ class Seg3DDataset(BaseDataset):
         # generate palette if it is not defined based on
         # label mapping, otherwise directly use palette
         # defined in dataset config.
-        palette = metainfo.get('PALETTE', None)
+        palette = metainfo.get('palette', None)
         updated_palette = self._update_palette(new_classes, palette)
 
-        metainfo['PALETTE'] = updated_palette
+        metainfo['palette'] = updated_palette
 
         # construct seg_label_mapping for semantic mask
         seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
@@ -150,13 +150,13 @@ class Seg3DDataset(BaseDataset):
             tuple: The mapping from old classes in cls.METAINFO to
             new classes in metainfo
         """
-        old_classes = self.METAINFO.get('CLASSES', None)
+        old_classes = self.METAINFO.get('classes', None)
         if (new_classes is not None and old_classes is not None
                 and list(new_classes) != list(old_classes)):
             if not set(new_classes).issubset(old_classes):
                 raise ValueError(
                     f'new classes {new_classes} is not a '
-                    f'subset of CLASSES {old_classes} in METAINFO.')
+                    f'subset of classes {old_classes} in METAINFO.')
 
             # obtain true id from valid_class_ids
             valid_class_ids = [
@@ -184,7 +184,7 @@ class Seg3DDataset(BaseDataset):
             # map label to category name
             label2cat = {
                 i: cat_name
-                for i, cat_name in enumerate(self.METAINFO['CLASSES'])
+                for i, cat_name in enumerate(self.METAINFO['classes'])
             }
             valid_class_ids = self.METAINFO['seg_valid_class_ids']
 
@@ -203,10 +203,10 @@ class Seg3DDataset(BaseDataset):
         """
         if palette is None:
             # If palette is not defined, it generate a palette according
-            # to the original PALETTE and classes.
-            old_classes = self.METAINFO.get('CLASSES', None)
+            # to the original palette and classes.
+            old_classes = self.METAINFO.get('classes', None)
             palette = [
-                self.METAINFO['PALETTE'][old_classes.index(cls_name)]
+                self.METAINFO['palette'][old_classes.index(cls_name)]
                 for cls_name in new_classes
             ]
             return palette
@@ -215,8 +215,8 @@ class Seg3DDataset(BaseDataset):
         if len(palette) == len(new_classes):
             return palette
         else:
-            raise ValueError('Once PLATTE in set in metainfo, it should'
-                             'match CLASSES in metainfo')
+            raise ValueError('Once palette in set in metainfo, it should'
+                             'match classes in metainfo')
 
     def parse_data_info(self, info: dict) -> dict:
         """Process the raw data info.
