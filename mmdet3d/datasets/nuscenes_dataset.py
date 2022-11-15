@@ -88,26 +88,44 @@ class NuScenesDataset(Det3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def _filter_with_mask(self, ann_info: dict) -> dict:
-        """Remove annotations that do not need to be cared.
-
-        Args:
-            ann_info (dict): Dict of annotation infos.
+    def filter_data(self) -> List[dict]:
+        """Filter annotations according to filter_cfg.
 
         Returns:
-            dict: Annotations after filtering.
+            List[dict]: Filtered results.
         """
-        filtered_annotations = {}
-        if self.use_valid_flag:
-            filter_mask = ann_info['bbox_3d_isvalid']
-        else:
-            filter_mask = ann_info['num_lidar_pts'] > 0
-        for key in ann_info.keys():
-            if key != 'instances':
-                filtered_annotations[key] = (ann_info[key][filter_mask])
-            else:
-                filtered_annotations[key] = ann_info[key]
-        return filtered_annotations
+        if self.test_mode:
+            return self.data_list
+
+        if self.filter_cfg is None:
+            return self.data_list
+
+        filter_empty_gt = self.filter_cfg.get('filter_empty_gt', False)
+        filter_class = self.filter_cfg.get('filter_class', False)
+
+        valid_data_infos = []
+        for data_info in self.data_list:
+            ann_info = data_info['ann_info']
+            valid_mask = np.full_like(
+                ann_info['gt_labels_3d'], True, dtype=bool)
+            if filter_class:
+                valid_mask &= ann_info['gt_labels_3d'] > -1
+
+            if self.filter_cfg.get('filter_with_mask', False):
+                if self.filter_cfg.get('use_valid_flage', False):
+                    valid_mask &= ann_info['bbox_3d_isvalid']
+                else:
+                    valid_mask &= ann_info['num_lidar_pts'] > 0
+
+            for key in ann_info.keys():
+                if key != 'instances':
+                    ann_info[key] = (ann_info[key][valid_mask])
+
+            if filter_empty_gt and len(ann_info['gt_labels_3d']) == 0:
+                continue
+            valid_data_infos.append(data_info)
+
+        return valid_data_infos
 
     def parse_ann_info(self, info: dict) -> dict:
         """Process the `instances` in data info to `ann_info`.
@@ -124,9 +142,6 @@ class NuScenesDataset(Det3DDataset):
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is not None:
-
-            ann_info = self._filter_with_mask(ann_info)
-
             if self.with_velocity:
                 gt_bboxes_3d = ann_info['gt_bboxes_3d']
                 gt_velocities = ann_info['velocities']
@@ -143,13 +158,6 @@ class NuScenesDataset(Det3DDataset):
             else:
                 ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
-
-            if self.task == 'mono3d':
-                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
-                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
-                ann_info['attr_labels'] = np.array(0, dtype=np.int64)
-                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
-                ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)

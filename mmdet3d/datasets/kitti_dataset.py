@@ -120,6 +120,39 @@ class KittiDataset(Det3DDataset):
 
         return info
 
+    def filter_data(self) -> List[dict]:
+        """Filter annotations according to filter_cfg.
+
+        Returns:
+            List[dict]: Filtered results.
+        """
+        if self.test_mode:
+            return self.data_list
+
+        if self.filter_cfg is None:
+            return self.data_list
+
+        filter_empty_gt = self.filter_cfg.get('filter_empty_gt', False)
+        filter_class = self.filter_cfg.get('filter_class', False)
+
+        valid_data_infos = []
+        for data_info in self.data_list:
+            ann_info = data_info['ann_info']
+            valid_mask = np.full_like(
+                ann_info['gt_labels_3d'], True, dtype=bool)
+            if filter_class:
+                valid_mask = ann_info['gt_labels_3d'] > -1
+
+            for key in ann_info.keys():
+                if key != 'instances':
+                    ann_info[key] = (ann_info[key][valid_mask])
+
+            if filter_empty_gt and len(ann_info['gt_labels_3d']) == 0:
+                continue
+            valid_data_infos.append(data_info)
+
+        return valid_data_infos
+
     def parse_ann_info(self, info: dict) -> dict:
         """Process the `instances` in data info to `ann_info`.
 
@@ -144,13 +177,6 @@ class KittiDataset(Det3DDataset):
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.task == 'mono_det':
-                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
-                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
-                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
-                ann_info['depths'] = np.zeros((0), dtype=np.float32)
-
-        ann_info = self._remove_dontcare(ann_info)
         # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
         lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
         # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`

@@ -80,12 +80,14 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
+                 merge_cfg: Optional[dict] = None,
                  show_ins_var: bool = False,
                  **kwargs) -> None:
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
         self.filter_empty_gt = filter_empty_gt
         self.load_eval_anns = load_eval_anns
+        self.merge_cfg = merge_cfg
         _default_modality_keys = ('use_lidar', 'use_camera')
         if modality is None:
             modality = dict()
@@ -127,6 +129,9 @@ class Det3DDataset(BaseDataset):
                 for name in self.METAINFO['classes']
             }
 
+        if self.merge_cfg is not None:
+            self.merge_mapping = self.parse_merge_cfg()
+
         super().__init__(
             ann_file=ann_file,
             metainfo=metainfo,
@@ -155,27 +160,6 @@ class Det3DDataset(BaseDataset):
             f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
             'current')
 
-    def _remove_dontcare(self, ann_info: dict) -> dict:
-        """Remove annotations that do not need to be cared.
-
-        -1 indicate dontcare in MMDet3d.
-
-        Args:
-            ann_info (dict): Dict of annotation infos. The
-                instance with label `-1` will be removed.
-
-        Returns:
-            dict: Annotations after filtering.
-        """
-        img_filtered_annotations = {}
-        filter_mask = ann_info['gt_labels_3d'] > -1
-        for key in ann_info.keys():
-            if key != 'instances':
-                img_filtered_annotations[key] = (ann_info[key][filter_mask])
-            else:
-                img_filtered_annotations[key] = ann_info[key]
-        return img_filtered_annotations
-
     def get_ann_info(self, index: int) -> dict:
         """Get annotation info according to the given index.
 
@@ -196,6 +180,36 @@ class Det3DDataset(BaseDataset):
             ann_info = data_info['ann_info']
 
         return ann_info
+
+    def parse_merge_cfg(self) -> dict:
+        """Parse `self.merge_cfg`.
+
+        Sometimes we want to merge certain classes into target class
+        to increate groundtruth number and improve training performance.
+
+        Returns:
+            dict: Processed `merge_mapping`
+        """
+
+        if not isinstance(self.merge_cfg, dict):
+            raise TypeError(
+                f'merge_cfg should be a dict, but got {type(self.merge_cfg)}')
+        merge_mapping = dict()
+        for merge_name, names in self.merge_cfg['class_merge'].items():
+            merge_label = self.METAINFO['classes'].index(merge_name)
+            if isinstance(names, tuple):
+                for name in names:
+                    ori_label = self.METAINFO['classes'].index(name)
+                    merge_mapping[ori_label] = merge_label
+            elif isinstance(names, str):
+                ori_label = self.METAINFO['classes'].index(name)
+                merge_mapping[ori_label] = merge_label
+            else:
+                raise TypeError(
+                    f'class names to be merged should be a tuple or str,'
+                    f'but got {type(names)}')
+
+        return merge_mapping
 
     def parse_ann_info(self, info: dict) -> Optional[dict]:
         """Process the `instances` in data info to `ann_info`.
@@ -236,6 +250,22 @@ class Det3DDataset(BaseDataset):
                 temp_anns = [item[ann_name] for item in instances]
                 # map the original dataset label to training label
                 if 'label' in ann_name and ann_name != 'attr_label':
+                    # if the merge_cfg is not None, we need to merge
+                    # specified dataset labels to the target dataset
+                    # label before mapping the original dataset label
+                    # to training label
+                    if self.merge_cfg is not None:
+                        merge_mask = [
+                            item in self.merge_mapping for item in temp_anns
+                        ]
+                        ann_info['merge_mask'] = np.array(merge_mask)
+
+                        temp_anns = [
+                            self.merge_mapping[item]
+                            if item in self.merge_mapping else item
+                            for item in temp_anns
+                        ]
+
                     temp_anns = [
                         self.label_mapping[item] for item in temp_anns
                     ]
