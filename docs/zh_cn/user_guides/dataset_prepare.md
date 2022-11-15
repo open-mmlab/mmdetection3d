@@ -120,7 +120,7 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
       idx2metainfo='data/waymo/waymo_format/idx2metainfo.pkl'
       )
   ```
-  实验表明，这种方式会将评估时间缩短 6 分钟左右。目前这种方式仅限于纯点云任务。
+  目前这种方式仅限于纯点云任务。
 
 ### NuScenes
 
