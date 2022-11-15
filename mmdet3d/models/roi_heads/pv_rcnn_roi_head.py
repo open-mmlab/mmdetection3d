@@ -14,7 +14,7 @@ from mmdet.models.task_modules.samplers import SamplingResult
 
 
 @MODELS.register_module()
-class PVRCNNROIHead(Base3DRoIHead):
+class PVRCNNRoiHead(Base3DRoIHead):
     """RoI head for PV-RCNN.
 
     Args:
@@ -40,7 +40,7 @@ class PVRCNNROIHead(Base3DRoIHead):
                  train_cfg: Optional[dict] = None,
                  test_cfg: Optional[dict] = None,
                  init_cfg: Optional[dict] = None):
-        super(PVRCNNROIHead, self).__init__(
+        super(PVRCNNRoiHead, self).__init__(
             bbox_head=bbox_head,
             bbox_roi_extractor=bbox_roi_extractor,
             train_cfg=train_cfg,

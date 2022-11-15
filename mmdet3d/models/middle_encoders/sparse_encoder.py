@@ -41,7 +41,7 @@ class SparseEncoder(nn.Module):
             Defaults to ((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1, 1)).
         block_type (str, optional): Type of the block to use.
             Defaults to 'conv_module'.
-        return_middle_feats (bool, optional): Whether output middle features.
+        return_middle_feats (bool): Whether output middle features.
             Default to False.
     """
 
@@ -121,7 +121,14 @@ class SparseEncoder(nn.Module):
             batch_size (int): Batch size.
 
         Returns:
-            dict: Backbone features.
+            torch.Tensor | tuple[torch.Tensor, list]: Return spatial features
+                include:
+
+            - spatial_features (torch.Tensor): Spatial features are out from
+                the last layer.
+            - encode_features (List[SparseConvTensor], optional): Middle layer
+                output features. When self.return_middle_feats is True, the
+                module returns middle features.
         """
         coors = coors.int()
         input_sp_tensor = SparseConvTensor(voxel_features, coors,

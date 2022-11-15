@@ -52,11 +52,10 @@ class StackQueryAndGroup(BaseModule):
                 (N1 + N2 ..., C). C is features channel number. Default: None.
         """
         assert xyz.shape[0] == xyz_batch_cnt.sum(
-        ), 'xyz: %s, xyz_batch_cnt: %s' % (str(
-            xyz.shape), str(new_xyz_batch_cnt))
+        ), f'xyz: {str(xyz.shape)}, xyz_batch_cnt: str(new_xyz_batch_cnt)'
         assert new_xyz.shape[0] == new_xyz_batch_cnt.sum(), \
-            'new_xyz: %s, new_xyz_batch_cnt: %s' % (
-                str(new_xyz.shape), str(new_xyz_batch_cnt))
+            'new_xyz: str(new_xyz.shape), new_xyz_batch_cnt: ' \
+            'str(new_xyz_batch_cnt)'
 
         # idx: (M1 + M2 ..., nsample), empty_ball_mask: (M1 + M2 ...)
         idx, empty_ball_mask = ball_query(0, self.radius, self.sample_nums,
@@ -98,7 +97,7 @@ class StackedSAModuleMSG(BaseModule):
             pointnet before the global pooling for each scale to encode
             point features.
         use_xyz (bool): Whether to use xyz. Default: True.
-        pool_mod (str, optional): Type of pooling method.
+        pool_mod (str): Type of pooling method.
             Default: 'max_pool'.
         norm_cfg (dict): Type of normalization method. Defaults to
             dict(type='BN2d', eps=1e-5, momentum=0.01).

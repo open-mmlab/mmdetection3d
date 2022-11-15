@@ -167,7 +167,7 @@ model = dict(
             type='mmdet.CrossEntropyLoss', use_sigmoid=False,
             loss_weight=0.2)),
     roi_head=dict(
-        type='PVRCNNROIHead',
+        type='PVRCNNRoiHead',
         num_classes=3,
         semantic_head=dict(
             type='ForegroundSegmentationHead',
