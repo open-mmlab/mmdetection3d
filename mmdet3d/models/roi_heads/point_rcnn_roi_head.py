@@ -2,13 +2,13 @@
 from typing import Dict, Optional
 
 import torch
+from mmdet.models.task_modules import AssignResult
 from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import bbox3d2roi
 from mmdet3d.utils.typing import InstanceList, SampleList
-from mmdet.models.task_modules import AssignResult
 from .base_3droi_head import Base3DRoIHead
 
 

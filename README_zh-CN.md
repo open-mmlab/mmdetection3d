@@ -165,6 +165,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
             <li><a href="configs/votenet">VoteNet (ICCV'2019)</a></li>
             <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
             <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
+            <li><a href="configs/fcaf3d">FCAF3D (ECCV'2022)</a></li>
       </ul>
       </td>
       <td>
@@ -202,29 +203,30 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
   </tbody>
 </table>
 
-|               | ResNet | ResNeXt | SENet | PointNet++ | DGCNN | HRNet | RegNetX | Res2Net | DLA |
-| ------------- | :----: | :-----: | :---: | :--------: | :---: | :---: | :-----: | :-----: | :-: |
-| SECOND        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| PointPillars  |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| FreeAnchor    |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| VoteNet       |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| H3DNet        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| 3DSSD         |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| Part-A2       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| MVXNet        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| CenterPoint   |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| SSN           |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| ImVoteNet     |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| FCOS3D        |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| PointNet++    |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| Group-Free-3D |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| ImVoxelNet    |   ✓    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| PAConv        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| DGCNN         |   ✗    |    ✗    |   ✗   |     ✗      |   ✓   |   ✗   |    ✗    |    ✗    |  ✗  |
-| SMOKE         |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
-| PGD           |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
-| SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
+|               | ResNet | ResNeXt | SENet | PointNet++ | DGCNN | HRNet | RegNetX | Res2Net | DLA | MinkResNet |
+| ------------- | :----: | :-----: | :---: | :--------: | :---: | :---: | :-----: | :-----: | :-: | :--------: |
+| SECOND        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| PointPillars  |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| FreeAnchor    |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| VoteNet       |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| H3DNet        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| 3DSSD         |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| Part-A2       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| MVXNet        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| CenterPoint   |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| SSN           |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| ImVoteNet     |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| FCOS3D        |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| PointNet++    |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| Group-Free-3D |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| ImVoxelNet    |   ✓    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| PAConv        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| DGCNN         |   ✗    |    ✗    |   ✗   |     ✗      |   ✓   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| SMOKE         |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
+| PGD           |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
+| SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| FCAF3D        |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✓      |
 
 **注意：**[MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/zh_cn/model_zoo.md) 支持的基于 2D 检测的 **300+ 个模型，40+ 的论文算法**在 MMDetection3D 中都可以被训练或使用。
 

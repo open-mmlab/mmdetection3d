@@ -165,6 +165,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/votenet">VoteNet (ICCV'2019)</a></li>
             <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
             <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
+            <li><a href="configs/fcaf3d">FCAF3D (ECCV'2022)</a></li>
       </ul>
       </td>
       <td>
@@ -202,29 +203,30 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
   </tbody>
 </table>
 
-|               | ResNet | ResNeXt | SENet | PointNet++ | DGCNN | HRNet | RegNetX | Res2Net | DLA |
-| ------------- | :----: | :-----: | :---: | :--------: | :---: | :---: | :-----: | :-----: | :-: |
-| SECOND        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| PointPillars  |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| FreeAnchor    |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| VoteNet       |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| H3DNet        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| 3DSSD         |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| Part-A2       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| MVXNet        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| CenterPoint   |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| SSN           |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| ImVoteNet     |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| FCOS3D        |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| PointNet++    |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| Group-Free-3D |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| ImVoxelNet    |   ✓    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| PAConv        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| DGCNN         |   ✗    |    ✗    |   ✗   |     ✗      |   ✓   |   ✗   |    ✗    |    ✗    |  ✗  |
-| SMOKE         |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
-| PGD           |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
-| SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
+|               | ResNet | ResNeXt | SENet | PointNet++ | DGCNN | HRNet | RegNetX | Res2Net | DLA | MinkResNet |
+| ------------- | :----: | :-----: | :---: | :--------: | :---: | :---: | :-----: | :-----: | :-: | :--------: |
+| SECOND        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| PointPillars  |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| FreeAnchor    |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| VoteNet       |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| H3DNet        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| 3DSSD         |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| Part-A2       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| MVXNet        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| CenterPoint   |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| SSN           |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| ImVoteNet     |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| FCOS3D        |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| PointNet++    |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| Group-Free-3D |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| ImVoxelNet    |   ✓    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| PAConv        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| DGCNN         |   ✗    |    ✗    |   ✗   |     ✗      |   ✓   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| SMOKE         |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
+| PGD           |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
+| SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| FCAF3D        |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✓      |
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 

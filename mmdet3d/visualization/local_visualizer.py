@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+from mmdet.visualization import DetLocalVisualizer
 from mmengine.dist import master_only
 from mmengine.structures import InstanceData
 from mmengine.visualization.utils import check_type, tensor2ndarray
@@ -19,7 +20,6 @@ from mmdet3d.structures import (BaseInstance3DBoxes, CameraInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
                                 PointData, points_cam2img)
 from mmdet3d.structures.bbox_3d.box_3d_mode import Box3DMode
-from mmdet.visualization import DetLocalVisualizer
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode)
 
@@ -708,9 +708,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
         """
-        classes = self.dataset_meta.get('classes', None)
-        # For object detection datasets, no palette is saved
-        palette = self.dataset_meta.get('palette', None)
+        classes = self.dataset_meta.get('CLASSES', None)
+        # For object detection datasets, no PALETTE is saved
+        palette = self.dataset_meta.get('PALETTE', None)
         ignore_index = self.dataset_meta.get('ignore_index', None)
 
         gt_data_3d = None

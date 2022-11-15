@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models.task_modules import AssignResult, BaseAssigner
+
 from .anchor import (ANCHOR_GENERATORS, PRIOR_GENERATORS,
                      AlignedAnchor3DRangeGenerator,
                      AlignedAnchor3DRangeGeneratorPerCls,

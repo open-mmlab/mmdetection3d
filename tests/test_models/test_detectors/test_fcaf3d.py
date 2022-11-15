@@ -21,7 +21,7 @@ class TestFCAF3d(unittest.TestCase):
         DefaultScope.get_instance('test_fcaf3d', scope_name='mmdet3d')
         _setup_seed(0)
         fcaf3d_net_cfg = _get_detector_cfg(
-            'fcaf3d/fcaf3d_8xb2_scannet-3d-18class.py')
+            'fcaf3d/fcaf3d_2xb8_scannet-3d-18class.py')
         model = MODELS.build(fcaf3d_net_cfg)
         num_gt_instance = 3
         packed_inputs = _create_detector_inputs(

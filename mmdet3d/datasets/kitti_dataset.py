@@ -113,7 +113,7 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
-        if self.task == 'mono_det':
+        if self.task == 'mono_det' and self.load_eval_anns:
             info['instances'] = info['cam_instances'][self.default_cam_key]
 
         info = super().parse_data_info(info)
