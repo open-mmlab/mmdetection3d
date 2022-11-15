@@ -6,13 +6,13 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from mmcv.ops import Voxelization
+from mmdet.models import DetDataPreprocessor
 from mmengine.model import stack_batch
 from mmengine.utils import is_list_of
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import OptConfigType
-from mmdet.models import DetDataPreprocessor
 from .utils import multiview_img_stack_batch
 
 

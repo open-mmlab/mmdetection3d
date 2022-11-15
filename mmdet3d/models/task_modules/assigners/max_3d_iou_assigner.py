@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Optional, Union
 
+from mmdet.models.task_modules import AssignResult, MaxIoUAssigner
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import TASK_UTILS
-from mmdet.models.task_modules import AssignResult, MaxIoUAssigner
 
 
 @TASK_UTILS.register_module()
