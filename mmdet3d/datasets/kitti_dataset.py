@@ -69,8 +69,13 @@ class KittiDataset(Det3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
             **kwargs)
+
         assert self.modality is not None
         assert box_type_3d.lower() in ('lidar', 'camera')
+        # the original label of `DontCare` in kitti is -1 in info file,
+        # to distinguish it with other not required classes, we map it
+        # from -1 to -2
+        self.label_mapping[-1] = -2
 
     def parse_data_info(self, info: dict) -> dict:
         """Process the raw data info.
@@ -128,15 +133,19 @@ class KittiDataset(Det3DDataset):
             return self.data_list
 
         filter_empty_gt = self.filter_cfg.get('filter_empty_gt', False)
-        filter_class = self.filter_cfg.get('filter_class', False)
 
         valid_data_infos = []
         for data_info in self.data_list:
             ann_info = data_info['ann_info']
-            valid_mask = np.full_like(
-                ann_info['gt_labels_3d'], True, dtype=bool)
-            if filter_class:
-                valid_mask = ann_info['gt_labels_3d'] > -1
+            valid_mask = np.ones(ann_info['gt_labels_3d'].shape, dtype=np.bool)
+
+            # Whether to filter `DontCare` objects, which is set to be True
+            if self.filter_cfg.get('filter_dontcare', True):
+                valid_mask &= ann_info['gt_labels_3d'] > -2
+
+            # Whether to filter object classes not required (not in metainfo)
+            if self.filter_cfg.get('filter_class', False):
+                valid_mask &= ann_info['gt_labels_3d'] > -1
 
             for key in ann_info.keys():
                 if key != 'instances':

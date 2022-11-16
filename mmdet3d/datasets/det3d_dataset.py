@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from os import path as osp
-from typing import Callable, List, Optional, Set, Union
+from typing import Callable, Dict, List, Optional, Sequence, Set, Union
 
 import mmengine
 import numpy as np
@@ -110,30 +110,9 @@ class Det3DDataset(BaseDataset):
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
-        if metainfo is not None and 'classes' in metainfo:
-            # we allow to train on subset of self.METAINFO['classes']
-            # map unselected labels to -1
-            self.label_mapping = {
-                i: -1
-                for i in range(len(self.METAINFO['classes']))
-            }
-            self.label_mapping[-1] = -1
-            for label_idx, name in enumerate(metainfo['classes']):
-                ori_label = self.METAINFO['classes'].index(name)
-                self.label_mapping[ori_label] = label_idx
-
-            self.num_ins_per_cat = {name: 0 for name in metainfo['classes']}
-        else:
-            self.label_mapping = {
-                i: i
-                for i in range(len(self.METAINFO['classes']))
-            }
-            self.label_mapping[-1] = -1
-
-            self.num_ins_per_cat = {
-                name: 0
-                for name in self.METAINFO['classes']
-            }
+        new_classes = metainfo.get('classes', None)
+        self.label_mapping, self.num_ins_per_cat = self.get_label_mapping(
+            new_classes)
 
         if self.merge_cfg is not None:
             self.merge_mapping = self.parse_merge_cfg()
@@ -165,6 +144,45 @@ class Det3DDataset(BaseDataset):
         print_log(
             f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
             'current')
+
+    def get_label_mapping(self,
+                          new_classes: Optional[Sequence] = None
+                          ) -> Union[Dict, None]:
+        """Get label mapping.
+
+        The ``label_mapping`` is a dictionary, its keys are the old label
+        ids and its values are the new label ids.
+
+        Args:
+            new_classes (list, tuple, optional): The new classes name from
+                metainfo. Default to None.
+
+        Returns:
+            tuple: The mapping from old classes in cls.METAINFO to
+            new classes in metainfo
+        """
+        # we allow to train on subset of self.METAINFO['classes']
+        # map unselected labels to -1
+        old_classes = self.METAINFO.get('classes', None)
+        if (new_classes is not None and old_classes is not None
+                and list(new_classes) != list(old_classes)):
+            if not set(new_classes).issubset(old_classes):
+                raise ValueError(
+                    f'new classes {new_classes} is not a '
+                    f'subset of classes {old_classes} in METAINFO.')
+
+            label_mapping = {i: -1 for i in range(len(old_classes))}
+
+            for label_idx, name in enumerate(new_classes):
+                ori_label = self.METAINFO['classes'].index(name)
+                label_mapping[ori_label] = label_idx
+
+            num_ins_per_cat = {name: 0 for name in new_classes}
+        else:
+            label_mapping = {i: i for i in range(len(old_classes))}
+            num_ins_per_cat = {name: 0 for name in old_classes}
+
+        return label_mapping, num_ins_per_cat
 
     def get_ann_info(self, index: int) -> dict:
         """Get annotation info according to the given index.
