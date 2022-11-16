@@ -144,6 +144,9 @@ class KittiDataset(Det3DDataset):
                 valid_mask &= ann_info['gt_labels_3d'] > -2
 
             # Whether to filter object classes not required (not in metainfo)
+            # 'filter_class' should be False if ground truth database
+            # sampling is used in data augmentation, since objects with
+            # labels -1 are kept to for collision detection
             if self.filter_cfg.get('filter_class', False):
                 valid_mask &= ann_info['gt_labels_3d'] > -1
 
