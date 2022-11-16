@@ -135,7 +135,8 @@ val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format')
+    data_root='./data/waymo/waymo_format',
+    convert_kitti_format=False)
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
