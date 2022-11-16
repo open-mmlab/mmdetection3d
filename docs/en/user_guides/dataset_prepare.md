@@ -110,7 +110,25 @@ Download Waymo open dataset V1.2 [HERE](https://waymo.com/open/download/) and it
 python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
 ```
 
-Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
+Note that:
+
+- If your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
+
+- If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/`. Then, the dataset config is modified like the following:
+
+  ```python
+  val_evaluator = dict(
+      type='WaymoMetric',
+      ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
+      waymo_bin_file='./data/waymo/waymo_format/gt.bin',
+      data_root='./data/waymo/waymo_format',
+      file_client_args=file_client_args,
+      convert_kitti_format=True,
+      idx2metainfo='data/waymo/waymo_format/idx2metainfo.pkl'
+      )
+  ```
+
+  Now, this trick is only used for LiDAR-based detection methods.
 
 ### NuScenes
 

@@ -5,29 +5,33 @@ r"""Adapted from `Waymo to KITTI converter
 
 try:
     from waymo_open_dataset import dataset_pb2 as open_dataset
+    from waymo_open_dataset import label_pb2
+    from waymo_open_dataset.protos import metrics_pb2
+    from waymo_open_dataset.protos.metrics_pb2 import Objects
 except ImportError:
+    Objects = None
     raise ImportError(
         'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
         'to install the official devkit first.')
 
 from glob import glob
 from os.path import join
+from typing import List, Optional
 
 import mmengine
 import numpy as np
 import tensorflow as tf
-from waymo_open_dataset import label_pb2
-from waymo_open_dataset.protos import metrics_pb2
 
 
-class KITTI2Waymo(object):
-    """KITTI predictions to Waymo converter.
+class Prediction2Waymo(object):
+    """Predictions to Waymo converter. The format of prediction results could
+    be original format or kitti-format.
 
     This class serves as the converter to change predictions from KITTI to
     Waymo format.
 
     Args:
-        kitti_result_files (list[dict]): Predictions in KITTI format.
+        results (list[dict]): Prediction results.
         waymo_tfrecords_dir (str): Directory to load waymo raw data.
         waymo_results_save_dir (str): Directory to save converted predictions
             in waymo format (.bin files).
@@ -35,33 +39,47 @@ class KITTI2Waymo(object):
             predictions in waymo format (.bin file), like 'a/b/c.bin'.
         prefix (str): Prefix of filename. In general, 0 for training, 1 for
             validation and 2 for testing.
-        workers (str): Number of parallel processes.
+        classes (dict): A list of class name.
+        workers (str): Number of parallel processes. Defaults to 2.
+        file_client_args (str): File client for reading gt in waymo format.
+            Defaults to ``dict(backend='disk')``.
+        from_kitti_format (bool, optional): Whether the reuslts are kitti
+            format. Defaults to False.
+        idx2metainfo (Optional[dict], optional): The mapping from sample_idx to
+            metainfo. The metainfo must contain the keys: 'idx2contextname' and
+            'idx2timestamp'. Defaults to None.
     """
 
     def __init__(self,
-                 kitti_result_files,
-                 waymo_tfrecords_dir,
-                 waymo_results_save_dir,
-                 waymo_results_final_path,
-                 prefix,
-                 workers=64,
-                 file_client_args=dict(backend='disk')):
+                 results: List[dict],
+                 waymo_tfrecords_dir: str,
+                 waymo_results_save_dir: str,
+                 waymo_results_final_path: str,
+                 prefix: str,
+                 classes: dict,
+                 workers: int = 2,
+                 file_client_args: dict = dict(backend='disk'),
+                 from_kitti_format: bool = False,
+                 idx2metainfo: Optional[dict] = None):
 
-        self.kitti_result_files = kitti_result_files
+        self.results = results
         self.waymo_tfrecords_dir = waymo_tfrecords_dir
         self.waymo_results_save_dir = waymo_results_save_dir
         self.waymo_results_final_path = waymo_results_final_path
         self.prefix = prefix
+        self.classes = classes
         self.workers = int(workers)
         self.file_client_args = file_client_args
-        self.name2idx = {}
-        for idx, result in enumerate(kitti_result_files):
-            if len(result['sample_id']) > 0:
-                self.name2idx[str(result['sample_id'][0])] = idx
+        self.from_kitti_format = from_kitti_format
+        if idx2metainfo is not None:
+            self.idx2metainfo = idx2metainfo
+            # If ``fast_eval``, the metainfo does not need to be read from
+            # original data online. It's preprocessed offline.
+            self.fast_eval = True
+        else:
+            self.fast_eval = False
 
-        # turn on eager execution for older tensorflow versions
-        if int(tf.__version__.split('.')[0]) < 2:
-            tf.enable_eager_execution()
+        self.name2idx = {}
 
         self.k2w_cls_map = {
             'Car': label_pb2.Label.TYPE_VEHICLE,
@@ -70,12 +88,28 @@ class KITTI2Waymo(object):
             'Cyclist': label_pb2.Label.TYPE_CYCLIST,
         }
 
-        self.T_ref_to_front_cam = np.array([[0.0, 0.0, 1.0, 0.0],
-                                            [-1.0, 0.0, 0.0, 0.0],
-                                            [0.0, -1.0, 0.0, 0.0],
-                                            [0.0, 0.0, 0.0, 1.0]])
+        if self.from_kitti_format:
+            self.T_ref_to_front_cam = np.array([[0.0, 0.0, 1.0, 0.0],
+                                                [-1.0, 0.0, 0.0, 0.0],
+                                                [0.0, -1.0, 0.0, 0.0],
+                                                [0.0, 0.0, 0.0, 1.0]])
+            # ``sample_idx`` of the sample in kitti-format is an array
+            for idx, result in enumerate(results):
+                if len(result['sample_idx']) > 0:
+                    self.name2idx[str(result['sample_idx'][0])] = idx
+        else:
+            # ``sample_idx`` of the sample in the original prediction
+            # is an int value.
+            for idx, result in enumerate(results):
+                self.name2idx[str(result['sample_idx'])] = idx
 
-        self.get_file_names()
+        if not self.fast_eval:
+            # need to read original '.tfrecord' file
+            self.get_file_names()
+            # turn on eager execution for older tensorflow versions
+            if int(tf.__version__.split('.')[0]) < 2:
+                tf.enable_eager_execution()
+
         self.create_folder()
 
     def get_file_names(self):
@@ -207,22 +241,30 @@ class KITTI2Waymo(object):
 
             filename = f'{self.prefix}{file_idx:03d}{frame_num:03d}'
 
-            for camera in frame.context.camera_calibrations:
-                # FRONT = 1, see dataset.proto for details
-                if camera.name == 1:
-                    T_front_cam_to_vehicle = np.array(
-                        camera.extrinsic.transform).reshape(4, 4)
-
-            T_k2w = T_front_cam_to_vehicle @ self.T_ref_to_front_cam
-
             context_name = frame.context.name
             frame_timestamp_micros = frame.timestamp_micros
 
             if filename in self.name2idx:
-                kitti_result = \
-                    self.kitti_result_files[self.name2idx[filename]]
-                objects = self.parse_objects(kitti_result, T_k2w, context_name,
-                                             frame_timestamp_micros)
+                if self.from_kitti_format:
+                    for camera in frame.context.camera_calibrations:
+                        # FRONT = 1, see dataset.proto for details
+                        if camera.name == 1:
+                            T_front_cam_to_vehicle = np.array(
+                                camera.extrinsic.transform).reshape(4, 4)
+
+                    T_k2w = T_front_cam_to_vehicle @ self.T_ref_to_front_cam
+
+                    kitti_result = \
+                        self.results[self.name2idx[filename]]
+                    objects = self.parse_objects(kitti_result, T_k2w,
+                                                 context_name,
+                                                 frame_timestamp_micros)
+                else:
+                    index = self.name2idx[filename]
+                    objects = self.parse_objects_from_origin(
+                        self.results[index], context_name,
+                        frame_timestamp_micros)
+
             else:
                 print(filename, 'not found.')
                 objects = metrics_pb2.Objects()
@@ -232,11 +274,100 @@ class KITTI2Waymo(object):
                     'wb') as f:
                 f.write(objects.SerializeToString())
 
+    def convert_one_fast(self, res_index: int):
+        """Convert action for single file. It read the metainfo from the
+        preprocessed file offline and will be faster.
+
+        Args:
+            res_index (int): The indices of the results.
+        """
+        sample_idx = self.results[res_index]['sample_idx']
+        if len(self.results[res_index]['pred_instances_3d']) > 0:
+            objects = self.parse_objects_from_origin(
+                self.results[res_index],
+                self.idx2metainfo[str(sample_idx)]['contextname'],
+                self.idx2metainfo[str(sample_idx)]['timestamp'])
+        else:
+            print(sample_idx, 'not found.')
+            objects = metrics_pb2.Objects()
+
+        with open(
+                join(self.waymo_results_save_dir, f'{sample_idx}.bin'),
+                'wb') as f:
+            f.write(objects.SerializeToString())
+
+    def parse_objects_from_origin(self, result: dict, contextname: str,
+                                  timestamp: str) -> Objects:
+        """Parse obejcts from the original prediction results.
+
+        Args:
+            result (dict): The original prediction results.
+            contextname (str): The ``contextname`` of sample in waymo.
+            timestamp (str): The ``timestamp`` of sample in waymo.
+
+        Returns:
+            metrics_pb2.Objects: The parsed object.
+        """
+        lidar_boxes = result['pred_instances_3d']['bboxes_3d'].tensor
+        scores = result['pred_instances_3d']['scores_3d']
+        labels = result['pred_instances_3d']['labels_3d']
+
+        def parse_one_object(index):
+            class_name = self.classes[labels[index].item()]
+
+            box = label_pb2.Label.Box()
+            height = lidar_boxes[index][5].item()
+            heading = lidar_boxes[index][6].item()
+
+            while heading < -np.pi:
+                heading += 2 * np.pi
+            while heading > np.pi:
+                heading -= 2 * np.pi
+
+            box.center_x = lidar_boxes[index][0].item()
+            box.center_y = lidar_boxes[index][1].item()
+            box.center_z = lidar_boxes[index][2].item() + height / 2
+            box.length = lidar_boxes[index][3].item()
+            box.width = lidar_boxes[index][4].item()
+            box.height = height
+            box.heading = heading
+
+            o = metrics_pb2.Object()
+            o.object.box.CopyFrom(box)
+            o.object.type = self.k2w_cls_map[class_name]
+            o.score = scores[index].item()
+            o.context_name = contextname
+            o.frame_timestamp_micros = timestamp
+
+            return o
+
+        objects = metrics_pb2.Objects()
+        for i in range(len(lidar_boxes)):
+            objects.objects.append(parse_one_object(i))
+
+        return objects
+
     def convert(self):
         """Convert action."""
         print('Start converting ...')
-        mmengine.track_parallel_progress(self.convert_one, range(len(self)),
-                                         self.workers)
+        convert_func = self.convert_one_fast if self.fast_eval else \
+            self.convert_one
+
+        # from torch.multiprocessing import set_sharing_strategy
+        # # Force using "file_system" sharing strategy for stability
+        # set_sharing_strategy("file_system")
+
+        # mmengine.track_parallel_progress(convert_func, range(len(self)),
+        #                                  self.workers)
+
+        # TODO: Support multiprocessing. Now, multiprocessing evaluation will
+        # cause shared memory error in torch-1.10 and torch-1.11. Details can
+        # be seen in https://github.com/pytorch/pytorch/issues/67864.
+        prog_bar = mmengine.ProgressBar(len(self))
+        for i in range(len(self)):
+            convert_func(i)
+            prog_bar.update()
+
         print('\nFinished ...')
 
         # combine all files into one .bin
@@ -248,7 +379,8 @@ class KITTI2Waymo(object):
 
     def __len__(self):
         """Length of the filename list."""
-        return len(self.waymo_tfrecord_pathnames)
+        return len(self.results) if self.fast_eval else len(
+            self.waymo_tfrecord_pathnames)
 
     def transform(self, T, x, y, z):
         """Transform the coordinates with matrix T.
