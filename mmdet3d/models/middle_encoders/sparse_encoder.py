@@ -41,6 +41,8 @@ class SparseEncoder(nn.Module):
             Defaults to ((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1, 1)).
         block_type (str, optional): Type of the block to use.
             Defaults to 'conv_module'.
+        return_middle_feats (bool): Whether output middle features.
+            Default to False.
     """
 
     def __init__(self,
@@ -54,7 +56,8 @@ class SparseEncoder(nn.Module):
                                                                         64)),
                  encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1,
                                                                  1)),
-                 block_type='conv_module'):
+                 block_type='conv_module',
+                 return_middle_feats=False):
         super().__init__()
         assert block_type in ['conv_module', 'basicblock']
         self.sparse_shape = sparse_shape
@@ -66,6 +69,7 @@ class SparseEncoder(nn.Module):
         self.encoder_paddings = encoder_paddings
         self.stage_num = len(self.encoder_channels)
         self.fp16_enabled = False
+        self.return_middle_feats = return_middle_feats
         # Spconv init all weight on its own
 
         assert isinstance(order, tuple) and len(order) == 3
@@ -117,7 +121,14 @@ class SparseEncoder(nn.Module):
             batch_size (int): Batch size.
 
         Returns:
-            dict: Backbone features.
+            torch.Tensor | tuple[torch.Tensor, list]: Return spatial features
+                include:
+
+            - spatial_features (torch.Tensor): Spatial features are out from
+                the last layer.
+            - encode_features (List[SparseConvTensor], optional): Middle layer
+                output features. When self.return_middle_feats is True, the
+                module returns middle features.
         """
         coors = coors.int()
         input_sp_tensor = SparseConvTensor(voxel_features, coors,
@@ -137,7 +148,10 @@ class SparseEncoder(nn.Module):
         N, C, D, H, W = spatial_features.shape
         spatial_features = spatial_features.view(N, C * D, H, W)
 
-        return spatial_features
+        if self.return_middle_feats:
+            return spatial_features, encode_features
+        else:
+            return spatial_features
 
     def make_encoder_layers(self,
                             make_block,
