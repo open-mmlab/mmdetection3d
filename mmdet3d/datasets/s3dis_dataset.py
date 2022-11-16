@@ -343,8 +343,8 @@ class S3DISSegDataset(_S3DISSegDataset):
             ann_file = self._duplicate_to_list(ann_file, 1)
         return ann_file
 
-    def _check_scene_idxs(self, scene_idx: Union[str, List[list, tuple,
-                                                           np.ndarray],
+    def _check_scene_idxs(self, scene_idx: Union[str, List[Union[list, tuple,
+                                                                 np.ndarray]],
                                                  List[str], None],
                           num: int) -> List[np.ndarray]:
         """Make scene_idxs as list/tuple."""
