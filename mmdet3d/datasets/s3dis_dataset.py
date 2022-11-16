@@ -18,7 +18,7 @@ class S3DISDataset(Det3DDataset):
     often train on 5 of them and test on the remaining one. The one for
     test is Area_5 as suggested in `GSDN <https://arxiv.org/abs/2006.12356>`_.
     To concatenate 5 areas during training
-    `mmdet.datasets.dataset_wrappers.ConcatDataset` should be used.
+    `mmengine.datasets.dataset_wrappers.ConcatDataset` should be used.
 
     Args:
         data_root (str): Path of dataset root.
@@ -51,8 +51,8 @@ class S3DISDataset(Det3DDataset):
     METAINFO = {
         'classes': ('table', 'chair', 'sofa', 'bookcase', 'board'),
         # the valid ids of segmentation annotations
-        'seg_valid_class_ids': tuple(range(13)),
-        'seg_all_class_ids': tuple(range(14))  # possibly with 'stair' class
+        'seg_valid_class_ids': (7, 8, 9, 10, 11),
+        'seg_all_class_ids': tuple(range(1, 14))  # possibly with 'stair' class
     }
 
     def __init__(self,
@@ -68,7 +68,7 @@ class S3DISDataset(Det3DDataset):
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 *kwargs) -> None:
+                 **kwargs) -> None:
 
         # construct seg_label_mapping for semantic mask
         seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
@@ -90,7 +90,7 @@ class S3DISDataset(Det3DDataset):
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
-            *kwargs)
+            **kwargs)
 
         self.metainfo['seg_label_mapping'] = self.seg_label_mapping
         assert 'use_camera' in self.modality and \
@@ -323,7 +323,8 @@ class S3DISSegDataset(_S3DISSegDataset):
         """Concat data_list from several datasets to form self.data_list.
 
         Args:
-            data_lists (List[List[dict]])
+            data_lists (List[List[dict]]): List of dict containing
+                annotation information.
         """
         self.data_list = [
             data for data_list in data_lists for data in data_list
