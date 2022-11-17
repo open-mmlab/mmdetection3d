@@ -1,13 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Tuple
 
+from mmdet.models.detectors.single_stage import SingleStageDetector
 from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptInstanceList
-from mmdet.models.detectors.single_stage import SingleStageDetector
 
 
 @MODELS.register_module()

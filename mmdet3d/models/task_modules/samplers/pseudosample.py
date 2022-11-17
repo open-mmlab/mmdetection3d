@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmdet.models.task_modules import AssignResult
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import TASK_UTILS
-from mmdet.models.task_modules import AssignResult
 from ..samplers import BaseSampler, SamplingResult
 
 
