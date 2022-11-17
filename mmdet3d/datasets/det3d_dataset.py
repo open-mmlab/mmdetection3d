@@ -38,6 +38,8 @@ class Det3DDataset(BaseDataset):
                 - use_camera: bool
                 - use_lidar: bool
             Defaults to `dict(use_lidar=True, use_camera=False)`
+        point_cloud_range (list[float]): The range of point cloud used to
+            filter points and 3D bboxes. Defaults to None.
         default_cam_key (str, optional): The default camera name adopted.
             Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
@@ -51,10 +53,6 @@ class Det3DDataset(BaseDataset):
               indoor point cloud 3d detection.
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
-        filter_empty_gt (bool): Whether to filter the data with empty GT.
-            If it's set to be True, the example with empty annotations after
-            data pipeline will be dropped and a random example will be chosen
-            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
         load_eval_anns (bool): Whether to load annotations in test_mode,
@@ -80,9 +78,9 @@ class Det3DDataset(BaseDataset):
                  data_prefix: dict = dict(pts='velodyne', img=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
+                 point_cloud_range: List[float] = None,
                  default_cam_key: str = None,
                  box_type_3d: dict = 'LiDAR',
-                 filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
@@ -91,7 +89,6 @@ class Det3DDataset(BaseDataset):
                  **kwargs) -> None:
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
-        self.filter_empty_gt = filter_empty_gt
         self.load_eval_anns = load_eval_anns
         self.merge_cfg = merge_cfg
         _default_modality_keys = ('use_lidar', 'use_camera')
@@ -103,6 +100,7 @@ class Det3DDataset(BaseDataset):
             if key not in modality:
                 modality[key] = False
         self.modality = modality
+        self.point_cloud_range = point_cloud_range
         self.default_cam_key = default_cam_key
         assert self.modality['use_lidar'] or self.modality['use_camera'], (
             'Please specify the `modality` (`use_lidar` '
@@ -338,6 +336,9 @@ class Det3DDataset(BaseDataset):
 
             info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
             info['lidar_path'] = info['lidar_points']['lidar_path']
+            if self.point_cloud_range is not None:
+                info['point_cloud_range'] = self.point_cloud_range
+
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
                     file_suffix = sweep['lidar_points']['lidar_path'].split(
@@ -432,13 +433,13 @@ class Det3DDataset(BaseDataset):
         input_dict['box_mode_3d'] = self.box_mode_3d
 
         # pre-pipline return None to random another in `__getitem__`
-        if not self.test_mode and self.filter_empty_gt:
+        if not self.test_mode:
             if len(input_dict['ann_info']['gt_labels_3d']) == 0:
                 return None
 
         example = self.pipeline(input_dict)
 
-        if not self.test_mode and self.filter_empty_gt:
+        if not self.test_mode:
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(

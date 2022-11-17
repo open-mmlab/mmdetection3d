@@ -82,6 +82,7 @@ train_dataloader = dict(
             data_root=data_root,
             ann_file='kitti_infos_train.pkl',
             data_prefix=dict(pts='training/velodyne_reduced'),
+            filter_cfg=dict(filter_empty_gt=False, filter_class=False),
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
