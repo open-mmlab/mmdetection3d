@@ -371,7 +371,7 @@ def post_process_coords(
 
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
-                    dataset: str) -> dict:
+                    dataset: str) -> Union[dict, None]:
     """Generate one 2D annotation record given various information on top of
     the 2D bounding box coordinates.
 
@@ -384,7 +384,7 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
         dataset (str): Name of dataset.
 
     Returns:
-        dict: A sample 2d annotation record.
+        dict or None: A sample 2d annotation record.
 
             - bbox_label (int): 2d box label id
             - bbox_label_3d (int): 3d box label id
