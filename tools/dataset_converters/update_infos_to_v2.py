@@ -80,9 +80,6 @@ def get_empty_lidar_points():
         num_pts_feats=None,
         # (str, optional): Path of LiDAR data file.
         lidar_path=None,
-        # (list[list[float]]): Transformation matrix from lidar
-        # or depth to image with shape [4, 4].
-        lidar2img=None,
         # (list[list[float]], optional): Transformation matrix
         # from lidar to ego-vehicle
         # with shape [4, 4].
@@ -120,6 +117,9 @@ def get_empty_img_info():
         # matrix from camera to image with
         # shape [3, 3], [3, 4] or [4, 4].
         cam2img=None,
+        # (list[list[float]]): Transformation matrix from lidar
+        # or depth to image with shape [4, 4].
+        lidar2img=None,
         # (list[list[float]], optional) : Transformation
         # matrix from camera to ego-vehicle
         # with shape [4, 4].
@@ -159,7 +159,7 @@ def get_empty_standard_data_info(
 
     data_info = dict(
         # (str): Sample id of the frame.
-        sample_id=None,
+        sample_idx=None,
         # (str, optional): '000010'
         token=None,
         **get_single_image_sweep(camera_types),
@@ -885,10 +885,8 @@ def update_waymo_infos(pkl_path, out_dir):
 
         for cam_idx, cam_key in enumerate(camera_types):
             rect = ori_info_dict['calib']['R0_rect'].astype(np.float32)
-            velo_to_cam = 'Tr_velo_to_cam'
-            if cam_idx != 0:
-                velo_to_cam += str(cam_idx)
-            Trv2c = ori_info_dict['calib'][velo_to_cam].astype(np.float32)
+            Trv2c = ori_info_dict['calib'][
+                f'Tr_velo_to_cam{str(cam_idx)}'].astype(np.float32)
 
             lidar2cam = rect @ Trv2c
             temp_data_info['images'][cam_key]['lidar2cam'] = lidar2cam.tolist()

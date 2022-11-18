@@ -69,10 +69,7 @@ class Waymo2KITTI(object):
             '_SIDE_LEFT',
             '_SIDE_RIGHT',
         ]
-        self.lidar_list = [
-            '_FRONT', '_FRONT_RIGHT', '_FRONT_LEFT', '_SIDE_RIGHT',
-            '_SIDE_LEFT'
-        ]
+        self.lidar_list = ['TOP', 'FRONT', 'SIDE_LEFT', 'SIDE_RIGHT', 'REAR']
         self.type_list = [
             'UNKNOWN', 'VEHICLE', 'PEDESTRIAN', 'SIGN', 'CYCLIST'
         ]
@@ -135,7 +132,8 @@ class Waymo2KITTI(object):
 
             self.save_image(frame, file_idx, frame_idx)
             self.save_calib(frame, file_idx, frame_idx)
-            self.save_lidar(frame, file_idx, frame_idx)
+            if 'testing_3d_camera_only_detection' not in self.load_dir:
+                self.save_lidar(frame, file_idx, frame_idx)
             self.save_pose(frame, file_idx, frame_idx)
             self.save_timestamp(frame, file_idx, frame_idx)
 
