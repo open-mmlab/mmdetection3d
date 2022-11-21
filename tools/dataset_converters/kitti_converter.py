@@ -86,7 +86,7 @@ class _NumPointsInGTCalculater:
             v_path, dtype=np.float32,
             count=-1).reshape([-1, self.num_features])
         rect = calib['R0_rect']
-        Trv2c = calib['Tr_velo_to_cam']
+        Trv2c = calib['Tr_velo_to_cam0']
         P2 = calib['P2']
         if self.remove_outside:
             points_v = box_np_ops.remove_outside_points(
