@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from mmdet.models.task_modules import BaseBBoxCoder
 
 from mmdet3d.registry import TASK_UTILS
 from mmdet3d.structures.bbox_3d import limit_period
-from mmdet.models.task_modules import BaseBBoxCoder
 
 
 @TASK_UTILS.register_module()
