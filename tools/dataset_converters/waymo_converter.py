@@ -439,7 +439,6 @@ class Waymo2KITTI(object):
             dir_list1 = [
                 self.label_all_save_dir,
                 self.calib_save_dir,
-                self.point_cloud_save_dir,
                 self.pose_save_dir,
                 self.timestamp_save_dir,
             ]
@@ -449,10 +448,12 @@ class Waymo2KITTI(object):
                 dir_list2.append(self.cam_sync_label_save_dir)
         else:
             dir_list1 = [
-                self.calib_save_dir, self.point_cloud_save_dir,
-                self.pose_save_dir, self.timestamp_save_dir
+                self.calib_save_dir, self.pose_save_dir,
+                self.timestamp_save_dir
             ]
             dir_list2 = [self.image_save_dir]
+        if 'testing_3d_camera_only_detection' not in self.load_dir:
+            dir_list1.append(self.point_cloud_save_dir,)
         for d in dir_list1:
             mmengine.mkdir_or_exist(d)
         for d in dir_list2:

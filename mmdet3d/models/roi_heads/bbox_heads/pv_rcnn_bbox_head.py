@@ -4,6 +4,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule
+from mmdet.models.task_modules.samplers import SamplingResult
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import nn as nn
@@ -14,8 +16,6 @@ from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.utils import InstanceList
-from mmdet.models.task_modules.samplers import SamplingResult
-from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()
