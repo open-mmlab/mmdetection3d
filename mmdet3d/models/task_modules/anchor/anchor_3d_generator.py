@@ -37,32 +37,36 @@ class Anchor3DRangeGenerator(object):
     """
 
     def __init__(self,
-                 ranges,
+                 point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
+                 bottom_heights=[-0.6],
                  sizes=[[3.9, 1.6, 1.56]],
                  scales=[1],
                  rotations=[0, 1.5707963],
                  custom_values=(),
                  reshape_out=True,
                  size_per_range=True):
-        assert mmengine.is_list_of(ranges, list)
+
+        assert mmengine.is_list_of(bottom_heights, float)
         if size_per_range:
-            if len(sizes) != len(ranges):
-                assert len(ranges) == 1
-                ranges = ranges * len(sizes)
-            assert len(ranges) == len(sizes)
+            if len(sizes) != len(bottom_heights):
+                assert len(bottom_heights) == 1
+                bottom_heights = bottom_heights * len(sizes)
+            assert len(bottom_heights) == len(sizes)
         else:
-            assert len(ranges) == 1
+            assert len(bottom_heights) == 1
         assert mmengine.is_list_of(sizes, list)
         assert isinstance(scales, list)
 
         self.sizes = sizes
         self.scales = scales
-        self.ranges = ranges
+        self.point_cloud_range = point_cloud_range
+        self.bottom_heights = bottom_heights
         self.rotations = rotations
         self.custom_values = custom_values
         self.cached_anchors = None
         self.reshape_out = reshape_out
         self.size_per_range = size_per_range
+        self.ranges = self._calculate_anchor_ranges()
 
     def __repr__(self):
         s = self.__class__.__name__ + '('
@@ -73,6 +77,19 @@ class Anchor3DRangeGenerator(object):
         s += f'reshape_out={self.reshape_out},\n'
         s += f'size_per_range={self.size_per_range})'
         return s
+
+    def _calculate_anchor_ranges(self):
+        """Calculate anchor ranges."""
+        anchor_ranges = []
+        for bottom_height in self.bottom_heights:
+            anchor_range = [
+                self.point_cloud_range[0], self.point_cloud_range[1],
+                bottom_height, self.point_cloud_range[3],
+                self.point_cloud_range[4], bottom_height
+            ]
+            anchor_ranges.append[anchor_range]
+
+        return anchor_ranges
 
     @property
     def num_base_anchors(self):
