@@ -1,6 +1,6 @@
 # Dummy ResNet Wrapper
 
-This is an example README for community `projects/`. We have provided detailed explanations for each field in the form of html comments, which are visible when you read the source of this README file. If you wish to submit your project to our main repository, then all the fields in this README are mandatory for others to understand what you have achieved in this implementation. For more details, read our [contribution guide](https://mmocr.readthedocs.io/en/dev-1.x/notes/contribution_guide.html) or approach us in [Discussions](https://github.com/open-mmlab/mmocr/discussions).
+This is an example README for community `projects/`. We have provided detailed explanations for each field in the form of html comments, which are visible when you read the source of this README file. If you wish to submit your project to our main repository, then all the fields in this README are mandatory for others to understand what you have achieved in this implementation.
 
 ## Description
 
