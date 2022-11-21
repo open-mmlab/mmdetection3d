@@ -86,7 +86,7 @@ class IndoorMetric(BaseMetric):
             ann_infos,
             pred_results,
             self.iou_thr,
-            self.dataset_meta['CLASSES'],
+            self.dataset_meta['classes'],
             logger=logger,
             box_mode_3d=box_mode_3d)
 
@@ -142,7 +142,7 @@ class Indoor2DMetric(BaseMetric):
             pred_labels = pred['labels'].cpu().numpy()
 
             dets = []
-            for label in range(len(self.dataset_meta['CLASSES'])):
+            for label in range(len(self.dataset_meta['classes'])):
                 index = np.where(pred_labels == label)[0]
                 pred_bbox_scores = np.hstack(
                     [pred_bboxes[index], pred_scores[index].reshape((-1, 1))])
@@ -171,7 +171,7 @@ class Indoor2DMetric(BaseMetric):
                 annotations,
                 scale_ranges=None,
                 iou_thr=iou_thr_2d_single,
-                dataset=self.dataset_meta['CLASSES'],
+                dataset=self.dataset_meta['classes'],
                 logger=logger)
             eval_results['mAP_' + str(iou_thr_2d_single)] = mean_ap
         return eval_results

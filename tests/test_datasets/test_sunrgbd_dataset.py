@@ -48,7 +48,7 @@ class TestScanNetDataset(unittest.TestCase):
             ann_file,
             data_prefix=data_prefix,
             pipeline=pipeline,
-            metainfo=dict(CLASSES=classes),
+            metainfo=dict(classes=classes),
             modality=modality)
 
         scannet_dataset.prepare_data(0)
@@ -81,7 +81,7 @@ class TestScanNetDataset(unittest.TestCase):
             ann_file,
             data_prefix=data_prefix,
             pipeline=pipeline,
-            metainfo=dict(CLASSES=classes),
+            metainfo=dict(classes=classes),
             modality=modality)
 
         input_dict = bed_scannet_dataset.get_data_info(0)
@@ -94,4 +94,4 @@ class TestScanNetDataset(unittest.TestCase):
         assert ann_info['gt_labels_3d'].dtype == np.int64
         # all instance have been filtered by classes
         self.assertEqual(len(ann_info['gt_labels_3d']), 3)
-        self.assertEqual(len(bed_scannet_dataset.metainfo['CLASSES']), 1)
+        self.assertEqual(len(bed_scannet_dataset.metainfo['classes']), 1)

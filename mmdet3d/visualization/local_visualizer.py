@@ -708,9 +708,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
         """
-        classes = self.dataset_meta.get('CLASSES', None)
-        # For object detection datasets, no PALETTE is saved
-        palette = self.dataset_meta.get('PALETTE', None)
+        classes = self.dataset_meta.get('classes', None)
+        # For object detection datasets, no palette is saved
+        palette = self.dataset_meta.get('palette', None)
         ignore_index = self.dataset_meta.get('ignore_index', None)
 
         gt_data_3d = None

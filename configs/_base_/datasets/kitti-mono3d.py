@@ -2,7 +2,7 @@ dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.

@@ -63,7 +63,7 @@ class WaymoDataset(KittiDataset):
             Defaults to 'lidar_det'.
         max_sweeps (int): max sweep for each frame. Defaults to 0.
     """
-    METAINFO = {'CLASSES': ('Car', 'Pedestrian', 'Cyclist')}
+    METAINFO = {'classes': ('Car', 'Pedestrian', 'Cyclist')}
 
     def __init__(self,
                  data_root: str,
@@ -91,7 +91,7 @@ class WaymoDataset(KittiDataset):
         # set loading mode for different task settings
         self.cam_sync_instances = cam_sync_instances
         # construct self.cat_ids for vision-only anns parsing
-        self.cat_ids = range(len(self.METAINFO['CLASSES']))
+        self.cat_ids = range(len(self.METAINFO['classes']))
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.max_sweeps = max_sweeps
         # we do not provide file_client_args to custom_3d init

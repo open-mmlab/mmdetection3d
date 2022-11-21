@@ -48,7 +48,7 @@ def test_getitem():
         ann_file,
         data_prefix=data_prefix,
         pipeline=pipeline,
-        metainfo=dict(CLASSES=classes),
+        metainfo=dict(classes=classes),
         modality=modality)
 
     lyft_dataset.prepare_data(0)
@@ -68,4 +68,4 @@ def test_getitem():
     assert 'gt_bboxes_3d' in ann_info
     assert isinstance(ann_info['gt_bboxes_3d'], LiDARInstance3DBoxes)
 
-    assert len(lyft_dataset.metainfo['CLASSES']) == 9
+    assert len(lyft_dataset.metainfo['classes']) == 9
