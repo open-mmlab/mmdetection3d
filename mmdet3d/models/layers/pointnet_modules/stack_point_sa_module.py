@@ -57,7 +57,7 @@ class StackQueryAndGroup(BaseModule):
             'new_xyz: str(new_xyz.shape), new_xyz_batch_cnt: ' \
             'str(new_xyz_batch_cnt)'
 
-        # idx: (M1 + M2 ..., nsample), empty_ball_mask: (M1 + M2 ...)
+        # idx: (M1 + M2 ..., nsample)
         idx = ball_query(0, self.radius, self.sample_nums, xyz, new_xyz,
                          xyz_batch_cnt, new_xyz_batch_cnt)
         empty_ball_mask = (idx[:, 0] == -1)
