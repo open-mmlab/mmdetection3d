@@ -33,8 +33,7 @@ class PointPillars(SingleStage3DDetector):
 
         voxel_encoder.update(
             point_cloud_range=self.data_preprocessor.point_cloud_range)
-        voxel_encoder.update(
-            point_cloud_range=self.data_preprocessor.voxel_size)
+        voxel_encoder.update(voxel_size=self.data_preprocessor.voxel_size)
         middle_encoder.update(output_shape=self.data_preprocessor.grid_size)
 
         self.voxel_encoder = MODELS.build(voxel_encoder)
