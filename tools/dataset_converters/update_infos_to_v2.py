@@ -885,8 +885,10 @@ def update_waymo_infos(pkl_path, out_dir):
 
         for cam_idx, cam_key in enumerate(camera_types):
             rect = ori_info_dict['calib']['R0_rect'].astype(np.float32)
-            Trv2c = ori_info_dict['calib'][f'Tr_velo_to_cam{cam_idx}'].astype(
-                np.float32)
+            velo_to_cam = 'Tr_velo_to_cam'
+            if cam_idx != 0:
+                velo_to_cam += str(cam_idx)
+            Trv2c = ori_info_dict['calib'][velo_to_cam].astype(np.float32)
 
             lidar2cam = rect @ Trv2c
             temp_data_info['images'][cam_key]['lidar2cam'] = lidar2cam.tolist()
@@ -914,7 +916,7 @@ def update_waymo_infos(pkl_path, out_dir):
             'point_cloud']['velodyne_path'].split('/')[-1]
 
         # TODO discuss the usage of Tr_velo_to_cam in lidar
-        Trv2c = ori_info_dict['calib']['Tr_velo_to_cam0'].astype(np.float32)
+        Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
 
         temp_data_info['lidar_points']['Tr_velo_to_cam'] = Trv2c.tolist()
 
