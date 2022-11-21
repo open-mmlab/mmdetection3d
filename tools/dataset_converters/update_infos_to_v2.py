@@ -914,7 +914,7 @@ def update_waymo_infos(pkl_path, out_dir):
             'point_cloud']['velodyne_path'].split('/')[-1]
 
         # TODO discuss the usage of Tr_velo_to_cam in lidar
-        Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
+        Trv2c = ori_info_dict['calib']['Tr_velo_to_cam0'].astype(np.float32)
 
         temp_data_info['lidar_points']['Tr_velo_to_cam'] = Trv2c.tolist()
 
