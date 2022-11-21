@@ -112,7 +112,7 @@ class NuScenesDataset(Det3DDataset):
                 valid_mask &= ann_info['gt_labels_3d'] > -1
 
             if self.filter_cfg.get('filter_with_mask', False):
-                if self.filter_cfg.get('use_valid_flage', False):
+                if self.filter_cfg.get('use_valid_flag', False):
                     valid_mask &= ann_info['bbox_3d_isvalid']
                 else:
                     valid_mask &= ann_info['num_lidar_pts'] > 0

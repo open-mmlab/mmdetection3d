@@ -307,7 +307,7 @@ class Det3DDataset(BaseDataset):
             ann_info['instances'] = info['instances']
 
             for label in ann_info['gt_labels_3d']:
-                if label != -1:
+                if label > 0:
                     cat_name = self.metainfo['classes'][label]
                     self.num_ins_per_cat[cat_name] += 1
 
@@ -392,13 +392,13 @@ class Det3DDataset(BaseDataset):
         """
         ori_num_per_cat = dict()
         for label in old_labels:
-            if label != -1:
+            if label > 0:
                 cat_name = self.metainfo['classes'][label]
                 ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name,
                                                                 0) + 1
         new_num_per_cat = dict()
         for label in new_labels:
-            if label != -1:
+            if label > 0:
                 cat_name = self.metainfo['classes'][label]
                 new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name,
                                                                 0) + 1
