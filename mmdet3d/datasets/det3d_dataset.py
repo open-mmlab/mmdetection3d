@@ -66,7 +66,7 @@ class Det3DDataset(BaseDataset):
                     (classes not in metainfo).
                 - filter_empty_gt: bool, whether to filter the data sample
                     without annotations.
-            Defaults to dict(filter_class=False, filter_empty_gt=False).
+            Defaults to None.
         merge_cfg (dict, optional): Config for merge dataset classes.
             Defaults to None.
             A typical merge config should be like:
@@ -91,8 +91,7 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
-                 filter_cfg: dict = dict(
-                     filter_class=False, filter_empty_gt=False),
+                 filter_cfg: Optional[dict] = None,
                  merge_cfg: Optional[dict] = None,
                  show_ins_var: bool = False,
                  **kwargs) -> None:
@@ -242,6 +241,41 @@ class Det3DDataset(BaseDataset):
                     f'or str, but got {type(names)}')
 
         return merge_mapping
+
+    def filter_data(self) -> List[dict]:
+        """Filter annotations according to filter_cfg.
+
+        Returns:
+            List[dict]: Filtered results.
+        """
+        if self.test_mode:
+            return self.data_list
+
+        if self.filter_cfg is None:
+            return self.data_list
+
+        filter_empty_gt = self.filter_cfg.get('filter_empty_gt', False)
+
+        valid_data_infos = []
+        for data_info in self.data_list:
+            ann_info = data_info['ann_info']
+            valid_mask = np.ones(ann_info['gt_labels_3d'].shape, dtype=np.bool)
+            # Whether to filter object classes not required (not in metainfo)
+            # 'filter_class' should be False if ground truth database
+            # sampling is used in data augmentation, since objects with
+            # labels -1 are kept to for collision detection
+            if self.filter_cfg.get('filter_class', False):
+                valid_mask &= ann_info['gt_labels_3d'] > -1
+
+            for key in ann_info.keys():
+                if key != 'instances':
+                    ann_info[key] = (ann_info[key][valid_mask])
+
+            if filter_empty_gt and len(ann_info['gt_labels_3d']) == 0:
+                continue
+            valid_data_infos.append(data_info)
+
+        return valid_data_infos
 
     def parse_ann_info(self, info: dict) -> Optional[dict]:
         """Process the `instances` in data info to `ann_info`.

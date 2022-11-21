@@ -53,6 +53,8 @@ train_dataloader = dict(
         pipeline=train_pipeline,
         modality=input_modality,
         test_mode=False,
+        filter_cfg=dict(
+            filter_dontcare=True, filter_class=True, filter_empty_gt=True),
         metainfo=metainfo,
         # we use box_type_3d='Camera' in monocular 3d
         # detection task
