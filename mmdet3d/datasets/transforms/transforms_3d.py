@@ -846,9 +846,6 @@ class ObjectRangeFilter(BaseTransform):
         point_cloud_range (list[float]): Point cloud range.
     """
 
-    def __init__(self, point_cloud_range: List[float]) -> None:
-        self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
-
     def transform(self, input_dict: dict) -> dict:
         """Transform function to filter objects by the range.
 
@@ -860,11 +857,16 @@ class ObjectRangeFilter(BaseTransform):
             keys are updated in the result dict.
         """
         # Check points instance type and initialise bev_range
+        pcd_range = input_dict.get('point_cloud_range', None)
+        if pcd_range is None:
+            raise ValueError(
+                'the point_cloud_range is is not provided in dataset.')
+
         if isinstance(input_dict['gt_bboxes_3d'],
                       (LiDARInstance3DBoxes, DepthInstance3DBoxes)):
-            bev_range = self.pcd_range[[0, 1, 3, 4]]
+            bev_range = pcd_range[[0, 1, 3, 4]]
         elif isinstance(input_dict['gt_bboxes_3d'], CameraInstance3DBoxes):
-            bev_range = self.pcd_range[[0, 2, 3, 5]]
+            bev_range = pcd_range[[0, 2, 3, 5]]
 
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
@@ -886,7 +888,6 @@ class ObjectRangeFilter(BaseTransform):
     def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(point_cloud_range={self.pcd_range.tolist()})'
         return repr_str
 
 
@@ -908,9 +909,6 @@ class PointsRangeFilter(BaseTransform):
         point_cloud_range (list[float]): Point cloud range.
     """
 
-    def __init__(self, point_cloud_range: List[float]) -> None:
-        self.pcd_range = np.array(point_cloud_range, dtype=np.float32)
-
     def transform(self, input_dict: dict) -> dict:
         """Transform function to filter points by the range.
 
@@ -921,8 +919,13 @@ class PointsRangeFilter(BaseTransform):
             dict: Results after filtering, 'points', 'pts_instance_mask'
             and 'pts_semantic_mask' keys are updated in the result dict.
         """
+        pcd_range = input_dict.get('point_cloud_range', None)
+        if pcd_range is None:
+            raise ValueError(
+                'the point_cloud_range is is not provided in dataset.')
+
         points = input_dict['points']
-        points_mask = points.in_range_3d(self.pcd_range)
+        points_mask = points.in_range_3d(pcd_range)
         clean_points = points[points_mask]
         input_dict['points'] = clean_points
         points_mask = points_mask.numpy()
@@ -941,7 +944,6 @@ class PointsRangeFilter(BaseTransform):
     def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(point_cloud_range={self.pcd_range.tolist()})'
         return repr_str
 
 

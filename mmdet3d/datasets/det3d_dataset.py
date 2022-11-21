@@ -75,6 +75,7 @@ class Det3DDataset(BaseDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  default_cam_key: str = None,
+                 point_cloud_range: List[float] = None,
                  box_type_3d: dict = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -96,6 +97,8 @@ class Det3DDataset(BaseDataset):
                 modality[key] = False
         self.modality = modality
         self.default_cam_key = default_cam_key
+        self.point_cloud_range = point_cloud_range
+
         assert self.modality['use_lidar'] or self.modality['use_camera'], (
             'Please specify the `modality` (`use_lidar` '
             f', `use_camera`) for {self.__class__.__name__}')
@@ -284,6 +287,10 @@ class Det3DDataset(BaseDataset):
 
             info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
             info['lidar_path'] = info['lidar_points']['lidar_path']
+            if self.point_cloud_range is not None:
+                info['point_cloud_range'] = np.array(
+                    self.point_cloud_range, dtype=np.float32)
+
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
                     file_suffix = sweep['lidar_points']['lidar_path'].split(
