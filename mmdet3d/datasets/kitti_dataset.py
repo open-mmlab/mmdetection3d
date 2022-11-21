@@ -32,12 +32,18 @@ class KittiDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool): Whether to filter the data with empty GT.
-            If it's set to be True, the example with empty annotations after
-            data pipeline will be dropped and a random example will be chosen
-            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
+        filter_cfg (dict, optional): Config for filter data.
+            the filter keys of kitti dataset include:
+                - filter_dontcare: bool, whether to filter the 'DontCare'
+                    objects in kitti dataset.
+                - filter_class: bool, whether to filter not required classes
+                    (classes not in metainfo).
+                - filter_empty_gt: bool, whether to filter the data sample
+                    without annotations.
+            Defaults to dict(filter_class=False, filter_empty_gt=False
+                             filter_dontcare=True).
     """
     # TODO: use full classes of kitti
     METAINFO = {
@@ -53,8 +59,11 @@ class KittiDataset(Det3DDataset):
                  default_cam_key: str = 'CAM2',
                  task: str = 'lidar_det',
                  box_type_3d: str = 'LiDAR',
-                 filter_empty_gt: bool = True,
                  test_mode: bool = False,
+                 filter_cfg: dict = dict(
+                     filter_class=False,
+                     filter_empty_gt=False,
+                     filter_dontcare=True),
                  **kwargs) -> None:
 
         assert task in ('lidar_det', 'mono_det')
@@ -66,8 +75,8 @@ class KittiDataset(Det3DDataset):
             modality=modality,
             default_cam_key=default_cam_key,
             box_type_3d=box_type_3d,
-            filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
+            filter_cfg=filter_cfg,
             **kwargs)
 
         assert self.modality is not None

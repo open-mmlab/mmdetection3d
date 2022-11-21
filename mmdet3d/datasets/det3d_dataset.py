@@ -60,6 +60,13 @@ class Det3DDataset(BaseDataset):
             used in Evaluator. Defaults to True.
         file_client_args (dict): Configuration of file client.
             Defaults to dict(backend='disk').
+        filter_cfg (dict, optional): Config for filter data.
+            the basic filter keys include:
+                - filter_class: bool, whether to filter not required classes
+                    (classes not in metainfo).
+                - filter_empty_gt: bool, whether to filter the data sample
+                    without annotations.
+            Defaults to dict(filter_class=False, filter_empty_gt=False).
         merge_cfg (dict, optional): Config for merge dataset classes.
             Defaults to None.
             A typical merge config should be like:
@@ -84,6 +91,8 @@ class Det3DDataset(BaseDataset):
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
+                 filter_cfg: dict = dict(
+                     filter_class=False, filter_empty_gt=False),
                  merge_cfg: Optional[dict] = None,
                  show_ins_var: bool = False,
                  **kwargs) -> None:
@@ -120,6 +129,7 @@ class Det3DDataset(BaseDataset):
             metainfo=metainfo,
             data_root=data_root,
             data_prefix=data_prefix,
+            filter_cfg=filter_cfg,
             pipeline=pipeline,
             test_mode=test_mode,
             **kwargs)

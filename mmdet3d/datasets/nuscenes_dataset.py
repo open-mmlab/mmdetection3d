@@ -35,12 +35,18 @@ class NuScenesDataset(Det3DDataset):
             - 'Camera': Box in camera coordinates.
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).
-        filter_empty_gt (bool): Whether to filter the data with empty GT.
-            If it's set to be True, the example with empty annotations after
-            data pipeline will be dropped and a random example will be chosen
-            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
+        filter_cfg (dict, optional): Config for filter data.
+            the filter keys of kitti dataset include:
+                - filter_with_mask: bool, whether to filter the objects
+                    according to provided mask of nuScenes dataset.
+                - filter_class: bool, whether to filter not required classes
+                    (classes not in metainfo).
+                - filter_empty_gt: bool, whether to filter the data sample
+                    without annotations.
+            Defaults to dict(filter_class=False, filter_empty_gt=False
+                             filter_with_mask=True).
         with_velocity (bool): Whether to include velocity prediction
             into the experiments. Defaults to True.
         use_valid_flag (bool): Whether to use `use_valid_flag` key
@@ -65,8 +71,11 @@ class NuScenesDataset(Det3DDataset):
                      use_camera=False,
                      use_lidar=True,
                  ),
-                 filter_empty_gt: bool = True,
                  test_mode: bool = False,
+                 filter_cfg: dict = dict(
+                     filter_class=False,
+                     filter_empty_gt=False,
+                     filter_with_mask=True),
                  with_velocity: bool = True,
                  use_valid_flag: bool = False,
                  **kwargs) -> None:
@@ -84,8 +93,8 @@ class NuScenesDataset(Det3DDataset):
             modality=modality,
             pipeline=pipeline,
             box_type_3d=box_type_3d,
-            filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
+            filter_cfg=filter_cfg,
             **kwargs)
 
     def filter_data(self) -> List[dict]:
