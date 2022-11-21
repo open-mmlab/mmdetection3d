@@ -58,9 +58,10 @@ class StackQueryAndGroup(BaseModule):
             'str(new_xyz_batch_cnt)'
 
         # idx: (M1 + M2 ..., nsample), empty_ball_mask: (M1 + M2 ...)
-        idx, empty_ball_mask = ball_query(0, self.radius, self.sample_nums,
-                                          xyz, new_xyz, xyz_batch_cnt,
-                                          new_xyz_batch_cnt)
+        idx = ball_query(0, self.radius, self.sample_nums, xyz, new_xyz,
+                         xyz_batch_cnt, new_xyz_batch_cnt)
+        empty_ball_mask = (idx[:, 0] == -1)
+        idx[empty_ball_mask] = 0
         grouped_xyz = grouping_operation(
             xyz, idx, xyz_batch_cnt,
             new_xyz_batch_cnt)  # (M1 + M2, 3, nsample)
