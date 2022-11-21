@@ -453,7 +453,7 @@ class Waymo2KITTI(object):
             ]
             dir_list2 = [self.image_save_dir]
         if 'testing_3d_camera_only_detection' not in self.load_dir:
-            dir_list1.append(self.point_cloud_save_dir,)
+            dir_list1.append(self.point_cloud_save_dir)
         for d in dir_list1:
             mmengine.mkdir_or_exist(d)
         for d in dir_list2:
