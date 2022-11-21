@@ -38,10 +38,10 @@ class Det3DDataset(BaseDataset):
                 - use_camera: bool
                 - use_lidar: bool
             Defaults to `dict(use_lidar=True, use_camera=False)`
-        point_cloud_range (list[float]): The range of point cloud used to
-            filter points and 3D bboxes. Defaults to None.
         default_cam_key (str, optional): The default camera name adopted.
             Defaults to None.
+        point_cloud_range (list[float]): The range of point cloud used to
+                    filter points and 3D bboxes. Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -85,8 +85,8 @@ class Det3DDataset(BaseDataset):
                  data_prefix: dict = dict(pts='velodyne', img=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 point_cloud_range: List[float] = None,
                  default_cam_key: str = None,
+                 point_cloud_range: List[float] = None,
                  box_type_3d: dict = 'LiDAR',
                  test_mode: bool = False,
                  load_eval_anns=True,
@@ -381,7 +381,8 @@ class Det3DDataset(BaseDataset):
             info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
             info['lidar_path'] = info['lidar_points']['lidar_path']
             if self.point_cloud_range is not None:
-                info['point_cloud_range'] = self.point_cloud_range
+                info['point_cloud_range'] = np.array(
+                    self.point_cloud_range, dtype=np.float32)
 
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
