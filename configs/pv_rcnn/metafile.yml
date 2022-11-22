@@ -25,5 +25,5 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 72.13
+          mAP: 72.28
     Weights:

@@ -18,7 +18,7 @@
 
 |                    Backbone                     |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |         Download         |
 | :---------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :----------------------: |
-| [SECFPN](./pv_rcnn_8xb2-80e_kitti-3d-3class.py) | 3 Class | cyclic 80e |   5.4    |                | 72.13 | [model](<>) \\ [log](<>) |
+| [SECFPN](./pv_rcnn_8xb2-80e_kitti-3d-3class.py) | 3 Class | cyclic 80e |   5.4    |                | 72.28 | [model](<>) \\ [log](<>) |
 
 Note: mAP represents AP11 results on 3 Class under the moderate setting.
 
@@ -26,9 +26,9 @@ Detailed performance on KITTI 3D detection (3D) is as follows, evaluated by AP11
 
 |            | Easy  | Moderate | Hard  |
 | ---------- | :---: | :------: | :---: |
-| Car        | 89.26 |  83.46   | 78.78 |
-| Pedestrian | 66.28 |  59.53   | 54.83 |
-| Cyclist    | 87.32 |  73.42   | 69.58 |
+| Car        | 89.20 |  83.72   | 78.79 |
+| Pedestrian | 66.64 |  59.84   | 55.33 |
+| Cyclist    | 87.25 |  73.27   | 69.61 |
 
 ## Citation
 
