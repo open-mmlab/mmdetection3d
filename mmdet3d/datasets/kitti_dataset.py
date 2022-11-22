@@ -24,6 +24,7 @@ class KittiDataset(Det3DDataset):
             Defaults to `dict(use_lidar=True)`.
         default_cam_key (str): The default camera name adopted.
             Defaults to 'CAM2'.
+        task (str): Detection task. Defaults to 'lidar_det'.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -151,11 +152,16 @@ class KittiDataset(Det3DDataset):
                 ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         ann_info = self._remove_dontcare(ann_info)
-        # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
-        lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
-        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
-        gt_bboxes_3d = CameraInstance3DBoxes(
-            ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
-                                                 np.linalg.inv(lidar2cam))
+
+        if self.task == 'mono_det':
+            gt_bboxes_3d = CameraInstance3DBoxes(
+                ann_info['gt_bboxes_3d'], origin=(0.5, 0.5, 0.5))
+        else:
+            # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
+            lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
+            # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+            gt_bboxes_3d = CameraInstance3DBoxes(
+                ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
+                                                     np.linalg.inv(lidar2cam))
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
         return ann_info
