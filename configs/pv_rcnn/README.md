@@ -16,9 +16,9 @@
 
 ### KITTI
 
-|                    Backbone                     |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |         Download         |
-| :---------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :----------------------: |
-| [SECFPN](./pv_rcnn_8xb2-80e_kitti-3d-3class.py) | 3 Class | cyclic 80e |   5.4    |                | 72.28 | [model](<>) \\ [log](<>) |
+|                    Backbone                     |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                                    Download                                                                                                                                                                    |
+| :---------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [SECFPN](./pv_rcnn_8xb2-80e_kitti-3d-3class.py) | 3 Class | cyclic 80e |   5.4    |                | 72.28 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class/pv_rcnn_8xb2-80e_kitti-3d-3class_20221117_234428-b384d22f.pth) \\ [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class/pv_rcnn_8xb2-80e_kitti-3d-3class_20221117_234428.json) |
 
 Note: mAP represents AP11 results on 3 Class under the moderate setting.
 
