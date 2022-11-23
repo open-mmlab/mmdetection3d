@@ -252,9 +252,9 @@ def get_kitti_style_2d_boxes(info: dict,
         # transform the center from [0.5, 1.0, 0.5] to [0.5, 0.5, 0.5]
         dst = np.array([0.5, 0.5, 0.5])
         src = np.array([0.5, 1.0, 0.5])
-        loc = loc + dim * (dst - src)
-        loc_3d = np.copy(loc)
-        gt_bbox_3d = np.concatenate([loc, dim, rot], axis=1).astype(np.float32)
+        loc_3d = loc + dim * (dst - src)
+        gt_bbox_3d = np.concatenate([loc_3d, dim, rot],
+                                    axis=1).astype(np.float32)
 
         # Filter out the corners that are not in front of the calibrated
         # sensor.
@@ -291,11 +291,10 @@ def get_kitti_style_2d_boxes(info: dict,
         # If mono3d=True, add 3D annotations in camera coordinates
         if mono3d and (repro_rec is not None):
             repro_rec['bbox_3d'] = np.concatenate(
-                [loc_3d, dim, rot],
-                axis=1).astype(np.float32).squeeze().tolist()
+                [loc, dim, rot], axis=1).astype(np.float32).squeeze().tolist()
             repro_rec['velocity'] = -1  # no velocity in KITTI
 
-            center_3d = np.array(loc).reshape([1, 3])
+            center_3d = np.array(loc_3d).reshape([1, 3])
             center_2d_with_depth = box_np_ops.points_cam2img(
                 center_3d, camera_intrinsic, with_depth=True)
             center_2d_with_depth = center_2d_with_depth.squeeze().tolist()

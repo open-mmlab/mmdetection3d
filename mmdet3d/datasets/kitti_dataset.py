@@ -152,16 +152,11 @@ class KittiDataset(Det3DDataset):
                 ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         ann_info = self._remove_dontcare(ann_info)
-
-        if self.task == 'mono_det':
-            gt_bboxes_3d = CameraInstance3DBoxes(
-                ann_info['gt_bboxes_3d'], origin=(0.5, 0.5, 0.5))
-        else:
-            # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
-            lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
-            # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
-            gt_bboxes_3d = CameraInstance3DBoxes(
-                ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
-                                                     np.linalg.inv(lidar2cam))
+        # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
+        lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
+        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+        gt_bboxes_3d = CameraInstance3DBoxes(
+            ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
+                                                 np.linalg.inv(lidar2cam))
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
         return ann_info
