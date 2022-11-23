@@ -51,9 +51,6 @@ class WaymoDataset(KittiDataset):
             in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float]): The range of point cloud
-            used to filter invalid predicted boxes.
-            Defaults to [-85, -85, -5, 85, 85, 5].
         cam_sync_instances (bool): If use the camera sync label
             supported from waymo version 1.3.1. Defaults to False.
         load_interval (int): load frame interval. Defaults to 1.
@@ -81,7 +78,6 @@ class WaymoDataset(KittiDataset):
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  cam_sync_instances: bool = False,
                  load_interval: int = 1,
                  task: str = 'lidar_det',
@@ -104,7 +100,6 @@ class WaymoDataset(KittiDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            pcd_limit_range=pcd_limit_range,
             default_cam_key=default_cam_key,
             data_prefix=data_prefix,
             test_mode=test_mode,

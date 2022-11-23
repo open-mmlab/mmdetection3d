@@ -52,6 +52,7 @@ def test_getitem():
         data_prefix=data_prefix,
         pipeline=pipeline,
         metainfo=dict(classes=classes),
+        filter_cfg=dict(filter_empty_gt=False, filter_class=True),
         modality=modality)
 
     nus_dataset.prepare_data(0)
@@ -67,7 +68,7 @@ def test_getitem():
             assert data_prefix['img'] in img_info['img_path']
             assert data_root in img_info['img_path']
 
-    ann_info = nus_dataset.parse_ann_info(input_dict)
+    ann_info = input_dict['ann_info']
 
     # assert the keys in ann_info and the type
     assert 'gt_labels_3d' in ann_info

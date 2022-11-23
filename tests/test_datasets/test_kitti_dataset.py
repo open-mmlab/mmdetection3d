@@ -55,11 +55,10 @@ def test_getitem():
         ),
         pipeline=pipeline,
         metainfo=dict(classes=classes),
+        filter_cfg=dict(filter_empty_gt=False, filter_class=True),
         modality=modality)
 
-    kitti_dataset.prepare_data(0)
     input_dict = kitti_dataset.get_data_info(0)
-    kitti_dataset[0]
     # assert the the path should contains data_prefix and data_root
     assert data_prefix['pts'] in input_dict['lidar_points']['lidar_path']
     assert data_root in input_dict['lidar_points']['lidar_path']
@@ -68,7 +67,7 @@ def test_getitem():
             assert data_prefix['img'] in img_info['img_path']
             assert data_root in img_info['img_path']
 
-    ann_info = kitti_dataset.parse_ann_info(input_dict)
+    ann_info = input_dict['ann_info']
 
     # assert the keys in ann_info and the type
     assert 'instances' in ann_info
@@ -95,10 +94,11 @@ def test_getitem():
         ),
         pipeline=pipeline,
         metainfo=dict(classes=['Car']),
+        filter_cfg=dict(filter_empty_gt=False, filter_class=True),
         modality=modality)
 
     input_dict = car_kitti_dataset.get_data_info(0)
-    ann_info = car_kitti_dataset.parse_ann_info(input_dict)
+    ann_info = input_dict['ann_info']
 
     # assert the keys in ann_info and the type
     assert 'instances' in ann_info

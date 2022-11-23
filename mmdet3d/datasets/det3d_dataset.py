@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from os import path as osp
-from typing import Callable, List, Optional, Set, Union
+from typing import Callable, Dict, List, Optional, Sequence, Set, Union
 
 import mmengine
 import numpy as np
@@ -40,6 +40,8 @@ class Det3DDataset(BaseDataset):
             Defaults to `dict(use_lidar=True, use_camera=False)`
         default_cam_key (str, optional): The default camera name adopted.
             Defaults to None.
+        point_cloud_range (list[float]): The range of point cloud used to
+                    filter points and 3D bboxes. Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -51,10 +53,6 @@ class Det3DDataset(BaseDataset):
               indoor point cloud 3d detection.
             - 'Camera': Box in camera coordinates, usually
               for vision-based 3d detection.
-        filter_empty_gt (bool): Whether to filter the data with empty GT.
-            If it's set to be True, the example with empty annotations after
-            data pipeline will be dropped and a random example will be chosen
-            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
         load_eval_anns (bool): Whether to load annotations in test_mode,
@@ -62,6 +60,19 @@ class Det3DDataset(BaseDataset):
             used in Evaluator. Defaults to True.
         file_client_args (dict): Configuration of file client.
             Defaults to dict(backend='disk').
+        filter_cfg (dict, optional): Config for filter data.
+            the basic filter keys include:
+                - filter_class: bool, whether to filter not required classes
+                    (classes not in metainfo).
+                - filter_empty_gt: bool, whether to filter the data sample
+                    without annotations.
+            Defaults to None.
+        merge_cfg (dict, optional): Config for merge dataset classes.
+            Defaults to None.
+            A typical merge config should be like:
+                If we want to merge classes `Truck` and `Van` into
+                `Car`, it should be:
+                dict(class_merge=dict(Car=('Truck','Van')))
         show_ins_var (bool): For debug purpose. Whether to show variation
             of the number of instances before and after through pipeline.
             Defaults to False.
@@ -75,17 +86,19 @@ class Det3DDataset(BaseDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  default_cam_key: str = None,
+                 point_cloud_range: List[float] = None,
                  box_type_3d: dict = 'LiDAR',
-                 filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  load_eval_anns=True,
                  file_client_args: dict = dict(backend='disk'),
+                 filter_cfg: Optional[dict] = None,
+                 merge_cfg: Optional[dict] = None,
                  show_ins_var: bool = False,
                  **kwargs) -> None:
         # init file client
         self.file_client = mmengine.FileClient(**file_client_args)
-        self.filter_empty_gt = filter_empty_gt
         self.load_eval_anns = load_eval_anns
+        self.merge_cfg = merge_cfg
         _default_modality_keys = ('use_lidar', 'use_camera')
         if modality is None:
             modality = dict()
@@ -95,6 +108,7 @@ class Det3DDataset(BaseDataset):
             if key not in modality:
                 modality[key] = False
         self.modality = modality
+        self.point_cloud_range = point_cloud_range
         self.default_cam_key = default_cam_key
         assert self.modality['use_lidar'] or self.modality['use_camera'], (
             'Please specify the `modality` (`use_lidar` '
@@ -102,36 +116,19 @@ class Det3DDataset(BaseDataset):
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
-        if metainfo is not None and 'classes' in metainfo:
-            # we allow to train on subset of self.METAINFO['classes']
-            # map unselected labels to -1
-            self.label_mapping = {
-                i: -1
-                for i in range(len(self.METAINFO['classes']))
-            }
-            self.label_mapping[-1] = -1
-            for label_idx, name in enumerate(metainfo['classes']):
-                ori_label = self.METAINFO['classes'].index(name)
-                self.label_mapping[ori_label] = label_idx
+        new_classes = metainfo.get('classes', None)
+        self.label_mapping, self.num_ins_per_cat = self.get_label_mapping(
+            new_classes)
 
-            self.num_ins_per_cat = {name: 0 for name in metainfo['classes']}
-        else:
-            self.label_mapping = {
-                i: i
-                for i in range(len(self.METAINFO['classes']))
-            }
-            self.label_mapping[-1] = -1
-
-            self.num_ins_per_cat = {
-                name: 0
-                for name in self.METAINFO['classes']
-            }
+        if self.merge_cfg is not None:
+            self.merge_mapping = self.parse_merge_cfg()
 
         super().__init__(
             ann_file=ann_file,
             metainfo=metainfo,
             data_root=data_root,
             data_prefix=data_prefix,
+            filter_cfg=filter_cfg,
             pipeline=pipeline,
             test_mode=test_mode,
             **kwargs)
@@ -155,26 +152,44 @@ class Det3DDataset(BaseDataset):
             f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
             'current')
 
-    def _remove_dontcare(self, ann_info: dict) -> dict:
-        """Remove annotations that do not need to be cared.
+    def get_label_mapping(self,
+                          new_classes: Optional[Sequence] = None
+                          ) -> Union[Dict, None]:
+        """Get label mapping.
 
-        -1 indicate dontcare in MMDet3d.
+        The ``label_mapping`` is a dictionary, its keys are the old label
+        ids and its values are the new label ids.
 
         Args:
-            ann_info (dict): Dict of annotation infos. The
-                instance with label `-1` will be removed.
+            new_classes (list, tuple, optional): The new classes name from
+                metainfo. Default to None.
 
         Returns:
-            dict: Annotations after filtering.
+            tuple: The mapping from old classes in cls.METAINFO to
+            new classes in metainfo
         """
-        img_filtered_annotations = {}
-        filter_mask = ann_info['gt_labels_3d'] > -1
-        for key in ann_info.keys():
-            if key != 'instances':
-                img_filtered_annotations[key] = (ann_info[key][filter_mask])
-            else:
-                img_filtered_annotations[key] = ann_info[key]
-        return img_filtered_annotations
+        # we allow to train on subset of self.METAINFO['classes']
+        # map unselected labels to -1
+        old_classes = self.METAINFO.get('classes', None)
+        if (new_classes is not None and old_classes is not None
+                and list(new_classes) != list(old_classes)):
+            if not set(new_classes).issubset(old_classes):
+                raise ValueError(
+                    f'new classes {new_classes} is not a '
+                    f'subset of classes {old_classes} in METAINFO.')
+
+            label_mapping = {i: -1 for i in range(len(old_classes))}
+
+            for label_idx, name in enumerate(new_classes):
+                ori_label = self.METAINFO['classes'].index(name)
+                label_mapping[ori_label] = label_idx
+
+            num_ins_per_cat = {name: 0 for name in new_classes}
+        else:
+            label_mapping = {i: i for i in range(len(old_classes))}
+            num_ins_per_cat = {name: 0 for name in old_classes}
+
+        return label_mapping, num_ins_per_cat
 
     def get_ann_info(self, index: int) -> dict:
         """Get annotation info according to the given index.
@@ -196,6 +211,71 @@ class Det3DDataset(BaseDataset):
             ann_info = data_info['ann_info']
 
         return ann_info
+
+    def parse_merge_cfg(self) -> dict:
+        """Parse `self.merge_cfg`.
+
+        Sometimes we want to merge certain classes into target class
+        to increase ground truth number and improve training performance.
+
+        Returns:
+            dict: Processed `merge_mapping`
+        """
+
+        if not isinstance(self.merge_cfg, dict):
+            raise TypeError(
+                f'merge_cfg should be a dict, but got {type(self.merge_cfg)}')
+        merge_mapping = dict()
+        for merge_name, names in self.merge_cfg['class_merge'].items():
+            merge_label = self.METAINFO['classes'].index(merge_name)
+            if isinstance(names, (list, tuple)):
+                for name in names:
+                    ori_label = self.METAINFO['classes'].index(name)
+                    merge_mapping[ori_label] = merge_label
+            elif isinstance(names, str):
+                ori_label = self.METAINFO['classes'].index(names)
+                merge_mapping[ori_label] = merge_label
+            else:
+                raise TypeError(
+                    f'class names to be merged should be a list, tuple'
+                    f'or str, but got {type(names)}')
+
+        return merge_mapping
+
+    def filter_data(self) -> List[dict]:
+        """Filter annotations according to filter_cfg.
+
+        Returns:
+            List[dict]: Filtered results.
+        """
+        if self.test_mode:
+            return self.data_list
+
+        if self.filter_cfg is None:
+            return self.data_list
+
+        filter_empty_gt = self.filter_cfg.get('filter_empty_gt', False)
+
+        valid_data_infos = []
+        for data_info in self.data_list:
+            ann_info = data_info['ann_info']
+            valid_mask = np.ones(ann_info['gt_labels_3d'].shape, dtype=np.bool)
+            # Whether to filter object classes not required (not in metainfo)
+            # 'filter_class' should be False if ground truth database
+            # sampling is used in data augmentation, since objects with
+            # labels -1 are kept to for collision detection
+            if self.filter_cfg.get('filter_class', False):
+                valid_mask &= ann_info['gt_labels_3d'] > -1
+
+            for key in ann_info.keys():
+                if key != 'instances':
+                    ann_info[key] = (ann_info[key][valid_mask])
+
+            if filter_empty_gt and len(ann_info['gt_labels_3d']) == 0:
+                continue
+            valid_data_infos.append(data_info)
+
+        return valid_data_infos
 
     def parse_ann_info(self, info: dict) -> Optional[dict]:
         """Process the `instances` in data info to `ann_info`.
@@ -236,6 +316,22 @@ class Det3DDataset(BaseDataset):
                 temp_anns = [item[ann_name] for item in instances]
                 # map the original dataset label to training label
                 if 'label' in ann_name and ann_name != 'attr_label':
+                    # if the merge_cfg is not None, we need to merge
+                    # specified dataset labels to the target dataset
+                    # label before mapping the original dataset label
+                    # to training label
+                    if self.merge_cfg is not None:
+                        merge_mask = [
+                            item in self.merge_mapping for item in temp_anns
+                        ]
+                        ann_info['merge_mask'] = np.array(merge_mask)
+
+                        temp_anns = [
+                            self.merge_mapping[item]
+                            if item in self.merge_mapping else item
+                            for item in temp_anns
+                        ]
+
                     temp_anns = [
                         self.label_mapping[item] for item in temp_anns
                     ]
@@ -255,7 +351,7 @@ class Det3DDataset(BaseDataset):
             ann_info['instances'] = info['instances']
 
             for label in ann_info['gt_labels_3d']:
-                if label != -1:
+                if label > 0:
                     cat_name = self.metainfo['classes'][label]
                     self.num_ins_per_cat[cat_name] += 1
 
@@ -284,6 +380,10 @@ class Det3DDataset(BaseDataset):
 
             info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
             info['lidar_path'] = info['lidar_points']['lidar_path']
+            if self.point_cloud_range is not None:
+                info['point_cloud_range'] = np.array(
+                    self.point_cloud_range, dtype=np.float32)
+
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
                     file_suffix = sweep['lidar_points']['lidar_path'].split(
@@ -337,13 +437,13 @@ class Det3DDataset(BaseDataset):
         """
         ori_num_per_cat = dict()
         for label in old_labels:
-            if label != -1:
+            if label > 0:
                 cat_name = self.metainfo['classes'][label]
                 ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name,
                                                                 0) + 1
         new_num_per_cat = dict()
         for label in new_labels:
-            if label != -1:
+            if label > 0:
                 cat_name = self.metainfo['classes'][label]
                 new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name,
                                                                 0) + 1
@@ -378,13 +478,13 @@ class Det3DDataset(BaseDataset):
         input_dict['box_mode_3d'] = self.box_mode_3d
 
         # pre-pipline return None to random another in `__getitem__`
-        if not self.test_mode and self.filter_empty_gt:
+        if not self.test_mode:
             if len(input_dict['ann_info']['gt_labels_3d']) == 0:
                 return None
 
         example = self.pipeline(input_dict)
 
-        if not self.test_mode and self.filter_empty_gt:
+        if not self.test_mode:
             # after pipeline drop the example with empty annotations
             # return None to random another in `__getitem__`
             if example is None or len(

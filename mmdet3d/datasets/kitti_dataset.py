@@ -32,15 +32,18 @@ class KittiDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool): Whether to filter the data with empty GT.
-            If it's set to be True, the example with empty annotations after
-            data pipeline will be dropped and a random example will be chosen
-            in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float]): The range of point cloud used to filter
-            invalid predicted boxes.
-            Defaults to [0, -40, -3, 70.4, 40, 0.0].
+        filter_cfg (dict, optional): Config for filter data.
+            the filter keys of kitti dataset include:
+                - filter_dontcare: bool, whether to filter the 'DontCare'
+                    objects in kitti dataset.
+                - filter_class: bool, whether to filter not required classes
+                    (classes not in metainfo).
+                - filter_empty_gt: bool, whether to filter the data sample
+                    without annotations.
+            Defaults to dict(filter_class=False, filter_empty_gt=False
+                             filter_dontcare=True).
     """
     # TODO: use full classes of kitti
     METAINFO = {
@@ -56,12 +59,13 @@ class KittiDataset(Det3DDataset):
                  default_cam_key: str = 'CAM2',
                  task: str = 'lidar_det',
                  box_type_3d: str = 'LiDAR',
-                 filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
+                 filter_cfg: dict = dict(
+                     filter_class=False,
+                     filter_empty_gt=False,
+                     filter_dontcare=True),
                  **kwargs) -> None:
 
-        self.pcd_limit_range = pcd_limit_range
         assert task in ('lidar_det', 'mono_det')
         self.task = task
         super().__init__(
@@ -71,11 +75,16 @@ class KittiDataset(Det3DDataset):
             modality=modality,
             default_cam_key=default_cam_key,
             box_type_3d=box_type_3d,
-            filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
+            filter_cfg=filter_cfg,
             **kwargs)
+
         assert self.modality is not None
         assert box_type_3d.lower() in ('lidar', 'camera')
+        # the original label of `DontCare` in kitti is -1 in info file,
+        # to distinguish it with other not required classes, we map it
+        # from -1 to -2
+        self.label_mapping[-1] = -2
 
     def parse_data_info(self, info: dict) -> dict:
         """Process the raw data info.
@@ -120,6 +129,46 @@ class KittiDataset(Det3DDataset):
 
         return info
 
+    def filter_data(self) -> List[dict]:
+        """Filter annotations according to filter_cfg.
+
+        Returns:
+            List[dict]: Filtered results.
+        """
+        if self.test_mode:
+            return self.data_list
+
+        if self.filter_cfg is None:
+            return self.data_list
+
+        filter_empty_gt = self.filter_cfg.get('filter_empty_gt', False)
+
+        valid_data_infos = []
+        for data_info in self.data_list:
+            ann_info = data_info['ann_info']
+            valid_mask = np.ones(ann_info['gt_labels_3d'].shape, dtype=np.bool)
+
+            # Whether to filter `DontCare` objects, which is set to be True
+            if self.filter_cfg.get('filter_dontcare', True):
+                valid_mask &= ann_info['gt_labels_3d'] > -2
+
+            # Whether to filter object classes not required (not in metainfo)
+            # 'filter_class' should be False if ground truth database
+            # sampling is used in data augmentation, since objects with
+            # labels -1 are kept to for collision detection
+            if self.filter_cfg.get('filter_class', False):
+                valid_mask &= ann_info['gt_labels_3d'] > -1
+
+            for key in ann_info.keys():
+                if key != 'instances':
+                    ann_info[key] = (ann_info[key][valid_mask])
+
+            if filter_empty_gt and len(ann_info['gt_labels_3d']) == 0:
+                continue
+            valid_data_infos.append(data_info)
+
+        return valid_data_infos
+
     def parse_ann_info(self, info: dict) -> dict:
         """Process the `instances` in data info to `ann_info`.
 
@@ -144,13 +193,6 @@ class KittiDataset(Det3DDataset):
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.task == 'mono_det':
-                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
-                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
-                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
-                ann_info['depths'] = np.zeros((0), dtype=np.float32)
-
-        ann_info = self._remove_dontcare(ann_info)
         # in kitti, lidar2cam = R0_rect @ Tr_velo_to_cam
         lidar2cam = np.array(info['images']['CAM2']['lidar2cam'])
         # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
