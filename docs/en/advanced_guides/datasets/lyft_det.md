@@ -40,8 +40,8 @@ Note that we follow the original folder names for clear organization. Please ren
 
 ## Dataset Preparation
 
-The way to organize Lyft dataset is similar to nuScenes. We also generate the .pkl and .json files which share almost the same structure.
-Next, we will mainly focus on the difference between these two datasets. For a more detailed explanation of the info structure, please refer to [nuScenes tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/nuscenes_det.md).
+The way to organize Lyft dataset is similar to nuScenes. We also generate the `.pkl` files which share almost the same structure.
+Next, we will mainly focus on the difference between these two datasets. For a more detailed explanation of the info structure, please refer to [nuScenes tutorial](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/nuscenes_det.md).
 
 To prepare info files for Lyft, run the following commands:
 
@@ -90,7 +90,7 @@ mmdetection3d
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
     - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
-  - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
+  - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations).
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]: The lidar data path of i-th sweep.
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle in i-th sweep timestamp
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle in i-th sweep timestamp to global coordinates. (4x4 list)
@@ -111,11 +111,11 @@ mmdetection3d
 
 Next, we will elaborate on the difference compared to nuScenes in terms of the details recorded in these info files.
 
-- without `lyft_database/xxxxx.bin`: This folder and `.bin` files are not extracted on the Lyft dataset due to the negligible effect of ground-truth sampling in the experiments.
+- Without `lyft_database/xxxxx.bin`: This folder and `.bin` files are not extracted on the Lyft dataset due to the negligible effect of ground-truth sampling in the experiments.
 
 - `lyft_infos_train.pkl`:
 
-  - Without info\['instances'\]\[i\]\['velocity'\], There is no velocity measurement on Lyft.
+  - Without info\['instances'\]\[i\]\['velocity'\]: There is no velocity measurement on Lyft.
   - Without info\['instances'\]\[i\]\['num_lidar_pts'\] and info\['instances'\]\['num_radar_pts'\]
 
 Here we only explain the data recorded in the training info files. The same applies to the validation set and test set (without instances).
@@ -160,7 +160,7 @@ where the first 3 dimensions refer to point coordinates, and the last refers to 
 
 ## Evaluation
 
-An example to evaluate PointPillars with 8 GPUs with Lyft metrics is as follows.
+An example to evaluate PointPillars with 8 GPUs with Lyft metrics is as follows:
 
 ```shell
 bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py checkpoints/hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d_20210517_202818-fc6904c3.pth 8

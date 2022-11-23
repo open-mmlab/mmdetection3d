@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmcv.cnn.bricks import build_conv_layer
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule, normal_init
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -16,7 +17,6 @@ from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.utils.typing import InstanceList, SamplingResultList
-from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

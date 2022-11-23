@@ -19,7 +19,7 @@ model = dict(
     train_cfg=dict(
         _delete_=True,
         assigner=dict(
-            type='MaxIoUAssigner',
+            type='Max3DIoUAssigner',
             iou_calculator=dict(type='BboxOverlapsNearest3D'),
             pos_iou_thr=0.6,
             neg_iou_thr=0.45,
