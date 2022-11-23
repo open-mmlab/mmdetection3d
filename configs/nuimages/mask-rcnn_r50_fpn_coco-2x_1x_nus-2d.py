@@ -13,8 +13,6 @@ file_client_args = dict(
         './data/nuscenes/': 's3://nuscenes/nuscenes/',
         'data/nuscenes/': 's3://nuscenes/nuscenes/'
     }))
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -25,11 +23,11 @@ test_pipeline = [
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='ImageToTensor', keys=['img']),
-            dict(type='Collect', keys=['img']),
-        ])
+        ]),
+    dict(
+        type='PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor')),
 ]
 data_root = 'data/nuimages/'
 # data = dict(

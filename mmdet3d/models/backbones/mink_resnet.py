@@ -5,11 +5,8 @@ try:
     import MinkowskiEngine as ME
     from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
-    import warnings
-    warnings.warn(
-        'Please follow `getting_started.md` to install MinkowskiEngine.`')
     # blocks are used in the static part of MinkResNet
-    BasicBlock, Bottleneck = None, None
+    ME = BasicBlock = Bottleneck = None
 
 import torch.nn as nn
 
@@ -38,6 +35,10 @@ class MinkResNet(nn.Module):
 
     def __init__(self, depth, in_channels, num_stages=4, pool=True):
         super(MinkResNet, self).__init__()
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for resnet')
         assert 4 >= num_stages >= 1

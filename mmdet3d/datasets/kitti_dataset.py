@@ -32,6 +32,15 @@ class KittiDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
+        load_type (str): Type of loading mode. Defaults to 'frame_based'.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_based': Only load the instances inside the default
+                cam, and need to convert to the FOV-based data type to support
+                image-based detector.
         filter_empty_gt (bool): Whether to filter the data with empty GT.
             If it's set to be True, the example with empty annotations after
             data pipeline will be dropped and a random example will be chosen
@@ -54,7 +63,7 @@ class KittiDataset(Det3DDataset):
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM2',
-                 task: str = 'lidar_det',
+                 load_type: str = 'frame_based',
                  box_type_3d: str = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -62,8 +71,9 @@ class KittiDataset(Det3DDataset):
                  **kwargs) -> None:
 
         self.pcd_limit_range = pcd_limit_range
-        assert task in ('lidar_det', 'mono_det')
-        self.task = task
+        assert load_type in ('frame_based', 'mv_image_based',
+                             'fov_image_based')
+        self.load_type = load_type
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -113,7 +123,7 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
-        if self.task == 'mono_det' and self.load_eval_anns:
+        if self.load_type == 'fov_image_based' and self.load_eval_anns:
             info['instances'] = info['cam_instances'][self.default_cam_key]
 
         info = super().parse_data_info(info)
@@ -144,7 +154,7 @@ class KittiDataset(Det3DDataset):
             ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.task == 'mono_det':
+            if self.load_type in ['fov_image_based', 'mv_image_based']:
                 ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
                 ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
                 ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)

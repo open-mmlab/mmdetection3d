@@ -26,6 +26,7 @@ workflows:
             tools/.* lint_only false
             configs/.* lint_only false
             .circleci/.* lint_only false
+            projects/.* lint_only false
           base-revision: dev-1.x
           # this is the path of the configuration we should trigger once
           # path filtering and pipeline parameter value updates are
