@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
+from mmdet.models.utils import select_single_mlvl
 from mmengine.config import ConfigDict
 from mmengine.model import BaseModule, constant_init
 from mmengine.structures import InstanceData
@@ -13,7 +14,6 @@ from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.structures import limit_period, xywhr2xyxyr
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils.typing import InstanceList, OptMultiConfig
-from mmdet.models.utils import select_single_mlvl
 
 
 class Base3DDenseHead(BaseModule, metaclass=ABCMeta):

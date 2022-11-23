@@ -12,6 +12,7 @@ import argparse
 import copy
 import time
 from os import path as osp
+from pathlib import Path
 
 import mmengine
 import numpy as np
@@ -80,9 +81,6 @@ def get_empty_lidar_points():
         num_pts_feats=None,
         # (str, optional): Path of LiDAR data file.
         lidar_path=None,
-        # (list[list[float]]): Transformation matrix from lidar
-        # or depth to image with shape [4, 4].
-        lidar2img=None,
         # (list[list[float]], optional): Transformation matrix
         # from lidar to ego-vehicle
         # with shape [4, 4].
@@ -120,6 +118,9 @@ def get_empty_img_info():
         # matrix from camera to image with
         # shape [3, 3], [3, 4] or [4, 4].
         cam2img=None,
+        # (list[list[float]]): Transformation matrix from lidar
+        # or depth to image with shape [4, 4].
+        lidar2img=None,
         # (list[list[float]], optional) : Transformation
         # matrix from camera to ego-vehicle
         # with shape [4, 4].
@@ -261,7 +262,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
     print(f'Reading from input file: {pkl_path}.')
     data_list = mmengine.load(pkl_path)
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
          'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
     }
@@ -283,8 +284,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
             ori_info_dict['ego2global_translation'])
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict.get(
             'num_features', 5)
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'lidar_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'lidar_path']).name
         temp_data_info['lidar_points'][
             'lidar2ego'] = convert_quaternion_to_matrix(
                 ori_info_dict['lidar2ego_rotation'],
@@ -314,8 +315,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
         temp_data_info['images'] = {}
         for cam in ori_info_dict['cams']:
             empty_img_info = get_empty_img_info()
-            empty_img_info['img_path'] = ori_info_dict['cams'][cam][
-                'data_path'].split('/')[-1]
+            empty_img_info['img_path'] = Path(ori_info_dict['cams'][cam][
+                'data_path']).name
             empty_img_info['cam2img'] = ori_info_dict['cams'][cam][
                 'cam_intrinsic'].tolist()
             empty_img_info['sample_data_token'] = ori_info_dict['cams'][cam][
@@ -340,8 +341,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
             empty_instance = get_empty_instance()
             empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
                 i, :].tolist()
-            if ori_info_dict['gt_names'][i] in METAINFO['CLASSES']:
-                empty_instance['bbox_label'] = METAINFO['CLASSES'].index(
+            if ori_info_dict['gt_names'][i] in METAINFO['classes']:
+                empty_instance['bbox_label'] = METAINFO['classes'].index(
                     ori_info_dict['gt_names'][i])
             else:
                 ignore_class_name.add(ori_info_dict['gt_names'][i])
@@ -359,13 +360,13 @@ def update_nuscenes_infos(pkl_path, out_dir):
             ori_info_dict, nusc)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -386,7 +387,7 @@ def update_kitti_infos(pkl_path, out_dir):
     # TODO update to full label
     # TODO discuss how to process 'Van', 'DontCare'
     METAINFO = {
-        'CLASSES': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+        'classes': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
                     'Person_sitting', 'Tram', 'Misc'),
     }
     print(f'Reading from input file: {pkl_path}.')
@@ -410,15 +411,15 @@ def update_kitti_infos(pkl_path, out_dir):
         temp_data_info['images']['CAM3']['cam2img'] = ori_info_dict['calib'][
             'P3'].tolist()
 
-        temp_data_info['images']['CAM2']['img_path'] = ori_info_dict['image'][
-            'image_path'].split('/')[-1]
+        temp_data_info['images']['CAM2']['img_path'] = Path(ori_info_dict['image'][
+            'image_path']).name
         h, w = ori_info_dict['image']['image_shape']
         temp_data_info['images']['CAM2']['height'] = h
         temp_data_info['images']['CAM2']['width'] = w
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'point_cloud']['velodyne_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'point_cloud']['velodyne_path']).name
 
         rect = ori_info_dict['calib']['R0_rect'].astype(np.float32)
         Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
@@ -451,8 +452,8 @@ def update_kitti_infos(pkl_path, out_dir):
             empty_instance = get_empty_instance()
             empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            if anns['name'][instance_id] in METAINFO['CLASSES']:
-                empty_instance['bbox_label'] = METAINFO['CLASSES'].index(
+            if anns['name'][instance_id] in METAINFO['classes']:
+                empty_instance['bbox_label'] = METAINFO['classes'].index(
                     anns['name'][instance_id])
             else:
                 ignore_class_name.add(anns['name'][instance_id])
@@ -498,14 +499,14 @@ def update_kitti_infos(pkl_path, out_dir):
         temp_data_info['cam_instances'] = cam_instances
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -522,7 +523,7 @@ def update_s3dis_infos(pkl_path, out_dir):
         print(f'Warning, you may overwriting '
               f'the original data {pkl_path}.')
         time.sleep(5)
-    METAINFO = {'CLASSES': ('table', 'chair', 'sofa', 'bookcase', 'board')}
+    METAINFO = {'classes': ('table', 'chair', 'sofa', 'bookcase', 'board')}
     print(f'Reading from input file: {pkl_path}.')
     data_list = mmengine.load(pkl_path)
     print('Start updating:')
@@ -532,12 +533,12 @@ def update_s3dis_infos(pkl_path, out_dir):
         temp_data_info['sample_idx'] = i
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'pts_path'].split('/')[-1]
-        temp_data_info['pts_semantic_mask_path'] = ori_info_dict[
-            'pts_semantic_mask_path'].split('/')[-1]
-        temp_data_info['pts_instance_mask_path'] = ori_info_dict[
-            'pts_instance_mask_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'pts_path']).name
+        temp_data_info['pts_semantic_mask_path'] = Path(ori_info_dict[
+            'pts_semantic_mask_path']).name
+        temp_data_info['pts_instance_mask_path'] = Path(ori_info_dict[
+            'pts_instance_mask_path']).name
 
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
@@ -554,12 +555,12 @@ def update_s3dis_infos(pkl_path, out_dir):
                     empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
                         instance_id].tolist()
 
-                    if anns['class'][instance_id] < len(METAINFO['CLASSES']):
+                    if anns['class'][instance_id] < len(METAINFO['classes']):
                         empty_instance['bbox_label_3d'] = anns['class'][
                             instance_id]
                     else:
                         ignore_class_name.add(
-                            METAINFO['CLASSES'][anns['class'][instance_id]])
+                            METAINFO['classes'][anns['class'][instance_id]])
                         empty_instance['bbox_label_3d'] = -1
 
                     empty_instance = clear_instance_unused_keys(empty_instance)
@@ -567,14 +568,14 @@ def update_s3dis_infos(pkl_path, out_dir):
             temp_data_info['instances'] = instance_list
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -593,7 +594,7 @@ def update_scannet_infos(pkl_path, out_dir):
               f'the original data {pkl_path}.')
         time.sleep(5)
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin')
@@ -606,12 +607,12 @@ def update_scannet_infos(pkl_path, out_dir):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'pts_path'].split('/')[-1]
-        temp_data_info['pts_semantic_mask_path'] = ori_info_dict[
-            'pts_semantic_mask_path'].split('/')[-1]
-        temp_data_info['pts_instance_mask_path'] = ori_info_dict[
-            'pts_instance_mask_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'pts_path']).name
+        temp_data_info['pts_semantic_mask_path'] = Path(ori_info_dict[
+            'pts_semantic_mask_path']).name
+        temp_data_info['pts_instance_mask_path'] = Path(ori_info_dict[
+            'pts_instance_mask_path']).name
 
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
@@ -629,9 +630,9 @@ def update_scannet_infos(pkl_path, out_dir):
                 empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
                     instance_id].tolist()
 
-                if anns['name'][instance_id] in METAINFO['CLASSES']:
+                if anns['name'][instance_id] in METAINFO['classes']:
                     empty_instance['bbox_label_3d'] = METAINFO[
-                        'CLASSES'].index(anns['name'][instance_id])
+                        'classes'].index(anns['name'][instance_id])
                 else:
                     ignore_class_name.add(anns['name'][instance_id])
                     empty_instance['bbox_label_3d'] = -1
@@ -641,14 +642,14 @@ def update_scannet_infos(pkl_path, out_dir):
         temp_data_info['instances'] = instance_list
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -667,7 +668,7 @@ def update_sunrgbd_infos(pkl_path, out_dir):
               f'the original data {pkl_path}.')
         time.sleep(5)
     METAINFO = {
-        'CLASSES': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+        'classes': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                     'dresser', 'night_stand', 'bookshelf', 'bathtub')
     }
     print(f'Reading from input file: {pkl_path}.')
@@ -678,8 +679,8 @@ def update_sunrgbd_infos(pkl_path, out_dir):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'pts_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'pts_path']).name
         calib = ori_info_dict['calib']
         rt_mat = calib['Rt']
         # follow Coord3DMode.convert_point
@@ -687,8 +688,8 @@ def update_sunrgbd_infos(pkl_path, out_dir):
                            ]) @ rt_mat.transpose(1, 0)
         depth2img = calib['K'] @ rt_mat
         temp_data_info['images']['CAM0']['depth2img'] = depth2img.tolist()
-        temp_data_info['images']['CAM0']['img_path'] = ori_info_dict['image'][
-            'image_path'].split('/')[-1]
+        temp_data_info['images']['CAM0']['img_path'] = Path(ori_info_dict['image'][
+            'image_path']).name
         h, w = ori_info_dict['image']['image_shape']
         temp_data_info['images']['CAM0']['height'] = h
         temp_data_info['images']['CAM0']['width'] = w
@@ -705,9 +706,9 @@ def update_sunrgbd_infos(pkl_path, out_dir):
                 empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
                     instance_id].tolist()
                 empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
-                if anns['name'][instance_id] in METAINFO['CLASSES']:
+                if anns['name'][instance_id] in METAINFO['classes']:
                     empty_instance['bbox_label_3d'] = METAINFO[
-                        'CLASSES'].index(anns['name'][instance_id])
+                        'classes'].index(anns['name'][instance_id])
                     empty_instance['bbox_label'] = empty_instance[
                         'bbox_label_3d']
                 else:
@@ -719,14 +720,14 @@ def update_sunrgbd_infos(pkl_path, out_dir):
         temp_data_info['instances'] = instance_list
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -746,7 +747,7 @@ def update_lyft_infos(pkl_path, out_dir):
     print(f'Reading from input file: {pkl_path}.')
     data_list = mmengine.load(pkl_path)
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
          'motorcycle', 'bicycle', 'pedestrian', 'animal'),
     }
@@ -760,8 +761,8 @@ def update_lyft_infos(pkl_path, out_dir):
         temp_data_info['ego2global'] = convert_quaternion_to_matrix(
             ori_info_dict['ego2global_rotation'],
             ori_info_dict['ego2global_translation'])
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'lidar_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'lidar_path']).name
         temp_data_info['lidar_points'][
             'lidar2ego'] = convert_quaternion_to_matrix(
                 ori_info_dict['lidar2ego_rotation'],
@@ -792,8 +793,8 @@ def update_lyft_infos(pkl_path, out_dir):
         temp_data_info['images'] = {}
         for cam in ori_info_dict['cams']:
             empty_img_info = get_empty_img_info()
-            empty_img_info['img_path'] = ori_info_dict['cams'][cam][
-                'data_path'].split('/')[-1]
+            empty_img_info['img_path'] = Path(ori_info_dict['cams'][cam][
+                'data_path']).name
             empty_img_info['cam2img'] = ori_info_dict['cams'][cam][
                 'cam_intrinsic'].tolist()
             empty_img_info['sample_data_token'] = ori_info_dict['cams'][cam][
@@ -817,8 +818,8 @@ def update_lyft_infos(pkl_path, out_dir):
             empty_instance = get_empty_instance()
             empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
                 i, :].tolist()
-            if ori_info_dict['gt_names'][i] in METAINFO['CLASSES']:
-                empty_instance['bbox_label'] = METAINFO['CLASSES'].index(
+            if ori_info_dict['gt_names'][i] in METAINFO['classes']:
+                empty_instance['bbox_label'] = METAINFO['classes'].index(
                     ori_info_dict['gt_names'][i])
             else:
                 ignore_class_name.add(ori_info_dict['gt_names'][i])
@@ -829,13 +830,13 @@ def update_lyft_infos(pkl_path, out_dir):
             temp_data_info['instances'].append(empty_instance)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
@@ -865,7 +866,7 @@ def update_waymo_infos(pkl_path, out_dir):
     # TODO update to full label
     # TODO discuss how to process 'Van', 'DontCare'
     METAINFO = {
-        'CLASSES': ('Car', 'Pedestrian', 'Cyclist', 'Sign'),
+        'classes': ('Car', 'Pedestrian', 'Cyclist', 'Sign'),
     }
     print(f'Reading from input file: {pkl_path}.')
     data_list = mmengine.load(pkl_path)
@@ -896,7 +897,7 @@ def update_waymo_infos(pkl_path, out_dir):
                 ori_info_dict['calib'][f'P{cam_idx}'] @ lidar2cam).tolist()
 
         # image path
-        base_img_path = ori_info_dict['image']['image_path'].split('/')[-1]
+        base_img_path = Path(ori_info_dict['image']['image_path']).name
 
         for cam_idx, cam_key in enumerate(camera_types):
             temp_data_info['images'][cam_key]['timestamp'] = ori_info_dict[
@@ -912,8 +913,8 @@ def update_waymo_infos(pkl_path, out_dir):
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['timestamp'] = ori_info_dict[
             'timestamp']
-        temp_data_info['lidar_points']['lidar_path'] = ori_info_dict[
-            'point_cloud']['velodyne_path'].split('/')[-1]
+        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
+            'point_cloud']['velodyne_path']).name
 
         # TODO discuss the usage of Tr_velo_to_cam in lidar
         Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
@@ -933,13 +934,13 @@ def update_waymo_infos(pkl_path, out_dir):
             lidar_sweep = get_single_lidar_sweep()
             lidar_sweep['ego2global'] = ori_sweep['pose']
             lidar_sweep['timestamp'] = ori_sweep['timestamp']
-            lidar_sweep['lidar_points']['lidar_path'] = ori_sweep[
-                'velodyne_path'].split('/')[-1]
+            lidar_sweep['lidar_points']['lidar_path'] = Path(ori_sweep[
+                'velodyne_path']).name
             # image sweeps
             image_sweep = get_single_image_sweep(camera_types)
             image_sweep['ego2global'] = ori_sweep['pose']
             image_sweep['timestamp'] = ori_sweep['timestamp']
-            img_path = ori_sweep['image_path'].split('/')[-1]
+            img_path = Path(ori_sweep['image_path']).name
             for cam_idx, cam_key in enumerate(camera_types):
                 image_sweep['images'][cam_key]['img_path'] = img_path
 
@@ -955,8 +956,8 @@ def update_waymo_infos(pkl_path, out_dir):
             empty_instance = get_empty_instance()
             empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            if anns['name'][instance_id] in METAINFO['CLASSES']:
-                empty_instance['bbox_label'] = METAINFO['CLASSES'].index(
+            if anns['name'][instance_id] in METAINFO['classes']:
+                empty_instance['bbox_label'] = METAINFO['classes'].index(
                     anns['name'][instance_id])
             else:
                 ignore_class_name.add(anns['name'][instance_id])
@@ -999,8 +1000,8 @@ def update_waymo_infos(pkl_path, out_dir):
             empty_instance = get_empty_instance()
             empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            if anns['name'][instance_id] in METAINFO['CLASSES']:
-                empty_instance['bbox_label'] = METAINFO['CLASSES'].index(
+            if anns['name'][instance_id] in METAINFO['classes']:
+                empty_instance['bbox_label'] = METAINFO['classes'].index(
                     anns['name'][instance_id])
             else:
                 ignore_class_name.add(anns['name'][instance_id])
@@ -1036,14 +1037,14 @@ def update_waymo_infos(pkl_path, out_dir):
 
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = pkl_path.split('/')[-1]
+    pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
 
     # dataset metainfo
     metainfo = dict()
-    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['CLASSES'])}
+    metainfo['categories'] = {k: i for i, k in enumerate(METAINFO['classes'])}
     if ignore_class_name:
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1

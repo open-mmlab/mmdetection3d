@@ -126,7 +126,7 @@ train_dataloader = dict(
             data_root=data_root,
             ann_file='nuscenes_infos_train.pkl',
             pipeline=train_pipeline,
-            metainfo=dict(CLASSES=class_names),
+            metainfo=dict(classes=class_names),
             test_mode=False,
             data_prefix=data_prefix,
             use_valid_flag=True,
@@ -134,8 +134,8 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')))
 test_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
 val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
 
 train_cfg = dict(val_interval=20)

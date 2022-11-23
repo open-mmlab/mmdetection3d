@@ -3,7 +3,7 @@ dataset_type = 'ScanNetDataset'
 data_root = 'data/scannet/'
 
 metainfo = dict(
-    CLASSES=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
              'bookshelf', 'picture', 'counter', 'desk', 'curtain',
              'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
              'garbagebin'))

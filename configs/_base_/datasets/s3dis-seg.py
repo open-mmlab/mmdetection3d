@@ -1,7 +1,7 @@
 # For S3DIS seg we usually do 13-class segmentation
 class_names = ('ceiling', 'floor', 'wall', 'beam', 'column', 'window', 'door',
                'table', 'chair', 'sofa', 'bookcase', 'board', 'clutter')
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 dataset_type = 'S3DISSegDataset'
 data_root = 'data/s3dis/'
 input_modality = dict(use_lidar=True, use_camera=False)

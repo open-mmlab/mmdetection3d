@@ -81,7 +81,7 @@ data_root = 'data/kitti/'
 class_names = ['Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 # file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.

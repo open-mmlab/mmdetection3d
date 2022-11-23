@@ -53,7 +53,7 @@ class KittiDataset(Det3DDataset):
     """
     # TODO: use full classes of kitti
     METAINFO = {
-        'CLASSES': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
+        'classes': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
                     'Person_sitting', 'Tram', 'Misc')
     }
 
@@ -123,7 +123,7 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
-        if self.load_type == 'fov_image_based':
+        if self.load_type == 'fov_image_based'  and self.load_eval_anns:
             info['instances'] = info['cam_instances'][self.default_cam_key]
 
         info = super().parse_data_info(info)

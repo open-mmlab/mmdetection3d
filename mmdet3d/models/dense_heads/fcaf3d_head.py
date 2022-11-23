@@ -7,12 +7,13 @@ try:
     from MinkowskiEngine import SparseTensor
 except ImportError:
     # Please follow getting_started.md to install MinkowskiEngine.
-    SparseTensor = None
+    ME = SparseTensor = None
     pass
 
 import torch
 from mmcv.cnn import Scale
 from mmcv.ops import nms3d, nms3d_normal
+from mmdet.utils import reduce_mean
 from mmengine.model import bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
@@ -20,7 +21,6 @@ from torch import Tensor, nn
 from mmdet3d.models import HEADS, build_loss
 from mmdet3d.structures import BaseInstance3DBoxes, rotation_3d_in_axis
 from mmdet3d.utils import InstanceList, OptInstanceList
-from mmdet.utils import reduce_mean
 from .base_3d_dense_head import Base3DDenseHead
 
 
@@ -69,6 +69,10 @@ class FCAF3DHead(Base3DDenseHead):
                  test_cfg: Optional[dict] = None,
                  init_cfg: Optional[dict] = None):
         super(FCAF3DHead, self).__init__(init_cfg)
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
         self.voxel_size = voxel_size
         self.pts_prune_threshold = pts_prune_threshold
         self.pts_assign_threshold = pts_assign_threshold

@@ -102,29 +102,29 @@ class Det3DDataset(BaseDataset):
 
         self.box_type_3d, self.box_mode_3d = get_box_type(box_type_3d)
 
-        if metainfo is not None and 'CLASSES' in metainfo:
-            # we allow to train on subset of self.METAINFO['CLASSES']
+        if metainfo is not None and 'classes' in metainfo:
+            # we allow to train on subset of self.METAINFO['classes']
             # map unselected labels to -1
             self.label_mapping = {
                 i: -1
-                for i in range(len(self.METAINFO['CLASSES']))
+                for i in range(len(self.METAINFO['classes']))
             }
             self.label_mapping[-1] = -1
-            for label_idx, name in enumerate(metainfo['CLASSES']):
-                ori_label = self.METAINFO['CLASSES'].index(name)
+            for label_idx, name in enumerate(metainfo['classes']):
+                ori_label = self.METAINFO['classes'].index(name)
                 self.label_mapping[ori_label] = label_idx
 
-            self.num_ins_per_cat = {name: 0 for name in metainfo['CLASSES']}
+            self.num_ins_per_cat = {name: 0 for name in metainfo['classes']}
         else:
             self.label_mapping = {
                 i: i
-                for i in range(len(self.METAINFO['CLASSES']))
+                for i in range(len(self.METAINFO['classes']))
             }
             self.label_mapping[-1] = -1
 
             self.num_ins_per_cat = {
                 name: 0
-                for name in self.METAINFO['CLASSES']
+                for name in self.METAINFO['classes']
             }
 
         super().__init__(
@@ -255,8 +255,9 @@ class Det3DDataset(BaseDataset):
             ann_info['instances'] = info['instances']
 
             for label in ann_info['gt_labels_3d']:
-                cat_name = self.metainfo['CLASSES'][label]
-                self.num_ins_per_cat[cat_name] += 1
+                if label != -1:
+                    cat_name = self.metainfo['classes'][label]
+                    self.num_ins_per_cat[cat_name] += 1
 
         return ann_info
 
@@ -336,12 +337,16 @@ class Det3DDataset(BaseDataset):
         """
         ori_num_per_cat = dict()
         for label in old_labels:
-            cat_name = self.metainfo['CLASSES'][label]
-            ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name, 0) + 1
+            if label != -1:
+                cat_name = self.metainfo['classes'][label]
+                ori_num_per_cat[cat_name] = ori_num_per_cat.get(cat_name,
+                                                                0) + 1
         new_num_per_cat = dict()
         for label in new_labels:
-            cat_name = self.metainfo['CLASSES'][label]
-            new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name, 0) + 1
+            if label != -1:
+                cat_name = self.metainfo['classes'][label]
+                new_num_per_cat[cat_name] = new_num_per_cat.get(cat_name,
+                                                                0) + 1
         content_show = [['category', 'new number', 'ori number']]
         for cat_name, num in ori_num_per_cat.items():
             new_num = new_num_per_cat.get(cat_name, 0)
@@ -387,9 +392,16 @@ class Det3DDataset(BaseDataset):
                 return None
 
         if self.show_ins_var:
-            self._show_ins_var(
-                ori_input_dict['ann_info']['gt_labels_3d'],
-                example['data_samples'].gt_instances_3d.labels_3d)
+            if 'ann_info' in ori_input_dict:
+                self._show_ins_var(
+                    ori_input_dict['ann_info']['gt_labels_3d'],
+                    example['data_samples'].gt_instances_3d.labels_3d)
+            else:
+                print_log(
+                    "'ann_info' is not in the input dict. It's probably that "
+                    'the data is not in training mode',
+                    'current',
+                    level=30)
 
         return example
 
