@@ -1,7 +1,6 @@
 # 学习配置文件
 
-MMDetection3D 和其他 OpenMMLab 仓库使用[MMEngine 配置系统](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/config.html)。它具有模块化和继承性设计，便于进行各种实验。
-如果希望检查配置文件，可以通过运行 `python tools/misc/print_config.py /PATH/TO/CONFIG` 来查看完整的配置。
+MMDetection3D 和其他 OpenMMLab 仓库使用[MMEngine 配置系统](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/config.html)。它具有模块化和继承性设计，便于进行各种实验。如果希望检查配置文件，可以通过运行 `python tools/misc/print_config.py /PATH/TO/CONFIG` 来查看完整的配置。
 
 ## 配置文件内容
 
@@ -119,7 +118,7 @@ data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
-metainfo = dict(CLASSES=['Pedestrian', 'Cyclist', 'Car'])
+metainfo = dict(classes=['Pedestrian', 'Cyclist', 'Car'])
 db_sampler = dict(
     data_root='data/kitti/',
     info_path='data/kitti/kitti_dbinfos_train.pkl',
@@ -250,7 +249,7 @@ train_dataloader = dict(
             ],
             modality=dict(use_lidar=True, use_camera=False),
             test_mode=False,
-            metainfo=dict(CLASSES=['Pedestrian', 'Cyclist', 'Car']),
+            metainfo=dict(classes=['Pedestrian', 'Cyclist', 'Car']),
             box_type_3d='LiDAR')))
 val_dataloader = dict(
     batch_size=1,
@@ -289,7 +288,7 @@ val_dataloader = dict(
         ],
         modality=dict(use_lidar=True, use_camera=False),
         test_mode=True,
-        metainfo=dict(CLASSES=['Pedestrian', 'Cyclist', 'Car']),
+        metainfo=dict(classes=['Pedestrian', 'Cyclist', 'Car']),
         box_type_3d='LiDAR'))
 test_dataloader = dict(
     batch_size=1,
@@ -328,7 +327,7 @@ test_dataloader = dict(
         ],
         modality=dict(use_lidar=True, use_camera=False),
         test_mode=True,
-        metainfo=dict(CLASSES=['Pedestrian', 'Cyclist', 'Car']),
+        metainfo=dict(classes=['Pedestrian', 'Cyclist', 'Car']),
         box_type_3d='LiDAR'))
 ```
 
@@ -360,17 +359,17 @@ test_cfg = dict(type='TestLoop')
 
 ### 优化器配置
 
-`optim_wrapper` 字段用来配置优化器相关设置。优化器包装器不仅提供优化器的功能，用时也支持其它功能，如梯度裁剪、混合精度训练等。更多内容参考[优化器包装器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optimizer.html)。
+`optim_wrapper` 字段用来配置优化器相关设置。优化器包装器不仅提供优化器的功能，用时也支持其它功能，如梯度裁剪、混合精度训练等。更多细节请参考[优化器封装教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optimizer.html)。
 
 ```python
-optim_wrapper = dict(  # Optimizer wrapper config
-    type='OptimWrapper',  # Optimizer wrapper type, switch to AmpOptimWrapper to enable mixed precision training.
-    optimizer=dict(  # Optimizer config. Support all kinds of optimizers in PyTorch. Refer to https://pytorch.org/docs/stable/optim.html#algorithms
+optim_wrapper = dict(  # 优化器封装配置
+    type='OptimWrapper',  # 优化器封装类型，切换成 AmpOptimWrapper 使用混合精度训练
+    optimizer=dict(  # 优化器配置。支持 PyTorch 中所有类型的优化器。参考 https://pytorch.org/docs/stable/optim.html#algorithms
         type='AdamW', lr=0.001, betas=(0.95, 0.99), weight_decay=0.01),
-    clip_grad=dict(max_norm=35, norm_type=2))  # Gradient clip option. Set None to disable gradient clip. Find usage in https://mmengine.readthedocs.io/en/latest/tutorials
+    clip_grad=dict(max_norm=35, norm_type=2))  # 梯度裁剪选项。设置 None 禁用梯度裁剪。用法请参考 https://mmengine.readthedocs.io/zh_CN/latest/tutorials
 ```
 
-`param_scheduler` 字段用来配置调整优化器超参数，例如学习率和动量。用户可以组合多个调度程序来创建所需要的参数调整策略。更多内容参考[参数调度器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/param_scheduler.html)和[参数调度器 API 文档](TODO)。
+`param_scheduler` 字段用来配置调整优化器超参数，例如学习率和动量。用户可以组合多个调度器来创建所需要的参数调整策略。更多细节请参考[参数调度器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/param_scheduler.html)和[参数调度器 API 文档](TODO)。
 
 ```python
 param_scheduler = [
@@ -426,13 +425,13 @@ default_hooks = dict(
 ### 运行配置
 
 ```python
-default_scope = 'mmdet3d'  # The default registry scope to find modules. Refer to https://mmengine.readthedocs.io/en/latest/tutorials/registry.html
+default_scope = 'mmdet3d'  # 寻找模块的默认注册域。参考 https://mmengine.readthedocs.io/zh_CN/latest/tutorials/registry.html
 
 env_cfg = dict(
-    cudnn_benchmark=False,  # Whether to enable cudnn benchmark
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),   # Use fork to start multi-processing threads. 'fork' usually faster than 'spawn' but maybe unsafe. See discussion in https://github.com/pytorch/pytorch/issues/1355
-    dist_cfg=dict(backend='nccl'))  # Distribution configs
-vis_backends = [dict(type='LocalVisBackend')]  # Visualization backends.
+    cudnn_benchmark=False,  # 是否使用 cudnn benchmark
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),  # 使用 fork 开启多线程。'fork' 通常比 'spawn' 快，但可能不安全。可参考 https://github.com/pytorch/pytorch/issues/1355
+    dist_cfg=dict(backend='nccl'))  # 分布式配置
+vis_backends = [dict(type='LocalVisBackend')]  # 可视化后端
 visualizer = dict(
     type='Det3DLocalVisualizer',
     vis_backends=[dict(type='LocalVisBackend')],
@@ -449,7 +448,7 @@ resume = False
 
 对于同一文件夹下的配置，推荐**只有一个**对应的 _原始配置_ 文件，所有其他的配置文件都应该继承自这个 _原始配置_ 文件，这样就能保证配置文件的最大继承深度为 3。
 
-为了便于理解，我们建议贡献值继承现有方法。例如，如果在 PointPillars 的基础上做了一些修改，用户首先可以通过指定 `_base_ = ../pointpillars/pointpillars_hv_fpn_sbn-all_8xb4_2x_nus-3d.py` 来继承基础的 PointPillars 结构，然后修改配置文件中的必要参数以完成继承。
+为了便于理解，我们建议贡献者继承现有方法。例如，如果在 PointPillars 的基础上做了一些修改，用户首先可以通过指定 `_base_ = ../pointpillars/pointpillars_hv_fpn_sbn-all_8xb4_2x_nus-3d.py` 来继承基础的 PointPillars 结构，然后修改配置文件中的必要参数以完成继承。
 
 如果你在构建一个与任何现有方法不共享结构的全新方法，可以在 `configs` 文件夹下创建一个新的例如 `xxx_rcnn` 文件夹。
 
@@ -459,7 +458,7 @@ resume = False
 
 有时候，你需要设置 `_delete_=True` 来忽略基础配置中的某些字段。你可以参考 [mmcv](https://mmcv.readthedocs.io/en/latest/utils.html#inherit-from-base-config-with-ignored-fields) 做简单了解。
 
-在 MMDetection3D 中，举个例子，修改以下 PointPillars 配置中的 FPN 瓶颈网络。
+在 MMDetection3D 中，例如，修改以下 PointPillars 配置中的 FPN 瓶颈网络。
 
 ```python
 model = dict(
@@ -498,7 +497,7 @@ model = dict(
 
 ### 在配置中使用中间变量
 
-在配置文件中通常会使用一些中间变量，例如数据集中 `train_pipeline`/`test_pipeline`。值得注意的是当在子配置中修改中间变量，用户需要再次将中间变量传递到相应的字段中。例如，我们想要使用多尺度策略训练和测试 PointPillars。`train_pipeline`/`test_pipeline` 是我们需要修改的中间变量。
+在配置文件中通常会使用一些中间变量，例如数据集中 `train_pipeline`/`test_pipeline`。需要注意的是当在子配置中修改中间变量，用户需要再次将中间变量传递到相应的字段中。例如，我们想要使用多尺度策略训练和测试 PointPillars。`train_pipeline`/`test_pipeline` 是我们需要修改的中间变量。
 
 ```python
 _base_ = './nus-3d.py'
@@ -566,7 +565,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 ```python
 _base_ = './pointpillars_hv_secfpn_8xb6_160e_kitti-3d-3class.py'
 
-a = {{_base_.model}} # variable `a` is equal to the `model` defined in `_base_`
+a = {{_base_.model}} # 变量 `a` 和 `_base_` 中定义的 `model` 相同
 ```
 
 ### 通过脚本参数修改配置
@@ -575,7 +574,7 @@ a = {{_base_.model}} # variable `a` is equal to the `model` defined in `_base_`
 
 - 更新配置字典的键值
 
-  可以按照原始配置中字典的键值顺序指定配置选项。例如， `--cfg-options model.backbone.norm_eval=False` 改变模型骨干网络中的 BN 模块为 `train` 模式。
+  可以按照原始配置中字典的键值顺序指定配置选项。例如，`--cfg-options model.backbone.norm_eval=False` 改变模型骨干网络中的 BN 模块为 `train` 模式。
 
 - 更新配置列表中的键值
 
@@ -597,11 +596,8 @@ a = {{_base_.model}} # variable `a` is equal to the `model` defined in `_base_`
 
 - `{algorithm name}`：算法名。这应该是检测器的名字例如 `pointpillars`，`fcos3d` 等。
 - `{model component names}`：算法中使用的组件名，例如体素编码器，骨干网络，瓶颈网络等。例如 `second_secfpn_head-dcn-circlenms` 意味着使用 SECOND's SparseEncoder，SECONDFPN 以及使用 DCN 和 circle NMS 的检测头。
-- `{training settings}`：训练设置信息，例如批量大小，数据增强，损失函数策略，调度器以及周期/迭代等。例如：`8xb4-tta-cyclic-20e` 意味着使用 8 个 GPUs，每个 GPU 有 4 个数据样本，测试增强，余弦退火学习率以及训练 20 个周期。
-  一些缩写：
+- `{training settings}`：训练设置信息，例如批量大小，数据增强，损失函数策略，调度器以及 epoch/迭代等。例如：`8xb4-tta-cyclic-20e` 意味着使用 8 个 GPUs，每个 GPU 有 4 个数据样本，测试增强，余弦退火学习率以及训练 20 个 epoch。一些缩写：
   - `{gpu x batch_per_gpu}`：GPUs 数以及每块 GPU 的样本数。`bN` 表示 每块 GPU 的批量大小为 N。例如 `4xb4` 是 4-gpus x 4-samples-per-gpu 的简写。
-  - `{schedule}`：训练策略，可选项为 `schedule-2x`，`schedule-3x`，`cyclic-20e`等。
-    `schedule-2x` 和 `schedule-3x` 分别表示训练 24 和 36 轮。
-    `cyclic-20e` 表示训练 20 轮。
+  - `{schedule}`：训练调度，可选项为 `schedule-2x`，`schedule-3x`，`cyclic-20e`等。`schedule-2x` 和 `schedule-3x` 分别表示训练 24 和 36 个 epoch。`cyclic-20e` 表示训练 20 个 epoch。
 - `{training dataset information}`：训练数据集名如 `kitti-3d-3class`，`nus-3d`，`s3dis-seg`，`scannet-seg`，`waymoD5-3d-car`。此处 `3d` 表示数据集用于 3d 目标检测，`seg` 表示数据集用于点云分割。
 - `{testing dataset information}`（可选）：当模型在一个数据集上训练，在另一个数据集上测试时的测试数据集名。如果没有指定，意味着模型在同一数据类型上训练和测试。
