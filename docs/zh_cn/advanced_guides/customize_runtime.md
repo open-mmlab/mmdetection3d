@@ -2,12 +2,12 @@
 
 ## 自定义优化器设置
 
-优化器相关的配置是由 `optim_wrapper` 管理的，其通常有三个字段：`optimizer`，`paramwise_cfg`，`clip_grad`。请参考 [OptimWrapper](https://mmengine.readthedocs.io/en/latest/tutorials/optim_wrapper.md) 了解更多细节。如下所示，使用 `AdamW` 作为`优化器`，骨干网络的学习率降低 10 倍，并添加了梯度裁剪。
+优化器相关的配置是由 `optim_wrapper` 管理的，其通常有三个字段：`optimizer`，`paramwise_cfg`，`clip_grad`。更多细节请参考 [OptimWrapper](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optim_wrapper.html)。如下所示，使用 `AdamW` 作为`优化器`，骨干网络的学习率降低 10 倍，并添加了梯度裁剪。
 
 ```python
 optim_wrapper = dict(
     type='OptimWrapper',
-    # optimizer
+    # 优化器
     optimizer=dict(
         type='AdamW',
         lr=0.0001,
@@ -15,21 +15,20 @@ optim_wrapper = dict(
         eps=1e-8,
         betas=(0.9, 0.999)),
 
-    # Parameter-level learning rate and weight decay settings
+    # 参数级学习率及权重衰减系数设置
     paramwise_cfg=dict(
         custom_keys={
             'backbone': dict(lr_mult=0.1, decay_mult=1.0),
         },
         norm_decay_mult=0.0),
 
-    # gradient clipping
+    # 梯度裁剪
     clip_grad=dict(max_norm=0.01, norm_type=2))
 ```
 
 ### 自定义 PyTorch 支持的优化器
 
-我们已经支持使用所有 PyTorch 实现的优化器，且唯一需要修改的地方就是改变配置文件中的 `optim_wrapper` 字段中的 `optimizer` 字段。
-举个例子，如果您想使用 `ADAM` （注意到这样可能会使性能大幅下降），您可以这样修改：
+我们已经支持使用所有 PyTorch 实现的优化器，且唯一需要修改的地方就是改变配置文件中的 `optim_wrapper` 字段中的 `optimizer` 字段。例如，如果您想使用 `ADAM`（注意到这样可能会使性能大幅下降），您可以这样修改：
 
 ```python
 optim_wrapper = dict(
@@ -37,7 +36,7 @@ optim_wrapper = dict(
     optimizer=dict(type='Adam', lr=0.0003, weight_decay=0.0001))
 ```
 
-为了修改模型的学习率，用户只需要修改 `optimizer` 中的 `lr` 字段。用户可以根据 PyTorch 的 [API 文档](https://pytorch.org/docs/stable/optim.html?highlight=optim#module-torch.optim) 直接设置参数。
+为了修改模型的学习率，用户只需要修改 `optimizer` 中的 `lr` 字段。用户可以根据 PyTorch 的 [API 文档](https://pytorch.org/docs/stable/optim.html?highlight=optim#module-torch.optim)直接设置参数。
 
 ### 自定义并实现优化器
 
@@ -45,8 +44,7 @@ optim_wrapper = dict(
 
 一个自定义优化器可以按照如下过程定义：
 
-假设您想要添加一个叫 `MyOptimizer` 的，拥有参数 `a`，`b` 和 `c` 的优化器，您需要创建一个叫做 `mmdet3d/engine/optimizers` 的目录。
-接下来，应该在目录下某个文件中实现新的优化器，比如 `mmdet3d/engine/optimizers/my_optimizer.py`：
+假设您想要添加一个叫 `MyOptimizer` 的，拥有参数 `a`，`b` 和 `c` 的优化器，您需要创建一个叫做 `mmdet3d/engine/optimizers` 的目录。接下来，应该在目录下某个文件中实现新的优化器，比如 `mmdet3d/engine/optimizers/my_optimizer.py`：
 
 ```python
 from mmdet3d.registry import OPTIMIZERS
@@ -62,38 +60,29 @@ class MyOptimizer(Optimizer):
 
 #### 2. 将优化器添加到注册器
 
-为了找到上述定义的优化器模块，该模块首先需要被引入主命名空间。有两种方法实现之：
+为了找到上述定义的优化器模块，该模块首先需要被引入主命名空间。有两种实现方法：
 
-- 新建 `mmdet3d/engine/optimizers/__init__.py` 文件用于引入。
+- 修改 `mmdet3d/engine/optimizers/__init__.py` 导入该模块。
 
-  新定义的模块应该在 `mmdet3d/engine/optimizers/__init__.py` 中被引入，使得注册器可以找到新模块并注册之：
+  新定义的模块应该在 `mmdet3d/engine/optimizers/__init__.py` 中被导入，从而被找到并且被添加到注册器中：
 
-```python
-from .my_optimizer import MyOptimizer
-```
+  ```python
+  from .my_optimizer import MyOptimizer
+  ```
 
-您也需要通过添加如下语句在 `mmdet3d/core/__init__.py` 中引入 `optimizer`：
+- 在配置中使用 `custom_imports` 来人工导入新优化器：
 
-```python
-from .optimizer import *
-```
+  ```python
+  custom_imports = dict(imports=['mmdet3d.engine.optimizers.my_optimizer'], allow_failed_imports=False)
+  ```
 
-- 在配置中使用 `custom_imports` 来人工引入新优化器：
+模块 `mmdet3d.engine.optimizers.my_optimizer` 会在程序开始被导入，且 `MyOptimizer` 类在那时会自动被注册。注意到应该只有包含 `MyOptimizer` 类的包被导入。`mmdet3d.engine.optimizers.my_optimizer.MyOptimizer`**不能**被直接导入。
 
-```python
-custom_imports = dict(imports=['mmdet3d.core.optimizer.my_optimizer'], allow_failed_imports=False)
-```
-
-模块 `mmdet3d.engine.optimizers.my_optimizer` 会在程序伊始被引入，且 `MyOptimizer` 类在那时会自动被注册。
-注意到只有包含 `MyOptimizer` 类的包应该被引入。
-`mmdet3d.engine.optimizers.my_optimizer.MyOptimizer` **不能** 被直接引入。
-
-事实上，用户可以在这种引入的方法中使用完全不同的文件目录结构，只要保证根目录能在 `PYTHONPATH` 中被定位。
+事实上，用户可以在这种导入的方法中使用完全不同的文件目录结构，只要保证根目录能在 `PYTHONPATH` 中被定位。
 
 #### 3. 在配置文件中指定优化器
 
-接下来您可以在配置文件的 `optimizer` 字段中使用 `MyOptimizer`。
-在配置文件中，优化器在 `optimizer` 字段中以如下方式定义：
+接下来您可以在配置文件的 `optimizer` 字段中使用 `MyOptimizer`。在配置文件中，优化器在 `optimizer` 字段中以如下方式定义：
 
 ```python
 optim_wrapper = dict(
@@ -109,10 +98,9 @@ optim_wrapper = dict(
     optimizer=dict(type='MyOptimizer', a=a_value, b=b_value, c=c_value))
 ```
 
-### 自定义优化器的构造器
+### 自定义优化器封装构造器
 
-部分模型可能会拥有一些参数专属的优化器设置，比如 BatchNorm 层的权重衰减 (weight decay)。
-用户可以通过自定义优化器的构造器来对那些细粒度的参数进行调优。
+部分模型可能会拥有一些参数专属的优化器设置，比如 BatchNorm 层的权重衰减 (weight decay)。用户可以通过自定义优化器封装构造器来对那些细粒度的参数进行调优。
 
 ```python
 from mmengine.optim import DefaultOptiWrapperConstructor
@@ -134,11 +122,11 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
 
 ```
 
-默认优化器构造器在[这里](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/optimizer/default_constructor.py#L18)实现。这部分代码也可以用作新优化器构造器的模版。
+默认优化器封装构造器在[这里](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/optimizer/default_constructor.py#L18)实现。这部分代码也可以用作新优化器封装构造器的模版。
 
 ### 额外的设置
 
-没有在优化器部分实现的技巧应该通过优化器构造器或者钩子来实现 （比如逐参数的学习率设置）。我们列举了一些常用的可以稳定训练过程或者加速训练的设置。我们欢迎提供更多类似设置的 PR 和 issue。
+没有在优化器部分实现的技巧应该通过优化器封装构造器或者钩子来实现（比如逐参数的学习率设置）。我们列举了一些常用的可以稳定训练过程或者加速训练的设置。我们欢迎提供更多类似设置的 PR 和 issue。
 
 - __使用梯度裁剪 (gradient clip) 来稳定训练过程__：
 
@@ -149,19 +137,17 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
       _delete_=True, clip_grad=dict(max_norm=35, norm_type=2))
   ```
 
-  如果您的配置继承了一个已经设置了 `optim_wrapper` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。详见配置文件的[说明文档](https://mmdetection3d.readthedocs.io/en/latest/tutorials/config.html)。
+  如果您的配置继承了一个已经设置了 `optim_wrapper` 的基础配置，那么您可能需要 `_delete_=True` 字段来覆盖基础配置中无用的设置。更多细节请参考[说明文档](https://mmdetection3d.readthedocs.io/en/latest/tutorials/config.html)。
 
-- __使用动量规划器 (momentum scheduler) 来加速模型收敛__：
+- __使用动量调度器 (momentum scheduler) 来加速模型收敛__：
 
-  我们支持用动量规划器来根据学习率更改模型的动量，这样可以使模型更快地收敛。
-  动量规划器通常和学习率规划器一起使用，比如说，如下配置文件在 [3D 检测](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/schedules/cyclic_20e.py)中被用于加速模型收敛。
-  更多细节详见 [CosineAnnealingLR](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L43) 和 [CosineAnnealingMomentum](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/momentum_scheduler.py#L71) 的实现。
+  我们支持用动量调度器来根据学习率更改模型的动量，这样可以使模型更快地收敛。动量调度器通常和学习率调度器一起使用，例如，如下配置文件在 [3D 检测](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/schedules/cyclic_20e.py)中被用于加速模型收敛。更多细节请参考 [CosineAnnealingLR](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L43) 和 [CosineAnnealingMomentum](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/momentum_scheduler.py#L71) 的实现方法。
 
   ```python
   param_scheduler = [
-      # 学习率调整策略
-      #在前 8 轮，学习率从 0 升到 lr * 10
-      # 在接下来 12 轮，学习率从 lr * 10 降到 lr * 1e-4
+      # 学习率调度器
+      # 在前 8 个 epoch，学习率从 0 升到 lr * 10
+      # 在接下来 12 个 epoch，学习率从 lr * 10 降到 lr * 1e-4
       dict(
           type='CosineAnnealingLR',
           T_max=8,
@@ -178,9 +164,9 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
           end=20,
           by_epoch=True,
           convert_to_iter_based=True),
-      # 动量调整策略
-      # 在前 8 轮，动量从 0 升到 0.85 / 0.95
-      # 在接下来 12 轮，动量从 0.85 / 0.95 升到 1
+      # 动量调度器
+      # 在前 8 个 epoch，动量从 0 升到 0.85 / 0.95
+      # 在接下来 12 个 epoch，动量从 0.85 / 0.95 升到 1
       dict(
           type='CosineAnnealingMomentum',
           T_max=8,
@@ -200,12 +186,11 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
   ]
   ```
 
-## 自定义训练规程
+## 自定义训练调度
 
-默认情况，我们使用阶梯式学习率衰减的 1 倍训练规程。这会调用 MMEngine 中的 [`MultiStepLR`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139)。
-我们在[这里](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py)支持很多其他学习率规划方案，比如`余弦退火`和`多项式衰减`规程。下面是一些样例：
+默认情况下我们使用阶梯式学习率衰减的 1 倍训练调度。这会调用 MMEngine 中的 [`MultiStepLR`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py#L139)。我们在[这里](https://github.com/open-mmlab/mmengine/blob/main/mmengine/optim/scheduler/lr_scheduler.py)支持了很多其他学习率调度，比如`余弦退火`和`多项式衰减`调度。下面是一些样例：
 
-- 多项式衰减规程:
+- 多项式衰减调度:
 
   ```python
   param_scheduler = [
@@ -218,7 +203,7 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
           by_epoch=True)]
   ```
 
-- 余弦退火规程:
+- 余弦退火调度:
 
   ```python
   param_scheduler = [
@@ -231,9 +216,9 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
           by_epoch=True)]
   ```
 
-## 自定义工作流
+## 自定义训练循环控制器
 
-我们默认在 `train_cfg` 中使用 `EpochBasedTrainLoop`，并在每一个训练周期完全后执行一次验证，如下所示：
+默认情况下，我们在 `train_cfg` 中使用 `EpochBasedTrainLoop`，并在每一个训练 epoch 完成后进行一次验证，如下所示：
 
 ```python
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_begin=1, val_interval=1)
@@ -242,9 +227,9 @@ train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_begin=1, val_int
 事实上，[`IterBasedTrainLoop`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/loops.py#L183%5D) 和 [`EpochBasedTrainLoop`](https://github.com/open-mmlab/mmengine/blob/main/mmengine/runner/loops.py#L18) 都支持动态间隔验证，如下所示：
 
 ```python
-# 在第 365001 个迭代之前，我们每隔 5000 个迭代验证一次
-# 在第 365000 个迭代之后，我们每隔 368750 个迭代验证一次
-# 这意味着我们在训练结束后验证一次。
+# 在第 365001 次迭代之前，我们每隔 5000 次迭代验证一次
+# 在第 365000 次迭代之后，我们每隔 368750 次迭代验证一次
+# 这意味着我们在训练结束后进行验证。
 
 interval = 5000
 max_iters = 368750
@@ -262,8 +247,7 @@ train_cfg = dict(
 
 #### 1. 实现一个新钩子
 
-MMEngine 提供了一些有用的[钩子](https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/hook.md)，但有些场合用户可能需要实现一个新的钩子。在 v1.1.0rc0 之后，MMDetection3D 在训练时支持基于 MMEngine 自定义钩子。因此用户可以直接在 mmdet3d 或者基于 mmdet3d 的代码库中实现钩子并通过更改训练配置来使用钩子。
-这里我们给出一个在 mmdet3d 中创建并使用新钩子的例子。
+MMEngine 提供了一些实用的[钩子](https://github.com/open-mmlab/mmengine/blob/main/docs/en/tutorials/hook.md)，但有些场合用户可能需要实现一个新的钩子。在 v1.1.0rc0 之后，MMDetection3D 在训练时支持基于 MMEngine 自定义钩子。因此用户可以直接在 mmdet3d 或者基于 mmdet3d 的代码库中实现钩子并通过更改训练配置来使用钩子。这里我们给出一个在 mmdet3d 中创建并使用新钩子的例子。
 
 ```python
 from mmengine.hooks import Hook
@@ -300,25 +284,25 @@ class MyHook(Hook):
                          outputs: Optional[dict] = None) -> None:
 ```
 
-取决于钩子的功能，用户需要指定钩子在每个训练阶段时的行为，具体包括如下阶段：`before_run`，`after_run`，`before_train`，`after_train`，`before_train_epoch`，`after_train_epoch`，`before_train_iter`，和 `after_train_iter`。有更多的位点可以插入钩子，详情可参考 [base hook class](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/hook.py#L9)。
+用户需要根据钩子的功能指定钩子在每个训练阶段时的行为，具体包括如下阶段：`before_run`，`after_run`，`before_train`，`after_train`，`before_train_epoch`，`after_train_epoch`，`before_train_iter`，和 `after_train_iter`。有更多的位点可以插入钩子，详情可参考 [base hook class](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/hook.py#L9)。
 
 #### 2. 注册新钩子
 
-接下来我们需要引入 `MyHook`。假设新钩子位于文件 `mmdet3d/engine/hooks/my_hook.py` 中，有两种方法可以实现之：
+接下来我们需要导入 `MyHook`。假设新钩子位于文件 `mmdet3d/engine/hooks/my_hook.py` 中，有两种实现方法：
 
-- 更改 `mmdet3d/engine/hooks/__init__.py` 来引入之：
+- 修改 `mmdet3d/engine/hooks/__init__.py` 导入该模块：
 
-  新定义的模块应在 `mmdet3d/engine/hooks/__init__.py` 中引入，以使得注册器可以找到新模块并注册之：
+  新定义的模块应该在 `mmdet3d/engine/hooks/__init__.py` 中被导入，从而被找到并且被添加到注册器中：
 
-```python
-from .my_hook import MyHook
-```
+  ```python
+  from .my_hook import MyHook
+  ```
 
-- 在配置中使用 `custom_imports` 来人为地引入之：
+- 在配置中使用 `custom_imports` 来人为地导入新钩子：
 
-```python
-custom_imports = dict(imports=['mmdet3d.core.utils.my_hook'], allow_failed_imports=False)
-```
+  ```python
+  custom_imports = dict(imports=['mmdet3d.engine.hooks.my_hook'], allow_failed_imports=False)
+  ```
 
 #### 3. 更改配置文件
 
@@ -336,7 +320,7 @@ custom_hooks = [
 ]
 ```
 
-注册阶段钩子的优先级默认设置为 `NORMAL`。
+默认情况下，注册阶段钩子的优先级为 `NORMAL`。
 
 ### 使用 MMEngine 中实现的钩子
 

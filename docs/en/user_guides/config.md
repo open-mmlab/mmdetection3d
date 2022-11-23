@@ -431,7 +431,7 @@ default_scope = 'mmdet3d'  # The default registry scope to find modules. Refer t
 
 env_cfg = dict(
     cudnn_benchmark=False,  # Whether to enable cudnn benchmark
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),   # Use fork to start multi-processing threads. 'fork' usually faster than 'spawn' but maybe unsafe. See discussion in https://github.com/pytorch/pytorch/issues/1355
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),  # Use fork to start multi-processing threads. 'fork' usually faster than 'spawn' but maybe unsafe. See discussion in https://github.com/pytorch/pytorch/issues/1355
     dist_cfg=dict(backend='nccl'))  # Distribution configs
 vis_backends = [dict(type='LocalVisBackend')]  # Visualization backends.
 visualizer = dict(

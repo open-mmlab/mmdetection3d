@@ -32,7 +32,7 @@ mmdetection3d
 
 ### Create KITTI dataset
 
-To create KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile, `.pkl` info files are also generated for training or validation. Subsequently, create KITTI data by running
+To create KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile, `.pkl` info files are also generated for training or validation. Subsequently, create KITTI data by running:
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -98,7 +98,7 @@ kitti
     - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate with shape (4, 4).
   - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance. For the i-th instance:
     - info\['instances'\]\[i\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
-    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, h, w, yaw) order.
     - info\['instances'\]\[i\]\['bbox_label'\]: An int indicate the 2D label of instance and the -1 indicating ignore.
     - info\['instances'\]\[i\]\['bbox_label_3d'\]: An int indicate the 3D label of instance and the -1 indicating ignore.
     - info\['instances'\]\[i\]\['depth'\]: Projected center depth of the 3D bounding box with respect to the image plane.
@@ -114,14 +114,15 @@ Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d
 
 ## Train pipeline
 
-A typical train pipeline of 3D detection on KITTI is as below.
+A typical train pipeline of 3D detection on KITTI is as below:
 
 ```python
 train_pipeline = [
-    dict(type='LoadPointsFromFile',
-         coord_type='LIDAR',
-         load_dim=4, # x, y, z, intensity
-         use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4, # x, y, z, intensity
+        use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -180,32 +181,26 @@ aos  AP:97.70, 89.11, 87.38
 
 An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
 
-- First, you need to modify the `test_evaluator` dict in your config file to add `pklfile_prefix` and `submission_prefix`, just like:
+- First, you need to modify the `test_dataloader` and `test_evaluator` dict in your config file, just like:
 
-```python
-data_root = 'data/kitti/'
-test_evaluator = dict(
-    type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_test.pkl',
-    metric='bbox',
-    pklfile_prefix='results/kitti-3class/kitti_results',
-    submission_prefix='results/kitti-3class/kitti_results')
-```
+  ```python
+  data_root = 'data/kitti/'
+  test_dataloader = dict(
+      dataset=dict(
+          ann_file='kitti_infos_test.pkl',
+          load_eval_anns=False,
+          data_prefix=dict(pts='testing/velodyne_reduced')))
+  test_evaluator = dict(
+      ann_file=data_root + 'kitti_infos_test.pkl',
+      format_only=True,
+      pklfile_prefix='results/kitti-3class/kitti_results',
+      submission_prefix='results/kitti-3class/kitti_results')
+  ```
 
 - And then, you can run the test script.
 
-```shell
-mkdir -p results/kitti-3class
-
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
-```
-
-- Or you can use `--cfg-options "test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results" "test_evaluator.submission_prefix=results/kitti-3class/kitti_results"` after the test command, and run test script directly.
-
-```shell
-mkdir -p results/kitti-3class
-
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
-```
+  ```shell
+  ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+  ```
 
 After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.

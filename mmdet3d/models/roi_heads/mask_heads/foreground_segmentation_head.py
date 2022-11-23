@@ -3,6 +3,7 @@ from typing import Dict, Optional, Tuple
 
 import torch
 from mmcv.cnn.bricks import build_norm_layer
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import nn as nn
@@ -10,7 +11,6 @@ from torch import nn as nn
 from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import InstanceList
-from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

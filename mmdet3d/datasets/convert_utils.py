@@ -296,7 +296,7 @@ def get_kitti_style_2d_boxes(info: dict,
             repro_rec['velocity'] = -1  # no velocity in KITTI
 
             center_3d = np.array(loc).reshape([1, 3])
-            center_2d_with_depth = box_np_ops.points_cam2img(
+            center_2d_with_depth = points_cam2img(
                 center_3d, camera_intrinsic, with_depth=True)
             center_2d_with_depth = center_2d_with_depth.squeeze().tolist()
 
