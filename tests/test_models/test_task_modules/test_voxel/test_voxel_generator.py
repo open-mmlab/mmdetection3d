@@ -15,7 +15,6 @@ def test_voxel_generator():
     voxels, coors, num_points_per_voxel = voxels
     expected_coors = np.array([[2, 0, 0], [3, 0, 0], [0, 0, 0], [1, 0, 0]])
     expected_num_points_per_voxel = np.array([5, 5, 5, 3])
-    print(voxels.shape, coors, num_points_per_voxel)
     assert voxels.shape == (4, 5, 3)
     assert np.all(coors == expected_coors)
     assert np.all(num_points_per_voxel == expected_num_points_per_voxel)
