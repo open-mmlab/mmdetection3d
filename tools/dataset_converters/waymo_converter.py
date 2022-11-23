@@ -133,10 +133,7 @@ class Waymo2KITTI(object):
             self.save_image(frame, file_idx, frame_idx)
             self.save_calib(frame, file_idx, frame_idx)
             if 'testing_3d_camera_only_detection' not in self.load_dir:
-<<<<<<< HEAD
                 # the camera only split doesn't contain lidar points.
-=======
->>>>>>> dev-1.x
                 self.save_lidar(frame, file_idx, frame_idx)
             self.save_pose(frame, file_idx, frame_idx)
             self.save_timestamp(frame, file_idx, frame_idx)
