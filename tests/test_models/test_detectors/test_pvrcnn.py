@@ -2,10 +2,10 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
-
-from mmdet3d.registry import MODELS
 from tests.utils.model_utils import (_create_detector_inputs,
                                      _get_detector_cfg, _setup_seed)
+
+from mmdet3d.registry import MODELS
 
 
 class TestPVRCNN(unittest.TestCase):
