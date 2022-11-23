@@ -73,11 +73,11 @@ GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION dv_mvx-f
 $CHECKPOINT_DIR/configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py/latest.pth --eval map \
 2>&1|tee $CHECKPOINT_DIR/configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py/FULL_LOG.txt &
 
-echo 'configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py' &
-mkdir -p $CHECKPOINT_DIR/configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py
-GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py \
-$CHECKPOINT_DIR/configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py/latest.pth --eval map \
-2>&1|tee $CHECKPOINT_DIR/configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py/FULL_LOG.txt &
+echo 'configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py' &
+mkdir -p $CHECKPOINT_DIR/configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py
+GPUS=8 GPUS_PER_NODE=8 CPUS_PER_TASK=5 ./tools/slurm_test.sh $PARTITION hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py \
+$CHECKPOINT_DIR/configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py/latest.pth --eval map \
+2>&1|tee $CHECKPOINT_DIR/configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py/FULL_LOG.txt &
 
 echo 'configs/pointnet2/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py' &
 mkdir -p $CHECKPOINT_DIR/configs/pointnet2/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
