@@ -3,12 +3,12 @@ dataset_type = 'ScanNetDataset'
 data_root = 'data/scannet/'
 
 metainfo = dict(
-    CLASSES=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
              'bookshelf', 'picture', 'counter', 'desk', 'curtain',
              'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
              'garbagebin'))
 
-file_client_args = dict(backend='disk')
+# file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.

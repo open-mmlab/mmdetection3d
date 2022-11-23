@@ -2,6 +2,11 @@
 from typing import List, Optional, Tuple
 
 import torch
+from mmdet.models.utils import (gaussian_radius, gen_gaussian_target,
+                                multi_apply)
+from mmdet.models.utils.gaussian_target import (get_local_maximum,
+                                                get_topk_from_heatmap,
+                                                transpose_and_gather_feat)
 from mmengine.structures import InstanceData
 from torch import Tensor
 from torch.nn import functional as F
@@ -9,11 +14,6 @@ from torch.nn import functional as F
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.utils import (ConfigType, InstanceList, OptConfigType,
                            OptInstanceList, OptMultiConfig)
-from mmdet.models.utils import (gaussian_radius, gen_gaussian_target,
-                                multi_apply)
-from mmdet.models.utils.gaussian_target import (get_local_maximum,
-                                                get_topk_from_heatmap,
-                                                transpose_and_gather_feat)
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 

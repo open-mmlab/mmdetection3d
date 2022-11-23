@@ -8,7 +8,7 @@ point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 # dataset settings
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 # PointPillars adopted a different sampling strategies among classes
 db_sampler = dict(

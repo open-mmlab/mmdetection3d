@@ -101,11 +101,12 @@ Considering there are many similar frames in the original dataset, we can basica
 
 ## Evaluation
 
-For evaluation on Waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.  Basically, you can follow the commands below to install `bazel` and build the file.
+For evaluation on Waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.  Basically, you can follow the commands below to install `bazel` and build the file.
 
 ```shell
 # download the code and enter the base directory
 git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
+# git clone https://github.com/Abyssaledge/waymo-open-dataset-master waymo-od # if you want to use faster multi-thread version.
 cd waymo-od
 git checkout remotes/origin/master
 
@@ -145,7 +146,7 @@ Then you can evaluate your models on Waymo. An example to evaluate PointPillars 
 
 An example to test PointPillars on Waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
-`submission_prefix` should be set in `test_evaluator` of configuration before you run the test command  if you want to generate the bin files and make a submission to the leaderboard..
+`submission_prefix` should be set in `test_evaluator` of configuration before you run the test command if you want to generate the bin files and make a submission to the leaderboard..
 
 After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/). Basically, here are some example commands.
 

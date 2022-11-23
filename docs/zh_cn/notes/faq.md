@@ -1,39 +1,20 @@
 # 常见问题解答
 
-我们列出了一些用户和开发者在开发过程中会遇到的常见问题以及对应的解决方案，如果您发现了任何频繁出现的问题，请随时扩充本列表，非常欢迎您提出的任何解决方案。如果您在环境配置、模型训练等工作中遇到任何的问题，请使用[问题模板](https://github.com/open-mmlab/mmdetection3d/blob/master/.github/ISSUE_TEMPLATE/error-report.md/)来创建相应的 issue,并将所需的所有信息填入到问题模板中，我们会尽快解决您的问题。
+我们列出了一些用户和开发者在开发过程中会遇到的常见问题以及对应的解决方案，如果您发现了任何频繁出现的问题，请随时扩充本列表，非常欢迎您提出的任何解决方案。如果您在环境配置、模型训练等工作中遇到任何的问题，请使用[问题模板](https://github.com/open-mmlab/mmdetection3d/blob/master/.github/ISSUE_TEMPLATE/error-report.md)来创建相应的 issue，并将所需的所有信息填入到问题模板中，我们会尽快解决您的问题。
 
-## MMCV/MMDet/MMDet3D Installation
+## MMEngine/MMCV/MMDet/MMDet3D 安装
 
-- 跟 MMCV, MMDetection, MMSegmentation 和 MMDetection3D 相关的编译问题; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
+- 跟 MMEngine, MMCV, MMDetection 和 MMDetection3D 相关的编译问题; "ConvWS is already registered in conv layer"; "AssertionError: MMCV==xxx is used but incompatible. Please install mmcv>=xxx, \<=xxx."
 
-MMDetection3D 需要的 MMCV, MMDetection 和 MMSegmentation 的版本列在了下面。请安装正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免相关的安装问题。
+- MMDetection3D 需要的 MMEngine, MMCV 和 MMDetection 的版本列在了下面。请安装正确版本的 MMEngine、MMCV 和 MMDetection 以避免相关的安装问题。
 
-| MMDetection3D version |   MMDetection version    | MMSegmentation version  |        MMCV version         |
-| :-------------------: | :----------------------: | :---------------------: | :-------------------------: |
-|        master         | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
-|       v1.0.0rc4       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
-|       v1.0.0rc3       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
-|       v1.0.0rc2       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
-|       v1.0.0rc1       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.5.0  |
-|       v1.0.0rc0       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
-|        0.18.1         | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
-|        0.18.0         | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
-|        0.17.3         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|        0.17.2         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|        0.17.1         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|        0.17.0         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|        0.16.0         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|        0.15.0         | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|        0.14.0         | mmdet>=2.10.0, \<=2.11.0 |      mmseg==0.14.0      | mmcv-full>=1.3.1, \<=1.4.0  |
-|        0.13.0         | mmdet>=2.10.0, \<=2.11.0 |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
-|        0.12.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
-|        0.11.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
-|        0.10.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
-|         0.9.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
-|         0.8.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
-|         0.7.0         | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
-|         0.6.0         | mmdet>=2.4.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.3, \<=1.2.0  |
-|         0.5.0         |          2.3.0           |      Not required       |      mmcv-full==1.0.5       |
+  | MMDetection3D 版本 |       MMEngine 版本        |         MMCV 版本         |      MMDetection 版本      |
+  | ---------------- | :----------------------: | :---------------------: | :----------------------: |
+  | dev-1.x          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc1        | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc0        | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+
+  **注意**：如果你想安装 mmdet3d-v1.0.0rcx，可以在[此处](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation)找到 MMDetection，MMSegmentation 和 MMCV 的兼容版本。请选择正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免安装问题。
 
 - 如果您在 `import open3d` 时遇到下面的问题：
 
@@ -69,4 +50,4 @@ MMDetection3D 不支持点云标注。我们提供一些开源的标注工具供
 - [SUSTechPOINTS](https://github.com/naurril/SUSTechPOINTS)
 - [LATTE](https://github.com/bernwang/latte)
 
-此外，我们改进了 [LATTE](https://github.com/bernwang/latte) 以便更方便的标注。 更多的细节请参考 [这里](https://arxiv.org/abs/2011.10174)。
+此外，我们改进了 [LATTE](https://github.com/bernwang/latte) 以便更方便的标注。更多的细节请参考[这里](https://arxiv.org/abs/2011.10174)。

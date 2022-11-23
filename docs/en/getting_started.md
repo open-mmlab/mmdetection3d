@@ -7,6 +7,7 @@ MMDection3D works on Linux, Windows (experimental support) and macOS and require
 - PyTorch 1.6+
 - CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
 - GCC 5+
+- [MMEngine](https://mmengine.readthedocs.io/en/latest/#installation)
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
 ```{note}
@@ -99,7 +100,7 @@ pip install -v -e .  # or "python setup.py develop"
 
 Note:
 
-1. The git commit id will be written to the version number with step d, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
+1. The git commit id will be written to the version number with step 4, e.g. 0.6.0+2e7045c. The version will also be saved in trained models.
    It is recommended that you run step d each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
 
    > Important: Be sure to remove the `./build` folder if you reinstall mmdet with a different CUDA/PyTorch version.
@@ -117,20 +118,20 @@ Note:
 
 4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
 
-   We have supported spconv2.0. If the user has installed spconv2.0, the code will use spconv2.0 first, which will take up less GPU memory than using the default mmcv spconv. Users can use the following commands to install spconv2.0:
+   We have supported `spconv 2.0`. If the user has installed `spconv 2.0`, the code will use `spconv 2.0` first, which will take up less GPU memory than using the default `mmcv spconv`. Users can use the following commands to install `spcon v2.0`:
 
    ```bash
    pip install cumm-cuxxx
    pip install spconv-cuxxx
    ```
 
-   Where xxx is the CUDA version in the environment.
+   Where `xxx` is the CUDA version in the environment.
 
    For example, using CUDA 10.2, the command will be `pip install cumm-cu102 && pip install spconv-cu102`.
 
    Supported CUDA versions include 10.2, 11.1, 11.3, and 11.4. Users can also install it by building from the source. For more details please refer to [spconv v2.x](https://github.com/traveller59/spconv).
 
-   We also support Minkowski Engine as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip`:
+   We also support `Minkowski Engine` as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/NVIDIA/MinkowskiEngine#installation) or use `pip` to install it:
 
    ```shell
    conda install openblas-devel -c anaconda
@@ -155,7 +156,7 @@ Examples:
 python demo/pcd_demo.py demo/data/kitti/000008.bin configs/second/second_hv-secfpn_8xb6-80e_kitti-3d-car.py checkpoints/second_hv-secfpn_8xb6-80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
 
-If you want to input a `ply` file, you can use the following function and convert it to `bin` format. Then you can use the converted `bin` file to generate demo.
+If you want to input a `.ply` file, you can use the following function and convert it to `.bin` format. Then you can use the converted `.bin` file to generate demo.
 Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training `ply data`.
 
 ```python
@@ -181,7 +182,7 @@ Examples:
 convert_ply('./test.ply', './test.bin')
 ```
 
-If you have point clouds in other format (`off`, `obj`, etc.), you can use `trimesh` to convert them into `ply`.
+If you have point clouds in other format (`.off`, `.obj`, etc.), you can use `trimesh` to convert them into `ply`.
 
 ```python
 import trimesh
@@ -197,7 +198,7 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](demo.md).
+More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](user_guides/inference.md).
 
 ## Customize Installation
 
@@ -216,7 +217,7 @@ Installing CUDA runtime libraries is enough if you follow our best practices, be
 
 ### Install MMEngine without MIM
 
-To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmcv.readthedocs.io/en/latest/get_started/installation.html).
+To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmengine.readthedocs.io/en/latest/get_started/installation.html).
 
 For example, you can install MMEngine by the following command.
 
@@ -280,5 +281,5 @@ pip install -e .
 
 ## Trouble shooting
 
-If you have some issues during the installation, please first view the [FAQ](faq.md) page.
+If you have some issues during the installation, please first view the [FAQ](notes/faq.md) page.
 You may [open an issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose) on GitHub if no solution is found.

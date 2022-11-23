@@ -72,7 +72,7 @@ class TestSemanticKITTIDataset(unittest.TestCase):
         semantickitti_dataset = SemanticKITTIDataset(
             data_root,
             ann_file,
-            metainfo=dict(CLASSES=classes, PALETTE=palette),
+            metainfo=dict(classes=classes, palette=palette),
             data_prefix=data_prefix,
             pipeline=pipeline,
             modality=modality)

@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) page for SUN RGB-D.
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md) page for SUN RGB-D.
 
 ### Download SUN RGB-D data and toolbox
 
@@ -151,21 +151,21 @@ sunrgbd
 ├── sunrgbd_infos_val.pkl
 ```
 
-- `points/0xxxxx.bin`: The point cloud data after downsample.
+- `points/xxxxxx.bin`: The point cloud data after downsample.
 - `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
-  - info\['lidar_points'\]: A dict contains all information relate to the the lidar points.
+  - info\['lidar_points'\]: A dict containing all information related to the the lidar points.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
-    - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
-  - info\['images'\]: A dict contains all information relate to the image data.
-    - info\['images'\]\['CAM0'\]\['img_path'\]: The image file name.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
+  - info\['images'\]: A dict containing all information relate to the image data.
+    - info\['images'\]\['CAM0'\]\['img_path'\]: The filename of the image.
     - info\['images'\]\['CAM0'\]\['depth2img'\]: Transformation matrix from depth to image with shape (4, 4).
     - info\['images'\]\['CAM0'\]\['height'\]: The height of image.
     - info\['images'\]\['CAM0'\]\['width'\]: The width of image.
-  - info\['instances'\]: A list of dict contains all the annotations of this frame. Each dict corresponds to annotations of single instance.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in depth coordinate system.
-    - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
-    - info\['instances'\]\['bbox_label_3d'\]: An int indicates the 3D label of instance and the -1 indicates ignore class.
-    - info\['instances'\]\['bbox_label'\]: An int indicates the 2D label of instance and the -1 indicates ignore class.
+  - info\['instances'\]: A list of dict contains all the annotations of this frame. Each dict corresponds to annotations of single instance. For the i-th instance:
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box in depth coordinate system.
+    - info\['instances'\]\[i\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: An int indicates the 3D label of instance and the -1 indicates ignore class.
+    - info\['instances'\]\[i\]\['bbox_label'\]: An int indicates the 2D label of instance and the -1 indicates ignore class.
 - `sunrgbd_infos_val.pkl`: The val data infos, which shares the same format as `sunrgbd_infos_train.pkl`.
 
 ## Train pipeline
@@ -232,19 +232,19 @@ train_pipeline = [
         shift_height=True),
     dict(
         type='Pack3DDetInputs',
-        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d','img', 'gt_bboxes', 'gt_bboxes_labels', ])
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d','img', 'gt_bboxes', 'gt_bboxes_labels'])
 ]
 ```
 
-Data augmentation/normalization for images:
+Data augmentation for images:
 
 - `Resize`: resize the input image, `keep_ratio=True` means the ratio of the image is kept unchanged.
 - `RandomFlip`: randomly flip the input image.
 
-The image augmentation and normalization functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines).
+The image augmentation functions are implemented in [MMDetection](https://github.com/open-mmlab/mmdetection/tree/dev-3.x/mmdet/datasets/transforms).
 
 ## Metrics
 
-Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py).
+Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called. Please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py) for more details.
 
 Since SUN RGB-D consists of image data, detection on image data is also feasible. For instance, in ImVoteNet, we first train an image detector, and we also use mAP for evaluation, e.g. `mAP@0.5`. We use the `eval_map` function from [MMDetection](https://github.com/open-mmlab/mmdetection) to calculate mAP.

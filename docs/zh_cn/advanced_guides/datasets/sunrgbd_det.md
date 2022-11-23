@@ -2,7 +2,7 @@
 
 ## 数据集的准备
 
-对于数据集准备的整体流程，请参考 SUN RGB-D 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/)。
+对于数据集准备的整体流程，请参考 SUN RGB-D 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md)。
 
 ### 下载 SUN RGB-D 数据与工具包
 
@@ -133,92 +133,7 @@ python tools/create_data.py sunrgbd --root-path ./data/sunrgbd \
 bash tools/create_data.sh <job_name> sunrgbd
 ```
 
-之前提到的点云数据就会被处理并以 `.bin` 格式重新存储。与此同时，`.pkl` 文件也被生成，用于存储数据标注和元信息。这一步处理中，用于生成 `.pkl` 文件的核心函数 `process_single_scene` 如下：
-
-```python
-def process_single_scene(sample_idx):
-    print(f'{self.split} sample_idx: {sample_idx}')
-    # 将深度图转换为点云并降采样点云
-    pc_upright_depth = self.get_depth(sample_idx)
-    pc_upright_depth_subsampled = random_sampling(
-        pc_upright_depth, self.num_points)
-
-    info = dict()
-    pc_info = {'num_features': 6, 'lidar_idx': sample_idx}
-    info['point_cloud'] = pc_info
-
-    # 将点云保存为 `.bin` 格式
-    mmengine.mkdir_or_exist(osp.join(self.root_dir, 'points'))
-    pc_upright_depth_subsampled.tofile(
-        osp.join(self.root_dir, 'points', f'{sample_idx:06d}.bin'))
-
-    # 存储点云存储路径
-    info['pts_path'] = osp.join('points', f'{sample_idx:06d}.bin')
-
-    # 存储图像存储路径以及其元信息
-    img_path = osp.join('image', f'{sample_idx:06d}.jpg')
-    image_info = {
-        'image_idx': sample_idx,
-        'image_shape': self.get_image_shape(sample_idx),
-        'image_path': img_path
-    }
-    info['image'] = image_info
-
-    # 保存标定信息
-    K, Rt = self.get_calibration(sample_idx)
-    calib_info = {'K': K, 'Rt': Rt}
-    info['calib'] = calib_info
-
-    # 保存所有数据标注
-    if has_label:
-        obj_list = self.get_label_objects(sample_idx)
-        annotations = {}
-        annotations['gt_num'] = len([
-            obj.classname for obj in obj_list
-            if obj.classname in self.cat2label.keys()
-        ])
-        if annotations['gt_num'] != 0:
-            # 类别名称
-            annotations['name'] = np.array([
-                obj.classname for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            # 二维图像包围框
-            annotations['bbox'] = np.concatenate([
-                obj.box2d.reshape(1, 4) for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ], axis=0)
-            # depth 坐标系下的三维包围框中心坐标
-            annotations['location'] = np.concatenate([
-                obj.centroid.reshape(1, 3) for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ], axis=0)
-            # depth 坐标系下的三维包围框大小
-            annotations['dimensions'] = 2 * np.array([
-                [obj.l, obj.h, obj.w] for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            # depth 坐标系下的三维包围框旋转角
-            annotations['rotation_y'] = np.array([
-                obj.heading_angle for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            annotations['index'] = np.arange(
-                len(obj_list), dtype=np.int32)
-            # 类别标签（数字）
-            annotations['class'] = np.array([
-                self.cat2label[obj.classname] for obj in obj_list
-                if obj.classname in self.cat2label.keys()
-            ])
-            # depth 坐标系下的三维包围框
-            annotations['gt_boxes_upright_depth'] = np.stack(
-                [
-                    obj.box3d for obj in obj_list
-                    if obj.classname in self.cat2label.keys()
-                ], axis=0)  # (K,8)
-        info['annos'] = annotations
-    return info
-```
+之前提到的点云数据就会被处理并以 `.bin` 格式重新存储。与此同时，`.pkl` 文件也被生成，用于存储数据标注和元信息。
 
 如上数据处理后，文件目录结构应如下：
 
@@ -236,24 +151,21 @@ sunrgbd
 ├── sunrgbd_infos_val.pkl
 ```
 
-- `points/0xxxxx.bin`：降采样后的点云数据。
+- `points/xxxxxx.bin`：降采样后的点云数据。
 - `sunrgbd_infos_train.pkl`：训练集数据信息（标注与元信息），每个场景所含数据信息具体如下：
-  - info\['point_cloud'\]：`{'num_features': 6, 'lidar_idx': sample_idx}`，其中 `sample_idx` 为该场景的索引。
-  - info\['pts_path'\]：`points/0xxxxx.bin` 的路径。
-  - info\['image'\]：图像路径与元信息：
-    - image\['image_idx'\]：图像索引。
-    - image\['image_shape'\]：图像张量的形状（即其尺寸）。
-    - image\['image_path'\]：图像路径。
-  - info\['annos'\]：每个场景的标注：
-    - annotations\['gt_num'\]：真实物体 (ground truth) 的数量。
-    - annotations\['name'\]：所有真实物体的语义类别名称，比如 `chair`（椅子）。
-    - annotations\['location'\]：depth 坐标系下三维包围框的重力中心 (gravity center)，形状为 \[K, 3\]，其中 K 是真实物体的数量。
-    - annotations\['dimensions'\]：depth 坐标系下三维包围框的大小，形状为 \[K, 3\]。
-    - annotations\['rotation_y'\]：depth 坐标系下三维包围框的旋转角，形状为 \[K, \]。
-    - annotations\['gt_boxes_upright_depth'\]：depth 坐标系下三维包围框 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 \[K, 7\]。
-    - annotations\['bbox'\]：二维包围框 `(x, y, x_size, y_size)`，形状为 \[K, 4\]。
-    - annotations\['index'\]：所有真实物体的索引，范围为 \[0, K)。
-    - annotations\['class'\]：所有真实物体类别的标号，范围为 \[0, 10)，形状为 \[K, \]。
+  - info\['lidar_points'\]：字典包含了与激光雷达点相关的信息。
+    - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
+    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
+  - info\['images'\]：字典包含了与图像数据相关的信息。
+    - info\['images'\]\['CAM0'\]\['img_path'\]：图像的文件名。
+    - info\['images'\]\['CAM0'\]\['depth2img'\]：深度到图像的变换矩阵，形状为 (4, 4)。
+    - info\['images'\]\['CAM0'\]\['height'\]：图像的高。
+    - info\['images'\]\['CAM0'\]\['width'\]：图像的宽。
+  - info\['instances'\]：由字典组成的列表，包含了该帧的所有标注信息。每个字典与单个实例的标注相关。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，表示深度坐标系下的 3D 边界框。
+    - info\['instances'\]\[i\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]：整数表示实例的 3D 标签，-1 表示忽略该类别。
+    - info\['instances'\]\[i\]\['bbox_label'\]：整数表示实例的 2D 标签，-1 表示忽略该类别。
 - `sunrgbd_infos_val.pkl`：验证集上的数据信息，与 `sunrgbd_infos_train.pkl` 格式完全一致。
 
 ## 训练流程
@@ -280,15 +192,16 @@ train_pipeline = [
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
     dict(type='PointSample', num_points=20000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 ```
 
 点云上的数据增强
 
 - `RandomFlip3D`：随机左右或前后翻转输入点云。
-- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 \[-30, 30\] （度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 \[0.85, 1.15\] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0（即不做位移）。
+- `GlobalRotScaleTrans`：旋转输入点云，对于 SUN RGB-D 角度通常落入 \[-30, 30\]（度）的范围；并放缩输入点云，对于 SUN RGB-D 比例通常落入 \[0.85, 1.15\] 的范围；最后平移输入点云，对于 SUN RGB-D 通常位移量为 0（即不做位移）。
 - `PointSample`：降采样输入点云。
 
 SUN RGB-D 上多模态（点云和图像）3D 物体检测的典型流程如下：
@@ -304,9 +217,8 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations3D'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 600), keep_ratio=True),
+    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.0),
-    dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(
         type='RandomFlip3D',
@@ -318,28 +230,21 @@ train_pipeline = [
         rot_range=[-0.523599, 0.523599],
         scale_ratio_range=[0.85, 1.15],
         shift_height=True),
-    dict(type='PointSample', num_points=20000),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
-        keys=[
-            'img', 'gt_bboxes', 'gt_labels', 'points', 'gt_bboxes_3d',
-            'gt_labels_3d'
-        ])
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d','img', 'gt_bboxes', 'gt_bboxes_labels'])
 ]
 ```
 
-图像上的数据增强/归一化
+图像上的数据增强
 
-- `Resize`: 改变输入图像的大小, `keep_ratio=True` 意味着图像的比例不改变。
-- `Normalize`: 归一化图像的 RGB 通道。
-- `RandomFlip`: 随机地翻折图像。
-- `Pad`: 扩大图像，默认情况下用零填充图像的边缘。
+- `Resize`：改变输入图像的大小，`keep_ratio=True` 意味着图像的比例不改变。
+- `RandomFlip`：随机地翻折图像。
 
-图像增强和归一化函数的实现取自 [MMDetection](https://github.com/open-mmlab/mmdetection/tree/master/mmdet/datasets/pipelines)。
+图像增强的实现取自 [MMDetection](https://github.com/open-mmlab/mmdetection/tree/dev-3.x/mmdet/datasets/transforms)。
 
 ## 度量指标
 
-与 ScanNet 一样，通常 mAP（全类平均精度）被用于 SUN RGB-D 的检测任务的评估，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时一个通用的计算 3D 物体检测多个类别的精度和召回率的函数被调用，可以参考 [`indoor_eval.py`](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/indoor_eval.py)。
+与 ScanNet 一样，通常使用 mAP（全类平均精度）来评估 SUN RGB-D 的检测任务的性能，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时调用一个通用的计算 3D 物体检测多个类别的精度和召回率的函数。更多细节请参考 [`indoor_eval.py`](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py)。
 
 因为 SUN RGB-D 包含有图像数据，所以图像上的物体检测也是可行的。举个例子，在 ImVoteNet 中，我们首先训练了一个图像检测器，并且也使用 mAP 指标，如 `mAP@0.5`，来评估其表现。我们使用 [MMDetection](https://github.com/open-mmlab/mmdetection) 库中的 `eval_map` 函数来计算 mAP。

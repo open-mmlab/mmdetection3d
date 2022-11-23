@@ -39,7 +39,7 @@ def _generate_scannet_seg_dataset_config():
         [227, 119, 194],
         [82, 84, 163],
     ]
-    scene_idxs = [0 for _ in range(20)]
+    scene_idxs = [0]
     modality = dict(use_lidar=True, use_camera=False)
     pipeline = [
         dict(
@@ -83,22 +83,39 @@ def _generate_scannet_dataset_config():
                'bookshelf', 'picture', 'counter', 'desk', 'curtain',
                'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
                'garbagebin')
-    # TODO add pipline
-    from mmcv.transforms.base import BaseTransform
-    from mmengine.registry import TRANSFORMS
-    if 'Identity' not in TRANSFORMS:
-
-        @TRANSFORMS.register_module()
-        class Identity(BaseTransform):
-
-            def transform(self, info):
-                if 'ann_info' in info:
-                    info['gt_labels_3d'] = info['ann_info']['gt_labels_3d']
-                return info
-
     modality = dict(use_lidar=True, use_camera=False)
     pipeline = [
-        dict(type='Identity'),
+        dict(
+            type='LoadPointsFromFile',
+            coord_type='DEPTH',
+            shift_height=True,
+            load_dim=6,
+            use_dim=[0, 1, 2]),
+        dict(
+            type='LoadAnnotations3D',
+            with_bbox_3d=True,
+            with_label_3d=True,
+            with_mask_3d=True,
+            with_seg_3d=True),
+        dict(type='GlobalAlignment', rotation_axis=2),
+        dict(type='PointSegClassMapping'),
+        dict(type='PointSample', num_points=5),
+        dict(
+            type='RandomFlip3D',
+            sync_2d=False,
+            flip_ratio_bev_horizontal=1.0,
+            flip_ratio_bev_vertical=1.0),
+        dict(
+            type='GlobalRotScaleTrans',
+            rot_range=[-0.087266, 0.087266],
+            scale_ratio_range=[1.0, 1.0],
+            shift_height=True),
+        dict(
+            type='Pack3DDetInputs',
+            keys=[
+                'points', 'pts_semantic_mask', 'gt_bboxes_3d', 'gt_labels_3d',
+                'pts_instance_mask'
+            ])
     ]
     data_prefix = dict(
         pts='points',
@@ -113,13 +130,13 @@ class TestScanNetDataset(unittest.TestCase):
         np.random.seed(0)
         data_root, ann_file, classes, data_prefix, \
             pipeline, modality, = _generate_scannet_dataset_config()
-
+        register_all_modules()
         scannet_dataset = ScanNetDataset(
             data_root,
             ann_file,
             data_prefix=data_prefix,
             pipeline=pipeline,
-            metainfo=dict(CLASSES=classes),
+            metainfo=dict(classes=classes),
             modality=modality)
 
         scannet_dataset.prepare_data(0)
@@ -146,7 +163,7 @@ class TestScanNetDataset(unittest.TestCase):
                               torch.tensor([107.7353]))
 
         no_class_scannet_dataset = ScanNetDataset(
-            data_root, ann_file, metainfo=dict(CLASSES=['cabinet']))
+            data_root, ann_file, metainfo=dict(classes=['cabinet']))
 
         input_dict = no_class_scannet_dataset.get_data_info(0)
         ann_info = no_class_scannet_dataset.parse_ann_info(input_dict)
@@ -158,7 +175,7 @@ class TestScanNetDataset(unittest.TestCase):
         self.assertEqual(ann_info['gt_labels_3d'].dtype, np.int64)
         # all instance have been filtered by classes
         self.assertEqual(len(ann_info['gt_labels_3d']), 27)
-        self.assertEqual(len(no_class_scannet_dataset.metainfo['CLASSES']), 1)
+        self.assertEqual(len(no_class_scannet_dataset.metainfo['classes']), 1)
 
     def test_scannet_seg(self):
         data_root, ann_file, classes, palette, scene_idxs, data_prefix, \
@@ -169,7 +186,7 @@ class TestScanNetDataset(unittest.TestCase):
         scannet_seg_dataset = ScanNetSegDataset(
             data_root,
             ann_file,
-            metainfo=dict(CLASSES=classes, PALETTE=palette),
+            metainfo=dict(classes=classes, palette=palette),
             data_prefix=data_prefix,
             pipeline=pipeline,
             modality=modality,

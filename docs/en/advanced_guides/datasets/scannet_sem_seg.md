@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-The overall process is similar to ScanNet 3D detection task. Please refer to this [section](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/scannet_det.md#dataset-preparation). Only a few differences and additional information about the 3D semantic segmentation data will be listed below.
+The overall process is similar to ScanNet 3D detection task. Please refer to this [section](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/datasets/scannet_det.md#dataset-preparation). Only a few differences and additional information about the 3D semantic segmentation data will be listed below.
 
 ### Export ScanNet data
 
@@ -100,8 +100,7 @@ train_pipeline = [
         enlarge_size=0.2,
         min_unique_num=None),
     dict(type='NormalizePointsColor', color_mean=None),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'pts_semantic_mask'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 ```
 
@@ -111,7 +110,7 @@ train_pipeline = [
 
 ## Metrics
 
-Typically mean Intersection over Union (mIoU) is used for evaluation on ScanNet. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/evaluation/seg_eval.py).
+Typically mean Intersection over Union (mIoU) is used for evaluation on ScanNet. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py).
 
 ## Testing and Making a Submission
 

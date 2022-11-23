@@ -1,11 +1,11 @@
 # Learn about Configs
 
-MMDetection3D and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.md). It has a modular and inheritance design, which is convenient to conduct various experiments.
+MMDetection3D and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.html). It has a modular and inheritance design, which is convenient to conduct various experiments.
 If you wish to inspect the config file, you may run `python tools/misc/print_config.py /PATH/TO/CONFIG` to see the complete config.
 
 ## Config File Content
 
-MMDetection3D uses a modular design, all modules with different functions can be configured through the config. Taking PointPillars as an example, we will introduce each field in the config according to different function modules:
+MMDetection3D uses a modular design, all modules with different functions can be configured through the config. Taking PointPillars as an example, we will introduce each field in the config according to different function modules.
 
 ### Model config
 
@@ -119,7 +119,7 @@ data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
-metainfo = dict(CLASSES=['Pedestrian', 'Cyclist', 'Car'])
+metainfo = dict(classes=['Pedestrian', 'Cyclist', 'Car'])
 db_sampler = dict(
     data_root='data/kitti/',
     info_path='data/kitti/kitti_dbinfos_train.pkl',
@@ -250,7 +250,7 @@ train_dataloader = dict(
             ],
             modality=dict(use_lidar=True, use_camera=False),
             test_mode=False,
-            metainfo=dict(CLASSES=['Pedestrian', 'Cyclist', 'Car']),
+            metainfo=dict(classes=['Pedestrian', 'Cyclist', 'Car']),
             box_type_3d='LiDAR')))
 val_dataloader = dict(
     batch_size=1,
@@ -289,7 +289,7 @@ val_dataloader = dict(
         ],
         modality=dict(use_lidar=True, use_camera=False),
         test_mode=True,
-        metainfo=dict(CLASSES=['Pedestrian', 'Cyclist', 'Car']),
+        metainfo=dict(classes=['Pedestrian', 'Cyclist', 'Car']),
         box_type_3d='LiDAR'))
 test_dataloader = dict(
     batch_size=1,
@@ -328,7 +328,7 @@ test_dataloader = dict(
         ],
         modality=dict(use_lidar=True, use_camera=False),
         test_mode=True,
-        metainfo=dict(CLASSES=['Pedestrian', 'Cyclist', 'Car']),
+        metainfo=dict(classes=['Pedestrian', 'Cyclist', 'Car']),
         box_type_3d='LiDAR'))
 ```
 
@@ -431,7 +431,7 @@ default_scope = 'mmdet3d'  # The default registry scope to find modules. Refer t
 
 env_cfg = dict(
     cudnn_benchmark=False,  # Whether to enable cudnn benchmark
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),   # Use fork to start multi-processing threads. 'fork' usually faster than 'spawn' but maybe unsafe. See discussion in https://github.com/pytorch/pytorch/issues/1355
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),  # Use fork to start multi-processing threads. 'fork' usually faster than 'spawn' but maybe unsafe. See discussion in https://github.com/pytorch/pytorch/issues/1355
     dist_cfg=dict(backend='nccl'))  # Distribution configs
 vis_backends = [dict(type='LocalVisBackend')]  # Visualization backends.
 visualizer = dict(
@@ -446,7 +446,7 @@ resume = False
 
 ## Config file inheritance
 
-There are 4 basic component types under `config/_base_`, dataset, model, schedule, default_runtime.
+There are 4 basic component types under `configs/_base_`, dataset, model, schedule, default_runtime.
 Many methods could be easily constructed with one of each like SECOND, PointPillars, PartA2, and VoteNet.
 The configs that are composed by components from `_base_` are called _primitive_.
 

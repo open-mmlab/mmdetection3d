@@ -151,7 +151,7 @@ class NuScenesMetric(BaseMetric):
         """
         logger: MMLogger = MMLogger.get_current_instance()
 
-        classes = self.dataset_meta['CLASSES']
+        classes = self.dataset_meta['classes']
         self.version = self.dataset_meta['version']
         # load annotations
         self.data_infos = load(

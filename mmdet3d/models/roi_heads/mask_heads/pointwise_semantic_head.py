@@ -2,6 +2,7 @@
 from typing import Dict, Optional, Tuple
 
 import torch
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from torch import Tensor
 from torch import nn as nn
@@ -10,7 +11,6 @@ from torch.nn import functional as F
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes, rotation_3d_in_axis
 from mmdet3d.utils import InstanceList
-from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

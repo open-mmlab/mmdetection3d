@@ -67,7 +67,7 @@ class TestInstanceSegMetric(unittest.TestCase):
                         'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                         'sink', 'bathtub', 'garbagebin')
         dataset_meta = dict(
-            seg_valid_class_ids=seg_valid_class_ids, CLASSES=class_labels)
+            seg_valid_class_ids=seg_valid_class_ids, classes=class_labels)
         instance_seg_metric = InstanceSegMetric()
         instance_seg_metric.dataset_meta = dataset_meta
         instance_seg_metric.process(data_batch, predictions)

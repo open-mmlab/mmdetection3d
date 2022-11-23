@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet3d.registry import MODELS
 from mmdet.models.backbones import RegNet
+
+from mmdet3d.registry import MODELS
 
 
 @MODELS.register_module()

@@ -1,6 +1,6 @@
-# 教程 4: 自定义模型
+# 自定义模型
 
-我们通常把模型的各个组成成分分成6种类型：
+我们通常把模型的各个组成成分分成 6 种类型：
 
 - 编码器（encoder）：包括 voxel layer、voxel encoder 和 middle encoder 等进入 backbone 前所使用的基于 voxel 的方法，如 HardVFE 和 PointPillarsScatter。
 - 骨干网络（backbone）：通常采用 FCN 网络来提取特征图，如 ResNet 和 SECOND。
@@ -22,10 +22,10 @@
 ```python
 import torch.nn as nn
 
-from ..builder import VOXEL_ENCODERS
+from mmdet3d.registry import MODELS
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class HardVFE(nn.Module):
 
     def __init__(self, arg1, arg2):
@@ -74,10 +74,10 @@ model = dict(
 ```python
 import torch.nn as nn
 
-from ..builder import BACKBONES
+from mmdet3d.registry import MODELS
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class SECOND(BaseModule):
 
     def __init__(self, arg1, arg2):
@@ -122,9 +122,9 @@ model = dict(
 创建一个新文件 `mmdet3d/models/necks/second_fpn.py` ：
 
 ```python
-from ..builder import NECKS
+from mmdet3d.registry import MODELS
 
-@NECKS.register
+@MODELS.register_module()
 class SECONDFPN(BaseModule):
 
     def __init__(self,
@@ -183,10 +183,10 @@ PartA2 RoI Head 实现一个新的 bbox head ，并用于目标检测的任务�
 为了实现一个新的 bbox head，通常需要在其中实现三个功能，如下所示，有时该模块还需要实现其他相关的功能，如 `loss` 和 `get_targets`。
 
 ```python
-from mmdet.models.builder import HEADS
-from .bbox_head import BBoxHead
+from mmdet3d.registry import MODELS
+from mmengine.model import BaseModule
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PartA2BboxHead(BaseModule):
     """PartA2 RoI head."""
 
@@ -218,71 +218,63 @@ class PartA2BboxHead(BaseModule):
         super(PartA2BboxHead, self).__init__(init_cfg=init_cfg)
 
     def forward(self, seg_feats, part_feats):
-
 ```
 
 其次，如果有必要的话，用户还需要实现一个新的 RoI Head，此处我们从 `Base3DRoIHead` 中继承得到一个新类 `PartAggregationROIHead`，此时我们就能发现 `Base3DRoIHead` 已经实现了下面的功能：
 
 ```python
-from abc import ABCMeta, abstractmethod
-from torch import nn as nn
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet.models.roi_heads import BaseRoIHead
 
 
-@HEADS.register_module()
-class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
+class Base3DRoIHead(BaseRoIHead):
     """Base class for 3d RoIHeads."""
 
     def __init__(self,
                  bbox_head=None,
-                 mask_roi_extractor=None,
+                 bbox_roi_extractor=None,
                  mask_head=None,
+                 mask_roi_extractor=None,
                  train_cfg=None,
                  test_cfg=None,
                  init_cfg=None):
+        super(Base3DRoIHead, self).__init__(
+            bbox_head=bbox_head,
+            bbox_roi_extractor=bbox_roi_extractor,
+            mask_head=mask_head,
+            mask_roi_extractor=mask_roi_extractor,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
 
-    @property
-    def with_bbox(self):
+    def init_bbox_head(self, bbox_roi_extractor: dict,
+                       bbox_head: dict) -> None:
+        """Initialize box head and box roi extractor.
 
-    @property
-    def with_mask(self):
-
-    @abstractmethod
-    def init_weights(self, pretrained):
-
-    @abstractmethod
-    def init_bbox_head(self):
-
-    @abstractmethod
-    def init_mask_head(self):
-
-    @abstractmethod
-    def init_assigner_sampler(self):
-
-    @abstractmethod
-    def forward_train(self,
-                      x,
-                      img_metas,
-                      proposal_list,
-                      gt_bboxes,
-                      gt_labels,
-                      gt_bboxes_ignore=None,
-                      **kwargs):
-
-    def simple_test(self,
-                    x,
-                    proposal_list,
-                    img_metas,
-                    proposals=None,
-                    rescale=False,
-                    **kwargs):
-        """Test without augmentation."""
-        pass
-
-    def aug_test(self, x, proposal_list, img_metas, rescale=False, **kwargs):
-        """Test with augmentations.
-        If rescale is False, then returned bboxes and masks will fit the scale
-        of imgs[0].
+        Args:
+            bbox_roi_extractor (dict or ConfigDict): Config of box
+                roi extractor.
+            bbox_head (dict or ConfigDict): Config of box in box head.
         """
+        self.bbox_roi_extractor = MODELS.build(bbox_roi_extractor)
+        self.bbox_head = MODELS.build(bbox_head)
+
+    def init_assigner_sampler(self):
+        """Initialize assigner and sampler."""
+        self.bbox_assigner = None
+        self.bbox_sampler = None
+        if self.train_cfg:
+            if isinstance(self.train_cfg.assigner, dict):
+                self.bbox_assigner = TASK_UTILS.build(self.train_cfg.assigner)
+            elif isinstance(self.train_cfg.assigner, list):
+                self.bbox_assigner = [
+                    TASK_UTILS.build(res) for res in self.train_cfg.assigner
+                ]
+            self.bbox_sampler = TASK_UTILS.build(self.train_cfg.sampler)
+
+    def init_mask_head(self):
+        """Initialize mask head, skip since ``PartAggregationROIHead`` does not
+        have one."""
         pass
 
 ```
@@ -290,87 +282,194 @@ class Base3DRoIHead(BaseModule, metaclass=ABCMeta):
 接着将会对 bbox_forward 的逻辑进行修改，同时，bbox_forward 还会继承来自 `Base3DRoIHead` 的其他逻辑，在 `mmdet3d/models/roi_heads/part_aggregation_roi_head.py` 中，我们实现了新的 RoI Head，如下所示：
 
 ```python
+from typing import Dict, List, Tuple
+
+from mmcv import ConfigDict
+from torch import Tensor
 from torch.nn import functional as F
 
-from mmdet3d.core import AssignResult
-from mmdet3d.core.bbox import bbox3d2result, bbox3d2roi
-from mmdet.core import build_assigner, build_sampler
-from mmdet.models import HEADS
-from ..builder import build_head, build_roi_extractor
+from mmdet3d.registry import MODELS
+from mmdet3d.structures import bbox3d2roi
+from mmdet3d.utils import InstanceList
+from mmdet.models.task_modules import AssignResult, SamplingResult
+from ...structures.det3d_data_sample import SampleList
 from .base_3droi_head import Base3DRoIHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PartAggregationROIHead(Base3DRoIHead):
     """Part aggregation roi head for PartA2.
+
     Args:
         semantic_head (ConfigDict): Config of semantic head.
         num_classes (int): The number of classes.
         seg_roi_extractor (ConfigDict): Config of seg_roi_extractor.
-        part_roi_extractor (ConfigDict): Config of part_roi_extractor.
+        bbox_roi_extractor (ConfigDict): Config of part_roi_extractor.
         bbox_head (ConfigDict): Config of bbox_head.
         train_cfg (ConfigDict): Training config.
         test_cfg (ConfigDict): Testing config.
     """
 
     def __init__(self,
-                 semantic_head,
-                 num_classes=3,
-                 seg_roi_extractor=None,
-                 part_roi_extractor=None,
-                 bbox_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None):
+                 semantic_head: dict,
+                 num_classes: int = 3,
+                 seg_roi_extractor: dict = None,
+                 bbox_head: dict = None,
+                 bbox_roi_extractor: dict = None,
+                 train_cfg: dict = None,
+                 test_cfg: dict = None,
+                 init_cfg: dict = None) -> None:
         super(PartAggregationROIHead, self).__init__(
             bbox_head=bbox_head,
+            bbox_roi_extractor=bbox_roi_extractor,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
         self.num_classes = num_classes
         assert semantic_head is not None
-        self.semantic_head = build_head(semantic_head)
+        self.init_seg_head(seg_roi_extractor, semantic_head)
 
-        if seg_roi_extractor is not None:
-            self.seg_roi_extractor = build_roi_extractor(seg_roi_extractor)
-        if part_roi_extractor is not None:
-            self.part_roi_extractor = build_roi_extractor(part_roi_extractor)
+    def init_seg_head(self, seg_roi_extractor: dict,
+                      semantic_head: dict) -> None:
+        """Initialize semantic head and seg roi extractor.
 
-        self.init_assigner_sampler()
-
-    def _bbox_forward(self, seg_feats, part_feats, voxels_dict, rois):
-        """Forward function of roi_extractor and bbox_head used in both
-        training and testing.
         Args:
-            seg_feats (torch.Tensor): Point-wise semantic features.
-            part_feats (torch.Tensor): Point-wise part prediction features.
-            voxels_dict (dict): Contains information of voxels.
-            rois (Tensor): Roi boxes.
-        Returns:
-            dict: Contains predictions of bbox_head and
-                features of roi_extractor.
+            seg_roi_extractor (dict): Config of seg
+                roi extractor.
+            semantic_head (dict): Config of semantic head.
         """
-        pooled_seg_feats = self.seg_roi_extractor(seg_feats,
-                                                  voxels_dict['voxel_centers'],
-                                                  voxels_dict['coors'][..., 0],
-                                                  rois)
-        pooled_part_feats = self.part_roi_extractor(
-            part_feats, voxels_dict['voxel_centers'],
-            voxels_dict['coors'][..., 0], rois)
-        cls_score, bbox_pred = self.bbox_head(pooled_seg_feats,
-                                              pooled_part_feats)
+        self.semantic_head = MODELS.build(semantic_head)
+        self.seg_roi_extractor = MODELS.build(seg_roi_extractor)
 
-        bbox_results = dict(
-            cls_score=cls_score,
-            bbox_pred=bbox_pred,
-            pooled_seg_feats=pooled_seg_feats,
-            pooled_part_feats=pooled_part_feats)
-        return bbox_results
+    @property
+    def with_semantic(self):
+        """bool: whether the head has semantic branch"""
+        return hasattr(self,
+                       'semantic_head') and self.semantic_head is not None
+
+    def predict(self,
+                feats_dict: Dict,
+                rpn_results_list: InstanceList,
+                batch_data_samples: SampleList,
+                rescale: bool = False,
+                **kwargs) -> InstanceList:
+        """Perform forward propagation of the roi head and predict detection
+        results on the features of the upstream network.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+                of rpn head.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+            rescale (bool): If True, return boxes in original image space.
+                Defaults to False.
+
+        Returns:
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
+        """
+        assert self.with_bbox, 'Bbox head must be implemented in PartA2.'
+        assert self.with_semantic, 'Semantic head must be implemented' \
+                                   ' in PartA2.'
+
+        batch_input_metas = [
+            data_samples.metainfo for data_samples in batch_data_samples
+        ]
+        voxels_dict = feats_dict.pop('voxels_dict')
+        # TODO: Split predict semantic and bbox
+        results_list = self.predict_bbox(feats_dict, voxels_dict,
+                                         batch_input_metas, rpn_results_list,
+                                         self.test_cfg)
+        return results_list
+
+    def predict_bbox(self, feats_dict: Dict, voxel_dict: Dict,
+                     batch_input_metas: List[dict],
+                     rpn_results_list: InstanceList,
+                     test_cfg: ConfigDict) -> InstanceList:
+        """Perform forward propagation of the bbox head and predict detection
+        results on the features of the upstream network.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            voxel_dict (dict): Contains information of voxels.
+            batch_input_metas (list[dict], Optional): Batch image meta info.
+                Defaults to None.
+            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+                of rpn head.
+            test_cfg (Config): Test config.
+
+        Returns:
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
+        """
+        ...
+
+    def loss(self, feats_dict: Dict, rpn_results_list: InstanceList,
+             batch_data_samples: SampleList, **kwargs) -> dict:
+        """Perform forward propagation and loss calculation of the detection
+        roi on the features of the upstream network.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+                of rpn head.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            dict[str, Tensor]: A dictionary of loss components
+        """
+        assert len(rpn_results_list) == len(batch_data_samples)
+        losses = dict()
+        batch_gt_instances_3d = []
+        batch_gt_instances_ignore = []
+        voxels_dict = feats_dict.pop('voxels_dict')
+        for data_sample in batch_data_samples:
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+            if 'ignored_instances' in data_sample:
+                batch_gt_instances_ignore.append(data_sample.ignored_instances)
+            else:
+                batch_gt_instances_ignore.append(None)
+        if self.with_semantic:
+            semantic_results = self._semantic_forward_train(
+                feats_dict, voxels_dict, batch_gt_instances_3d)
+            losses.update(semantic_results.pop('loss_semantic'))
+
+        sample_results = self._assign_and_sample(rpn_results_list,
+                                                 batch_gt_instances_3d)
+        if self.with_bbox:
+            feats_dict.update(semantic_results)
+            bbox_results = self._bbox_forward_train(feats_dict, voxels_dict,
+                                                    sample_results)
+            losses.update(bbox_results['loss_bbox'])
+
+        return losses
 ```
 
-此处我们省略了与其他功能相关的细节，请参考 [此处](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/models/roi_heads/part_aggregation_roi_head.py) 获取更多细节。
+此处我们省略相关函数的更多细节。请参考[代码](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/roi_heads/part_aggregation_roi_head.py)了解更多细节。
 
-最后，用户需要在 `mmdet3d/models/bbox_heads/__init__.py` 和 `mmdet3d/models/roi_heads/__init__.py` 中添加新模块，使得对应的注册器能够发现并加载该模块。
+最后，用户需要在 `mmdet3d/models/bbox_heads/__init__.py` 和 `mmdet3d/models/roi_heads/__init__.py` 中添加模块以确保相应的注册器能够找到并加载它们。
 
 此外，用户也可以添加以下的代码到配置文件中，从而实现相同的目标。
 
@@ -379,7 +478,7 @@ custom_imports=dict(
     imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'])
 ```
 
-PartAggregationROIHead 的配置文件如下所示：
+PartAggregationROIHead 的配置文件如下所示。
 
 ```python
 model = dict(
@@ -394,14 +493,16 @@ model = dict(
             seg_score_thr=0.3,
             num_classes=3,
             loss_seg=dict(
-                type='FocalLoss',
+                type='mmdet.FocalLoss',
                 use_sigmoid=True,
                 reduction='sum',
                 gamma=2.0,
                 alpha=0.25,
                 loss_weight=1.0),
             loss_part=dict(
-                type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=True,
+                loss_weight=1.0)),
         seg_roi_extractor=dict(
             type='Single3DRoIAwareExtractor',
             roi_layer=dict(
@@ -409,7 +510,7 @@ model = dict(
                 out_size=14,
                 max_pts_per_voxel=128,
                 mode='max')),
-        part_roi_extractor=dict(
+        bbox_roi_extractor=dict(
             type='Single3DRoIAwareExtractor',
             roi_layer=dict(
                 type='RoIAwarePool3d',
@@ -433,15 +534,15 @@ model = dict(
             roi_feat_size=14,
             with_corner_loss=True,
             loss_bbox=dict(
-                type='SmoothL1Loss',
+                type='mmdet.SmoothL1Loss',
                 beta=1.0 / 9.0,
                 reduction='sum',
                 loss_weight=1.0),
             loss_cls=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 use_sigmoid=True,
                 reduction='sum',
-                loss_weight=1.0)))
+                loss_weight=1.0))),
     ...
     )
 ```
@@ -459,8 +560,8 @@ PartA2 Head 的第二阶段主要使用新建的 `PartAggregationROIHead` 和 `P
 import torch
 import torch.nn as nn
 
-from ..builder import LOSSES
-from .utils import weighted_loss
+from mmdet3d.registry import MODELS
+from mmdet.models.losses.utils import weighted_loss
 
 @weighted_loss
 def my_loss(pred, target):
@@ -468,7 +569,7 @@ def my_loss(pred, target):
     loss = torch.abs(pred - target)
     return loss
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class MyLoss(nn.Module):
 
     def __init__(self, reduction='mean', loss_weight=1.0):
