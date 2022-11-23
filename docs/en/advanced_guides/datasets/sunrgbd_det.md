@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md/) page for SUN RGB-D.
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/master/data/sunrgbd/README.md) page for SUN RGB-D.
 
 ### Download SUN RGB-D data and toolbox
 
@@ -153,9 +153,9 @@ sunrgbd
 
 - `points/xxxxxx.bin`: The point cloud data after downsample.
 - `sunrgbd_infos_train.pkl`: The train data infos, the detailed info of each scene is as follows:
-  - info\['lidar_points'\]: A dict containing all information relate to the the lidar points.
+  - info\['lidar_points'\]: A dict containing all information related to the the lidar points.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
-    - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
   - info\['images'\]: A dict containing all information relate to the image data.
     - info\['images'\]\['CAM0'\]\['img_path'\]: The filename of the image.
     - info\['images'\]\['CAM0'\]\['depth2img'\]: Transformation matrix from depth to image with shape (4, 4).
@@ -245,6 +245,6 @@ The image augmentation functions are implemented in [MMDetection](https://github
 
 ## Metrics
 
-Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py).
+Same as ScanNet, typically mean Average Precision (mAP) is used for evaluation on SUN RGB-D, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called. Please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py) for more details.
 
 Since SUN RGB-D consists of image data, detection on image data is also feasible. For instance, in ImVoteNet, we first train an image detector, and we also use mAP for evaluation, e.g. `mAP@0.5`. We use the `eval_map` function from [MMDetection](https://github.com/open-mmlab/mmdetection) to calculate mAP.
