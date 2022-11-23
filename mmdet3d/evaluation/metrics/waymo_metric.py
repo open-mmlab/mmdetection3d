@@ -45,8 +45,15 @@ class WaymoMetric(KittiMetric):
         submission_prefix (str, optional): The prefix of submission data.
             If not specified, the submission data will not be generated.
             Default: None.
-        task: (str, optional): task for 3D detection, if cam, would filter
-            the points that outside the image.
+        load_type (str, optional): Type of loading mode during training.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_base': Only load the instances inside the default cam,
+                and need to convert to the FOV-based data type to support
+                image-based detector.
         default_cam_key (str, optional): The default camera for lidar to
             camear conversion. By default, KITTI: CAM2, Waymo: CAM_FRONT
         use_pred_sample_idx (bool, optional): In formating results, use the
@@ -76,7 +83,7 @@ class WaymoMetric(KittiMetric):
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
                  submission_prefix: str = None,
-                 task='lidar_det',
+                 load_type: str = 'frame_based',
                  default_cam_key: str = 'CAM_FRONT',
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
@@ -85,7 +92,7 @@ class WaymoMetric(KittiMetric):
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
         self.split = split
-        self.task = task
+        self.load_type = load_type
         self.use_pred_sample_idx = use_pred_sample_idx
         self.convert_kitti_format = convert_kitti_format
 
@@ -124,8 +131,8 @@ class WaymoMetric(KittiMetric):
         assert len(results) == len(self.data_infos), \
             'invalid list length of network outputs'
         # different from kitti, waymo do not need to convert the ann file
-        # handle the mono3d task
-        if self.task == 'mono_det':
+        # handle the mv_image_based load_mode
+        if self.load_type == 'mv_image_based':
             new_data_infos = []
             for info in self.data_infos:
                 height = info['images'][self.default_cam_key]['height']
@@ -425,7 +432,7 @@ class WaymoMetric(KittiMetric):
         lidar2cam = cam0_info['images'][self.default_cam_key]['lidar2img']
         lidar2cam = np.array(lidar2cam).astype(np.float32)
         box_preds_camera = box_preds_lidar.convert_to(
-            Box3DMode.CAM, np.linalg.inv(lidar2cam), correct_yaw=True)
+            Box3DMode.CAM, lidar2cam, correct_yaw=True)
         # Note: bbox is meaningless in final evaluation, set to 0
         merged_box_dict = dict(
             bbox=np.zeros([box_preds_lidar.tensor.shape[0], 4]),
@@ -470,7 +477,7 @@ class WaymoMetric(KittiMetric):
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
 
-            if self.task == 'mono_det':
+            if self.load_type == 'mv_image_based':
                 if idx % self.num_cams == 0:
                     box_dict_per_frame = []
                     cam0_key = list(info['images'].keys())[0]
@@ -487,7 +494,7 @@ class WaymoMetric(KittiMetric):
                 # If you want to use another camera, please modify it.
                 image_shape = (info['images'][self.default_cam_key]['height'],
                                info['images'][self.default_cam_key]['width'])
-            if self.task == 'mono_det':
+            if self.load_type == 'mv_image_based':
                 box_dict_per_frame.append(box_dict)
                 if (idx + 1) % self.num_cams != 0:
                     continue
@@ -587,7 +594,7 @@ class WaymoMetric(KittiMetric):
 
     def convert_valid_bboxes(self, box_dict: dict, info: dict):
         """Convert the predicted boxes into valid ones. Should handle the
-        different task mode (mono3d, mv3d, lidar), separately.
+        load_model (frame_based, mv_image_based, fov_image_based), separately.
 
         Args:
             box_dict (dict): Box dictionaries to be converted.
@@ -624,11 +631,11 @@ class WaymoMetric(KittiMetric):
                 scores=np.zeros([0]),
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
-        # Here default used 'CAM2' to compute metric. If you want to
+        # Here default used 'CAM_FRONT' to compute metric. If you want to
         # use another camera, please modify it.
-        if self.task in ['mv3d_det', 'lidar_det']:
+        if self.load_type in ['frame_based', 'fov_image_based']:
             cam_key = self.default_cam_key
-        elif self.task == 'mono_det':
+        elif self.load_type == 'mv_image_based':
             cam_key = list(info['images'].keys())[0]
         else:
             raise NotImplementedError
@@ -661,12 +668,12 @@ class WaymoMetric(KittiMetric):
                           (box_2d_preds[:, 1] < image_shape[0]) &
                           (box_2d_preds[:, 2] > 0) & (box_2d_preds[:, 3] > 0))
         # check box_preds_lidar
-        if self.task in ['mv3d_det', 'lidar_det']:
+        if self.load_type in ['frame_based']:
             limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
             valid_pcd_inds = ((box_preds_lidar.center > limit_range[:3]) &
                               (box_preds_lidar.center < limit_range[3:]))
             valid_inds = valid_pcd_inds.all(-1)
-        elif self.task == 'mono_det':
+        if self.load_type in ['mv_image_based', 'fov_image_based']:
             valid_inds = valid_cam_inds
 
         if valid_inds.sum() > 0:
