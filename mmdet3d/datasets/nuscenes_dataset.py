@@ -38,8 +38,8 @@ class NuScenesDataset(Det3DDataset):
             - 'mv_image_based': Load all of the instances in the frame and need
                 to convert to the FOV-based data type to support image-based
                 detector.
-            - 'fov_image_based': Only load the instances inside the default cam,
-                and need to convert to the FOV-based data type to support
+            - 'fov_image_based': Only load the instances inside the default
+                cam, and need to convert to the FOV-based data type to support
                 image-based detector.
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).

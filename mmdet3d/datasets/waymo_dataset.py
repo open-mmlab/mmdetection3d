@@ -90,7 +90,6 @@ class WaymoDataset(KittiDataset):
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  cam_sync_instances: bool = False,
                  load_interval: int = 1,
-                 task: str = 'lidar_det',
                  max_sweeps: int = 0,
                  **kwargs) -> None:
         self.load_interval = load_interval

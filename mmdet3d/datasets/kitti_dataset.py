@@ -38,8 +38,8 @@ class KittiDataset(Det3DDataset):
             - 'mv_image_based': Load all of the instances in the frame and need
                 to convert to the FOV-based data type to support image-based
                 detector.
-            - 'fov_image_based': Only load the instances inside the default cam,
-                and need to convert to the FOV-based data type to support
+            - 'fov_image_based': Only load the instances inside the default
+                cam, and need to convert to the FOV-based data type to support
                 image-based detector.
         filter_empty_gt (bool): Whether to filter the data with empty GT.
             If it's set to be True, the example with empty annotations after
@@ -123,7 +123,7 @@ class KittiDataset(Det3DDataset):
 
             info['plane'] = plane_lidar
 
-        if self.load_type == 'fov_image_based'  and self.load_eval_anns:
+        if self.load_type == 'fov_image_based' and self.load_eval_anns:
             info['instances'] = info['cam_instances'][self.default_cam_key]
 
         info = super().parse_data_info(info)
