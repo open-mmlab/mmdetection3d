@@ -103,7 +103,7 @@ Note:
 
 2. Here we only explain the data recorded in the training info files. The same applies to validation and testing set (the `.pkl` file of test set does not contains `instances` and `cam_instances`).
 
-The core function to get `nuscenes_infos_xxx.pkl` are  [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146).
+The core function to get `nuscenes_infos_xxx.pkl` is  [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146).
 Please refer to [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py) for more details.
 
 ## Training pipeline
