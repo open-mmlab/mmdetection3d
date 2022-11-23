@@ -284,8 +284,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
             ori_info_dict['ego2global_translation'])
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict.get(
             'num_features', 5)
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'lidar_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['lidar_path']).name
         temp_data_info['lidar_points'][
             'lidar2ego'] = convert_quaternion_to_matrix(
                 ori_info_dict['lidar2ego_rotation'],
@@ -315,8 +315,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
         temp_data_info['images'] = {}
         for cam in ori_info_dict['cams']:
             empty_img_info = get_empty_img_info()
-            empty_img_info['img_path'] = Path(ori_info_dict['cams'][cam][
-                'data_path']).name
+            empty_img_info['img_path'] = Path(
+                ori_info_dict['cams'][cam]['data_path']).name
             empty_img_info['cam2img'] = ori_info_dict['cams'][cam][
                 'cam_intrinsic'].tolist()
             empty_img_info['sample_data_token'] = ori_info_dict['cams'][cam][
@@ -411,15 +411,15 @@ def update_kitti_infos(pkl_path, out_dir):
         temp_data_info['images']['CAM3']['cam2img'] = ori_info_dict['calib'][
             'P3'].tolist()
 
-        temp_data_info['images']['CAM2']['img_path'] = Path(ori_info_dict['image'][
-            'image_path']).name
+        temp_data_info['images']['CAM2']['img_path'] = Path(
+            ori_info_dict['image']['image_path']).name
         h, w = ori_info_dict['image']['image_shape']
         temp_data_info['images']['CAM2']['height'] = h
         temp_data_info['images']['CAM2']['width'] = w
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'point_cloud']['velodyne_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['point_cloud']['velodyne_path']).name
 
         rect = ori_info_dict['calib']['R0_rect'].astype(np.float32)
         Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
@@ -533,12 +533,12 @@ def update_s3dis_infos(pkl_path, out_dir):
         temp_data_info['sample_idx'] = i
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'pts_path']).name
-        temp_data_info['pts_semantic_mask_path'] = Path(ori_info_dict[
-            'pts_semantic_mask_path']).name
-        temp_data_info['pts_instance_mask_path'] = Path(ori_info_dict[
-            'pts_instance_mask_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['pts_path']).name
+        temp_data_info['pts_semantic_mask_path'] = Path(
+            ori_info_dict['pts_semantic_mask_path']).name
+        temp_data_info['pts_instance_mask_path'] = Path(
+            ori_info_dict['pts_instance_mask_path']).name
 
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
@@ -607,12 +607,12 @@ def update_scannet_infos(pkl_path, out_dir):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'pts_path']).name
-        temp_data_info['pts_semantic_mask_path'] = Path(ori_info_dict[
-            'pts_semantic_mask_path']).name
-        temp_data_info['pts_instance_mask_path'] = Path(ori_info_dict[
-            'pts_instance_mask_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['pts_path']).name
+        temp_data_info['pts_semantic_mask_path'] = Path(
+            ori_info_dict['pts_semantic_mask_path']).name
+        temp_data_info['pts_instance_mask_path'] = Path(
+            ori_info_dict['pts_instance_mask_path']).name
 
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
@@ -679,8 +679,8 @@ def update_sunrgbd_infos(pkl_path, out_dir):
         temp_data_info = get_empty_standard_data_info()
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'pts_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['pts_path']).name
         calib = ori_info_dict['calib']
         rt_mat = calib['Rt']
         # follow Coord3DMode.convert_point
@@ -688,8 +688,8 @@ def update_sunrgbd_infos(pkl_path, out_dir):
                            ]) @ rt_mat.transpose(1, 0)
         depth2img = calib['K'] @ rt_mat
         temp_data_info['images']['CAM0']['depth2img'] = depth2img.tolist()
-        temp_data_info['images']['CAM0']['img_path'] = Path(ori_info_dict['image'][
-            'image_path']).name
+        temp_data_info['images']['CAM0']['img_path'] = Path(
+            ori_info_dict['image']['image_path']).name
         h, w = ori_info_dict['image']['image_shape']
         temp_data_info['images']['CAM0']['height'] = h
         temp_data_info['images']['CAM0']['width'] = w
@@ -761,8 +761,8 @@ def update_lyft_infos(pkl_path, out_dir):
         temp_data_info['ego2global'] = convert_quaternion_to_matrix(
             ori_info_dict['ego2global_rotation'],
             ori_info_dict['ego2global_translation'])
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'lidar_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['lidar_path']).name
         temp_data_info['lidar_points'][
             'lidar2ego'] = convert_quaternion_to_matrix(
                 ori_info_dict['lidar2ego_rotation'],
@@ -793,8 +793,8 @@ def update_lyft_infos(pkl_path, out_dir):
         temp_data_info['images'] = {}
         for cam in ori_info_dict['cams']:
             empty_img_info = get_empty_img_info()
-            empty_img_info['img_path'] = Path(ori_info_dict['cams'][cam][
-                'data_path']).name
+            empty_img_info['img_path'] = Path(
+                ori_info_dict['cams'][cam]['data_path']).name
             empty_img_info['cam2img'] = ori_info_dict['cams'][cam][
                 'cam_intrinsic'].tolist()
             empty_img_info['sample_data_token'] = ori_info_dict['cams'][cam][
@@ -913,8 +913,8 @@ def update_waymo_infos(pkl_path, out_dir):
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['timestamp'] = ori_info_dict[
             'timestamp']
-        temp_data_info['lidar_points']['lidar_path'] = Path(ori_info_dict[
-            'point_cloud']['velodyne_path']).name
+        temp_data_info['lidar_points']['lidar_path'] = Path(
+            ori_info_dict['point_cloud']['velodyne_path']).name
 
         # TODO discuss the usage of Tr_velo_to_cam in lidar
         Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
@@ -934,8 +934,8 @@ def update_waymo_infos(pkl_path, out_dir):
             lidar_sweep = get_single_lidar_sweep()
             lidar_sweep['ego2global'] = ori_sweep['pose']
             lidar_sweep['timestamp'] = ori_sweep['timestamp']
-            lidar_sweep['lidar_points']['lidar_path'] = Path(ori_sweep[
-                'velodyne_path']).name
+            lidar_sweep['lidar_points']['lidar_path'] = Path(
+                ori_sweep['velodyne_path']).name
             # image sweeps
             image_sweep = get_single_image_sweep(camera_types)
             image_sweep['ego2global'] = ori_sweep['pose']
