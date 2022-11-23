@@ -2,7 +2,7 @@
 
 ## Dataset preparation
 
-For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md/) page for ScanNet.
+For the overall process, please refer to the [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md) page for ScanNet.
 
 ### Export ScanNet point cloud data
 
@@ -188,7 +188,7 @@ def process_single_scene(sample_idx):
     return info
 ```
 
-The directory structure after process should be as below
+The directory structure after process should be as below:
 
 ```
 scannet
@@ -226,12 +226,12 @@ scannet
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: \[1, 40\], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
 - `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
-  - info\['lidar_points'\]: A dict containing all information relate to the lidar points.
-    - info\['lidar_points'\]\['lidar_path'\]: The filename of `xxx.bin` of lidar points.
+  - info\['lidar_points'\]: A dict containing all information related to the lidar points.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['axis_align_matrix'\]: The transformation matrix to align the axis.
-  - info\['pts_semantic_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
-  - info\['pts_instance_mask_path'\]: The filename of `xxx.bin` contains semantic mask annotation.
+  - info\['pts_semantic_mask_path'\]: The filename of the semantic mask annotation.
+  - info\['pts_instance_mask_path'\]: The filename of the instance mask annotation.
   - info\['instances'\]: A list of dict contains all annotations, each dict contains all annotation information of single instance. For the i-th instance:
     - info\['instances'\]\[i\]\['bbox_3d'\]: List of 6 numbers representing the axis-aligned 3D bounding box of the instance in depth coordinate system, in (x, y, z, l, w, h) order.
     - info\['instances'\]\[i\]\['bbox_label_3d'\]: The label of each 3d bounding boxes.
@@ -257,8 +257,7 @@ train_pipeline = [
         with_mask_3d=True,
         with_seg_3d=True),
     dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='PointSegClassMapping'),
+    dict(type='PointSegClassMapping'),
     dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
@@ -288,6 +287,6 @@ train_pipeline = [
 
 ## Metrics
 
-Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called, please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py).
+Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called. Please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py) for more details.
 
 As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D Non-Maximum Suppression (NMS), which is regardless of rotation, is adopted during post-processing .

@@ -26,14 +26,13 @@ mmdetection3d
 
 ## 数据准备
 
-我们通常需要通过特定样式来使用 .pkl 或 .json 文件组织有用的数据信息，例如用于组织图像及其标注的 coco 样式。
-要为 nuScenes 准备这些文件，请运行以下命令：
+我们通常需要通过特定样式来使用 `.pkl` 文件组织有用的数据信息。要为 nuScenes 准备这些文件，请运行以下命令：
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
-处理后的文件夹结构应该如下
+处理后的文件夹结构应该如下。
 
 ```
 mmdetection3d
@@ -61,7 +60,7 @@ mmdetection3d
   - info\['token'\]：样本数据标记。
   - info\['timestamp'\]：样本数据时间戳。
   - info\['lidar_points'\]：是一个字典，包含了所有与激光雷达点相关的信息。
-    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件路径。
+    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
     - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
@@ -74,7 +73,7 @@ mmdetection3d
     - info\['lidar_sweeps'\]\[i\]\['sample_data_token'\]：扫描样本数据标记。
   - info\['images'\]：是一个字典，包含与每个相机对应的六个键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。每个字典包含了对应相机的所有数据信息。
     - info\['images'\]\['CAM_XXX'\]\['img_path'\]：图像的文件名。
-    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]：当 3D 投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
+    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]：当 3D 点投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
     - info\['images'\]\['CAM_XXX'\]\['sample_data_token'\]：图像样本数据标记。
     - info\['images'\]\['CAM_XXX'\]\['timestamp'\]：图像的时间戳。
     - info\['images'\]\['CAM_XXX'\]\['cam2ego'\]：该相机传感器到自车的变换矩阵。（4x4 列表）
@@ -86,24 +85,23 @@ mmdetection3d
     - info\['instances'\]\[i\]\['num_lidar_pts'\]：每个 3D 边界框内包含的激光雷达点数。
     - info\['instances'\]\[i\]\['num_radar_pts'\]：每个 3D 边界框内包含的雷达点数。
     - info\['instances'\]\[i\]\['bbox_3d_isvalid'\]：每个包围框是否有效。一般情况下，我们只将包含至少一个激光雷达或雷达点的 3D 框作为有效框。
-  - info\['cam_instances'\]：是一个字典，包含以下键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。对于基于视觉的 3D 目标检测任务，我们将整个场景的 3D 标注划分至它们所属于的相应相机中。
+  - info\['cam_instances'\]：是一个字典，包含以下键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_BACK'`, `'CAM_BACK_LEFT'`, `'CAM_BACK_RIGHT'`。对于基于视觉的 3D 目标检测任务，我们将整个场景的 3D 标注划分至它们所属于的相应相机中。对于其中的第 i 个实例，我们有：
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label'\]：实例标签。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label_3d'\]：实例标签。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox'\]：2D 边界框标注（3D 框投影的矩形框），顺序为 \[x1, y1, x2, y2\] 的列表。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['center_2d'\]：3D 框投影到图像上的中心点，大小为 (2, ) 的列表。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['depth'\]：3D 框投影中心的深度。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
-    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
 
 注意：
 
-1. `instances` 和 `cam_instances` 中 `bbox_3d` 的区别。
-   `bbox_3d` 都被转换到 MMDet3D 定义的坐标系下，`instances` 中的 `bbox_3d` 是在激光雷达坐标系下，而 `cam_instances` 是在相机坐标系下。注意它们 3D 框中表示的不同（'l, w, h' 和 'l, h, w'）。
+1. `instances` 和 `cam_instances` 中 `bbox_3d` 的区别。`bbox_3d` 都被转换到 MMDet3D 定义的坐标系下，`instances` 中的 `bbox_3d` 是在激光雷达坐标系下，而 `cam_instances` 是在相机坐标系下。注意它们 3D 框中表示的不同（'l, w, h' 和 'l, h, w'）。
 
-2. 这里我们只解释训练信息文件中记录的数据。这同样适用于验证集和测试集（测试集的 pkl 文件中不包含 `instances` 以及 `cam_instances`）。
+2. 这里我们只解释训练信息文件中记录的数据。这同样适用于验证集和测试集（测试集的 `.pkl` 文件中不包含 `instances` 以及 `cam_instances`）。
 
-获取 `nuscenes_infos_xxx.pkl` 的核心函数为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L397)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py)。
+获取 `nuscenes_infos_xxx.pkl` 的核心函数为 [\_fill_trainval_infos](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py#L146)。更多细节请参考 [nuscenes_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/nuscenes_converter.py)。
 
 ## 训练流程
 
@@ -138,10 +136,7 @@ train_pipeline = [
 ]
 ```
 
-与一般情况相比，nuScenes 有一个特定的 `'LoadPointsFromMultiSweeps'` 流水线来从连续帧加载点云。这是此设置中使用的常见做法。
-更多细节请参考 nuScenes [原始论文](https://arxiv.org/abs/1903.11027)。
-`'LoadPointsFromMultiSweeps'` 中的默认 `use_dim` 是 `[0, 1, 2, 4]`，其中前 3 个维度是指点坐标，最后一个是指时间戳差异。
-由于在拼接来自不同帧的点时使用点云的强度信息会产生噪声，因此默认情况下不使用点云的强度信息。
+与一般情况相比，nuScenes 有一个特定的 `'LoadPointsFromMultiSweeps'` 流水线来从连续帧加载点云。这是此设置中使用的常见做法。更多细节请参考 nuScenes [原始论文](https://arxiv.org/abs/1903.11027)。`'LoadPointsFromMultiSweeps'` 中的默认 `use_dim` 是 `[0, 1, 2, 4]`，其中前 3 个维度是指点坐标，最后一个是指时间戳差异。由于在拼接来自不同帧的点时使用点云的强度信息会产生噪声，因此默认情况下不使用点云的强度信息。
 
 ### 基于视觉的方法
 
@@ -158,7 +153,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
+    dict(type='mmdet.Resize', img_scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
@@ -173,8 +168,7 @@ train_pipeline = [
 
 - 它使用单目流水线加载图像，其中包括额外的必需信息，如相机内参矩阵。
 - 它需要加载 3D 标注。
-- 一些数据增强技术需要调整，例如`RandomFlip3D`。
-  目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
+- 一些数据增强技术需要调整，例如`RandomFlip3D`。目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
 
 ## 评估
 
@@ -186,9 +180,7 @@ bash ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-
 
 ## 指标
 
-NuScenes 提出了一个综合指标，即 nuScenes 检测分数（NDS），以评估不同的方法并设置基准测试。
-它由平均精度（mAP）、平均平移误差（ATE）、平均尺度误差（ASE）、平均方向误差（AOE）、平均速度误差（AVE）和平均属性误差（AAE）组成。
-更多细节请参考其[官方网站](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)。
+NuScenes 提出了一个综合指标，即 nuScenes 检测分数（NDS），以评估不同的方法并设置基准测试。它由平均精度（mAP）、平均平移误差（ATE）、平均尺度误差（ASE）、平均方向误差（AOE）、平均速度误差（AVE）和平均属性误差（AAE）组成。更多细节请参考其[官方网站](https://www.nuscenes.org/object-detection?externalData=all&mapData=all&modalities=Any)。
 
 我们也采用这种方法对 nuScenes 进行评估。打印的评估结果示例如下：
 

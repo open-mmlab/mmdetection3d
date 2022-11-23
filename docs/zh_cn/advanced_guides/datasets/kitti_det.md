@@ -4,7 +4,7 @@
 
 ## 数据准备
 
-您可以在[这里](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)下载 KITTI 3D 检测数据并解压缩所有 zip 文件。此外，您可以在[这里](https://download.openmmlab.com/mmdetection3d/data/train_planes.zip)下载道路平面信息，其在训练过程中作为一个可选项，用来提高模型的性能。道路平面信息由 [AVOD](https://github.com/kujason/avod) 生成，你可以在[这里](https://github.com/kujason/avod/issues/19)查看更多细节。
+您可以在[这里](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)下载 KITTI 3D 检测数据并解压缩所有 zip 文件。此外，您可以在[这里](https://download.openmmlab.com/mmdetection3d/data/train_planes.zip)下载道路平面信息，其在训练过程中作为一个可选项，用来提高模型的性能。道路平面信息由 [AVOD](https://github.com/kujason/avod) 生成，更多细节请参考[此处](https://github.com/kujason/avod/issues/19)。
 
 像准备数据集的一般方法一样，建议将数据集根目录链接到 `$MMDETECTION3D/data`。
 
@@ -97,7 +97,7 @@ kitti
       - info\['lidar_points'\]\['Tr_imu_to_velo'\]：IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组。
     - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。对于其中的第 i 个实例，我们有：
       - info\['instances'\]\[i\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
-      - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, w, h, l, yaw) 的顺序表示实例的 3D 边界框。
+      - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
       - info\['instances'\]\[i\]\['bbox_label'\]：是一个整数，表示实例的 2D 标签，-1 代表忽略。
       - info\['instances'\]\[i\]\['bbox_label_3d'\]：是一个整数，表示实例的 3D 标签，-1 代表忽略。
       - info\['instances'\]\[i\]\['depth'\]：3D 边界框投影到相关图像平面的中心点的深度。
@@ -109,7 +109,7 @@ kitti
       - info\['instances'\]\[i\]\['group_ids'\]：用于多部分的物体。
     - info\['plane'\]（可选）：地平面信息。
 
-请参考 [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) 和 [update_infos_to_v2.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/update_infos_to_v2.py) 了解更多细节。
+更多细节请参考 [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) 和 [update_infos_to_v2.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/update_infos_to_v2.py)。
 
 ## 训练流程
 
@@ -160,7 +160,7 @@ bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_ki
 
 ## 度量指标
 
-KITTI 官方使用全类平均精度（mAP）和平均方向相似度（AOS）来评估 3D 目标检测的性能，请参考[官方网站](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php)和[论文](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)获取更多细节。
+KITTI 官方使用全类平均精度（mAP）和平均方向相似度（AOS）来评估 3D 目标检测的性能，更多细节请参考[官方网站](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php)和[论文](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)。
 
 MMDetection3D 采用相同的方法在 KITTI 数据集上进行评估，下面展示了一个评估结果的例子：
 
@@ -181,32 +181,26 @@ aos  AP:97.70, 89.11, 87.38
 
 使用 8 个 GPU 在 KITTI 上测试 PointPillars 并生成对排行榜的提交的示例如下：
 
-- 首先，你需要在你的配置文件中修改 `test_evaluator` 字典，并加上 `pklfile_prefix` 和 `submission_prefix`，如下所示：
+- 首先，你需要在你的配置文件中修改 `test_dataloader` 和 `test_evaluator` 字典，如下所示：
 
-```python
-data_root = 'data/kitti'
-test_evaluator = dict(
-    type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_test.pkl',
-    metric='bbox',
-    pklfile_prefix='results/kitti-3class/kitti_results',
-    submission_prefix='results/kitti-3class/kitti_results')
-```
+  ```python
+  data_root = 'data/kitti/'
+  test_dataloader = dict(
+      dataset=dict(
+          ann_file='kitti_infos_test.pkl',
+          load_eval_anns=False,
+          data_prefix=dict(pts='testing/velodyne_reduced')))
+  test_evaluator = dict(
+      ann_file=data_root + 'kitti_infos_test.pkl',
+      format_only=True,
+      pklfile_prefix='results/kitti-3class/kitti_results',
+      submission_prefix='results/kitti-3class/kitti_results')
+  ```
 
 - 接下来，你可以运行如下测试脚本。
 
-```shell
-mkdir -p results/kitti-3class
+  ```shell
+  ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+  ```
 
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
-```
-
-- 或者你可以在测试指令中使用 `--cfg-options "test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results" "test_evaluator.submission_prefix=results/kitti-3class/kitti_results"`，然后直接运行如下测试脚本。
-
-```shell
-mkdir -p results/kitti-3class
-
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
-```
-
-在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](<(http://www.cvlibs.net/datasets/kitti/index.php)>)获取更多细节。
+在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，更多细节请参考 [KITTI 官方网站](http://www.cvlibs.net/datasets/kitti/index.php)。

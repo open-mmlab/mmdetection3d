@@ -16,39 +16,39 @@ The ideal situation is that we can reorganize the customized raw data and conver
 
 #### Point cloud Format
 
-Currently, we only support '.bin' format point cloud for training and inference. Before training on your own datasets, you need to convert your point cloud files with other formats to '.bin' files. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
+Currently, we only support `.bin` format point cloud for training and inference. Before training on your own datasets, you need to convert your point cloud files with other formats to `.bin` files. The common point cloud data formats include `.pcd` and `.las`, we list some open-source tools for reference.
 
-1. Convert pcd to bin: https://github.com/DanielPollithy/pypcd
+1. Convert `.pcd` to `.bin`: https://github.com/DanielPollithy/pypcd
 
-- You can install pypcd with the following command:
+- You can install `pypcd` with the following command:
 
-```bash
-pip install git+https://github.com/DanielPollithy/pypcd.git
-```
+  ```bash
+  pip install git+https://github.com/DanielPollithy/pypcd.git
+  ```
 
-- You can use the following command to read the pcd file and convert it to bin format and save it:
+- You can use the following script to read the `.pcd` file and convert it to `.bin` format and save it:
 
-```python
-import numpy as np
-from pypcd import pypcd
+  ```python
+  import numpy as np
+  from pypcd import pypcd
 
-pcd_data = pypcd.PointCloud.from_path('point_cloud_data.pcd')
-points = np.zeros([pcd_data.width, 4], dtype=np.float32)
-points[:, 0] = pcd_data.pc_data['x'].copy()
-points[:, 1] = pcd_data.pc_data['y'].copy()
-points[:, 2] = pcd_data.pc_data['z'].copy()
-points[:, 3] = pcd_data.pc_data['intensity'].copy().astype(np.float32)
-with open('point_cloud_data.bin', 'wb') as f:
-    f.write(points.tobytes())
-```
+  pcd_data = pypcd.PointCloud.from_path('point_cloud_data.pcd')
+  points = np.zeros([pcd_data.width, 4], dtype=np.float32)
+  points[:, 0] = pcd_data.pc_data['x'].copy()
+  points[:, 1] = pcd_data.pc_data['y'].copy()
+  points[:, 2] = pcd_data.pc_data['z'].copy()
+  points[:, 3] = pcd_data.pc_data['intensity'].copy().astype(np.float32)
+  with open('point_cloud_data.bin', 'wb') as f:
+      f.write(points.tobytes())
+  ```
 
-2. Convert las to bin: The common conversion path is las -> pcd -> bin, and the conversion from las -> pcd can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
+2. Convert `.las` to `.bin`: The common conversion path is `.las -> .pcd -> .bin`, and the conversion from `.las -> .pcd` can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
 
 #### Label Format
 
 The most basic information: 3D bounding box and category label of each scene need to be contained in the annotation `.txt` file. Each line represents a 3D box in a certain scene as follow:
 
-```python
+```
 # format: [x, y, z, dx, dy, dz, yaw, category_name]
 1.23 1.42 0.23 3.96 1.65 1.55 1.56 Car
 3.51 2.15 0.42 1.05 0.87 1.86 1.23 Pedestrian
