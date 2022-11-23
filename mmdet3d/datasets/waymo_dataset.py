@@ -31,7 +31,7 @@ class WaymoDataset(KittiDataset):
                                     CAM_FRONT_LEFT='image_2',
                                     CAM_SIDE_RIGHT='image_3',
                                     CAM_SIDE_LEFT='image_4')
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used
             as input. Defaults to dict(use_lidar=True).
@@ -60,7 +60,7 @@ class WaymoDataset(KittiDataset):
             in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float]): The range of point cloud
+        pcd_limit_range (List[float]): The range of point cloud
             used to filter invalid predicted boxes.
             Defaults to [-85, -85, -5, 85, 85, 5].
         cam_sync_instances (bool): If use the camera sync label
@@ -123,7 +123,7 @@ class WaymoDataset(KittiDataset):
             info (dict): Data information of single data sample.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                   3D ground truth bboxes.
@@ -188,7 +188,7 @@ class WaymoDataset(KittiDataset):
         data_list = data_list[::self.load_interval]
         return data_list
 
-    def parse_data_info(self, info: dict) -> dict:
+    def parse_data_info(self, info: dict) -> Union[dict, List[dict]]:
         """if task is lidar or multiview det, use super() method elif task is
         mono3d, split the info from frame-wise to img-wise."""
 

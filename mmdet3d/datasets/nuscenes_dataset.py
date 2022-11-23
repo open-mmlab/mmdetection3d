@@ -178,7 +178,7 @@ class NuScenesDataset(Det3DDataset):
 
         return ann_info
 
-    def parse_data_info(self, info: dict) -> dict:
+    def parse_data_info(self, info: dict) -> Union[List[dict], dict]:
         """Process the raw data info.
 
         The only difference with it in `Det3DDataset`
@@ -188,7 +188,7 @@ class NuScenesDataset(Det3DDataset):
             info (dict): Raw info dict.
 
         Returns:
-            dict: Has `ann_info` in training stage. And
+            List[dict] or dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
         if self.load_type == 'mv_image_based':

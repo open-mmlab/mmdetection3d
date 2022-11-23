@@ -18,10 +18,10 @@ class KittiDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
-            Defaults to `dict(use_lidar=True)`.
+            Defaults to dict(use_lidar=True).
         default_cam_key (str): The default camera name adopted.
             Defaults to 'CAM2'.
         box_type_3d (str): Type of 3D box of this dataset.
@@ -47,7 +47,7 @@ class KittiDataset(Det3DDataset):
             in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float]): The range of point cloud used to filter
+        pcd_limit_range (List[float]): The range of point cloud used to filter
             invalid predicted boxes.
             Defaults to [0, -40, -3, 70.4, 40, 0.0].
     """
