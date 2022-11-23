@@ -17,7 +17,7 @@ Collections:
 
 Models:
   - Name: pv_rcnn_8xb2-80e_kitti-3d-3class
-    In Collection: PV_RCNN
+    In Collection: PV-RCNN
     Config: configs/pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class.py
     Metadata:
       Training Memory (GB): 5.4
