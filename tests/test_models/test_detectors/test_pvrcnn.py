@@ -2,10 +2,10 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
-from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
-                             setup_seed)
 
 from mmdet3d.registry import MODELS
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestPVRCNN(unittest.TestCase):
@@ -20,8 +20,7 @@ class TestPVRCNN(unittest.TestCase):
             'pvrcnn/pvrcnn_8xb2-80e_kitti-3d-3class.py')
         model = MODELS.build(pvrcnn_cfg)
         num_gt_instance = 2
-        packed_inputs = create_detector_inputs(
-            num_gt_instance=num_gt_instance)
+        packed_inputs = create_detector_inputs(num_gt_instance=num_gt_instance)
 
         # TODO: Support aug data test
         # aug_packed_inputs = [
