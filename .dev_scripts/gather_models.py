@@ -1,16 +1,31 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 """Script to gather benchmarked models and prepare them for upload.
 
+1. Organize the model save directory
+
+Assumes that the directory format of the model after training is:
+work_dir/config_folder/config_file/, so it is necessary to organize
+the directory into the following form in advance during training.
+
+For example, the command during training should be:
+
+./tools/slurm_train.sh mm_det centerpoint
+configs/centerpoint/centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus.py
+work_dir/centerpoint/centerpoint_0075voxel_second_secfpn_4x8_cyclic_20e_nus.py
+
+2. Gather model
+
+Use ./dev_scripts/gather_model.py to batch process the model:
+
 Usage:
-python gather_models.py ${root_path} ${out_dir}
+python .dev_scripts/gather_models.py ${SAVED_DIR} ${OUT_DIR}
+
+- SAVED_DIR: the model ckpt, log path after training, default is . /work_dir
+- OUT_DIR: The path where the output information is saved after processing by
+           the script, the default path is . /gather
 
 Example:
-python gather_models.py ./work_dirs ./gather
-
-Note that before running the above command, rename the directory with the
-config name if you did not use the default directory name, create
-a corresponding directory 'pgd' under the above path and put the used config
-into it.
+python .dev_scripts/gather_models.py ./work_dir/ ./gather
 """
 
 import argparse
