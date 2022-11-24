@@ -1,128 +1,61 @@
 # 依赖
 
-- Linux 或者 macOS (实验性支持 Windows)
+MMDetection3D 可以安装在 Linux, MacOS, (实验性支持 Windows) 的平台上，它具体需要下列安装包:
+
 - Python 3.6+
 - PyTorch 1.3+
 - CUDA 9.2+ (如果你从源码编译 PyTorch, CUDA 9.0 也是兼容的。)
 - GCC 5+
 - [MMCV](https://mmcv.readthedocs.io/en/latest/#installation)
 
-| MMDetection3D 版本 |     MMDetection 版本     |   MMSegmentation 版本   |          MMCV 版本          |
-| :----------------: | :----------------------: | :---------------------: | :-------------------------: |
-|       master       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
-|     v1.0.0rc4      | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
-|     v1.0.0rc3      | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
-|     v1.0.0rc2      | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
-|     v1.0.0rc1      | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.5.0  |
-|     v1.0.0rc0      | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
-|       0.18.1       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
-|       0.18.0       | mmdet>=2.19.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.3.17, \<=1.5.0 |
-|       0.17.3       | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|       0.17.2       | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|       0.17.1       | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|       0.17.0       | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|       0.16.0       | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|       0.15.0       | mmdet>=2.14.0, \<=3.0.0  | mmseg>=0.14.1, \<=1.0.0 | mmcv-full>=1.3.8, \<=1.4.0  |
-|       0.14.0       | mmdet>=2.10.0, \<=2.11.0 |      mmseg==0.14.0      | mmcv-full>=1.3.1, \<=1.4.0  |
-|       0.13.0       | mmdet>=2.10.0, \<=2.11.0 |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
-|       0.12.0       | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.4.0  |
-|       0.11.0       | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
-|       0.10.0       | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
-|       0.9.0        | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.2.4, \<=1.3.0  |
-|       0.8.0        | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
-|       0.7.0        | mmdet>=2.5.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.5, \<=1.3.0  |
-|       0.6.0        | mmdet>=2.4.0, \<=2.11.0  |      Not required       | mmcv-full>=1.1.3, \<=1.2.0  |
-|       0.5.0        |          2.3.0           |      Not required       |      mmcv-full==1.0.5       |
-
-# 安装
-
-## MMdetection3D 安装流程
-
-### 快速安装脚本
-
-如果你已经成功安装 CUDA 11.0，那么你可以使用这个快速安装命令进行 MMDetection3D 的安装。 否则，则参考下一小节的详细安装流程。
-
-```shell
-conda create -n open-mmlab python=3.7 pytorch=1.9 cudatoolkit=11.0 torchvision -c pytorch -y
-conda activate open-mmlab
-pip3 install openmim
-mim install mmcv-full
-mim install mmdet
-mim install mmsegmentation
-git clone https://github.com/open-mmlab/mmdetection3d.git
-cd mmdetection3d
-pip3 install -e .
+```{note}
+如果你已经装了 pytorch, 可以跳过这一部分，然后转到[下一章节](#安装). 如果没有，可以参照以下步骤安装环境。
 ```
 
-### 详细安装流程
+**步骤 0.** 安装 MiniConda [官网](https://docs.conda.io/en/latest/miniconda.html).
 
-**a. 使用 conda 新建虚拟环境，并进入该虚拟环境。**
+**步骤 1.** 使用 conda 新建虚拟环境，并进入该虚拟环境.
 
 ```shell
-conda create -n open-mmlab python=3.7 -y
-conda activate open-mmlab
+conda create --name openmmlab python=3.8 -y
+conda activate openmmlab
 ```
 
-**b. 基于 [PyTorch 官网](https://pytorch.org/)安装 PyTorch 和 torchvision，例如：**
+**步骤 2.** 基于 [PyTorch 官网](https://pytorch.org/)安装 PyTorch 和 torchvision，例如：
+
+GPU 环境下
 
 ```shell
 conda install pytorch torchvision -c pytorch
 ```
 
-**注意**：需要确保 CUDA 的编译版本和运行版本匹配。可以在 [PyTorch 官网](https://pytorch.org/)查看预编译包所支持的 CUDA 版本。
-
-`例 1` 例如在 `/usr/local/cuda` 下安装了 CUDA 10.1， 并想安装 PyTorch 1.5，则需要安装支持 CUDA 10.1 的预构建 PyTorch：
+CPU 环境下
 
 ```shell
-conda install pytorch cudatoolkit=10.1 torchvision -c pytorch
+conda install pytorch torchvision cpuonly -c pytorch
 ```
 
-`例 2` 例如在 `/usr/local/cuda` 下安装了 CUDA 9.2， 并想安装 PyTorch 1.3.1，则需要安装支持 CUDA 9.2  的预构建 PyTorch：
+# 安装
+
+我们建议用户参照我们的最佳实践 MMDetection3D。不过，整个过程也是可定制化的，具体可参照[自定义安装章节](#customize-installation)
+
+## 最佳实践
+
+如果你已经成功安装 CUDA 11.0，那么你可以使用这个快速安装命令进行 MMDetection3D 的安装。 否则，则参考下一小节的详细安装流程。
 
 ```shell
-conda install pytorch=1.3.1 cudatoolkit=9.2 torchvision=0.4.2 -c pytorch
+pip install openmim
+mim install mmcv-full
+mim install mmdet
+mim install mmsegmentation
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+pip install -e .
 ```
 
-如果不是安装预构建的包，而是从源码中构建 PyTorch，则可以使用更多的 CUDA 版本，例如 CUDA 9.0。
+**步骤 0. 通过[MIM](https://github.com/open-mmlab/mim) 安装  [MMCV](https://github.com/open-mmlab/mmcv).**
 
-**c. 安装 [MMCV](https://mmcv.readthedocs.io/en/latest/).**
-需要安装 *mmcv-full*，因为 MMDetection3D 依赖 MMDetection 且需要 *mmcv-full* 中基于 CUDA 的程序。
-
-`例` 可以使用下面命令安装预编译版本的 *mmcv-full* ：(可使用的版本在[这里](https://mmcv.readthedocs.io/en/latest/#install-with-pip)可以找到)
-
-```shell
-pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/{cu_version}/{torch_version}/index.html
-```
-
-需要把命令行中的 `{cu_version}` 和 `{torch_version}` 替换成对应的版本。例如：在 CUDA 11 和 PyTorch 1.7.0 的环境下，可以使用下面命令安装最新版本的 MMCV：
-
-```shell
-pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu110/torch1.7.0/index.html
-```
-
-PyTorch 在 1.x.0 和 1.x.1 之间通常是兼容的，故 mmcv-full 只提供 1.x.0 的编译包。如果你的 PyTorch 版本是 1.x.1，你可以放心地安装在 1.x.0 版本编译的 mmcv-full。
-
-```
-# 我们可以忽略 PyTorch 的小版本号
-pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu110/torch1.7/index.html
-```
-
-请参考 [MMCV](https://mmcv.readthedocs.io/en/latest/#installation) 获取不同版本的 MMCV 所兼容的的不同的 PyTorch 和 CUDA 版本。同时，也可以通过以下命令行从源码编译 MMCV：
-
-```shell
-git clone https://github.com/open-mmlab/mmcv.git
-cd mmcv
-MMCV_WITH_OPS=1 pip install -e .  # 安装好 mmcv-full
-cd ..
-```
-
-或者，可以直接使用命令行安装：
-
-```shell
-pip install mmcv-full
-```
-
-**d. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
+**步骤 1. 安装 [MMDetection](https://github.com/open-mmlab/mmdetection).**
 
 ```shell
 pip install mmdet
@@ -133,12 +66,12 @@ pip install mmdet
 ```shell
 git clone https://github.com/open-mmlab/mmdetection.git
 cd mmdetection
-git checkout v2.19.0  # 转到 v2.19.0 分支
+git checkout v2.24.0  # switch to v2.24.0 branch
 pip install -r requirements/build.txt
 pip install -v -e .  # or "python setup.py develop"
 ```
 
-**e. 安装 [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
+**步骤 2. 安装 [MMSegmentation](https://github.com/open-mmlab/mmsegmentation).**
 
 ```shell
 pip install mmsegmentation
@@ -153,14 +86,14 @@ git checkout v0.20.0  # switch to v0.20.0 branch
 pip install -e .  # or "python setup.py develop"
 ```
 
-**f. 克隆 MMDetection3D 代码仓库**
+**步骤 3. 克隆 MMDetection3D 代码仓库.**
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 ```
 
-**g. 安装依赖包和 MMDetection3D.**
+**步骤 4. 安装依赖包和 MMDetection3D.**
 
 ```shell
 pip install -v -e .  # or "python setup.py develop"
@@ -184,58 +117,27 @@ pip install -v -e .  # or "python setup.py develop"
 
 4. 一些安装依赖是可以选择的。例如只需要安装最低运行要求的版本，则可以使用 `pip install -v -e .` 命令。如果希望使用可选择的像 `albumentations` 和 `imagecorruptions` 这种依赖项，可以使用 `pip install -r requirements/optional.txt ` 进行手动安装，或者在使用 `pip` 时指定所需的附加功能（例如 `pip install -v -e .[optional]`），支持附加功能的有效键值包括  `all`、`tests`、`build` 以及 `optional` 。
 
+   我们已经支持 spconv2.0. 如果用户已经安装 spconv 2.0， 代码会默认使用 spconv 2.0。它可以比原生 mmcv spconv 使用更少的内存。 用户可以使用下列的命令来安装 spconv 2.0.
+
+   ```bash
+   pip install cumm-cuxxx
+   pip install spconv-cuxxx
+   ```
+
+   xxx 表示  CUDA 的版本。
+
+   例如, 使用 CUDA 10.2, 对应命令是  `pip install cumm-cu102 && pip install spconv-cu102`.
+
+   支持的 CUDA 版本包括 10.2, 11.1, 11.3, and 11.4. 用户可以通过源码编译来在这些版本上安装. 具体细节请参考 [spconv v2.x](https://github.com/traveller59/spconv).
+
+   我们同时也支持 Minkowski Engine 来作为稀疏卷机的后端. 如果需要，可以参照 [安装指南](https://github.com/NVIDIA/MinkowskiEngine#installation) 或使用 `pip`:
+
+   ```shell
+   conda install openblas-devel -c anaconda
+   pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
+   ```
+
 5. 我们的代码目前不能在只有 CPU 的环境（CUDA 不可用）下编译运行。
-
-## 另一种选择：Docker Image
-
-我们提供了 [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/master/docker/Dockerfile) 来建立一个镜像。
-
-```shell
-# 基于 PyTorch 1.6, CUDA 10.1 生成 docker 的镜像
-docker build -t mmdetection3d docker/
-```
-
-运行命令：
-
-```shell
-docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
-```
-
-## 从零开始的安装脚本
-
-以下是一个基于 conda 安装 MMdetection3D 的脚本
-
-```shell
-conda create -n open-mmlab python=3.7 -y
-conda activate open-mmlab
-
-# 安装基于环境中默认 CUDA 版本下最新的 PyTorch (通常使用最新版本)
-conda install -c pytorch pytorch torchvision -y
-
-# 安装 mmcv
-pip install mmcv-full
-
-# 安装 mmdetection
-pip install git+https://github.com/open-mmlab/mmdetection.git
-
-# 安装 mmsegmentation
-pip install git+https://github.com/open-mmlab/mmsegmentation.git
-
-# 安装 mmdetection3d
-git clone https://github.com/open-mmlab/mmdetection3d.git
-cd mmdetection3d
-pip install -v -e .
-```
-
-## 使用多版本的 MMDetection3D
-
-训练和测试的脚本已经在 PYTHONPATH 中进行了修改，以确保脚本使用当前目录中的 MMDetection3D。
-
-要使环境中安装默认的 MMDetection3D 而不是当前正在在使用的，可以删除出现在相关脚本中的代码：
-
-```shell
-PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
-```
 
 # 验证
 
@@ -319,3 +221,76 @@ result, data = inference_detector(model, point_cloud)
 # 可视化结果并且将结果保存到 'results' 文件夹
 model.show_results(data, result, out_dir='results')
 ```
+
+## 自定义安装
+
+### CUDA 版本
+
+当安装 PyTorch 的时候，你需要去指定 CUDA 的版本。如果你不清楚如何选择 CUDA 的版本，可以参考我们如下的建议：
+
+- 对于 Ampere 的 NVIDIA GPU, 比如 GeForce 30 series 和 NVIDIA A100, CUDA 11 是必须的。
+- 对于老款的 NVIDIA GPUs, CUDA 11 是可编译的，但是 CUDA 10.2 提供更好的可编译性，并且更轻量。
+
+请确保GPU 驱动版本大于最低需求。这个[表格](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions__table-cuda-toolkit-driver-versions) 提供更多的信息。
+
+```{note}
+如果你参照最佳实践，你只需要安装 CUDA runtime libraries。 这是因为没有代码需要在本地通过 CUDA 编译。然而如果你需要编译MMCV源码，或者编译其他 CUDA 代码，你需要基于 NVIDIA [website](https://developer.nvidia.com/cuda-downloads) 安装完整的 CUDA toolkit，并且要保证它的版本跟 PyTorch 匹配。比如在 'conda install` 里对应的 cudatoolkit 版本。
+```
+
+### 不通过MIM 安装MMCV
+
+MMCV 包含一些 C++ 和 CUDA 扩展,因此以复杂的方式依赖于 PyTorch。 MIM 会自动解决此类依赖关系并使安装更容易。但是，这不是必须的。
+
+如果想要使用 pip 而不是 MIM 安装 MMCV, 请参考 [MMCV 安装指南](https://mmcv.readthedocs.io/en/latest/get_started/installation.html). 这需要根据 PyTorch 版本及其 CUDA 版本手动指定 find-url。
+
+例如, 下面的脚本安装 的 mmcv-full 是对应的 PyTorch 1.10.x 和 CUDA 11.3.
+
+```shell
+pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
+```
+
+### 通过Docker 安装
+
+我们提供了 [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/master/docker/Dockerfile) 来建立一个镜像。
+
+```shell
+# 基于 PyTorch 1.6, CUDA 10.1 生成 docker 的镜像
+docker build -t mmdetection3d docker/
+```
+
+运行命令：
+
+```shell
+docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
+```
+
+## 从零开始的安装脚本
+
+以下是一个基于 conda 安装 MMdetection3D 的脚本
+
+```shell
+conda create -n open-mmlab python=3.7 -y
+conda activate open-mmlab
+
+# install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
+conda install -c pytorch pytorch torchvision -y
+
+# install mmcv
+pip install mmcv-full
+
+# install mmdetection
+pip install git+https://github.com/open-mmlab/mmdetection.git
+
+# install mmsegmentation
+pip install git+https://github.com/open-mmlab/mmsegmentation.git
+
+# install mmdetection3d
+git clone https://github.com/open-mmlab/mmdetection3d.git
+cd mmdetection3d
+pip install -v -e .
+```
+
+## 故障排除
+
+如果在安装过程中遇到什么问题，可以先参考 [FAQ](faq.md) 页面.
+如果没有找到对应的解决方案，你也可以在 Github [提一个 issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose)。

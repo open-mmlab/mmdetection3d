@@ -203,7 +203,7 @@ class PointRCNNBboxHead(BaseModule):
                     nn.init.constant_(m.bias, 0)
         normal_init(self.conv_reg.weight, mean=0, std=0.001)
 
-    def forward(self, feats):
+    def forward(self, input_data):
         """Forward pass.
 
         Args:
@@ -212,9 +212,8 @@ class PointRCNNBboxHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Score of class and bbox predictions.
         """
-        input_data = feats.clone().detach()
         xyz_input = input_data[..., 0:self.in_channels].transpose(
-            1, 2).unsqueeze(dim=3).contiguous().clone().detach()
+            1, 2).unsqueeze(dim=3).contiguous()
         xyz_features = self.xyz_up_layer(xyz_input)
         rpn_features = input_data[..., self.in_channels:].transpose(
             1, 2).unsqueeze(dim=3)
