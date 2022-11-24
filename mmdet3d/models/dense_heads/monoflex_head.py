@@ -2,6 +2,11 @@
 from typing import List, Optional, Tuple, Union
 
 import torch
+from mmdet.models.utils import (gaussian_radius, gen_gaussian_target,
+                                multi_apply)
+from mmdet.models.utils.gaussian_target import (get_local_maximum,
+                                                get_topk_from_heatmap,
+                                                transpose_and_gather_feat)
 from mmengine.config import ConfigDict
 from mmengine.model import xavier_init
 from mmengine.structures import InstanceData
@@ -15,11 +20,6 @@ from mmdet3d.models.utils import (filter_outside_objs, get_edge_indices,
                                   handle_proj_objs)
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
-from mmdet.models.utils import (gaussian_radius, gen_gaussian_target,
-                                multi_apply)
-from mmdet.models.utils.gaussian_target import (get_local_maximum,
-                                                get_topk_from_heatmap,
-                                                transpose_and_gather_feat)
 from .anchor_free_mono3d_head import AnchorFreeMono3DHead
 
 

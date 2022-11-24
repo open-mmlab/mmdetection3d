@@ -7,10 +7,10 @@ import mmengine
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
+from mmdet.datasets.transforms import LoadAnnotations
 
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures.points import BasePoints, get_points_type
-from mmdet.datasets.transforms import LoadAnnotations
 
 
 @TRANSFORMS.register_module()

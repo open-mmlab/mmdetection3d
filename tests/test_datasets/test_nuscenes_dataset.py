@@ -51,7 +51,7 @@ def test_getitem():
         ann_file=ann_file,
         data_prefix=data_prefix,
         pipeline=pipeline,
-        metainfo=dict(CLASSES=classes),
+        metainfo=dict(classes=classes),
         modality=modality)
 
     nus_dataset.prepare_data(0)
@@ -77,7 +77,7 @@ def test_getitem():
     assert 'gt_bboxes_3d' in ann_info
     assert isinstance(ann_info['gt_bboxes_3d'], LiDARInstance3DBoxes)
 
-    assert len(nus_dataset.metainfo['CLASSES']) == 10
+    assert len(nus_dataset.metainfo['classes']) == 10
 
     assert input_dict['token'] == 'fd8420396768425eabec9bdddf7e64b6'
     assert input_dict['timestamp'] == 1533201470.448696

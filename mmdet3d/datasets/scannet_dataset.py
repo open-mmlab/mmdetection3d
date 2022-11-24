@@ -27,9 +27,9 @@ class ScanNetDataset(Det3DDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for data. Defaults to
             dict(pts='points',
-                 pts_isntance_mask='instance_mask',
+                 pts_instance_mask='instance_mask',
                  pts_semantic_mask='semantic_mask').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=False, use_lidar=True).
@@ -49,7 +49,7 @@ class ScanNetDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
@@ -185,31 +185,34 @@ class ScanNetSegDataset(Seg3DDataset):
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
         ann_file (str): Path of annotation file. Defaults to ''.
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
-            dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
+            dict(pts='points',
+                 img='',
+                 pts_instance_mask='',
+                 pts_semantic_mask='').
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES) to
+            unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
          'window', 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
          'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
          'otherfurniture'),
-        'PALETTE': [
+        'palette': [
             [174, 199, 232],
             [152, 223, 138],
             [31, 119, 180],
@@ -242,7 +245,10 @@ class ScanNetSegDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                     pts='points',
+                     img='',
+                     pts_instance_mask='',
+                     pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,
@@ -261,7 +267,8 @@ class ScanNetSegDataset(Seg3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def get_scene_idxs(self, scene_idxs):
+    def get_scene_idxs(self, scene_idxs: Union[np.ndarray, str,
+                                               None]) -> np.ndarray:
         """Compute scene_idxs for data sampling.
 
         We sample more times for scenes with more points.
@@ -278,11 +285,11 @@ class ScanNetSegDataset(Seg3DDataset):
 class ScanNetInstanceSegDataset(Seg3DDataset):
 
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
          'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
-        'PLATTE': [
+        'palette': [
             [174, 199, 232],
             [152, 223, 138],
             [31, 119, 180],
@@ -315,7 +322,10 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                     pts='points',
+                     img='',
+                     pts_instance_mask='',
+                     pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  test_mode: bool = False,

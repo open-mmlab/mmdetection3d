@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from mmcv.cnn import ConvModule
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -14,7 +15,6 @@ from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import limit_period, xywhr2xyxyr
 from mmdet3d.utils import InstanceList, OptInstanceList
-from mmdet.models.utils import multi_apply
 from ..builder import build_head
 from .anchor3d_head import Anchor3DHead
 

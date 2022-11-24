@@ -36,7 +36,7 @@ class Kitti2DDataset(Det3DDataset):
             Defaults to False.
     """
 
-    CLASSES = ('car', 'pedestrian', 'cyclist')
+    classes = ('car', 'pedestrian', 'cyclist')
     """
     Annotation format:
     [
@@ -90,7 +90,7 @@ class Kitti2DDataset(Det3DDataset):
         self.data_infos = mmengine.load(ann_file)
         self.cat2label = {
             cat_name: i
-            for i, cat_name in enumerate(self.CLASSES)
+            for i, cat_name in enumerate(self.classes)
         }
         return self.data_infos
 
@@ -122,7 +122,7 @@ class Kitti2DDataset(Det3DDataset):
         difficulty = annos['difficulty']
 
         # remove classes that is not needed
-        selected = self.keep_arrays_by_name(gt_names, self.CLASSES)
+        selected = self.keep_arrays_by_name(gt_names, self.classes)
         gt_bboxes = gt_bboxes[selected]
         gt_names = gt_names[selected]
         difficulty = difficulty[selected]
@@ -215,7 +215,7 @@ class Kitti2DDataset(Det3DDataset):
         """
         from mmdet3d.structures.ops.transforms import bbox2result_kitti2d
         sample_idx = [info['image']['image_idx'] for info in self.data_infos]
-        result_files = bbox2result_kitti2d(outputs, self.CLASSES, sample_idx,
+        result_files = bbox2result_kitti2d(outputs, self.classes, sample_idx,
                                            out)
         return result_files
 
@@ -237,5 +237,5 @@ class Kitti2DDataset(Det3DDataset):
                                        ]), 'KITTI data set only evaluate bbox'
         gt_annos = [info['annos'] for info in self.data_infos]
         ap_result_str, ap_dict = kitti_eval(
-            gt_annos, result_files, self.CLASSES, eval_types=['bbox'])
+            gt_annos, result_files, self.classes, eval_types=['bbox'])
         return ap_result_str, ap_dict

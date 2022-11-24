@@ -26,7 +26,7 @@ class SUNRGBDDataset(Det3DDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for data. Defaults to
             dict(pts='points',img='sunrgbd_trainval').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_camera=True, use_lidar=True).
@@ -46,7 +46,7 @@ class SUNRGBDDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+        'classes': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                     'dresser', 'night_stand', 'bookshelf', 'bathtub')
     }
 

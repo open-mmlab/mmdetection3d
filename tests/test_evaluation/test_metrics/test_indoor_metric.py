@@ -49,7 +49,7 @@ class TestIndoorMetric(unittest.TestCase):
         pred_dict['eval_ann_info'] = eval_ann_info
 
         indoor_metric.dataset_meta = {
-            'CLASSES': ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+            'classes': ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
                         'window', 'bookshelf', 'picture', 'counter', 'desk',
                         'curtain', 'refrigerator', 'showercurtrain', 'toilet',
                         'sink', 'bathtub', 'garbagebin'),

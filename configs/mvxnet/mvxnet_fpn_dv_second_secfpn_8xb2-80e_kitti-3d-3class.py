@@ -142,7 +142,7 @@ model = dict(
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=True, use_camera=True)
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),

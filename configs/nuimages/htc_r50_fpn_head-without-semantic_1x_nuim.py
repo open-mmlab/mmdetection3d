@@ -6,6 +6,7 @@ _base_ = [
 model = dict(
     type='HybridTaskCascade',
     pretrained='torchvision://resnet50',
+    _scope_='mmdet',
     backbone=dict(
         type='ResNet',
         depth=50,

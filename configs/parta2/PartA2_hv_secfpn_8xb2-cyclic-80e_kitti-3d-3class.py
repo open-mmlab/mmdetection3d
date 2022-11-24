@@ -84,7 +84,7 @@ train_dataloader = dict(
             data_prefix=dict(pts='training/velodyne_reduced'),
             pipeline=train_pipeline,
             modality=input_modality,
-            metainfo=dict(CLASSES=class_names),
+            metainfo=dict(classes=class_names),
             box_type_3d='LiDAR',
             test_mode=False)))
 test_dataloader = dict(
@@ -100,7 +100,7 @@ test_dataloader = dict(
         data_prefix=dict(pts='training/velodyne_reduced'),
         pipeline=test_pipeline,
         modality=input_modality,
-        metainfo=dict(CLASSES=class_names),
+        metainfo=dict(classes=class_names),
         box_type_3d='LiDAR',
         test_mode=True))
 val_dataloader = dict(
@@ -116,7 +116,7 @@ val_dataloader = dict(
         data_prefix=dict(pts='training/velodyne_reduced'),
         pipeline=eval_pipeline,
         modality=input_modality,
-        metainfo=dict(CLASSES=class_names),
+        metainfo=dict(classes=class_names),
         box_type_3d='LiDAR',
         test_mode=True))
 val_evaluator = dict(

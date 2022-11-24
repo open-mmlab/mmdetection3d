@@ -2,6 +2,7 @@
 from typing import Dict, List, Optional, Tuple
 
 import torch
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -15,7 +16,6 @@ from mmdet3d.structures.bbox_3d import (BaseInstance3DBoxes,
                                         LiDARInstance3DBoxes)
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils.typing import InstanceList
-from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

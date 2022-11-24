@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 import torch
 from mmcv.cnn import ConvModule
+from mmdet.models.utils import multi_apply
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -15,7 +16,6 @@ from mmdet3d.models.losses import chamfer_distance
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import (BaseInstance3DBoxes, DepthInstance3DBoxes,
                                 Det3DDataSample)
-from mmdet.models.utils import multi_apply
 
 
 @MODELS.register_module()

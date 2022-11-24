@@ -7,32 +7,34 @@ try:
     from MinkowskiEngine import SparseTensor
 except ImportError:
     # Please follow getting_started.md to install MinkowskiEngine.
-    SparseTensor = None
+    ME = SparseTensor = None
     pass
 
 import torch
 from mmcv.cnn import Scale
 from mmcv.ops import nms3d, nms3d_normal
+from mmdet.utils import reduce_mean
 from mmengine.model import bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
 
-from mmdet3d.models import HEADS, build_loss
+from mmdet3d.registry import MODELS
 from mmdet3d.structures import BaseInstance3DBoxes, rotation_3d_in_axis
 from mmdet3d.utils import InstanceList, OptInstanceList
-from mmdet.utils import reduce_mean
 from .base_3d_dense_head import Base3DDenseHead
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class FCAF3DHead(Base3DDenseHead):
     r"""Bbox head of `FCAF3D <https://arxiv.org/abs/2112.00322>`_.
+
     Actually here we store both the sparse 3D FPN and a head. The neck and
     the head can not be simply separated as pruning score on the i-th level
     of FPN requires classification scores from i+1-th level of the head.
+
     Args:
         num_classes (int): Number of classes.
-        in_channels (tuple[int]): Number of channels in input tensors.
+        in_channels (int): Number of channels in input tensors.
         out_channels (int): Number of channels in the neck output tensors.
         num_reg_outs (int): Number of regression layer channels.
         voxel_size (float): Voxel size in meters.
@@ -43,9 +45,12 @@ class FCAF3DHead(Base3DDenseHead):
         pts_center_threshold (int): Box to location assigner parameter.
             After feature level for the box is determined, assigner selects
             pts_center_threshold locations closest to the box center.
-        center_loss (dict, optional): Config of centerness loss.
-        bbox_loss (dict, optional): Config of bbox loss.
-        cls_loss (dict, optional): Config of classification loss.
+        center_loss (dict): Config of centerness loss. Defaults to
+            dict(type='mmdet.CrossEntropyLoss', use_sigmoid=True).
+        bbox_loss (dict): Config of bbox loss. Defaults to
+            dict(type='AxisAlignedIoULoss').
+        cls_loss (dict): Config of classification loss. Defaults to
+            dict = dict(type='mmdet.FocalLoss').
         train_cfg (dict, optional): Config for train stage. Defaults to None.
         test_cfg (dict, optional): Config for test stage. Defaults to None.
         init_cfg (dict, optional): Config for weight initialization.
@@ -69,13 +74,17 @@ class FCAF3DHead(Base3DDenseHead):
                  test_cfg: Optional[dict] = None,
                  init_cfg: Optional[dict] = None):
         super(FCAF3DHead, self).__init__(init_cfg)
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
         self.voxel_size = voxel_size
         self.pts_prune_threshold = pts_prune_threshold
         self.pts_assign_threshold = pts_assign_threshold
         self.pts_center_threshold = pts_center_threshold
-        self.center_loss = build_loss(center_loss)
-        self.bbox_loss = build_loss(bbox_loss)
-        self.cls_loss = build_loss(cls_loss)
+        self.center_loss = MODELS.build(center_loss)
+        self.bbox_loss = MODELS.build(bbox_loss)
+        self.cls_loss = MODELS.build(cls_loss)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self._init_layers(in_channels, out_channels, num_reg_outs, num_classes)
@@ -87,6 +96,7 @@ class FCAF3DHead(Base3DDenseHead):
         Args:
             in_channels (int): Number of input channels.
             out_channels (int): Number of output channels.
+
         Returns:
             torch.nn.Module: With corresponding layers.
         """
@@ -102,6 +112,7 @@ class FCAF3DHead(Base3DDenseHead):
         Args:
             in_channels (int): Number of input channels.
             out_channels (int): Number of output channels.
+
         Returns:
             torch.nn.Module: With corresponding layers.
         """
@@ -331,7 +342,7 @@ class FCAF3DHead(Base3DDenseHead):
                 `labels_3d``、``depths``、``centers_2d`` and attributes.
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
-            batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
                 Batch of gt_instances_ignore. It includes ``bboxes`` attribute
                 data that is ignored during training and testing.
                 Defaults to None.
@@ -426,7 +437,7 @@ class FCAF3DHead(Base3DDenseHead):
 
         Returns:
             list[InstanceData]: Predicted bboxes, scores, and labels for
-                all scenes.
+            all scenes.
         """
         results = []
         for i in range(len(batch_input_metas)):
@@ -515,7 +526,7 @@ class FCAF3DHead(Base3DDenseHead):
 
         Returns:
             Tensor: Face distances of shape (N_points, N_boxes, 6),
-                (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
+            (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
         """
         shift = torch.stack(
             (points[..., 0] - boxes[..., 0], points[..., 1] - boxes[..., 1],
@@ -564,7 +575,7 @@ class FCAF3DHead(Base3DDenseHead):
 
         Returns:
             tuple[Tensor, ...]: Centerness, bbox and classification
-                targets for all locations.
+            targets for all locations.
         """
         float_max = points[0].new_tensor(1e8)
         n_levels = len(points)
