@@ -5,7 +5,7 @@ model = dict(test_cfg=dict(pts=dict(use_rotate_nms=True, max_num=500)))
 
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 # Using calibration info convert the Lidar-coordinate point cloud range to the
-# ego-coordinate point cloud range could bring a little promotion.
+# ego-coordinate point cloud range could bring a little promotion in nuScenes.
 # point_cloud_range = [-54, -54.8, -5.0, 54, 53.2, 3.0]
 file_client_args = dict(backend='disk')
 class_names = [
