@@ -262,7 +262,7 @@ def get_kitti_style_2d_boxes(info: dict,
         corners_3d = box_np_ops.center_to_corner_box3d(
             gt_bbox_3d[:, :3],
             gt_bbox_3d[:, 3:6],
-            gt_bbox_3d[:, 6], [0.5, 0.5, 0.5],
+            gt_bbox_3d[:, 6], (0.5, 0.5, 0.5),
             axis=1)
         corners_3d = corners_3d[0].T  # (1, 8, 3) -> (3, 8)
         in_front = np.argwhere(corners_3d[2, :] > 0).flatten()
