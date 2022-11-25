@@ -7,8 +7,7 @@ from torch import nn as nn
 SA_MODULES = Registry('point_sa_module')
 
 
-def build_sa_module(cfg: Union[dict, None], *args: list,
-                    **kwargs: dict) -> nn.Module:
+def build_sa_module(cfg: Union[dict, None], *args, **kwargs) -> nn.Module:
     """Build PointNet2 set abstraction (SA) module.
 
     Args:
