@@ -69,10 +69,7 @@ class Waymo2KITTI(object):
             '_SIDE_LEFT',
             '_SIDE_RIGHT',
         ]
-        self.lidar_list = [
-            '_FRONT', '_FRONT_RIGHT', '_FRONT_LEFT', '_SIDE_RIGHT',
-            '_SIDE_LEFT'
-        ]
+        self.lidar_list = ['TOP', 'FRONT', 'SIDE_LEFT', 'SIDE_RIGHT', 'REAR']
         self.type_list = [
             'UNKNOWN', 'VEHICLE', 'PEDESTRIAN', 'SIGN', 'CYCLIST'
         ]
@@ -135,7 +132,9 @@ class Waymo2KITTI(object):
 
             self.save_image(frame, file_idx, frame_idx)
             self.save_calib(frame, file_idx, frame_idx)
-            self.save_lidar(frame, file_idx, frame_idx)
+            if 'testing_3d_camera_only_detection' not in self.load_dir:
+                # the camera only split doesn't contain lidar points.
+                self.save_lidar(frame, file_idx, frame_idx)
             self.save_pose(frame, file_idx, frame_idx)
             self.save_timestamp(frame, file_idx, frame_idx)
 
@@ -441,7 +440,6 @@ class Waymo2KITTI(object):
             dir_list1 = [
                 self.label_all_save_dir,
                 self.calib_save_dir,
-                self.point_cloud_save_dir,
                 self.pose_save_dir,
                 self.timestamp_save_dir,
             ]
@@ -451,10 +449,12 @@ class Waymo2KITTI(object):
                 dir_list2.append(self.cam_sync_label_save_dir)
         else:
             dir_list1 = [
-                self.calib_save_dir, self.point_cloud_save_dir,
-                self.pose_save_dir, self.timestamp_save_dir
+                self.calib_save_dir, self.pose_save_dir,
+                self.timestamp_save_dir
             ]
             dir_list2 = [self.image_save_dir]
+        if 'testing_3d_camera_only_detection' not in self.load_dir:
+            dir_list1.append(self.point_cloud_save_dir)
         for d in dir_list1:
             mmengine.mkdir_or_exist(d)
         for d in dir_list2:

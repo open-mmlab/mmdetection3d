@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -8,7 +8,6 @@ from mmdet3d.registry import DATASETS
 from mmdet3d.structures import DepthInstance3DBoxes
 from .det3d_dataset import Det3DDataset
 from .seg3d_dataset import Seg3DDataset
-from .transforms import Compose
 
 
 @DATASETS.register_module()
@@ -19,138 +18,132 @@ class S3DISDataset(Det3DDataset):
     often train on 5 of them and test on the remaining one. The one for
     test is Area_5 as suggested in `GSDN <https://arxiv.org/abs/2006.12356>`_.
     To concatenate 5 areas during training
-    `mmdet.datasets.dataset_wrappers.ConcatDataset` should be used.
+    `mmengine.datasets.dataset_wrappers.ConcatDataset` should be used.
 
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        metainfo (dict, optional): Meta information for dataset, such as class
+            information. Defaults to None.
+        data_prefix (dict): Prefix for data. Defaults to
+            dict(pts='points',
+                 pts_instance_mask='instance_mask',
+                 pts_semantic_mask='semantic_mask').
+        pipeline (List[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_camera=False, use_lidar=True).
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'Depth' in this dataset. Available options includes
+            Defaults to 'Depth' in this dataset. Available options includes:
 
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
-    classes = ('table', 'chair', 'sofa', 'bookcase', 'board')
+    METAINFO = {
+        'classes': ('table', 'chair', 'sofa', 'bookcase', 'board'),
+        # the valid ids of segmentation annotations
+        'seg_valid_class_ids': (7, 8, 9, 10, 11),
+        'seg_all_class_ids': tuple(range(1, 14))  # possibly with 'stair' class
+    }
 
     def __init__(self,
-                 data_root,
-                 ann_file,
-                 pipeline=None,
-                 classes=None,
-                 modality=None,
-                 box_type_3d='Depth',
-                 filter_empty_gt=True,
-                 test_mode=False,
-                 *kwargs):
+                 data_root: str,
+                 ann_file: str,
+                 metainfo: Optional[dict] = None,
+                 data_prefix: dict = dict(
+                     pts='points',
+                     pts_instance_mask='instance_mask',
+                     pts_semantic_mask='semantic_mask'),
+                 pipeline: List[Union[dict, Callable]] = [],
+                 modality: dict = dict(use_camera=False, use_lidar=True),
+                 box_type_3d: str = 'Depth',
+                 filter_empty_gt: bool = True,
+                 test_mode: bool = False,
+                 **kwargs) -> None:
+
+        # construct seg_label_mapping for semantic mask
+        seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
+        seg_valid_cat_ids = self.METAINFO['seg_valid_class_ids']
+        neg_label = len(seg_valid_cat_ids)
+        seg_label_mapping = np.ones(
+            seg_max_cat_id + 1, dtype=np.int) * neg_label
+        for cls_idx, cat_id in enumerate(seg_valid_cat_ids):
+            seg_label_mapping[cat_id] = cls_idx
+        self.seg_label_mapping = seg_label_mapping
+
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
+            metainfo=metainfo,
+            data_prefix=data_prefix,
             pipeline=pipeline,
-            classes=classes,
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
-            *kwargs)
+            **kwargs)
 
-    def get_ann_info(self, index):
-        """Get annotation info according to the given index.
+        self.metainfo['seg_label_mapping'] = self.seg_label_mapping
+        assert 'use_camera' in self.modality and \
+               'use_lidar' in self.modality
+        assert self.modality['use_camera'] or self.modality['use_lidar']
+
+    def parse_data_info(self, info: dict) -> dict:
+        """Process the raw data info.
 
         Args:
-            index (int): Index of the annotation data to get.
+            info (dict): Raw info dict.
 
         Returns:
-            dict: annotation information consists of the following keys:
-
-                - gt_bboxes_3d (:obj:`DepthInstance3DBoxes`):
-                    3D ground truth bboxes
-                - gt_labels_3d (np.ndarray): Labels of ground truths.
-                - pts_instance_mask_path (str): Path of instance masks.
-                - pts_semantic_mask_path (str): Path of semantic masks.
+            dict: Has `ann_info` in training stage. And
+            all path has been converted to absolute path.
         """
-        # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-        if info['annos']['gt_num'] != 0:
-            gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
-                np.float32)  # k, 6
-            gt_labels_3d = info['annos']['class'].astype(np.int64)
-        else:
-            gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
-            gt_labels_3d = np.zeros((0, ), dtype=np.int64)
+        info['pts_instance_mask_path'] = osp.join(
+            self.data_prefix.get('pts_instance_mask', ''),
+            info['pts_instance_mask_path'])
+        info['pts_semantic_mask_path'] = osp.join(
+            self.data_prefix.get('pts_semantic_mask', ''),
+            info['pts_semantic_mask_path'])
 
+        info = super().parse_data_info(info)
+        # only be used in `PointSegClassMapping` in pipeline
+        # to map original semantic class to valid category ids.
+        info['seg_label_mapping'] = self.seg_label_mapping
+        return info
+
+    def parse_ann_info(self, info: dict) -> dict:
+        """Process the `instances` in data info to `ann_info`.
+
+        Args:
+            info (dict): Info dict.
+
+        Returns:
+            dict: Processed `ann_info`.
+        """
+        ann_info = super().parse_ann_info(info)
+        # empty gt
+        if ann_info is None:
+            ann_info = dict()
+            ann_info['gt_bboxes_3d'] = np.zeros((0, 6), dtype=np.float32)
+            ann_info['gt_labels_3d'] = np.zeros((0, ), dtype=np.int64)
         # to target box structure
-        gt_bboxes_3d = DepthInstance3DBoxes(
-            gt_bboxes_3d,
-            box_dim=gt_bboxes_3d.shape[-1],
+
+        ann_info['gt_bboxes_3d'] = DepthInstance3DBoxes(
+            ann_info['gt_bboxes_3d'],
+            box_dim=ann_info['gt_bboxes_3d'].shape[-1],
             with_yaw=False,
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
-        pts_instance_mask_path = osp.join(self.data_root,
-                                          info['pts_instance_mask_path'])
-        pts_semantic_mask_path = osp.join(self.data_root,
-                                          info['pts_semantic_mask_path'])
-
-        anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            pts_instance_mask_path=pts_instance_mask_path,
-            pts_semantic_mask_path=pts_semantic_mask_path)
-        return anns_results
-
-    def get_data_info(self, index):
-        """Get data info according to the given index.
-
-        Args:
-            index (int): Index of the sample data to get.
-
-        Returns:
-            dict: Data information that will be passed to the data
-                preprocessing transforms. It includes the following keys:
-
-                - pts_filename (str): Filename of point clouds.
-                - file_name (str): Filename of point clouds.
-                - ann_info (dict): Annotation info.
-        """
-        info = self.data_infos[index]
-        pts_filename = osp.join(self.data_root, info['pts_path'])
-        input_dict = dict(pts_filename=pts_filename)
-
-        if not self.test_mode:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
-            if self.filter_empty_gt and ~(annos['gt_labels_3d'] != -1).any():
-                return None
-        return input_dict
-
-    def _build_default_pipeline(self):
-        """Build the default pipeline for this dataset."""
-        pipeline = [
-            dict(
-                type='LoadPointsFromFile',
-                coord_type='DEPTH',
-                shift_height=False,
-                load_dim=6,
-                use_dim=[0, 1, 2, 3, 4, 5]),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=self.classes,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ]
-        return Compose(pipeline)
+        return ann_info
 
 
 class _S3DISSegDataset(Seg3DDataset):
@@ -171,16 +164,16 @@ class _S3DISSegDataset(Seg3DDataset):
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
-            dict(pts='points', instance_mask='', semantic_mask='').
-        pipeline (list[dict]): Pipeline used for data processing.
+            dict(pts='points', pts_instance_mask='', pts_semantic_mask='').
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES) to
+            unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
@@ -205,7 +198,7 @@ class _S3DISSegDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                     pts='points', pts_instance_mask='', pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,
@@ -224,7 +217,8 @@ class _S3DISSegDataset(Seg3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def get_scene_idxs(self, scene_idxs):
+    def get_scene_idxs(self, scene_idxs: Union[np.ndarray, str,
+                                               None]) -> np.ndarray:
         """Compute scene_idxs for data sampling.
 
         We sample more times for scenes with more points.
@@ -252,21 +246,21 @@ class S3DISSegDataset(_S3DISSegDataset):
 
     Args:
         data_root (str, optional): Path of dataset root. Defaults to None.
-        ann_files (list[str]): Path of several annotation files.
+        ann_files (List[str]): Path of several annotation files.
             Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
-            dict(pts='points', instance_mask='', semantic_mask='').
-        pipeline (list[dict]): Pipeline used for data processing.
+            dict(pts='points', pts_instance_mask='', pts_semantic_mask='').
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
             Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES) to
+            unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (list[np.ndarray] | list[str], optional): Precomputed index
+        scene_idxs (List[np.ndarray] | List[str], optional): Precomputed index
             to load data. For scenes with many points, we may sample it
             several times. Defaults to None.
         test_mode (bool): Whether the dataset is in test mode.
@@ -278,7 +272,7 @@ class S3DISSegDataset(_S3DISSegDataset):
                  ann_files: List[str] = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                     pts='points', pts_instance_mask='', pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,
@@ -302,7 +296,6 @@ class S3DISSegDataset(_S3DISSegDataset):
             ignore_index=ignore_index,
             scene_idxs=scene_idxs[0],
             test_mode=test_mode,
-            serialize_data=False,
             **kwargs)
 
         datasets = [
@@ -326,29 +319,34 @@ class S3DISSegDataset(_S3DISSegDataset):
         if not self.test_mode:
             self._set_group_flag()
 
-    def concat_data_list(self, data_lists: List[List[dict]]) -> List[dict]:
+    def concat_data_list(self, data_lists: List[List[dict]]) -> None:
         """Concat data_list from several datasets to form self.data_list.
 
         Args:
-            data_lists (list[list[dict]])
+            data_lists (List[List[dict]]): List of dict containing
+                annotation information.
         """
         self.data_list = [
             data for data_list in data_lists for data in data_list
         ]
 
     @staticmethod
-    def _duplicate_to_list(x, num):
+    def _duplicate_to_list(x: Any, num: int) -> list:
         """Repeat x `num` times to form a list."""
         return [x for _ in range(num)]
 
-    def _check_ann_files(self, ann_file):
+    def _check_ann_files(
+            self, ann_file: Union[List[str], Tuple[str], str]) -> List[str]:
         """Make ann_files as list/tuple."""
         # ann_file could be str
         if not isinstance(ann_file, (list, tuple)):
             ann_file = self._duplicate_to_list(ann_file, 1)
         return ann_file
 
-    def _check_scene_idxs(self, scene_idx, num):
+    def _check_scene_idxs(self, scene_idx: Union[str, List[Union[list, tuple,
+                                                                 np.ndarray]],
+                                                 List[str], None],
+                          num: int) -> List[np.ndarray]:
         """Make scene_idxs as list/tuple."""
         if scene_idx is None:
             return self._duplicate_to_list(scene_idx, num)

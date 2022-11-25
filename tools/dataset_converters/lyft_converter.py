@@ -131,6 +131,7 @@ def _fill_trainval_infos(lyft,
 
         info = {
             'lidar_path': lidar_path,
+            'num_features': 5,
             'token': sample['token'],
             'sweeps': [],
             'cams': dict(),

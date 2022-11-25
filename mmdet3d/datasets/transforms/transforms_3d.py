@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import mmcv
 import numpy as np
-from mmcv.transforms import BaseTransform, RandomResize, Resize
+from mmcv.transforms import BaseTransform, Compose, RandomResize, Resize
 from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
                                        RandomFlip)
 from mmengine import is_tuple_of
@@ -17,7 +17,6 @@ from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 LiDARInstance3DBoxes)
 from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
-from .compose import Compose
 from .data_augment_utils import noise_per_object_v3_
 
 

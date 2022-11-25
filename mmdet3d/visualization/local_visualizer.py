@@ -26,9 +26,9 @@ from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
 try:
     import open3d as o3d
     from open3d import geometry
+    from open3d.visualization import Visualizer
 except ImportError:
-    raise ImportError(
-        'Please run "pip install open3d" to install open3d first.')
+    o3d = geometry = Visualizer = None
 
 
 @VISUALIZERS.register_module()
@@ -126,7 +126,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             del self.pcd
             del self.points_colors
 
-    def _initialize_o3d_vis(self, frame_cfg) -> o3d.visualization.Visualizer:
+    def _initialize_o3d_vis(self, frame_cfg) -> Visualizer:
         """Initialize open3d vis according to frame_cfg.
 
         Args:
@@ -136,6 +136,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         Returns:
             :obj:`o3d.visualization.Visualizer`: Created open3d vis.
         """
+        if o3d is None or geometry is None:
+            raise ImportError(
+                'Please run "pip install open3d" to install open3d first.')
         o3d_vis = o3d.visualization.Visualizer()
         o3d_vis.create_window()
         # create coordinate frame

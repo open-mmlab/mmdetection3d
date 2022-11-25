@@ -5,28 +5,25 @@ try:
     import MinkowskiEngine as ME
     from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
-    import warnings
-    warnings.warn(
-        'Please follow `getting_started.md` to install MinkowskiEngine.`')
     # blocks are used in the static part of MinkResNet
-    BasicBlock, Bottleneck = None, None
+    ME = BasicBlock = Bottleneck = None
 
 import torch.nn as nn
 
-from mmdet3d.models.builder import BACKBONES
+from mmdet3d.registry import MODELS
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class MinkResNet(nn.Module):
     r"""Minkowski ResNet backbone. See `4D Spatio-Temporal ConvNets
     <https://arxiv.org/abs/1904.08755>`_ for more details.
 
     Args:
         depth (int): Depth of resnet, from {18, 34, 50, 101, 152}.
-        in_channels (ont): Number of input channels, 3 for RGB.
-        num_stages (int, optional): Resnet stages. Default: 4.
-        pool (bool, optional): Add max pooling after first conv if True.
-            Default: True.
+        in_channels (int): Number of input channels, 3 for RGB.
+        num_stages (int): Resnet stages. Defaults to 4.
+        pool (bool): Whether to add max pooling after first conv.
+            Defaults to True.
     """
     arch_settings = {
         18: (BasicBlock, (2, 2, 2, 2)),
@@ -38,6 +35,10 @@ class MinkResNet(nn.Module):
 
     def __init__(self, depth, in_channels, num_stages=4, pool=True):
         super(MinkResNet, self).__init__()
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for resnet')
         assert 4 >= num_stages >= 1

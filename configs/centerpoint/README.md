@@ -91,12 +91,8 @@ test_pipeline = [
             dict(type='RandomFlip3D', sync_2d=False),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 data = dict(

@@ -52,6 +52,7 @@ train_dataloader = dict(
         data_prefix=dict(img='training/image_2'),
         pipeline=train_pipeline,
         modality=input_modality,
+        load_type='fov_image_based',
         test_mode=False,
         metainfo=metainfo,
         # we use box_type_3d='Camera' in monocular 3d
@@ -70,6 +71,7 @@ val_dataloader = dict(
         ann_file='kitti_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
+        load_type='fov_image_based',
         metainfo=metainfo,
         test_mode=True,
         box_type_3d='Camera'))
