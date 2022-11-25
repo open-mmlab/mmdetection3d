@@ -30,6 +30,12 @@ We implement FCAF3D and provide the result and checkpoints on the ScanNet and SU
 | :------------------------------------------------: | :------: | :------------: | :----------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | [MinkResNet34](./fcaf3d_8x2_sunrgbd-3d-10class.py) |   6.3    |      15.6      | 63.8(63.8\*) | 47.3(48.2\*) | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.log.json) |
 
+### S3DIS
+
+|                     Backbone                     | Mem (GB) | Inf time (fps) |   AP@0.25    |    AP@0.5    |                                                                                                                                                    Download                                                                                                                                                     |
+| :----------------------------------------------: | :------: | :------------: | :----------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [MinkResNet34](./fcaf3d_2xb8_s3dis-3d-5class.py) |   23.5   |      4.2       | 67.4(64.9\*) | 45.7(43.8\*) | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_s3dis-3d-5class/fcaf3d_8x2_s3dis-3d-5class_20220805_121957.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_s3dis-3d-5class/fcaf3d_8x2_s3dis-3d-5class_20220805_121957.log.json) |
+
 **Note**
 
 - We report the results across 5 train runs followed by 5 test runs. * means the results reported in the paper.
