@@ -48,12 +48,12 @@ model = dict(
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[[-74.88, -74.88, -0.0345, 74.88, 74.88, -0.0345],
-                    [-74.88, -74.88, -0.1188, 74.88, 74.88, -0.1188],
-                    [-74.88, -74.88, 0, 74.88, 74.88, 0]],
+                    [-74.88, -74.88, 0, 74.88, 74.88, 0],
+                    [-74.88, -74.88, -0.1188, 74.88, 74.88, -0.1188]],
             sizes=[
                 [4.73, 2.08, 1.77],  # car
-                [1.81, 0.84, 1.77],  # cyclist
-                [0.91, 0.84, 1.74]  # pedestrian
+                [0.91, 0.84, 1.74],  # pedestrian
+                [1.81, 0.84, 1.77]  # cyclist
             ],
             rotations=[0, 1.57],
             reshape_out=False),
@@ -82,14 +82,14 @@ model = dict(
                     neg_iou_thr=0.4,
                     min_pos_iou=0.4,
                     ignore_iof_thr=-1),
-                dict(  # cyclist
+                dict(  # pedestrian
                     type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.3,
                     min_pos_iou=0.3,
                     ignore_iof_thr=-1),
-                dict(  # pedestrian
+                dict(  # cyclist
                     type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
