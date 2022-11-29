@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import os
 from os import path as osp
 from typing import Callable, List, Optional, Set, Union
 
@@ -287,7 +288,7 @@ class Det3DDataset(BaseDataset):
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
                     file_suffix = sweep['lidar_points']['lidar_path'].split(
-                        '/')[-1]
+                        os.sep)[-1]
                     if 'samples' in sweep['lidar_points']['lidar_path']:
                         sweep['lidar_points']['lidar_path'] = osp.join(
                             self.data_prefix['pts'], file_suffix)
