@@ -1,59 +1,62 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple, Union
+
 import torch
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.bbox_3d import (get_proj_mat_by_coord_type,
                                         points_cam2img, points_img2cam)
+from mmdet3d.utils import OptConfigType, OptMultiConfig
 from . import apply_3d_transformation
 
 
-def point_sample(img_meta,
-                 img_features,
-                 points,
-                 proj_mat,
-                 coord_type,
-                 img_scale_factor,
-                 img_crop_offset,
-                 img_flip,
-                 img_pad_shape,
-                 img_shape,
-                 aligned=True,
-                 padding_mode='zeros',
-                 align_corners=True,
-                 valid_flag=False):
+def point_sample(img_meta: dict,
+                 img_features: Tensor,
+                 points: Tensor,
+                 proj_mat: Tensor,
+                 coord_type: str,
+                 img_scale_factor: Tensor,
+                 img_crop_offset: Tensor,
+                 img_flip: bool,
+                 img_pad_shape: Tuple[int],
+                 img_shape: Tuple[int],
+                 aligned: bool = True,
+                 padding_mode: str = 'zeros',
+                 align_corners: bool = True,
+                 valid_flag: bool = False) -> Tensor:
     """Obtain image features using points.
 
     Args:
         img_meta (dict): Meta info.
-        img_features (torch.Tensor): 1 x C x H x W image features.
-        points (torch.Tensor): Nx3 point cloud in LiDAR coordinates.
-        proj_mat (torch.Tensor): 4x4 transformation matrix.
+        img_features (Tensor): 1 x C x H x W image features.
+        points (Tensor): Nx3 point cloud in LiDAR coordinates.
+        proj_mat (Tensor): 4x4 transformation matrix.
         coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
-        img_scale_factor (torch.Tensor): Scale factor with shape of
+        img_scale_factor (Tensor): Scale factor with shape of
             (w_scale, h_scale).
-        img_crop_offset (torch.Tensor): Crop offset used to crop
-            image during data augmentation with shape of (w_offset, h_offset).
+        img_crop_offset (Tensor): Crop offset used to crop image during
+            data augmentation with shape of (w_offset, h_offset).
         img_flip (bool): Whether the image is flipped.
-        img_pad_shape (tuple[int]): int tuple indicates the h & w after
-            padding, this is necessary to obtain features in feature map.
-        img_shape (tuple[int]): int tuple indicates the h & w before padding
-            after scaling, this is necessary for flipping coordinates.
-        aligned (bool): Whether use bilinear interpolation when
+        img_pad_shape (Tuple[int]): Int tuple indicates the h & w after
+            padding. This is necessary to obtain features in feature map.
+        img_shape (Tuple[int]): Int tuple indicates the h & w before padding
+            after scaling. This is necessary for flipping coordinates.
+        aligned (bool): Whether to use bilinear interpolation when
             sampling image features for each point. Defaults to True.
         padding_mode (str): Padding mode when padding values for
             features of out-of-image points. Defaults to 'zeros'.
         align_corners (bool): Whether to align corners when
             sampling image features for each point. Defaults to True.
-        valid_flag (bool): Whether to filter out the points that
-            outside the image and with depth smaller than 0. Defaults to
-            False.
+        valid_flag (bool): Whether to filter out the points that outside
+            the image and with depth smaller than 0. Defaults to False.
 
     Returns:
-        torch.Tensor: NxC image features sampled by point coordinates.
+        Tensor: NxC image features sampled by point coordinates.
     """
 
     # apply transformation based on info in img_meta
@@ -114,55 +117,55 @@ class PointFusion(BaseModule):
     """Fuse image features from multi-scale features.
 
     Args:
-        img_channels (list[int] | int): Channels of image features.
+        img_channels (List[int] or int): Channels of image features.
             It could be a list if the input is multi-scale image features.
         pts_channels (int): Channels of point features
         mid_channels (int): Channels of middle layers
         out_channels (int): Channels of output fused features
-        img_levels (int, optional): Number of image levels. Defaults to 3.
-        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
-            Defaults to 'LIDAR'.
-        conv_cfg (dict, optional): Dict config of conv layers of middle
-            layers. Defaults to None.
-        norm_cfg (dict, optional): Dict config of norm layers of middle
-            layers. Defaults to None.
-        act_cfg (dict, optional): Dict config of activatation layers.
+        img_levels (List[int] or int): Number of image levels. Defaults to 3.
+        coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'. Defaults to 'LIDAR'.
+        conv_cfg (:obj:`ConfigDict` or dict): Config dict for convolution
+            layers of middle layers. Defaults to None.
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layers of middle layers. Defaults to None.
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Defaults to None.
-        activate_out (bool, optional): Whether to apply relu activation
-            to output features. Defaults to True.
-        fuse_out (bool, optional): Whether apply conv layer to the fused
-            features. Defaults to False.
-        dropout_ratio (int, float, optional): Dropout ratio of image
-            features to prevent overfitting. Defaults to 0.
-        aligned (bool, optional): Whether apply aligned feature fusion.
+        init_cfg (:obj:`ConfigDict` or dict or List[:obj:`Contigdict` or dict],
+            optional): Initialization config dict. Defaults to None.
+        activate_out (bool): Whether to apply relu activation to output
+            features. Defaults to True.
+        fuse_out (bool): Whether to apply conv layer to the fused features.
+            Defaults to False.
+        dropout_ratio (int or float): Dropout ratio of image features to
+            prevent overfitting. Defaults to 0.
+        aligned (bool): Whether to apply aligned feature fusion.
             Defaults to True.
-        align_corners (bool, optional): Whether to align corner when
-            sampling features according to points. Defaults to True.
-        padding_mode (str, optional): Mode used to pad the features of
-            points that do not have corresponding image features.
-            Defaults to 'zeros'.
-        lateral_conv (bool, optional): Whether to apply lateral convs
-            to image features. Defaults to True.
+        align_corners (bool): Whether to align corner when sampling features
+            according to points. Defaults to True.
+        padding_mode (str): Mode used to pad the features of points that do not
+            have corresponding image features. Defaults to 'zeros'.
+        lateral_conv (bool): Whether to apply lateral convs to image features.
+            Defaults to True.
     """
 
     def __init__(self,
-                 img_channels,
-                 pts_channels,
-                 mid_channels,
-                 out_channels,
-                 img_levels=3,
-                 coord_type='LIDAR',
-                 conv_cfg=None,
-                 norm_cfg=None,
-                 act_cfg=None,
-                 init_cfg=None,
-                 activate_out=True,
-                 fuse_out=False,
-                 dropout_ratio=0,
-                 aligned=True,
-                 align_corners=True,
-                 padding_mode='zeros',
-                 lateral_conv=True):
+                 img_channels: Union[List[int], int],
+                 pts_channels: int,
+                 mid_channels: int,
+                 out_channels: int,
+                 img_levels: Union[List[int], int] = 3,
+                 coord_type: str = 'LIDAR',
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: OptConfigType = None,
+                 act_cfg: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None,
+                 activate_out: bool = True,
+                 fuse_out: bool = False,
+                 dropout_ratio: Union[int, float] = 0,
+                 aligned: bool = True,
+                 align_corners: bool = True,
+                 padding_mode: str = 'zeros',
+                 lateral_conv: bool = True) -> None:
         super(PointFusion, self).__init__(init_cfg=init_cfg)
         if isinstance(img_levels, int):
             img_levels = [img_levels]
@@ -225,18 +228,19 @@ class PointFusion(BaseModule):
                 dict(type='Xavier', layer='Linear', distribution='uniform')
             ]
 
-    def forward(self, img_feats, pts, pts_feats, img_metas):
+    def forward(self, img_feats: List[Tensor], pts: List[Tensor],
+                pts_feats: Tensor, img_metas: List[dict]) -> Tensor:
         """Forward function.
 
         Args:
-            img_feats (list[torch.Tensor]): Image features.
-            pts: [list[torch.Tensor]]: A batch of points with shape N x 3.
-            pts_feats (torch.Tensor): A tensor consist of point features of the
+            img_feats (List[Tensor]): Image features.
+            pts: (List[Tensor]): A batch of points with shape N x 3.
+            pts_feats (Tensor): A tensor consist of point features of the
                 total batch.
-            img_metas (list[dict]): Meta information of images.
+            img_metas (List[dict]): Meta information of images.
 
         Returns:
-            torch.Tensor: Fused features of each point.
+            Tensor: Fused features of each point.
         """
         img_pts = self.obtain_mlvl_feats(img_feats, pts, img_metas)
         img_pre_fuse = self.img_transform(img_pts)
@@ -252,17 +256,18 @@ class PointFusion(BaseModule):
 
         return fuse_out
 
-    def obtain_mlvl_feats(self, img_feats, pts, img_metas):
+    def obtain_mlvl_feats(self, img_feats: List[Tensor], pts: List[Tensor],
+                          img_metas: List[dict]) -> Tensor:
         """Obtain multi-level features for each point.
 
         Args:
-            img_feats (list(torch.Tensor)): Multi-scale image features produced
+            img_feats (List[Tensor]): Multi-scale image features produced
                 by image backbone in shape (N, C, H, W).
-            pts (list[torch.Tensor]): Points of each sample.
-            img_metas (list[dict]): Meta information for each sample.
+            pts (List[Tensor]): Points of each sample.
+            img_metas (List[dict]): Meta information for each sample.
 
         Returns:
-            torch.Tensor: Corresponding image features of each point.
+            Tensor: Corresponding image features of each point.
         """
         if self.lateral_convs is not None:
             img_ins = [
@@ -285,17 +290,17 @@ class PointFusion(BaseModule):
         img_pts = torch.cat(img_feats_per_point, dim=0)
         return img_pts
 
-    def sample_single(self, img_feats, pts, img_meta):
+    def sample_single(self, img_feats: Tensor, pts: Tensor,
+                      img_meta: dict) -> Tensor:
         """Sample features from single level image feature map.
 
         Args:
-            img_feats (torch.Tensor): Image feature map in shape
-                (1, C, H, W).
-            pts (torch.Tensor): Points of a single sample.
+            img_feats (Tensor): Image feature map in shape (1, C, H, W).
+            pts (Tensor): Points of a single sample.
             img_meta (dict): Meta information of the single sample.
 
         Returns:
-            torch.Tensor: Single level image features of each point.
+            Tensor: Single level image features of each point.
         """
         # TODO: image transformation also extracted
         img_scale_factor = (
@@ -324,49 +329,47 @@ class PointFusion(BaseModule):
         return img_pts
 
 
-def voxel_sample(voxel_features,
-                 voxel_range,
-                 voxel_size,
-                 depth_samples,
-                 proj_mat,
-                 downsample_factor,
-                 img_scale_factor,
-                 img_crop_offset,
-                 img_flip,
-                 img_pad_shape,
-                 img_shape,
-                 aligned=True,
-                 padding_mode='zeros',
-                 align_corners=True):
+def voxel_sample(voxel_features: Tensor,
+                 voxel_range: List[float],
+                 voxel_size: List[float],
+                 depth_samples: Tensor,
+                 proj_mat: Tensor,
+                 downsample_factor: int,
+                 img_scale_factor: Tensor,
+                 img_crop_offset: Tensor,
+                 img_flip: bool,
+                 img_pad_shape: Tuple[int],
+                 img_shape: Tuple[int],
+                 aligned: bool = True,
+                 padding_mode: str = 'zeros',
+                 align_corners: bool = True) -> Tensor:
     """Obtain image features using points.
 
     Args:
-        voxel_features (torch.Tensor): 1 x C x Nx x Ny x Nz voxel features.
-        voxel_range (list): The range of voxel features.
-        voxel_size (:obj:`ConfigDict` or dict): The voxel size of voxel
-            features.
-        depth_samples (torch.Tensor): N depth samples in LiDAR coordinates.
-        proj_mat (torch.Tensor): ORIGINAL LiDAR2img projection matrix
-            for N views.
+        voxel_features (Tensor): 1 x C x Nx x Ny x Nz voxel features.
+        voxel_range (List[float]): The range of voxel features.
+        voxel_size (List[float]): The voxel size of voxel features.
+        depth_samples (Tensor): N depth samples in LiDAR coordinates.
+        proj_mat (Tensor): ORIGINAL LiDAR2img projection matrix for N views.
         downsample_factor (int): The downsample factor in rescaling.
-        img_scale_factor (tuple[torch.Tensor]): Scale factor with shape of
+        img_scale_factor (Tensor): Scale factor with shape of
             (w_scale, h_scale).
-        img_crop_offset (tuple[torch.Tensor]): Crop offset used to crop
-            image during data augmentation with shape of (w_offset, h_offset).
+        img_crop_offset (Tensor): Crop offset used to crop image during
+            data augmentation with shape of (w_offset, h_offset).
         img_flip (bool): Whether the image is flipped.
-        img_pad_shape (tuple[int]): int tuple indicates the h & w after
-            padding, this is necessary to obtain features in feature map.
-        img_shape (tuple[int]): int tuple indicates the h & w before padding
-            after scaling, this is necessary for flipping coordinates.
-        aligned (bool, optional): Whether use bilinear interpolation when
+        img_pad_shape (Tuple[int]): Int tuple indicates the h & w after
+            padding. This is necessary to obtain features in feature map.
+        img_shape (Tuple[int]): Int tuple indicates the h & w before padding
+            after scaling. This is necessary for flipping coordinates.
+        aligned (bool): Whether to use bilinear interpolation when
             sampling image features for each point. Defaults to True.
-        padding_mode (str, optional): Padding mode when padding values for
+        padding_mode (str): Padding mode when padding values for
             features of out-of-image points. Defaults to 'zeros'.
-        align_corners (bool, optional): Whether to align corners when
+        align_corners (bool): Whether to align corners when
             sampling image features for each point. Defaults to True.
 
     Returns:
-        torch.Tensor: 1xCxDxHxW frustum features sampled from voxel features.
+        Tensor: 1xCxDxHxW frustum features sampled from voxel features.
     """
     # construct frustum grid
     device = voxel_features.device

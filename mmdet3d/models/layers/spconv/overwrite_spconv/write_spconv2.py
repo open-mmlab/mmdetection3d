@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import itertools
+from typing import List, OrderedDict
 
 from mmengine.registry import MODELS
 from torch.nn.parameter import Parameter
 
 
-def register_spconv2():
+def register_spconv2() -> bool:
     """This func registers spconv2.0 spconv ops to overwrite the default mmcv
     spconv ops."""
     try:
@@ -39,8 +40,10 @@ def register_spconv2():
         return True
 
 
-def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
-                          missing_keys, unexpected_keys, error_msgs):
+def _load_from_state_dict(self, state_dict: OrderedDict, prefix: str,
+                          local_metadata: dict, strict: bool,
+                          missing_keys: List[str], unexpected_keys: List[str],
+                          error_msgs: List[str]) -> None:
     """Rewrite this func to compat the convolutional kernel weights between
     spconv 1.x in MMCV and 2.x in spconv2.x.
 

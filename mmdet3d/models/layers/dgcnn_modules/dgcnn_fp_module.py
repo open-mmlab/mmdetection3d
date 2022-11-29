@@ -1,7 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
+
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 class DGCNNFPModule(BaseModule):
@@ -10,21 +15,21 @@ class DGCNNFPModule(BaseModule):
     Propagate the features from one set to another.
 
     Args:
-        mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict, optional): Type of activation method.
-            Defaults to dict(type='BN1d').
-        act_cfg (dict, optional): Type of activation method.
+        mlp_channels (List[int]): List of mlp channels.
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN1d').
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Defaults to dict(type='ReLU').
-        init_cfg (dict, optional): Initialization config. Defaults to None.
+        init_cfg (:obj:`ConfigDict` or dict or List[:obj:`Contigdict` or dict],
+            optional): Initialization config dict. Defaults to None.
     """
 
     def __init__(self,
-                 mlp_channels,
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
-        self.fp16_enabled = False
+                 mlp_channels: List[int],
+                 norm_cfg: ConfigType = dict(type='BN1d'),
+                 act_cfg: ConfigType = dict(type='ReLU'),
+                 init_cfg: OptMultiConfig = None) -> None:
+        super(DGCNNFPModule, self).__init__(init_cfg=init_cfg)
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
             self.mlps.add_module(
@@ -38,14 +43,14 @@ class DGCNNFPModule(BaseModule):
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg))
 
-    def forward(self, points):
-        """forward.
+    def forward(self, points: Tensor) -> Tensor:
+        """Forward.
 
         Args:
-            points (Tensor): (B, N, C) tensor of the input points.
+            points (Tensor): (B, N, C) Tensor of the input points.
 
         Returns:
-            Tensor: (B, N, M) M = mlp[-1], tensor of the new points.
+            Tensor: (B, N, M) M = mlp[-1]. Tensor of the new points.
         """
 
         if points is not None:
