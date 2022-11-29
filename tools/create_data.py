@@ -256,6 +256,10 @@ args = parser.parse_args()
 if __name__ == '__main__':
     from mmdet3d.utils import register_all_modules
     register_all_modules()
+
+    import multiprocessing as mp
+    mp.set_start_method("spawn")
+
     if args.dataset == 'kitti':
         kitti_data_prep(
             root_path=args.root_path,
