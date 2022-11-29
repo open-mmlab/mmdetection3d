@@ -1,45 +1,48 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Tuple
+
 import numba
 import numpy as np
 import torch
 from mmcv.ops import nms, nms_rotated
+from torch import Tensor
 
 
-def box3d_multiclass_nms(mlvl_bboxes,
-                         mlvl_bboxes_for_nms,
-                         mlvl_scores,
-                         score_thr,
-                         max_num,
-                         cfg,
-                         mlvl_dir_scores=None,
-                         mlvl_attr_scores=None,
-                         mlvl_bboxes2d=None):
+def box3d_multiclass_nms(
+        mlvl_bboxes: Tensor,
+        mlvl_bboxes_for_nms: Tensor,
+        mlvl_scores: Tensor,
+        score_thr: float,
+        max_num: int,
+        cfg: dict,
+        mlvl_dir_scores: Optional[Tensor] = None,
+        mlvl_attr_scores: Optional[Tensor] = None,
+        mlvl_bboxes2d: Optional[Tensor] = None) -> Tuple[Tensor]:
     """Multi-class NMS for 3D boxes. The IoU used for NMS is defined as the 2D
     IoU between BEV boxes.
 
     Args:
-        mlvl_bboxes (torch.Tensor): Multi-level boxes with shape (N, M).
+        mlvl_bboxes (Tensor): Multi-level boxes with shape (N, M).
             M is the dimensions of boxes.
-        mlvl_bboxes_for_nms (torch.Tensor): Multi-level boxes with shape
-            (N, 5) ([x1, y1, x2, y2, ry]). N is the number of boxes.
+        mlvl_bboxes_for_nms (Tensor): Multi-level boxes with shape (N, 5)
+            ([x1, y1, x2, y2, ry]). N is the number of boxes.
             The coordinate system of the BEV boxes is counterclockwise.
-        mlvl_scores (torch.Tensor): Multi-level boxes with shape
-            (N, C + 1). N is the number of boxes. C is the number of classes.
-        score_thr (float): Score threshold to filter boxes with low
-            confidence.
+        mlvl_scores (Tensor): Multi-level boxes with shape (N, C + 1).
+            N is the number of boxes. C is the number of classes.
+        score_thr (float): Score threshold to filter boxes with low confidence.
         max_num (int): Maximum number of boxes will be kept.
         cfg (dict): Configuration dict of NMS.
-        mlvl_dir_scores (torch.Tensor, optional): Multi-level scores
-            of direction classifier. Defaults to None.
-        mlvl_attr_scores (torch.Tensor, optional): Multi-level scores
-            of attribute classifier. Defaults to None.
-        mlvl_bboxes2d (torch.Tensor, optional): Multi-level 2D bounding
-            boxes. Defaults to None.
+        mlvl_dir_scores (Tensor, optional): Multi-level scores of direction
+            classifier. Defaults to None.
+        mlvl_attr_scores (Tensor, optional): Multi-level scores of attribute
+            classifier. Defaults to None.
+        mlvl_bboxes2d (Tensor, optional): Multi-level 2D bounding boxes.
+            Defaults to None.
 
     Returns:
-        tuple[torch.Tensor]: Return results after nms, including 3D
-            bounding boxes, scores, labels, direction scores, attribute
-            scores (optional) and 2D bounding boxes (optional).
+        Tuple[Tensor]: Return results after nms, including 3D bounding boxes,
+        scores, labels, direction scores, attribute scores (optional) and
+        2D bounding boxes (optional).
     """
     # do multi class nms
     # the fg class id range: [0, num_classes-1]
@@ -128,17 +131,18 @@ def box3d_multiclass_nms(mlvl_bboxes,
     return results
 
 
-def aligned_3d_nms(boxes, scores, classes, thresh):
+def aligned_3d_nms(boxes: Tensor, scores: Tensor, classes: Tensor,
+                   thresh: float) -> Tensor:
     """3D NMS for aligned boxes.
 
     Args:
-        boxes (torch.Tensor): Aligned box with shape [n, 6].
-        scores (torch.Tensor): Scores of each box.
-        classes (torch.Tensor): Class of each box.
+        boxes (Tensor): Aligned box with shape [N, 6].
+        scores (Tensor): Scores of each box.
+        classes (Tensor): Class of each box.
         thresh (float): IoU threshold for nms.
 
     Returns:
-        torch.Tensor: Indices of selected boxes.
+        Tensor: Indices of selected boxes.
     """
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
@@ -179,21 +183,20 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
 
 
 @numba.jit(nopython=True)
-def circle_nms(dets, thresh, post_max_size=83):
+def circle_nms(dets: Tensor, thresh: float, post_max_size: int = 83) -> Tensor:
     """Circular NMS.
 
-    An object is only counted as positive if no other center
-    with a higher confidence exists within a radius r using a
-    bird-eye view distance metric.
+    An object is only counted as positive if no other center with a higher
+    confidence exists within a radius r using a bird-eye view distance metric.
 
     Args:
-        dets (torch.Tensor): Detection results with the shape of [N, 3].
+        dets (Tensor): Detection results with the shape of [N, 3].
         thresh (float): Value of threshold.
-        post_max_size (int, optional): Max number of prediction to be kept.
+        post_max_size (int): Max number of prediction to be kept.
             Defaults to 83.
 
     Returns:
-        torch.Tensor: Indexes of the detections to be kept.
+        Tensor: Indexes of the detections to be kept.
     """
     x1 = dets[:, 0]
     y1 = dets[:, 1]
@@ -228,24 +231,28 @@ def circle_nms(dets, thresh, post_max_size=83):
 # This function duplicates functionality of mmcv.ops.iou_3d.nms_bev
 # from mmcv<=1.5, but using cuda ops from mmcv.ops.nms.nms_rotated.
 # Nms api will be unified in mmdetection3d one day.
-def nms_bev(boxes, scores, thresh, pre_max_size=None, post_max_size=None):
+def nms_bev(boxes: Tensor,
+            scores: Tensor,
+            thresh: float,
+            pre_max_size: Optional[int] = None,
+            post_max_size: Optional[int] = None) -> Tensor:
     """NMS function GPU implementation (for BEV boxes). The overlap of two
     boxes for IoU calculation is defined as the exact overlapping area of the
     two boxes. In this function, one can also set ``pre_max_size`` and
     ``post_max_size``.
 
     Args:
-        boxes (torch.Tensor): Input boxes with the shape of [N, 5]
+        boxes (Tensor): Input boxes with the shape of [N, 5]
             ([x1, y1, x2, y2, ry]).
-        scores (torch.Tensor): Scores of boxes with the shape of [N].
+        scores (Tensor): Scores of boxes with the shape of [N].
         thresh (float): Overlap threshold of NMS.
         pre_max_size (int, optional): Max size of boxes before NMS.
-            Default: None.
+            Defaults to None.
         post_max_size (int, optional): Max size of boxes after NMS.
-            Default: None.
+            Defaults to None.
 
     Returns:
-        torch.Tensor: Indexes after NMS.
+        Tensor: Indexes after NMS.
     """
     assert boxes.size(1) == 5, 'Input boxes shape should be [N, 5]'
     order = scores.sort(0, descending=True)[1]
@@ -271,18 +278,18 @@ def nms_bev(boxes, scores, thresh, pre_max_size=None, post_max_size=None):
 # This function duplicates functionality of mmcv.ops.iou_3d.nms_normal_bev
 # from mmcv<=1.5, but using cuda ops from mmcv.ops.nms.nms.
 # Nms api will be unified in mmdetection3d one day.
-def nms_normal_bev(boxes, scores, thresh):
+def nms_normal_bev(boxes: Tensor, scores: Tensor, thresh: float) -> Tensor:
     """Normal NMS function GPU implementation (for BEV boxes). The overlap of
     two boxes for IoU calculation is defined as the exact overlapping area of
     the two boxes WITH their yaw angle set to 0.
 
     Args:
-        boxes (torch.Tensor): Input boxes with shape (N, 5).
-        scores (torch.Tensor): Scores of predicted boxes with shape (N).
+        boxes (Tensor): Input boxes with shape (N, 5).
+        scores (Tensor): Scores of predicted boxes with shape (N).
         thresh (float): Overlap threshold of NMS.
 
     Returns:
-        torch.Tensor: Remaining indices with scores in descending order.
+        Tensor: Remaining indices with scores in descending order.
     """
     assert boxes.shape[1] == 5, 'Input boxes shape should be [N, 5]'
     return nms(boxes[:, :-1], scores, thresh)[1]

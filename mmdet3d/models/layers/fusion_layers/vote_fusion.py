@@ -1,5 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple
+
 import torch
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
@@ -14,27 +17,33 @@ class VoteFusion(nn.Module):
     """Fuse 2d features from 3d seeds.
 
     Args:
-        num_classes (int): number of classes.
-        max_imvote_per_pixel (int): max number of imvotes.
+        num_classes (int): Number of classes.
+        max_imvote_per_pixel (int): Max number of imvotes.
     """
 
-    def __init__(self, num_classes=10, max_imvote_per_pixel=3):
+    def __init__(self,
+                 num_classes: int = 10,
+                 max_imvote_per_pixel: int = 3) -> None:
         super(VoteFusion, self).__init__()
         self.num_classes = num_classes
         self.max_imvote_per_pixel = max_imvote_per_pixel
 
-    def forward(self, imgs, bboxes_2d_rescaled, seeds_3d_depth, img_metas):
+    def forward(self, imgs: List[Tensor], bboxes_2d_rescaled: List[Tensor],
+                seeds_3d_depth: List[Tensor],
+                img_metas: List[dict]) -> Tuple[Tensor]:
         """Forward function.
 
         Args:
-            imgs (list[torch.Tensor]): Image features.
-            bboxes_2d_rescaled (list[torch.Tensor]): 2D bboxes.
-            seeds_3d_depth (torch.Tensor): 3D seeds.
-            img_metas (list[dict]): Meta information of images.
+            imgs (List[Tensor]): Image features.
+            bboxes_2d_rescaled (List[Tensor]): 2D bboxes.
+            seeds_3d_depth (List[Tensor]): 3D seeds.
+            img_metas (List[dict]): Meta information of images.
 
         Returns:
-            torch.Tensor: Concatenated cues of each point.
-            torch.Tensor: Validity mask of each feature.
+            Tuple[Tensor]:
+
+                - img_features: Concatenated cues of each point.
+                - masks: Validity mask of each feature.
         """
         img_features = []
         masks = []
