@@ -149,7 +149,7 @@ python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device 
 例如：
 
 ```shell
-python demo/pcd_demo.py demo/data/kitti/000008.bin configs/second/second_hv-secfpn_8xb6-80e_kitti-3d-car.py checkpoints/second_hv-secfpn_8xb6-80e_kitti-3d-car_20200620_230238-393f000c.pth
+python demo/pcd_demo.py demo/data/kitti/000008.bin configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-car.py checkpoints/second_hv_secfpn_8xb6-80e_kitti-3d-car_20200620_230238-393f000c.pth
 ```
 
 如果你想输入一个 `.ply` 格式的文件，你可以使用如下函数将它转换为 `.bin` 的文件格式。然后就可以使用转化成 `.bin` 格式的文件去运行样例程序。
