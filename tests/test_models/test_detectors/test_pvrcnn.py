@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestPVRCNN(unittest.TestCase):
@@ -15,18 +15,17 @@ class TestPVRCNN(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'PointVoxelRCNN')
         DefaultScope.get_instance('test_pvrcnn', scope_name='mmdet3d')
-        _setup_seed(0)
-        pvrcnn_cfg = _get_detector_cfg(
+        setup_seed(0)
+        pvrcnn_cfg = get_detector_cfg(
             'pvrcnn/pvrcnn_8xb2-80e_kitti-3d-3class.py')
         model = MODELS.build(pvrcnn_cfg)
         num_gt_instance = 2
-        packed_inputs = _create_detector_inputs(
-            num_gt_instance=num_gt_instance)
+        packed_inputs = create_detector_inputs(num_gt_instance=num_gt_instance)
 
         # TODO: Support aug data test
         # aug_packed_inputs = [
-        #     _create_detector_inputs(num_gt_instance=num_gt_instance),
-        #     _create_detector_inputs(num_gt_instance=num_gt_instance + 1)
+        #     create_detector_inputs(num_gt_instance=num_gt_instance),
+        #     create_detector_inputs(num_gt_instance=num_gt_instance + 1)
         # ]
         # test_aug_test
         # metainfo = {

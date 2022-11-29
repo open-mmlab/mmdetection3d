@@ -5,10 +5,10 @@ import unittest
 import numpy as np
 import torch
 from mmengine.testing import assert_allclose
-from utils import create_data_info_after_loading
 
 from mmdet3d.datasets import GlobalAlignment, RandomFlip3D
 from mmdet3d.datasets.transforms import GlobalRotScaleTrans
+from mmdet3d.testing import create_data_info_after_loading
 
 
 class TestGlobalRotScaleTrans(unittest.TestCase):

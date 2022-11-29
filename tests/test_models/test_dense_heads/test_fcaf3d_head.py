@@ -6,7 +6,7 @@ import torch
 
 from mmdet3d import *  # noqa
 from mmdet3d.models.dense_heads import FCAF3DHead
-from tests.utils.model_utils import _create_detector_inputs
+from mmdet3d.testing import create_detector_inputs
 
 
 class TestAnchor3DHead(TestCase):
@@ -63,7 +63,7 @@ class TestAnchor3DHead(TestCase):
         x = (x1, x2, x3, x4)
 
         # fake annotation
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             with_points=False,
             with_img=False,
             num_gt_instance=3,
