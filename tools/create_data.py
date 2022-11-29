@@ -258,7 +258,7 @@ if __name__ == '__main__':
     register_all_modules()
 
     import multiprocessing
-    multiprocessing.set_start_method("spawn")
+    multiprocessing.set_start_method('spawn')
 
     if args.dataset == 'kitti':
         kitti_data_prep(
