@@ -49,12 +49,12 @@ class Grid(object):
         if self.use_h:
             for i in range(hh // d):
                 s = d * i + st_h
-                t = min(s + self.l, hh)
+                t = min(s + self.length, hh)
                 mask[s:t, :] *= 0
         if self.use_w:
             for i in range(ww // d):
                 s = d * i + st_w
-                t = min(s + self.l, ww)
+                t = min(s + self.length, ww)
                 mask[:, s:t] *= 0
 
         r = np.random.randint(self.rotate)
@@ -117,12 +117,12 @@ class GridMask(nn.Module):
         if self.use_h:
             for i in range(hh // d):
                 s = d * i + st_h
-                t = min(s + self.l, hh)
+                t = min(s + self.length, hh)
                 mask[s:t, :] *= 0
         if self.use_w:
             for i in range(ww // d):
                 s = d * i + st_w
-                t = min(s + self.l, ww)
+                t = min(s + self.length, ww)
                 mask[:, s:t] *= 0
 
         r = np.random.randint(self.rotate)
