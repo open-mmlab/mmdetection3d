@@ -161,7 +161,7 @@ train_pipeline = [
         with_attr_label=False),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
-    dict(type='gt3d_version_transfrom'),
+    dict(type='LidarBox3dVersionTransfrom'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     dict(
@@ -199,7 +199,7 @@ test_pipeline = [
 
 data = dict(
     samples_per_gpu=1,
-    workers_per_gpu=1,
+    workers_per_gpu=4,
     train=dict(
         type=dataset_type,
         data_root=data_root,

@@ -2158,11 +2158,13 @@ class PadMultiViewImage(object):
 
 
 @PIPELINES.register_module()
-class gt3d_version_transfrom(object):
-    """Transform the gt_bboxes_3d coor from mmdet3d v1.x to v0.x.
+class LidarBox3dVersionTransfrom(object):
+    """Transform the LiDARInstance3DBoxes from mmdet3d v1.x to v0.x. Due to the
+    Coordinate system refactoring: https://mmdetection3d.readthedocs.io/en/late
+    st/compatibility.html#v1-0-0rc0.
 
     Args:
-        dir(bool): transform forward or backward (1 for backward)
+        dir(bool): transform forward or backward (Fake parameter)
     """
 
     def __init__(self, dir=1):
@@ -2170,7 +2172,8 @@ class gt3d_version_transfrom(object):
         self.dir = dir
 
     def __call__(self, input_dict):
-        """Call function to record random shift and scale infos.
+        """Call function to transform the LiDARInstance3DBoxes from mmdet3d
+        v1.x to v0.x.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
