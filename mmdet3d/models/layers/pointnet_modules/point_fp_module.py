@@ -5,7 +5,10 @@ import torch
 from mmcv.cnn import ConvModule
 from mmcv.ops import three_interpolate, three_nn
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
+
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 class PointFPModule(BaseModule):
@@ -15,16 +18,17 @@ class PointFPModule(BaseModule):
 
     Args:
         mlp_channels (list[int]): List of mlp channels.
-        norm_cfg (dict, optional): Type of normalization method.
-            Default: dict(type='BN2d').
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN2d').
+        init_cfg (:obj:`ConfigDict` or dict or List[:obj:`Contigdict` or dict],
+            optional): Initialization config dict. Defaults to None.
     """
 
     def __init__(self,
                  mlp_channels: List[int],
-                 norm_cfg: dict = dict(type='BN2d'),
-                 init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
-        self.fp16_enabled = False
+                 norm_cfg: ConfigType = dict(type='BN2d'),
+                 init_cfg: OptMultiConfig = None) -> None:
+        super(PointFPModule, self).__init__(init_cfg=init_cfg)
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
             self.mlps.add_module(
@@ -37,23 +41,22 @@ class PointFPModule(BaseModule):
                     conv_cfg=dict(type='Conv2d'),
                     norm_cfg=norm_cfg))
 
-    def forward(self, target: torch.Tensor, source: torch.Tensor,
-                target_feats: torch.Tensor,
-                source_feats: torch.Tensor) -> torch.Tensor:
-        """forward.
+    def forward(self, target: Tensor, source: Tensor, target_feats: Tensor,
+                source_feats: Tensor) -> Tensor:
+        """Forward.
 
         Args:
-            target (Tensor): (B, n, 3) tensor of the xyz positions of
+            target (Tensor): (B, n, 3) Tensor of the xyz positions of
                 the target features.
-            source (Tensor): (B, m, 3) tensor of the xyz positions of
+            source (Tensor): (B, m, 3) Tensor of the xyz positions of
                 the source features.
-            target_feats (Tensor): (B, C1, n) tensor of the features to be
+            target_feats (Tensor): (B, C1, n) Tensor of the features to be
                 propagated to.
-            source_feats (Tensor): (B, C2, m) tensor of features
+            source_feats (Tensor): (B, C2, m) Tensor of features
                 to be propagated.
 
         Return:
-            Tensor: (B, M, N) M = mlp[-1], tensor of the target features.
+            Tensor: (B, M, N) M = mlp[-1], Tensor of the target features.
         """
         if source is not None:
             dist, idx = three_nn(target, source)

@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class Test3DSSD(unittest.TestCase):
@@ -15,11 +15,11 @@ class Test3DSSD(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'SSD3DNet')
         DefaultScope.get_instance('test_ssd3d', scope_name='mmdet3d')
-        _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg('3dssd/3dssd_4xb4_kitti-3d-car.py')
+        setup_seed(0)
+        voxel_net_cfg = get_detector_cfg('3dssd/3dssd_4xb4_kitti-3d-car.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 3
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             num_gt_instance=num_gt_instance, num_classes=1)
 
         if torch.cuda.is_available():

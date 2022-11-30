@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestFCAF3d(unittest.TestCase):
@@ -19,12 +19,12 @@ class TestFCAF3d(unittest.TestCase):
         import mmdet3d.models
         assert hasattr(mmdet3d.models, 'MinkSingleStage3DDetector')
         DefaultScope.get_instance('test_fcaf3d', scope_name='mmdet3d')
-        _setup_seed(0)
-        fcaf3d_net_cfg = _get_detector_cfg(
+        setup_seed(0)
+        fcaf3d_net_cfg = get_detector_cfg(
             'fcaf3d/fcaf3d_2xb8_scannet-3d-18class.py')
         model = MODELS.build(fcaf3d_net_cfg)
         num_gt_instance = 3
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             num_gt_instance=num_gt_instance,
             num_classes=1,
             points_feat_dim=6,

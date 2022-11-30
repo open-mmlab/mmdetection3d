@@ -54,9 +54,8 @@ def test_getitem():
     lyft_dataset.prepare_data(0)
     input_dict = lyft_dataset.get_data_info(0)
     # assert the the path should contains data_prefix and data_root
-    assert input_dict['lidar_points'][
-        'lidar_path'] == 'tests/data/lyft/lidar/host-a017_lidar1_' \
-                         '1236118886901125926.bin'
+    assert data_prefix['pts'] in input_dict['lidar_points']['lidar_path']
+    assert data_root in input_dict['lidar_points']['lidar_path']
 
     ann_info = lyft_dataset.parse_ann_info(input_dict)
 

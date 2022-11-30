@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestSSN(unittest.TestCase):
@@ -15,8 +15,8 @@ class TestSSN(unittest.TestCase):
 
         assert hasattr(mmdet3d.models.dense_heads, 'ShapeAwareHead')
         DefaultScope.get_instance('test_ssn', scope_name='mmdet3d')
-        _setup_seed(0)
-        ssn_cfg = _get_detector_cfg(
+        setup_seed(0)
+        ssn_cfg = get_detector_cfg(
             'ssn/ssn_hv_secfpn_sbn-all_16xb2-2x_nus-3d.py')
         ssn_cfg.pts_voxel_encoder.feat_channels = [1, 1]
         ssn_cfg.pts_middle_encoder.in_channels = 1
@@ -28,14 +28,14 @@ class TestSSN(unittest.TestCase):
         ssn_cfg.pts_bbox_head.feat_channels = 1
         model = MODELS.build(ssn_cfg)
         num_gt_instance = 50
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             num_gt_instance=num_gt_instance, gt_bboxes_dim=9)
 
         # TODO: Support aug_test
         # aug_data = [
-        #     _create_detector_inputs(
+        #     create_detector_inputs(
         #         num_gt_instance=num_gt_instance, gt_bboxes_dim=9),
-        #     _create_detector_inputs(
+        #     create_detector_inputs(
         #         num_gt_instance=num_gt_instance + 1, gt_bboxes_dim=9)
         # ]
         # test_aug_test
