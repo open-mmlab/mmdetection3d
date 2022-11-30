@@ -4,6 +4,7 @@ from logging import warning
 import numpy as np
 import torch
 
+import mmdet3d
 from mmdet3d.core.utils import array_converter
 
 
@@ -386,11 +387,13 @@ def denormalize_bbox(normalized_bboxes, pc_range):
         denormalized_bboxes = torch.cat([cx, cy, cz, w, length, h, rot],
                                         dim=-1)
 
-    denormalized_bboxes_clone = denormalized_bboxes.clone()
-    denormalized_bboxes[:, 3] = denormalized_bboxes_clone[:, 4]
-    denormalized_bboxes[:, 4] = denormalized_bboxes_clone[:, 3]
-    # change yaw
-    denormalized_bboxes[:, 6] = -denormalized_bboxes_clone[:, 6] - np.pi / 2
-    denormalized_bboxes[:, 6] = limit_period(
-        denormalized_bboxes[:, 6], period=np.pi * 2)
+    if int(mmdet3d.__version__[0]) >= 1:
+        denormalized_bboxes_clone = denormalized_bboxes.clone()
+        denormalized_bboxes[:, 3] = denormalized_bboxes_clone[:, 4]
+        denormalized_bboxes[:, 4] = denormalized_bboxes_clone[:, 3]
+        # change yaw
+        denormalized_bboxes[:,
+                            6] = -denormalized_bboxes_clone[:, 6] - np.pi / 2
+        denormalized_bboxes[:, 6] = limit_period(
+            denormalized_bboxes[:, 6], period=np.pi * 2)
     return denormalized_bboxes
