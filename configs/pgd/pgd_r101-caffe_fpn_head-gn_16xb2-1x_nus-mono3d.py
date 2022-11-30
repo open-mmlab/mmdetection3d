@@ -19,7 +19,8 @@ model = dict(
             (),  # velo
             (256, )  # bbox2d
         ),
-        loss_depth=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_depth=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         bbox_coder=dict(
             type='PGDBBoxCoder',
             base_depths=((31.99, 21.12), (37.15, 24.63), (39.69, 23.97),
@@ -43,8 +44,6 @@ class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
-img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
 train_pipeline = [
     dict(type='LoadImageFromFileMono3D'),
     dict(
@@ -57,11 +56,8 @@ train_pipeline = [
         with_bbox_depth=True),
     dict(type='Resize', img_scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
+        type='Pack3DDetInputs',
         keys=[
             'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels',
             'gt_bboxes_3d', 'gt_labels_3d', 'centers2d', 'depths'
@@ -75,14 +71,8 @@ test_pipeline = [
         flip=False,
         transforms=[
             dict(type='RandomFlip3D'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['img']),
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['img']),
 ]
 data = dict(
     samples_per_gpu=2,

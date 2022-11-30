@@ -56,7 +56,7 @@ eval_pipeline = [
     dict(type='Pack3DDetInputs', keys=['img']),
 ]
 
-metainfo = dict(classes=class_names)
+metainfo = dict(CLASSES=class_names)
 
 train_dataloader = dict(
     batch_size=3,
@@ -81,7 +81,7 @@ train_dataloader = dict(
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
-        task='mono_det',
+        load_type='fov_image_based',
         # load one frame every three frames
         load_interval=5))
 
@@ -109,7 +109,7 @@ val_dataloader = dict(
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
-        task='mono_det',
+        load_type='fov_image_based',
     ))
 
 test_dataloader = dict(
@@ -136,14 +136,15 @@ test_dataloader = dict(
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
-        task='mono_det',
+        load_type='fov_image_based',
     ))
 
 val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
+    waymo_bin_file='./data/waymo/waymo_format/fov_gt.bin',
     data_root='./data/waymo/waymo_format',
     metric='LET_mAP',
-    task='mono_det')
+    load_type='fov_image_based',
+)
 test_evaluator = val_evaluator

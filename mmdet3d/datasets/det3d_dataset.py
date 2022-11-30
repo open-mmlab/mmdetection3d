@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import os
 from os import path as osp
 from typing import Callable, List, Optional, Set, Union
 
@@ -30,14 +31,14 @@ class Det3DDataset(BaseDataset):
             information. Defaults to None.
         data_prefix (dict): Prefix for training data. Defaults to
             dict(pts='velodyne', img='').
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input,
             it usually has following keys:
 
                 - use_camera: bool
                 - use_lidar: bool
-            Defaults to `dict(use_lidar=True, use_camera=False)`
+            Defaults to dict(use_lidar=True, use_camera=False).
         default_cam_key (str, optional): The default camera name adopted.
             Defaults to None.
         box_type_3d (str): Type of 3D box of this dataset.
@@ -78,7 +79,7 @@ class Det3DDataset(BaseDataset):
                  box_type_3d: dict = 'LiDAR',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 load_eval_anns=True,
+                 load_eval_anns: bool = True,
                  file_client_args: dict = dict(backend='disk'),
                  show_ins_var: bool = False,
                  **kwargs) -> None:
@@ -158,7 +159,7 @@ class Det3DDataset(BaseDataset):
     def _remove_dontcare(self, ann_info: dict) -> dict:
         """Remove annotations that do not need to be cared.
 
-        -1 indicate dontcare in MMDet3d.
+        -1 indicates dontcare in MMDet3d.
 
         Args:
             ann_info (dict): Dict of annotation infos. The
@@ -186,7 +187,7 @@ class Det3DDataset(BaseDataset):
             index (int): Index of the annotation data to get.
 
         Returns:
-            dict: annotation information.
+            dict: Annotation information.
         """
         data_info = self.get_data_info(index)
         # test model
@@ -197,7 +198,7 @@ class Det3DDataset(BaseDataset):
 
         return ann_info
 
-    def parse_ann_info(self, info: dict) -> Optional[dict]:
+    def parse_ann_info(self, info: dict) -> Union[dict, None]:
         """Process the `instances` in data info to `ann_info`.
 
         In `Custom3DDataset`, we simply concatenate all the field
@@ -209,7 +210,7 @@ class Det3DDataset(BaseDataset):
             info (dict): Info dict.
 
         Returns:
-            dict | None: Processed `ann_info`
+            dict or None: Processed `ann_info`.
         """
         # add s or gt prefix for most keys after concat
         # we only process 3d annotations here, the corresponding
@@ -287,7 +288,7 @@ class Det3DDataset(BaseDataset):
             if 'lidar_sweeps' in info:
                 for sweep in info['lidar_sweeps']:
                     file_suffix = sweep['lidar_points']['lidar_path'].split(
-                        '/')[-1]
+                        os.sep)[-1]
                     if 'samples' in sweep['lidar_points']['lidar_path']:
                         sweep['lidar_points']['lidar_path'] = osp.join(
                             self.data_prefix['pts'], file_suffix)
@@ -327,7 +328,8 @@ class Det3DDataset(BaseDataset):
 
         return info
 
-    def _show_ins_var(self, old_labels: np.ndarray, new_labels: torch.Tensor):
+    def _show_ins_var(self, old_labels: np.ndarray,
+                      new_labels: torch.Tensor) -> None:
         """Show variation of the number of instances before and after through
         the pipeline.
 
@@ -356,7 +358,7 @@ class Det3DDataset(BaseDataset):
             'The number of instances per category after and before '
             f'through pipeline:\n{table.table}', 'current')
 
-    def prepare_data(self, index: int) -> Optional[dict]:
+    def prepare_data(self, index: int) -> Union[dict, None]:
         """Data preparation for both training and testing stage.
 
         Called by `__getitem__`  of dataset.
@@ -365,7 +367,7 @@ class Det3DDataset(BaseDataset):
             index (int): Index for accessing the target data.
 
         Returns:
-            dict | None: Data dict of the corresponding index.
+            dict or None: Data dict of the corresponding index.
         """
         ori_input_dict = self.get_data_info(index)
 

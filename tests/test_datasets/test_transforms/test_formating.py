@@ -3,10 +3,10 @@ import unittest
 
 import torch
 from mmengine.testing import assert_allclose
-from utils import create_data_info_after_loading
 
 from mmdet3d.datasets.transforms.formating import Pack3DDetInputs
 from mmdet3d.structures import LiDARInstance3DBoxes
+from mmdet3d.testing import create_data_info_after_loading
 
 
 class TestPack3DDetInputs(unittest.TestCase):

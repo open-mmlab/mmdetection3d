@@ -36,14 +36,24 @@ class WaymoMetric(KittiMetric):
             names to disambiguate homonymous metrics of different evaluators.
             If prefix is not provided in the argument, self.default_prefix
             will be used instead. Defaults to None.
+        convert_kitti_format (bool, optional): Whether convert the reuslts to
+            kitti format. Now, in order to be compatible with camera-based
+            methods, defaults to True.
         pklfile_prefix (str, optional): The prefix of pkl files, including
             the file path and the prefix of filename, e.g., "a/b/prefix".
             If not specified, a temp file will be created. Default: None.
         submission_prefix (str, optional): The prefix of submission data.
             If not specified, the submission data will not be generated.
             Default: None.
-        task: (str, optional): task for 3D detection, if cam, would filter
-            the points that outside the image.
+        load_type (str, optional): Type of loading mode during training.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_base': Only load the instances inside the default cam,
+                and need to convert to the FOV-based data type to support
+                image-based detector.
         default_cam_key (str, optional): The default camera for lidar to
             camear conversion. By default, KITTI: CAM2, Waymo: CAM_FRONT
         use_pred_sample_idx (bool, optional): In formating results, use the
@@ -54,6 +64,11 @@ class WaymoMetric(KittiMetric):
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
         file_client_args (dict): file client for reading gt in waymo format.
+            Defaults to ``dict(backend='disk')``.
+        idx2metainfo (Optional[str], optional): The file path of the metainfo
+            in waymmo. It stores the mapping from sample_idx to metainfo.
+            The metainfo must contain the keys: 'idx2contextname' and
+            'idx2timestamp'. Defaults to None.
     """
     num_cams = 5
 
@@ -64,19 +79,28 @@ class WaymoMetric(KittiMetric):
                  split: str = 'training',
                  metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
+                 convert_kitti_format: bool = True,
                  prefix: Optional[str] = None,
                  pklfile_prefix: str = None,
                  submission_prefix: str = None,
-                 task='lidar_det',
+                 load_type: str = 'frame_based',
                  default_cam_key: str = 'CAM_FRONT',
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
-                 file_client_args: dict = dict(backend='disk')):
+                 file_client_args: dict = dict(backend='disk'),
+                 idx2metainfo: Optional[str] = None):
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
         self.split = split
-        self.task = task
+        self.load_type = load_type
         self.use_pred_sample_idx = use_pred_sample_idx
+        self.convert_kitti_format = convert_kitti_format
+
+        if idx2metainfo is not None:
+            self.idx2metainfo = mmengine.load(idx2metainfo)
+        else:
+            self.idx2metainfo = None
+
         super().__init__(
             ann_file=ann_file,
             metric=metric,
@@ -104,9 +128,11 @@ class WaymoMetric(KittiMetric):
 
         # load annotations
         self.data_infos = load(self.ann_file)['data_list']
+        assert len(results) == len(self.data_infos), \
+            'invalid list length of network outputs'
         # different from kitti, waymo do not need to convert the ann file
-        # handle the mono3d task
-        if self.task == 'mono_det':
+        # handle the mv_image_based load_mode
+        if self.load_type == 'mv_image_based':
             new_data_infos = []
             for info in self.data_infos:
                 height = info['images'][self.default_cam_key]['height']
@@ -131,7 +157,7 @@ class WaymoMetric(KittiMetric):
 
                     # TODO check if need to modify the sample id
                     # TODO check when will use it except for evaluation.
-                    camera_info['sample_id'] = info['sample_id']
+                    camera_info['sample_idx'] = info['sample_idx']
                     new_data_infos.append(camera_info)
             self.data_infos = new_data_infos
 
@@ -141,8 +167,6 @@ class WaymoMetric(KittiMetric):
         else:
             eval_tmp_dir = None
             pklfile_prefix = self.pklfile_prefix
-
-        # load annotations
 
         result_dict, tmp_dir = self.format_results(
             results,
@@ -186,11 +210,7 @@ class WaymoMetric(KittiMetric):
                 f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
             print(eval_str)
-            ret_bytes = subprocess.check_output(
-                'mmdet3d/evaluation/functional/waymo_utils/' +
-                f'compute_detection_metrics_main {pklfile_prefix}.bin ' +
-                f'{self.waymo_bin_file}',
-                shell=True)
+            ret_bytes = subprocess.check_output(eval_str, shell=True)
             ret_texts = ret_bytes.decode('utf-8')
             print_log(ret_texts, logger=logger)
 
@@ -292,7 +312,7 @@ class WaymoMetric(KittiMetric):
                        pklfile_prefix: str = None,
                        submission_prefix: str = None,
                        classes: List[str] = None):
-        """Format the results to pkl file.
+        """Format the results to bin file.
 
         Args:
             results (list[dict]): Testing results of the
@@ -313,9 +333,22 @@ class WaymoMetric(KittiMetric):
                 the formatted result, tmp_dir is the temporal directory created
                 for saving json files when jsonfile_prefix is not specified.
         """
-        result_files, tmp_dir = super().format_results(results, pklfile_prefix,
-                                                       submission_prefix,
-                                                       classes)
+        waymo_save_tmp_dir = tempfile.TemporaryDirectory()
+        waymo_results_save_dir = waymo_save_tmp_dir.name
+        waymo_results_final_path = f'{pklfile_prefix}.bin'
+
+        if self.convert_kitti_format:
+            results_kitti_format, tmp_dir = super().format_results(
+                results, pklfile_prefix, submission_prefix, classes)
+            final_results = results_kitti_format['pred_instances_3d']
+        else:
+            final_results = results
+            for i, res in enumerate(final_results):
+                # Actually, `sample_idx` here is the filename without suffix.
+                # It's for identitying the sample in formating.
+                res['sample_idx'] = self.data_infos[i]['sample_idx']
+                res['pred_instances_3d']['bboxes_3d'].limit_yaw(
+                    offset=0.5, period=np.pi * 2)
 
         waymo_root = self.data_root
         if self.split == 'training':
@@ -326,21 +359,23 @@ class WaymoMetric(KittiMetric):
             prefix = '2'
         else:
             raise ValueError('Not supported split value.')
-        waymo_save_tmp_dir = tempfile.TemporaryDirectory()
-        waymo_results_save_dir = waymo_save_tmp_dir.name
-        waymo_results_final_path = f'{pklfile_prefix}.bin'
-        from ..functional.waymo_utils.prediction_kitti_to_waymo import \
-            KITTI2Waymo
-        converter = KITTI2Waymo(
-            result_files['pred_instances_3d'],
+
+        from ..functional.waymo_utils.prediction_to_waymo import \
+            Prediction2Waymo
+        converter = Prediction2Waymo(
+            final_results,
             waymo_tfrecords_dir,
             waymo_results_save_dir,
             waymo_results_final_path,
             prefix,
-            file_client_args=self.file_client_args)
+            classes,
+            file_client_args=self.file_client_args,
+            from_kitti_format=self.convert_kitti_format,
+            idx2metainfo=self.idx2metainfo)
         converter.convert()
         waymo_save_tmp_dir.cleanup()
-        return result_files, waymo_save_tmp_dir
+
+        return final_results, waymo_save_tmp_dir
 
     def merge_multi_view_boxes(self, box_dict_per_frame: List[dict],
                                cam0_info: dict):
@@ -397,7 +432,7 @@ class WaymoMetric(KittiMetric):
         lidar2cam = cam0_info['images'][self.default_cam_key]['lidar2img']
         lidar2cam = np.array(lidar2cam).astype(np.float32)
         box_preds_camera = box_preds_lidar.convert_to(
-            Box3DMode.CAM, np.linalg.inv(lidar2cam), correct_yaw=True)
+            Box3DMode.CAM, lidar2cam, correct_yaw=True)
         # Note: bbox is meaningless in final evaluation, set to 0
         merged_box_dict = dict(
             bbox=np.zeros([box_preds_lidar.tensor.shape[0], 4]),
@@ -405,7 +440,7 @@ class WaymoMetric(KittiMetric):
             box3d_lidar=box_preds_lidar.tensor.numpy(),
             scores=scores.numpy(),
             label_preds=labels.numpy(),
-            sample_idx=box_dict['sample_id'],
+            sample_idx=box_dict['sample_idx'],
         )
         return merged_box_dict
 
@@ -431,8 +466,6 @@ class WaymoMetric(KittiMetric):
         Returns:
             list[dict]: A list of dictionaries with the kitti format.
         """
-        assert len(net_outputs) == len(self.data_infos), \
-            'invalid list length of network outputs'
         if submission_prefix is not None:
             mmengine.mkdir_or_exist(submission_prefix)
 
@@ -444,7 +477,7 @@ class WaymoMetric(KittiMetric):
             sample_idx = sample_id_list[idx]
             info = self.data_infos[sample_idx]
 
-            if self.task == 'mono_det':
+            if self.load_type == 'mv_image_based':
                 if idx % self.num_cams == 0:
                     box_dict_per_frame = []
                     cam0_key = list(info['images'].keys())[0]
@@ -461,7 +494,7 @@ class WaymoMetric(KittiMetric):
                 # If you want to use another camera, please modify it.
                 image_shape = (info['images'][self.default_cam_key]['height'],
                                info['images'][self.default_cam_key]['width'])
-            if self.task == 'mono_det':
+            if self.load_type == 'mv_image_based':
                 box_dict_per_frame.append(box_dict)
                 if (idx + 1) % self.num_cams != 0:
                     continue
@@ -544,7 +577,7 @@ class WaymoMetric(KittiMetric):
                 # In waymo validation sample_idx in prediction is 000xxx
                 # but in info file it is 1000xxx
                 save_sample_idx = box_dict['sample_idx']
-            annos[-1]['sample_id'] = np.array(
+            annos[-1]['sample_idx'] = np.array(
                 [save_sample_idx] * len(annos[-1]['score']), dtype=np.int64)
 
             det_annos += annos
@@ -561,12 +594,12 @@ class WaymoMetric(KittiMetric):
 
     def convert_valid_bboxes(self, box_dict: dict, info: dict):
         """Convert the predicted boxes into valid ones. Should handle the
-        different task mode (mono3d, mv3d, lidar), separately.
+        load_model (frame_based, mv_image_based, fov_image_based), separately.
 
         Args:
             box_dict (dict): Box dictionaries to be converted.
 
-                - boxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
+                - bboxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
                 - scores_3d (torch.Tensor): Scores of boxes.
                 - labels_3d (torch.Tensor): Class labels of boxes.
             info (dict): Data info.
@@ -587,7 +620,7 @@ class WaymoMetric(KittiMetric):
         box_preds = box_dict['bboxes_3d']
         scores = box_dict['scores_3d']
         labels = box_dict['labels_3d']
-        sample_idx = info['sample_id']
+        sample_idx = info['sample_idx']
         box_preds.limit_yaw(offset=0.5, period=np.pi * 2)
 
         if len(box_preds) == 0:
@@ -598,11 +631,11 @@ class WaymoMetric(KittiMetric):
                 scores=np.zeros([0]),
                 label_preds=np.zeros([0, 4]),
                 sample_idx=sample_idx)
-        # Here default used 'CAM2' to compute metric. If you want to
+        # Here default used 'CAM_FRONT' to compute metric. If you want to
         # use another camera, please modify it.
-        if self.task in ['mv3d_det', 'lidar_det']:
+        if self.load_type in ['frame_based', 'fov_image_based']:
             cam_key = self.default_cam_key
-        elif self.task == 'mono_det':
+        elif self.load_type == 'mv_image_based':
             cam_key = list(info['images'].keys())[0]
         else:
             raise NotImplementedError
@@ -635,12 +668,12 @@ class WaymoMetric(KittiMetric):
                           (box_2d_preds[:, 1] < image_shape[0]) &
                           (box_2d_preds[:, 2] > 0) & (box_2d_preds[:, 3] > 0))
         # check box_preds_lidar
-        if self.task in ['mv3d_det', 'lidar_det']:
+        if self.load_type in ['frame_based']:
             limit_range = box_preds.tensor.new_tensor(self.pcd_limit_range)
             valid_pcd_inds = ((box_preds_lidar.center > limit_range[:3]) &
                               (box_preds_lidar.center < limit_range[3:]))
             valid_inds = valid_pcd_inds.all(-1)
-        elif self.task == 'mono_det':
+        if self.load_type in ['mv_image_based', 'fov_image_based']:
             valid_inds = valid_cam_inds
 
         if valid_inds.sum() > 0:

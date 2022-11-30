@@ -2,11 +2,11 @@
 """Collecting some commonly used type hint in MMDetection3D."""
 from typing import List, Optional, Union
 
+from mmdet.models.task_modules.samplers import SamplingResult
 from mmengine.config import ConfigDict
 from mmengine.structures import InstanceData
 
 from mmdet3d.structures.det3d_data_sample import Det3DDataSample
-from mmdet.models.task_modules.samplers import SamplingResult
 
 # Type hint of config data
 ConfigType = Union[ConfigDict, dict]

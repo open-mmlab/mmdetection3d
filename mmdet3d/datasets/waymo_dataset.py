@@ -31,7 +31,7 @@ class WaymoDataset(KittiDataset):
                                     CAM_FRONT_LEFT='image_2',
                                     CAM_SIDE_RIGHT='image_3',
                                     CAM_SIDE_LEFT='image_4')
-        pipeline (list[dict]): Pipeline used for data processing.
+        pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used
             as input. Defaults to dict(use_lidar=True).
@@ -45,22 +45,27 @@ class WaymoDataset(KittiDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
+        load_type (str): Type of loading mode. Defaults to 'frame_based'.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_based': Only load the instances inside the default
+                cam, and need to convert to the FOV-based data type to support
+                image-based detector.
         filter_empty_gt (bool): Whether to filter the data with empty GT.
             If it's set to be True, the example with empty annotations after
             data pipeline will be dropped and a random example will be chosen
             in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (list[float]): The range of point cloud
+        pcd_limit_range (List[float]): The range of point cloud
             used to filter invalid predicted boxes.
             Defaults to [-85, -85, -5, 85, 85, 5].
         cam_sync_instances (bool): If use the camera sync label
             supported from waymo version 1.3.1. Defaults to False.
         load_interval (int): load frame interval. Defaults to 1.
-        task (str): task for 3D detection (lidar, mono3d).
-            lidar: take all the ground trurh in the frame.
-            mono3d: take the groundtruth that can be seen in the cam.
-            Defaults to 'lidar_det'.
         max_sweeps (int): max sweep for each frame. Defaults to 0.
     """
     METAINFO = {'classes': ('Car', 'Pedestrian', 'Cyclist')}
@@ -79,12 +84,12 @@ class WaymoDataset(KittiDataset):
                  modality: dict = dict(use_lidar=True),
                  default_cam_key: str = 'CAM_FRONT',
                  box_type_3d: str = 'LiDAR',
+                 load_type: str = 'frame_based',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
                  cam_sync_instances: bool = False,
                  load_interval: int = 1,
-                 task: str = 'lidar_det',
                  max_sweeps: int = 0,
                  **kwargs) -> None:
         self.load_interval = load_interval
@@ -96,7 +101,7 @@ class WaymoDataset(KittiDataset):
         self.max_sweeps = max_sweeps
         # we do not provide file_client_args to custom_3d init
         # because we want disk loading for info
-        # while ceph loading for KITTI2Waymo
+        # while ceph loading for Prediction2Waymo
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -108,7 +113,7 @@ class WaymoDataset(KittiDataset):
             default_cam_key=default_cam_key,
             data_prefix=data_prefix,
             test_mode=test_mode,
-            task=task,
+            load_type=load_type,
             **kwargs)
 
     def parse_ann_info(self, info: dict) -> dict:
@@ -118,7 +123,7 @@ class WaymoDataset(KittiDataset):
             info (dict): Data information of single data sample.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - bboxes_3d (:obj:`LiDARInstance3DBoxes`):
                   3D ground truth bboxes.
@@ -151,7 +156,7 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        if self.task == 'mono_det':
+        if self.load_type in ['fov_image_based', 'mv_image_based']:
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
@@ -183,13 +188,22 @@ class WaymoDataset(KittiDataset):
         data_list = data_list[::self.load_interval]
         return data_list
 
-    def parse_data_info(self, info: dict) -> dict:
+    def parse_data_info(self, info: dict) -> Union[dict, List[dict]]:
         """if task is lidar or multiview det, use super() method elif task is
         mono3d, split the info from frame-wise to img-wise."""
-        if self.task != 'mono_det':
-            if self.cam_sync_instances:
-                # use the cam sync labels
-                info['instances'] = info['cam_sync_instances']
+
+        if self.cam_sync_instances:
+            info['instances'] = info['cam_sync_instances']
+
+        if self.load_type == 'frame_based':
+            return super().parse_data_info(info)
+        elif self.load_type == 'fov_image_based':
+            # only loading the fov image and the fov instance
+            new_image_info = {}
+            new_image_info[self.default_cam_key] = \
+                info['images'][self.default_cam_key]
+            info['images'] = new_image_info
+            info['instances'] = info['cam_instances'][self.default_cam_key]
             return super().parse_data_info(info)
         else:
             # in the mono3d, the instances is from cam sync.
@@ -222,7 +236,7 @@ class WaymoDataset(KittiDataset):
 
                 # TODO check if need to modify the sample id
                 # TODO check when will use it except for evaluation.
-                camera_info['sample_id'] = info['sample_id']
+                camera_info['sample_idx'] = info['sample_idx']
 
                 if not self.test_mode:
                     # used in training

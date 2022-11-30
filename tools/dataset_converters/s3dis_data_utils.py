@@ -129,7 +129,7 @@ class S3DISData(object):
                 - gt_num (int): Number of boxes.
         """
         bboxes, labels = [], []
-        for i in range(1, pts_instance_mask.max()):
+        for i in range(1, pts_instance_mask.max() + 1):
             ids = pts_instance_mask == i
             # check if all instance points have same semantic label
             assert pts_semantic_mask[ids].min() == pts_semantic_mask[ids].max()

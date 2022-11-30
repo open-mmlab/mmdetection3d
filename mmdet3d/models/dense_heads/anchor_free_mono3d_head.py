@@ -4,13 +4,13 @@ from typing import Any, List, Sequence, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule
+from mmdet.models.utils import multi_apply
 from mmengine.model import bias_init_with_prob, normal_init
 from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType, InstanceList, OptConfigType
-from mmdet.models.utils import multi_apply
 from .base_mono3d_dense_head import BaseMono3DDenseHead
 
 

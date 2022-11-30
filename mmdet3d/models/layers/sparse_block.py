@@ -1,17 +1,21 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple, Union
+
 from mmcv.cnn import build_conv_layer, build_norm_layer
+from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
 from torch import nn
 
-from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
+from mmdet3d.utils import OptConfigType
 from .spconv import IS_SPCONV2_AVAILABLE
 
 if IS_SPCONV2_AVAILABLE:
-    from spconv.pytorch import SparseModule, SparseSequential
+    from spconv.pytorch import SparseConvTensor, SparseModule, SparseSequential
 else:
-    from mmcv.ops import SparseModule, SparseSequential
+    from mmcv.ops import SparseConvTensor, SparseModule, SparseSequential
 
 
-def replace_feature(out, new_features):
+def replace_feature(out: SparseConvTensor,
+                    new_features: SparseConvTensor) -> SparseConvTensor:
     if 'replace_feature' in out.__dir__():
         # spconv 2.x behaviour
         return out.replace_feature(new_features)
@@ -26,25 +30,26 @@ class SparseBottleneck(Bottleneck, SparseModule):
     Bottleneck block implemented with submanifold sparse convolution.
 
     Args:
-        inplanes (int): inplanes of block.
-        planes (int): planes of block.
-        stride (int, optional): stride of the first block. Default: 1.
-        downsample (Module, optional): down sample module for block.
-        conv_cfg (dict, optional): dictionary to construct and config conv
-            layer. Default: None.
-        norm_cfg (dict, optional): dictionary to construct and config norm
-            layer. Default: dict(type='BN').
+        inplanes (int): Inplanes of block.
+        planes (int): Planes of block.
+        stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
+        downsample (Module, optional): Down sample module for block.
+            Defaults to None.
+        conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
+            convolution layer. Defaults to None.
+        norm_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
+            normalization layer. Defaults to None.
     """
 
     expansion = 4
 
     def __init__(self,
-                 inplanes,
-                 planes,
-                 stride=1,
-                 downsample=None,
-                 conv_cfg=None,
-                 norm_cfg=None):
+                 inplanes: int,
+                 planes: int,
+                 stride: Union[int, Tuple[int]] = 1,
+                 downsample: nn.Module = None,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: OptConfigType = None) -> None:
 
         SparseModule.__init__(self)
         Bottleneck.__init__(
@@ -56,7 +61,7 @@ class SparseBottleneck(Bottleneck, SparseModule):
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg)
 
-    def forward(self, x):
+    def forward(self, x: SparseConvTensor) -> SparseConvTensor:
         identity = x.features
 
         out = self.conv1(x)
@@ -85,25 +90,26 @@ class SparseBasicBlock(BasicBlock, SparseModule):
     Sparse basic block implemented with submanifold sparse convolution.
 
     Args:
-        inplanes (int): inplanes of block.
-        planes (int): planes of block.
-        stride (int, optional): stride of the first block. Default: 1.
-        downsample (Module, optional): down sample module for block.
-        conv_cfg (dict, optional): dictionary to construct and config conv
-            layer. Default: None.
-        norm_cfg (dict, optional): dictionary to construct and config norm
-            layer. Default: dict(type='BN').
+        inplanes (int): Inplanes of block.
+        planes (int): Planes of block.
+        stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
+        downsample (Module, optional): Down sample module for block.
+            Defaults to None.
+        conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
+            convolution layer. Defaults to None.
+        norm_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
+            normalization layer. Defaults to None.
     """
 
     expansion = 1
 
     def __init__(self,
-                 inplanes,
-                 planes,
-                 stride=1,
-                 downsample=None,
-                 conv_cfg=None,
-                 norm_cfg=None):
+                 inplanes: int,
+                 planes: int,
+                 stride: Union[int, Tuple[int]] = 1,
+                 downsample: nn.Module = None,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: OptConfigType = None) -> None:
         SparseModule.__init__(self)
         BasicBlock.__init__(
             self,
@@ -114,7 +120,7 @@ class SparseBasicBlock(BasicBlock, SparseModule):
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg)
 
-    def forward(self, x):
+    def forward(self, x: SparseConvTensor) -> SparseConvTensor:
         identity = x.features
 
         assert x.features.dim() == 2, f'x.features.dim()={x.features.dim()}'
@@ -134,29 +140,33 @@ class SparseBasicBlock(BasicBlock, SparseModule):
         return out
 
 
-def make_sparse_convmodule(in_channels,
-                           out_channels,
-                           kernel_size,
-                           indice_key,
-                           stride=1,
-                           padding=0,
-                           conv_type='SubMConv3d',
-                           norm_cfg=None,
-                           order=('conv', 'norm', 'act')):
+def make_sparse_convmodule(
+    in_channels: int,
+    out_channels: int,
+    kernel_size: Union[int, Tuple[int]],
+    indice_key: str,
+    stride: Union[int, Tuple[int]] = 1,
+    padding: Union[int, Tuple[int]] = 0,
+    conv_type: str = 'SubMConv3d',
+    norm_cfg: OptConfigType = None,
+    order: Tuple[str] = ('conv', 'norm', 'act')
+) -> SparseSequential:
     """Make sparse convolution module.
 
     Args:
-        in_channels (int): the number of input channels
-        out_channels (int): the number of out channels
-        kernel_size (int|tuple(int)): kernel size of convolution
-        indice_key (str): the indice key used for sparse tensor
-        stride (int|tuple(int)): the stride of convolution
-        padding (int or list[int]): the padding number of input
-        conv_type (str): sparse conv type in spconv
-        norm_cfg (dict[str]): config of normalization layer
-        order (tuple[str]): The order of conv/norm/activation layers. It is a
+        in_channels (int): The number of input channels.
+        out_channels (int): The number of out channels.
+        kernel_size (int | Tuple[int]): Kernel size of convolution.
+        indice_key (str): The indice key used for sparse tensor.
+        stride (int or tuple[int]): The stride of convolution.
+        padding (int or tuple[int]): The padding number of input.
+        conv_type (str): Sparse conv type in spconv. Defaults to 'SubMConv3d'.
+        norm_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
+            normalization layer. Defaults to None.
+        order (Tuple[str]): The order of conv/norm/activation layers. It is a
             sequence of "conv", "norm" and "act". Common examples are
             ("conv", "norm", "act") and ("act", "conv", "norm").
+            Defaults to ('conv', 'norm', 'act').
 
     Returns:
         spconv.SparseSequential: sparse convolution module.

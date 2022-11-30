@@ -1,13 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from typing import List, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule, build_activation_layer, build_norm_layer
 from mmcv.ops import assign_score_withk as assign_score_cuda
 from mmengine.model import constant_init
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
+from mmdet3d.utils import ConfigType
 from .utils import assign_kernel_withoutk, assign_score, calc_euclidian_dist
 
 
@@ -17,33 +20,33 @@ class ScoreNet(nn.Module):
 
     Args:
         mlp_channels (List[int]): Hidden unit sizes of SharedMLP layers.
-        last_bn (bool, optional): Whether to use BN on the last output of mlps.
+        last_bn (bool): Whether to use BN on the last output of mlps.
             Defaults to False.
-        score_norm (str, optional): Normalization function of output scores.
+        score_norm (str): Normalization function of output scores.
             Can be 'softmax', 'sigmoid' or 'identity'. Defaults to 'softmax'.
-        temp_factor (float, optional): Temperature factor to scale the output
+        temp_factor (float): Temperature factor to scale the output
             scores before softmax. Defaults to 1.0.
-        norm_cfg (dict, optional): Type of normalization method.
-            Defaults to dict(type='BN2d').
-        bias (bool | str, optional): If specified as `auto`, it will be decided
-            by the norm_cfg. Bias will be set as True if `norm_cfg` is None,
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN2d').
+        bias (bool or str): If specified as `auto`, it will be decided by
+            `norm_cfg`. `bias` will be set as True if `norm_cfg` is None,
             otherwise False. Defaults to 'auto'.
 
     Note:
         The official code applies xavier_init to all Conv layers in ScoreNet,
-            see `PAConv <https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg
-            /model/pointnet2/paconv.py#L105>`_. However in our experiments, we
-            did not find much difference in applying such xavier initialization
-            or not. So we neglect this initialization in our implementation.
+        see `PAConv <https://github.com/CVMI-Lab/PAConv/blob/main/scene_seg
+        /model/pointnet2/paconv.py#L105>`_. However in our experiments, we
+        did not find much difference in applying such xavier initialization
+        or not. So we neglect this initialization in our implementation.
     """
 
     def __init__(self,
-                 mlp_channels,
-                 last_bn=False,
-                 score_norm='softmax',
-                 temp_factor=1.0,
-                 norm_cfg=dict(type='BN2d'),
-                 bias='auto'):
+                 mlp_channels: List[int],
+                 last_bn: bool = False,
+                 score_norm: str = 'softmax',
+                 temp_factor: float = 1.0,
+                 norm_cfg: ConfigType = dict(type='BN2d'),
+                 bias: Union[bool, str] = 'auto') -> None:
         super(ScoreNet, self).__init__()
 
         assert score_norm in ['softmax', 'sigmoid', 'identity'], \
@@ -79,16 +82,16 @@ class ScoreNet(nn.Module):
                 act_cfg=None,
                 bias=bias))
 
-    def forward(self, xyz_features):
+    def forward(self, xyz_features: Tensor) -> Tensor:
         """Forward.
 
         Args:
-            xyz_features (torch.Tensor): (B, C, N, K), features constructed
-                from xyz coordinates of point pairs. May contain relative
-                positions, Euclidean distance, etc.
+            xyz_features (Tensor): (B, C, N, K) Features constructed from xyz
+                coordinates of point pairs. May contain relative positions,
+                Euclidean distance, etc.
 
         Returns:
-            torch.Tensor: (B, N, K, M), predicted scores for `M` kernels.
+            Tensor: (B, N, K, M) Predicted scores for `M` kernels.
         """
         scores = self.mlps(xyz_features)  # (B, M, N, K)
 
@@ -116,43 +119,49 @@ class PAConv(nn.Module):
         in_channels (int): Input channels of point features.
         out_channels (int): Output channels of point features.
         num_kernels (int): Number of kernel weights in the weight bank.
-        norm_cfg (dict, optional): Type of normalization method.
-            Defaults to dict(type='BN2d', momentum=0.1).
-        act_cfg (dict, optional): Type of activation method.
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN2d', momentum=0.1).
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Defaults to dict(type='ReLU', inplace=True).
-        scorenet_input (str, optional): Type of input to ScoreNet.
+        scorenet_input (str): Type of input to ScoreNet.
             Can be 'identity', 'w_neighbor' or 'w_neighbor_dist'.
             Defaults to 'w_neighbor_dist'.
-        weight_bank_init (str, optional): Init method of weight bank kernels.
+        weight_bank_init (str): Init method of weight bank kernels.
             Can be 'kaiming' or 'xavier'. Defaults to 'kaiming'.
-        kernel_input (str, optional): Input features to be multiplied with
-            kernel weights. Can be 'identity' or 'w_neighbor'.
+        kernel_input (str): Input features to be multiplied with kernel
+            weights. Can be 'identity' or 'w_neighbor'.
             Defaults to 'w_neighbor'.
-        scorenet_cfg (dict, optional): Config of the ScoreNet module, which
-            may contain the following keys and values:
+        scorenet_cfg (dict): Config of the ScoreNet module, which may contain
+            the following keys and values:
 
             - mlp_channels (List[int]): Hidden units of MLPs.
             - score_norm (str): Normalization function of output scores.
-                Can be 'softmax', 'sigmoid' or 'identity'.
+              Can be 'softmax', 'sigmoid' or 'identity'.
             - temp_factor (float): Temperature factor to scale the output
-                scores before softmax.
+              scores before softmax.
             - last_bn (bool): Whether to use BN on the last output of mlps.
+            Defaults to dict(mlp_channels=[16, 16, 16],
+                             score_norm='softmax',
+                             temp_factor=1.0,
+                             last_bn=False).
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_kernels,
-                 norm_cfg=dict(type='BN2d', momentum=0.1),
-                 act_cfg=dict(type='ReLU', inplace=True),
-                 scorenet_input='w_neighbor_dist',
-                 weight_bank_init='kaiming',
-                 kernel_input='w_neighbor',
-                 scorenet_cfg=dict(
-                     mlp_channels=[16, 16, 16],
-                     score_norm='softmax',
-                     temp_factor=1.0,
-                     last_bn=False)):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_kernels: int,
+        norm_cfg: ConfigType = dict(type='BN2d', momentum=0.1),
+        act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+        scorenet_input: str = 'w_neighbor_dist',
+        weight_bank_init: str = 'kaiming',
+        kernel_input: str = 'w_neighbor',
+        scorenet_cfg: dict = dict(
+            mlp_channels=[16, 16, 16],
+            score_norm='softmax',
+            temp_factor=1.0,
+            last_bn=False)
+    ) -> None:
         super(PAConv, self).__init__()
 
         # determine weight kernel size according to used features
@@ -218,21 +227,20 @@ class PAConv(nn.Module):
 
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         """Initialize weights of shared MLP layers and BN layers."""
         if self.bn is not None:
             constant_init(self.bn, val=1, bias=0)
 
-    def _prepare_scorenet_input(self, points_xyz):
+    def _prepare_scorenet_input(self, points_xyz: Tensor) -> Tensor:
         """Prepare input point pairs features for self.ScoreNet.
 
         Args:
-            points_xyz (torch.Tensor): (B, 3, npoint, K)
-                Coordinates of the grouped points.
+            points_xyz (Tensor): (B, 3, npoint, K) Coordinates of the
+                grouped points.
 
         Returns:
-            torch.Tensor: (B, C, npoint, K)
-                The generated features per point pair.
+            Tensor: (B, C, npoint, K) The generated features per point pair.
         """
         B, _, npoint, K = points_xyz.size()
         center_xyz = points_xyz[..., :1].repeat(1, 1, 1, K)
@@ -250,22 +258,22 @@ class PAConv(nn.Module):
                                      dim=1)
         return xyz_features
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tuple[Tensor]) -> Tuple[Tensor]:
         """Forward.
 
         Args:
-            inputs (tuple(torch.Tensor)):
+            inputs (Tuple[Tensor]):
 
-                - features (torch.Tensor): (B, in_c, npoint, K)
-                    Features of the queried points.
-                - points_xyz (torch.Tensor): (B, 3, npoint, K)
-                    Coordinates of the grouped points.
+                - features (Tensor): (B, in_c, npoint, K)
+                  Features of the queried points.
+                - points_xyz (Tensor): (B, 3, npoint, K)
+                  Coordinates of the grouped points.
 
         Returns:
-            Tuple[torch.Tensor]:
+            Tuple[Tensor]:
 
-                - new_features: (B, out_c, npoint, K), features after PAConv.
-                - points_xyz: same as input.
+                - new_features: (B, out_c, npoint, K) Features after PAConv.
+                - points_xyz: Same as input.
         """
         features, points_xyz = inputs
         B, _, npoint, K = features.size()
@@ -315,20 +323,22 @@ class PAConvCUDA(PAConv):
     more detailed descriptions.
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_kernels,
-                 norm_cfg=dict(type='BN2d', momentum=0.1),
-                 act_cfg=dict(type='ReLU', inplace=True),
-                 scorenet_input='w_neighbor_dist',
-                 weight_bank_init='kaiming',
-                 kernel_input='w_neighbor',
-                 scorenet_cfg=dict(
-                     mlp_channels=[8, 16, 16],
-                     score_norm='softmax',
-                     temp_factor=1.0,
-                     last_bn=False)):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_kernels: int,
+        norm_cfg: ConfigType = dict(type='BN2d', momentum=0.1),
+        act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+        scorenet_input: str = 'w_neighbor_dist',
+        weight_bank_init: str = 'kaiming',
+        kernel_input: str = 'w_neighbor',
+        scorenet_cfg: dict = dict(
+            mlp_channels=[8, 16, 16],
+            score_norm='softmax',
+            temp_factor=1.0,
+            last_bn=False)
+    ) -> None:
         super(PAConvCUDA, self).__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -343,27 +353,27 @@ class PAConvCUDA(PAConv):
         assert self.kernel_input == 'w_neighbor', \
             'CUDA implemented PAConv only supports w_neighbor kernel_input'
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tuple[Tensor]) -> Tuple[Tensor]:
         """Forward.
 
         Args:
-            inputs (tuple(torch.Tensor)):
+            inputs (Tuple[Tensor]):
 
-                - features (torch.Tensor): (B, in_c, N)
-                    Features of all points in the current point cloud.
-                    Different from non-CUDA version PAConv, here the features
-                        are not grouped by each center to form a K dim.
-                - points_xyz (torch.Tensor): (B, 3, npoint, K)
-                    Coordinates of the grouped points.
-                - points_idx (torch.Tensor): (B, npoint, K)
-                    Index of the grouped points.
+                - features (Tensor): (B, in_c, N)
+                  Features of all points in the current point cloud.
+                  Different from non-CUDA version PAConv, here the features
+                  are not grouped by each center to form a K dim.
+                - points_xyz (Tensor): (B, 3, npoint, K)
+                  Coordinates of the grouped points.
+                - points_idx (Tensor): (B, npoint, K)
+                  Index of the grouped points.
 
         Returns:
-            Tuple[torch.Tensor]:
+            Tuple[Tensor]:
 
-                - new_features: (B, out_c, npoint, K), features after PAConv.
-                - points_xyz: same as input.
-                - points_idx: same as input.
+                - new_features: (B, out_c, npoint, K) Features after PAConv.
+                - points_xyz: Same as input.
+                - points_idx: Same as input.
         """
         features, points_xyz, points_idx = inputs
 

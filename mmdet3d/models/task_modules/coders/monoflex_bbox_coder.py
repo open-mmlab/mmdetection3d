@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from mmdet.models.task_modules import BaseBBoxCoder
 from torch.nn import functional as F
 
 from mmdet3d.registry import TASK_UTILS
-from mmdet.models.task_modules import BaseBBoxCoder
 
 
 @TASK_UTILS.register_module()

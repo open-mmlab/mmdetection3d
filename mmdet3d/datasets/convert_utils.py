@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-from collections import OrderedDict
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
+from nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points
 from pyquaternion import Quaternion
 from shapely.geometry import MultiPoint, box
@@ -53,19 +53,20 @@ LyftNameMapping = {
 }
 
 
-def get_nuscenes_2d_boxes(nusc, sample_data_token: str,
-                          visibilities: List[str]):
-    """Get the 2d / mono3d annotation records for a given `sample_data_token of
-    nuscenes dataset.
+def get_nuscenes_2d_boxes(nusc: NuScenes, sample_data_token: str,
+                          visibilities: List[str]) -> List[dict]:
+    """Get the 2d / mono3d annotation records for a given `sample_data_token`
+    of nuscenes dataset.
 
     Args:
+        nusc (:obj:`NuScenes`): NuScenes class.
         sample_data_token (str): Sample data token belonging to a camera
             keyframe.
-        visibilities (list[str]): Visibility filter.
+        visibilities (List[str]): Visibility filter.
 
     Return:
-        list[dict]: List of 2d annotation record that belongs to the input
-            `sample_data_token`.
+        List[dict]: List of 2d annotation record that belongs to the input
+        `sample_data_token`.
     """
 
     # Get the sample data and the sample corresponding to that sample data.
@@ -190,7 +191,7 @@ def get_kitti_style_2d_boxes(info: dict,
                              occluded: Tuple[int] = (0, 1, 2, 3),
                              annos: Optional[dict] = None,
                              mono3d: bool = True,
-                             dataset: str = 'kitti'):
+                             dataset: str = 'kitti') -> List[dict]:
     """Get the 2d / mono3d annotation records for a given info.
 
     This function is used to get 2D/Mono3D annotations when loading annotations
@@ -202,7 +203,7 @@ def get_kitti_style_2d_boxes(info: dict,
             belong to. In KITTI, typically only CAM 2 will be used,
             and in Waymo, multi cameras could be used.
             Defaults to 2.
-        occluded (tuple[int]): Integer (0, 1, 2, 3) indicating occlusion state:
+        occluded (Tuple[int]): Integer (0, 1, 2, 3) indicating occlusion state:
             0 = fully visible, 1 = partly occluded, 2 = largely occluded,
             3 = unknown, -1 = DontCare.
             Defaults to (0, 1, 2, 3).
@@ -213,8 +214,8 @@ def get_kitti_style_2d_boxes(info: dict,
             Defaults to 'kitti'.
 
     Return:
-        list[dict]: List of 2d / mono3d annotation record that
-            belongs to the input camera id.
+        List[dict]: List of 2d / mono3d annotation record that
+        belongs to the input camera id.
     """
     # Get calibration information
     camera_intrinsic = info['calib'][f'P{cam_idx}']
@@ -296,7 +297,7 @@ def get_kitti_style_2d_boxes(info: dict,
             repro_rec['velocity'] = -1  # no velocity in KITTI
 
             center_3d = np.array(loc).reshape([1, 3])
-            center_2d_with_depth = box_np_ops.points_cam2img(
+            center_2d_with_depth = points_cam2img(
                 center_3d, camera_intrinsic, with_depth=True)
             center_2d_with_depth = center_2d_with_depth.squeeze().tolist()
 
@@ -336,20 +337,20 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
 
 
 def post_process_coords(
-    corner_coords: List, imsize: Tuple[int, int] = (1600, 900)
-) -> Union[Tuple[float, float, float, float], None]:
+    corner_coords: List[int], imsize: Tuple[int] = (1600, 900)
+) -> Union[Tuple[float], None]:
     """Get the intersection of the convex hull of the reprojected bbox corners
     and the image canvas, return None if no intersection.
 
     Args:
-        corner_coords (list[int]): Corner coordinates of reprojected
+        corner_coords (List[int]): Corner coordinates of reprojected
             bounding box.
-        imsize (tuple[int]): Size of the image canvas.
+        imsize (Tuple[int]): Size of the image canvas.
             Defaults to (1600, 900).
 
     Return:
-        tuple[float]: Intersection of the convex hull of the 2D box
-            corners and the image canvas.
+        Tuple[float] or None: Intersection of the convex hull of the 2D box
+        corners and the image canvas.
     """
     polygon_from_2d_box = MultiPoint(corner_coords).convex_hull
     img_canvas = box(0, 0, imsize[0], imsize[1])
@@ -370,7 +371,7 @@ def post_process_coords(
 
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
-                    dataset: str) -> OrderedDict:
+                    dataset: str) -> Union[dict, None]:
     """Generate one 2D annotation record given various information on top of
     the 2D bounding box coordinates.
 
@@ -383,11 +384,11 @@ def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
         dataset (str): Name of dataset.
 
     Returns:
-        dict: A sample 2d annotation record.
+        dict or None: A sample 2d annotation record.
 
             - bbox_label (int): 2d box label id
             - bbox_label_3d (int): 3d box label id
-            - bbox (list[float]): left x, top y, right x, bottom y of 2d box
+            - bbox (List[float]): left x, top y, right x, bottom y of 2d box
             - bbox_3d_isvalid (bool): whether the box is valid
     """
 

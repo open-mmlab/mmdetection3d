@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestPointRCNN(unittest.TestCase):
@@ -15,12 +15,12 @@ class TestPointRCNN(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'PointRCNN')
         DefaultScope.get_instance('test_pointrcnn', scope_name='mmdet3d')
-        _setup_seed(0)
-        pointrcnn_cfg = _get_detector_cfg(
+        setup_seed(0)
+        pointrcnn_cfg = get_detector_cfg(
             'point_rcnn/point-rcnn_8xb2_kitti-3d-3class.py')
         model = MODELS.build(pointrcnn_cfg)
         num_gt_instance = 2
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             num_points=10101, num_gt_instance=num_gt_instance)
 
         if torch.cuda.is_available():
