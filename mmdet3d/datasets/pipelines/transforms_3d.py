@@ -2158,13 +2158,10 @@ class PadMultiViewImage(object):
 
 @PIPELINES.register_module()
 class gt3d_version_transfrom(object):
-    """Transform the gt3d coor from mmdet3d v1.x to v0.x.
-
-    dir(bool): transform forward or backward (1 for backward)
+    """Transform the gt_bboxes_3d coor from mmdet3d v1.x to v0.x.
 
     Args:
-        shift_scale (tuple[float]): Shift and scale range.
-        aug_prob (float): The shifting and scaling probability.
+        dir(bool): transform forward or backward (1 for backward)
     """
 
     def __init__(self, dir=1):
@@ -2175,11 +2172,11 @@ class gt3d_version_transfrom(object):
         """Call function to record random shift and scale infos.
 
         Args:
-            results (dict): Result dict from loading pipeline.
+            input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Results after random shift and scale, 'center', 'size'
-                and 'affine_aug' keys are added in the result dict.
+            dict: Results after transformation,
+                'gt_bboxes_3d' key is updated in the result dict.
         """
         gt_bboxes_3d = input_dict['gt_bboxes_3d'].tensor
 
