@@ -67,7 +67,7 @@ A total of 11 developers contributed to this release.
 
 #### Bug Fixes
 
-- Fix point cloud loop visualization error (#1914)
+- Fix missing registration of models in [setup_env.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/utils/setup_env.py) (#1808)
 - Fix the data base sampler bugs when using the ground plane data (#1812)
 - Add output directory existing check during visualization (#1828)
 - Fix bugs of nuScenes dataset for monocular 3D detection (#1837)
