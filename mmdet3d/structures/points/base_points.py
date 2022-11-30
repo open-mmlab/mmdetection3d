@@ -6,7 +6,6 @@ from typing import Optional, Sequence, Union
 import numpy as np
 import torch
 
-from mmdet3d.structures.bbox_3d import Coord3DMode
 from ..bbox_3d.utils import rotation_3d_in_axis
 
 
@@ -264,7 +263,7 @@ class BasePoints(object):
     @abstractmethod
     def convert_to(
         self,
-        dst: Coord3DMode,
+        dst: int,
         rt_mat: Optional[Union[np.ndarray,
                                torch.Tensor]] = None) -> 'BasePoints':
         """Convert self to ``dst`` mode.

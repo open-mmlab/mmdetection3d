@@ -4,7 +4,6 @@ from typing import Optional, Sequence, Union
 import numpy as np
 import torch
 
-from mmdet3d.structures import Coord3DMode
 from .base_points import BasePoints
 
 
@@ -54,7 +53,7 @@ class CameraPoints(BasePoints):
 
     def convert_to(
         self,
-        dst: Coord3DMode,
+        dst: int,
         rt_mat: Optional[Union[np.ndarray,
                                torch.Tensor]] = None) -> BasePoints:
         """Convert self to ``dst`` mode.
@@ -72,5 +71,6 @@ class CameraPoints(BasePoints):
             :obj:`BasePoints`: The converted point of the same type
             in the `dst` mode.
         """
+        from mmdet3d.structures import Coord3DMode
         return Coord3DMode.convert_point(
             point=self, src=Coord3DMode.CAM, dst=dst, rt_mat=rt_mat)
