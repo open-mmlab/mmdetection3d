@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Union
+
 import numpy as np
 import torch
 
 from mmdet3d.structures.points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
+from .box_3d_mode import Box3DMode
 from .utils import rotation_3d_in_axis
 
 
@@ -25,9 +28,6 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
     The yaw is 0 at the positive direction of x axis, and increases from
     the positive direction of x to the positive direction of y.
 
-    A refactor is ongoing to make the three coordinate systems
-    easier to understand and convert between each other.
-
     Attributes:
         tensor (torch.Tensor): Float matrix of N x box_dim.
         box_dim (int): Integer indicating the dimension of a box.
@@ -38,7 +38,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
     YAW_AXIS = 2
 
     @property
-    def gravity_center(self):
+    def gravity_center(self) -> torch.Tensor:
         """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         bottom_center = self.bottom_center
         gravity_center = torch.zeros_like(bottom_center)
@@ -47,7 +47,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         return gravity_center
 
     @property
-    def corners(self):
+    def corners(self) -> torch.Tensor:
         """torch.Tensor: Coordinates of corners of all the boxes
         in shape (N, 8, 3).
 
@@ -78,7 +78,7 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 device=dims.device, dtype=dims.dtype)
 
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-        # use relative origin [0.5, 0.5, 0]
+        # use relative origin (0.5, 0.5, 0)
         corners_norm = corners_norm - dims.new_tensor([0.5, 0.5, 0])
         corners = dims.view([-1, 1, 3]) * corners_norm.reshape([1, 8, 3])
 
@@ -88,20 +88,24 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
-    def rotate(self, angle, points=None):
+    def rotate(
+        self,
+        angle: Union[float, torch.Tensor, np.ndarray],
+        points: Optional[Union[torch.Tensor, np.ndarray, BasePoints]] = None
+    ) -> Union[tuple, None]:
         """Rotate boxes with points (optional) with the given angle or rotation
         matrix.
 
         Args:
-            angles (float | torch.Tensor | np.ndarray):
+            angle (float or torch.Tensor or np.ndarray):
                 Rotation angle or rotation matrix.
-            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
+            points (torch.Tensor or np.ndarray or :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
 
         Returns:
             tuple or None: When ``points`` is None, the function returns
-                None, otherwise it returns the rotated points and the
-                rotation matrix ``rot_mat_T``.
+            None, otherwise it returns the rotated points and the
+            rotation matrix ``rot_mat_T``.
         """
         if not isinstance(angle, torch.Tensor):
             angle = self.tensor.new_tensor(angle)
@@ -140,18 +144,24 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 raise ValueError
             return points, rot_mat_T
 
-    def flip(self, bev_direction='horizontal', points=None):
+    def flip(
+        self,
+        bev_direction: str = 'horizontal',
+        points: Optional[Union[torch.Tensor, np.ndarray, BasePoints]] = None
+    ) -> Union[torch.Tensor, np.ndarray, BasePoints, None]:
         """Flip the boxes in BEV along given BEV direction.
 
         In LIDAR coordinates, it flips the y (horizontal) or x (vertical) axis.
 
         Args:
             bev_direction (str): Flip direction (horizontal or vertical).
-            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
+                Defaults to 'horizontal'.
+            points (torch.Tensor or np.ndarray or :obj:`BasePoints`, optional):
                 Points to flip. Defaults to None.
 
         Returns:
-            torch.Tensor, numpy.ndarray or None: Flipped points.
+            torch.Tensor or np.ndarray or :obj:`BasePoints` or None:
+            Flipped points.
         """
         assert bev_direction in ('horizontal', 'vertical')
         if bev_direction == 'horizontal':
@@ -174,24 +184,27 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def convert_to(self, dst, rt_mat=None, correct_yaw=False):
+    def convert_to(self,
+                   dst: Box3DMode,
+                   rt_mat: Optional[Union[np.ndarray, torch.Tensor]] = None,
+                   correct_yaw: bool = False) -> BaseInstance3DBoxes:
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`Box3DMode`): the target Box mode
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            dst (:obj:`Box3DMode`): The target Box mode.
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from ``src`` coordinates to ``dst`` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
-            correct_yaw (bool): If convert the yaw angle to the target
+            correct_yaw (bool): Whether to convert the yaw angle to the target
                 coordinate. Defaults to False.
+
         Returns:
             :obj:`BaseInstance3DBoxes`:
-                The converted box of the same type in the ``dst`` mode.
+            The converted box of the same type in the ``dst`` mode.
         """
-        from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
             box=self,
             src=Box3DMode.LIDAR,
@@ -199,11 +212,14 @@ class LiDARInstance3DBoxes(BaseInstance3DBoxes):
             rt_mat=rt_mat,
             correct_yaw=correct_yaw)
 
-    def enlarged_box(self, extra_width):
+    def enlarged_box(
+            self, extra_width: Union[float,
+                                     torch.Tensor]) -> 'LiDARInstance3DBoxes':
         """Enlarge the length, width and height boxes.
 
         Args:
-            extra_width (float | torch.Tensor): Extra width to enlarge the box.
+            extra_width (float or torch.Tensor):
+                Extra width to enlarge the box.
 
         Returns:
             :obj:`LiDARInstance3DBoxes`: Enlarged boxes.

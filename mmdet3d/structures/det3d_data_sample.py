@@ -15,44 +15,44 @@ class Det3DDataSample(DetDataSample):
     The attributes in ``Det3DDataSample`` are divided into several parts:
 
         - ``proposals``(InstanceData): Region proposals used in two-stage
-            detectors.
+          detectors.
         - ``ignored_instances``(InstanceData): Instances to be ignored during
-            training/testing.
+          training/testing.
         - ``gt_instances_3d``(InstanceData): Ground truth of 3D instance
-            annotations.
+          annotations.
         - ``gt_instances``(InstanceData): Ground truth of 2D instance
-            annotations.
+          annotations.
         - ``pred_instances_3d``(InstanceData): 3D instances of model
-            predictions.
-            - For point-cloud 3d object detection task whose input modality
+          predictions.
+          - For point-cloud 3d object detection task whose input modality
             is `use_lidar=True, use_camera=False`, the 3D predictions results
             are saved in `pred_instances_3d`.
-            - For vision-only(monocular/multi-view) 3D object detection task
+          - For vision-only(monocular/multi-view) 3D object detection task
             whose input modality is `use_lidar=False, use_camera=True`, the 3D
             predictions are saved in `pred_instances_3d`.
         - ``pred_instances``(InstanceData): 2D instances of model
-            predictions.
-            -  For multi-modality 3D detection task whose input modality is
+          predictions.
+          -  For multi-modality 3D detection task whose input modality is
             `use_lidar=True, use_camera=True`, the 2D predictions
             are saved in `pred_instances`.
         - ``pts_pred_instances_3d``(InstanceData): 3D instances of model
             predictions based on point cloud.
-            -  For multi-modality 3D detection task whose input modality is
+          -  For multi-modality 3D detection task whose input modality is
             `use_lidar=True, use_camera=True`, the 3D predictions based on
             point cloud are saved in `pts_pred_instances_3d` to distinguish
             with `img_pred_instances_3d` which based on image.
         - ``img_pred_instances_3d``(InstanceData): 3D instances of model
             predictions based on image.
-            -  For multi-modality 3D detection task whose input modality is
+          -  For multi-modality 3D detection task whose input modality is
             `use_lidar=True, use_camera=True`, the 3D predictions based on
             image are saved in `img_pred_instances_3d` to distinguish with
             `pts_pred_instances_3d` which based on point cloud.
         - ``gt_pts_seg``(PointData): Ground truth of point cloud
-            segmentation.
+          segmentation.
         - ``pred_pts_seg``(PointData): Prediction of point cloud
-            segmentation.
+          segmentation.
         - ``eval_ann_info``(dict): Raw annotation, which will be passed to
-            evaluator and do the online evaluation.
+          evaluator and do the online evaluation.
 
     Examples:
     >>> from mmengine.structures import InstanceData
@@ -162,11 +162,11 @@ class Det3DDataSample(DetDataSample):
         return self._gt_instances_3d
 
     @gt_instances_3d.setter
-    def gt_instances_3d(self, value: InstanceData):
+    def gt_instances_3d(self, value: InstanceData) -> None:
         self.set_field(value, '_gt_instances_3d', dtype=InstanceData)
 
     @gt_instances_3d.deleter
-    def gt_instances_3d(self):
+    def gt_instances_3d(self) -> None:
         del self._gt_instances_3d
 
     @property
@@ -174,11 +174,11 @@ class Det3DDataSample(DetDataSample):
         return self._pred_instances_3d
 
     @pred_instances_3d.setter
-    def pred_instances_3d(self, value: InstanceData):
+    def pred_instances_3d(self, value: InstanceData) -> None:
         self.set_field(value, '_pred_instances_3d', dtype=InstanceData)
 
     @pred_instances_3d.deleter
-    def pred_instances_3d(self):
+    def pred_instances_3d(self) -> None:
         del self._pred_instances_3d
 
     @property
@@ -186,11 +186,11 @@ class Det3DDataSample(DetDataSample):
         return self._pts_pred_instances_3d
 
     @pts_pred_instances_3d.setter
-    def pts_pred_instances_3d(self, value: InstanceData):
+    def pts_pred_instances_3d(self, value: InstanceData) -> None:
         self.set_field(value, '_pts_pred_instances_3d', dtype=InstanceData)
 
     @pts_pred_instances_3d.deleter
-    def pts_pred_instances_3d(self):
+    def pts_pred_instances_3d(self) -> None:
         del self._pts_pred_instances_3d
 
     @property
@@ -198,11 +198,11 @@ class Det3DDataSample(DetDataSample):
         return self._img_pred_instances_3d
 
     @img_pred_instances_3d.setter
-    def img_pred_instances_3d(self, value: InstanceData):
+    def img_pred_instances_3d(self, value: InstanceData) -> None:
         self.set_field(value, '_img_pred_instances_3d', dtype=InstanceData)
 
     @img_pred_instances_3d.deleter
-    def img_pred_instances_3d(self):
+    def img_pred_instances_3d(self) -> None:
         del self._img_pred_instances_3d
 
     @property
@@ -210,11 +210,11 @@ class Det3DDataSample(DetDataSample):
         return self._gt_pts_seg
 
     @gt_pts_seg.setter
-    def gt_pts_seg(self, value: PointData):
+    def gt_pts_seg(self, value: PointData) -> None:
         self.set_field(value, '_gt_pts_seg', dtype=PointData)
 
     @gt_pts_seg.deleter
-    def gt_pts_seg(self):
+    def gt_pts_seg(self) -> None:
         del self._gt_pts_seg
 
     @property
@@ -222,11 +222,11 @@ class Det3DDataSample(DetDataSample):
         return self._pred_pts_seg
 
     @pred_pts_seg.setter
-    def pred_pts_seg(self, value: PointData):
+    def pred_pts_seg(self, value: PointData) -> None:
         self.set_field(value, '_pred_pts_seg', dtype=PointData)
 
     @pred_pts_seg.deleter
-    def pred_pts_seg(self):
+    def pred_pts_seg(self) -> None:
         del self._pred_pts_seg
 
 

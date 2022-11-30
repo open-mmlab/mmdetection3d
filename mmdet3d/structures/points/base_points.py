@@ -1,10 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 from abc import abstractmethod
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import torch
 
+from mmdet3d.structures import Coord3DMode
 from ..bbox_3d.utils import rotation_3d_in_axis
 
 
@@ -12,8 +14,9 @@ class BasePoints(object):
     """Base class for Points.
 
     Args:
-        tensor (torch.Tensor | np.ndarray | list): a N x points_dim matrix.
-        points_dim (int, optional): Number of the dimension of a point.
+        tensor (torch.Tensor or np.ndarray or Sequence):
+            A N x points_dim matrix.
+        points_dim (int): Number of the dimension of a point.
             Each row is (x, y, z). Defaults to 3.
         attribute_dims (dict, optional): Dictionary to indicate the
             meaning of extra dimension. Defaults to None.
@@ -22,12 +25,15 @@ class BasePoints(object):
         tensor (torch.Tensor): Float matrix of N x points_dim.
         points_dim (int): Integer indicating the dimension of a point.
             Each row is (x, y, z, ...).
-        attribute_dims (bool): Dictionary to indicate the meaning of extra
+        attribute_dims (dict): Dictionary to indicate the meaning of extra
             dimension. Defaults to None.
         rotation_axis (int): Default rotation axis for points rotation.
     """
 
-    def __init__(self, tensor, points_dim=3, attribute_dims=None):
+    def __init__(self,
+                 tensor: Union[torch.Tensor, np.ndarray, Sequence],
+                 points_dim: int = 3,
+                 attribute_dims: Optional[dict] = None) -> None:
         if isinstance(tensor, torch.Tensor):
             device = tensor.device
         else:
@@ -47,12 +53,12 @@ class BasePoints(object):
         self.rotation_axis = 0
 
     @property
-    def coord(self):
+    def coord(self) -> torch.Tensor:
         """torch.Tensor: Coordinates of each point in shape (N, 3)."""
         return self.tensor[:, :3]
 
     @coord.setter
-    def coord(self, tensor):
+    def coord(self, tensor: Union[torch.Tensor, np.ndarray]) -> None:
         """Set the coordinates of each point."""
         try:
             tensor = tensor.reshape(self.shape[0], 3)
@@ -63,9 +69,9 @@ class BasePoints(object):
         self.tensor[:, :3] = tensor
 
     @property
-    def height(self):
+    def height(self) -> Union[torch.Tensor, None]:
         """torch.Tensor:
-            A vector with height of each point in shape (N, 1), or None."""
+        A vector with height of each point in shape (N, 1), or None."""
         if self.attribute_dims is not None and \
                 'height' in self.attribute_dims.keys():
             return self.tensor[:, self.attribute_dims['height']]
@@ -73,7 +79,7 @@ class BasePoints(object):
             return None
 
     @height.setter
-    def height(self, tensor):
+    def height(self, tensor: Union[torch.Tensor, np.ndarray]) -> None:
         """Set the height of each point."""
         try:
             tensor = tensor.reshape(self.shape[0])
@@ -94,9 +100,9 @@ class BasePoints(object):
             self.points_dim += 1
 
     @property
-    def color(self):
+    def color(self) -> Union[torch.Tensor, None]:
         """torch.Tensor:
-            A vector with color of each point in shape (N, 3), or None."""
+        A vector with color of each point in shape (N, 3), or None."""
         if self.attribute_dims is not None and \
                 'color' in self.attribute_dims.keys():
             return self.tensor[:, self.attribute_dims['color']]
@@ -104,7 +110,7 @@ class BasePoints(object):
             return None
 
     @color.setter
-    def color(self, tensor):
+    def color(self, tensor: Union[torch.Tensor, np.ndarray]) -> None:
         """Set the color of each point."""
         try:
             tensor = tensor.reshape(self.shape[0], 3)
@@ -128,11 +134,11 @@ class BasePoints(object):
             self.points_dim += 3
 
     @property
-    def shape(self):
-        """torch.Shape: Shape of points."""
+    def shape(self) -> torch.Size:
+        """torch.Size: Shape of points."""
         return self.tensor.shape
 
-    def shuffle(self):
+    def shuffle(self) -> torch.Tensor:
         """Shuffle the points.
 
         Returns:
@@ -142,13 +148,18 @@ class BasePoints(object):
         self.tensor = self.tensor[idx]
         return idx
 
-    def rotate(self, rotation, axis=None):
+    def rotate(self,
+               rotation: Union[float, np.ndarray, torch.Tensor],
+               axis: Optional[int] = None) -> torch.Tensor:
         """Rotate points with the given rotation matrix or angle.
 
         Args:
-            rotation (float | np.ndarray | torch.Tensor): Rotation matrix
+            rotation (float or np.ndarray or torch.Tensor): Rotation matrix
                 or angle.
             axis (int, optional): Axis to rotate at. Defaults to None.
+
+        Returns:
+            torch.Tensor: Rotation matrix.
         """
         if not isinstance(rotation, torch.Tensor):
             rotation = self.tensor.new_tensor(rotation)
@@ -171,7 +182,7 @@ class BasePoints(object):
         return rot_mat_T
 
     @abstractmethod
-    def flip(self, bev_direction='horizontal'):
+    def flip(self, bev_direction: str = 'horizontal') -> None:
         """Flip the points along given BEV direction.
 
         Args:
@@ -179,11 +190,11 @@ class BasePoints(object):
         """
         pass
 
-    def translate(self, trans_vector):
+    def translate(self, trans_vector: Union[np.ndarray, torch.Tensor]) -> None:
         """Translate points with the given translation vector.
 
         Args:
-            trans_vector (np.ndarray, torch.Tensor): Translation
+            trans_vector (np.ndarray or torch.Tensor): Translation
                 vector of size 3 or nx3.
         """
         if not isinstance(trans_vector, torch.Tensor):
@@ -200,12 +211,14 @@ class BasePoints(object):
             )
         self.tensor[:, :3] += trans_vector
 
-    def in_range_3d(self, point_range):
+    def in_range_3d(
+        self, point_range: Union[Sequence[float], torch.Tensor, np.ndarray]
+    ) -> torch.Tensor:
         """Check whether the points are in the given range.
 
         Args:
-            point_range (list | torch.Tensor): The range of point
-                (x_min, y_min, z_min, x_max, y_max, z_max)
+            point_range (Sequence[float] or torch.Tensor or np.ndarray):
+                The range of point (x_min, y_min, z_min, x_max, y_max, z_max).
 
         Note:
             In the original implementation of SECOND, checking whether
@@ -214,7 +227,7 @@ class BasePoints(object):
 
         Returns:
             torch.Tensor: A binary vector indicating whether each point is
-                inside the reference range.
+            inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > point_range[0])
                           & (self.tensor[:, 1] > point_range[1])
@@ -225,20 +238,22 @@ class BasePoints(object):
         return in_range_flags
 
     @property
-    def bev(self):
+    def bev(self) -> torch.Tensor:
         """torch.Tensor: BEV of the points in shape (N, 2)."""
         return self.tensor[:, [0, 1]]
 
-    def in_range_bev(self, point_range):
+    def in_range_bev(
+        self, point_range: Union[Sequence[float], torch.Tensor, np.ndarray]
+    ) -> torch.Tensor:
         """Check whether the points are in the given range.
 
         Args:
-            point_range (list | torch.Tensor): The range of point
-                in order of (x_min, y_min, x_max, y_max).
+            point_range (Sequence[float] or torch.Tensor or np.ndarray):
+                The range of point in order of (x_min, y_min, x_max, y_max).
 
         Returns:
             torch.Tensor: Indicating whether each point is inside
-                the reference range.
+            the reference range.
         """
         in_range_flags = ((self.bev[:, 0] > point_range[0])
                           & (self.bev[:, 1] > point_range[1])
@@ -247,12 +262,16 @@ class BasePoints(object):
         return in_range_flags
 
     @abstractmethod
-    def convert_to(self, dst, rt_mat=None):
+    def convert_to(
+        self,
+        dst: Coord3DMode,
+        rt_mat: Optional[Union[np.ndarray,
+                               torch.Tensor]] = None) -> 'BasePoints':
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`CoordMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            dst (:obj:`CoordMode`): The target Point mode.
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -260,20 +279,22 @@ class BasePoints(object):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            :obj:`BasePoints`: The converted box of the same type
-                in the `dst` mode.
+            :obj:`BasePoints`: The converted point of the same type
+            in the `dst` mode.
         """
         pass
 
-    def scale(self, scale_factor):
-        """Scale the points with horizontal and vertical scaling factors.
+    def scale(self, scale_factor: float) -> None:
+        """Scale the points with given scaling factors.
 
         Args:
             scale_factors (float): Scale factors to scale the points.
         """
         self.tensor[:, :3] *= scale_factor
 
-    def __getitem__(self, item):
+    def __getitem__(
+        self, item: Union[int, tuple, slice, np.ndarray,
+                          torch.Tensor]) -> 'BasePoints':
         """
         Note:
             The following usage are allowed:
@@ -293,7 +314,7 @@ class BasePoints(object):
 
         Returns:
             :obj:`BasePoints`: A new object of
-                :class:`BasePoints` after indexing.
+            :class:`BasePoints` after indexing.
         """
         original_type = type(self)
         if isinstance(item, int):
@@ -345,20 +366,20 @@ class BasePoints(object):
         return original_type(
             p, points_dim=p.shape[1], attribute_dims=attribute_dims)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """int: Number of points in the current object."""
         return self.tensor.shape[0]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a strings that describes the object."""
         return self.__class__.__name__ + '(\n    ' + str(self.tensor) + ')'
 
     @classmethod
-    def cat(cls, points_list):
+    def cat(cls, points_list: Sequence['BasePoints']) -> 'BasePoints':
         """Concatenate a list of Points into a single Points.
 
         Args:
-            points_list (list[:obj:`BasePoints`]): List of points.
+            points_list (Sequence[:obj:`BasePoints`]): List of points.
 
         Returns:
             :obj:`BasePoints`: The concatenated Points.
@@ -376,28 +397,27 @@ class BasePoints(object):
             attribute_dims=points_list[0].attribute_dims)
         return cat_points
 
-    def to(self, device):
+    def to(self, device: Union[str, torch.device], *args,
+           **kwargs) -> 'BasePoints':
         """Convert current points to a specific device.
 
         Args:
             device (str | :obj:`torch.device`): The name of the device.
 
         Returns:
-            :obj:`BasePoints`: A new boxes object on the
-                specific device.
+            :obj:`BasePoints`: A new points object on the specific device.
         """
         original_type = type(self)
         return original_type(
-            self.tensor.to(device),
+            self.tensor.to(device, *args, **kwargs),
             points_dim=self.points_dim,
             attribute_dims=self.attribute_dims)
 
-    def clone(self):
+    def clone(self) -> 'BasePoints':
         """Clone the Points.
 
         Returns:
-            :obj:`BasePoints`: Box object with the same properties
-                as self.
+            :obj:`BasePoints`: Point object with the same properties as self.
         """
         original_type = type(self)
         return original_type(
@@ -406,11 +426,11 @@ class BasePoints(object):
             attribute_dims=self.attribute_dims)
 
     @property
-    def device(self):
-        """str: The device of the points are on."""
+    def device(self) -> torch.device:
+        """:obj:`torch.device`: The device of the points are on."""
         return self.tensor.device
 
-    def __iter__(self):
+    def __iter__(self) -> torch.Tensor:
         """Yield a point as a Tensor of shape (4,) at a time.
 
         Returns:
@@ -418,18 +438,20 @@ class BasePoints(object):
         """
         yield from self.tensor
 
-    def new_point(self, data):
+    def new_points(
+            self, data: Union[torch.Tensor, np.ndarray,
+                              Sequence]) -> 'BasePoints':
         """Create a new point object with data.
 
         The new point and its tensor has the similar properties
-            as self and self.tensor, respectively.
+        as self and self.tensor, respectively.
 
         Args:
-            data (torch.Tensor | numpy.array | list): Data to be copied.
+            data (torch.Tensor or np.ndarray or Sequence): Data to be copied.
 
         Returns:
             :obj:`BasePoints`: A new point object with ``data``,
-                the object's other properties are similar to ``self``.
+            the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \
             if not isinstance(data, torch.Tensor) else data.to(self.device)

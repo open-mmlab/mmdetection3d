@@ -7,7 +7,7 @@ from .lidar_points import LiDARPoints
 __all__ = ['BasePoints', 'CameraPoints', 'DepthPoints', 'LiDARPoints']
 
 
-def get_points_type(points_type):
+def get_points_type(points_type: str) -> type:
     """Get the class of points according to coordinate type.
 
     Args:

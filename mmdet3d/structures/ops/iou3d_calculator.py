@@ -16,13 +16,18 @@ class BboxOverlapsNearest3D(object):
 
     Args:
         coordinate (str): 'camera', 'lidar', or 'depth' coordinate system.
+            Defaults to 'lidar'.
     """
 
-    def __init__(self, coordinate='lidar'):
+    def __init__(self, coordinate: str = 'lidar') -> None:
         assert coordinate in ['camera', 'lidar', 'depth']
         self.coordinate = coordinate
 
-    def __call__(self, bboxes1, bboxes2, mode='iou', is_aligned=False):
+    def __call__(self,
+                 bboxes1: torch.Tensor,
+                 bboxes2: torch.Tensor,
+                 mode: str = 'iou',
+                 is_aligned: bool = False) -> torch.Tensor:
         """Calculate nearest 3D IoU.
 
         Note:
@@ -31,26 +36,27 @@ class BboxOverlapsNearest3D(object):
             between each aligned pair of bboxes1 and bboxes2.
 
         Args:
-            bboxes1 (torch.Tensor): shape (N, 7+N)
-                [x, y, z, x_size, y_size, z_size, ry, v].
-            bboxes2 (torch.Tensor): shape (M, 7+N)
-                [x, y, z, x_size, y_size, z_size, ry, v].
-            mode (str): "iou" (intersection over union) or iof
-                (intersection over foreground).
+            bboxes1 (torch.Tensor): shape (M, 7+C)
+                [x, y, z, x_size, y_size, z_size, ry, v*].
+            bboxes2 (torch.Tensor): shape (N, 7+C)
+                [x, y, z, x_size, y_size, z_size, ry, v*].
+            mode (str): "iou" (intersection over union) or "iof"
+                (intersection over foreground). Defaults to 'iou'.
             is_aligned (bool): Whether the calculation is aligned.
+                Defaults to False.
 
-        Return:
+        Returns:
             torch.Tensor: If ``is_aligned`` is ``True``, return ious between
-                bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
-                ``False``, return shape is M.
+            bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
+            ``False``, return shape is (M,).
         """
         return bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode, is_aligned,
                                         self.coordinate)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(coordinate={self.coordinate}'
+        repr_str += f'(coordinate={self.coordinate})'
         return repr_str
 
 
@@ -63,11 +69,14 @@ class BboxOverlaps3D(object):
             'camera', 'lidar', and 'depth'.
     """
 
-    def __init__(self, coordinate):
+    def __init__(self, coordinate: str) -> None:
         assert coordinate in ['camera', 'lidar', 'depth']
         self.coordinate = coordinate
 
-    def __call__(self, bboxes1, bboxes2, mode='iou'):
+    def __call__(self,
+                 bboxes1: torch.Tensor,
+                 bboxes2: torch.Tensor,
+                 mode: str = 'iou') -> torch.Tensor:
         """Calculate 3D IoU using cuda implementation.
 
         Note:
@@ -76,31 +85,31 @@ class BboxOverlaps3D(object):
             calculate the actual 3D IoUs of boxes.
 
         Args:
-            bboxes1 (torch.Tensor): with shape (N, 7+C),
+            bboxes1 (torch.Tensor): with shape (M, 7+C),
                 (x, y, z, x_size, y_size, z_size, ry, v*).
-            bboxes2 (torch.Tensor): with shape (M, 7+C),
+            bboxes2 (torch.Tensor): with shape (N, 7+C),
                 (x, y, z, x_size, y_size, z_size, ry, v*).
-            mode (str): "iou" (intersection over union) or
-                iof (intersection over foreground).
+            mode (str): "iou" (intersection over union) or "iof"
+                (intersection over foreground). Defaults to 'iou'.
 
-        Return:
+        Returns:
             torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
-                with shape (M, N) (aligned mode is not supported currently).
+            with shape (M, N) (aligned mode is not supported currently).
         """
         return bbox_overlaps_3d(bboxes1, bboxes2, mode, self.coordinate)
 
-    def __repr__(self):
-        """str: return a string that describes the module"""
+    def __repr__(self) -> str:
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
-        repr_str += f'(coordinate={self.coordinate}'
+        repr_str += f'(coordinate={self.coordinate})'
         return repr_str
 
 
-def bbox_overlaps_nearest_3d(bboxes1,
-                             bboxes2,
-                             mode='iou',
-                             is_aligned=False,
-                             coordinate='lidar'):
+def bbox_overlaps_nearest_3d(bboxes1: torch.Tensor,
+                             bboxes2: torch.Tensor,
+                             mode: str = 'iou',
+                             is_aligned: bool = False,
+                             coordinate: str = 'lidar') -> torch.Tensor:
     """Calculate nearest 3D IoU.
 
     Note:
@@ -114,18 +123,21 @@ def bbox_overlaps_nearest_3d(bboxes1,
         aligned pair of bboxes1 and bboxes2.
 
     Args:
-        bboxes1 (torch.Tensor): with shape (N, 7+C),
+        bboxes1 (torch.Tensor): with shape (M, 7+C),
             (x, y, z, x_size, y_size, z_size, ry, v*).
-        bboxes2 (torch.Tensor): with shape (M, 7+C),
+        bboxes2 (torch.Tensor): with shape (N, 7+C),
             (x, y, z, x_size, y_size, z_size, ry, v*).
-        mode (str): "iou" (intersection over union) or iof
-            (intersection over foreground).
-        is_aligned (bool): Whether the calculation is aligned
+        mode (str): "iou" (intersection over union) or "iof"
+            (intersection over foreground). Defaults to 'iou'.
+        is_aligned (bool): Whether the calculation is aligned.
+            Defaults to False.
+        coordinate (str): The coordinate system, valid options are
+            'camera', 'lidar', and 'depth'. Defaults to 'lidar'.
 
-    Return:
+    Returns:
         torch.Tensor: If ``is_aligned`` is ``True``, return ious between
-            bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
-            ``False``, return shape is M.
+        bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
+        ``False``, return shape is (M,).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
 
@@ -145,7 +157,10 @@ def bbox_overlaps_nearest_3d(bboxes1,
     return ret
 
 
-def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
+def bbox_overlaps_3d(bboxes1: torch.Tensor,
+                     bboxes2: torch.Tensor,
+                     mode: str = 'iou',
+                     coordinate: str = 'camera') -> torch.Tensor:
     """Calculate 3D IoU using cuda implementation.
 
     Note:
@@ -154,17 +169,18 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
         calculate the actual IoUs of boxes.
 
     Args:
-        bboxes1 (torch.Tensor): with shape (N, 7+C),
+        bboxes1 (torch.Tensor): with shape (M, 7+C),
             (x, y, z, x_size, y_size, z_size, ry, v*).
-        bboxes2 (torch.Tensor): with shape (M, 7+C),
+        bboxes2 (torch.Tensor): with shape (N, 7+C),
             (x, y, z, x_size, y_size, z_size, ry, v*).
-        mode (str): "iou" (intersection over union) or
-            iof (intersection over foreground).
+        mode (str): "iou" (intersection over union) or "iof"
+            (intersection over foreground). Defaults to 'iou'.
         coordinate (str): 'camera' or 'lidar' coordinate system.
+            Defaults to 'camera'.
 
-    Return:
+    Returns:
         torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
-            with shape (M, N) (aligned mode is not supported currently).
+        with shape (M, N) (aligned mode is not supported currently).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
 
@@ -180,59 +196,65 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
 class AxisAlignedBboxOverlaps3D(object):
     """Axis-aligned 3D Overlaps (IoU) Calculator."""
 
-    def __call__(self, bboxes1, bboxes2, mode='iou', is_aligned=False):
-        """Calculate IoU between 2D bboxes.
+    def __call__(self,
+                 bboxes1: torch.Tensor,
+                 bboxes2: torch.Tensor,
+                 mode: str = 'iou',
+                 is_aligned: bool = False) -> torch.Tensor:
+        """Calculate IoU between 3D bboxes.
 
         Args:
-            bboxes1 (Tensor): shape (B, m, 6) in <x1, y1, z1, x2, y2, z2>
+            bboxes1 (torch.Tensor): Shape (B, M, 6) in <x1, y1, z1, x2, y2, z2>
                 format or empty.
-            bboxes2 (Tensor): shape (B, n, 6) in <x1, y1, z1, x2, y2, z2>
+            bboxes2 (torch.Tensor): Shape (B, N, 6) in <x1, y1, z1, x2, y2, z2>
                 format or empty.
                 B indicates the batch dim, in shape (B1, B2, ..., Bn).
-                If ``is_aligned`` is ``True``, then m and n must be equal.
+                If ``is_aligned`` is ``True``, then M and N must be equal.
             mode (str): "iou" (intersection over union) or "giou" (generalized
-                intersection over union).
-            is_aligned (bool, optional): If True, then m and n must be equal.
+                intersection over union). Defaults to 'iou'.
+            is_aligned (bool): If True, then M and N must be equal.
                 Defaults to False.
+
         Returns:
-            Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
+            torch.Tensor: Shape (M, N) if ``is_aligned`` is False
+                else shape (M,).
         """
         assert bboxes1.size(-1) == bboxes2.size(-1) == 6
         return axis_aligned_bbox_overlaps_3d(bboxes1, bboxes2, mode,
                                              is_aligned)
 
-    def __repr__(self):
-        """str: a string describing the module"""
+    def __repr__(self) -> str:
+        """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__ + '()'
         return repr_str
 
 
-def axis_aligned_bbox_overlaps_3d(bboxes1,
-                                  bboxes2,
-                                  mode='iou',
-                                  is_aligned=False,
-                                  eps=1e-6):
+def axis_aligned_bbox_overlaps_3d(bboxes1: torch.Tensor,
+                                  bboxes2: torch.Tensor,
+                                  mode: str = 'iou',
+                                  is_aligned: bool = False,
+                                  eps: float = 1e-6) -> torch.Tensor:
     """Calculate overlap between two set of axis aligned 3D bboxes. If
     ``is_aligned`` is ``False``, then calculate the overlaps between each bbox
     of bboxes1 and bboxes2, otherwise the overlaps between each aligned pair of
     bboxes1 and bboxes2.
 
     Args:
-        bboxes1 (Tensor): shape (B, m, 6) in <x1, y1, z1, x2, y2, z2>
+        bboxes1 (torch.Tensor): Shape (B, M, 6) in <x1, y1, z1, x2, y2, z2>
             format or empty.
-        bboxes2 (Tensor): shape (B, n, 6) in <x1, y1, z1, x2, y2, z2>
+        bboxes2 (torch.Tensor): Shape (B, N, 6) in <x1, y1, z1, x2, y2, z2>
             format or empty.
             B indicates the batch dim, in shape (B1, B2, ..., Bn).
-            If ``is_aligned`` is ``True``, then m and n must be equal.
+            If ``is_aligned`` is ``True``, then M and N must be equal.
         mode (str): "iou" (intersection over union) or "giou" (generalized
             intersection over union).
-        is_aligned (bool, optional): If True, then m and n must be equal.
+        is_aligned (bool): If True, then M and N must be equal.
             Defaults to False.
-        eps (float, optional): A value added to the denominator for numerical
+        eps (float): A value added to the denominator for numerical
             stability. Defaults to 1e-6.
 
     Returns:
-        Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
+        torch.Tensor: Shape (M, N) if ``is_aligned`` is False else shape (M,).
 
     Example:
         >>> bboxes1 = torch.FloatTensor([
@@ -247,14 +269,18 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
         >>> ])
         >>> overlaps = axis_aligned_bbox_overlaps_3d(bboxes1, bboxes2)
         >>> assert overlaps.shape == (3, 3)
-        >>> overlaps = bbox_overlaps(bboxes1, bboxes2, is_aligned=True)
+        >>> overlaps = axis_aligned_bbox_overlaps_3d(
+        ...     bboxes1, bboxes2, is_aligned=True)
         >>> assert overlaps.shape == (3, )
     Example:
         >>> empty = torch.empty(0, 6)
         >>> nonempty = torch.FloatTensor([[0, 0, 0, 10, 9, 10]])
-        >>> assert tuple(bbox_overlaps(empty, nonempty).shape) == (0, 1)
-        >>> assert tuple(bbox_overlaps(nonempty, empty).shape) == (1, 0)
-        >>> assert tuple(bbox_overlaps(empty, empty).shape) == (0, 0)
+        >>> assert tuple(axis_aligned_bbox_overlaps_3d(
+        ...     empty, nonempty).shape) == (0, 1)
+        >>> assert tuple(axis_aligned_bbox_overlaps_3d(
+        ...     nonempty, empty).shape) == (1, 0)
+        >>> assert tuple(axis_aligned_bbox_overlaps_3d(
+        ...     empty, empty).shape) == (0, 0)
     """
 
     assert mode in ['iou', 'giou'], f'Unsupported mode {mode}'
@@ -289,7 +315,7 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
         lt = torch.max(bboxes1[..., :3], bboxes2[..., :3])  # [B, rows, 3]
         rb = torch.min(bboxes1[..., 3:], bboxes2[..., 3:])  # [B, rows, 3]
 
-        wh = (rb - lt).clamp(min=0)  # [B, rows, 2]
+        wh = (rb - lt).clamp(min=0)  # [B, rows, 3]
         overlap = wh[..., 0] * wh[..., 1] * wh[..., 2]
 
         if mode in ['iou', 'giou']:

@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from enum import IntEnum, unique
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -63,30 +64,37 @@ class Box3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def convert(box, src, dst, rt_mat=None, with_yaw=True, correct_yaw=False):
+    def convert(
+        box: Union[Sequence, np.ndarray, torch.Tensor, BaseInstance3DBoxes],
+        src: 'Box3DMode',
+        dst: 'Box3DMode',
+        rt_mat: Optional[Union[np.ndarray, torch.Tensor]] = None,
+        with_yaw: bool = True,
+        correct_yaw: bool = False
+    ) -> Union[Sequence, np.ndarray, torch.Tensor, BaseInstance3DBoxes]:
         """Convert boxes from `src` mode to `dst` mode.
 
         Args:
-            box (tuple | list | np.ndarray |
-                torch.Tensor | :obj:`BaseInstance3DBoxes`):
+            box (tuple or list or np.ndarray or
+                torch.Tensor or :obj:`BaseInstance3DBoxes`):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
             src (:obj:`Box3DMode`): The src Box mode.
             dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
-            with_yaw (bool, optional): If `box` is an instance of
+            with_yaw (bool): If `box` is an instance of
                 :obj:`BaseInstance3DBoxes`, whether or not it has a yaw angle.
                 Defaults to True.
             correct_yaw (bool): If the yaw is rotated by rt_mat.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor |
-                :obj:`BaseInstance3DBoxes`):
-                The converted box of the same type.
+            (tuple or list or np.ndarray or torch.Tensor or
+            :obj:`BaseInstance3DBoxes`):
+            The converted box of the same type.
         """
         if src == dst:
             return box

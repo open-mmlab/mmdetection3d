@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from enum import IntEnum, unique
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -13,7 +14,7 @@ from .box_3d_mode import Box3DMode
 @unique
 class Coord3DMode(IntEnum):
     r"""Enum of different ways to represent a box
-        and point cloud.
+    and point cloud.
 
     Coordinates in LiDAR:
 
@@ -63,16 +64,26 @@ class Coord3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def convert(input, src, dst, rt_mat=None, with_yaw=True, is_point=True):
+    def convert(
+        input: Union[Sequence, np.ndarray, torch.Tensor, BaseInstance3DBoxes,
+                     BasePoints],
+        src: Union[Box3DMode, 'Coord3DMode'],
+        dst: Union[Box3DMode, 'Coord3DMode'],
+        rt_mat: Optional[Union[np.ndarray, torch.Tensor]] = None,
+        with_yaw: bool = True,
+        correct_yaw: bool = False,
+        is_point: bool = True
+    ) -> Union[Sequence, np.ndarray, torch.Tensor, BaseInstance3DBoxes,
+               BasePoints]:
         """Convert boxes or points from `src` mode to `dst` mode.
 
         Args:
-            input (tuple | list | np.ndarray | torch.Tensor |
-                :obj:`BaseInstance3DBoxes` | :obj:`BasePoints`):
+            input (tuple or list or np.ndarray or torch.Tensor or
+                :obj:`BaseInstance3DBoxes` or :obj:`BasePoints`):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
-            src (:obj:`Box3DMode` | :obj:`Coord3DMode`): The source mode.
-            dst (:obj:`Box3DMode` | :obj:`Coord3DMode`): The target mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            src (:obj:`Box3DMode` or :obj:`Coord3DMode`): The source mode.
+            dst (:obj:`Box3DMode` or :obj:`Coord3DMode`): The target mode.
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -81,19 +92,26 @@ class Coord3DMode(IntEnum):
             with_yaw (bool): If `box` is an instance of
                 :obj:`BaseInstance3DBoxes`, whether or not it has a yaw angle.
                 Defaults to True.
+            correct_yaw (bool): If the yaw is rotated by rt_mat.
+                Defaults to False.
             is_point (bool): If `input` is neither an instance of
                 :obj:`BaseInstance3DBoxes` nor an instance of
                 :obj:`BasePoints`, whether or not it is point data.
                 Defaults to True.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor |
-                :obj:`BaseInstance3DBoxes` | :obj:`BasePoints`):
-                The converted box of the same type.
+            (tuple or list or np.ndarray or torch.Tensor or
+            :obj:`BaseInstance3DBoxes` or :obj:`BasePoints`):
+            The converted data of the same type.
         """
         if isinstance(input, BaseInstance3DBoxes):
             return Coord3DMode.convert_box(
-                input, src, dst, rt_mat=rt_mat, with_yaw=with_yaw)
+                input,
+                src,
+                dst,
+                rt_mat=rt_mat,
+                with_yaw=with_yaw,
+                correct_yaw=correct_yaw)
         elif isinstance(input, BasePoints):
             return Coord3DMode.convert_point(input, src, dst, rt_mat=rt_mat)
         elif isinstance(input, (tuple, list, np.ndarray, torch.Tensor)):
@@ -102,21 +120,33 @@ class Coord3DMode(IntEnum):
                     input, src, dst, rt_mat=rt_mat)
             else:
                 return Coord3DMode.convert_box(
-                    input, src, dst, rt_mat=rt_mat, with_yaw=with_yaw)
+                    input,
+                    src,
+                    dst,
+                    rt_mat=rt_mat,
+                    with_yaw=with_yaw,
+                    correct_yaw=correct_yaw)
         else:
             raise NotImplementedError
 
     @staticmethod
-    def convert_box(box, src, dst, rt_mat=None, with_yaw=True):
+    def convert_box(
+        box: Union[Sequence, np.ndarray, torch.Tensor, BaseInstance3DBoxes],
+        src: Box3DMode,
+        dst: Box3DMode,
+        rt_mat: Optional[Union[np.ndarray, torch.Tensor]] = None,
+        with_yaw: bool = True,
+        correct_yaw: bool = False
+    ) -> Union[Sequence, np.ndarray, torch.Tensor, BaseInstance3DBoxes]:
         """Convert boxes from `src` mode to `dst` mode.
 
         Args:
-            box (tuple | list | np.ndarray |
-                torch.Tensor | :obj:`BaseInstance3DBoxes`):
+            box (tuple or list or np.ndarray or
+                torch.Tensor or :obj:`BaseInstance3DBoxes`):
                 Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
             src (:obj:`Box3DMode`): The src Box mode.
             dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -125,25 +155,38 @@ class Coord3DMode(IntEnum):
             with_yaw (bool): If `box` is an instance of
                 :obj:`BaseInstance3DBoxes`, whether or not it has a yaw angle.
                 Defaults to True.
+            correct_yaw (bool): If the yaw is rotated by rt_mat.
+                Defaults to False.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor |
-                :obj:`BaseInstance3DBoxes`):
-                The converted box of the same type.
+            (tuple or list or np.ndarray or torch.Tensor or
+            :obj:`BaseInstance3DBoxes`):
+            The converted box of the same type.
         """
-        return Box3DMode.convert(box, src, dst, rt_mat=rt_mat)
+        return Box3DMode.convert(
+            box,
+            src,
+            dst,
+            rt_mat=rt_mat,
+            with_yaw=with_yaw,
+            correct_yaw=correct_yaw)
 
     @staticmethod
-    def convert_point(point, src, dst, rt_mat=None):
+    def convert_point(
+        point: Union[Sequence, np.ndarray, torch.Tensor, BasePoints],
+        src: 'Coord3DMode',
+        dst: 'Coord3DMode',
+        rt_mat: Optional[Union[np.ndarray, torch.Tensor]] = None
+    ) -> Union[Sequence, np.ndarray, torch.Tensor, BasePoints]:
         """Convert points from `src` mode to `dst` mode.
 
         Args:
-            point (tuple | list | np.ndarray |
-                torch.Tensor | :obj:`BasePoints`):
+            point (tuple or list or np.ndarray or
+                torch.Tensor or :obj:`BasePoints`):
                 Can be a k-tuple, k-list or an Nxk array/tensor.
             src (:obj:`CoordMode`): The src Point mode.
             dst (:obj:`CoordMode`): The target Point mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
@@ -151,8 +194,8 @@ class Coord3DMode(IntEnum):
                 to LiDAR. This requires a transformation matrix.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor | :obj:`BasePoints`):
-                The converted point of the same type.
+            (tuple or list or np.ndarray or torch.Tensor or
+            :obj:`BasePoints`): The converted point of the same type.
         """
         if src == dst:
             return point

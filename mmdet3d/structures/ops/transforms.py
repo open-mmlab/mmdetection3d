@@ -1,8 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional
+
 import torch
 
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 
-def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
+
+def bbox3d_mapping_back(bboxes: BaseInstance3DBoxes, scale_factor: float,
+                        flip_horizontal: bool,
+                        flip_vertical: bool) -> BaseInstance3DBoxes:
     """Map bboxes from testing scale to original image scale.
 
     Args:
@@ -24,16 +30,16 @@ def bbox3d_mapping_back(bboxes, scale_factor, flip_horizontal, flip_vertical):
     return new_bboxes
 
 
-def bbox3d2roi(bbox_list):
+def bbox3d2roi(bbox_list: List[torch.Tensor]) -> torch.Tensor:
     """Convert a list of bounding boxes to roi format.
 
     Args:
-        bbox_list (list[torch.Tensor]): A list of bounding boxes
+        bbox_list (List[torch.Tensor]): A list of bounding boxes
             corresponding to a batch of images.
 
     Returns:
-        torch.Tensor: Region of interests in shape (n, c), where
-            the channels are in order of [batch_ind, x, y ...].
+        torch.Tensor: Region of interests in shape (N, C), where
+        the channels are in order of [batch_ind, x, y ...].
     """
     rois_list = []
     for img_id, bboxes in enumerate(bbox_list):
@@ -48,23 +54,27 @@ def bbox3d2roi(bbox_list):
 
 
 # TODO delete this
-def bbox3d2result(bboxes, scores, labels, attrs=None):
+def bbox3d2result(
+        bboxes: torch.Tensor,
+        scores: torch.Tensor,
+        labels: torch.Tensor,
+        attrs: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
     """Convert detection results to a list of numpy arrays.
 
     Args:
         bboxes (torch.Tensor): Bounding boxes with shape (N, 5).
-        labels (torch.Tensor): Labels with shape (N, ).
         scores (torch.Tensor): Scores with shape (N, ).
+        labels (torch.Tensor): Labels with shape (N, ).
         attrs (torch.Tensor, optional): Attributes with shape (N, ).
             Defaults to None.
 
     Returns:
-        dict[str, torch.Tensor]: Bounding box results in cpu mode.
+        Dict[str, torch.Tensor]: Bounding box results in cpu mode.
 
-            - boxes_3d (torch.Tensor): 3D boxes.
-            - scores (torch.Tensor): Prediction scores.
+            - bboxes_3d (torch.Tensor): 3D boxes.
+            - scores_3d (torch.Tensor): Prediction scores.
             - labels_3d (torch.Tensor): Box labels.
-            - attrs_3d (torch.Tensor, optional): Box attributes.
+            - attr_labels (torch.Tensor, optional): Box attributes.
     """
     result_dict = dict(
         bboxes_3d=bboxes.to('cpu'),

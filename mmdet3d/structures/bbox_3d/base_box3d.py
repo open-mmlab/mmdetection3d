@@ -1,11 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 from abc import abstractmethod
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from mmcv.ops import box_iou_rotated, points_in_boxes_all, points_in_boxes_part
 
+from mmdet3d.structures.points import BasePoints
+from .box_3d_mode import Box3DMode
 from .utils import limit_period
 
 
@@ -17,14 +20,14 @@ class BaseInstance3DBoxes(object):
         the box is (0.5, 0.5, 0).
 
     Args:
-        tensor (torch.Tensor | np.ndarray | list): a N x box_dim matrix.
+        tensor (torch.Tensor or np.ndarray or Sequence): a N x box_dim matrix.
         box_dim (int): Number of the dimension of a box.
             Each row is (x, y, z, x_size, y_size, z_size, yaw).
             Defaults to 7.
         with_yaw (bool): Whether the box is with yaw rotation.
             If False, the value of yaw will be set to 0 as minmax boxes.
             Defaults to True.
-        origin (tuple[float], optional): Relative position of the box origin.
+        origin (Tuple[float]): Relative position of the box origin.
             Defaults to (0.5, 0.5, 0). This will guide the box be converted to
             (0.5, 0.5, 0) mode.
 
@@ -36,7 +39,13 @@ class BaseInstance3DBoxes(object):
             boxes.
     """
 
-    def __init__(self, tensor, box_dim=7, with_yaw=True, origin=(0.5, 0.5, 0)):
+    def __init__(
+        self,
+        tensor: Union[torch.Tensor, np.ndarray, Sequence],
+        box_dim: int = 7,
+        with_yaw: bool = True,
+        origin: Tuple[float] = (0.5, 0.5, 0)
+    ) -> None:  # yapf
         if isinstance(tensor, torch.Tensor):
             device = tensor.device
         else:
@@ -68,39 +77,39 @@ class BaseInstance3DBoxes(object):
             self.tensor[:, :3] += self.tensor[:, 3:6] * (dst - src)
 
     @property
-    def volume(self):
+    def volume(self) -> torch.Tensor:
         """torch.Tensor: A vector with volume of each box."""
         return self.tensor[:, 3] * self.tensor[:, 4] * self.tensor[:, 5]
 
     @property
-    def dims(self):
+    def dims(self) -> torch.Tensor:
         """torch.Tensor: Size dimensions of each box in shape (N, 3)."""
         return self.tensor[:, 3:6]
 
     @property
-    def yaw(self):
+    def yaw(self) -> torch.Tensor:
         """torch.Tensor: A vector with yaw of each box in shape (N, )."""
         return self.tensor[:, 6]
 
     @property
-    def height(self):
+    def height(self) -> torch.Tensor:
         """torch.Tensor: A vector with height of each box in shape (N, )."""
         return self.tensor[:, 5]
 
     @property
-    def top_height(self):
+    def top_height(self) -> torch.Tensor:
         """torch.Tensor:
-            A vector with the top height of each box in shape (N, )."""
+        A vector with the top height of each box in shape (N, )."""
         return self.bottom_height + self.height
 
     @property
-    def bottom_height(self):
+    def bottom_height(self) -> torch.Tensor:
         """torch.Tensor:
-            A vector with bottom's height of each box in shape (N, )."""
+        A vector with bottom's height of each box in shape (N, )."""
         return self.tensor[:, 2]
 
     @property
-    def center(self):
+    def center(self) -> torch.Tensor:
         """Calculate the center of all the boxes.
 
         Note:
@@ -119,31 +128,31 @@ class BaseInstance3DBoxes(object):
         return self.bottom_center
 
     @property
-    def bottom_center(self):
+    def bottom_center(self) -> torch.Tensor:
         """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         return self.tensor[:, :3]
 
     @property
-    def gravity_center(self):
+    def gravity_center(self) -> torch.Tensor:
         """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
         pass
 
     @property
-    def corners(self):
+    def corners(self) -> torch.Tensor:
         """torch.Tensor:
-            a tensor with 8 corners of each box in shape (N, 8, 3)."""
+        A tensor with 8 corners of each box in shape (N, 8, 3)."""
         pass
 
     @property
-    def bev(self):
+    def bev(self) -> torch.Tensor:
         """torch.Tensor: 2D BEV box of each box with rotation
-            in XYWHR format, in shape (N, 5)."""
+        in XYWHR format, in shape (N, 5)."""
         return self.tensor[:, [0, 1, 3, 4, 6]]
 
     @property
-    def nearest_bev(self):
+    def nearest_bev(self) -> torch.Tensor:
         """torch.Tensor: A tensor of 2D BEV box of each box
-            without rotation."""
+        without rotation."""
         # Obtain BEV boxes with rotation in XYWHR format
         bev_rotated_boxes = self.bev
         # convert the rotation to a valid range
@@ -161,12 +170,14 @@ class BaseInstance3DBoxes(object):
         bev_boxes = torch.cat([centers - dims / 2, centers + dims / 2], dim=-1)
         return bev_boxes
 
-    def in_range_bev(self, box_range):
+    def in_range_bev(
+        self, box_range: Union[Sequence[float], torch.Tensor, np.ndarray]
+    ) -> torch.Tensor:
         """Check whether the boxes are in the given range.
 
         Args:
-            box_range (list | torch.Tensor): the range of box
-                (x_min, y_min, x_max, y_max)
+            box_range (Sequence[float] or torch.Tensor or np.ndarray):
+                The range of box (x_min, y_min, x_max, y_max).
 
         Note:
             The original implementation of SECOND checks whether boxes in
@@ -183,46 +194,59 @@ class BaseInstance3DBoxes(object):
         return in_range_flags
 
     @abstractmethod
-    def rotate(self, angle, points=None):
+    def rotate(
+        self,
+        angle: Union[float, torch.Tensor, np.ndarray],
+        points: Optional[Union[torch.Tensor, np.ndarray, BasePoints]] = None
+    ) -> Union[tuple, None]:
         """Rotate boxes with points (optional) with the given angle or rotation
         matrix.
 
         Args:
-            angle (float | torch.Tensor | np.ndarray):
+            angle (float or torch.Tensor or np.ndarray):
                 Rotation angle or rotation matrix.
-            points (torch.Tensor | numpy.ndarray |
+            points (torch.Tensor or np.ndarray or
                 :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
         """
         pass
 
     @abstractmethod
-    def flip(self, bev_direction='horizontal'):
+    def flip(
+        self,
+        bev_direction: str = 'horizontal',
+        points: Optional[Union[torch.Tensor, np.ndarray, BasePoints]] = None
+    ) -> Union[torch.Tensor, np.ndarray, BasePoints, None]:
         """Flip the boxes in BEV along given BEV direction.
 
         Args:
-            bev_direction (str, optional): Direction by which to flip.
+            bev_direction (str): Direction by which to flip.
                 Can be chosen from 'horizontal' and 'vertical'.
                 Defaults to 'horizontal'.
+            points (torch.Tensor or np.ndarray or :obj:`BasePoints`, optional):
+                Points to flip. Defaults to None.
         """
         pass
 
-    def translate(self, trans_vector):
+    def translate(self, trans_vector: Union[torch.Tensor, np.ndarray]) -> None:
         """Translate boxes with the given translation vector.
 
         Args:
-            trans_vector (torch.Tensor): Translation vector of size (1, 3).
+            trans_vector (torch.Tensor or np.ndarray):
+                Translation vector of size (1, 3).
         """
         if not isinstance(trans_vector, torch.Tensor):
             trans_vector = self.tensor.new_tensor(trans_vector)
         self.tensor[:, :3] += trans_vector
 
-    def in_range_3d(self, box_range):
+    def in_range_3d(
+        self, box_range: Union[Sequence[float], torch.Tensor, np.ndarray]
+    ) -> torch.Tensor:
         """Check whether the boxes are in the given range.
 
         Args:
-            box_range (list | torch.Tensor): The range of box
-                (x_min, y_min, z_min, x_max, y_max, z_max)
+            box_range (Sequence[float] or torch.Tensor or np.ndarray):
+                The range of box (x_min, y_min, z_min, x_max, y_max, z_max).
 
         Note:
             In the original implementation of SECOND, checking whether
@@ -231,7 +255,7 @@ class BaseInstance3DBoxes(object):
 
         Returns:
             torch.Tensor: A binary vector indicating whether each box is
-                inside the reference range.
+            inside the reference range.
         """
         in_range_flags = ((self.tensor[:, 0] > box_range[0])
                           & (self.tensor[:, 1] > box_range[1])
@@ -242,55 +266,60 @@ class BaseInstance3DBoxes(object):
         return in_range_flags
 
     @abstractmethod
-    def convert_to(self, dst, rt_mat=None):
+    def convert_to(self,
+                   dst: Box3DMode,
+                   rt_mat: Optional[Union[np.ndarray, torch.Tensor]] = None,
+                   correct_yaw: bool = False) -> 'BaseInstance3DBoxes':
         """Convert self to ``dst`` mode.
 
         Args:
             dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            rt_mat (np.ndarray or torch.Tensor, optional): The rotation and
                 translation matrix between different coordinates.
                 Defaults to None.
                 The conversion from `src` coordinates to `dst` coordinates
                 usually comes along the change of sensors, e.g., from camera
                 to LiDAR. This requires a transformation matrix.
+            correct_yaw (bool): Whether to convert the yaw angle to the target
+                coordinate. Defaults to False.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: The converted box of the same type
-                in the `dst` mode.
+            in the `dst` mode.
         """
         pass
 
-    def scale(self, scale_factor):
-        """Scale the box with horizontal and vertical scaling factors.
+    def scale(self, scale_factor: float) -> None:
+        """Scale the box with given scaling factors.
 
         Args:
-            scale_factors (float): Scale factors to scale the boxes.
+            scale_factor (float): Scale factors to scale the boxes.
         """
         self.tensor[:, :6] *= scale_factor
         self.tensor[:, 7:] *= scale_factor  # velocity
 
-    def limit_yaw(self, offset=0.5, period=np.pi):
+    def limit_yaw(self, offset: float = 0.5, period: float = np.pi) -> None:
         """Limit the yaw to a given period and offset.
 
         Args:
-            offset (float, optional): The offset of the yaw. Defaults to 0.5.
-            period (float, optional): The expected period. Defaults to np.pi.
+            offset (float): The offset of the yaw. Defaults to 0.5.
+            period (float): The expected period. Defaults to np.pi.
         """
         self.tensor[:, 6] = limit_period(self.tensor[:, 6], offset, period)
 
-    def nonempty(self, threshold=0.0):
+    def nonempty(self, threshold: float = 0.0) -> torch.Tensor:
         """Find boxes that are non-empty.
 
         A box is considered empty,
         if either of its side is no larger than threshold.
 
         Args:
-            threshold (float, optional): The threshold of minimal sizes.
+            threshold (float): The threshold of minimal sizes.
                 Defaults to 0.0.
 
         Returns:
             torch.Tensor: A binary vector which represents whether each
-                box is empty (False) or non-empty (True).
+            box is empty (False) or non-empty (True).
         """
         box = self.tensor
         size_x = box[..., 3]
@@ -300,7 +329,9 @@ class BaseInstance3DBoxes(object):
                 & (size_y > threshold) & (size_z > threshold))
         return keep
 
-    def __getitem__(self, item):
+    def __getitem__(
+        self, item: Union[int, slice, np.ndarray, torch.Tensor]
+    ) -> 'BaseInstance3DBoxes':
         """
         Note:
             The following usage are allowed:
@@ -316,7 +347,7 @@ class BaseInstance3DBoxes(object):
 
         Returns:
             :obj:`BaseInstance3DBoxes`: A new object of
-                :class:`BaseInstance3DBoxes` after indexing.
+            :class:`BaseInstance3DBoxes` after indexing.
         """
         original_type = type(self)
         if isinstance(item, int):
@@ -329,20 +360,21 @@ class BaseInstance3DBoxes(object):
             f'Indexing on Boxes with {item} failed to return a matrix!'
         return original_type(b, box_dim=self.box_dim, with_yaw=self.with_yaw)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """int: Number of boxes in the current object."""
         return self.tensor.shape[0]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a strings that describes the object."""
         return self.__class__.__name__ + '(\n    ' + str(self.tensor) + ')'
 
     @classmethod
-    def cat(cls, boxes_list):
+    def cat(cls, boxes_list: Sequence['BaseInstance3DBoxes']
+            ) -> 'BaseInstance3DBoxes':
         """Concatenate a list of Boxes into a single Boxes.
 
         Args:
-            boxes_list (list[:obj:`BaseInstance3DBoxes`]): List of boxes.
+            boxes_list (Sequence[:obj:`BaseInstance3DBoxes`]): List of boxes.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: The concatenated Boxes.
@@ -360,15 +392,16 @@ class BaseInstance3DBoxes(object):
             with_yaw=boxes_list[0].with_yaw)
         return cat_boxes
 
-    def to(self, device, *args, **kwargs):
+    def to(self, device: Union[str, torch.device], *args,
+           **kwargs) -> 'BaseInstance3DBoxes':
         """Convert current boxes to a specific device.
 
         Args:
-            device (str | :obj:`torch.device`): The name of the device.
+            device (str or :obj:`torch.device`): The name of the device.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: A new boxes object on the
-                specific device.
+            specific device.
         """
         original_type = type(self)
         return original_type(
@@ -376,23 +409,23 @@ class BaseInstance3DBoxes(object):
             box_dim=self.box_dim,
             with_yaw=self.with_yaw)
 
-    def clone(self):
+    def clone(self) -> 'BaseInstance3DBoxes':
         """Clone the Boxes.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: Box object with the same properties
-                as self.
+            as self.
         """
         original_type = type(self)
         return original_type(
             self.tensor.clone(), box_dim=self.box_dim, with_yaw=self.with_yaw)
 
     @property
-    def device(self):
-        """str: The device of the boxes are on."""
+    def device(self) -> torch.device:
+        """:obj:`torch.device`: The device of the boxes are on."""
         return self.tensor.device
 
-    def __iter__(self):
+    def __iter__(self) -> torch.Tensor:
         """Yield a box as a Tensor of shape (4,) at a time.
 
         Returns:
@@ -401,20 +434,23 @@ class BaseInstance3DBoxes(object):
         yield from self.tensor
 
     @classmethod
-    def height_overlaps(cls, boxes1, boxes2, mode='iou'):
+    def height_overlaps(cls,
+                        boxes1: 'BaseInstance3DBoxes',
+                        boxes2: 'BaseInstance3DBoxes',
+                        mode: str = 'iou') -> torch.Tensor:
         """Calculate height overlaps of two boxes.
 
         Note:
             This function calculates the height overlaps between boxes1 and
-            boxes2,  boxes1 and boxes2 should be in the same type.
+            boxes2, boxes1 and boxes2 should be in the same type.
 
         Args:
             boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
             boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
-            mode (str, optional): Mode of IoU calculation. Defaults to 'iou'.
+            mode (str): Mode of IoU calculation. Defaults to 'iou'.
 
         Returns:
-            torch.Tensor: Calculated iou of boxes.
+            torch.Tensor: Calculated height overlaps of boxes.
         """
         assert isinstance(boxes1, BaseInstance3DBoxes)
         assert isinstance(boxes2, BaseInstance3DBoxes)
@@ -433,7 +469,10 @@ class BaseInstance3DBoxes(object):
         return overlaps_h
 
     @classmethod
-    def overlaps(cls, boxes1, boxes2, mode='iou'):
+    def overlaps(cls,
+                 boxes1: 'BaseInstance3DBoxes',
+                 boxes2: 'BaseInstance3DBoxes',
+                 mode: str = 'iou') -> torch.Tensor:
         """Calculate 3D overlaps of two boxes.
 
         Note:
@@ -443,7 +482,7 @@ class BaseInstance3DBoxes(object):
         Args:
             boxes1 (:obj:`BaseInstance3DBoxes`): Boxes 1 contain N boxes.
             boxes2 (:obj:`BaseInstance3DBoxes`): Boxes 2 contain M boxes.
-            mode (str, optional): Mode of iou calculation. Defaults to 'iou'.
+            mode (str): Mode of IoU calculation. Defaults to 'iou'.
 
         Returns:
             torch.Tensor: Calculated 3D overlaps of the boxes.
@@ -486,18 +525,20 @@ class BaseInstance3DBoxes(object):
 
         return iou3d
 
-    def new_box(self, data):
+    def new_box(
+        self, data: Union[torch.Tensor, np.ndarray,
+                          Sequence]) -> 'BaseInstance3DBoxes':
         """Create a new box object with data.
 
         The new box and its tensor has the similar properties
-            as self and self.tensor, respectively.
+        as self and self.tensor, respectively.
 
         Args:
-            data (torch.Tensor | numpy.array | list): Data to be copied.
+            data (torch.Tensor or np.ndarray or Sequence): Data to be copied.
 
         Returns:
             :obj:`BaseInstance3DBoxes`: A new bbox object with ``data``,
-                the object's other properties are similar to ``self``.
+            the object's other properties are similar to ``self``.
         """
         new_tensor = self.tensor.new_tensor(data) \
             if not isinstance(data, torch.Tensor) else data.to(self.device)
@@ -505,7 +546,10 @@ class BaseInstance3DBoxes(object):
         return original_type(
             new_tensor, box_dim=self.box_dim, with_yaw=self.with_yaw)
 
-    def points_in_boxes_part(self, points, boxes_override=None):
+    def points_in_boxes_part(
+            self,
+            points: torch.Tensor,
+            boxes_override: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Find the box in which each point is.
 
         Args:
@@ -516,8 +560,8 @@ class BaseInstance3DBoxes(object):
 
         Returns:
             torch.Tensor: The index of the first box that each point
-                is in, in shape (M, ). Default value is -1
-                (if the point is not enclosed by any box).
+            is in, in shape (M, ). Default value is -1
+            (if the point is not enclosed by any box).
 
         Note:
             If a point is enclosed by multiple boxes, the index of the
@@ -534,7 +578,10 @@ class BaseInstance3DBoxes(object):
                                            points.device)).squeeze(0)
         return box_idx
 
-    def points_in_boxes_all(self, points, boxes_override=None):
+    def points_in_boxes_all(
+            self,
+            points: torch.Tensor,
+            boxes_override: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Find all boxes in which each point is.
 
         Args:
@@ -545,9 +592,9 @@ class BaseInstance3DBoxes(object):
 
         Returns:
             torch.Tensor: A tensor indicating whether a point is in a box,
-                in shape (M, T). T is the number of boxes. Denote this
-                tensor as A, if the m^th point is in the t^th box, then
-                `A[m, t] == 1`, elsewise `A[m, t] == 0`.
+            in shape (M, T). T is the number of boxes. Denote this
+            tensor as A, if the m^th point is in the t^th box, then
+            `A[m, t] == 1`, elsewise `A[m, t] == 0`.
         """
         if boxes_override is not None:
             boxes = boxes_override
@@ -565,13 +612,19 @@ class BaseInstance3DBoxes(object):
 
         return box_idxs_of_pts.squeeze(0)
 
-    def points_in_boxes(self, points, boxes_override=None):
+    def points_in_boxes(
+            self,
+            points: torch.Tensor,
+            boxes_override: Optional[torch.Tensor] = None) -> torch.Tensor:
         warnings.warn('DeprecationWarning: points_in_boxes is a '
                       'deprecated method, please consider using '
                       'points_in_boxes_part.')
         return self.points_in_boxes_part(points, boxes_override)
 
-    def points_in_boxes_batch(self, points, boxes_override=None):
+    def points_in_boxes_batch(
+            self,
+            points: torch.Tensor,
+            boxes_override: Optional[torch.Tensor] = None) -> torch.Tensor:
         warnings.warn('DeprecationWarning: points_in_boxes_batch is a '
                       'deprecated method, please consider using '
                       'points_in_boxes_all.')

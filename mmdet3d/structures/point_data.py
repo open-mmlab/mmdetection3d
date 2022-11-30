@@ -12,7 +12,7 @@ IndexType = Union[str, slice, int, list, torch.LongTensor,
 
 
 class PointData(BaseDataElement):
-    """Data structure for point-level annnotations or predictions.
+    """Data structure for point-level annotations or predictions.
 
     All data items in ``data_fields`` of ``PointData`` meet the following
     requirements:
@@ -27,7 +27,7 @@ class PointData(BaseDataElement):
 
     Examples:
         >>> metainfo = dict(
-        ...     sample_id=random.randint(0, 100))
+        ...     sample_idx=random.randint(0, 100))
         >>> points = np.random.randint(0, 255, (100, 3))
         >>> point_data = PointData(metainfo=metainfo,
         ...                        points=points)
@@ -45,23 +45,21 @@ class PointData(BaseDataElement):
         >>> assert tuple(point_data.pts_instance_mask.shape) == (100)
     """
 
-    def __setattr__(self, name: str, value: Sized):
+    def __setattr__(self, name: str, value: Sized) -> None:
         """setattr is only used to set data.
 
-        the value must have the attribute of `__len__` and have the same length
+        The value must have the attribute of `__len__` and have the same length
         of PointData.
         """
         if name in ('_metainfo_fields', '_data_fields'):
             if not hasattr(self, name):
                 super().__setattr__(name, value)
             else:
-                raise AttributeError(
-                    f'{name} has been used as a '
-                    f'private attribute, which is immutable. ')
-
+                raise AttributeError(f'{name} has been used as a '
+                                     'private attribute, which is immutable.')
         else:
             assert isinstance(value,
-                              Sized), 'value must contain `_len__` attribute'
+                              Sized), 'value must contain `__len__` attribute'
             super().__setattr__(name, value)
 
     __setitem__ = __setattr__
@@ -69,12 +67,12 @@ class PointData(BaseDataElement):
     def __getitem__(self, item: IndexType) -> 'PointData':
         """
         Args:
-            item (str, obj:`slice`,
-                obj`torch.LongTensor`, obj:`torch.BoolTensor`):
+            item (str, :obj:`slice`,
+                :obj:`torch.LongTensor`, :obj:`torch.BoolTensor`):
                 get the corresponding values according to item.
 
         Returns:
-            obj:`PointData`: Corresponding values.
+            :obj:`PointData`: Corresponding values.
         """
         if isinstance(item, list):
             item = np.array(item)
@@ -87,8 +85,8 @@ class PointData(BaseDataElement):
         if isinstance(item, str):
             return getattr(self, item)
 
-        if type(item) == int:
-            if item >= len(self) or item < -len(self):  # type:ignore
+        if isinstance(item, int):
+            if item >= len(self) or item < -len(self):  # type: ignore
                 raise IndexError(f'Index {item} out of range!')
             else:
                 # keep the dimension
@@ -99,14 +97,14 @@ class PointData(BaseDataElement):
             assert item.dim() == 1, 'Only support to get the' \
                                     ' values along the first dimension.'
             if isinstance(item, (torch.BoolTensor, torch.cuda.BoolTensor)):
-                assert len(item) == len(self), f'The shape of the' \
-                                               f' input(BoolTensor)) ' \
+                assert len(item) == len(self), 'The shape of the' \
+                                               ' input(BoolTensor) ' \
                                                f'{len(item)} ' \
-                                               f' does not match the shape ' \
-                                               f'of the indexed tensor ' \
-                                               f'in results_filed ' \
+                                               'does not match the shape ' \
+                                               'of the indexed tensor ' \
+                                               'in results_field ' \
                                                f'{len(self)} at ' \
-                                               f'first dimension. '
+                                               'first dimension.'
 
             for k, v in self.items():
                 if isinstance(v, torch.Tensor):
@@ -147,10 +145,10 @@ class PointData(BaseDataElement):
             # item is a slice
             for k, v in self.items():
                 new_data[k] = v[item]
-        return new_data  # type:ignore
+        return new_data  # type: ignore
 
     def __len__(self) -> int:
-        """int: the length of PointData"""
+        """int: The length of PointData."""
         if len(self._data_fields) > 0:
             return len(self.values()[0])
         else:

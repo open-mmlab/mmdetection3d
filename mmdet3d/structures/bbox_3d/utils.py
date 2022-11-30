@@ -1,54 +1,60 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from logging import warning
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 import torch
 
 from mmdet3d.utils.array_converter import array_converter
+from .box_3d_mode import (Box3DMode, CameraInstance3DBoxes,
+                          DepthInstance3DBoxes, LiDARInstance3DBoxes)
 
 
 @array_converter(apply_to=('val', ))
-def limit_period(val, offset=0.5, period=np.pi):
+def limit_period(val: Union[torch.Tensor, np.ndarray],
+                 offset: float = 0.5,
+                 period: float = np.pi) -> Union[torch.Tensor, np.ndarray]:
     """Limit the value into a period for periodic function.
 
     Args:
-        val (torch.Tensor | np.ndarray): The value to be converted.
-        offset (float, optional): Offset to set the value range.
-            Defaults to 0.5.
-        period ([type], optional): Period of the value. Defaults to np.pi.
+        val (torch.Tensor or np.ndarray): The value to be converted.
+        offset (float): Offset to set the value range. Defaults to 0.5.
+        period (float): Period of the value. Defaults to np.pi.
 
     Returns:
-        (torch.Tensor | np.ndarray): Value in the range of
-            [-offset * period, (1-offset) * period]
+        (torch.Tensor or np.ndarray): Value in the range of
+        [-offset * period, (1-offset) * period].
     """
     limited_val = val - torch.floor(val / period + offset) * period
     return limited_val
 
 
 @array_converter(apply_to=('points', 'angles'))
-def rotation_3d_in_axis(points,
-                        angles,
-                        axis=0,
-                        return_mat=False,
-                        clockwise=False):
+def rotation_3d_in_axis(
+    points: Union[torch.Tensor, np.ndarray, Sequence],
+    angles: Union[torch.Tensor, np.ndarray, Sequence[float], float],
+    axis: int = 0,
+    return_mat: bool = False,
+    clockwise: bool = False
+) -> Union[Tuple[Union[torch.Tensor, np.ndarray]], torch.Tensor, np.ndarray]:
     """Rotate points by angles according to axis.
 
     Args:
-        points (np.ndarray | torch.Tensor | list | tuple ):
+        points (torch.Tensor or np.ndarray or list or tuple):
             Points of shape (N, M, 3).
-        angles (np.ndarray | torch.Tensor | list | tuple | float):
-            Vector of angles in shape (N,)
-        axis (int, optional): The axis to be rotated. Defaults to 0.
-        return_mat: Whether or not return the rotation matrix (transposed).
-            Defaults to False.
-        clockwise: Whether the rotation is clockwise. Defaults to False.
+        angles (torch.Tensor or np.ndarray or List[float] or Tuple[float] or
+            float): Vector of angles in shape (N,).
+        axis (int): The axis to be rotated. Defaults to 0.
+        return_mat (bool): Whether or not to return the rotation matrix
+            (transposed). Defaults to False.
+        clockwise (bool): Whether the rotation is clockwise. Defaults to False.
 
     Raises:
-        ValueError: when the axis is not in range [0, 1, 2], it will
-            raise value error.
+        ValueError: When the axis is not in range [0, 1, 2], it will
+        raise value error.
 
     Returns:
-        (torch.Tensor | np.ndarray): Rotated points in shape (N, M, 3).
+        (torch.Tensor or np.ndarray): Rotated points in shape (N, M, 3).
     """
     batch_free = len(points.shape) == 2
     if batch_free:
@@ -118,14 +124,17 @@ def rotation_3d_in_axis(points,
 
 
 @array_converter(apply_to=('boxes_xywhr', ))
-def xywhr2xyxyr(boxes_xywhr):
+def xywhr2xyxyr(
+    boxes_xywhr: Union[torch.Tensor, np.ndarray]
+) -> Union[torch.Tensor, np.ndarray]:
     """Convert a rotated boxes in XYWHR format to XYXYR format.
 
     Args:
-        boxes_xywhr (torch.Tensor | np.ndarray): Rotated boxes in XYWHR format.
+        boxes_xywhr (torch.Tensor or np.ndarray): Rotated boxes
+            in XYWHR format.
 
     Returns:
-        (torch.Tensor | np.ndarray): Converted boxes in XYXYR format.
+        (torch.Tensor or np.ndarray): Converted boxes in XYXYR format.
     """
     boxes = torch.zeros_like(boxes_xywhr)
     half_w = boxes_xywhr[..., 2] / 2
@@ -139,7 +148,7 @@ def xywhr2xyxyr(boxes_xywhr):
     return boxes
 
 
-def get_box_type(box_type):
+def get_box_type(box_type: str) -> Tuple[type, Box3DMode]:
     """Get the type and mode of box structure.
 
     Args:
@@ -148,13 +157,11 @@ def get_box_type(box_type):
 
     Raises:
         ValueError: A ValueError is raised when `box_type`
-            does not belong to the three valid types.
+        does not belong to the three valid types.
 
     Returns:
         tuple: Box type and box mode.
     """
-    from .box_3d_mode import (Box3DMode, CameraInstance3DBoxes,
-                              DepthInstance3DBoxes, LiDARInstance3DBoxes)
     box_type_lower = box_type.lower()
     if box_type_lower == 'lidar':
         box_type_3d = LiDARInstance3DBoxes
@@ -173,28 +180,31 @@ def get_box_type(box_type):
 
 
 @array_converter(apply_to=('points_3d', 'proj_mat'))
-def points_cam2img(points_3d, proj_mat, with_depth=False):
+def points_cam2img(
+        points_3d: Union[torch.Tensor, np.ndarray],
+        proj_mat: Union[torch.Tensor, np.ndarray],
+        with_depth: bool = False) -> Union[torch.Tensor, np.ndarray]:
     """Project points in camera coordinates to image coordinates.
 
     Args:
-        points_3d (torch.Tensor | np.ndarray): Points in shape (N, 3)
-        proj_mat (torch.Tensor | np.ndarray):
+        points_3d (torch.Tensor or np.ndarray): Points in shape (N, 3).
+        proj_mat (torch.Tensor or np.ndarray):
             Transformation matrix between coordinates.
-        with_depth (bool, optional): Whether to keep depth in the output.
+        with_depth (bool): Whether to keep depth in the output.
             Defaults to False.
 
     Returns:
-        (torch.Tensor | np.ndarray): Points in image coordinates,
-            with shape [N, 2] if `with_depth=False`, else [N, 3].
+        (torch.Tensor or np.ndarray): Points in image coordinates,
+        with shape [N, 2] if `with_depth=False`, else [N, 3].
     """
     points_shape = list(points_3d.shape)
     points_shape[-1] = 1
 
-    assert len(proj_mat.shape) == 2, 'The dimension of the projection'\
+    assert len(proj_mat.shape) == 2, 'The dimension of the projection' \
         f' matrix should be 2 instead of {len(proj_mat.shape)}.'
     d1, d2 = proj_mat.shape[:2]
     assert (d1 == 3 and d2 == 3) or (d1 == 3 and d2 == 4) or (
-        d1 == 4 and d2 == 4), 'The shape of the projection matrix'\
+        d1 == 4 and d2 == 4), 'The shape of the projection matrix' \
         f' ({d1}*{d2}) is not supported.'
     if d1 == 3:
         proj_mat_expanded = torch.eye(
@@ -215,18 +225,21 @@ def points_cam2img(points_3d, proj_mat, with_depth=False):
 
 
 @array_converter(apply_to=('points', 'cam2img'))
-def points_img2cam(points, cam2img):
+def points_img2cam(
+    points: Union[torch.Tensor, np.ndarray],
+    cam2img: Union[torch.Tensor,
+                   np.ndarray]) -> Union[torch.Tensor, np.ndarray]:
     """Project points in image coordinates to camera coordinates.
 
     Args:
-        points (torch.Tensor): 2.5D points in 2D images, [N, 3],
+        points (torch.Tensor or np.ndarray): 2.5D points in 2D images, [N, 3],
             3 corresponds with x, y in the image and depth.
-        cam2img (torch.Tensor): Camera intrinsic matrix. The shape can be
-            [3, 3], [3, 4] or [4, 4].
+        cam2img (torch.Tensor or np.ndarray): Camera intrinsic matrix.
+            The shape can be [3, 3], [3, 4] or [4, 4].
 
     Returns:
-        torch.Tensor: points in 3D space. [N, 3],
-            3 corresponds with x, y, z in 3D space.
+        (torch.Tensor or np.ndarray): points in 3D space. [N, 3],
+        3 corresponds with x, y, z in 3D space.
     """
     assert cam2img.shape[0] <= 4
     assert cam2img.shape[1] <= 4
@@ -248,7 +261,7 @@ def points_img2cam(points, cam2img):
     return points3D
 
 
-def mono_cam_box2vis(cam_box):
+def mono_cam_box2vis(cam_box: CameraInstance3DBoxes) -> CameraInstance3DBoxes:
     """This is a post-processing function on the bboxes from Mono-3D task. If
     we want to perform projection visualization, we need to:
 
@@ -269,7 +282,6 @@ def mono_cam_box2vis(cam_box):
     warning.warn('DeprecationWarning: The hack of yaw and dimension in the '
                  'monocular 3D detection on nuScenes has been removed. The '
                  'function mono_cam_box2vis will be deprecated.')
-    from . import CameraInstance3DBoxes
     assert isinstance(cam_box, CameraInstance3DBoxes), \
         'input bbox should be CameraInstance3DBoxes!'
 
@@ -294,7 +306,8 @@ def mono_cam_box2vis(cam_box):
     return cam_box
 
 
-def get_proj_mat_by_coord_type(img_meta, coord_type):
+def get_proj_mat_by_coord_type(img_meta: dict,
+                               coord_type: str) -> torch.Tensor:
     """Obtain image features using points.
 
     Args:
@@ -311,15 +324,15 @@ def get_proj_mat_by_coord_type(img_meta, coord_type):
     return img_meta[mapping[coord_type]]
 
 
-def yaw2local(yaw, loc):
+def yaw2local(yaw: torch.Tensor, loc: torch.Tensor) -> torch.Tensor:
     """Transform global yaw to local yaw (alpha in kitti) in camera
     coordinates, ranges from -pi to pi.
 
     Args:
         yaw (torch.Tensor): A vector with local yaw of each box.
-            shape: (N, )
+            shape: (N, ).
         loc (torch.Tensor): gravity center of each box.
-            shape: (N, 3)
+            shape: (N, 3).
 
     Returns:
         torch.Tensor: local yaw (alpha in kitti).
@@ -335,7 +348,8 @@ def yaw2local(yaw, loc):
     return local_yaw
 
 
-def get_lidar2img(cam2img, lidar2cam):
+def get_lidar2img(cam2img: torch.Tensor,
+                  lidar2cam: torch.Tensor) -> torch.Tensor:
     """Get the projection matrix of lidar2img.
 
     Args:
