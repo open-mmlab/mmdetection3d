@@ -1,5 +1,47 @@
 # Changelog of v1.1
 
+### v1.1.0rc2 (1/12/2022)
+
+#### Highlights
+
+- Support [PV-RCNN](https://arxiv.org/abs/1912.13192)
+- Speed up evaluation on Waymo dataset
+
+#### New Features
+
+- Support [PV-RCNN](https://arxiv.org/abs/1912.13192) (#1597)
+- Speed up evaluation on Waymo dataset (#2008)
+- Refactor FCAF3D in the framework of mmdet3d v1.1 (#1945)
+- Refactor S3DIS dataset in the framework of mmdet3d v1.1 (#1984)
+- Add `Projects/` folder and the first example project (#2042)
+
+#### Improvements
+
+- Rename `CLASSES` and `PALETTE` to `classes` and `palette` respectively (#1932)
+- Update `metainfo` in pkl files and add `categories` into metainfo (#1934)
+- Show instance statistics before and after through the pipeline (#1863)
+- Refactor configs of DGCNN for different areas (#1967)
+- Remove testing utils from `tests/utils/` to `mmdet3d/testing/` (#2012)
+- Add typehint for code in `models/layers/` (#2014)
+- Refine documentation (#1891, #1994)
+
+#### Bug Fixes
+
+- Fix loop visualization error about point cloud (#1914)
+- Fix image conversion of Waymo to avoid information loss (#1979)
+- Fix evaluation on KITTI testset (#2005)
+- Fix sampling bugs in `IoUNegPiecewiseSampler` (#2017)
+- Fix point cloud range in Centerpoint (#1998)
+- Fix some loading bugs and support FOV-image-based mode on Waymo dataset (#1942)
+- Fix dataset conversion utils (#1923, #2040, #1971)
+- Update metafiles in all the configs (#2006)
+
+#### Contributors
+
+A total of 11 developers contributed to this release.
+
+@vavanade, @oyel, @thinkthinking, @274869388, @cxiang26, @lianqing11, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @Tai-Wang
+
 ### v1.1.0rc1 (11/10/2022)
 
 #### Highlights
@@ -25,7 +67,7 @@
 
 #### Bug Fixes
 
-- Fix missing registration of models in [setup_env.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/utils/setup_env.py) (#1808)
+- ix point cloud loop visualization error (#1914)
 - Fix the data base sampler bugs when using the ground plane data (#1812)
 - Add output directory existing check during visualization (#1828)
 - Fix bugs of nuScenes dataset for monocular 3D detection (#1837)

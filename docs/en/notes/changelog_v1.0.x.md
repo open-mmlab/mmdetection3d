@@ -1,5 +1,23 @@
 # Changelog of v1.0.x
 
+### v1.0.0rc6 (1/12/2022)
+
+#### Improvements
+
+- Update Waymo converter to save memory occupancy (#1759)
+- Update model link and performance about CenterPoint (#1916)
+
+#### Bug Fixes
+
+- Fix GPU memory occupancy problem in PonitRCNN (#1928)
+- Fix sampling bugs in `IoUNegPiecewiseSampler` (#2018)
+
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@oyel, @zzj403, @VVsssssk, @Tai-Wang, @tpoisonooo, @JingweiZhang12
+
 ### v1.0.0rc5 (11/10/2022)
 
 #### New Features
