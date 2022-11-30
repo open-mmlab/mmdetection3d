@@ -6,7 +6,7 @@ from typing import Optional, Sequence, Union
 import numpy as np
 import torch
 
-from mmdet3d.structures import Coord3DMode
+from mmdet3d.structures.bbox_3d import Coord3DMode
 from ..bbox_3d.utils import rotation_3d_in_axis
 
 
