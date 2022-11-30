@@ -10,6 +10,7 @@ from mmcv import is_tuple_of
 from mmcv.utils import build_from_cfg
 from PIL import Image
 
+import mmdet3d
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops, limit_period)
@@ -2178,20 +2179,27 @@ class gt3d_version_transfrom(object):
             dict: Results after transformation,
                 'gt_bboxes_3d' key is updated in the result dict.
         """
-        gt_bboxes_3d = input_dict['gt_bboxes_3d'].tensor
+        if int(mmdet3d.__version__[0]) >= 1:
+            # Begin hack adaptation to mmdet3d v1.0 ####
+            gt_bboxes_3d = input_dict['gt_bboxes_3d'].tensor
 
-        gt_bboxes_3d_1 = gt_bboxes_3d.clone()
+            gt_bboxes_3d[:, [3, 4]] = gt_bboxes_3d[:, [4, 3]]
+            gt_bboxes_3d[:, 6] = -gt_bboxes_3d[:, 6] - np.pi / 2
 
-        gt_bboxes_3d[:, 3] = gt_bboxes_3d_1[:, 4]
-        gt_bboxes_3d[:, 4] = gt_bboxes_3d_1[:, 3]
-        # change yaw
-        rot = gt_bboxes_3d_1[..., 6]
-        gt_bboxes_3d[:, 6] = -rot.squeeze()
-        gt_bboxes_3d[:, 6] -= np.pi / 2
-        gt_bboxes_3d[:, 6] = limit_period(gt_bboxes_3d[:, 6], period=np.pi * 2)
+            # gt_bboxes_3d_1 = gt_bboxes_3d.clone()
 
-        input_dict['gt_bboxes_3d'] = LiDARInstance3DBoxes(
-            gt_bboxes_3d, box_dim=9)
+            # gt_bboxes_3d[:, 3] = gt_bboxes_3d_1[:, 4]
+            # gt_bboxes_3d[:, 4] = gt_bboxes_3d_1[:, 3]
+            # change yaw
+            # rot = gt_bboxes_3d_1[..., 6]
+            # gt_bboxes_3d[:, 6] = -rot.squeeze()
+            # gt_bboxes_3d[:, 6] -= np.pi / 2
+            gt_bboxes_3d[:, 6] = limit_period(
+                gt_bboxes_3d[:, 6], period=np.pi * 2)
+
+            input_dict['gt_bboxes_3d'] = LiDARInstance3DBoxes(
+                gt_bboxes_3d, box_dim=9)
+            # End hack adaptation to mmdet3d v1.0 ####
         return input_dict
 
     def __repr__(self):
