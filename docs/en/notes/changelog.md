@@ -20,7 +20,7 @@
 - Rename `CLASSES` and `PALETTE` to `classes` and `palette` respectively (#1932)
 - Update `metainfo` in pkl files and add `categories` into metainfo (#1934)
 - Show instance statistics before and after through the pipeline (#1863)
-- Refactor configs of DGCNN for different areas (#1967)
+- Add configs of DGCNN for different testing areas (#1967)
 - Remove testing utils from `tests/utils/` to `mmdet3d/testing/` (#2012)
 - Add typehint for code in `models/layers/` (#2014)
 - Refine documentation (#1891, #1994)
@@ -30,8 +30,8 @@
 - Fix loop visualization error about point cloud (#1914)
 - Fix image conversion of Waymo to avoid information loss (#1979)
 - Fix evaluation on KITTI testset (#2005)
-- Fix sampling bugs in `IoUNegPiecewiseSampler` (#2017)
-- Fix point cloud range in Centerpoint (#1998)
+- Fix sampling bug in `IoUNegPiecewiseSampler` (#2017)
+- Fix point cloud range in CenterPoint (#1998)
 - Fix some loading bugs and support FOV-image-based mode on Waymo dataset (#1942)
 - Fix dataset conversion utils (#1923, #2040, #1971)
 - Update metafiles in all the configs (#2006)
@@ -67,7 +67,7 @@ A total of 11 developers contributed to this release.
 
 #### Bug Fixes
 
-- ix point cloud loop visualization error (#1914)
+- Fix point cloud loop visualization error (#1914)
 - Fix the data base sampler bugs when using the ground plane data (#1812)
 - Add output directory existing check during visualization (#1828)
 - Fix bugs of nuScenes dataset for monocular 3D detection (#1837)
