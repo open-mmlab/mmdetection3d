@@ -11,6 +11,7 @@ from .mink_single_stage import MinkSingleStage3DDetector
 from .mvx_faster_rcnn import DynamicMVXFasterRCNN, MVXFasterRCNN
 from .mvx_two_stage import MVXTwoStageDetector
 from .parta2 import PartA2
+from .petr3d import Petr3D
 from .point_rcnn import PointRCNN
 from .sassd import SASSD
 from .single_stage_mono3d import SingleStageMono3DDetector
@@ -24,5 +25,5 @@ __all__ = [
     'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',
     'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
     'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'PointRCNN', 'SMOKEMono3D',
-    'MinkSingleStage3DDetector', 'SASSD'
+    'MinkSingleStage3DDetector', 'SASSD', 'Petr3D'
 ]

@@ -6,6 +6,7 @@ from .iou_calculators import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
                               BboxOverlapsNearest3D,
                               axis_aligned_bbox_overlaps_3d, bbox_overlaps_3d,
                               bbox_overlaps_nearest_3d)
+from .match_costs import BBox3DL1Cost
 from .samplers import (BaseSampler, CombinedSampler,
                        InstanceBalancedPosSampler, IoUBalancedNegSampler,
                        PseudoSampler, RandomSampler, SamplingResult)
@@ -26,5 +27,6 @@ __all__ = [
     'LiDARInstance3DBoxes', 'CameraInstance3DBoxes', 'bbox3d2roi',
     'bbox3d2result', 'DepthInstance3DBoxes', 'BaseInstance3DBoxes',
     'bbox3d_mapping_back', 'xywhr2xyxyr', 'limit_period', 'points_cam2img',
-    'points_img2cam', 'get_box_type', 'Coord3DMode', 'mono_cam_box2vis'
+    'points_img2cam', 'get_box_type', 'Coord3DMode', 'mono_cam_box2vis',
+    'BBox3DL1Cost'
 ]

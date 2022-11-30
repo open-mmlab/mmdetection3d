@@ -8,9 +8,10 @@ from .nostem_regnet import NoStemRegNet
 from .pointnet2_sa_msg import PointNet2SAMSG
 from .pointnet2_sa_ssg import PointNet2SASSG
 from .second import SECOND
+from .vovnetcp import VoVNetCP
 
 __all__ = [
     'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet', 'NoStemRegNet',
     'SECOND', 'DGCNNBackbone', 'PointNet2SASSG', 'PointNet2SAMSG',
-    'MultiBackbone', 'DLANet', 'MinkResNet'
+    'MultiBackbone', 'DLANet', 'MinkResNet', 'VoVNetCP'
 ]
