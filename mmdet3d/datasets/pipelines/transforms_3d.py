@@ -2185,15 +2185,6 @@ class gt3d_version_transfrom(object):
 
             gt_bboxes_3d[:, [3, 4]] = gt_bboxes_3d[:, [4, 3]]
             gt_bboxes_3d[:, 6] = -gt_bboxes_3d[:, 6] - np.pi / 2
-
-            # gt_bboxes_3d_1 = gt_bboxes_3d.clone()
-
-            # gt_bboxes_3d[:, 3] = gt_bboxes_3d_1[:, 4]
-            # gt_bboxes_3d[:, 4] = gt_bboxes_3d_1[:, 3]
-            # change yaw
-            # rot = gt_bboxes_3d_1[..., 6]
-            # gt_bboxes_3d[:, 6] = -rot.squeeze()
-            # gt_bboxes_3d[:, 6] -= np.pi / 2
             gt_bboxes_3d[:, 6] = limit_period(
                 gt_bboxes_3d[:, 6], period=np.pi * 2)
 
