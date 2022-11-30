@@ -244,12 +244,12 @@ lr_config = dict(
     warmup_ratio=1.0 / 3,
     min_lr_ratio=1e-3,
 )
-total_epochs = 12
-evaluation = dict(interval=12, pipeline=test_pipeline)
+total_epochs = 24
+evaluation = dict(interval=24, pipeline=test_pipeline)
 find_unused_parameters = False
 
 runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
-load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
+load_from = 'ckpts/fcos3d_vovnet_imgbackbone-remapped.pth'
 resume_from = None
 
 # mAP: 0.3778

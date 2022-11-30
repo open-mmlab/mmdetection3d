@@ -105,7 +105,7 @@ model = dict(
                 ),  # Fake cost. Just to be compatible with DETR head.
                 pc_range=point_cloud_range))))
 
-dataset_type = 'CustomNuScenesDataset'
+dataset_type = 'PETRNuScenesDataset'
 data_root = '/mnt/d/nus/v1.0-mini/'
 
 file_client_args = dict(backend='disk')
@@ -164,6 +164,7 @@ train_pipeline = [
         with_attr_label=False),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='gt3d_version_transfrom'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     # dict(
@@ -176,7 +177,7 @@ train_pipeline = [
         rot_range=[-0.3925, 0.3925],
         translation_std=[0, 0, 0],
         scale_ratio_range=[0.95, 1.05],
-        reverse_angle=True,
+        reverse_angle=False,
         training=True),
     dict(type='NormalizeMultiviewImage', **img_norm_cfg),
     dict(type='PadMultiViewImage', size_divisor=32),
