@@ -4,8 +4,11 @@ from mmdet.models.necks.fpn import FPN
 from .dla_neck import DLANeck
 from .imvoxel_neck import OutdoorImVoxelNeck
 from .pointnet2_fp_neck import PointNetFPNeck
+from .rpn_transformer import (RPN_transformer_deformable,
+                              RPN_transformer_deformable_mtf)
 from .second_fpn import SECONDFPN
 
 __all__ = [
-    'FPN', 'SECONDFPN', 'OutdoorImVoxelNeck', 'PointNetFPNeck', 'DLANeck'
+    'FPN', 'SECONDFPN', 'OutdoorImVoxelNeck', 'PointNetFPNeck', 'DLANeck',
+    'RPN_transformer_deformable', 'RPN_transformer_deformable_mtf'
 ]
