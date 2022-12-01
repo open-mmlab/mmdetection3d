@@ -5,11 +5,11 @@
 #### Improvements
 
 - Update Waymo converter to save storage space (#1759)
-- Update model link and performance about CenterPoint (#1916)
+- Update model link and performance of CenterPoint (#1916)
 
 #### Bug Fixes
 
-- Fix GPU memory occupancy problem in PonitRCNN (#1928)
+- Fix GPU memory occupancy problem in PointRCNN (#1928)
 - Fix sampling bug in `IoUNegPiecewiseSampler` (#2018)
 
 #### Contributors
