@@ -11,8 +11,8 @@
 
 - Support [PV-RCNN](https://arxiv.org/abs/1912.13192) (#1597)
 - Speed up evaluation on Waymo dataset (#2008)
-- Refactor FCAF3D in the framework of mmdet3d v1.1 (#1945)
-- Refactor S3DIS dataset in the framework of mmdet3d v1.1 (#1984)
+- Refactor FCAF3D into the framework of mmdet3d v1.1 (#1945)
+- Refactor S3DIS dataset into the framework of mmdet3d v1.1 (#1984)
 - Add `Projects/` folder and the first example project (#2042)
 
 #### Improvements
