@@ -26,5 +26,5 @@ Models:
       - Task: 3D Object Detection
         Dataset: KITTI
         Metrics:
-          mAP: 21.98
+          mAP: 21.86
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/monoflex/monoflex_dla34_pytorch_dlaneck_gn-all_2x4_6x_kitti-mono3d_20211228_027553-d46d9bb0.pth
