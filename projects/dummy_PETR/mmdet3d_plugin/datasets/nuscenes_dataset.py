@@ -5,6 +5,7 @@ from mmdet3d.datasets.builder import DATASETS  # noqa: F401
 from mmdet3d.datasets.nuscenes_dataset import NuScenesDataset
 
 
+@DATASETS.register_module()
 class PETRNuScenesDataset(NuScenesDataset):
     r"""NuScenes Dataset.
     This dataset only add camera intrinsics and extrinsics to the results.
