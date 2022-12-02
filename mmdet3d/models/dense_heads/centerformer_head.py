@@ -7,17 +7,17 @@
 
 import copy
 import logging
-from collections import defaultdict
 
 import numpy as np
 import torch
 from mmcv.cnn import build_norm_layer
+from mmengine.logging import print_log
 from mmengine.model import kaiming_init
 from torch import nn
 
 from mmdet3d.models.losses import FastFocalLoss
 from mmdet3d.registry import MODELS
-from mmdet3d.structures import Det3DDataSample, bbox_overlaps_3d
+from mmdet3d.structures import bbox_overlaps_3d
 from ..layers import circle_nms, nms_bev
 
 
@@ -90,7 +90,6 @@ class CenterHeadIoU_1d(nn.Module):
                      128,
                  ],
                  tasks=[],
-                 dataset='waymo',
                  weight=0.25,
                  iou_weight=1,
                  corner_weight=1,
@@ -103,6 +102,7 @@ class CenterHeadIoU_1d(nn.Module):
                  iou_loss=False,
                  corner_loss=False,
                  iou_factor=[1, 1, 4],
+                 test_cfg=None,
                  **kawrgs):
         super(CenterHeadIoU_1d, self).__init__()
 
@@ -112,11 +112,11 @@ class CenterHeadIoU_1d(nn.Module):
         self.weight = weight  # weight between hm loss and loc loss
         self.iou_weight = iou_weight
         self.corner_weight = corner_weight
-        self.dataset = dataset
         self.iou_factor = iou_factor
 
         self.in_channels = in_channels
         self.num_classes = num_classes
+        self.test_cfg = test_cfg
 
         self.crit = FastFocalLoss(assign_label_window_size)
         self.crit_reg = torch.nn.L1Loss(reduction='none')
@@ -145,7 +145,7 @@ class CenterHeadIoU_1d(nn.Module):
         )
 
         self.tasks = nn.ModuleList()
-        print('Use HM Bias: ', init_bias)
+        print_log(f'Use HM Bias: {init_bias}', 'current')
 
         for num_cls in num_classes:
             heads = copy.deepcopy(common_heads)
@@ -174,8 +174,8 @@ class CenterHeadIoU_1d(nn.Module):
         y = torch.clamp(x.sigmoid_(), min=1e-4, max=1 - 1e-4)
         return y
 
-    def loss(self, example, preds_dicts, test_cfg, **kwargs):
-        rets = []
+    def loss(self, preds_dicts, example, **kwargs):
+        losses = {}
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
             hm_loss = self.crit(
@@ -194,36 +194,35 @@ class CenterHeadIoU_1d(nn.Module):
                 corner_mask = (example['corners'][task_id] > 0).to(corner_loss)
                 corner_loss = (corner_loss * corner_mask).sum() / (
                     corner_mask.sum() + 1e-4)
+                losses.update({
+                    f'{task_id}_corner_loss':
+                    corner_loss * self.corner_weight
+                })
 
             # reconstruct the anno_box from multiple reg heads
-            if self.dataset in ['waymo', 'nuscenes']:
-                if 'vel' in preds_dict:
-                    preds_dict['anno_box'] = torch.cat(
-                        (
-                            preds_dict['reg'],
-                            preds_dict['height'],
-                            preds_dict['dim'],
-                            preds_dict['vel'],
-                            preds_dict['rot'],
-                        ),
-                        dim=1,
-                    )
-                else:
-                    preds_dict['anno_box'] = torch.cat(
-                        (
-                            preds_dict['reg'],
-                            preds_dict['height'],
-                            preds_dict['dim'],
-                            preds_dict['rot'],
-                        ),
-                        dim=1,
-                    )
-                    target_box = target_box[..., [0, 1, 2, 3, 4, 5, -2,
-                                                  -1]]  # remove vel target
+            if 'vel' in preds_dict:
+                preds_dict['anno_box'] = torch.cat(
+                    (
+                        preds_dict['reg'],
+                        preds_dict['height'],
+                        preds_dict['dim'],
+                        preds_dict['vel'],
+                        preds_dict['rot'],
+                    ),
+                    dim=1,
+                )
             else:
-                raise NotImplementedError()
-
-            ret = {}
+                preds_dict['anno_box'] = torch.cat(
+                    (
+                        preds_dict['reg'],
+                        preds_dict['height'],
+                        preds_dict['dim'],
+                        preds_dict['rot'],
+                    ),
+                    dim=1,
+                )
+                target_box = target_box[..., [0, 1, 2, 3, 4, 5, -2,
+                                              -1]]  # remove vel target
 
             # Regression loss for dimension, offset, height, rotation
             # get corresponding gt box # B, 500
@@ -251,14 +250,14 @@ class CenterHeadIoU_1d(nn.Module):
                     preds_box = get_box(
                         preds_dict['anno_box'],
                         preds_dict['order'],
-                        test_cfg,
+                        self.test_cfg,
                         preds_dict['hm'].shape[2],
                         preds_dict['hm'].shape[3],
                     )
                     cur_gt = get_box_gt(
                         target_box,
                         preds_dict['order'],
-                        test_cfg,
+                        self.test_cfg,
                         preds_dict['hm'].shape[2],
                         preds_dict['hm'].shape[3],
                     )
@@ -272,35 +271,31 @@ class CenterHeadIoU_1d(nn.Module):
                                          iou_targets) * mask.reshape(-1)
                 iou_loss = iou_loss.sum() / (mask.sum() + 1e-4)
 
-            loss = hm_loss + self.weight * loc_loss
-            if self.use_iou_loss:
-                loss = loss + self.iou_weight * iou_loss
-            if self.corner_loss:
-                loss = loss + self.corner_weight * corner_loss
-            ret.update({
-                'loss': loss,
-                'hm_loss': hm_loss.detach().cpu(),
-                'loc_loss': loc_loss,
-                'loc_loss_elem': box_loss.detach().cpu(),
-                'num_positive': example['mask'][task_id].float().sum(),
+                losses.update(
+                    {f'{task_id}_iou_loss': iou_loss * self.iou_weight})
+
+            # loss = hm_loss + self.weight * loc_loss
+            # if self.use_iou_loss:
+            #     loss = loss + self.iou_weight * iou_loss
+            # if self.corner_loss:
+            #     loss = loss + self.corner_weight * corner_loss
+            losses.update({
+                f'{task_id}_hm_loss': hm_loss,
+                f'{task_id}_loc_loss': loc_loss * self.weight,
+                # 'loc_loss_elem': box_loss,
+                # 'num_positive': example['mask'][task_id].float().sum(),
             })
-            if self.use_iou_loss:
-                ret.update({'iou_loss': iou_loss.detach().cpu()})
-            if self.corner_loss:
-                ret.update({'corner_loss': corner_loss.detach().cpu()})
 
-            rets.append(ret)
-        """convert batch-key to key-batch
-        """
-        rets_merged = defaultdict(list)
-        for ret in rets:
-            for k, v in ret.items():
-                rets_merged[k].append(v)
+        # """convert batch-key to key-batch"""
+        # rets_merged = defaultdict(list)
+        # for ret in rets:
+        #     for k, v in ret.items():
+        #         rets_merged[k].append(v)
 
-        return rets_merged
+        return losses
 
     @torch.no_grad()
-    def predict(self, example, preds_dicts, test_cfg, **kwargs):
+    def predict(self, preds_dicts, example, **kwargs):
         """decode, nms, then return the detection result.
 
         Additionally support double flip testing
@@ -309,7 +304,7 @@ class CenterHeadIoU_1d(nn.Module):
         rets = []
         metas = []
 
-        post_center_range = test_cfg.post_center_limit_range
+        post_center_range = self.test_cfg.post_center_limit_range
         if len(post_center_range) > 0:
             post_center_range = torch.tensor(
                 post_center_range,
@@ -373,11 +368,11 @@ class CenterHeadIoU_1d(nn.Module):
                 batch_reg[:, :, 1:2])
 
             xs = (
-                xs * test_cfg.out_size_factor * test_cfg.voxel_size[0] +
-                test_cfg.pc_range[0])
+                xs * self.test_cfg.out_size_factor *
+                self.test_cfg.voxel_size[0] + self.test_cfg.pc_range[0])
             ys = (
-                ys * test_cfg.out_size_factor * test_cfg.voxel_size[1] +
-                test_cfg.pc_range[1])
+                ys * self.test_cfg.out_size_factor *
+                self.test_cfg.voxel_size[1] + self.test_cfg.pc_range[1])
 
             if 'vel' in preds_dict:
                 batch_vel = preds_dict['vel']
@@ -390,7 +385,7 @@ class CenterHeadIoU_1d(nn.Module):
 
             metas.append(meta_list)
 
-            if test_cfg.get('per_class_nms', False):
+            if self.test_cfg.get('per_class_nms', False):
                 pass
             else:
                 rets.append(
@@ -399,7 +394,7 @@ class CenterHeadIoU_1d(nn.Module):
                         batch_box_preds,
                         batch_score,
                         batch_label,
-                        test_cfg,
+                        self.test_cfg,
                         post_center_range,
                         task_id,
                         batch_mask,

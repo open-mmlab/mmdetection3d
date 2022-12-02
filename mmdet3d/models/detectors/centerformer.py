@@ -142,14 +142,14 @@ class CenterFormer(Base3DDetector):
 
         batch_input_metas = [item.metainfo for item in batch_data_samples]
         pts_feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
-        outs = self.backbone(pts_feats, batch_data_samples)
-        losses = dict()
-        preds = self.bbox_head(outs)
+        preds, batch_tatgets = self.backbone(pts_feats, batch_data_samples)
+        preds = self.bbox_head(preds)
         if self.training:
-            self.bbox_head.loss(preds, batch_data_samples)
+            losses = dict()
+            losses.update(self.bbox_head.loss(preds, batch_tatgets))
+            return losses
         else:
-            self.bbox_head.predict(preds, batch_data_samples)
-        return losses
+            return self.bbox_head.predict(preds, batch_tatgets)
 
     def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
                 batch_data_samples: List[Det3DDataSample],

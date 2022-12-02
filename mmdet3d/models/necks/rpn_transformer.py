@@ -1,14 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import torch
 from mmcv.cnn import build_norm_layer
+from mmdet.models.utils import multi_apply
 from mmengine.logging import print_log
 from mmengine.model import xavier_init
-from torch import nn
+from mmengine.structures import InstanceData
+from torch import Tensor, nn
 from torch.nn import functional as F
 
-from mmdet3d.models.utils.transformer import Deform_Transformer, Transformer
+from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
+from mmdet3d.models.utils.transformer import Deform_Transformer
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import center_to_corner_box2d
 
 
 class ChannelAttention(nn.Module):
@@ -335,349 +341,6 @@ class RPN_transformer_base(nn.Module):
 
 
 @MODELS.register_module()
-class RPN_transformer(RPN_transformer_base):
-
-    def __init__(
-            self,
-            layer_nums,  # [2,2,2]
-            ds_num_filters,  # [128,256,64]
-            num_input_features,  # 256
-            transformer_config=None,
-            hm_head_layer=2,
-            corner_head_layer=2,
-            corner=False,
-            assign_label_window_size=1,
-            classes=3,
-            use_gt_training=False,
-            norm_cfg=None,
-            logger=None,
-            init_bias=-2.19,
-            score_threshold=0.1,
-            obj_num=500,
-            parametric_embedding=False,
-            **kwargs):
-        super(RPN_transformer, self).__init__(
-            layer_nums,
-            ds_num_filters,
-            num_input_features,
-            transformer_config,
-            hm_head_layer,
-            corner_head_layer,
-            corner,
-            assign_label_window_size,
-            classes,
-            use_gt_training,
-            norm_cfg,
-            logger,
-            init_bias,
-            score_threshold,
-            obj_num,
-        )
-
-        self.transformer_layer = Transformer(
-            self._num_filters[-1] * 2,
-            depth=transformer_config.depth,
-            heads=transformer_config.heads,
-            dim_head=transformer_config.dim_head,
-            mlp_dim=transformer_config.MLP_dim,
-            dropout=transformer_config.DP_rate,
-            out_attention=transformer_config.out_att,
-        )
-        self.pos_embedding_type = transformer_config.get(
-            'pos_embedding_type', 'linear')
-        if self.pos_embedding_type == 'linear':
-            self.pos_embedding = nn.Linear(2, self._num_filters[-1] * 2)
-        elif self.pos_embedding_type == 'none':
-            self.pos_embedding = None
-        else:
-            raise NotImplementedError()
-        self.cross_attention_kernel_size = transformer_config.cross_attention_kernel_size
-        self.parametric_embedding = parametric_embedding
-        if self.parametric_embedding:
-            self.query_embed = nn.Embedding(self.obj_num,
-                                            self._num_filters[-1] * 2)
-            nn.init.uniform_(self.query_embed.weight, -1.0, 1.0)
-
-        print_log('Finish RPN_transformer Initialization', 'current')
-
-    def forward(self, x, example=None):
-
-        # FPN
-        x = self.blocks[0](x)
-        x_down = self.blocks[1](x)
-        x_up = torch.cat([self.blocks[2](x_down), self.up(x)], dim=1)
-
-        # heatmap head
-        hm = self.hm_head(x_up)
-
-        if self.corner and self.corner_head.training:
-            corner_hm = self.corner_head(x_up)
-            corner_hm = torch.sigmoid(corner_hm)
-
-        # find top K center location
-        hm = torch.sigmoid(hm)
-        batch, num_cls, H, W = hm.size()
-
-        scores, labels = torch.max(
-            hm.reshape(batch, num_cls, H * W), dim=1)  # b,H*W
-
-        self.batch_id = torch.from_numpy(np.indices(
-            (batch, self.obj_num))[0]).to(labels)
-
-        if self.use_gt_training and self.hm_head.training:
-            gt_inds = example['ind'][0][:, (self.window_size //
-                                            2)::self.window_size]
-            gt_masks = example['mask'][0][:, (self.window_size //
-                                              2)::self.window_size]
-            batch_id_gt = torch.from_numpy(
-                np.indices((batch, gt_inds.shape[1]))[0]).to(labels)
-            scores[batch_id_gt,
-                   gt_inds] = scores[batch_id_gt, gt_inds] + gt_masks
-            order = scores.sort(1, descending=True)[1]
-            order = order[:, :self.obj_num]
-            scores[batch_id_gt,
-                   gt_inds] = scores[batch_id_gt, gt_inds] - gt_masks
-        else:
-            order = scores.sort(1, descending=True)[1]
-            order = order[:, :self.obj_num]
-
-        scores = torch.gather(scores, 1, order)
-        labels = torch.gather(labels, 1, order)
-        mask = scores > self.score_threshold
-
-        ct_feat = (x_up.reshape(batch, -1,
-                                H * W).transpose(2,
-                                                 1).contiguous()[self.batch_id,
-                                                                 order]
-                   )  # B, 500, C
-
-        # create position embedding for each center
-        y_coor = order // W
-        # x_coor = order - y_coor*W
-        x_coor = order % W
-        pos_features = torch.stack([x_coor, y_coor], dim=2)
-
-        if self.parametric_embedding:
-            ct_feat = self.query_embed.weight
-            ct_feat = ct_feat.unsqueeze(0).expand(batch, -1, -1)
-
-        # run transformer
-        neighbor_feat, neighbor_pos = self.get_multi_scale_feature(
-            pos_features, [x_up, x, x_down])
-
-        transformer_out = self.transformer_layer(
-            ct_feat,
-            pos_embedding=self.pos_embedding,
-            center_pos=pos_features.to(ct_feat),
-            y=neighbor_feat,
-            neighbor_pos=neighbor_pos.to(ct_feat),
-        )  # (B,N,C)
-
-        ct_feat = (transformer_out['ct_feat'].transpose(2, 1).contiguous()
-                   )  # B, C, 500
-
-        out_dict = {}
-        out_dict.update({
-            'hm': hm,
-            'scores': scores,
-            'labels': labels,
-            'order': order,
-            'ct_feat': ct_feat,
-            'mask': mask,
-            'BEV_feat': x_up,
-            'H': H,
-            'W': W,
-        })
-        if self.corner and self.corner_head.training:
-            out_dict.update({'corner_hm': corner_hm})
-
-        return out_dict
-
-
-@MODELS.register_module()
-class RPN_transformer_multiframe(RPN_transformer_base):
-
-    def __init__(
-            self,
-            layer_nums,  # [2,2,2]
-            ds_num_filters,  # [128,256,64]
-            num_input_features,  # 256
-            transformer_config=None,
-            hm_head_layer=2,
-            corner_head_layer=2,
-            corner=False,
-            assign_label_window_size=1,
-            classes=3,
-            use_gt_training=False,
-            norm_cfg=None,
-            logger=None,
-            init_bias=-2.19,
-            score_threshold=0.1,
-            obj_num=500,
-            frame=1,
-            **kwargs):
-        super(RPN_transformer_multiframe, self).__init__(
-            layer_nums,
-            ds_num_filters,
-            num_input_features,
-            transformer_config,
-            hm_head_layer,
-            corner_head_layer,
-            corner,
-            assign_label_window_size,
-            classes,
-            use_gt_training,
-            norm_cfg,
-            logger,
-            init_bias,
-            score_threshold,
-            obj_num,
-        )
-        self.frame = frame
-
-        self.out = nn.Sequential(
-            nn.Conv2d(
-                self._num_filters[-1] * 2 * frame,
-                self._num_filters[-1] * 2,
-                3,
-                padding=1,
-                bias=False,
-            ),
-            build_norm_layer(self._norm_cfg, self._num_filters[-1] * 2)[1],
-            nn.ReLU(),
-        )
-        self.mtf_attention = SpatialAttention_mtf()
-        self.time_embedding = nn.Linear(1, self._num_filters[-1] * 2)
-
-        self.transformer_layer = Transformer(
-            self._num_filters[-1] * 2,
-            depth=transformer_config.depth,
-            heads=transformer_config.heads,
-            dim_head=transformer_config.dim_head,
-            mlp_dim=transformer_config.MLP_dim,
-            dropout=transformer_config.DP_rate,
-            out_attention=transformer_config.out_att,
-        )
-        self.pos_embedding_type = transformer_config.get(
-            'pos_embedding_type', 'linear')
-        if self.pos_embedding_type == 'linear':
-            self.pos_embedding = nn.Linear(3, self._num_filters[-1] * 2)
-        else:
-            raise NotImplementedError()
-        self.cross_attention_kernel_size = transformer_config.cross_attention_kernel_size
-
-        print_log('Finish RPN_transformer Initialization', 'current')
-
-    def forward(self, x, example=None):
-        # FPN
-        x = self.blocks[0](x)
-        x_down = self.blocks[1](x)
-        x_up = torch.cat([self.blocks[2](x_down), self.up(x)], dim=1)
-
-        # take out the BEV feature on current frame
-        x = torch.split(x, self.frame)
-        x_up = torch.split(x_up, self.frame)
-        x_down = torch.split(x_down, self.frame)
-        x_prev = torch.stack([t[1:] for t in x_up], dim=0)  # B,K,C,H,W
-        x = torch.stack([t[0] for t in x], dim=0)
-        x_down = torch.stack([t[0] for t in x_down], dim=0)
-
-        x_up = torch.stack([t[0] for t in x_up], dim=0)  # B,C,H,W
-        # use spatial attention in current frame on previous feature
-        x_prev_cat = self.mtf_attention(
-            x_up,
-            x_prev.reshape(x_up.shape[0], -1, x_up.shape[2],
-                           x_up.shape[3]))  # B,K*C,H,W
-        # time embedding
-        x_up_fuse = torch.cat((x_up, x_prev_cat), dim=1) + self.time_embedding(
-            example['times'][:, :, None].to(x_up)).reshape(
-                x_up.shape[0], -1, 1, 1)
-        # fuse mtf feature
-        x_up_fuse = self.out(x_up_fuse)
-
-        # heatmap head
-        hm = self.hm_head(x_up_fuse)
-
-        if self.corner and self.corner_head.training:
-            corner_hm = self.corner_head(x_up_fuse)
-            corner_hm = torch.sigmoid(corner_hm)
-
-        # find top K center location
-        hm = torch.sigmoid(hm)
-        batch, num_cls, H, W = hm.size()
-
-        scores, labels = torch.max(
-            hm.reshape(batch, num_cls, H * W), dim=1)  # b,H*W
-
-        self.batch_id = torch.from_numpy(np.indices(
-            (batch, self.obj_num))[0]).to(labels)
-
-        if self.use_gt_training and self.hm_head.training:
-            gt_inds = example['ind'][0][:, (self.window_size //
-                                            2)::self.window_size]
-            gt_masks = example['mask'][0][:, (self.window_size //
-                                              2)::self.window_size]
-            batch_id_gt = torch.from_numpy(
-                np.indices((batch, gt_inds.shape[1]))[0]).to(labels)
-            scores[batch_id_gt,
-                   gt_inds] = scores[batch_id_gt, gt_inds] + gt_masks
-            order = scores.sort(1, descending=True)[1]
-            order = order[:, :self.obj_num]
-            scores[batch_id_gt,
-                   gt_inds] = scores[batch_id_gt, gt_inds] - gt_masks
-        else:
-            order = scores.sort(1, descending=True)[1]
-            order = order[:, :self.obj_num]
-
-        scores = torch.gather(scores, 1, order)
-        labels = torch.gather(labels, 1, order)
-        mask = scores > self.score_threshold
-
-        ct_feat = (x_up.reshape(batch, -1,
-                                H * W).transpose(2,
-                                                 1).contiguous()[self.batch_id,
-                                                                 order]
-                   )  # B, 500, C
-
-        # create position embedding for each center
-        y_coor = order // W
-        x_coor = order % W
-        pos_features = torch.stack([x_coor, y_coor], dim=2)
-
-        # run transformer
-        neighbor_feat, neighbor_pos, neighbor_time = self.get_multi_scale_feature_multiframe(
-            pos_features, [x_up, x, x_down, x_prev], example['times'])
-        neighbor_pos = torch.cat((neighbor_pos, neighbor_time), dim=3)
-        pos_features = F.pad(pos_features, (0, 1), 'constant', 0)
-
-        transformer_out = self.transformer_layer(
-            ct_feat,
-            pos_embedding=self.pos_embedding,
-            center_pos=pos_features.to(ct_feat),
-            y=neighbor_feat,
-            neighbor_pos=neighbor_pos.to(ct_feat),
-        )  # (B,N,C)
-
-        ct_feat = (transformer_out['ct_feat'].transpose(2, 1).contiguous()
-                   )  # B, C, 500
-
-        out_dict = {}
-        out_dict.update({
-            'hm': hm,
-            'scores': scores,
-            'labels': labels,
-            'order': order,
-            'ct_feat': ct_feat,
-            'mask': mask,
-            'BEV_feat': x_up,
-        })
-        if self.corner and self.corner_head.training:
-            out_dict.update({'corner_hm': corner_hm})
-
-        return out_dict
-
-
-@MODELS.register_module()
 class RPN_transformer_deformable(RPN_transformer_base):
 
     def __init__(
@@ -698,6 +361,8 @@ class RPN_transformer_deformable(RPN_transformer_base):
             init_bias=-2.19,
             score_threshold=0.1,
             obj_num=500,
+            train_cfg=None,
+            test_cfg=None,
             **kwargs):
         super(RPN_transformer_deformable, self).__init__(
             layer_nums,
@@ -716,6 +381,8 @@ class RPN_transformer_deformable(RPN_transformer_base):
             score_threshold,
             obj_num,
         )
+        self.train_cfg = train_cfg
+        self.test_cfg = test_cfg
 
         self.transformer_layer = Deform_Transformer(
             self._num_filters[-1] * 2,
@@ -742,7 +409,20 @@ class RPN_transformer_deformable(RPN_transformer_base):
         print_log('Finish RPN_transformer_deformable Initialization',
                   'current')
 
-    def forward(self, x, example=None):
+    def forward(self, x, batch_data_samples):
+
+        batch_gt_instance_3d = []
+        for data_sample in batch_data_samples:
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+
+        heatmaps, anno_boxes, gt_inds, gt_masks, corner_heatmaps = self.get_targets(  # noqa: E501
+            batch_gt_instance_3d)
+        batch_targets = dict(
+            ind=gt_inds,
+            mask=gt_masks,
+            hm=heatmaps,
+            anno_box=anno_boxes,
+            corners=corner_heatmaps)
 
         # FPN
         x = self.blocks[0](x)
@@ -766,18 +446,14 @@ class RPN_transformer_deformable(RPN_transformer_base):
             (batch, self.obj_num))[0]).to(labels)
 
         if self.use_gt_training and self.hm_head.training:
-            gt_inds = example['ind'][0][:, (self.window_size //
-                                            2)::self.window_size]
-            gt_masks = example['mask'][0][:, (self.window_size //
-                                              2)::self.window_size]
+            inds = gt_inds[0][:, (self.window_size // 2)::self.window_size]
+            masks = gt_masks[0][:, (self.window_size // 2)::self.window_size]
             batch_id_gt = torch.from_numpy(
-                np.indices((batch, gt_inds.shape[1]))[0]).to(labels)
-            scores[batch_id_gt,
-                   gt_inds] = scores[batch_id_gt, gt_inds] + gt_masks
+                np.indices((batch, inds.shape[1]))[0]).to(labels)
+            scores[batch_id_gt, inds] = scores[batch_id_gt, inds] + masks
             order = scores.sort(1, descending=True)[1]
             order = order[:, :self.obj_num]
-            scores[batch_id_gt,
-                   gt_inds] = scores[batch_id_gt, gt_inds] - gt_masks
+            scores[batch_id_gt, inds] = scores[batch_id_gt, inds] - masks
         else:
             order = scores.sort(1, descending=True)[1]
             order = order[:, :self.obj_num]
@@ -850,7 +526,226 @@ class RPN_transformer_deformable(RPN_transformer_base):
         if self.corner and self.corner_head.training:
             out_dict.update({'corner_hm': corner_hm})
 
-        return out_dict
+        return out_dict, batch_targets
+
+    def get_targets(
+        self,
+        batch_gt_instances_3d: List[InstanceData],
+    ) -> Tuple[List[Tensor]]:
+        """Generate targets. How each output is transformed: Each nested list
+        is transposed so that all same-index elements in each sub-list (1, ...,
+        N) become the new sub-lists.
+
+                [ [a0, a1, a2, ... ], [b0, b1, b2, ... ], ... ]
+                ==> [ [a0, b0, ... ], [a1, b1, ... ], [a2, b2, ... ] ]
+            The new transposed nested list is converted into a list of N
+            tensors generated by concatenating tensors in the new sub-lists.
+                [ tensor0, tensor1, tensor2, ... ]
+        Args:
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and\
+                ``labels_3d`` attributes.
+        Returns:
+            Returns:
+                tuple[list[torch.Tensor]]: Tuple of target including
+                    the following results in order.
+                - list[torch.Tensor]: Heatmap scores.
+                - list[torch.Tensor]: Ground truth boxes.
+                - list[torch.Tensor]: Indexes indicating the
+                    position of the valid boxes.
+                - list[torch.Tensor]: Masks indicating which
+                    boxes are valid.
+        """
+        heatmaps, anno_boxes, inds, masks, corner_heatmaps = multi_apply(
+            self.get_targets_single, batch_gt_instances_3d)
+        # Transpose heatmaps
+        heatmaps = list(map(list, zip(*heatmaps)))
+        heatmaps = [torch.stack(hms_) for hms_ in heatmaps]
+        # Transpose heatmaps
+        corner_heatmaps = list(map(list, zip(*corner_heatmaps)))
+        corner_heatmaps = [torch.stack(hms_) for hms_ in corner_heatmaps]
+        # Transpose anno_boxes
+        anno_boxes = list(map(list, zip(*anno_boxes)))
+        anno_boxes = [torch.stack(anno_boxes_) for anno_boxes_ in anno_boxes]
+        # Transpose inds
+        inds = list(map(list, zip(*inds)))
+        inds = [torch.stack(inds_) for inds_ in inds]
+        # Transpose inds
+        masks = list(map(list, zip(*masks)))
+        masks = [torch.stack(masks_) for masks_ in masks]
+        return heatmaps, anno_boxes, inds, masks, corner_heatmaps
+
+    def get_targets_single(self,
+                           gt_instances_3d: InstanceData) -> Tuple[Tensor]:
+        """Generate training targets for a single sample.
+        Args:
+            gt_instances_3d (:obj:`InstanceData`): Gt_instances of
+                single data sample. It usually includes
+                ``bboxes_3d`` and ``labels_3d`` attributes.
+        Returns:
+            tuple[list[torch.Tensor]]: Tuple of target including
+                the following results in order.
+                - list[torch.Tensor]: Heatmap scores.
+                - list[torch.Tensor]: Ground truth boxes.
+                - list[torch.Tensor]: Indexes indicating the position
+                    of the valid boxes.
+                - list[torch.Tensor]: Masks indicating which boxes
+                    are valid.
+        """
+        gt_labels_3d = gt_instances_3d.labels_3d
+        gt_bboxes_3d = gt_instances_3d.bboxes_3d
+        device = gt_labels_3d.device
+        gt_bboxes_3d = torch.cat(
+            (gt_bboxes_3d.gravity_center, gt_bboxes_3d.tensor[:, 3:]),
+            dim=1).to(device)
+        max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
+        grid_size = torch.tensor(self.train_cfg['grid_size'])
+        pc_range = torch.tensor(self.train_cfg['point_cloud_range'])
+        voxel_size = torch.tensor(self.train_cfg['voxel_size'])
+
+        feature_map_size = grid_size[:2] // self.train_cfg['out_size_factor']
+
+        # reorganize the gt_dict by tasks
+        task_masks = []
+        flag = 0
+        for class_name in self.class_names:
+            task_masks.append([
+                torch.where(gt_labels_3d == class_name.index(i) + flag)
+                for i in class_name
+            ])
+            flag += len(class_name)
+
+        task_boxes = []
+        task_classes = []
+        flag2 = 0
+        for idx, mask in enumerate(task_masks):
+            task_box = []
+            task_class = []
+            for m in mask:
+                task_box.append(gt_bboxes_3d[m])
+                # 0 is background for each task, so we need to add 1 here.
+                task_class.append(gt_labels_3d[m] + 1 - flag2)
+            task_boxes.append(torch.cat(task_box, axis=0).to(device))
+            task_classes.append(torch.cat(task_class).long().to(device))
+            flag2 += len(mask)
+        draw_gaussian = draw_heatmap_gaussian
+        heatmaps, anno_boxes, inds, masks, corner_heatmaps = [], [], [], [], []
+
+        for idx, task_head in enumerate(self.task_heads):
+            heatmap = gt_bboxes_3d.new_zeros(
+                (len(self.class_names[idx]), feature_map_size[1],
+                 feature_map_size[0]))
+            corner_heatmap = torch.zeros(
+                (1, feature_map_size[1], feature_map_size[0]),
+                dtype=torch.float32,
+                device=device)
+
+            anno_box = gt_bboxes_3d.new_zeros((max_objs, 8),
+                                              dtype=torch.float32)
+
+            ind = gt_labels_3d.new_zeros((max_objs), dtype=torch.int64)
+            mask = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.uint8)
+
+            num_objs = min(task_boxes[idx].shape[0], max_objs)
+
+            for k in range(num_objs):
+                cls_id = task_classes[idx][k] - 1
+
+                width = task_boxes[idx][k][3]
+                length = task_boxes[idx][k][4]
+                width = width / voxel_size[0] / self.train_cfg[
+                    'out_size_factor']
+                length = length / voxel_size[1] / self.train_cfg[
+                    'out_size_factor']
+
+                if width > 0 and length > 0:
+                    radius = gaussian_radius(
+                        (length, width),
+                        min_overlap=self.train_cfg['gaussian_overlap'])
+                    radius = max(self.train_cfg['min_radius'], int(radius))
+
+                    # be really careful for the coordinate system of
+                    # your box annotation.
+                    x, y, z = task_boxes[idx][k][0], task_boxes[idx][k][
+                        1], task_boxes[idx][k][2]
+
+                    coor_x = (
+                        x - pc_range[0]
+                    ) / voxel_size[0] / self.train_cfg['out_size_factor']
+                    coor_y = (
+                        y - pc_range[1]
+                    ) / voxel_size[1] / self.train_cfg['out_size_factor']
+
+                    center = torch.tensor([coor_x, coor_y],
+                                          dtype=torch.float32,
+                                          device=device)
+                    center_int = center.to(torch.int32)
+
+                    # throw out not in range objects to avoid out of array
+                    # area when creating the heatmap
+                    if not (0 <= center_int[0] < feature_map_size[0]
+                            and 0 <= center_int[1] < feature_map_size[1]):
+                        continue
+
+                    draw_gaussian(heatmap[cls_id], center_int, radius)
+
+                    radius = radius // 2
+                    # # draw four corner and center TODO: use torch
+                    rot = task_boxes[idx][k][6]
+                    corner_keypoints = center_to_corner_box2d(
+                        center.unsqueeze(0).cpu().numpy(),
+                        torch.tensor([[width, length]],
+                                     dtype=torch.float32).numpy(),
+                        angles=rot,
+                        origin=0.5)
+                    corner_keypoints = torch.from_numpy(corner_keypoints).to(
+                        center)
+
+                    draw_gaussian(corner_heatmap[0], center_int, radius)
+                    draw_gaussian(
+                        corner_heatmap[0],
+                        (corner_keypoints[0, 0] + corner_keypoints[0, 1]) / 2,
+                        radius)
+                    draw_gaussian(
+                        corner_heatmap[0],
+                        (corner_keypoints[0, 2] + corner_keypoints[0, 3]) / 2,
+                        radius)
+                    draw_gaussian(
+                        corner_heatmap[0],
+                        (corner_keypoints[0, 0] + corner_keypoints[0, 3]) / 2,
+                        radius)
+                    draw_gaussian(
+                        corner_heatmap[0],
+                        (corner_keypoints[0, 1] + corner_keypoints[0, 2]) / 2,
+                        radius)
+
+                    new_idx = k
+                    x, y = center_int[0], center_int[1]
+
+                    assert (y * feature_map_size[0] + x <
+                            feature_map_size[0] * feature_map_size[1])
+
+                    ind[new_idx] = y * feature_map_size[0] + x
+                    mask[new_idx] = 1
+                    # TODO: support other outdoor dataset
+                    # vx, vy = task_boxes[idx][k][7:]
+                    rot = task_boxes[idx][k][6]
+                    box_dim = task_boxes[idx][k][3:6]
+                    if self.norm_bbox:
+                        box_dim = box_dim.log()
+                    anno_box[new_idx] = torch.cat([
+                        center - torch.tensor([x, y], device=device),
+                        z.unsqueeze(0), box_dim,
+                        torch.sin(rot).unsqueeze(0),
+                        torch.cos(rot).unsqueeze(0)
+                    ])
+
+            heatmaps.append(heatmap)
+            corner_heatmaps.append(corner_heatmap)
+            anno_boxes.append(anno_box)
+            masks.append(mask)
+            inds.append(ind)
+        return heatmaps, anno_boxes, inds, masks, corner_heatmaps
 
 
 @MODELS.register_module()

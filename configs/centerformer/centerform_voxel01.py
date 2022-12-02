@@ -87,17 +87,18 @@ model = dict(
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]),
     test_cfg=dict(
         post_center_limit_range=[-80, -80, -10.0, 80, 80, 10.0],
-        point_cloud_range=point_cloud_range,
-        max_per_img=1000,
+        nms=dict(
+            use_rotate_nms=False,
+            use_multi_class_nms=True,
+            nms_pre_max_size=[1600, 1600, 800],
+            nms_post_max_size=[200, 200, 100],
+            nms_iou_threshold=[0.8, 0.55, 0.55],
+        ),
         score_threshold=0.1,
+        pc_range=[-75.2, -75.2],
         out_size_factor=4,
-        voxel_size=voxel_size[:2],
-        iou_factor=[1, 1, 4],
-        nms_type='rotate',
-        use_multi_class_nms=True,
-        nms_pre_max_size=[1600, 1600, 800],
-        nms_post_max_size=[200, 200, 100],
-        nms_iou_thres=[0.8, 0.55, 0.55],
+        voxel_size=[0.1, 0.1],
+        obj_num=1000,
     ))
 
 data_root = 'data/waymo_mini/kitti_format/'
