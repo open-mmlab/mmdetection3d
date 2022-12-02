@@ -2,6 +2,10 @@
 
 ### v1.0.0rc6 (1/12/2022)
 
+#### New Features
+
+- Add `Projects/` folder and the first example project (#2082)
+
 #### Improvements
 
 - Update Waymo converter to save storage space (#1759)

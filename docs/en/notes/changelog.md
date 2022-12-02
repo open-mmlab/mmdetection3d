@@ -9,7 +9,7 @@
 
 #### New Features
 
-- Support [PV-RCNN](https://arxiv.org/abs/1912.13192) (#1597)
+- Support [PV-RCNN](https://arxiv.org/abs/1912.13192) (#1597, #2045)
 - Speed up evaluation on Waymo dataset (#2008)
 - Refactor FCAF3D into the framework of mmdet3d v1.1 (#1945)
 - Refactor S3DIS dataset into the framework of mmdet3d v1.1 (#1984)
@@ -24,6 +24,7 @@
 - Remove testing utils from `tests/utils/` to `mmdet3d/testing/` (#2012)
 - Add typehint for code in `models/layers/` (#2014)
 - Refine documentation (#1891, #1994)
+- Refine voxelization for better speed (#2062)
 
 #### Bug Fixes
 
@@ -38,9 +39,9 @@
 
 #### Contributors
 
-A total of 11 developers contributed to this release.
+A total of 12 developers contributed to this release.
 
-@vavanade, @oyel, @thinkthinking, @274869388, @cxiang26, @lianqing11, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @Tai-Wang
+@vavanade, @oyel, @thinkthinking, @PeterH0323， @274869388, @cxiang26, @lianqing11, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @Tai-Wang
 
 ### v1.1.0rc1 (11/10/2022)
 
