@@ -1,5 +1,27 @@
 ## Changelog
 
+### v1.0.0rc6 (2/12/2022)
+
+#### New Features
+
+- Add `Projects/` folder and the first example project (#2082)
+
+#### Improvements
+
+- Update Waymo converter to save storage space (#1759)
+- Update model link and performance of CenterPoint (#1916)
+
+#### Bug Fixes
+
+- Fix GPU memory occupancy problem in PointRCNN (#1928)
+- Fix sampling bug in `IoUNegPiecewiseSampler` (#2018)
+
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@oyel, @zzj403, @VVsssssk, @Tai-Wang, @tpoisonooo, @JingweiZhang12, @ZCMax
+
 ### v1.0.0rc5 (11/10/2022)
 
 #### New Features
