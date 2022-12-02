@@ -20,7 +20,7 @@
 
 A total of 6 developers contributed to this release.
 
-@oyel, @zzj403, @VVsssssk, @Tai-Wang, @tpoisonooo, @JingweiZhang12
+@oyel, @zzj403, @VVsssssk, @Tai-Wang, @tpoisonooo, @JingweiZhang12, @ZCMax
 
 ### v1.0.0rc5 (11/10/2022)
 
