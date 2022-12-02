@@ -1,6 +1,6 @@
 # Changelog of v1.1
 
-### v1.1.0rc2 (1/12/2022)
+### v1.1.0rc2 (2/12/2022)
 
 #### Highlights
 

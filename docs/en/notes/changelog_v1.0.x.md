@@ -1,6 +1,6 @@
 # Changelog of v1.0.x
 
-### v1.0.0rc6 (1/12/2022)
+### v1.0.0rc6 (2/12/2022)
 
 #### New Features
 
