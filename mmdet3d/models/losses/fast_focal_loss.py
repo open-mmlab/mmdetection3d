@@ -11,7 +11,7 @@ def _gather_feat(feat, ind, mask=None):
         mask = mask.unsqueeze(2).expand_as(feat)
         feat = feat[mask]
         feat = feat.view(-1, dim)
-    return
+    return feat
 
 
 def _transpose_and_gather_feat(feat, ind):

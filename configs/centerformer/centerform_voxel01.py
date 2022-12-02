@@ -8,6 +8,7 @@ _base_ = ['../_base_/default_runtime.py']
 voxel_size = [0.1, 0.1, 0.15]
 point_cloud_range = [-75.2, -75.2, -2, 75.2, 75.2, 4]
 class_names = ['Car', 'Pedestrian', 'Cyclist']
+tasks = [dict(num_class=3, class_names=['car', 'pedestrian', 'cyclist'])]
 metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=True, use_camera=False)
 file_client_args = dict(backend='disk')
@@ -41,6 +42,7 @@ model = dict(
         layer_nums=[5, 5, 1],
         ds_num_filters=[256, 256, 128],
         num_input_features=256,
+        tasks=tasks,
         use_gt_training=True,
         corner=True,
         assign_label_window_size=1,
@@ -58,9 +60,7 @@ model = dict(
     bbox_head=dict(
         type='CenterHeadIoU_1d',
         in_channels=256,
-        tasks=[
-            dict(num_class=3, class_names=['car', 'pedestrian', 'cyclist'])
-        ],
+        tasks=tasks,
         dataset='waymo',
         weight=2,
         corner_loss=True,
@@ -287,4 +287,4 @@ test_cfg = dict()
 #   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
-default_hooks = dict(logger=dict(type='LoggerHook', interval=5))
+default_hooks = dict(logger=dict(type='LoggerHook', interval=1))

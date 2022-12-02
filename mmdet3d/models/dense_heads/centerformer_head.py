@@ -601,4 +601,4 @@ def get_corresponding_box(x_ind, y_ind, y_mask, y_cls, target_box):
         select_mask[i, match[:, 0]] = 1
         select_cls[i, match[:, 0]] = box_cls[match[:, 1]]
 
-    return select_target, select_mask,
+    return select_target, select_mask, select_cls

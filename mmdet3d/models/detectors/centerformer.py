@@ -55,6 +55,7 @@ class CenterFormer(Base3DDetector):
         if middle_encoder:
             self.middle_encoder = MODELS.build(middle_encoder)
         if backbone:
+            backbone.update(train_cfg=train_cfg, test_cfg=test_cfg)
             self.backbone = MODELS.build(backbone)
         if neck is not None:
             self.neck = MODELS.build(neck)

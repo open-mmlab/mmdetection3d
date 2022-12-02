@@ -347,7 +347,8 @@ class RPN_transformer_deformable(RPN_transformer_base):
             self,
             layer_nums,  # [2,2,2]
             ds_num_filters,  # [128,256,64]
-            num_input_features,  # 256
+            num_input_features,
+            tasks=dict(),
             transformer_config=None,
             hm_head_layer=2,
             corner_head_layer=2,
@@ -383,6 +384,9 @@ class RPN_transformer_deformable(RPN_transformer_base):
         )
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+        self.tasks = tasks
+        num_classes = [len(t['class_names']) for t in tasks]
+        self.class_names = [t['class_names'] for t in tasks]
 
         self.transformer_layer = Deform_Transformer(
             self._num_filters[-1] * 2,
@@ -409,20 +413,25 @@ class RPN_transformer_deformable(RPN_transformer_base):
         print_log('Finish RPN_transformer_deformable Initialization',
                   'current')
 
+    def _sigmoid(self, x):
+        y = torch.clamp(x.sigmoid_(), min=1e-4, max=1 - 1e-4)
+        return y
+
     def forward(self, x, batch_data_samples):
 
         batch_gt_instance_3d = []
         for data_sample in batch_data_samples:
             batch_gt_instance_3d.append(data_sample.gt_instances_3d)
 
-        heatmaps, anno_boxes, gt_inds, gt_masks, corner_heatmaps = self.get_targets(  # noqa: E501
+        heatmaps, anno_boxes, gt_inds, gt_masks, corner_heatmaps, cat_labels = self.get_targets(  # noqa: E501
             batch_gt_instance_3d)
         batch_targets = dict(
             ind=gt_inds,
             mask=gt_masks,
             hm=heatmaps,
             anno_box=anno_boxes,
-            corners=corner_heatmaps)
+            corners=corner_heatmaps,
+            cat=cat_labels)
 
         # FPN
         x = self.blocks[0](x)
@@ -434,10 +443,10 @@ class RPN_transformer_deformable(RPN_transformer_base):
 
         if self.corner and self.corner_head.training:
             corner_hm = self.corner_head(x_up)
-            corner_hm = torch.sigmoid(corner_hm)
+            corner_hm = self._sigmoid(corner_hm)
 
         # find top K center location
-        hm = torch.sigmoid(hm)
+        hm = self._sigmoid(hm)
         batch, num_cls, H, W = hm.size()
 
         scores, labels = torch.max(
@@ -556,7 +565,7 @@ class RPN_transformer_deformable(RPN_transformer_base):
                 - list[torch.Tensor]: Masks indicating which
                     boxes are valid.
         """
-        heatmaps, anno_boxes, inds, masks, corner_heatmaps = multi_apply(
+        heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels = multi_apply(
             self.get_targets_single, batch_gt_instances_3d)
         # Transpose heatmaps
         heatmaps = list(map(list, zip(*heatmaps)))
@@ -573,7 +582,10 @@ class RPN_transformer_deformable(RPN_transformer_base):
         # Transpose inds
         masks = list(map(list, zip(*masks)))
         masks = [torch.stack(masks_) for masks_ in masks]
-        return heatmaps, anno_boxes, inds, masks, corner_heatmaps
+        # Transpose cat_labels
+        cat_labels = list(map(list, zip(*cat_labels)))
+        cat_labels = [torch.stack(labels_) for labels_ in cat_labels]
+        return heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels
 
     def get_targets_single(self,
                            gt_instances_3d: InstanceData) -> Tuple[Tensor]:
@@ -629,9 +641,9 @@ class RPN_transformer_deformable(RPN_transformer_base):
             task_classes.append(torch.cat(task_class).long().to(device))
             flag2 += len(mask)
         draw_gaussian = draw_heatmap_gaussian
-        heatmaps, anno_boxes, inds, masks, corner_heatmaps = [], [], [], [], []
+        heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels = [], [], [], [], [], []
 
-        for idx, task_head in enumerate(self.task_heads):
+        for idx in range(len(self.tasks)):
             heatmap = gt_bboxes_3d.new_zeros(
                 (len(self.class_names[idx]), feature_map_size[1],
                  feature_map_size[0]))
@@ -645,6 +657,7 @@ class RPN_transformer_deformable(RPN_transformer_base):
 
             ind = gt_labels_3d.new_zeros((max_objs), dtype=torch.int64)
             mask = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.uint8)
+            cat_label = gt_bboxes_3d.new_zeros((max_objs), dtype=torch.int64)
 
             num_objs = min(task_boxes[idx].shape[0], max_objs)
 
@@ -727,12 +740,12 @@ class RPN_transformer_deformable(RPN_transformer_base):
 
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
+                    cat_label[new_idx] = cls_id
                     # TODO: support other outdoor dataset
                     # vx, vy = task_boxes[idx][k][7:]
                     rot = task_boxes[idx][k][6]
                     box_dim = task_boxes[idx][k][3:6]
-                    if self.norm_bbox:
-                        box_dim = box_dim.log()
+                    box_dim = box_dim.log()
                     anno_box[new_idx] = torch.cat([
                         center - torch.tensor([x, y], device=device),
                         z.unsqueeze(0), box_dim,
@@ -745,7 +758,8 @@ class RPN_transformer_deformable(RPN_transformer_base):
             anno_boxes.append(anno_box)
             masks.append(mask)
             inds.append(ind)
-        return heatmaps, anno_boxes, inds, masks, corner_heatmaps
+            cat_labels.append(cat_label)
+        return heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels
 
 
 @MODELS.register_module()
