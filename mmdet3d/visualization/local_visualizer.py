@@ -405,18 +405,22 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self,
             points: Union[np.ndarray, Tensor],
             pts2img: np.ndarray,
+            depth_unit: int = 20,
             sizes: Optional[Union[np.ndarray, Tensor, int]] = 10) -> None:
         """Draw projected points on the image.
 
         Args:
-            positions (Union[np.ndarray, torch.Tensor]): Positions to draw.
-            pts2imgs (np,ndarray): The transformatino matrix from the
+            points (Union[np.ndarray, torch.Tensor]): Point clouds
+                in shape (N, C), where C is dimension of each point cloud.
+            pts2img (np,ndarray): The transformatino matrix from the
                 coordinate of point cloud to image plane.
+            depth_unit (int): Unit of depth range division.
+                Defaults to 20.
             sizes (Optional[Union[np.ndarray, torch.Tensor, int]]): The
                 marker size. Default to 10.
         """
         check_type('points', points, (np.ndarray, Tensor))
-        points = tensor2ndarray(points)
+        points = tensor2ndarray(points)[:, :3]
         assert self._image is not None, 'Please set image using `set_image`'
         projected_points = points_cam2img(points, pts2img, with_depth=True)
         mask = np.ones(projected_points.shape[0], dtype=bool)
@@ -428,7 +432,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         mask = np.logical_and(mask, projected_points[:, 1] < self.height - 1)
         projected_points = projected_points[mask]
         depths = depths[mask]
-        colors = (depths % 25) / 25
+        colors = (depths % depth_unit) / depth_unit
         # use colormap to obtain the render color
         color_map = plt.get_cmap('jet')
         self.ax_save.scatter(
