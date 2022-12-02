@@ -1,4 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
+import sys
+
 from mmdet.datasets.builder import build_dataloader
 from .builder import DATASETS, PIPELINES, build_dataset
 from .custom_3d import Custom3DDataset
@@ -28,6 +31,11 @@ from .semantickitti_dataset import SemanticKITTIDataset
 from .sunrgbd_dataset import SUNRGBDDataset
 from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
+
+pwd = os.getcwd()
+sys.path.append(os.path.join(pwd, 'projects/dummy_PETR/mmdet3d_plugin'))
+from datasets.nuscenes_dataset import \
+    PETRNuScenesDataset  # noqa: E402,F401,F403
 
 __all__ = [
     'KittiDataset', 'KittiMonoDataset', 'build_dataloader', 'DATASETS',
