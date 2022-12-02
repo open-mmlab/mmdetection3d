@@ -419,8 +419,16 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         points = tensor2ndarray(points)
         assert self._image is not None, 'Please set image using `set_image`'
         projected_points = points_cam2img(points, pts2img, with_depth=True)
+        mask = np.ones(projected_points.shape[0], dtype=bool)
         depths = projected_points[:, 2]
-        colors = (depths % 20) / 20
+        mask = np.logical_and(mask, depths > 0)
+        mask = np.logical_and(mask, projected_points[:, 0] > 1)
+        mask = np.logical_and(mask, projected_points[:, 0] < self.width - 1)
+        mask = np.logical_and(mask, projected_points[:, 1] > 1)
+        mask = np.logical_and(mask, projected_points[:, 1] < self.height - 1)
+        projected_points = projected_points[mask]
+        depths = depths[mask]
+        colors = (depths % 25) / 25
         # use colormap to obtain the render color
         color_map = plt.get_cmap('jet')
         self.ax_save.scatter(
