@@ -17,7 +17,7 @@ class TestPVRCNN(unittest.TestCase):
         DefaultScope.get_instance('test_pvrcnn', scope_name='mmdet3d')
         setup_seed(0)
         pvrcnn_cfg = get_detector_cfg(
-            'pvrcnn/pvrcnn_8xb2-80e_kitti-3d-3class.py')
+            'pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class.py')
         model = MODELS.build(pvrcnn_cfg)
         num_gt_instance = 2
         packed_inputs = create_detector_inputs(num_gt_instance=num_gt_instance)
