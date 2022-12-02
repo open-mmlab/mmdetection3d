@@ -33,8 +33,8 @@ from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
 pwd = os.getcwd()
-sys.path.append(os.path.join(pwd, 'projects/dummy_PETR/mmdet3d_plugin'))
-from datasets.nuscenes_dataset import \
+sys.path.append(os.path.join(pwd, 'projects/dummy_PETR'))
+from mmdet3d_plugin.datasets.nuscenes_dataset import \
     PETRNuScenesDataset  # noqa: E402,F401,F403
 
 __all__ = [

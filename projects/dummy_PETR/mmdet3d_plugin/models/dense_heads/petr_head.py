@@ -13,10 +13,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from core.bbox.structures.utils import normalize_bbox
 from mmcv.cnn import Conv2d, Linear, bias_init_with_prob
 from mmcv.cnn.bricks.transformer import build_positional_encoding
 from mmcv.runner import force_fp32
+from mmdet3d_plugin.core.bbox.structures.utils import normalize_bbox
 
 from mmdet3d.core.bbox.coders import build_bbox_coder
 from mmdet.core import build_assigner, build_sampler, multi_apply, reduce_mean

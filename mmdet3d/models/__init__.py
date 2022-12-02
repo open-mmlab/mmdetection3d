@@ -32,5 +32,8 @@ __all__ = [
 ]
 
 pwd = os.getcwd()
-sys.path.append(os.path.join(pwd, 'projects/dummy_PETR/mmdet3d_plugin'))
-from models import *  # noqa: F401,E402,F403
+sys.path.append(os.path.join(pwd, 'projects/dummy_PETR'))
+from mmdet3d_plugin.models.backbones import *  # noqa: F401,E402,F403
+from mmdet3d_plugin.models.dense_heads import *  # noqa: F401,E402,F403
+from mmdet3d_plugin.models.detectors import *  # noqa: F401,E402,F403
+from mmdet3d_plugin.models.necks import *  # noqa: F401,E402,F403

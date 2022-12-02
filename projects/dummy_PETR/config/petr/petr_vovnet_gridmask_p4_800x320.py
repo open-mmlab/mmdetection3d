@@ -107,7 +107,7 @@ model = dict(
                 pc_range=point_cloud_range))))
 
 dataset_type = 'PETRNuScenesDataset'
-data_root = 'data/nuscenes/'
+data_root = '/mnt/d/nus/v1.0-mini/'
 
 file_client_args = dict(backend='disk')
 
@@ -252,7 +252,7 @@ evaluation = dict(interval=24, pipeline=test_pipeline)
 find_unused_parameters = False
 
 runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
-load_from = 'ckpts/fcos3d_vovnet_imgbackbone-remapped.pth'
+# load_from = 'ckpts/fcos3d_vovnet_imgbackbone-remapped.pth'
 resume_from = None
 
 # --------------Original---------------
