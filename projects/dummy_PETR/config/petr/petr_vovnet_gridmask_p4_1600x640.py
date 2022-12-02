@@ -1,4 +1,7 @@
-_base_ = ['../_base_/datasets/nus-3d.py', '../_base_/default_runtime.py']
+_base_ = [
+    '../../../../configs/_base_/datasets/nus-3d.py',
+    '../../../../configs/_base_/default_runtime.py'
+]
 backbone_norm_cfg = dict(type='LN', requires_grad=True)
 
 # If point cloud range is changed, the models should also change their point
