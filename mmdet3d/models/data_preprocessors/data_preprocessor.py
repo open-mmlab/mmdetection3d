@@ -103,6 +103,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         self.voxel = voxel
         self.voxel_type = voxel_type
         if voxel:
+            self.voxel_size = voxel_layer['voxel_size']
+            self.point_cloud_range = voxel_layer['point_cloud_range']
+            self.grid_size = self.calculate_grid_size(self.point_cloud_range,
+                                                      self.voxel_size)
             self.voxel_layer = Voxelization(**voxel_layer)
 
     def forward(self,
@@ -327,6 +331,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                             'or a tuple with inputs and data_samples, but got '
                             f'{type(data)}: {data}')
         return batch_pad_shape
+
+    def calculate_grid_size(self, point_cloud_range, voxel_size):
+        point_cloud_range = np.array(point_cloud_range, dtype=np.float32)
+        voxel_size = np.array(voxel_size, dtype=np.float32)
+        grid_size = (point_cloud_range[3:] -
+                     point_cloud_range[:3]) / voxel_size
+        grid_size = np.round(grid_size).astype(np.int64)
+        return grid_size
 
     @torch.no_grad()
     def voxelize(self, points: List[torch.Tensor]) -> Dict[str, torch.Tensor]:

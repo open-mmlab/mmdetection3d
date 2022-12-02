@@ -37,8 +37,8 @@ train_pipeline = [
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05]),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointsRangeFilter'),
+    dict(type='ObjectRangeFilter'),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -58,8 +58,7 @@ test_pipeline = [
                 scale_ratio_range=[1., 1.],
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+            dict(type='PointsRangeFilter')
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -84,6 +83,7 @@ train_dataloader = dict(
             data_prefix=dict(pts='training/velodyne_reduced'),
             pipeline=train_pipeline,
             modality=input_modality,
+            point_cloud_range=point_cloud_range,
             test_mode=False,
             metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
@@ -102,6 +102,7 @@ val_dataloader = dict(
         ann_file='kitti_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
+        point_cloud_range=point_cloud_range,
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR'))
@@ -118,6 +119,7 @@ test_dataloader = dict(
         ann_file='kitti_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
+        point_cloud_range=point_cloud_range,
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR'))

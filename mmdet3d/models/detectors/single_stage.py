@@ -49,6 +49,11 @@ class SingleStage3DDetector(Base3DDetector):
             self.neck = MODELS.build(neck)
         bbox_head.update(train_cfg=train_cfg)
         bbox_head.update(test_cfg=test_cfg)
+
+        if hasattr(self.data_preprocessor, 'point_cloud_range'):
+            bbox_head.update(
+                point_cloud_range=self.data_preprocessor.point_cloud_range)
+
         self.bbox_head = MODELS.build(bbox_head)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg

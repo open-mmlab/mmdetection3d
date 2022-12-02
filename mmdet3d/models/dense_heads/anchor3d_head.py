@@ -58,6 +58,7 @@ class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
                      rotations=[0, 1.57],
                      custom_values=[],
                      reshape_out=False),
+                 point_cloud_range: List[float] = None,
                  assigner_per_size: bool = False,
                  assign_per_class: bool = False,
                  diff_rad_by_sin: bool = True,
@@ -93,6 +94,9 @@ class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
             'dir_offset and dir_limit_offset will be depressed and be '
             'incorporated into box coder in the future')
         self.fp16_enabled = False
+
+        if point_cloud_range is not None:
+            anchor_generator.update(point_cloud_range=point_cloud_range)
 
         # build anchor generator
         self.prior_generator = TASK_UTILS.build(anchor_generator)
