@@ -106,7 +106,7 @@ model = dict(
                 pc_range=point_cloud_range))))
 
 dataset_type = 'PETRNuScenesDataset'
-data_root = '/mnt/d/nus/v1.0-mini/'
+data_root = 'data/nuscenes/'
 
 file_client_args = dict(backend='disk')
 
