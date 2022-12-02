@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-from mmdet3d.datasets.builder import DATASETS
+
+from mmdet3d.datasets.builder import DATASETS  # noqa: F401
 from mmdet3d.datasets.nuscenes_dataset import NuScenesDataset
 
 

@@ -1,6 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet.core.bbox import build_bbox_coder
-from .nms_free_coder import NMSFreeCoder
+from .nms_free_coder import NMSFreeCoder  # noqa: F401
 
-    'NMSFreeCoder'
-]
+__all__ = ['NMSFreeCoder']

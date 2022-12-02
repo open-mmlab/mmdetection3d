@@ -13,6 +13,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from core.bbox.structures.utils import normalize_bbox
 from mmcv.cnn import Conv2d, Linear, bias_init_with_prob
 from mmcv.cnn.bricks.transformer import build_positional_encoding
 from mmcv.runner import force_fp32
@@ -23,7 +24,6 @@ from mmdet.models import HEADS, build_loss
 from mmdet.models.dense_heads.anchor_free_head import AnchorFreeHead
 from mmdet.models.utils import NormedLinear, build_transformer
 from mmdet.models.utils.transformer import inverse_sigmoid
-from core.bbox.structures.utils import normalize_bbox
 
 
 def pos2posemb3d(pos, num_pos_feats=128, temperature=10000):

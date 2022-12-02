@@ -1,19 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import mmcv
 import numpy as np
 import torch
-import mmcv
-from mmcv import is_tuple_of
-from mmcv.utils import build_from_cfg
 from PIL import Image
 
 import mmdet3d
-from mmdet3d.core import VoxelGenerator
-from mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
-                               LiDARInstance3DBoxes, box_np_ops, limit_period)
-from mmdet3d.datasets.builder import OBJECTSAMPLERS, PIPELINES
-from mmdet3d.datasets.pipelines.compose import Compose
-from mmdet.datasets.pipelines import RandomCrop, RandomFlip, Rotate
-from mmdet3d.datasets.builder import OBJECTSAMPLERS, PIPELINES
+from mmdet3d.core.bbox import LiDARInstance3DBoxes, limit_period
+from mmdet3d.datasets.builder import PIPELINES
 
 
 @PIPELINES.register_module()

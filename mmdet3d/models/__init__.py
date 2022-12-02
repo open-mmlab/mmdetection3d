@@ -22,15 +22,15 @@ from .roi_heads import *  # noqa: F401,F403
 from .segmentors import *  # noqa: F401,F403
 from .voxel_encoders import *  # noqa: F401,F403
 
-pwd = os.getcwd()
-sys.path.append(os.path.join(pwd, 'projects/dummy_PETR/mmdet3d_plugin'))
-from models import *  # noqa: E402,F401,F403
-pwd = os.getcwd()
-sys.path.append(os.path.join(pwd,'projects/dummy_PETR/mmdet3d_plugin'))
-from models import *  # noqa: F401,F403
-
+__all__ = [
+    'BACKBONES', 'NECKS', 'ROI_EXTRACTORS', 'SHARED_HEADS', 'HEADS', 'LOSSES',
+    'DETECTORS', 'SEGMENTORS', 'VOXEL_ENCODERS', 'MIDDLE_ENCODERS',
     'FUSION_LAYERS', 'build_backbone', 'build_neck', 'build_roi_extractor',
     'build_shared_head', 'build_head', 'build_loss', 'build_detector',
     'build_fusion_layer', 'build_model', 'build_middle_encoder',
     'build_voxel_encoder'
 ]
+
+pwd = os.getcwd()
+sys.path.append(os.path.join(pwd, 'projects/dummy_PETR/mmdet3d_plugin'))
+from models import *  # noqa: F401,E402,F403
