@@ -256,7 +256,8 @@ args = parser.parse_args()
 if __name__ == '__main__':
     from mmdet3d.utils import register_all_modules
     register_all_modules()
-
+    
+    # Set to spawn mode to avoid stuck when process dataset creating
     import multiprocessing
     multiprocessing.set_start_method('spawn')
 
