@@ -252,6 +252,7 @@ runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
 load_from = 'ckpts/fcos3d_vovnet_imgbackbone-remapped.pth'
 resume_from = None
 
+# --------------Original---------------
 # mAP: 0.3778
 # mATE: 0.7463
 # mASE: 0.2718
@@ -273,3 +274,26 @@ resume_from = None
 # bicycle 0.341   0.609   0.270   0.812   0.455   0.017
 # traffic_cone    0.531   0.582   0.320   nan     nan     nan
 # barrier 0.472   0.673   0.281   0.145   nan     nan
+
+# --------------Refactored---------------
+# mAP: 0.3827
+# mATE: 0.7375
+# mASE: 0.2703
+# mAOE: 0.4799
+# mAVE: 0.8699
+# mAAE: 0.2038
+# NDS: 0.4352
+# Eval time: 124.8s
+
+# Per-class results:
+# Object Class	  AP	  ATE	  ASE	  AOE	  AVE	  AAE
+# car	  0.574	  0.519	  0.150	  0.087	  0.865	  0.206
+# truck	  0.349	  0.773	  0.213	  0.117	  0.855	  0.220
+# bus	  0.423	  0.781	  0.204	  0.122	  1.902	  0.319
+# trailer 0.219	  1.034	  0.231	  0.608	  0.830	  0.149
+# construction_vehicle	  0.084	  1.062	  0.486	  1.245	  0.172	  0.360
+# pedestrian	  0.452	  0.681	  0.293	  0.646	  0.529	  0.231
+# motorcycle	  0.378	  0.670	  0.250	  0.567	  1.334	  0.130
+# bicycle	      0.347	  0.639	  0.264	  0.788	  0.472	  0.016
+# traffic_cone	  0.538	  0.553	  0.325	  nan	  nan	  nan
+# barrier	      0.464	  0.662	 0.287	  0.137	  nan	  nan
