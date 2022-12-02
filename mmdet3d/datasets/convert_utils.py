@@ -253,6 +253,7 @@ def get_kitti_style_2d_boxes(info: dict,
         # transform the center from [0.5, 1.0, 0.5] to [0.5, 0.5, 0.5]
         dst = np.array([0.5, 0.5, 0.5])
         src = np.array([0.5, 1.0, 0.5])
+        # gravity center
         loc_center = loc + dim * (dst - src)
         gt_bbox_3d = np.concatenate([loc_center, dim, rot],
                                     axis=1).astype(np.float32)
@@ -291,6 +292,7 @@ def get_kitti_style_2d_boxes(info: dict,
 
         # If mono3d=True, add 3D annotations in camera coordinates
         if mono3d and (repro_rec is not None):
+            # use bottom center to represent the bbox_3d
             repro_rec['bbox_3d'] = np.concatenate(
                 [loc, dim, rot], axis=1).astype(np.float32).squeeze().tolist()
             repro_rec['velocity'] = -1  # no velocity in KITTI
