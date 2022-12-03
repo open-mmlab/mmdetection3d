@@ -6,17 +6,15 @@ from mmdet3d.models.task_modules.voxel import VoxelGenerator
 
 def test_voxel_generator():
     np.random.seed(0)
-    voxel_size = [0.5, 0.5, 0.5]
-    point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-    max_num_points = 1000
+    voxel_size = [5, 5, 1]
+    point_cloud_range = [0, 0, 0, 20, 40, 4]
+    max_num_points = 5
     self = VoxelGenerator(voxel_size, point_cloud_range, max_num_points)
-    points = np.random.rand(1000, 4)
+    points = np.random.uniform(0, 4, (20, 3))
     voxels = self.generate(points)
     voxels, coors, num_points_per_voxel = voxels
-    expected_coors = np.array([[7, 81, 1], [6, 81, 0], [7, 80, 1], [6, 81, 1],
-                               [7, 81, 0], [6, 80, 1], [7, 80, 0], [6, 80, 0]])
-    expected_num_points_per_voxel = np.array(
-        [120, 121, 127, 134, 115, 127, 125, 131])
-    assert voxels.shape == (8, 1000, 4)
+    expected_coors = np.array([[2, 0, 0], [3, 0, 0], [0, 0, 0], [1, 0, 0]])
+    expected_num_points_per_voxel = np.array([5, 5, 5, 3])
+    assert voxels.shape == (4, 5, 3)
     assert np.all(coors == expected_coors)
     assert np.all(num_points_per_voxel == expected_num_points_per_voxel)

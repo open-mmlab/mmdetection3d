@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from mmdet.models.detectors import BaseDetector
 
 from mmdet3d.models.layers.fusion_layers.point_fusion import (point_sample,
                                                               voxel_sample)
@@ -8,7 +9,6 @@ from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d.utils import get_lidar2img
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import ConfigType, OptConfigType
-from mmdet.models.detectors import BaseDetector
 from .dfm import DfM
 from .imvoxelnet import ImVoxelNet
 

@@ -58,5 +58,4 @@ train_pipeline = [
 train_dataloader = dict(batch_size=8, dataset=dict(pipeline=train_pipeline))
 
 # runtime settings
-val_cfg = dict(interval=1)
-train_cfg = dict(by_epoch=True, max_epochs=200)
+train_cfg = dict(by_epoch=True, max_epochs=200, val_interval=1)

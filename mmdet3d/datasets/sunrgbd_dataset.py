@@ -24,13 +24,13 @@ class SUNRGBDDataset(Det3DDataset):
         ann_file (str): Path of annotation file.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optiona;): Prefix for data. Defaults to
+        data_prefix (dict): Prefix for data. Defaults to
             dict(pts='points',img='sunrgbd_trainval').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_camera=True, use_lidar=True).
-        default_cam_key (str, optional): The default camera name adopted.
+        pipeline (List[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_camera=True, use_lidar=True).
+        default_cam_key (str): The default camera name adopted.
             Defaults to 'CAM0'.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
@@ -40,13 +40,13 @@ class SUNRGBDDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
+        filter_empty_gt (bool): Whether to filter empty GT.
             Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
+        'classes': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
                     'dresser', 'night_stand', 'bookshelf', 'bathtub')
     }
 
@@ -58,11 +58,11 @@ class SUNRGBDDataset(Det3DDataset):
                      pts='points', img='sunrgbd_trainval/image'),
                  pipeline: List[Union[dict, Callable]] = [],
                  default_cam_key: str = 'CAM0',
-                 modality=dict(use_camera=True, use_lidar=True),
+                 modality: dict = dict(use_camera=True, use_lidar=True),
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
-                 **kwargs):
+                 **kwargs) -> None:
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -121,7 +121,7 @@ class SUNRGBDDataset(Det3DDataset):
         return info
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Info dict.

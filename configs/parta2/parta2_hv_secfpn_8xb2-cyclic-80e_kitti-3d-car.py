@@ -1,4 +1,4 @@
-_base_ = './PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py'
+_base_ = './parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py'
 
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # velodyne coordinates, x, y, z
 
@@ -124,19 +124,15 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
     dataset=dict(
         dataset=dict(
-            pipeline=train_pipeline, metainfo=dict(CLASSES=class_names))))
+            pipeline=train_pipeline, metainfo=dict(classes=class_names))))
 test_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
-val_dataloader = dict(dataset=dict(metainfo=dict(CLASSES=class_names)))
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
+val_dataloader = dict(dataset=dict(metainfo=dict(classes=class_names)))
 find_unused_parameters = True

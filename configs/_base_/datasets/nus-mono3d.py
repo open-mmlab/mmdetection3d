@@ -4,7 +4,7 @@ class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=False, use_camera=True)
@@ -65,7 +65,7 @@ train_dataloader = dict(
             CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
             CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         ann_file='nuscenes_infos_train.pkl',
-        task='mono_det',
+        load_type='mv_image_based',
         pipeline=train_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -92,7 +92,7 @@ val_dataloader = dict(
             CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
             CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         ann_file='nuscenes_infos_val.pkl',
-        task='mono_det',
+        load_type='mv_image_based',
         pipeline=test_pipeline,
         modality=input_modality,
         metainfo=metainfo,

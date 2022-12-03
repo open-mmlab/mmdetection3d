@@ -6,13 +6,13 @@ import mmcv
 import mmengine
 import numpy as np
 from mmcv.ops import roi_align
+from mmdet.evaluation import bbox_overlaps
 from mmengine import track_iter_progress
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 
 from mmdet3d.datasets import build_dataset
 from mmdet3d.structures.ops import box_np_ops as box_np_ops
-from mmdet.evaluation import bbox_overlaps
 
 
 def _poly2mask(mask_ann, img_h, img_w):
@@ -243,7 +243,7 @@ def create_groundtruth_database(dataset_class_name,
         image_idx = example['sample_idx']
         points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
-        names = [dataset.metainfo['CLASSES'][i] for i in annos['gt_labels_3d']]
+        names = [dataset.metainfo['classes'][i] for i in annos['gt_labels_3d']]
         group_dict = dict()
         if 'group_ids' in annos:
             group_ids = annos['group_ids']
@@ -409,7 +409,7 @@ class GTDatabaseCreater:
         points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
         names = [
-            self.dataset.metainfo['CLASSES'][i] for i in annos['gt_labels_3d']
+            self.dataset.metainfo['classes'][i] for i in annos['gt_labels_3d']
         ]
         group_dict = dict()
         if 'group_ids' in annos:

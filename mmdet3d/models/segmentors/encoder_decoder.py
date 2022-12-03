@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -40,10 +40,10 @@ class EncoderDecoder3D(Base3DSegmentor):
 
     .. code:: text
 
-     predict(): inference() -> postprocess_result()
-     inference(): whole_inference()/slide_inference()
-     whole_inference()/slide_inference(): encoder_decoder()
-     encoder_decoder(): extract_feat() -> decode_head.predict()
+    predict(): inference() -> postprocess_result()
+    inference(): whole_inference()/slide_inference()
+    whole_inference()/slide_inference(): encoder_decoder()
+    encoder_decoder(): extract_feat() -> decode_head.predict()
 
     4 The ``_forward`` method is used to output the tensor by running the model,
     which includes two steps: (1) Extracts features to obtain the feature maps
@@ -51,7 +51,7 @@ class EncoderDecoder3D(Base3DSegmentor):
 
     .. code:: text
 
-     _forward(): extract_feat() -> _decode_head.forward()
+    _forward(): extract_feat() -> _decode_head.forward()
 
     Args:
 
@@ -65,10 +65,10 @@ class EncoderDecoder3D(Base3DSegmentor):
             loass. Defaults to None.
         train_cfg (OptConfigType): The config for training. Defaults to None.
         test_cfg (OptConfigType): The config for testing. Defaults to None.
-        data_preprocessor (dict, optional): The pre-process config of
-            :class:`BaseDataPreprocessor`.
-        init_cfg (dict, optional): The weight initialized config for
-            :class:`BaseModule`.
+        data_preprocessor (OptConfigType): The pre-process config of
+            :class:`BaseDataPreprocessor`. Defaults to None.
+        init_cfg (OptMultiConfig): The weight initialized config for
+            :class:`BaseModule`. Defaults to None.
     """  # noqa: E501
 
     def __init__(self,
@@ -80,7 +80,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  data_preprocessor: OptConfigType = None,
-                 init_cfg: OptMultiConfig = None):
+                 init_cfg: OptMultiConfig = None) -> None:
         super(EncoderDecoder3D, self).__init__(
             data_preprocessor=data_preprocessor, init_cfg=init_cfg)
         self.backbone = MODELS.build(backbone)
@@ -122,15 +122,15 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.loss_regularization = MODELS.build(loss_regularization)
 
-    def extract_feat(self, batch_inputs) -> List[Tensor]:
+    def extract_feat(self, batch_inputs: Tensor) -> Tensor:
         """Extract features from points."""
         x = self.backbone(batch_inputs)
         if self.with_neck:
             x = self.neck(x)
         return x
 
-    def encode_decode(self, batch_inputs: torch.Tensor,
-                      batch_input_metas: List[dict]) -> List[Tensor]:
+    def encode_decode(self, batch_inputs: Tensor,
+                      batch_input_metas: List[dict]) -> Tensor:
         """Encode points with backbone and decode into a semantic segmentation
         map of the same size as input.
 
@@ -178,7 +178,7 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return losses
 
-    def _loss_regularization_forward_train(self):
+    def _loss_regularization_forward_train(self) -> dict:
         """Calculate regularization loss for model weight in training."""
         losses = dict()
         if isinstance(self.loss_regularization, nn.ModuleList):
@@ -203,7 +203,7 @@ class EncoderDecoder3D(Base3DSegmentor):
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
                 - imgs (torch.Tensor, optional): Image tensor has shape
-                    (B, C, H, W).
+                  (B, C, H, W).
             batch_data_samples (list[:obj:`Det3DDataSample`]): The det3d
                 data samples. It usually includes information such
                 as `metainfo` and `gt_pts_sem_seg`.
@@ -213,7 +213,8 @@ class EncoderDecoder3D(Base3DSegmentor):
         """
 
         # extract features using backbone
-        x = self.extract_feat(batch_inputs_dict)
+        points = torch.stack(batch_inputs_dict['points'])
+        x = self.extract_feat(points)
 
         losses = dict()
 
@@ -236,7 +237,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                           patch_center: Tensor,
                           coord_max: Tensor,
                           feats: Tensor,
-                          use_normalized_coord: bool = False):
+                          use_normalized_coord: bool = False) -> Tensor:
         """Generating model input.
 
         Generate input by subtracting patch center and adding additional
@@ -273,7 +274,7 @@ class EncoderDecoder3D(Base3DSegmentor):
                                   block_size: float,
                                   sample_rate: float = 0.5,
                                   use_normalized_coord: bool = False,
-                                  eps: float = 1e-3):
+                                  eps: float = 1e-3) -> Tuple[Tensor, Tensor]:
         """Sampling points in a sliding window fashion.
 
         First sample patches to cover all the input points.
@@ -291,12 +292,12 @@ class EncoderDecoder3D(Base3DSegmentor):
                 points coverage. Defaults to 1e-3.
 
         Returns:
-            np.ndarray | np.ndarray:
+            tuple:
 
                 - patch_points (torch.Tensor): Points of different patches of
-                    shape [K, N, 3+C].
+                  shape [K, N, 3+C].
                 - patch_idxs (torch.Tensor): Index of each point in
-                    `patch_points`, of shape [K, N].
+                  `patch_points`, of shape [K, N].
         """
         device = points.device
         # we assume the first three dims are points' 3D coordinates
@@ -372,7 +373,7 @@ class EncoderDecoder3D(Base3DSegmentor):
         return patch_points, patch_idxs
 
     def slide_inference(self, point: Tensor, img_meta: List[dict],
-                        rescale: bool):
+                        rescale: bool) -> Tensor:
         """Inference by sliding-window with overlap.
 
         Args:
@@ -417,14 +418,14 @@ class EncoderDecoder3D(Base3DSegmentor):
         return preds.transpose(0, 1)  # to [num_classes, K*N]
 
     def whole_inference(self, points: Tensor, input_metas: List[dict],
-                        rescale: bool):
+                        rescale: bool) -> Tensor:
         """Inference with full scene (one forward pass without sliding)."""
         seg_logit = self.encode_decode(points, input_metas)
         # TODO: if rescale and voxelization segmentor
         return seg_logit
 
     def inference(self, points: Tensor, input_metas: List[dict],
-                  rescale: bool):
+                  rescale: bool) -> Tensor:
         """Inference with slide/whole style.
 
         Args:
@@ -489,7 +490,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             seg_map = seg_map.cpu()
             seg_pred_list.append(seg_map)
 
-        return self.postprocess_result(seg_pred_list, batch_input_metas)
+        return self.postprocess_result(seg_pred_list, batch_data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,
@@ -502,7 +503,7 @@ class EncoderDecoder3D(Base3DSegmentor):
 
                 - points (list[torch.Tensor]): Point cloud of each sample.
                 - imgs (torch.Tensor, optional): Image tensor has shape
-                    (B, C, H, W).
+                  (B, C, H, W).
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
                 data samples. It usually includes information such
                 as `metainfo` and `gt_pts_sem_seg`.
@@ -510,7 +511,8 @@ class EncoderDecoder3D(Base3DSegmentor):
         Returns:
             Tensor: Forward output of model without any post-processes.
         """
-        x = self.extract_feat(batch_inputs_dict)
+        points = torch.stack(batch_inputs_dict['points'])
+        x = self.extract_feat(points)
         return self.decode_head.forward(x)
 
     def aug_test(self, batch_inputs, batch_img_metas):

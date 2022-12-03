@@ -26,7 +26,7 @@
 
 **News**:
 
-**v1.1.0rc1** was released in 11/10/2022
+**v1.1.0rc2** was released in 2/12/2022
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
 
@@ -60,7 +60,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 
 - **High efficiency**
 
-  It trains faster than other codebases. The main results are as below. Details can be found in [benchmark.md](./docs/en/benchmarks.md). We compare the number of samples trained per second (the higher, the better). The models that are not supported by other codebases are marked by `×`.
+  It trains faster than other codebases. The main results are as below. Details can be found in [benchmark.md](./docs/en/notes/benchmarks.md). We compare the number of samples trained per second (the higher, the better). The models that are not supported by other codebases are marked by `×`.
 
   |       Methods       | MMDetection3D | [OpenPCDet](https://github.com/open-mmlab/OpenPCDet) | [votenet](https://github.com/facebookresearch/votenet) | [Det3D](https://github.com/poodarchu/Det3D) |
   | :-----------------: | :-----------: | :--------------------------------------------------: | :----------------------------------------------------: | :-----------------------------------------: |
@@ -78,7 +78,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-**1.1.0rc1** was released in 11/10/2022.
+**1.1.0rc2** was released in 2/12/2022.
 
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 
@@ -159,12 +159,14 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/point_rcnn">PointRCNN (CVPR'2019)</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
+            <li><a href="configs/pv_rcnn">PV-RCNN (CVPR'2020)</a></li>
         </ul>
         <li><b>Indoor</b></li>
         <ul>
             <li><a href="configs/votenet">VoteNet (ICCV'2019)</a></li>
             <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
             <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
+            <li><a href="configs/fcaf3d">FCAF3D (ECCV'2022)</a></li>
       </ul>
       </td>
       <td>
@@ -202,31 +204,33 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
   </tbody>
 </table>
 
-|               | ResNet | ResNeXt | SENet | PointNet++ | DGCNN | HRNet | RegNetX | Res2Net | DLA |
-| ------------- | :----: | :-----: | :---: | :--------: | :---: | :---: | :-----: | :-----: | :-: |
-| SECOND        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| PointPillars  |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| FreeAnchor    |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| VoteNet       |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| H3DNet        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| 3DSSD         |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| Part-A2       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| MVXNet        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| CenterPoint   |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| SSN           |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |
-| ImVoteNet     |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| FCOS3D        |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| PointNet++    |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| Group-Free-3D |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| ImVoxelNet    |   ✓    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| PAConv        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |
-| DGCNN         |   ✗    |    ✗    |   ✗   |     ✗      |   ✓   |   ✗   |    ✗    |    ✗    |  ✗  |
-| SMOKE         |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
-| PGD           |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
-| MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |
-| SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |
+|               | ResNet | ResNeXt | SENet | PointNet++ | DGCNN | HRNet | RegNetX | Res2Net | DLA | MinkResNet |
+| ------------- | :----: | :-----: | :---: | :--------: | :---: | :---: | :-----: | :-----: | :-: | :--------: |
+| SECOND        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| PointPillars  |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| FreeAnchor    |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| VoteNet       |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| H3DNet        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| 3DSSD         |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| Part-A2       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| MVXNet        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| CenterPoint   |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| SSN           |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ✓    |    ☐    |  ✗  |     ✗      |
+| ImVoteNet     |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| FCOS3D        |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| PointNet++    |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| Group-Free-3D |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| ImVoxelNet    |   ✓    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| PAConv        |   ✗    |    ✗    |   ✗   |     ✓      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| DGCNN         |   ✗    |    ✗    |   ✗   |     ✗      |   ✓   |   ✗   |    ✗    |    ✗    |  ✗  |     ✗      |
+| SMOKE         |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
+| PGD           |   ✓    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
+| SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
+| FCAF3D        |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✓      |
+| PV-RCNN       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
 
-**Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/en/model_zoo.md) can be trained or used in this codebase.
+**Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 
 ## Installation
 
@@ -234,7 +238,7 @@ Please refer to [getting_started.md](docs/en/getting_started.md) for installatio
 
 ## Get Started
 
-Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/user_guides/1_exist_data_model.md) and [with customized dataset](docs/en/user_guides/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/user_guides/config.md), [adding new dataset](docs/en/advanced_guides/customize_dataset.md), [designing data pipeline](docs/en/user_guides/data_pipeline.md), [customizing models](docs/en/advanced_guides/customize_models.md), [customizing runtime settings](docs/en/advanced_guides/customize_runtime.md) and [Waymo dataset](docs/en/advanced_guides/datasets/waymo_det.md).
+Please see [getting_started.md](docs/en/getting_started.md) for the basic usage of MMDetection3D. We provide guidance for quick run [with existing dataset](docs/en/user_guides/train_test.md) and [with new dataset](docs/en/user_guides/2_new_data_model.md) for beginners. There are also tutorials for [learning configuration systems](docs/en/user_guides/config.md), [customizing dataset](docs/en/advanced_guides/customize_dataset.md), [designing data pipeline](docs/en/user_guides/data_pipeline.md), [customizing models](docs/en/advanced_guides/customize_models.md), [customizing runtime settings](docs/en/advanced_guides/customize_runtime.md) and [Waymo dataset](docs/en/advanced_guides/datasets/waymo_det.md).
 
 Please refer to [FAQ](docs/en/notes/faq.md) for frequently asked questions. When updating the version of MMDetection3D, please also check the [compatibility doc](docs/en/notes/compatibility.md) to be aware of the BC-breaking updates introduced in each version.
 
@@ -264,11 +268,13 @@ We wish that the toolbox and benchmark could serve the growing research communit
 
 - [MMEngine](https://github.com/open-mmlab/mmengine): OpenMMLab foundational library for training deep learning models.
 - [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab foundational library for computer vision.
+- [MMEval](https://github.com/open-mmlab/mmeval): A unified evaluation library for multiple machine learning libraries.
 - [MIM](https://github.com/open-mmlab/mim): MIM installs OpenMMLab packages.
 - [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab image classification toolbox and benchmark.
 - [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab detection toolbox and benchmark.
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab's next-generation platform for general 3D object detection.
 - [MMRotate](https://github.com/open-mmlab/mmrotate): OpenMMLab rotated object detection toolbox and benchmark.
+- [MMYOLO](https://github.com/open-mmlab/mmyolo): OpenMMLab YOLO series toolbox and benchmark.
 - [MMSegmentation](https://github.com/open-mmlab/mmsegmentation): OpenMMLab semantic segmentation toolbox and benchmark.
 - [MMOCR](https://github.com/open-mmlab/mmocr): OpenMMLab text detection, recognition, and understanding toolbox.
 - [MMPose](https://github.com/open-mmlab/mmpose): OpenMMLab pose estimation toolbox and benchmark.

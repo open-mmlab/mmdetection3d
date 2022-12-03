@@ -44,7 +44,7 @@ The arguments:
 - `type`: The name of the corresponding metric, usually associated with the dataset.
 - `ann_file`: The path of annotation file.
 - `pklfile_prefix`: An optional argument. The filename of the output results in pickle format. If not specified, the results will not be saved to a file.
-- `submission_prefix`: An optional argument. The the results will not be saved to a file then you can upload it to do the official evaluation.
+- `submission_prefix`: An optional argument. The results will be saved to a file then you can upload it to do the official evaluation.
 
 Examples:
 
@@ -70,7 +70,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
 
    ```shell
    python tools/test.py configs/votenet/votenet_8xb8_scannet-3d.py \
-       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth \
+       checkpoints/votenet_8x8_scannet-3d-18class_20200620_230238-2cea9c3a.pth
    ```
 
 4. Test SECOND on KITTI with 8 GPUs, and evaluate the mAP.
@@ -243,17 +243,17 @@ If you use launch training jobs with Slurm, there are two ways to specify the po
    In `config1.py`,
 
    ```python
-    env_cfg = dict(
-        dist_cfg=dict(backend='nccl', port=29500)
-    )
+   env_cfg = dict(
+       dist_cfg=dict(backend='nccl', port=29500)
+   )
    ```
 
    In `config2.py`,
 
    ```python
-    env_cfg = dict(
-        dist_cfg=dict(backend='nccl', port=29500)
-    )
+   env_cfg = dict(
+       dist_cfg=dict(backend='nccl', port=29501)
+   )
    ```
 
    Then you can launch two jobs with `config1.py` and `config2.py`.

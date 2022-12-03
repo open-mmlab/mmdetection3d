@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmengine.registry import MODELS
+from torch import Tensor
 from torch import distributed as dist
 from torch import nn as nn
 from torch.autograd.function import Function
@@ -9,7 +10,7 @@ from torch.autograd.function import Function
 class AllReduce(Function):
 
     @staticmethod
-    def forward(ctx, input):
+    def forward(ctx, input: Tensor) -> Tensor:
         input_list = [
             torch.zeros_like(input) for k in range(dist.get_world_size())
         ]
@@ -19,7 +20,7 @@ class AllReduce(Function):
         return torch.sum(inputs, dim=0)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, grad_output: Tensor) -> Tensor:
         dist.all_reduce(grad_output, async_op=False)
         return grad_output
 
@@ -43,20 +44,18 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
         It is slower than `nn.SyncBatchNorm`.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fp16_enabled = False
+    def __init__(self, *args: list, **kwargs: dict) -> None:
+        super(NaiveSyncBatchNorm1d, self).__init__(*args, **kwargs)
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
         """
         Args:
-            input (tensor): Has shape (N, C) or (N, C, L), where N is
+            input (Tensor): Has shape (N, C) or (N, C, L), where N is
                 the batch size, C is the number of features or
                 channels, and L is the sequence length
 
         Returns:
-            tensor: Has shape (N, C) or (N, C, L), has same shape
-            as input.
+            Tensor: Has shape (N, C) or (N, C, L), same shape as input.
         """
         assert input.dtype == torch.float32, \
             f'input should be in float32 type, got {input.dtype}'
@@ -112,17 +111,16 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
         It is slower than `nn.SyncBatchNorm`.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fp16_enabled = False
+    def __init__(self, *args: list, **kwargs: dict) -> None:
+        super(NaiveSyncBatchNorm2d, self).__init__(*args, **kwargs)
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
         """
         Args:
-            Input (tensor): Feature has shape (N, C, H, W).
+            Input (Tensor): Feature has shape (N, C, H, W).
 
         Returns:
-            tensor: Has shape (N, C, H, W), same shape as input.
+            Tensor: Has shape (N, C, H, W), same shape as input.
         """
         assert input.dtype == torch.float32, \
             f'input should be in float32 type, got {input.dtype}'

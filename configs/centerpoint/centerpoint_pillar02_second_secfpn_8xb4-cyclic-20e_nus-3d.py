@@ -7,6 +7,9 @@ _base_ = [
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+# Using calibration info convert the Lidar-coordinate point cloud range to the
+# ego-coordinate point cloud range could bring a little promotion in nuScenes.
+# point_cloud_range = [-51.2, -52, -5.0, 51.2, 50.4, 3.0]
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -126,7 +129,7 @@ train_dataloader = dict(
             data_root=data_root,
             ann_file='nuscenes_infos_train.pkl',
             pipeline=train_pipeline,
-            metainfo=dict(CLASSES=class_names),
+            metainfo=dict(classes=class_names),
             test_mode=False,
             data_prefix=data_prefix,
             use_valid_flag=True,
@@ -134,8 +137,8 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')))
 test_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
 val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(CLASSES=class_names)))
+    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
 
 train_cfg = dict(val_interval=20)

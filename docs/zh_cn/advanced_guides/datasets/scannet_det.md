@@ -1,8 +1,8 @@
-# 3D 目标检测 Scannet 数据集
+# 3D 目标检测 ScanNet 数据集
 
 ## 数据集准备
 
-请参考 ScanNet 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md/)以查看总体流程。
+请参考 ScanNet 的[指南](https://github.com/open-mmlab/mmdetection3d/blob/master/data/scannet/README.md)以查看总体流程。
 
 ### 提取 ScanNet 点云数据
 
@@ -32,10 +32,10 @@ mmdetection3d
 
 在 `scans` 文件夹下总共有 1201 个训练样本文件夹和 312 个验证样本文件夹，其中存有未处理的点云数据和相关的标注。比如说，在文件夹 `scene0001_01` 下文件是这样组织的：
 
-- `scene0001_01_vh_clean_2.ply`: 存有每个顶点坐标和颜色的网格文件。网格的顶点被直接用作未处理的点云数据。
-- `scene0001_01.aggregation.json`: 包含物体 ID、分割部分 ID、标签的标注文件。
-- `scene0001_01_vh_clean_2.0.010000.segs.json`: 包含分割部分 ID 和顶点的分割标注文件。
-- `scene0001_01.txt`: 包括对齐矩阵等的元文件。
+- `scene0001_01_vh_clean_2.ply`：存有每个顶点坐标和颜色的网格文件。网格的顶点被直接用作未处理的点云数据。
+- `scene0001_01.aggregation.json`：包含物体 ID、分割部分 ID、标签的标注文件。
+- `scene0001_01_vh_clean_2.0.010000.segs.json`：包含分割部分 ID 和顶点的分割标注文件。
+- `scene0001_01.txt`：包括对齐矩阵等的元文件。
 - `scene0001_01_vh_clean_2.labels.ply`：包含每个顶点类别的标注文件。
 
 通过运行 `python batch_load_scannet_data.py` 来提取 ScanNet 数据。主要步骤包括：
@@ -227,21 +227,15 @@ scannet
 - `semantic_mask/xxxxx.bin`：每个点的语义标签，值的范围为：\[1, 40\], 也就是 `nyu40id` 的标准。请注意：在训练流程 `PointSegClassMapping` 中，`nyu40id` 的 ID 会被映射到训练 ID。
 - `posed_images/scenexxxx_xx`：`.jpg` 图像的集合，还包含 `.txt` 格式的 4x4 相机姿态和单个 `.txt` 格式的相机内参矩阵文件。
 - `scannet_infos_train.pkl`：训练集的数据信息，每个场景的具体信息如下：
-  - info\['point_cloud'\]：`{'num_features': 6, 'lidar_idx': sample_idx}`，其中 `sample_idx` 为该场景的索引。
-  - info\['pts_path'\]：`points/xxxxx.bin` 的路径。
-  - info\['pts_instance_mask_path'\]：`instance_mask/xxxxx.bin` 的路径。
-  - info\['pts_semantic_mask_path'\]：`semantic_mask/xxxxx.bin` 的路径。
-  - info\['annos'\]：每个场景的标注。
-    - annotations\['gt_num'\]：真实物体 (ground truth) 的数量。
-    - annotations\['name'\]：所有真实物体的语义类别名称，比如 `chair`（椅子）。
-    - annotations\['location'\]：depth 坐标系下与坐标轴平行的三维包围框的重力中心 (gravity center)，形状为 \[K, 3\]，其中 K 是真实物体的数量。
-    - annotations\['dimensions'\]：depth 坐标系下与坐标轴平行的三维包围框的大小，形状为 \[K, 3\]。
-    - annotations\['gt_boxes_upright_depth'\]：depth 坐标系下与坐标轴平行的三维包围框 `(x, y, z, x_size, y_size, z_size, yaw)`，形状为 \[K, 6\]。
-    - annotations\['unaligned_location'\]：depth 坐标系下与坐标轴不平行（对齐前）的三维包围框的重力中心。
-    - annotations\['unaligned_dimensions'\]：depth 坐标系下与坐标轴不平行的三维包围框的大小。
-    - annotations\['unaligned_gt_boxes_upright_depth'\]：depth 坐标系下与坐标轴不平行的三维包围框。
-    - annotations\['index'\]：所有真实物体的索引，范围为 \[0, K)。
-    - annotations\['class'\]：所有真实物体类别的标号，范围为 \[0, 18)，形状为 \[K, \]。
+  - info\['lidar_points'\]：字典包含与激光雷达点相关的信息。
+    - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
+    - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
+    - info\['lidar_points'\]\['axis_align_matrix'\]：用于对齐坐标轴的变换矩阵。
+  - info\['pts_semantic_mask_path'\]：语义分割标注的文件名。
+  - info\['pts_instance_mask_path'\]：实例分割标注的文件名。
+  - info\['instances'\]：字典组成的列表，每个字典包含一个实例的所有标注信息。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 6 的列表，以 (x, y, z, l, w, h) 的顺序表示深度坐标系下与坐标轴平行的 3D 边界框。
+    - info\[instances\]\[i\]\['bbox_label_3d'\]：3D 边界框的标签。
 - `scannet_infos_val.pkl`：验证集上的数据信息，与 `scannet_infos_train.pkl` 格式完全一致。
 - `scannet_infos_test.pkl`：测试集上的数据信息，与 `scannet_infos_train.pkl` 格式几乎完全一致，除了缺少标注。
 
@@ -264,8 +258,7 @@ train_pipeline = [
         with_mask_3d=True,
         with_seg_3d=True),
     dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='PointSegClassMapping'),
+    dict(type='PointSegClassMapping'),
     dict(type='PointSample', num_points=40000),
     dict(
         type='RandomFlip3D',
@@ -277,9 +270,8 @@ train_pipeline = [
         rot_range=[-0.087266, 0.087266],
         scale_ratio_range=[1.0, 1.0],
         shift_height=True),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(
-        type='Collect3D',
+        type='Pack3DDetInputs',
         keys=[
             'points', 'gt_bboxes_3d', 'gt_labels_3d', 'pts_semantic_mask',
             'pts_instance_mask'
@@ -292,10 +284,10 @@ train_pipeline = [
 - 数据增强:
   - `PointSample`：下采样输入点云。
   - `RandomFlip3D`：随机左右或前后翻转点云。
-  - `GlobalRotScaleTrans`: 旋转输入点云，对于 ScanNet 角度通常落入 \[-5, 5\] （度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0（即不做缩放）；最后平移输入点云，对于 ScanNet 通常位移量为 0（即不做位移）。
+  - `GlobalRotScaleTrans`：旋转输入点云，对于 ScanNet 角度通常落入 \[-5, 5\]（度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0（即不做缩放）；最后平移输入点云，对于 ScanNet 通常位移量为 0（即不做位移）。
 
 ## 评估指标
 
-通常 mAP（全类平均精度）被用于 ScanNet 的检测任务的评估，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时一个通用的计算 3D 物体检测多个类别的精度和召回率的函数被调用，可以参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3D/core/evaluation/indoor_eval.py)。
+通常使用 mAP（全类平均精度）来评估 ScanNet 的检测任务的性能，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时调用一个通用的计算 3D 物体检测多个类别的精度和召回率的函数。更多细节请参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py)。
 
-与在章节`提取 ScanNet 数据` 中介绍的那样，所有真实物体的三维包围框是与坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于与坐标轴平行的包围框的非极大值抑制 (NMS) ，该过程不会考虑包围框的旋转。
+与在章节`提取 ScanNet 数据`中介绍的那样，所有真实物体的三维包围框是与坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于与坐标轴平行的包围框的非极大值抑制（NMS），该过程不会考虑包围框的旋转。

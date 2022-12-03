@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Callable, Dict, List, Optional, Sequence, Union
+from typing import Callable, List, Optional, Sequence, Union
 
 import mmengine
 import numpy as np
@@ -16,40 +16,45 @@ class Seg3DDataset(BaseDataset):
     This is the base dataset of ScanNet, S3DIS and SemanticKITTI dataset.
 
     Args:
-        data_root (str): Path of dataset root.
-        ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        data_root (str, optional): Path of dataset root. Defaults to None.
+        ann_file (str): Path of annotation file. Defaults to ''.
         metainfo (dict, optional): Meta information for dataset, such as class
             information. Defaults to None.
-        data_prefix (dict, optional): Prefix for training data. Defaults to
-            dict(pts='velodyne', img='', instance_mask='', semantic_mask='').
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input, it usually has following keys.
+        data_prefix (dict): Prefix for training data. Defaults to
+            dict(pts='points',
+                 img='',
+                 pts_instance_mask='',
+                 pts_semantic_mask='').
+        pipeline (List[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used
+            as input, it usually has following keys:
 
                 - use_camera: bool
                 - use_lidar: bool
-            Defaults to `dict(use_lidar=True, use_camera=False)`
-        test_mode (bool, optional): Whether the dataset is in test mode.
-            Defaults to False.
+            Defaults to dict(use_lidar=True, use_camera=False).
         ignore_index (int, optional): The label index to be ignored, e.g.
-            unannotated points. If None is given, set to len(self.CLASSES) to
+            unannotated points. If None is given, set to len(self.classes) to
             be consistent with PointSegClassMapping function in pipeline.
             Defaults to None.
-        scene_idxs (np.ndarray | str, optional): Precomputed index to load
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
             data. For scenes with many points, we may sample it several times.
             Defaults to None.
-        load_eval_anns (bool): Whether to load annotations
-            in test_mode, the annotation will be save in
-            `eval_ann_infos`, which can be use in Evaluator.
+        test_mode (bool): Whether the dataset is in test mode.
+            Defaults to False.
+        serialize_data (bool): Whether to hold memory using serialized objects,
+            when enabled, data loader workers can use shared RAM from master
+            process instead of making a copy.
+            Defaults to False for 3D Segmentation datasets.
+        load_eval_anns (bool): Whether to load annotations in test_mode,
+            the annotation will be save in `eval_ann_infos`, which can be used
+            in Evaluator. Defaults to True.
         file_client_args (dict): Configuration of file client.
-            Defaults to `dict(backend='disk')`.
+            Defaults to dict(backend='disk').
     """
     METAINFO = {
-        'CLASSES': None,  # names of all classes data used for the task
-        'PALETTE': None,  # official color for visualization
+        'classes': None,  # names of all classes data used for the task
+        'palette': None,  # official color for visualization
         'seg_valid_class_ids': None,  # class_ids used for training
         'seg_all_class_ids': None,  # all possible class_ids in loaded seg mask
     }
@@ -62,12 +67,13 @@ class Seg3DDataset(BaseDataset):
                      pts='points',
                      img='',
                      pts_instance_mask='',
-                     pts_emantic_mask=''),
+                     pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
                  ignore_index: Optional[int] = None,
-                 scene_idxs: Optional[str] = None,
+                 scene_idxs: Optional[Union[str, np.ndarray]] = None,
                  test_mode: bool = False,
+                 serialize_data: bool = False,
                  load_eval_anns: bool = True,
                  file_client_args: dict = dict(backend='disk'),
                  **kwargs) -> None:
@@ -78,11 +84,11 @@ class Seg3DDataset(BaseDataset):
 
         # TODO: We maintain the ignore_index attributes,
         # but we may consider to remove it in the future.
-        self.ignore_index = len(self.METAINFO['CLASSES']) if \
+        self.ignore_index = len(self.METAINFO['classes']) if \
             ignore_index is None else ignore_index
 
         # Get label mapping for custom classes
-        new_classes = metainfo.get('CLASSES', None)
+        new_classes = metainfo.get('classes', None)
 
         self.label_mapping, self.label2cat, seg_valid_class_ids = \
             self.get_label_mapping(new_classes)
@@ -95,10 +101,10 @@ class Seg3DDataset(BaseDataset):
         # generate palette if it is not defined based on
         # label mapping, otherwise directly use palette
         # defined in dataset config.
-        palette = metainfo.get('PALETTE', None)
+        palette = metainfo.get('palette', None)
         updated_palette = self._update_palette(new_classes, palette)
 
-        metainfo['PALETTE'] = updated_palette
+        metainfo['palette'] = updated_palette
 
         # construct seg_label_mapping for semantic mask
         seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
@@ -117,18 +123,19 @@ class Seg3DDataset(BaseDataset):
             data_prefix=data_prefix,
             pipeline=pipeline,
             test_mode=test_mode,
+            serialize_data=serialize_data,
             **kwargs)
 
         self.metainfo['seg_label_mapping'] = self.seg_label_mapping
         self.scene_idxs = self.get_scene_idxs(scene_idxs)
+        self.data_list = [self.data_list[i] for i in self.scene_idxs]
 
         # set group flag for the sampler
         if not self.test_mode:
             self._set_group_flag()
 
     def get_label_mapping(self,
-                          new_classes: Optional[Sequence] = None
-                          ) -> Union[Dict, None]:
+                          new_classes: Optional[Sequence] = None) -> tuple:
         """Get label mapping.
 
         The ``label_mapping`` is a dictionary, its keys are the old label ids
@@ -138,21 +145,20 @@ class Seg3DDataset(BaseDataset):
         None, `label_mapping` is not None.
 
         Args:
-            new_classes (list, tuple, optional): The new classes name from
-                metainfo. Default to None.
-
+            new_classes (list or tuple, optional): The new classes name from
+                metainfo. Defaults to None.
 
         Returns:
             tuple: The mapping from old classes in cls.METAINFO to
-                new classes in metainfo
+            new classes in metainfo
         """
-        old_classes = self.METAINFO.get('CLASSES', None)
+        old_classes = self.METAINFO.get('classes', None)
         if (new_classes is not None and old_classes is not None
                 and list(new_classes) != list(old_classes)):
             if not set(new_classes).issubset(old_classes):
                 raise ValueError(
                     f'new classes {new_classes} is not a '
-                    f'subset of CLASSES {old_classes} in METAINFO.')
+                    f'subset of classes {old_classes} in METAINFO.')
 
             # obtain true id from valid_class_ids
             valid_class_ids = [
@@ -180,13 +186,14 @@ class Seg3DDataset(BaseDataset):
             # map label to category name
             label2cat = {
                 i: cat_name
-                for i, cat_name in enumerate(self.METAINFO['CLASSES'])
+                for i, cat_name in enumerate(self.METAINFO['classes'])
             }
             valid_class_ids = self.METAINFO['seg_valid_class_ids']
 
         return label_mapping, label2cat, valid_class_ids
 
-    def _update_palette(self, new_classes, palette) -> list:
+    def _update_palette(self, new_classes: list, palette: Union[None,
+                                                                list]) -> list:
         """Update palette according to metainfo.
 
         If length of palette is equal to classes, just return the palette.
@@ -199,10 +206,10 @@ class Seg3DDataset(BaseDataset):
         """
         if palette is None:
             # If palette is not defined, it generate a palette according
-            # to the original PALETTE and classes.
-            old_classes = self.METAINFO.get('CLASSES', None)
+            # to the original palette and classes.
+            old_classes = self.METAINFO.get('classes', None)
             palette = [
-                self.METAINFO['PALETTE'][old_classes.index(cls_name)]
+                self.METAINFO['palette'][old_classes.index(cls_name)]
                 for cls_name in new_classes
             ]
             return palette
@@ -211,8 +218,8 @@ class Seg3DDataset(BaseDataset):
         if len(palette) == len(new_classes):
             return palette
         else:
-            raise ValueError('Once PLATTE in set in metainfo, it should'
-                             'match CLASSES in metainfo')
+            raise ValueError('Once palette in set in metainfo, it should'
+                             'match classes in metainfo')
 
     def parse_data_info(self, info: dict) -> dict:
         """Process the raw data info.
@@ -260,7 +267,8 @@ class Seg3DDataset(BaseDataset):
 
         return info
 
-    def get_scene_idxs(self, scene_idxs):
+    def get_scene_idxs(self, scene_idxs: Union[None, str,
+                                               np.ndarray]) -> np.ndarray:
         """Compute scene_idxs for data sampling.
 
         We sample more times for scenes with more points.
@@ -282,7 +290,7 @@ class Seg3DDataset(BaseDataset):
 
         return scene_idxs.astype(np.int32)
 
-    def _set_group_flag(self):
+    def _set_group_flag(self) -> None:
         """Set flag according to image aspect ratio.
 
         Images with aspect ratio greater than 1 will be set as group 1,

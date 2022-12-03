@@ -1,8 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
+
+from mmdet3d.utils import ConfigType
 
 
 class EdgeFusionModule(BaseModule):
@@ -12,21 +17,22 @@ class EdgeFusionModule(BaseModule):
         out_channels (int): The number of output channels.
         feat_channels (int): The number of channels in feature map
             during edge feature fusion.
-        kernel_size (int, optional): Kernel size of convolution.
-            Default: 3.
-        act_cfg (dict, optional): Config of activation.
-            Default: dict(type='ReLU').
-        norm_cfg (dict, optional): Config of normalization.
-            Default: dict(type='BN1d')).
+        kernel_size (int): Kernel size of convolution. Defaults to 3.
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
+            Defaults to dict(type='ReLU').
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN1d').
     """
 
-    def __init__(self,
-                 out_channels,
-                 feat_channels,
-                 kernel_size=3,
-                 act_cfg=dict(type='ReLU'),
-                 norm_cfg=dict(type='BN1d')):
-        super().__init__()
+    def __init__(
+        self,
+        out_channels: int,
+        feat_channels: int,
+        kernel_size: int = 3,
+        act_cfg: ConfigType = dict(type='ReLU'),
+        norm_cfg: ConfigType = dict(type='BN1d')
+    ) -> None:
+        super(EdgeFusionModule, self).__init__()
         self.edge_convs = nn.Sequential(
             ConvModule(
                 feat_channels,
@@ -39,22 +45,22 @@ class EdgeFusionModule(BaseModule):
             nn.Conv1d(feat_channels, out_channels, kernel_size=1))
         self.feat_channels = feat_channels
 
-    def forward(self, features, fused_features, edge_indices, edge_lens,
-                output_h, output_w):
+    def forward(self, features: Tensor, fused_features: Tensor,
+                edge_indices: Tensor, edge_lens: List[int], output_h: int,
+                output_w: int) -> Tensor:
         """Forward pass.
 
         Args:
-            features (torch.Tensor): Different representative features
-                for fusion.
-            fused_features (torch.Tensor): Different representative
-                features to be fused.
-            edge_indices (torch.Tensor): Batch image edge indices.
-            edge_lens (list[int]): List of edge length of each image.
+            features (Tensor): Different representative features for fusion.
+            fused_features (Tensor): Different representative features
+                to be fused.
+            edge_indices (Tensor): Batch image edge indices.
+            edge_lens (List[int]): List of edge length of each image.
             output_h (int): Height of output feature map.
             output_w (int): Width of output feature map.
 
         Returns:
-            torch.Tensor: Fused feature maps.
+            Tensor: Fused feature maps.
         """
         batch_size = features.shape[0]
         # normalize

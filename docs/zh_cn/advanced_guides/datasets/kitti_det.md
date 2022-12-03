@@ -2,11 +2,9 @@
 
 本页提供了有关在 MMDetection3D 中使用 KITTI 数据集的具体教程。
 
-**注意**：此教程目前仅适用于基于雷达和多模态的 3D 目标检测的相关方法，与基于单目图像的 3D 目标检测相关的内容会在之后进行补充。
-
 ## 数据准备
 
-您可以在[这里](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)下载 KITTI 3D 检测数据并解压缩所有 zip 文件。此外，您可以在[这里](https://download.openmmlab.com/mmdetection3d/data/train_planes.zip)下载道路平面信息，其在训练过程中作为一个可选项，用来提高模型的性能。道路平面信息由 [AVOD](https://github.com/kujason/avod) 生成，你可以在[这里](https://github.com/kujason/avod/issues/19)查看更多细节。
+您可以在[这里](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)下载 KITTI 3D 检测数据并解压缩所有 zip 文件。此外，您可以在[这里](https://download.openmmlab.com/mmdetection3d/data/train_planes.zip)下载道路平面信息，其在训练过程中作为一个可选项，用来提高模型的性能。道路平面信息由 [AVOD](https://github.com/kujason/avod) 生成，更多细节请参考[此处](https://github.com/kujason/avod/issues/19)。
 
 像准备数据集的一般方法一样，建议将数据集根目录链接到 `$MMDETECTION3D/data`。
 
@@ -39,7 +37,7 @@ mmdetection3d
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
 
-# Download data split
+# 下载数据划分
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/test.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/test.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/train.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/train.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
@@ -48,7 +46,7 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
 ```
 
-需要注意的是，如果您的本地磁盘没有充足的存储空间来存储转换后的数据，您可以通过改变 `out-dir` 来指定其他任意的存储路径。如果您没有准备 `planes` 数据，您需要移除 `--with-plane` 标志。
+需要注意的是，如果您的本地磁盘没有充足的存储空间来存储转换后的数据，您可以通过改变 `--out-dir` 来指定其他任意的存储路径。如果您没有准备 `planes` 数据，您需要移除 `--with-plane` 标志。
 
 处理后的文件夹结构应该如下：
 
@@ -78,39 +76,40 @@ kitti
 ├── kitti_dbinfos_train.pkl
 ├── kitti_infos_test.pkl
 ├── kitti_infos_trainval.pkl
-├── kitti_infos_train_mono3d.coco.json
-├── kitti_infos_trainval_mono3d.coco.json
-├── kitti_infos_test_mono3d.coco.json
-├── kitti_infos_val_mono3d.coco.json
 ```
 
-其中的各项文件的含义如下所示：
+- `kitti_gt_database/xxxxx.bin`：训练数据集中包含在 3D 标注框中的点云数据。
+- `kitti_infos_train.pkl`：训练数据集，该字典包含了两个键值：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `categories`, `dataset` 和 `info_version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的所有详细信息。
+  - info\['sample_idx'\]：该样本在整个数据集的索引。
+  - info\['images'\]：多个相机捕获的图像信息。是一个字典，包含 5 个键值：`CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`。
+    - info\['images'\]\['R0_rect'\]：校准旋转矩阵，是一个 4x4 数组。
+    - info\['images'\]\['CAM2'\]：包含 `CAM2` 相机传感器的信息。
+      - info\['images'\]\['CAM2'\]\['img_path'\]：图像的文件名。
+      - info\['images'\]\['CAM2'\]\['height'\]：图像的高。
+      - info\['images'\]\['CAM2'\]\['width'\]：图像的宽。
+      - info\['images'\]\['CAM2'\]\['cam2img'\]：相机到图像的变换矩阵，是一个 4x4 数组。
+      - info\['images'\]\['CAM2'\]\['lidar2cam'\]：激光雷达到相机的变换矩阵，是一个 4x4 数组。
+      - info\['images'\]\['CAM2'\]\['lidar2img'\]：激光雷达到图像的变换矩阵，是一个 4x4 数组。
+    - info\['lidar_points'\]：是一个字典，包含了激光雷达点相关的信息。
+      - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
+      - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
+      - info\['lidar_points'\]\['Tr_velo_to_cam'\]：Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组。
+      - info\['lidar_points'\]\['Tr_imu_to_velo'\]：IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组。
+    - info\['instances'\]：是一个字典组成的列表。每个字典包含单个实例的所有标注信息。对于其中的第 i 个实例，我们有：
+      - info\['instances'\]\[i\]\['bbox'\]：长度为 4 的列表，以 (x1, y1, x2, y2) 的顺序表示实例的 2D 边界框。
+      - info\['instances'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
+      - info\['instances'\]\[i\]\['bbox_label'\]：是一个整数，表示实例的 2D 标签，-1 代表忽略。
+      - info\['instances'\]\[i\]\['bbox_label_3d'\]：是一个整数，表示实例的 3D 标签，-1 代表忽略。
+      - info\['instances'\]\[i\]\['depth'\]：3D 边界框投影到相关图像平面的中心点的深度。
+      - info\['instances'\]\[i\]\['num_lidar_pts'\]：3D 边界框内的激光雷达点数。
+      - info\['instances'\]\[i\]\['center_2d'\]：3D 边界框投影的 2D 中心。
+      - info\['instances'\]\[i\]\['difficulty'\]：KITTI 官方定义的困难度，包括简单、适中、困难。
+      - info\['instances'\]\[i\]\['truncated'\]：从 0（非截断）到 1（截断）的浮点数，其中截断指的是离开检测图像边界的检测目标。
+      - info\['instances'\]\[i\]\['occluded'\]：整数 (0,1,2,3) 表示目标的遮挡状态：0 = 完全可见，1 = 部分遮挡，2 = 大面积遮挡，3 = 未知。
+      - info\['instances'\]\[i\]\['group_ids'\]：用于多部分的物体。
+    - info\['plane'\]（可选）：地平面信息。
 
-- `kitti_gt_database/xxxxx.bin`： 训练数据集中包含在 3D 标注框中的点云数据
-- `kitti_infos_train.pkl`：训练数据集的信息，其中每一帧的信息包含下面的内容：
-  - info\['point_cloud'\]: {'num_features': 4, 'velodyne_path': velodyne_path}.
-  - info\['annos'\]: {
-    - 位置：其中 x,y,z 为相机参考坐标系下的目标的底部中心（单位为米），是一个尺寸为 Nx3 的数组
-    - 维度: 目标的高、宽、长（单位为米），是一个尺寸为 Nx3 的数组
-    - 旋转角：相机坐标系下目标绕着 Y 轴的旋转角 ry，其取值范围为 \[-pi..pi\] ，是一个尺寸为 N 的数组
-    - 名称：标准框所包含的目标的名称，是一个尺寸为 N 的数组
-    - 困难度：kitti 官方所定义的困难度，包括 简单，适中，困难
-    - 组别标识符：用于多部件的目标
-      }
-  - (optional) info\['calib'\]: {
-    - P0：校对后的 camera0 投影矩阵，是一个 3x4 数组
-    - P1：校对后的 camera1 投影矩阵，是一个 3x4 数组
-    - P2：校对后的 camera2 投影矩阵，是一个 3x4 数组
-    - P3：校对后的 camera3 投影矩阵，是一个 3x4 数组
-    - R0_rect：校准旋转矩阵，是一个 4x4 数组
-    - Tr_velo_to_cam：从 Velodyne 坐标到相机坐标的变换矩阵，是一个 4x4 数组
-    - Tr_imu_to_velo：从 IMU 坐标到 Velodyne 坐标的变换矩阵，是一个 4x4 数组
-      }
-  - (optional) info\['image'\]:{'image_idx': idx, 'image_path': image_path, 'image_shape', image_shape}.
-
-**注意**：其中的 info\['annos'\] 中的数据均位于相机参考坐标系中，更多的细节请参考[此处](http://www.cvlibs.net/publications/Geiger2013IJRR.pdf)。
-
-获取 kitti_infos_xxx.pkl 和 kitti_infos_xxx_mono3d.coco.json 的核心函数分别为 [get_kitti_image_info](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_data_utils.py#L140) 和 [get_2d_boxes](https://github.com/open-mmlab/mmdetection3d/blob/7873c8f62b99314f35079f369d1dab8d63f8a3ce/tools/data_converter/kitti_converter.py#L378).
+更多细节请参考 [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) 和 [update_infos_to_v2.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/update_infos_to_v2.py)。
 
 ## 训练流程
 
@@ -122,13 +121,9 @@ train_pipeline = [
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=4, # x, y, z, intensity
-        use_dim=4, # x, y, z, intensity
-        file_client_args=file_client_args),
+        use_dim=4),
     dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        file_client_args=file_client_args),
+        type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -144,8 +139,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 ```
 
@@ -159,12 +155,12 @@ train_pipeline = [
 使用 8 个 GPU 以及 KITTI 指标评估的 PointPillars 的示例如下：
 
 ```shell
-bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --eval bbox
+bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
 ## 度量指标
 
-KITTI 官方使用全类平均精度（mAP）和平均方向相似度（AOS）来评估 3D 目标检测的性能，请参考[官方网站](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php)和[论文](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)获取更多细节。
+KITTI 官方使用全类平均精度（mAP）和平均方向相似度（AOS）来评估 3D 目标检测的性能，更多细节请参考[官方网站](http://www.cvlibs.net/datasets/kitti/eval_3dobject.php)和[论文](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)。
 
 MMDetection3D 采用相同的方法在 KITTI 数据集上进行评估，下面展示了一个评估结果的例子：
 
@@ -185,10 +181,26 @@ aos  AP:97.70, 89.11, 87.38
 
 使用 8 个 GPU 在 KITTI 上测试 PointPillars 并生成对排行榜的提交的示例如下：
 
-```shell
-mkdir -p results/kitti-3class
+- 首先，你需要在你的配置文件中修改 `test_dataloader` 和 `test_evaluator` 字典，如下所示：
 
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/latest.pth 8 --out results/kitti-3class/results_eval.pkl --format-only --eval-options 'pklfile_prefix=results/kitti-3class/kitti_results' 'submission_prefix=results/kitti-3class/kitti_results'
-```
+  ```python
+  data_root = 'data/kitti/'
+  test_dataloader = dict(
+      dataset=dict(
+          ann_file='kitti_infos_test.pkl',
+          load_eval_anns=False,
+          data_prefix=dict(pts='testing/velodyne_reduced')))
+  test_evaluator = dict(
+      ann_file=data_root + 'kitti_infos_test.pkl',
+      format_only=True,
+      pklfile_prefix='results/kitti-3class/kitti_results',
+      submission_prefix='results/kitti-3class/kitti_results')
+  ```
 
-在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，请参考 [KITTI 官方网站](<(http://www.cvlibs.net/datasets/kitti/index.php)>)获取更多细节。
+- 接下来，你可以运行如下测试脚本。
+
+  ```shell
+  ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+  ```
+
+在生成 `results/kitti-3class/kitti_results/xxxxx.txt` 后，您可以提交这些文件到 KITTI 官方网站进行基准测试，更多细节请参考 [KITTI 官方网站](http://www.cvlibs.net/datasets/kitti/index.php)。

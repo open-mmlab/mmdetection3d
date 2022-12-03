@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmdet.models.losses.utils import weighted_loss
 from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
-from mmdet.models.losses.utils import weighted_loss
 
 
 @weighted_loss

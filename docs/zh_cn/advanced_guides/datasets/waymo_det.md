@@ -101,11 +101,12 @@ mmdetection3d
 
 ## 评估
 
-为了在 Waymo 数据集上进行检测性能评估，请按照[此处指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)构建用于计算评估指标的二进制文件 `compute_detection_metrics_main`，并将它置于 `mmdet3d/core/evaluation/waymo_utils/` 下。您基本上可以按照下方命令安装 `bazel`，然后构建二进制文件：
+为了在 Waymo 数据集上进行检测性能评估，请按照[此处指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md)构建用于计算评估指标的二进制文件 `compute_detection_metrics_main`，并将它置于 `mmdet3d/core/evaluation/waymo_utils/` 下。您基本上可以按照下方命令安装 `bazel`，然后构建二进制文件：
 
 ```shell
 # download the code and enter the base directory
 git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
+# git clone https://github.com/Abyssaledge/waymo-open-dataset-master waymo-od # if you want to use faster multi-thread version.
 cd waymo-od
 git checkout remotes/origin/master
 
@@ -122,19 +123,16 @@ sudo apt install build-essential
 bazel clean
 
 bazel build waymo_open_dataset/metrics/tools/compute_detection_metrics_main
-cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../mmdetection3d/mmdet3d/evaluation/functional/waymo_utils/
 ```
 
 接下来，您就可以在 Waymo 上评估您的模型了。如下示例是使用 8 个图形处理器 (GPU) 在 Waymo 上用 Waymo 评价指标评估 PointPillars 模型的情景：
 
 ```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-    --eval waymo --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-    'submission_prefix=results/waymo-car/kitti_results'
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth
 ```
 
-如果需要生成 bin 文件，应在 `--eval-options` 中给出 `pklfile_prefix`。对于评价指标， `waymo` 是我们推荐的官方评估原型。目前，`kitti` 这一评估选项是从 KITTI 迁移而来的，且每个难度下的评估结果和 KITTI 数据集中定义得到的不尽相同——目前大多数物体被标记为难度 0（日后会修复）。`kitti` 评估选项的不稳定来源于很大的计算量，转换的数据中遮挡 (occlusion) 和截断 (truncation) 的缺失，难度的不同定义方式，以及不同的平均精度 (Average Precision) 计算方式。
+如果需要生成 bin 文件，需要在配置文件的 `test_evaluator` 中指定 `pklfile_prefix`，因此你可以在命令后添加 `--cfg-options "test_evaluator.pklfile_prefix=xxxx"`。
 
 **注意**:
 
@@ -148,25 +146,20 @@ cp bazel-bin/waymo_open_dataset/metrics/tools/compute_detection_metrics_main ../
 
 如下是一个使用 8 个图形处理器在 Waymo 上测试 PointPillars，生成 bin 文件并提交结果到官方榜单的例子：
 
-```shell
-./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car.py \
-    checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth --out results/waymo-car/results_eval.pkl \
-    --format-only --eval-options 'pklfile_prefix=results/waymo-car/kitti_results' \
-    'submission_prefix=results/waymo-car/kitti_results'
-```
+如果你想生成 bin 文件并提交到服务器中，在运行测试指令前你需要在配置文件的 `test_evaluator` 中指定 `submission_prefix`。
 
-在生成 bin 文件后，您可以简单地构建二进制文件 `create_submission`，并按照[指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) 创建一个提交文件。下面是一些示例：
+在生成 bin 文件后，您可以简单地构建二进制文件 `create_submission`，并按照[指示](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/)创建一个提交文件。下面是一些示例：
 
 ```shell
 cd ../waymo-od/
 bazel build waymo_open_dataset/metrics/tools/create_submission
 cp bazel-bin/waymo_open_dataset/metrics/tools/create_submission ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
 vim waymo_open_dataset/metrics/tools/submission.txtpb  # set the metadata information
-cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/core/evaluation/waymo_utils/
+cp waymo_open_dataset/metrics/tools/submission.txtpb ../mmdetection3d/mmdet3d/evaluation/functional/waymo_utils/
 
 cd ../mmdetection3d
 # suppose the result bin is in `results/waymo-car/submission`
-mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/core/evaluation/waymo_utils/submission.txtpb'
+mmdet3d/core/evaluation/waymo_utils/create_submission  --input_filenames='results/waymo-car/kitti_results_test.bin' --output_filename='results/waymo-car/submission/model' --submission_filename='mmdet3d/evaluation/functional/waymo_utils/submission.txtpb'
 
 tar cvf results/waymo-car/submission/my_model.tar results/waymo-car/submission/my_model/
 gzip results/waymo-car/submission/my_model.tar

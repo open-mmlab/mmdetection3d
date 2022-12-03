@@ -12,7 +12,7 @@ def multiview_img_stack_batch(
     """
     Compared to the stack_batch in mmengine.model.utils,
     multiview_img_stack_batch further handle the multiview images.
-    see diff of padded_sizes[:, :-2] = 0 vs padded_sizees[:, 0] = 0 in line 47
+    see diff of padded_sizes[:, :-2] = 0 vs padded_sizes[:, 0] = 0 in line 47
     Stack multiple tensors to form a batch and pad the tensor to the max
     shape use the right bottom padding mode in these images. If
     ``pad_size_divisor > 0``, add padding to ensure the shape of each dim is
@@ -23,20 +23,20 @@ def multiview_img_stack_batch(
         pad_size_divisor (int): If ``pad_size_divisor > 0``, add padding
             to ensure the shape of each dim is divisible by
             ``pad_size_divisor``. This depends on the model, and many
-            models need to be divisible by 32. Defaults to 1
-        pad_value (int, float): The padding value. Defaults to 0.
+            models need to be divisible by 32. Defaults to 1.
+        pad_value (int or float): The padding value. Defaults to 0.
 
     Returns:
         Tensor: The n dim tensor.
     """
     assert isinstance(
         tensor_list,
-        list), (f'Expected input type to be list, but got {type(tensor_list)}')
+        list), f'Expected input type to be list, but got {type(tensor_list)}'
     assert tensor_list, '`tensor_list` could not be an empty list'
     assert len({
         tensor.ndim
         for tensor in tensor_list
-    }) == 1, (f'Expected the dimensions of all tensors must be the same, '
+    }) == 1, ('Expected the dimensions of all tensors must be the same, '
               f'but got {[tensor.ndim for tensor in tensor_list]}')
 
     dim = tensor_list[0].dim()
@@ -46,7 +46,7 @@ def multiview_img_stack_batch(
     max_sizes = torch.ceil(
         torch.max(all_sizes, dim=0)[0] / pad_size_divisor) * pad_size_divisor
     padded_sizes = max_sizes - all_sizes
-    # The first dim normally means channel,  which should not be padded.
+    # The first dim normally means channel, which should not be padded.
     padded_sizes[:, :-2] = 0
     if padded_sizes.sum() == 0:
         return torch.stack(tensor_list)

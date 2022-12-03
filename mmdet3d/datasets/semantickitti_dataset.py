@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Callable, List, Optional, Union
 
+import numpy as np
+
 from mmdet3d.registry import DATASETS
 from .seg3d_dataset import Seg3DDataset
 
@@ -14,30 +16,35 @@ class SemanticKITTIDataset(Seg3DDataset):
     for data downloading
 
     Args:
-        data_root (str): Path of dataset root.
-        ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        box_type_3d (str, optional): NO 3D box for this dataset.
-            You can choose any type
-            Based on the `box_type_3d`, the dataset will encapsulate the box
-            to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes
+        data_root (str, optional): Path of dataset root. Defaults to None.
+        ann_file (str): Path of annotation file. Defaults to ''.
+        metainfo (dict, optional): Meta information for dataset, such as class
+            information. Defaults to None.
+        data_prefix (dict): Prefix for training data. Defaults to
+            dict(pts='points',
+                 img='',
+                 pts_instance_mask='',
+                 pts_semantic_mask='').
+        pipeline (List[dict]): Pipeline used for data processing.
+            Defaults to [].
+        modality (dict): Modality to specify the sensor data used as input,
+            it usually has following keys:
 
-            - 'LiDAR': Box in LiDAR coordinates.
-            - 'Depth': Box in depth coordinates, usually for indoor dataset.
-            - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+                - use_camera: bool
+                - use_lidar: bool
+            Defaults to dict(use_lidar=True, use_camera=False).
+        ignore_index (int, optional): The label index to be ignored, e.g.
+            unannotated points. If None is given, set to len(self.classes) to
+            be consistent with PointSegClassMapping function in pipeline.
+            Defaults to None.
+        scene_idxs (np.ndarray or str, optional): Precomputed index to load
+            data. For scenes with many points, we may sample it several times.
+            Defaults to None.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES': ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck',
+        'classes': ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck',
                     'bus', 'person', 'bicyclist', 'motorcyclist', 'road',
                     'parking', 'sidewalk', 'other-ground', 'building', 'fence',
                     'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'),
@@ -52,12 +59,15 @@ class SemanticKITTIDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points', img='', instance_mask='', semantic_mask=''),
+                     pts='points',
+                     img='',
+                     pts_instance_mask='',
+                     pts_semantic_mask=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
-                 ignore_index=None,
-                 scene_idxs=None,
-                 test_mode=False,
+                 ignore_index: Optional[int] = None,
+                 scene_idxs: Optional[Union[str, np.ndarray]] = None,
+                 test_mode: bool = False,
                  **kwargs) -> None:
 
         super().__init__(

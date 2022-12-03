@@ -62,7 +62,7 @@ eval_pipeline = [
     dict(type='MultiViewWrapper', transforms=test_transforms),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 train_dataloader = dict(
     batch_size=2,

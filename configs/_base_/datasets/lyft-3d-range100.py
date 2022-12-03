@@ -39,8 +39,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
@@ -59,23 +60,15 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
     dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 data = dict(

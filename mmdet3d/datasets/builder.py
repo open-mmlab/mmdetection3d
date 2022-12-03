@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import platform
 
-from mmdet3d.registry import DATASETS, TRANSFORMS
 from mmdet.datasets.builder import _concat_dataset
+
+from mmdet3d.registry import DATASETS, TRANSFORMS
 
 if platform.system() != 'Windows':
     # https://github.com/pytorch/pytorch/issues/973

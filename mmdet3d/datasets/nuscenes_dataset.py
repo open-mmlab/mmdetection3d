@@ -22,9 +22,8 @@ class NuScenesDataset(Det3DDataset):
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
-        task (str, optional): Detection task. Defaults to 'lidar_det'.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -33,20 +32,31 @@ class NuScenesDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to dict(use_camera=False, use_lidar=True).
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        load_type (str): Type of loading mode. Defaults to 'frame_based'.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_based': Only load the instances inside the default
+                cam, and need to convert to the FOV-based data type to support
+                image-based detector.
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_camera=False, use_lidar=True).
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        with_velocity (bool, optional): Whether to include velocity prediction
+        with_velocity (bool): Whether to include velocity prediction
             into the experiments. Defaults to True.
-        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
+        use_valid_flag (bool): Whether to use `use_valid_flag` key
             in the info file as mask to filter gt_boxes and gt_names.
             Defaults to False.
     """
     METAINFO = {
-        'CLASSES':
+        'classes':
         ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
          'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
         'version':
@@ -56,9 +66,9 @@ class NuScenesDataset(Det3DDataset):
     def __init__(self,
                  data_root: str,
                  ann_file: str,
-                 task: str = 'lidar_det',
                  pipeline: List[Union[dict, Callable]] = [],
                  box_type_3d: str = 'LiDAR',
+                 load_type: str = 'frame_based',
                  modality: dict = dict(
                      use_camera=False,
                      use_lidar=True,
@@ -72,8 +82,9 @@ class NuScenesDataset(Det3DDataset):
         self.with_velocity = with_velocity
 
         # TODO: Redesign multi-view data process in the future
-        assert task in ('lidar_det', 'mono_det', 'multi-view_det')
-        self.task = task
+        assert load_type in ('frame_based', 'mv_image_based',
+                             'fov_image_based')
+        self.load_type = load_type
 
         assert box_type_3d.lower() in ('lidar', 'camera')
         super().__init__(
@@ -108,16 +119,16 @@ class NuScenesDataset(Det3DDataset):
         return filtered_annotations
 
     def parse_ann_info(self, info: dict) -> dict:
-        """Get annotation info according to the given index.
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
             info (dict): Data information of single data sample.
 
         Returns:
-            dict: annotation information consists of the following keys:
+            dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes.
+                  3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
         """
         ann_info = super().parse_ann_info(info)
@@ -142,7 +153,7 @@ class NuScenesDataset(Det3DDataset):
                 ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
             ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
 
-            if self.task == 'mono3d':
+            if self.load_type in ['fov_image_based', 'mv_image_based']:
                 ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
                 ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
                 ann_info['attr_labels'] = np.array(0, dtype=np.int64)
@@ -152,7 +163,7 @@ class NuScenesDataset(Det3DDataset):
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
         # TODO: Unify the coordinates
-        if self.task == 'mono_det':
+        if self.load_type in ['fov_image_based', 'mv_image_based']:
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
@@ -167,7 +178,7 @@ class NuScenesDataset(Det3DDataset):
 
         return ann_info
 
-    def parse_data_info(self, info: dict) -> dict:
+    def parse_data_info(self, info: dict) -> Union[List[dict], dict]:
         """Process the raw data info.
 
         The only difference with it in `Det3DDataset`
@@ -177,10 +188,10 @@ class NuScenesDataset(Det3DDataset):
             info (dict): Raw info dict.
 
         Returns:
-            dict: Has `ann_info` in training stage. And
+            List[dict] or dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
-        if self.task == 'mono_det':
+        if self.load_type == 'mv_image_based':
             data_list = []
             if self.modality['use_lidar']:
                 info['lidar_points']['lidar_path'] = \

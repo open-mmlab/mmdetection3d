@@ -16,9 +16,11 @@ We support drawing point cloud on the image by using `draw_points_on_image`.
 
 ```python
 import mmcv
-from mmengine import load
-from mmdet3d.visualization import Det3DLocalVisualizer
 import numpy as np
+from mmengine import load
+
+from mmdet3d.visualization import Det3DLocalVisualizer
+
 info_file = load('demo/data/kitti/000008.pkl')
 points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
 points = points.reshape(-1, 4)[:, :3]
@@ -40,6 +42,7 @@ We support drawing 3D boxes on point cloud by using `draw_bboxes_3d`.
 
 ```python
 import torch
+
 from mmdet3d.visualization import Det3DLocalVisualizer
 from mmdet3d.structures import LiDARInstance3DBoxes
 
@@ -66,8 +69,10 @@ We support drawing projected 3D boxes on image by using `draw_proj_bboxes_3d`.
 import mmcv
 import numpy as np
 from mmengine import load
+
 from mmdet3d.visualization import Det3DLocalVisualizer
 from mmdet3d.structures import CameraInstance3DBoxes
+
 info_file = load('demo/data/kitti/000008.pkl')
 cam2img = np.array(info_file['data_list'][0]['images']['CAM2']['cam2img'], dtype=np.float32)
 bboxes_3d = []
@@ -91,11 +96,12 @@ visualizer.show()
 
 ### Drawing BEV Boxes
 
-We support drawing projected 3D boxes on image by using `draw_proj_bboxes_3d`.
+We support drawing BEV boxes by using `draw_bev_bboxes`.
 
 ```python
 import numpy as np
 from mmengine import load
+
 from mmdet3d.visualization import Det3DLocalVisualizer
 from mmdet3d.structures import CameraInstance3DBoxes
 
@@ -122,6 +128,7 @@ We support draw segmentation mask via per-point colorization by using `draw_seg_
 
 ```python
 import torch
+
 from mmdet3d.visualization import Det3DLocalVisualizer
 
 points = np.fromfile('tests/data/s3dis/points/Area_1_office_2.bin', dtype=np.float32)
@@ -136,7 +143,7 @@ visualizer.show()
 
 ## Results
 
-To see the prediction results of trained models, you can run the following command
+To see the prediction results of trained models, you can run the following command:
 
 ```bash
 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
@@ -144,9 +151,9 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 
 After running this command, plotted results including input data and the output of networks visualized on the input will be saved in `${SHOW_DIR}`.
 
-After running this command, you will obtain the input data, the output of networks and ground-truth labels visualized on the input (e.g. `***_gt.png` and `***_pred.png` in multi-modality detection task and vision-based detection task) in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. If you are running test in remote server without GUI, the online visualization is not supported, you can download the `results.pkl` from the remote server, and visualize the prediction results offline in your local machine.
+After running this command, you will obtain the input data, the output of networks and ground-truth labels visualized on the input (e.g. `***_gt.png` and `***_pred.png` in multi-modality detection task and vision-based detection task) in `${SHOW_DIR}`. When `show` is enabled, [Open3D](http://www.open3d.org/) will be used to visualize the results online. If you are running test in remote server without GUI, the online visualization is not supported. You can download the `results.pkl` from the remote server, and visualize the prediction results offline in your local machine.
 
-To visualize the results with `Open3D` backend offline, you can run the following command
+To visualize the results with `Open3D` backend offline, you can run the following command:
 
 ```bash
 python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} --show-dir ${SHOW_DIR}
@@ -158,7 +165,7 @@ This allows the inference and results generation to be done in remote server and
 
 ## Dataset
 
-We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, multi-modality 3D detection on KITTI and SUN RGB-D, as well as monocular 3D detection on nuScenes. To browse the KITTI dataset, you can run the following command
+We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, multi-modality 3D detection on KITTI and SUN RGB-D, as well as monocular 3D detection on nuScenes. To browse the KITTI dataset, you can run the following command:
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --output-dir ${OUTPUT_DIR}
@@ -169,10 +176,10 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 To verify the data consistency and the effect of data augmentation, you can also add `--aug` flag to visualize the data after data augmentation using the command as below:
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --aug --output-dir ${OUTPUT_DIR}
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task lidar_det --aug --output-dir ${OUTPUT_DIR}
 ```
 
-If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi_modality-det`. An example is showed below
+If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi-modality_det`. An example is showed below:
 
 ```shell
 python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR}
@@ -180,15 +187,15 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 
 ![](../../../resources/browse_dataset_multi_modality.png)
 
-You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task
+You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task:
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task lidar_seg --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../../resources/browse_dataset_seg.png)
 
-And browsing the nuScenes dataset in monocular 3D detection task
+And browsing the nuScenes dataset in monocular 3D detection task:
 
 ```shell
 python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR} --online

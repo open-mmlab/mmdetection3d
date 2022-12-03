@@ -12,7 +12,7 @@ from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 PointData)
 
 
-def _setup_seed(seed):
+def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
@@ -44,7 +44,7 @@ def _get_config_module(fname):
     return config_mod
 
 
-def _get_model_cfg(fname):
+def get_model_cfg(fname):
     """Grab configs necessary to create a model.
 
     These are deep copied to allow for safe modification of parameters without
@@ -56,7 +56,7 @@ def _get_model_cfg(fname):
     return model
 
 
-def _get_detector_cfg(fname):
+def get_detector_cfg(fname):
     """Grab configs necessary to create a detector.
 
     These are deep copied to allow for safe modification of parameters without
@@ -73,19 +73,19 @@ def _get_detector_cfg(fname):
     return model
 
 
-def _create_detector_inputs(seed=0,
-                            with_points=True,
-                            with_img=False,
-                            img_size=10,
-                            num_gt_instance=20,
-                            num_points=10,
-                            points_feat_dim=4,
-                            num_classes=3,
-                            gt_bboxes_dim=7,
-                            with_pts_semantic_mask=False,
-                            with_pts_instance_mask=False,
-                            bboxes_3d_type='lidar'):
-    _setup_seed(seed)
+def create_detector_inputs(seed=0,
+                           with_points=True,
+                           with_img=False,
+                           img_size=10,
+                           num_gt_instance=20,
+                           num_points=10,
+                           points_feat_dim=4,
+                           num_classes=3,
+                           gt_bboxes_dim=7,
+                           with_pts_semantic_mask=False,
+                           with_pts_instance_mask=False,
+                           bboxes_3d_type='lidar'):
+    setup_seed(seed)
     assert bboxes_3d_type in ('lidar', 'depth', 'cam')
     bbox_3d_class = {
         'lidar': LiDARInstance3DBoxes,

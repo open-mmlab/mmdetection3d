@@ -1,30 +1,36 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from functools import partial
+from typing import Tuple
 
 import torch
+from torch import Tensor
 
 from mmdet3d.structures.points import get_points_type
 
 
-def apply_3d_transformation(pcd, coord_type, img_meta, reverse=False):
+def apply_3d_transformation(pcd: Tensor,
+                            coord_type: str,
+                            img_meta: dict,
+                            reverse: bool = False) -> Tensor:
     """Apply transformation to input point cloud.
 
     Args:
-        pcd (torch.Tensor): The point cloud to be transformed.
+        pcd (Tensor): The point cloud to be transformed.
         coord_type (str): 'DEPTH' or 'CAMERA' or 'LIDAR'.
         img_meta(dict): Meta info regarding data transformation.
-        reverse (bool): Reversed transformation or not.
+        reverse (bool): Reversed transformation or not. Defaults to False.
 
     Note:
         The elements in img_meta['transformation_3d_flow']:
-        "T" stands for translation;
-        "S" stands for scale;
-        "R" stands for rotation;
-        "HF" stands for horizontal flip;
-        "VF" stands for vertical flip.
+
+            - "T" stands for translation;
+            - "S" stands for scale;
+            - "R" stands for rotation;
+            - "HF" stands for horizontal flip;
+            - "VF" stands for vertical flip.
 
     Returns:
-        torch.Tensor: The transformed point cloud.
+        Tensor: The transformed point cloud.
     """
 
     dtype = pcd.dtype
@@ -92,16 +98,18 @@ def apply_3d_transformation(pcd, coord_type, img_meta, reverse=False):
     return pcd.coord
 
 
-def extract_2d_info(img_meta, tensor):
+def extract_2d_info(
+        img_meta: dict,
+        tensor: Tensor) -> Tuple[int, int, int, int, Tensor, bool, Tensor]:
     """Extract image augmentation information from img_meta.
 
     Args:
-        img_meta(dict): Meta info regarding data transformation.
-        tensor(torch.Tensor): Input tensor used to create new ones.
+        img_meta (dict): Meta info regarding data transformation.
+        tensor (Tensor): Input tensor used to create new ones.
 
     Returns:
-        (int, int, int, int, torch.Tensor, bool, torch.Tensor):
-            The extracted information.
+        Tuple[int, int, int, int, torch.Tensor, bool, torch.Tensor]:
+        The extracted information.
     """
     img_shape = img_meta['img_shape']
     ori_shape = img_meta['ori_shape']
@@ -120,17 +128,17 @@ def extract_2d_info(img_meta, tensor):
             img_crop_offset)
 
 
-def bbox_2d_transform(img_meta, bbox_2d, ori2new):
+def bbox_2d_transform(img_meta: dict, bbox_2d: Tensor,
+                      ori2new: bool) -> Tensor:
     """Transform 2d bbox according to img_meta.
 
     Args:
-        img_meta(dict): Meta info regarding data transformation.
-        bbox_2d (torch.Tensor): Shape (..., >4)
-            The input 2d bboxes to transform.
+        img_meta (dict): Meta info regarding data transformation.
+        bbox_2d (Tensor): Shape (..., >4) The input 2d bboxes to transform.
         ori2new (bool): Origin img coord system to new or not.
 
     Returns:
-        torch.Tensor: The transformed 2d bboxes.
+        Tensor: The transformed 2d bboxes.
     """
 
     img_h, img_w, ori_h, ori_w, img_scale_factor, img_flip, \
@@ -174,17 +182,17 @@ def bbox_2d_transform(img_meta, bbox_2d, ori2new):
     return bbox_2d_new
 
 
-def coord_2d_transform(img_meta, coord_2d, ori2new):
+def coord_2d_transform(img_meta: dict, coord_2d: Tensor,
+                       ori2new: bool) -> Tensor:
     """Transform 2d pixel coordinates according to img_meta.
 
     Args:
-        img_meta(dict): Meta info regarding data transformation.
-        coord_2d (torch.Tensor): Shape (..., 2)
-            The input 2d coords to transform.
+        img_meta (dict): Meta info regarding data transformation.
+        coord_2d (Tensor): Shape (..., 2) The input 2d coords to transform.
         ori2new (bool): Origin img coord system to new or not.
 
     Returns:
-        torch.Tensor: The transformed 2d coordinates.
+        Tensor: The transformed 2d coordinates.
     """
 
     img_h, img_w, ori_h, ori_w, img_scale_factor, img_flip, \

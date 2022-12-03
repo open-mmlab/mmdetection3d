@@ -140,7 +140,8 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
 
     def postprocess_result(self, seg_pred_list: List[dict],
                            batch_img_metas: List[dict]) -> list:
-        """ Convert results list to `Det3DDataSample`.
+        """Convert results list to `Det3DDataSample`.
+
         Args:
             seg_logits_list (List[dict]): List of segmentation results,
                 seg_logits from model of each input point clouds sample.
@@ -157,7 +158,8 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         for i in range(len(seg_pred_list)):
             img_meta = batch_img_metas[i]
             seg_pred = seg_pred_list[i]
-            prediction = Det3DDataSample(**{'metainfo': img_meta})
+            prediction = Det3DDataSample(**{'metainfo': img_meta.metainfo})
+            prediction.set_data({'eval_ann_info': img_meta.eval_ann_info})
             prediction.set_data(
                 {'pred_pts_seg': PointData(**{'pts_semantic_mask': seg_pred})})
             predictions.append(prediction)

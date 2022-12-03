@@ -32,7 +32,7 @@ mmdetection3d
 
 ### Create KITTI dataset
 
-To create KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile, `.pkl` info files are also generated for training or validation. Subsequently, create KITTI data by running
+To create KITTI point cloud data, we load the raw point cloud data and generate the relevant annotations including object labels and bounding boxes. We also generate all single training objects' point cloud in KITTI dataset and save them as `.bin` files in `data/kitti/kitti_gt_database`. Meanwhile, `.pkl` info files are also generated for training or validation. Subsequently, create KITTI data by running:
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -43,11 +43,10 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/val.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/val.txt
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
 
-
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
 ```
 
-Note that if your local disk does not have enough space for saving converted data, you can change the `out-dir` to anywhere else, and you need to remove the `--with-plane` flag if `planes` are not prepared.
+Note that if your local disk does not have enough space for saving converted data, you can change the `--out-dir` to anywhere else, and you need to remove the `--with-plane` flag if `planes` are not prepared.
 
 The folder structure after processing should be as below
 
@@ -79,51 +78,51 @@ kitti
 ├── kitti_infos_trainval.pkl
 ```
 
-- `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset
-- `kitti_infos_train.pkl`: training dataset info, each frame info has two keys: `metainfo` and `data_list`.
-  `metainfo` is a dict, it contains the essential information for the dataset, such as `CLASSES` and `version`.
-  `data_list` is a list, it has all the needed data information, and each item is detailed information dict for a single sample. Detailed information is as follows:
+- `kitti_gt_database/xxxxx.bin`: point cloud data included in each 3D bounding box of the training dataset.
+- `kitti_infos_train.pkl`: training dataset, a dict contains two keys: `metainfo` and `data_list`.
+  `metainfo` contains the basic information for the dataset itself, such as `categories`, `dataset` and `info_version`, while `data_list` is a list of dict, each dict (hereinafter referred to as `info`) contains all the detailed information of single sample as follows:
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['images'\]: Information of images captured by multiple cameras. A dict contains five keys including: `CAM0`, `CAM1`, `CAM2`, `CAM3`, `R0_rect`.
     - info\['images'\]\['R0_rect'\]: Rectifying rotation matrix with shape (4, 4).
     - info\['images'\]\['CAM2'\]: Include some information about the `CAM2` camera sensor.
-      - info\['images'\]\['CAM2'\]\['img_path'\]: The path to the image file.
+      - info\['images'\]\['CAM2'\]\['img_path'\]: The filename of the image.
       - info\['images'\]\['CAM2'\]\['height'\]: The height of the image.
       - info\['images'\]\['CAM2'\]\['width'\]: The width of the image.
       - info\['images'\]\['CAM2'\]\['cam2img'\]: Transformation matrix from camera to image with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2cam'\]: Transformation matrix from lidar to camera with shape (4, 4).
       - info\['images'\]\['CAM2'\]\['lidar2img'\]: Transformation matrix from lidar to image with shape (4, 4).
-  - info\['lidar_points'\]: Information of point cloud captured by Lidar. A dict contains information of LiDAR point cloud frame.
-    - info\['lidar_points'\]\['lidar_path'\]: The file path of the lidar point cloud data.
-    - info\['lidar_points'\]\['num_features'\]: Number of features for each point.
+  - info\['lidar_points'\]: A dict containing all the information related to the lidar points.
+    - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
+    - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['Tr_velo_to_cam'\]: Transformation from Velodyne coordinate to camera coordinate with shape (4, 4).
     - info\['lidar_points'\]\['Tr_imu_to_velo'\]: Transformation from IMU coordinate to Velodyne coordinate with shape (4, 4).
-  - info\['instances'\]: Required by object detection task. A list contains some dict of instance infos. Each dict corresponds to annotations of one instance in this frame.
-    - info\['instances'\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
-    - info\['instances'\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, w, h, l, yaw) order.
-    - info\['instances'\]\['bbox_label'\]: An int indicate the 2D label of instance and the -1 indicating ignore.
-    - info\['instances'\]\['bbox_label_3d'\]: An int indicate the 3D label of instance and the -1 indicating ignore.
-    - info\['instances'\]\['depth'\]: Projected center depth of the 3D bounding box with respect to the image plane.
-    - info\['instances'\]\['num_lidar_pts'\]: The number of LiDAR points in the 3D bounding box.
-    - info\['instances'\]\['center_2d'\]: Projected 2D center of the 3D bounding box.
-    - info\['instances'\]\['difficulty'\]: Kitti difficulty, Easy, Moderate, Hard.
-    - info\['instances'\]\['truncated'\]: The instances bbox is truncated.
-    - info\['instances'\]\['occluded'\]: The instances bbox is semi occluded or fully occluded.
-    - info\['instances'\]\['group_ids'\]: Used for multi-part object.
+  - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance. For the i-th instance:
+    - info\['instances'\]\[i\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order.
+    - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, h, w, yaw) order.
+    - info\['instances'\]\[i\]\['bbox_label'\]: An int indicate the 2D label of instance and the -1 indicating ignore.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: An int indicate the 3D label of instance and the -1 indicating ignore.
+    - info\['instances'\]\[i\]\['depth'\]: Projected center depth of the 3D bounding box with respect to the image plane.
+    - info\['instances'\]\[i\]\['num_lidar_pts'\]: The number of LiDAR points in the 3D bounding box.
+    - info\['instances'\]\[i\]\['center_2d'\]: Projected 2D center of the 3D bounding box.
+    - info\['instances'\]\[i\]\['difficulty'\]: KITTI difficulty: 'Easy', 'Moderate', 'Hard'.
+    - info\['instances'\]\[i\]\['truncated'\]: Float from 0 (non-truncated) to 1 (truncated), where truncated refers to the object leaving image boundaries.
+    - info\['instances'\]\[i\]\['occluded'\]: Integer (0,1,2,3) indicating occlusion state: 0 = fully visible, 1 = partly occluded, 2 = largely occluded, 3 = unknown.
+    - info\['instances'\]\[i\]\['group_ids'\]: Used for multi-part object.
   - info\['plane'\](optional): Road level information.
 
 Please refer to [kitti_converter.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/kitti_converter.py) and [update_infos_to_v2.py ](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tools/dataset_converters/update_infos_to_v2.py) for more details.
 
 ## Train pipeline
 
-A typical train pipeline of 3D detection on KITTI is as below.
+A typical train pipeline of 3D detection on KITTI is as below:
 
 ```python
 train_pipeline = [
-    dict(type='LoadPointsFromFile',
-         coord_type='LIDAR',
-         load_dim=4, # x, y, z, intensity
-         use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4, # x, y, z, intensity
+        use_dim=4),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -156,7 +155,7 @@ train_pipeline = [
 An example to evaluate PointPillars with 8 GPUs with kitti metrics is as follows:
 
 ```shell
-bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+bash tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
 ```
 
 ## Metrics
@@ -180,34 +179,28 @@ aos  AP:97.70, 89.11, 87.38
 
 ## Testing and make a submission
 
-An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard. An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
+An example to test PointPillars on KITTI with 8 GPUs and generate a submission to the leaderboard is as follows:
 
-- First, you need to modify the `test_evaluator` dict in your config file to add `pklfile_prefix` and `submission_prefix`, just like:
+- First, you need to modify the `test_dataloader` and `test_evaluator` dict in your config file, just like:
 
-```python
-data_root = 'data/kitti/'
-test_evaluator = dict(
-    type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox',
-    pklfile_prefix='results/kitti-3class/kitti_results',
-    submission_prefix='results/kitti-3class/kitti_results')
-```
+  ```python
+  data_root = 'data/kitti/'
+  test_dataloader = dict(
+      dataset=dict(
+          ann_file='kitti_infos_test.pkl',
+          load_eval_anns=False,
+          data_prefix=dict(pts='testing/velodyne_reduced')))
+  test_evaluator = dict(
+      ann_file=data_root + 'kitti_infos_test.pkl',
+      format_only=True,
+      pklfile_prefix='results/kitti-3class/kitti_results',
+      submission_prefix='results/kitti-3class/kitti_results')
+  ```
 
 - And then, you can run the test script.
 
-```shell
-mkdir -p results/kitti-3class
-
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
-```
-
-- Or you can use `--cfg-options "test_evaluator.jsonfile_prefix=work_dirs/pp-nus/results_eval.json)` after the test command, and run test script directly.
-
-```shell
-mkdir -p results/kitti-3class
-
-./tools/dist_test.sh configs/pointpillars/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8 --cfg-options 'test_evaluator.pklfile_prefix=results/kitti-3class/kitti_results' 'test_evaluator.submission_prefix=results/kitti-3class/kitti_results'
-```
+  ```shell
+  ./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class/latest.pth 8
+  ```
 
 After generating `results/kitti-3class/kitti_results/xxxxx.txt` files, you can submit these files to KITTI benchmark. Please refer to the [KITTI official website](http://www.cvlibs.net/datasets/kitti/index.php) for more details.

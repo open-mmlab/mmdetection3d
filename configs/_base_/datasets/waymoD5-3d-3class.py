@@ -16,7 +16,7 @@ file_client_args = dict(backend='disk')
 #     })
 
 class_names = ['Car', 'Pedestrian', 'Cyclist']
-metainfo = dict(CLASSES=class_names)
+metainfo = dict(classes=class_names)
 
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
 input_modality = dict(use_lidar=True, use_camera=False)
@@ -151,7 +151,8 @@ val_evaluator = dict(
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
     data_root='./data/waymo/waymo_format',
-    file_client_args=file_client_args)
+    file_client_args=file_client_args,
+    convert_kitti_format=False)
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

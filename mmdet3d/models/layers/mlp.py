@@ -1,7 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple
+
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
+
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 class MLP(BaseModule):
@@ -10,26 +15,28 @@ class MLP(BaseModule):
     Pass features (B, C, N) through an MLP.
 
     Args:
-        in_channels (int, optional): Number of channels of input features.
-            Default: 18.
-        conv_channels (tuple[int], optional): Out channels of the convolution.
-            Default: (256, 256).
-        conv_cfg (dict, optional): Config of convolution.
-            Default: dict(type='Conv1d').
-        norm_cfg (dict, optional): Config of normalization.
-            Default: dict(type='BN1d').
-        act_cfg (dict, optional): Config of activation.
-            Default: dict(type='ReLU').
+        in_channels (int): Number of channels of input features.
+            Defaults to 18.
+        conv_channels (Tuple[int]): Out channels of the convolution.
+            Defaults to (256, 256).
+        conv_cfg (:obj:`ConfigDict` or dict): Config dict for convolution
+            layer. Defaults to dict(type='Conv1d').
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN1d').
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
+            Defaults to dict(type='ReLU').
+        init_cfg (:obj:`ConfigDict` or dict or List[:obj:`Contigdict` or dict],
+            optional): Initialization config dict. Defaults to None.
     """
 
     def __init__(self,
-                 in_channel=18,
-                 conv_channels=(256, 256),
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
+                 in_channel: int = 18,
+                 conv_channels: Tuple[int] = (256, 256),
+                 conv_cfg: ConfigType = dict(type='Conv1d'),
+                 norm_cfg: ConfigType = dict(type='BN1d'),
+                 act_cfg: ConfigType = dict(type='ReLU'),
+                 init_cfg: OptMultiConfig = None) -> None:
+        super(MLP, self).__init__(init_cfg=init_cfg)
         self.mlp = nn.Sequential()
         prev_channels = in_channel
         for i, conv_channel in enumerate(conv_channels):
@@ -47,5 +54,5 @@ class MLP(BaseModule):
                     inplace=True))
             prev_channels = conv_channels[i]
 
-    def forward(self, img_features):
+    def forward(self, img_features: Tensor) -> Tensor:
         return self.mlp(img_features)
