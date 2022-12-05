@@ -34,6 +34,10 @@ python tools/test.py projects/dummy_PETR/config/petr/petr_vovnet_gridmask_p4_800
 
 This Result is trained by petr_vovnet_gridmask_p4_800x320.py and use [weights](https://drive.google.com/file/d/1ABI5BoQCkCkP4B0pO5KBJ3Ni0tei0gZi/view?usp=sharing) as pretrain weight.
 
+|                                                Backbone                                                | Lr schd | Mem (GB) | Inf time (fps) | mAP  | NDS  |         Download         |
+| :----------------------------------------------------------------------------------------------------: | :-----: | :------: | :------------: | :--: | :--: | :----------------------: |
+| [petr_vovnet_gridmask_p4_800x320](projects/dummy_PETR/configs/petr/petr_vovnet_gridmask_p4_800x320.py) |   1x    |   7.62   |      18.7      | 38.3 | 43.5 | [model](<>) \| [log](<>) |
+
 ```
 mAP: 0.3827
 mATE: 0.7375
