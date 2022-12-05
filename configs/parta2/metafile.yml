@@ -16,9 +16,9 @@ Collections:
       Version: v0.5.0
 
 Models:
-  - Name: hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class
+  - Name: parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class
     In Collection: Part-A^2
-    Config: configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py
+    Config: configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py
     Metadata:
       Training Memory (GB): 4.1
     Results:
@@ -28,9 +28,9 @@ Models:
           mAP: 68.33
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/parta2/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class/hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-3class_20210831_022017-454a5344.pth
 
-  - Name: hv_PartA2_secfpn_2x8_cyclic_80e_kitti-3d-car
+  - Name: parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-car
     In Collection: Part-A^2
-    Config: configs/parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-car.py
+    Config: configs/parta2/parta2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-car.py
     Metadata:
       Training Memory (GB): 4.0
     Results:
