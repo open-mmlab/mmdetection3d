@@ -1,14 +1,18 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Union
+
 from mmengine.registry import Registry
+from torch import nn as nn
 
 SA_MODULES = Registry('point_sa_module')
 
 
-def build_sa_module(cfg, *args, **kwargs):
+def build_sa_module(cfg: Union[dict, None], *args, **kwargs) -> nn.Module:
     """Build PointNet2 set abstraction (SA) module.
 
     Args:
-        cfg (None or dict): The SA module config, which should contain:
+        cfg (dict or None): The SA module config, which should contain:
+
             - type (str): Module type.
             - module args: Args needed to instantiate an SA module.
         args (argument list): Arguments passed to the `__init__`

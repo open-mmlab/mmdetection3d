@@ -14,9 +14,9 @@ Collections:
       Version: v0.5.0
 
 Models:
-  - Name: hv_second_secfpn_6x8_80e_kitti-3d-car
+  - Name: second_hv_secfpn_8xb6-80e_kitti-3d-car
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_6x8_80e_kitti-3d-car.py
+    Config: configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-car.py
     Metadata:
       Training Data: KITTI
       Training Memory (GB): 5.4
@@ -28,9 +28,9 @@ Models:
           mAP: 79.07
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/second/hv_second_secfpn_6x8_80e_kitti-3d-car/hv_second_secfpn_6x8_80e_kitti-3d-car_20200620_230238-393f000c.pth
 
-  - Name: hv_second_secfpn_6x8_80e_kitti-3d-3class
+  - Name: second_hv_secfpn_8xb6-80e_kitti-3d-3class
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_6x8_80e_kitti-3d-3class.py
+    Config: configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-3class.py
     Metadata:
       Training Data: KITTI
       Training Memory (GB): 5.4
@@ -42,9 +42,9 @@ Models:
           mAP: 65.74
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/second/hv_second_secfpn_6x8_80e_kitti-3d-3class/hv_second_secfpn_6x8_80e_kitti-3d-3class_20210831_022017-ae782e87.pth
 
-  - Name: hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class
+  - Name: second_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
+    Config: configs/second/second_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py
     Metadata:
       Training Data: Waymo
       Training Memory (GB): 8.12
@@ -58,9 +58,9 @@ Models:
           mAP@L2: 58.9
           mAPH@L2: 55.7
 
-  - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-car
+  - Name: second_hv_secfpn_8xb6-amp-80e_kitti-3d-car
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py
+    Config: configs/second/hv_second_secfpn_8xb6-amp-80e_kitti-3d-car.py
     Metadata:
       Training Techniques:
         - AdamW
@@ -77,9 +77,9 @@ Models:
     Code:
       Version: v0.7.0
 
-  - Name: hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class
+  - Name: second_hv_secfpn_8xb6-amp-80e_kitti-3d-3class
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py
+    Config: configs/second/hv_second_secfpn_8xb6-amp-80e_kitti-3d-3class.py
     Metadata:
       Training Techniques:
         - AdamW

@@ -26,7 +26,7 @@
 
 **News**:
 
-**v1.1.0rc1** was released in 11/10/2022
+**v1.1.0rc2** was released in 2/12/2022
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
 
@@ -78,7 +78,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-**1.1.0rc1** was released in 11/10/2022.
+**1.1.0rc2** was released in 2/12/2022.
 
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 
@@ -159,6 +159,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/point_rcnn">PointRCNN (CVPR'2019)</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
+            <li><a href="configs/pv_rcnn">PV-RCNN (CVPR'2020)</a></li>
         </ul>
         <li><b>Indoor</b></li>
         <ul>
@@ -227,6 +228,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 | MonoFlex      |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✓  |     ✗      |
 | SA-SSD        |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
 | FCAF3D        |   ✗    |    ✗    |   ✗   |     ✗      |   ✗   |   ✗   |    ✗    |    ✗    |  ✗  |     ✓      |
+| PV-RCNN       |   ☐    |    ☐    |   ☐   |     ✗      |   ✗   |   ☐   |    ☐    |    ☐    |  ✗  |     ✗      |
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 

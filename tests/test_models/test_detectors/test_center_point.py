@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestCenterPoint(unittest.TestCase):
@@ -15,14 +15,14 @@ class TestCenterPoint(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'CenterPoint')
 
-        _setup_seed(0)
+        setup_seed(0)
         DefaultScope.get_instance('test_center_point', scope_name='mmdet3d')
-        centerpoint_net_cfg = _get_detector_cfg(
+        centerpoint_net_cfg = get_detector_cfg(
             'centerpoint/centerpoint_voxel01_second_secfpn_8xb4-cyclic-20e_nus-3d.py'  # noqa
         )
         model = MODELS.build(centerpoint_net_cfg)
         num_gt_instance = 50
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             with_img=True, num_gt_instance=num_gt_instance, points_feat_dim=5)
 
         for sample_id in range(len(packed_inputs['data_samples'])):

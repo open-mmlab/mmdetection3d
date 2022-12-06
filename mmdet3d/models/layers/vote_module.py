@@ -1,10 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple
+
 import torch
 from mmcv.cnn import ConvModule
 from mmengine import is_tuple_of
+from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.models.builder import build_loss
+from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType
 
 
 class VoteModule(nn.Module):
@@ -14,41 +18,41 @@ class VoteModule(nn.Module):
 
     Args:
         in_channels (int): Number of channels of seed point features.
-        vote_per_seed (int, optional): Number of votes generated from
-            each seed point. Default: 1.
-        gt_per_seed (int, optional): Number of ground truth votes generated
-            from each seed point. Default: 3.
-        num_points (int, optional): Number of points to be used for voting.
-            Default: 1.
-        conv_channels (tuple[int], optional): Out channels of vote
-            generating convolution. Default: (16, 16).
-        conv_cfg (dict, optional): Config of convolution.
-            Default: dict(type='Conv1d').
-        norm_cfg (dict, optional): Config of normalization.
-            Default: dict(type='BN1d').
-        norm_feats (bool, optional): Whether to normalize features.
-            Default: True.
-        with_res_feat (bool, optional): Whether to predict residual features.
-            Default: True.
-        vote_xyz_range (list[float], optional):
-            The range of points translation. Default: None.
-        vote_loss (dict, optional): Config of vote loss. Default: None.
+        vote_per_seed (int): Number of votes generated from each seed point.
+            Defaults to 1.
+        gt_per_seed (int): Number of ground truth votes generated from each
+            seed point. Defaults to 3.
+        num_points (int): Number of points to be used for voting.
+            Defaults to 1.
+        conv_channels (tuple[int]): Out channels of vote generating
+            convolution. Defaults to (16, 16).
+        conv_cfg (:obj:`ConfigDict` or dict): Config dict for convolution
+            layer. Defaults to dict(type='Conv1d').
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to dict(type='BN1d').
+        norm_feats (bool): Whether to normalize features. Default to True.
+        with_res_feat (bool): Whether to predict residual features.
+            Defaults to True.
+        vote_xyz_range (List[float], optional): The range of points
+            translation. Defaults to None.
+        vote_loss (:obj:`ConfigDict` or dict, optional): Config of vote loss.
+            Defaults to None.
     """
 
     def __init__(self,
-                 in_channels,
-                 vote_per_seed=1,
-                 gt_per_seed=3,
-                 num_points=-1,
-                 conv_channels=(16, 16),
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 norm_feats=True,
-                 with_res_feat=True,
-                 vote_xyz_range=None,
-                 vote_loss=None):
-        super().__init__()
+                 in_channels: int,
+                 vote_per_seed: int = 1,
+                 gt_per_seed: int = 3,
+                 num_points: int = -1,
+                 conv_channels: Tuple[int] = (16, 16),
+                 conv_cfg: ConfigType = dict(type='Conv1d'),
+                 norm_cfg: ConfigType = dict(type='BN1d'),
+                 act_cfg: ConfigType = dict(type='ReLU'),
+                 norm_feats: bool = True,
+                 with_res_feat: bool = True,
+                 vote_xyz_range: List[float] = None,
+                 vote_loss: OptConfigType = None) -> None:
+        super(VoteModule, self).__init__()
         self.in_channels = in_channels
         self.vote_per_seed = vote_per_seed
         self.gt_per_seed = gt_per_seed
@@ -60,7 +64,7 @@ class VoteModule(nn.Module):
         self.vote_xyz_range = vote_xyz_range
 
         if vote_loss is not None:
-            self.vote_loss = build_loss(vote_loss)
+            self.vote_loss = MODELS.build(vote_loss)
 
         prev_channels = in_channels
         vote_conv_list = list()
@@ -86,23 +90,24 @@ class VoteModule(nn.Module):
             out_channel = 3 * self.vote_per_seed
         self.conv_out = nn.Conv1d(prev_channels, out_channel, 1)
 
-    def forward(self, seed_points, seed_feats):
-        """forward.
+    def forward(self, seed_points: Tensor,
+                seed_feats: Tensor) -> Tuple[Tensor]:
+        """Forward.
 
         Args:
-            seed_points (torch.Tensor): Coordinate of the seed
-                points in shape (B, N, 3).
-            seed_feats (torch.Tensor): Features of the seed points in shape
+            seed_points (Tensor): Coordinate of the seed points in shape
+                (B, N, 3).
+            seed_feats (Tensor): Features of the seed points in shape
                 (B, C, N).
 
         Returns:
-            tuple[torch.Tensor]:
+            Tuple[torch.Tensor]:
 
                 - vote_points: Voted xyz based on the seed points
-                    with shape (B, M, 3), ``M=num_seed*vote_per_seed``.
+                  with shape (B, M, 3), ``M=num_seed*vote_per_seed``.
                 - vote_features: Voted features based on the seed points with
-                    shape (B, C, M) where ``M=num_seed*vote_per_seed``,
-                    ``C=vote_feature_dim``.
+                  shape (B, C, M) where ``M=num_seed*vote_per_seed``,
+                  ``C=vote_feature_dim``.
         """
         if self.num_points != -1:
             assert self.num_points < seed_points.shape[1], \
@@ -150,19 +155,20 @@ class VoteModule(nn.Module):
             vote_feats = seed_feats
         return vote_points, vote_feats, offset
 
-    def get_loss(self, seed_points, vote_points, seed_indices,
-                 vote_targets_mask, vote_targets):
+    def get_loss(self, seed_points: Tensor, vote_points: Tensor,
+                 seed_indices: Tensor, vote_targets_mask: Tensor,
+                 vote_targets: Tensor) -> Tensor:
         """Calculate loss of voting module.
 
         Args:
-            seed_points (torch.Tensor): Coordinate of the seed points.
-            vote_points (torch.Tensor): Coordinate of the vote points.
-            seed_indices (torch.Tensor): Indices of seed points in raw points.
-            vote_targets_mask (torch.Tensor): Mask of valid vote targets.
-            vote_targets (torch.Tensor): Targets of votes.
+            seed_points (Tensor): Coordinate of the seed points.
+            vote_points (Tensor): Coordinate of the vote points.
+            seed_indices (Tensor): Indices of seed points in raw points.
+            vote_targets_mask (Tensor): Mask of valid vote targets.
+            vote_targets (Tensor): Targets of votes.
 
         Returns:
-            torch.Tensor: Weighted vote loss.
+            Tensor: Weighted vote loss.
         """
         batch_size, num_seed = seed_points.shape[:2]
 

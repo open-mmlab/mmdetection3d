@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestMVXNet(unittest.TestCase):
@@ -15,14 +15,14 @@ class TestMVXNet(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'DynamicMVXFasterRCNN')
 
-        _setup_seed(0)
+        setup_seed(0)
         DefaultScope.get_instance('test_mvxnet', scope_name='mmdet3d')
-        mvx_net_cfg = _get_detector_cfg(
+        mvx_net_cfg = get_detector_cfg(
             'mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py'  # noqa
         )
         model = MODELS.build(mvx_net_cfg)
         num_gt_instance = 1
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             with_img=False, num_gt_instance=num_gt_instance, points_feat_dim=4)
 
         if torch.cuda.is_available():

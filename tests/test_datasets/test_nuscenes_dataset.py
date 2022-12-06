@@ -58,10 +58,8 @@ def test_getitem():
     input_dict = nus_dataset.get_data_info(0)
     # assert the the path should contains data_prefix and data_root
     assert data_prefix['pts'] in input_dict['lidar_points']['lidar_path']
-    assert input_dict['lidar_points'][
-        'lidar_path'] == 'tests/data/nuscenes/samples/LIDAR_TOP/' \
-                         'n015-2018-08-02-17-16-37+0800__LIDAR_TOP__' \
-                         '1533201470948018.pcd.bin'
+    assert data_root in input_dict['lidar_points']['lidar_path']
+
     for cam_id, img_info in input_dict['images'].items():
         if 'img_path' in img_info:
             assert data_prefix['img'] in img_info['img_path']
