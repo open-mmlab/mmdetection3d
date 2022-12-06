@@ -10,7 +10,6 @@ MMDetection3D works on Linux, Windows (experimental support) and macOS and requi
 - [MMEngine](https://mmengine.readthedocs.io/en/latest/#installation)
 - [MMCV](https://mmcv.readthedocs.io/en/2.x/#installation)
 
-
 ```{note}
 If you are experienced with PyTorch and have already installed it, just skip this part and jump to the [next section](#installation). Otherwise, you can follow these steps for the preparation.
 ```
