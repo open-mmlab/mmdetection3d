@@ -41,7 +41,9 @@ class Batch3DRoIGridExtractor(BaseModule):
             torch.Tensor: Grid points features.
         """
         batch_size = int(batch_inds.max()) + 1
-
+        roi_boxes_list = []
+        for i in range(batch_size):
+            roi_boxes_list.append(rois[rois[:, 0] == i])
         xyz = coordinate
         xyz_batch_cnt = xyz.new_zeros(batch_size).int()
         for k in range(batch_size):
@@ -61,7 +63,8 @@ class Batch3DRoIGridExtractor(BaseModule):
             xyz_batch_cnt=xyz_batch_cnt,
             new_xyz=new_xyz.contiguous(),
             new_xyz_batch_cnt=new_xyz_batch_cnt,
-            features=feats.contiguous())  # (M1 + M2 ..., C)
+            features=feats.contiguous(),
+            roi_boxes_list=roi_boxes_list)  # (M1 + M2 ..., C)
 
         pooled_features = pooled_features.view(-1, self.grid_size,
                                                self.grid_size, self.grid_size,
