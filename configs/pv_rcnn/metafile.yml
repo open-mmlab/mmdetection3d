@@ -1,0 +1,29 @@
+Collections:
+  - Name: PV-RCNN
+    Metadata:
+      Training Data: KITTI
+      Training Techniques:
+        - AdamW
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - Feature Pyramid Network
+    Paper:
+      URL: https://arxiv.org/abs/1912.13192
+      Title: 'PV-RCNN: Point-Voxel Feature Set Abstraction for 3D Object Detection'
+    README: configs/pv_rcnn/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/detectors/pv_rcnn.py#L12
+      Version: v1.1.0rc2
+
+Models:
+  - Name: pv_rcnn_8xb2-80e_kitti-3d-3class
+    In Collection: PV-RCNN
+    Config: configs/pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class.py
+    Metadata:
+      Training Memory (GB): 5.4
+    Results:
+      - Task: 3D Object Detection
+        Dataset: KITTI
+        Metrics:
+          mAP: 72.28
+    Weights: <https://download.openmmlab.com/mmdetection3d/v1.1.0_models/pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class/pv_rcnn_8xb2-80e_kitti-3d-3class_20221117_234428-b384d22f.pth

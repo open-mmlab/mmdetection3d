@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestImVoxelNet(unittest.TestCase):
@@ -15,12 +15,12 @@ class TestImVoxelNet(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'ImVoxelNet')
         DefaultScope.get_instance('test_ImVoxelNet', scope_name='mmdet3d')
-        _setup_seed(0)
-        imvoxel_net_cfg = _get_detector_cfg(
+        setup_seed(0)
+        imvoxel_net_cfg = get_detector_cfg(
             'imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py')
         model = MODELS.build(imvoxel_net_cfg)
         num_gt_instance = 1
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             with_points=False,
             with_img=True,
             img_size=(128, 128),

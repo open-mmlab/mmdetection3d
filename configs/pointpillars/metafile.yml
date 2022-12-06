@@ -14,7 +14,7 @@ Collections:
       Version: v0.6.0
 
 Models:
-  - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-car
+  - Name: pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car.py
     Metadata:
@@ -28,7 +28,7 @@ Models:
           AP: 77.6
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20220331_134606-d42d15ed.pth
 
-  - Name: hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class
+  - Name: pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py
     Metadata:
@@ -42,7 +42,7 @@ Models:
           AP: 64.07
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20220301_150306-37dc2420.pth
 
-  - Name: hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d
+  - Name: pointpillars_hv_secfpn_sbn-all_8xb4-2x_nus-3d
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
@@ -57,7 +57,29 @@ Models:
           NDS: 49.1
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d_20210826_225857-f19d00a3.pth
 
-  - Name: hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d
+  - Name: pointpillars_hv_secfpn_sbn-all_8xb4-amp-2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_8xb4-amp-2x_nus-3d.py
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Hard Voxelization
+      Training Data: nuScenes
+      Training Memory (GB): 8.37
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 35.19
+          NDS: 50.27
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d_20201020_222626-c3f0483e.pth
+    Code:
+      Version: v0.7.0
+
+  - Name: pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
@@ -72,7 +94,29 @@ Models:
           NDS: 53.15
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20210826_104936-fca299c1.pth
 
-  - Name: hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d
+  - Name: pointpillars_hv_fpn_sbn-all_8xb4-amp-2x_nus-3d
+    In Collection: PointPillars
+    Config: configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-amp-2x_nus-3d.py
+    Metadata:
+      Training Techniques:
+        - AdamW
+        - Mixed Precision Training
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Hard Voxelization
+      Training Data: nuScenes
+      Training Memory (GB): 8.40
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 39.26
+          NDS: 53.26
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth
+    Code:
+      Version: v0.7.0
+
+  - Name: pointpillars_hv_secfpn_sbn-all_8xb2-2x_lyft-3d
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_8xb2-2x_lyft-3d.py
     Metadata:
@@ -87,7 +131,7 @@ Models:
           Public Score: 14.1
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_secfpn_sbn-all_2x8_2x_lyft-3d_20210829_100455-82b81c39.pth
 
-  - Name: hv_pointpillars_fpn_sbn-all_2x8_2x_lyft-3d
+  - Name: pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py
     Metadata:
@@ -167,47 +211,3 @@ Models:
           mAPH@L1: 63.3
           mAP@L2: 62.6
           mAPH@L2: 57.6
-
-  - Name: hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d
-    In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d.py
-    Metadata:
-      Training Techniques:
-        - AdamW
-        - Mixed Precision Training
-      Training Resources: 8x TITAN Xp
-      Architecture:
-        - Hard Voxelization
-      Training Data: nuScenes
-      Training Memory (GB): 8.37
-    Results:
-      - Task: 3D Object Detection
-        Dataset: nuScenes
-        Metrics:
-          mAP: 35.19
-          NDS: 50.27
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_secfpn_sbn-all_fp16_2x8_2x_nus-3d_20201020_222626-c3f0483e.pth
-    Code:
-      Version: v0.7.0
-
-  - Name: hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d
-    In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py
-    Metadata:
-      Training Techniques:
-        - AdamW
-        - Mixed Precision Training
-      Training Resources: 8x TITAN Xp
-      Architecture:
-        - Hard Voxelization
-      Training Data: nuScenes
-      Training Memory (GB): 8.40
-    Results:
-      - Task: 3D Object Detection
-        Dataset: nuScenes
-        Metrics:
-          mAP: 39.26
-          NDS: 53.26
-    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fp16/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth
-    Code:
-      Version: v0.7.0

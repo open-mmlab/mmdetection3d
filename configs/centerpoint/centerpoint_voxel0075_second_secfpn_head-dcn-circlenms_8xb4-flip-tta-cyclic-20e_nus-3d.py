@@ -2,6 +2,9 @@ _base_ = './centerpoint_voxel0075_second_secfpn_' \
          'head-dcn-circlenms_8xb4_cyclic-20e_nus-3d.py'
 
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
+# Using calibration info convert the Lidar-coordinate point cloud range to the
+# ego-coordinate point cloud range could bring a little promotion in nuScenes.
+# point_cloud_range = [-54, -54.8, -5.0, 54, 53.2, 3.0]
 file_client_args = dict(backend='disk')
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',

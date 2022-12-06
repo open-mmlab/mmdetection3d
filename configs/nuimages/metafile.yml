@@ -1,3 +1,27 @@
+Collections:
+  - Name: Mask R-CNN
+    Metadata:
+      Training Data: nuImages
+      Training Techniques:
+        - SGD with Momentum
+        - Weight Decay
+      Training Resources: 8x TITAN Xp
+      Architecture:
+        - Softmax
+        - RPN
+        - Convolution
+        - Dense Connections
+        - FPN
+        - ResNet
+        - RoIAlign
+    Paper:
+      URL: https://arxiv.org/abs/1703.06870v3
+      Title: "Mask R-CNN"
+    README: configs/nuimages/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection/blob/v2.0.0/mmdet/models/detectors/mask_rcnn.py#L6
+      Version: v2.0.0
+
 Models:
   - Name: mask_rcnn_r50_fpn_1x_nuim
     In Collection: Mask R-CNN

@@ -4,8 +4,8 @@ import torch
 from mmengine import DefaultScope
 
 from mmdet3d.registry import MODELS
-from tests.utils.model_utils import (_create_detector_inputs,
-                                     _get_detector_cfg, _setup_seed)
+from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
+                             setup_seed)
 
 
 class TestH3D(unittest.TestCase):
@@ -15,11 +15,11 @@ class TestH3D(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'H3DNet')
         DefaultScope.get_instance('test_H3DNet', scope_name='mmdet3d')
-        _setup_seed(0)
-        voxel_net_cfg = _get_detector_cfg('h3dnet/h3dnet_8xb3_scannet-seg.py')
+        setup_seed(0)
+        voxel_net_cfg = get_detector_cfg('h3dnet/h3dnet_8xb3_scannet-seg.py')
         model = MODELS.build(voxel_net_cfg)
         num_gt_instance = 5
-        packed_inputs = _create_detector_inputs(
+        packed_inputs = create_detector_inputs(
             num_gt_instance=num_gt_instance,
             points_feat_dim=4,
             bboxes_3d_type='depth',

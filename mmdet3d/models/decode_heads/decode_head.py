@@ -87,8 +87,6 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         else:
             self.dropout = None
 
-        self.fp16_enabled = False
-
     def init_weights(self):
         """Initialize weights of classification layer."""
         super().init_weights()
@@ -112,9 +110,9 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
 
         Args:
             inputs (list[torch.Tensor]): List of multi-level point features.
-            img_metas (list[dict]): Meta information of each sample.
-            pts_semantic_mask (torch.Tensor): Semantic segmentation masks
-                used if the architecture supports semantic segmentation task.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
+                data samples. It usually includes information such
+                as `metainfo` and `gt_pts_seg`.
             train_cfg (dict): The training config.
 
         Returns:
@@ -130,7 +128,9 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
 
         Args:
             inputs (list[Tensor]): List of multi-level point features.
-            batch_img_metas (list[dict]): Meta information of each sample.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
+                data samples. It usually includes information such
+                as `metainfo` and `gt_pts_seg`.
             test_cfg (dict): The testing config.
 
         Returns:
