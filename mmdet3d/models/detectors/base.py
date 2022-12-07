@@ -7,7 +7,8 @@ from mmengine.structures import InstanceData
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import (ForwardResults,
                                                   OptSampleList, SampleList)
-from mmdet3d.utils.typing import OptConfigType, OptInstanceList, OptMultiConfig
+from mmdet3d.utils.typing_utils import (OptConfigType, OptInstanceList,
+                                        OptMultiConfig)
 
 
 @MODELS.register_module()

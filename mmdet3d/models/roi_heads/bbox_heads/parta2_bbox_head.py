@@ -11,7 +11,7 @@ from torch import Tensor
 
 from mmdet3d.models import make_sparse_convmodule
 from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
-from mmdet3d.utils.typing import InstanceList
+from mmdet3d.utils.typing_utils import InstanceList
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import (SparseConvTensor, SparseMaxPool3d,
@@ -26,7 +26,7 @@ from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.utils.typing import SamplingResultList
+from mmdet3d.utils.typing_utils import SamplingResultList
 
 
 @MODELS.register_module()
