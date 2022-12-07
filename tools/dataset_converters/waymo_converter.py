@@ -313,10 +313,10 @@ class Waymo2KITTI(object):
             bounding_box = None
             name = None
             id = obj.id
-            for lidar in self.lidar_list:
-                if id + lidar in id_to_bbox:
-                    bounding_box = id_to_bbox.get(id + lidar)
-                    name = str(id_to_name.get(id + lidar))
+            for proj_cam in self.cam_list:
+                if id + proj_cam in id_to_bbox:
+                    bounding_box = id_to_bbox.get(id + proj_cam)
+                    name = str(id_to_name.get(id + proj_cam))
                     break
 
             # NOTE: the 2D labels do not have strict correspondence with
