@@ -44,7 +44,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
     Args:
         name (str): Name of the instance. Defaults to 'visualizer'.
-        points (np.ndarray, optional, shape=[N, 3+C]): Points to visualize.
+        points (np.ndarray, optional): Points to visualize with shape (N, 3+C).
             Defaults to None.
         image (np.ndarray, optional): The origin image to draw. The format
             should be RGB. Defaults to None.
@@ -155,11 +155,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                    points_color: Tuple[float] = (0.5, 0.5, 0.5),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
-        """Set the pints to draw.
+        """Set the point cloud to draw.
 
         Args:
-            points (np.ndarray, shape=[N, 3+C]):
-                points to visualize.
+            points (np.ndarray): Points to visualize with shape (N, 3+C).
             pcd_mode (int): The point cloud mode (coordinates):
                 0 represents LiDAR, 1 represents CAMERA, 2
                 represents Depth. Defaults to 0.
@@ -231,7 +230,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         bbox3d.
 
         Args:
-            bboxes_3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
+            bboxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             bbox_color (Tuple[float]): The color of 3D bboxes.
                 Defaults to (0, 1, 0).
@@ -349,7 +348,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Draw projected 3D boxes on the image.
 
         Args:
-            bboxes_3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
+            bboxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             scale (dict): Value to scale the bev bboxes for better
                 visualization. Defaults to 15.
@@ -447,7 +446,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Draw projected 3D boxes on the image.
 
         Args:
-            bboxes_3d (:obj:`BaseInstance3DBoxes`, shape=[M, 7]):
+            bboxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             input_meta (dict): Input meta information.
             edge_colors (str or Tuple[int] or List[str or Tuple[int]]): The
@@ -522,8 +521,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Add segmentation mask to visualizer via per-point colorization.
 
         Args:
-            seg_mask_colors (np.ndarray, shape=[N, 6]):
-                The segmentation mask whose first 3 dims are point coordinates
+            seg_mask_colors (np.ndarray): The segmentation mask with shape
+                (N, 6), whose first 3 dims are point coordinates
                 and last 3 dims are converted colors.
         """
         # we can't draw the colors on existing points
@@ -558,7 +557,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 corresponding to the category. Defaults to None.
 
         Returns:
-            dict: The drawn point cloud and image which channel is RGB.
+            dict: The drawn point cloud and image whose channel is RGB.
         """
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
@@ -602,7 +601,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                           points: Union[Tensor, np.ndarray],
                           pts_seg: PointData,
                           palette: Optional[List[tuple]] = None,
-                          ignore_index: Optional[int] = None) -> dict:
+                          ignore_index: Optional[int] = None) -> None:
         """Draw 3D semantic mask of GT or prediction.
 
         Args:
@@ -614,9 +613,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 corresponding to the category. Defaults to None.
             ignore_index (int, optional): Ignore category.
                 Defaults to None.
-
-        Returns:
-            dict: The drawn points with color.
         """
         check_type('points', points, (np.ndarray, Tensor))
 
