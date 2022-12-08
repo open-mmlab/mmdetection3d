@@ -121,7 +121,7 @@ def proj_depth_bbox3d_to_img(bboxes_3d: DepthInstance3DBoxes,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes_3d (:obj:`DepthInstance3DBoxes`, shape=[M, 7]):
+        bboxes_3d (:obj:`DepthInstance3DBoxes`):
             3D bbox in depth coordinate system to visualize.
         input_meta (dict): Used in coordinates transformation.
     """
@@ -152,7 +152,7 @@ def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes_3d (:obj:`CameraInstance3DBoxes`, shape=[M, 7]):
+        bboxes_3d (:obj:`CameraInstance3DBoxes`):
             3D bbox in camera coordinate system to visualize.
         input_meta (dict): Meta information.
     """
