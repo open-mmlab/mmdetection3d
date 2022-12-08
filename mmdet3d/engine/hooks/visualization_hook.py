@@ -40,7 +40,7 @@ class Det3DVisualizationHook(Hook):
         score_thr (float): The threshold to visualize the bboxes
             and masks. Defaults to 0.3.
         show (bool): Whether to display the drawn image. Default to False.
-        vis-task (str): Visualization task. Defaults to 'mono_det'.
+        vis_task (str): Visualization task. Defaults to 'mono_det'.
         wait_time (float): The interval of show (s). Defaults to 0.
         test_out_dir (str, optional): directory where painted images
             will be saved in testing process.
