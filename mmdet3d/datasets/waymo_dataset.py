@@ -156,20 +156,12 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        if self.load_type in ['fov_image_based', 'mv_image_based']:
-            gt_bboxes_3d = CameraInstance3DBoxes(
-                ann_info['gt_bboxes_3d'],
-                box_dim=ann_info['gt_bboxes_3d'].shape[-1],
-                origin=(0.5, 0.5, 0.5))
-
-        else:
-            # in waymo, lidar2cam = R0_rect @ Tr_velo_to_cam
-            # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
-            lidar2cam = np.array(
-                info['images'][self.default_cam_key]['lidar2cam'])
-            gt_bboxes_3d = CameraInstance3DBoxes(
-                ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
-                                                     np.linalg.inv(lidar2cam))
+        # in waymo, lidar2cam = R0_rect @ Tr_velo_to_cam
+        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+        lidar2cam = np.array(info['images'][self.default_cam_key]['lidar2cam'])
+        gt_bboxes_3d = CameraInstance3DBoxes(
+            ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
+                                                 np.linalg.inv(lidar2cam))
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 
         anns_results = dict(

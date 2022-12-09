@@ -253,16 +253,17 @@ def get_kitti_style_2d_boxes(info: dict,
         # transform the center from [0.5, 1.0, 0.5] to [0.5, 0.5, 0.5]
         dst = np.array([0.5, 0.5, 0.5])
         src = np.array([0.5, 1.0, 0.5])
-        loc = loc + dim * (dst - src)
-        loc_3d = np.copy(loc)
-        gt_bbox_3d = np.concatenate([loc, dim, rot], axis=1).astype(np.float32)
+        # gravity center
+        loc_center = loc + dim * (dst - src)
+        gt_bbox_3d = np.concatenate([loc_center, dim, rot],
+                                    axis=1).astype(np.float32)
 
         # Filter out the corners that are not in front of the calibrated
         # sensor.
         corners_3d = box_np_ops.center_to_corner_box3d(
             gt_bbox_3d[:, :3],
             gt_bbox_3d[:, 3:6],
-            gt_bbox_3d[:, 6], [0.5, 0.5, 0.5],
+            gt_bbox_3d[:, 6], (0.5, 0.5, 0.5),
             axis=1)
         corners_3d = corners_3d[0].T  # (1, 8, 3) -> (3, 8)
         in_front = np.argwhere(corners_3d[2, :] > 0).flatten()
@@ -291,12 +292,12 @@ def get_kitti_style_2d_boxes(info: dict,
 
         # If mono3d=True, add 3D annotations in camera coordinates
         if mono3d and (repro_rec is not None):
+            # use bottom center to represent the bbox_3d
             repro_rec['bbox_3d'] = np.concatenate(
-                [loc_3d, dim, rot],
-                axis=1).astype(np.float32).squeeze().tolist()
+                [loc, dim, rot], axis=1).astype(np.float32).squeeze().tolist()
             repro_rec['velocity'] = -1  # no velocity in KITTI
 
-            center_3d = np.array(loc).reshape([1, 3])
+            center_3d = np.array(loc_center).reshape([1, 3])
             center_2d_with_depth = points_cam2img(
                 center_3d, camera_intrinsic, with_depth=True)
             center_2d_with_depth = center_2d_with_depth.squeeze().tolist()
