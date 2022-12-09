@@ -302,8 +302,10 @@ def update_nuscenes_infos(pkl_path, out_dir):
                 ori_sweep['ego2global_rotation'],
                 ori_sweep['ego2global_translation'])
             lidar2sensor = np.eye(4)
-            lidar2sensor[:3, :3] = ori_sweep['sensor2lidar_rotation'].T
-            lidar2sensor[:3, 3] = -ori_sweep['sensor2lidar_translation']
+            rot = ori_sweep['sensor2lidar_rotation']
+            trans = ori_sweep['sensor2lidar_translation']
+            lidar2sensor[:3, :3] = rot.T
+            lidar2sensor[:3, 3] = -1 * np.matmul(rot.T, trans.reshape(3, 1))
             temp_lidar_sweep['lidar_points'][
                 'lidar2sensor'] = lidar2sensor.astype(np.float32).tolist()
             temp_lidar_sweep['timestamp'] = ori_sweep['timestamp'] / 1e6
@@ -781,8 +783,10 @@ def update_lyft_infos(pkl_path, out_dir):
                 ori_sweep['ego2global_rotation'],
                 ori_sweep['ego2global_translation'])
             lidar2sensor = np.eye(4)
-            lidar2sensor[:3, :3] = ori_sweep['sensor2lidar_rotation'].T
-            lidar2sensor[:3, 3] = -ori_sweep['sensor2lidar_translation']
+            rot = ori_sweep['sensor2lidar_rotation']
+            trans = ori_sweep['sensor2lidar_translation']
+            lidar2sensor[:3, :3] = rot.T
+            lidar2sensor[:3, 3] = -1 * np.matmul(rot.T, trans.reshape(3, 1))
             temp_lidar_sweep['lidar_points'][
                 'lidar2sensor'] = lidar2sensor.astype(np.float32).tolist()
             # bc-breaking: Timestamp has divided 1e6 in pkl infos.
