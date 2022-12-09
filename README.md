@@ -96,7 +96,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-v1.0.0rc5 was released in 11/10/2022.
+**v1.0.0rc6** was released in 2/12/2022.
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
