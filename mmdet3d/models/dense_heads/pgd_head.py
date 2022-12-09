@@ -15,8 +15,8 @@ from torch.nn import functional as F
 from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import points_cam2img, points_img2cam, xywhr2xyxyr
-from mmdet3d.utils.typing import (ConfigType, InstanceList, OptConfigType,
-                                  OptInstanceList)
+from mmdet3d.utils.typing_utils import (ConfigType, InstanceList,
+                                        OptConfigType, OptInstanceList)
 from .fcos_mono3d_head import FCOSMono3DHead
 
 
