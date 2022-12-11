@@ -1,4 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
+import sys
+
 from .builder import DATASETS, PIPELINES, build_dataset
 from .dataset_wrappers import CBGSDataset
 from .det3d_dataset import Det3DDataset
@@ -25,6 +28,10 @@ from .transforms import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
                          RandomShiftScale, Resize3D, VoxelBasedPointSampler)
 from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
+
+pwd = os.getcwd()
+sys.path.append(os.path.join(pwd, 'projects/dummy_PETR'))
+from mmdet3d_plugin.datasets.transforms import *  # noqa: E402,F401,F403
 
 __all__ = [
     'KittiDataset', 'DATASETS', 'CBGSDataset',

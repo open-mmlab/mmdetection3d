@@ -253,7 +253,6 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             raise NotImplementedError(
                 'Currently we only support load image from kitti and'
                 'nuscenes datasets')
-
         img_bytes = self.file_client.get(filename)
         img = mmcv.imfrombytes(
             img_bytes, flag=self.color_type, backend=self.imdecode_backend)
