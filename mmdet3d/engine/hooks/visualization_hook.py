@@ -122,7 +122,7 @@ class Det3DVisualizationHook(Hook):
                 data_input,
                 data_sample=outputs[0],
                 show=self.show,
-                vis_task=self.vis_task, 
+                vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
                 step=total_curr_iter)
@@ -177,7 +177,7 @@ class Det3DVisualizationHook(Hook):
                 data_input,
                 data_sample=data_sample,
                 show=self.show,
-                vis_task=self.vis_task, 
+                vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
                 out_file=out_file,
