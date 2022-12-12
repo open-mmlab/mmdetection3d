@@ -16,7 +16,7 @@ Collections:
       Version: v1.0.0
 
 Models:
-  - Name: point-rcnn_8xb2_kitti-3d-3class.py
+  - Name: point-rcnn_8xb2_kitti-3d-3class
     In Collection: PointRCNN
     Config: configs/point_rcnn/point-rcnn_8xb2_kitti-3d-3class.py
     Metadata:

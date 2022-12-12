@@ -15,8 +15,8 @@ class TestPartA2(unittest.TestCase):
 
         assert hasattr(mmdet3d.models, 'PartA2')
         DefaultScope.get_instance('test_parta2', scope_name='mmdet3d')
-        setup_seed(0)
-        parta2_cfg = get_detector_cfg(
+        _setup_seed(0)
+        parta2_cfg = _get_detector_cfg(
             'parta2/PartA2_hv_secfpn_8xb2-cyclic-80e_kitti-3d-3class.py')
         model = MODELS.build(parta2_cfg)
         num_gt_instance = 2

@@ -156,7 +156,7 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        if self.load_type in ['fov_image_based', 'mv_image_based']:
+        if self.task == 'mono_det':
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],

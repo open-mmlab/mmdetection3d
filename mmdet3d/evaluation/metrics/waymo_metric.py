@@ -178,7 +178,7 @@ class WaymoMetric(KittiMetric):
         for metric in self.metrics:
             ap_dict = self.waymo_evaluate(
                 pklfile_prefix, metric=metric, logger=logger)
-            metric_dict[metric] = ap_dict
+            metric_dict.update(ap_dict)
         if eval_tmp_dir is not None:
             eval_tmp_dir.cleanup()
 

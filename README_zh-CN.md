@@ -26,7 +26,7 @@
 
 **新闻**：
 
-**v1.1.0rc1** 版本已经在 2022.10.11 发布。
+**v1.1.0rc2** 版本已经在 2022.12.2 发布。
 
 由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在[变更日志](docs/zh_cn/notes/changelog.md)和 [v1.0.x 版本变更日志](docs/zh_cn/notes/changelog_v1.0.x.md)中查看更多详细信息。
 
@@ -77,7 +77,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 ## 更新日志
 
-我们在 2022.10.11 发布了 **1.1.0rc1** 版本。
+我们在 2022.10.11 发布了 **1.1.0rc1** 版本.
 
 更多细节和版本发布历史可以参考 [changelog.md](docs/zh_cn/notes/changelog.md)。
 
@@ -290,7 +290,7 @@ MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与
 扫描下方的二维码可关注 OpenMMLab 团队的 [知乎官方账号](https://www.zhihu.com/people/openmmlab)，加入 OpenMMLab 团队的 [官方交流 QQ 群](https://jq.qq.com/?_wv=1027&k=aCvMxdr3)
 
 <div align="center">
-<img src="/resources/zhihu_qrcode.jpg" height="400" />  <img src="/resources/qq_group_qrcode.png" height="400" />
+<img src="https://user-images.githubusercontent.com/25839884/205870927-39f4946d-8751-4219-a4c0-740117558fd7.jpg" height="400" />  <img src="https://user-images.githubusercontent.com/25839884/203904835-62392033-02d4-4c73-a68c-c9e4c1e2b07f.jpg" height="400" />
 </div>
 
 我们会在 OpenMMLab 社区为大家
