@@ -13,7 +13,7 @@
 
 对于模型的训练速度（样本/秒），我们将 MMDetection3D 与其他实现了相同模型的代码库进行了对比。结果如下所示，表格内的数字越大，代表模型的训练速度越快。代码库中不支持的模型使用 `×` 进行标识。
 
-|         模型          | MMDetection3D | OpenPCDet | votenet | Det3D |
+|        模型         | MMDetection3D | OpenPCDet | votenet | Det3D |
 | :-----------------: | :-----------: | :-------: | :-----: | :---: |
 |       VoteNet       |      358      |     ×     |   77    |   ×   |
 |  PointPillars-car   |      141      |     ×     |    ×    |  140  |
