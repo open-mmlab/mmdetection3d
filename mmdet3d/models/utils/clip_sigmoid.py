@@ -13,5 +13,5 @@ def clip_sigmoid(x, eps=1e-4):
     Returns:
         torch.Tensor: Feature map after sigmoid.
     """
-    y = torch.clamp(x.sigmoid_(), min=eps, max=1 - eps)
+    y = torch.clamp(x.sigmoid(), min=eps, max=1 - eps)
     return y

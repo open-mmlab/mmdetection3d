@@ -9,14 +9,16 @@ from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils.typing import InstanceList
 
 
 @MODELS.register_module()
 class FPSSampler(nn.Module):
-    """Using Euclidean distances of points for FPS.
+    """Using Euclidean distances of points for FPS to sampler key points.
 
     Args:
-        num_keypoints (int): Need to sample key points num.
+        num_keypoints (int): Num of key points which sampler
+            from raw points cloud.
     """
 
     def __init__(self, num_keypoints: int) -> None:
@@ -47,9 +49,10 @@ class SPCSampler(nn.Module):
     Representative Keypoint Sampling.
 
     Args:
-        num_keypoints (int): Need to sample key points num.
+        num_keypoints (int): Num of key points which sampler
+            from raw points cloud.
         sample_radius_with_roi (float): Sample points radius of each roi boxes.
-        num_sectors (int): Divide space into `num_sectors` sectors.
+        num_sectors (int): Divide 3D space into `num_sectors` sectors.
         num_max_points_of_part (int): Max points num in each part.
             Default to 200000.
     """
@@ -68,15 +71,16 @@ class SPCSampler(nn.Module):
         self.num_sectors = num_sectors
 
     def sample_points_with_roi(self, rois: Tensor, points: Tensor) -> Tensor:
-        """Sample points with roi boxes. Filter some points which keep away roi
+        """Sample points by roi boxes. Filter some points which keep away roi
         boxes.
 
         Args:
             rois (torch.Tensor): (M, 7 + C) Roi boxes.
-            points (torch.Tensor): (N, 3) Input raw points coordinates.
+            points (torch.Tensor): (N, 3) Input raw points cloud.
 
         Returns:
-            torch.Tensor: (N_out, 3) Sampled points.
+            torch.Tensor: (N_out, 3) Sampled points close to roi boxes.
+                N_out is sampled points num.
         """
         if points.shape[0] < self.num_max_points_of_part:
             distance = (points[:, None, :] - rois[None, :, 0:3]).norm(dim=-1)
@@ -107,10 +111,11 @@ class SPCSampler(nn.Module):
         """Use FPS sample points in each sector.
 
         Args:
-            points (torch.tensor): Input points coordinates.
+            points (torch.tensor): Input points cloud.
 
         Returns:
-            torch.tensor: (N_out, 3) Sampled points.
+            torch.tensor: (N_out, 3) Sampled points gathered from sector fps.
+                N_out is sampled points num.
         """
         sector_size = np.pi * 2 / self.num_sectors
         point_angles = torch.atan2(points[:, 1], points[:, 0]) + np.pi
@@ -149,31 +154,34 @@ class SPCSampler(nn.Module):
 
     def sectorized_proposal_centric_sampling(self, roi_boxes: Tensor,
                                              points: Tensor) -> Tensor:
-        """Sampled key points by roi and sector fps.
+        """Sample key points by roi and sector fps.
 
         Args:
-            roi_boxes (torch.Tensor): Roi boxes used to sample points.
-            points (torch.Tensor): Input points.
+            roi_boxes (torch.Tensor): (M, 7 + C) Roi boxes.
+            points (torch.Tensor): Input points cloud.
 
         Returns:
-            torch.Tensor: Sampled points.
+            torch.Tensor: Sampled points shape with (self.num_keypoints, 3).
         """
-        sampled_points, _ = self.sample_points_with_roi(
-            rois=roi_boxes, points=points)
+        if len(roi_boxes) == 0:
+            sampled_points = points
+        else:
+            sampled_points, _ = self.sample_points_with_roi(
+                rois=roi_boxes, points=points)
         sampled_points = self.sector_fps(points=sampled_points)
         return sampled_points
 
     def forward(self, points_list: List[Tensor],
-                roi_boxes_list) -> List[Tensor]:
-        """Sampling points with SPC.
+                roi_boxes_list: InstanceList) -> List[Tensor]:
+        """Sample key points by SPC func.
 
         Args:
-            points_list (List[torch.Tensor]): Input batch points list.
-            roi_boxes_list (List[:obj:`InstanceData`]): A list include
-                some roi boxes.
+            points_list (List[torch.Tensor]): Input batch points cloud list.
+            roi_boxes_list (List[:obj:`InstanceData`]): A list include batch
+                roi boxes.
 
         Returns:
-            List[torch.Tensor]: Sampled points results.
+            List[torch.Tensor]: Batch sampled points results.
         """
         key_points_list = []
         for i in range(len(roi_boxes_list)):
