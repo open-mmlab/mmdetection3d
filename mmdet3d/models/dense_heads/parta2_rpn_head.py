@@ -10,7 +10,7 @@ from torch import Tensor
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import limit_period, xywhr2xyxyr
-from mmdet3d.utils.typing import InstanceList
+from mmdet3d.utils.typing_utils import InstanceList
 from ...structures.det3d_data_sample import SampleList
 from .anchor3d_head import Anchor3DHead
 

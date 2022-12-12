@@ -7,7 +7,7 @@ from torch import nn as nn
 
 from mmdet3d.models.layers import PointFPModule
 from mmdet3d.registry import MODELS
-from mmdet3d.utils.typing import ConfigType
+from mmdet3d.utils.typing_utils import ConfigType
 from .decode_head import Base3DDecodeHead
 
 

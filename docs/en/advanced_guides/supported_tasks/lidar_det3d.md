@@ -6,14 +6,14 @@ Next, taking PointPillars on the KITTI dataset as an example, we will show how t
 
 ## Data Preparation
 
-To begin with, we need to download the raw data and reorganize the data in a standard way presented in the [doc for data preparation](https://mmdetection3d.readthedocs.io/en/latest/data_preparation.html).
-Note that for KITTI, we need extra txt files for data splits.
+To begin with, we need to download the raw data and reorganize the data in a standard way presented in the [doc for data preparation](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/dataset_prepare.html).
+Note that for KITTI, we need extra `.txt` files for data splits.
 
-Due to different ways of organizing the raw data in different datasets, we typically need to collect the useful data information with a .pkl or .json file.
+Due to different ways of organizing the raw data in different datasets, we typically need to collect the useful data information with a `.pkl` file.
 So after getting all the raw data ready, we need to run the scripts provided in the `create_data.py` for different datasets to generate data infos.
 For example, for KITTI we need to run:
 
-```
+```shell
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
 ```
 
@@ -49,17 +49,17 @@ mmdetection3d
 ## Training
 
 Then let us train a model with provided configs for PointPillars.
-You can basically follow this [tutorial](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/1_exist_data_model.html) for sample scripts when training with different GPU settings.
+You can basically follow the examples provided in this [tutorial](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/train_test.html) when training with different GPU settings.
 Suppose we use 8 GPUs on a single machine with distributed training:
 
-```
-./tools/dist_train.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py 8
+```shell
+./tools/dist_train.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py 8
 ```
 
 Note that `8xb6` in the config name refers to the training is completed with 8 GPUs and 6 samples on each GPU.
 If your customized setting is different from this, sometimes you need to adjust the learning rate accordingly.
 A basic rule can be referred to [here](https://arxiv.org/abs/1706.02677). We have supported `--auto-scale-lr` to
-enable automatically scaling LR
+enable automatically scaling LR.
 
 ## Quantitative Evaluation
 
@@ -83,23 +83,22 @@ aos AP:97.70, 88.73, 87.34
 
 In addition, you can also evaluate a specific model checkpoint after training is finished. Simply run scripts like the following:
 
-```
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
+```shell
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
 ```
 
 ## Testing and Making a Submission
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
-you just need to specify the `submission_prefix` for corresponding evaluator,
-e.g., add `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)` in the configuration then you can get the results file or you can just add
-`--cfg-options "test_evaluator.submission_prefix=work_dirs/pointpillars/test_submission` in the end of test command.
-Please guarantee the `data_prefix` and `ann_file` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/kitti-3d-3class.py#L113) in the config corresponds to the test set instead of validation set.
+you need to specify the `submission_prefix` for corresponding evaluator,
+e.g., add `test_evaluator = dict(type='KittiMetric', ann_file=data_root + 'kitti_infos_test.pkl', format_only=True, pklfile_prefix='results/kitti-3class/kitti_results', submission_prefix='results/kitti-3class/kitti_results')` in the configuration then you can get the results file.
+Please guarantee the `data_prefix` and `ann_file` in [info for testing](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/kitti-3d-3class.py#L117) in the config corresponds to the test set instead of validation set.
 After generating the results, you can basically compress the folder and upload to the KITTI evaluation server.
 
 ## Qualitative Validation
 
 MMDetection3D also provides versatile tools for visualization such that we can have an intuitive feeling of the detection results predicted by our trained models.
-You can either set the `--show'` option to visualize the detection results online during evaluation,
+You can either set the `--show` option to visualize the detection results online during evaluation,
 or using `tools/misc/visualize_results.py` for offline visualization.
 Besides, we also provide scripts `tools/misc/browse_dataset.py` to visualize the dataset without inference.
-Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/dev-1.x/useful_tools.html#visualization).
+Please refer more details in the [doc for visualization](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/visualization.html).

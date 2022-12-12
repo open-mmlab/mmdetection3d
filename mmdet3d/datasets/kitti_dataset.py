@@ -24,6 +24,15 @@ class KittiDataset(Det3DDataset):
             Defaults to dict(use_lidar=True).
         default_cam_key (str): The default camera name adopted.
             Defaults to 'CAM2'.
+        load_type (str): Type of loading mode. Defaults to 'frame_based'.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+              to convert to the FOV-based data type to support image-based
+              detector.
+            - 'fov_image_based': Only load the instances inside the default
+              cam, and need to convert to the FOV-based data type to support
+              image-based detector.
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -32,15 +41,6 @@ class KittiDataset(Det3DDataset):
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        load_type (str): Type of loading mode. Defaults to 'frame_based'.
-
-            - 'frame_based': Load all of the instances in the frame.
-            - 'mv_image_based': Load all of the instances in the frame and need
-                to convert to the FOV-based data type to support image-based
-                detector.
-            - 'fov_image_based': Only load the instances inside the default
-                cam, and need to convert to the FOV-based data type to support
-                image-based detector.
         filter_empty_gt (bool): Whether to filter the data with empty GT.
             If it's set to be True, the example with empty annotations after
             data pipeline will be dropped and a random example will be chosen

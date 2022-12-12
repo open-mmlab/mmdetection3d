@@ -16,7 +16,7 @@ from mmdet3d.models.layers.pointnet_modules import build_sa_module
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
                                         rotation_3d_in_axis, xywhr2xyxyr)
-from mmdet3d.utils.typing import InstanceList, SamplingResultList
+from mmdet3d.utils.typing_utils import InstanceList, SamplingResultList
 
 
 @MODELS.register_module()
