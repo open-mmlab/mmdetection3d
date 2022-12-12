@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Union
+
 import torch
 from mmdet.models.losses.utils import weighted_loss
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
@@ -8,16 +11,16 @@ from mmdet3d.structures import AxisAlignedBboxOverlaps3D
 
 
 @weighted_loss
-def axis_aligned_iou_loss(pred, target):
+def axis_aligned_iou_loss(pred: Tensor, target: Tensor) -> Tensor:
     """Calculate the IoU loss (1-IoU) of two set of axis aligned bounding
     boxes. Note that predictions and targets are one-to-one corresponded.
 
     Args:
-        pred (torch.Tensor): Bbox predictions with shape [..., 3].
-        target (torch.Tensor): Bbox targets (gt) with shape [..., 3].
+        pred (Tensor): Bbox predictions with shape [..., 3].
+        target (Tensor): Bbox targets (gt) with shape [..., 3].
 
     Returns:
-        torch.Tensor: IoU loss between predictions and targets.
+        Tensor: IoU loss between predictions and targets.
     """
 
     axis_aligned_iou = AxisAlignedBboxOverlaps3D()(
@@ -33,7 +36,7 @@ class AxisAlignedIoULoss(nn.Module):
     Args:
         reduction (str): Method to reduce losses.
             The valid reduction method are none, sum or mean.
-        loss_weight (float, optional): Weight of loss. Defaults to 1.0.
+        loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 
     def __init__(self, reduction='mean', loss_weight=1.0):
@@ -43,18 +46,18 @@ class AxisAlignedIoULoss(nn.Module):
         self.loss_weight = loss_weight
 
     def forward(self,
-                pred,
-                target,
-                weight=None,
-                avg_factor=None,
-                reduction_override=None,
-                **kwargs):
+                pred: Tensor,
+                target: Tensor,
+                weight: Optional[Union[Tensor, float]] = None,
+                avg_factor: Optional[int] = None,
+                reduction_override: Optional[str] = None,
+                **kwargs) -> Tensor:
         """Forward function of loss calculation.
 
         Args:
-            pred (torch.Tensor): Bbox predictions with shape [..., 3].
-            target (torch.Tensor): Bbox targets (gt) with shape [..., 3].
-            weight (torch.Tensor | float, optional): Weight of loss.
+            pred (Tensor): Bbox predictions with shape [..., 3].
+            target (Tensor): Bbox targets (gt) with shape [..., 3].
+            weight (Tensor | float, optional): Weight of loss.
                 Defaults to None.
             avg_factor (int, optional): Average factor that is used to average
                 the loss. Defaults to None.
@@ -63,7 +66,7 @@ class AxisAlignedIoULoss(nn.Module):
                 Defaults to None.
 
         Returns:
-            torch.Tensor: IoU loss between predictions and targets.
+            Tensor: IoU loss between predictions and targets.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
