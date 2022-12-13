@@ -81,7 +81,7 @@ class PAConvRegularizationLoss(nn.Module):
     Args:
         reduction (str): Method to reduce losses. The reduction is performed
             among all PAConv modules instead of prediction tensors.
-            The valid reduction method are none, sum or mean.
+            The valid reduction method are none, sum or mean. Defaults to mean.
         loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 

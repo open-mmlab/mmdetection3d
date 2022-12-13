@@ -67,14 +67,14 @@ class MultiBinLoss(nn.Module):
     """Multi-Bin Loss for orientation.
 
     Args:
-        reduction (str, optional): The method to reduce the loss.
+        reduction (str): The method to reduce the loss.
             Options are 'none', 'mean' and 'sum'. Defaults to 'none'.
         loss_weight (float): The weight of loss. Defaults
             to 1.0.
     """
 
     def __init__(self,
-                 reduction: Optional[str] = 'none',
+                 reduction: str = 'none',
                  loss_weight: float = 1.0) -> None:
         super(MultiBinLoss, self).__init__()
         assert reduction in ['none', 'sum', 'mean']

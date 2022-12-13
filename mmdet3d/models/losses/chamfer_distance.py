@@ -23,12 +23,14 @@ def chamfer_distance(
             calculate Chamfer Distance.
         dst (Tensor): Destination set with shape [B, M, C] to
             calculate Chamfer Distance.
-        src_weight (Tensor or float): Weight of source loss.
+        src_weight (Tensor or float): Weight of source loss. Defaults to 1.0.
         dst_weight (Tensor or float): Weight of destination loss.
+            Defaults to 1.0.
         criterion_mode (str): Criterion mode to calculate distance.
-            The valid modes are smooth_l1, l1 or l2.
+            The valid modes are smooth_l1, l1 or l2. Defaults to l2.
         reduction (str): Method to reduce losses.
             The valid reduction method are 'none', 'sum' or 'mean'.
+            Defaults to mean.
 
     Returns:
         tuple: Source and Destination loss with the corresponding indices.
@@ -82,11 +84,12 @@ class ChamferDistance(nn.Module):
 
     Args:
         mode (str): Criterion mode to calculate distance.
-            The valid modes are smooth_l1, l1 or l2.
+            The valid modes are smooth_l1, l1 or l2. Defaults to l2.
         reduction (str): Method to reduce losses.
             The valid reduction method are none, sum or mean.
-        loss_src_weight (float): Weight of loss_source.
-        loss_dst_weight (float): Weight of loss_target.
+            Defaults to mean.
+        loss_src_weight (float): Weight of loss_source. Defaults to l.0.
+        loss_dst_weight (float): Weight of loss_target. Defaults to 1.0.
     """
 
     def __init__(self,
@@ -110,7 +113,7 @@ class ChamferDistance(nn.Module):
         src_weight: Union[Tensor, float] = 1.0,
         dst_weight: Union[Tensor, float] = 1.0,
         reduction_override: Optional[str] = None,
-        return_indices: Optional[bool] = False,
+        return_indices: bool = False,
         **kwargs
     ) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor], Tuple[Tensor, Tensor]]:
         """Forward function of loss calculation.
@@ -127,7 +130,7 @@ class ChamferDistance(nn.Module):
             reduction_override (str, optional): Method to reduce losses.
                 The valid reduction method are 'none', 'sum' or 'mean'.
                 Defaults to None.
-            return_indices (bool, optional): Whether to return indices.
+            return_indices (bool): Whether to return indices.
                 Defaults to False.
 
         Returns:

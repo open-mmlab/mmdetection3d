@@ -103,7 +103,7 @@ class UncertainSmoothL1Loss(nn.Module):
                 target: Tensor,
                 sigma: Tensor,
                 weight: Optional[Tensor] = None,
-                avg_factor: Optional[int] = None,
+                avg_factor: Optional[float] = None,
                 reduction_override: Optional[str] = None,
                 **kwargs) -> Tensor:
         """Forward function.
@@ -114,8 +114,8 @@ class UncertainSmoothL1Loss(nn.Module):
             sigma (Tensor): The sigma for uncertainty.
             weight (Tensor, optional): The weight of loss for each
                 prediction. Defaults to None.
-            avg_factor (int, optional): Average factor that is used to average
-                the loss. Defaults to None.
+            avg_factor (float, optional): Average factor that is used to
+                average the loss. Defaults to None.
             reduction_override (str, optional): The reduction method used to
                 override the original reduction method of the loss.
                 Defaults to None.
@@ -166,18 +166,18 @@ class UncertainL1Loss(nn.Module):
                 target: Tensor,
                 sigma: Tensor,
                 weight: Optional[Tensor] = None,
-                avg_factor: Optional[int] = None,
+                avg_factor: Optional[float] = None,
                 reduction_override: Optional[str] = None) -> Tensor:
         """Forward function.
 
         Args:
-            pred (torch.Tensor): The prediction.
-            target (torch.Tensor): The learning target of the prediction.
-            sigma (torch.Tensor): The sigma for uncertainty.
-            weight (torch.Tensor, optional): The weight of loss for each
+            pred (Tensor): The prediction.
+            target (Tensor): The learning target of the prediction.
+            sigma (Tensor): The sigma for uncertainty.
+            weight (Tensor, optional): The weight of loss for each
                 prediction. Defaults to None.
-            avg_factor (int, optional): Average factor that is used to average
-                the loss. Defaults to None.
+            avg_factor (float, optional): Average factor that is used to
+                average the loss. Defaults to None.
             reduction_override (str, optional): The reduction method used to
                 override the original reduction method of the loss.
                 Defaults to None.

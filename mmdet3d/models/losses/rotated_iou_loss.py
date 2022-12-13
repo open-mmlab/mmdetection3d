@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Union
+from typing import Optional
 
 import torch
 from mmcv.ops import diff_iou_rotated_3d
@@ -35,12 +35,13 @@ class RotatedIoU3DLoss(nn.Module):
     Args:
         reduction (str): Method to reduce losses.
             The valid reduction method are none, sum or mean.
-        loss_weight (float, optional): Weight of loss. Defaults to 1.0.
+            Defaults to mean.
+        loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 
     def __init__(self,
                  reduction: str = 'mean',
-                 loss_weight: Optional[float] = 1.0) -> None:
+                 loss_weight: float = 1.0) -> None:
         super().__init__()
         self.reduction = reduction
         self.loss_weight = loss_weight
@@ -48,8 +49,8 @@ class RotatedIoU3DLoss(nn.Module):
     def forward(self,
                 pred: Tensor,
                 target: Tensor,
-                weight: Optional[Union[Tensor, float]] = None,
-                avg_factor: Optional[int] = None,
+                weight: Optional[Tensor] = None,
+                avg_factor: Optional[float] = None,
                 reduction_override: Optional[str] = None,
                 **kwargs) -> Tensor:
         """Forward function of loss calculation.
@@ -59,10 +60,10 @@ class RotatedIoU3DLoss(nn.Module):
                 (x, y, z, w, l, h, alpha).
             target (Tensor): Bbox targets (gt) with shape [..., 7]
                 (x, y, z, w, l, h, alpha).
-            weight (Tensor | float, optional): Weight of loss.
+            weight (Tensor, optional): Weight of loss.
                 Defaults to None.
-            avg_factor (int, optional): Average factor that is used to average
-                the loss. Defaults to None.
+            avg_factor (float, optional): Average factor that is used to
+                average the loss. Defaults to None.
             reduction_override (str, optional): Method to reduce losses.
                 The valid reduction method are 'none', 'sum' or 'mean'.
                 Defaults to None.
