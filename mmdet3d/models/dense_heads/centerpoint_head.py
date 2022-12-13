@@ -336,10 +336,7 @@ class CenterHead(BaseModule):
             heads = copy.deepcopy(common_heads)
             heads.update(dict(heatmap=(num_cls, num_heatmap_convs)))
             separate_head.update(
-                in_channels=share_conv_channel,
-                heads=heads,
-                num_cls=num_cls,
-                bias=True)
+                in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
             self.task_heads.append(builder.build_head(separate_head))
 
     def forward_single(self, x: Tensor) -> dict:
@@ -719,7 +716,7 @@ class CenterHead(BaseModule):
     def predict_by_feat(self,
                         preds_dicts: Tuple[List[dict]],
                         batch_input_metas: List[dict],
-                        test_cfg=None,
+                        test_cfg: dict = None,
                         *args,
                         **kwargs) -> List[InstanceData]:
         """Generate bboxes from bbox head predictions.
@@ -731,6 +728,7 @@ class CenterHead(BaseModule):
                 FPN level.
             batch_input_metas (list[dict]): Meta info of multiple
                 inputs.
+            test_cfg (dict, optional): Config dict of test hyper-parameters.
 
         Returns:
             list[:obj:`InstanceData`]: Instance prediction
@@ -849,6 +847,7 @@ class CenterHead(BaseModule):
                 shape of [N, 9].
             batch_cls_labels (list[torch.Tensor]): Prediction label with the
                 shape of [N].
+            test_cfg (dict, optional): Config dict of test hyper-parameters.
             img_metas (list[dict]): Meta information of each sample.
 
         Returns:
