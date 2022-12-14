@@ -69,9 +69,9 @@ def get_centers2d_target(centers2d: Tensor, centers: Tensor,
     bottom_x = (h - 1 - b) / a
 
     left_coors = torch.stack((left_y.new_zeros(N, ), left_y), dim=1)
-    right_coors = torch.stack((right_y.new_full((N,), w - 1), right_y), dim=1)
+    right_coors = torch.stack((right_y.new_full((N, ), w - 1), right_y), dim=1)
     top_coors = torch.stack((top_x, top_x.new_zeros(N, )), dim=1)
-    bottom_coors = torch.stack((bottom_x, bottom_x.new_full((N,), h - 1)),
+    bottom_coors = torch.stack((bottom_x, bottom_x.new_full((N, ), h - 1)),
                                dim=1)
 
     intersects = torch.stack(
@@ -80,7 +80,7 @@ def get_centers2d_target(centers2d: Tensor, centers: Tensor,
     intersects_y = intersects[:, :, 1]
     inds = (intersects_x >= 0) & (intersects_x <=
                                   w - 1) & (intersects_y >= 0) & (
-                   intersects_y <= h - 1)
+                                      intersects_y <= h - 1)
     valid_intersects = intersects[inds].reshape(N, 2, 2)
     dist = torch.norm(valid_intersects - centers2d.unsqueeze(1), dim=2)
     min_idx = torch.argmin(dist, dim=1)
@@ -91,10 +91,10 @@ def get_centers2d_target(centers2d: Tensor, centers: Tensor,
     return centers2d_target
 
 
-def handle_proj_objs(centers2d_list: List[Tensor],
-                     gt_bboxes_list: List[Tensor],
-                     img_metas: List[dict]) -> Tuple[
-    List[Tensor], List[Tensor], List[Tensor]]:
+def handle_proj_objs(
+        centers2d_list: List[Tensor], gt_bboxes_list: List[Tensor],
+        img_metas: List[dict]
+) -> Tuple[List[Tensor], List[Tensor], List[Tensor]]:
     """Function to handle projected object centers2d, generate target
     centers2d.
 

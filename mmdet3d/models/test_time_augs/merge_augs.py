@@ -4,8 +4,8 @@ from typing import List
 import torch
 
 from mmdet3d.structures import bbox3d2result, bbox3d_mapping_back, xywhr2xyxyr
-from ..layers import nms_bev, nms_normal_bev
 from ...utils import OptConfigType
+from ..layers import nms_bev, nms_normal_bev
 
 
 def merge_aug_bboxes_3d(aug_results: List[dict],
@@ -32,7 +32,7 @@ def merge_aug_bboxes_3d(aug_results: List[dict],
     """
 
     assert len(aug_results) == len(aug_batch_input_metas), \
-        '"aug_results" should have the same length as ' \ 
+        '"aug_results" should have the same length as ' \
         f'"aug_batch_input_metas", got len(aug_results)={len(aug_results)} ' \
         f'and len(aug_batch_input_metas)={len(aug_batch_input_metas)}'
 
