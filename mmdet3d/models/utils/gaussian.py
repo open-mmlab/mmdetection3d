@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple, List
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -25,7 +25,9 @@ def gaussian_2d(shape: Tuple[int, int], sigma: float = 1) -> np.ndarray:
     return h
 
 
-def draw_heatmap_gaussian(heatmap: Tensor, center: Tensor, radius: int,
+def draw_heatmap_gaussian(heatmap: Tensor,
+                          center: Tensor,
+                          radius: int,
                           k: int = 1) -> Tensor:
     """Get gaussian masked heatmap.
 
@@ -51,8 +53,8 @@ def draw_heatmap_gaussian(heatmap: Tensor, center: Tensor, radius: int,
     masked_heatmap = heatmap[y - top:y + bottom, x - left:x + right]
     masked_gaussian = torch.from_numpy(
         gaussian[radius - top:radius + bottom,
-        radius - left:radius + right]).to(heatmap.device,
-                                          torch.float32)
+                 radius - left:radius + right]).to(heatmap.device,
+                                                   torch.float32)
     if min(masked_gaussian.shape) > 0 and min(masked_heatmap.shape) > 0:
         torch.max(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
     return heatmap
@@ -74,25 +76,28 @@ def gaussian_radius(det_size: Tuple[Tensor, Tensor],
     a1 = 1
     b1 = (height + width)
     c1 = width * height * (1 - min_overlap) / (1 + min_overlap)
-    sq1 = torch.sqrt(b1 ** 2 - 4 * a1 * c1)
+    sq1 = torch.sqrt(b1**2 - 4 * a1 * c1)
     r1 = (b1 + sq1) / 2
 
     a2 = 4
     b2 = 2 * (height + width)
     c2 = (1 - min_overlap) * width * height
-    sq2 = torch.sqrt(b2 ** 2 - 4 * a2 * c2)
+    sq2 = torch.sqrt(b2**2 - 4 * a2 * c2)
     r2 = (b2 + sq2) / 2
 
     a3 = 4 * min_overlap
     b3 = -2 * min_overlap * (height + width)
     c3 = (min_overlap - 1) * width * height
-    sq3 = torch.sqrt(b3 ** 2 - 4 * a3 * c3)
+    sq3 = torch.sqrt(b3**2 - 4 * a3 * c3)
     r3 = (b3 + sq3) / 2
     return min(r1, r2, r3)
 
 
-def get_ellip_gaussian_2D(heatmap: Tensor, center: List[int],
-                          radius_x: int, radius_y: int, k: int = 1) -> Tensor:
+def get_ellip_gaussian_2D(heatmap: Tensor,
+                          center: List[int],
+                          radius_x: int,
+                          radius_y: int,
+                          k: int = 1) -> Tensor:
     """Generate 2D ellipse gaussian heatmap.
 
     Args:
@@ -121,7 +126,7 @@ def get_ellip_gaussian_2D(heatmap: Tensor, center: List[int],
 
     masked_heatmap = heatmap[y - top:y + bottom, x - left:x + right]
     masked_gaussian = gaussian_kernel[radius_y - top:radius_y + bottom,
-                      radius_x - left:radius_x + right]
+                                      radius_x - left:radius_x + right]
     out_heatmap = heatmap
     torch.max(
         masked_heatmap,

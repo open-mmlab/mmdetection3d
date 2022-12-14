@@ -4,14 +4,14 @@ from typing import List, Tuple
 import torch
 from torch import Tensor
 
-from mmdet3d.structures import points_cam2img, CameraInstance3DBoxes
+from mmdet3d.structures import CameraInstance3DBoxes, points_cam2img
 
 
-def get_keypoints(gt_bboxes_3d_list: List[CameraInstance3DBoxes],
-                  centers2d_list: List[Tensor],
-                  img_metas: List[dict],
-                  use_local_coords: str = True) -> Tuple[
-    List[Tensor], List[Tensor]]:
+def get_keypoints(
+        gt_bboxes_3d_list: List[CameraInstance3DBoxes],
+        centers2d_list: List[Tensor],
+        img_metas: List[dict],
+        use_local_coords: str = True) -> Tuple[List[Tensor], List[Tensor]]:
     """Function to filter the objects label outside the image.
 
     Args:
@@ -54,9 +54,9 @@ def get_keypoints(gt_bboxes_3d_list: List[CameraInstance3DBoxes],
         # keypoints mask: keypoints must be inside
         # the image and in front of the camera
         keypoints_x_visible = (keypoints2d[..., 0] >= 0) & (
-                keypoints2d[..., 0] <= w - 1)
+            keypoints2d[..., 0] <= w - 1)
         keypoints_y_visible = (keypoints2d[..., 1] >= 0) & (
-                keypoints2d[..., 1] <= h - 1)
+            keypoints2d[..., 1] <= h - 1)
         keypoints_z_visible = (keypoints3d[..., -1] > 0)
 
         # (N, 1O)

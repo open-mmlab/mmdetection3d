@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import functools
 from inspect import getfullargspec
-from typing import Optional, Tuple, Callable, Union
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -261,10 +261,12 @@ class ArrayConverter:
             raise TypeError(f'Template type {self.array_type}'
                             f' is not supported.')
 
-    def convert(self, input_array: TemplateArrayType,
-                target_type: TargetType = None,
-                target_array: TargetType = None) -> Union[
-        np.ndarray, torch.Tensor]:
+    def convert(
+            self,
+            input_array: TemplateArrayType,
+            target_type: TargetType = None,
+            target_array: TargetType = None
+    ) -> Union[np.ndarray, torch.Tensor]:
         """Convert input array to target data type.
 
         Args:
@@ -324,8 +326,9 @@ class ArrayConverter:
                 converted_array = target_array.new_tensor(input_array)
         return converted_array
 
-    def recover(self, input_array: Union[np.ndarray, torch.Tensor]) -> Union[
-        np.ndarray, torch.Tensor]:
+    def recover(
+        self, input_array: Union[np.ndarray, torch.Tensor]
+    ) -> Union[np.ndarray, torch.Tensor]:
         """Recover input type to original array type.
 
         Args:
