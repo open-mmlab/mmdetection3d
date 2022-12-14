@@ -25,7 +25,8 @@ def gaussian_2d(shape: Tuple[int, int], sigma: float = 1) -> np.ndarray:
     return h
 
 
-def draw_heatmap_gaussian(heatmap: Tensor, center: Tensor, radius: int, k: int = 1) -> Tensor:
+def draw_heatmap_gaussian(heatmap: Tensor, center: Tensor, radius: int,
+                          k: int = 1) -> Tensor:
     """Get gaussian masked heatmap.
 
     Args:
@@ -57,7 +58,8 @@ def draw_heatmap_gaussian(heatmap: Tensor, center: Tensor, radius: int, k: int =
     return heatmap
 
 
-def gaussian_radius(det_size: Tuple[Tensor, Tensor], min_overlap: float = 0.5) -> Tensor:
+def gaussian_radius(det_size: Tuple[Tensor, Tensor],
+                    min_overlap: float = 0.5) -> Tensor:
     """Get radius of gaussian.
 
     Args:

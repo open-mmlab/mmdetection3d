@@ -10,7 +10,8 @@ from mmdet3d.structures import points_cam2img, CameraInstance3DBoxes
 def get_keypoints(gt_bboxes_3d_list: List[CameraInstance3DBoxes],
                   centers2d_list: List[Tensor],
                   img_metas: List[dict],
-                  use_local_coords: str = True) -> Tuple[List[Tensor], List[Tensor]]:
+                  use_local_coords: str = True) -> Tuple[
+    List[Tensor], List[Tensor]]:
     """Function to filter the objects label outside the image.
 
     Args:
@@ -24,9 +25,9 @@ def get_keypoints(gt_bboxes_3d_list: List[CameraInstance3DBoxes],
             for keypoints. Default: True.
 
     Returns:
-        Tuple[List[Tensor], List[Tensor]]: It contains two elements, the first is the
-        keypoints for each projected 2D bbox in batch data. The second is
-        the visible mask of depth calculated by keypoints.
+        Tuple[List[Tensor], List[Tensor]]: It contains two elements,
+        the first is the keypoints for each projected 2D bbox in batch data.
+        The second is the visible mask of depth calculated by keypoints.
     """
 
     assert len(gt_bboxes_3d_list) == len(centers2d_list)

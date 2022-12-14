@@ -11,7 +11,8 @@ def filter_outside_objs(gt_bboxes_list: List[Tensor],
                         gt_labels_list: List[Tensor],
                         gt_bboxes_3d_list: List[CameraInstance3DBoxes],
                         gt_labels_3d_list: List[Tensor],
-                        centers2d_list: List[Tensor], img_metas: List[dict]) -> None:
+                        centers2d_list: List[Tensor],
+                        img_metas: List[dict]) -> None:
     """Function to filter the objects label outside the image.
 
     Args:
@@ -20,7 +21,8 @@ def filter_outside_objs(gt_bboxes_list: List[Tensor],
         gt_labels_list (List[Tensor]): Ground truth labels of each box,
             each has shape (num_gt,).
         gt_bboxes_3d_list (List[:objs:`CameraInstance3DBoxes`]): 3D Ground
-            truth bboxes of each image, each has shape (num_gt, bbox_code_size).
+            truth bboxes of each image, each has shape
+            (num_gt, bbox_code_size).
         gt_labels_3d_list (List[Tensor]): 3D Ground truth labels of each
             box, each has shape (num_gt,).
         centers2d_list (List[Tensor]): Projected 3D centers onto 2D image,
@@ -44,7 +46,8 @@ def filter_outside_objs(gt_bboxes_list: List[Tensor],
         gt_labels_3d_list[i] = gt_labels_3d_list[i][keep_inds]
 
 
-def get_centers2d_target(centers2d: Tensor, centers: Tensor, img_shape: tuple) -> Tensor:
+def get_centers2d_target(centers2d: Tensor, centers: Tensor,
+                         img_shape: tuple) -> Tensor:
     """Function to get target centers2d.
 
     Args:
@@ -90,7 +93,8 @@ def get_centers2d_target(centers2d: Tensor, centers: Tensor, img_shape: tuple) -
 
 def handle_proj_objs(centers2d_list: List[Tensor],
                      gt_bboxes_list: List[Tensor],
-                     img_metas: List[dict]) -> Tuple[List[Tensor], List[Tensor], List[Tensor]]:
+                     img_metas: List[dict]) -> Tuple[
+    List[Tensor], List[Tensor], List[Tensor]]:
     """Function to handle projected object centers2d, generate target
     centers2d.
 

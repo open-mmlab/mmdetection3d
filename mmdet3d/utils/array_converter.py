@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 TemplateArrayType = Union[tuple, list, int, float, np.ndarray, torch.Tensor]
+TargetType = Optional[Union[np.ndarray, torch.Tensor]]
 
 
 def array_converter(to_torch: Optional[bool] = True,
@@ -207,11 +208,13 @@ class ArrayConverter:
                                  np.int64, np.uint8, np.uint16, np.uint32,
                                  np.uint64, np.float16, np.float32, np.float64)
 
-    def __init__(self, template_array: Optional[TemplateArrayType] = None) -> None:
+    def __init__(self,
+                 template_array: Optional[TemplateArrayType] = None) -> None:
         """Utility class for data-type agnostic processing.
 
         Args:
-            template_array (tuple | list | int | float | np.ndarray | torch.Tensor, optional):
+            template_array (tuple | list | int | float | np.ndarray |
+            torch.Tensor, optional):
                 template array.
         """
         if template_array is not None:
@@ -259,14 +262,14 @@ class ArrayConverter:
                             f' is not supported.')
 
     def convert(self, input_array: TemplateArrayType,
-                target_type: Optional[Union[np.ndarray, torch.Tensor]] = None,
-                target_array: Optional[Union[np.ndarray, torch.Tensor]] = None) \
-            -> Union[np.ndarray, torch.Tensor]:
+                target_type: TargetType = None,
+                target_array: TargetType = None) -> Union[
+        np.ndarray, torch.Tensor]:
         """Convert input array to target data type.
 
         Args:
-            input_array (tuple | list | int | float | np.ndarray | torch.Tensor):
-                Input array.
+            input_array (tuple | list | int | float | np.ndarray |
+            torch.Tensor): Input array.
             target_type (np.ndarray | torch.Tensor, optional):
                 Type to which input array is converted.
             target_array (np.ndarray | torch.Tensor, optional):
@@ -280,7 +283,8 @@ class ArrayConverter:
                 same data type, a TypeError is raised.
 
         Returns:
-            converted_array (np.ndarray | torch.Tensor): Array which input array is converted.
+            converted_array (np.ndarray | torch.Tensor): Array which
+            input array is converted.
         """
         if isinstance(input_array, (list, tuple)):
             try:
@@ -320,7 +324,8 @@ class ArrayConverter:
                 converted_array = target_array.new_tensor(input_array)
         return converted_array
 
-    def recover(self, input_array: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
+    def recover(self, input_array: Union[np.ndarray, torch.Tensor]) -> Union[
+        np.ndarray, torch.Tensor]:
         """Recover input type to original array type.
 
         Args:

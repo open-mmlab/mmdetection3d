@@ -32,9 +32,9 @@ def merge_aug_bboxes_3d(aug_results: List[dict],
     """
 
     assert len(aug_results) == len(aug_batch_input_metas), \
-        '"aug_results" should have the same length as "aug_batch_input_metas", got len(' \
-        f'aug_results)={len(aug_results)} and ' \
-        f'len(aug_batch_input_metas)={len(aug_batch_input_metas)}'
+        '"aug_results" should have the same length as ' \ 
+        f'"aug_batch_input_metas", got len(aug_results)={len(aug_results)} ' \
+        f'and len(aug_batch_input_metas)={len(aug_batch_input_metas)}'
 
     recovered_bboxes = []
     recovered_scores = []
