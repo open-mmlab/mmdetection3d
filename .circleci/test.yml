@@ -51,6 +51,7 @@ jobs:
           command: |
             python -m pip install --upgrade pip
             python -m pip install wheel
+            python -m pip install typing-extensions --upgrade
       - run:
           name: Install PyTorch
           command: |
@@ -149,7 +150,7 @@ workflows:
           name: maximum_version_cpu
           torch: 1.13.0
           torchvision: 0.14.0
-          python: 3.8.0
+          python: 3.9.0
           requires:
             - minimum_version_cpu
       - hold:
