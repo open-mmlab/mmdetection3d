@@ -58,7 +58,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-        torch: [1.6.0, 1.7.1, 1.8.1, 1.9.1, 1.10.1, 1.11.0, 1.12.1]
+        torch: [1.6.0, 1.7.1, 1.8.1, 1.9.1, 1.10.1, 1.11.0, 1.12.1, 1.13.0]
         include:
           - torch: 1.6.0
             torchvision: 0.7.0
@@ -74,6 +74,8 @@ jobs:
             torchvision: 0.12.0
           - torch: 1.12.1
             torchvision: 0.13.1
+          - torch: 1.13.0
+            torchvision: 0.14.0
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -185,3 +187,37 @@ jobs:
       - name: Run unittests and generate coverage report
         run: |
           pytest tests/
+  build_cu116:
+    runs-on: ubuntu-18.04
+    container:
+      image: pytorch/pytorch:1.13.0-cuda11.6-cudnn8-devel
+    strategy:
+      matrix:
+        python-version: [ 3.7 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        run: pip install pip --upgrade
+      - name: Fetch GPG keys
+        run: |
+          apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+          apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y git ffmpeg libturbojpeg
+      - name: Install MMEngine from main branch
+        run: pip install git+https://github.com/open-mmlab/mmengine.git@main
+      - name: Install ninja to speed the compilation
+        run: pip install ninja
+      - name: Build MMCV from source
+        run: pip install -e . -v
+      - name: Install unit tests dependencies
+        run: pip install -r requirements/test.txt
+      - name: Run unittests and generate coverage report
+        run: |
+          coverage run --branch --source mmcv -m pytest tests
+          coverage xml
+          coverage report -m
