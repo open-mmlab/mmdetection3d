@@ -26,21 +26,26 @@ class VectorPoolLocalInterpolateModule(nn.Module):
         neighbor_type (str): Query neighbor type. Include
             [ball, cube]. Default to 'cube'.
         use_xyz (bool): Whether used xyz coordinates as features.
+            Default to True.
         neighbour_distance_multiplier (float): The multiplier of neighbor
             distance is used to calculate the distance by
-            neighbor_distance_multiplier * max_neighbour_distance.
-        norm_cfg (dict, optional): Config dict of normalization layers.
+            neighbor_distance_multiplier * max_neighbour_distance. Default
+            to 1.0
+        norm_cfg (dict, optional): Config dict of normalization layers. Default
+            to dict(type='BN2d').
     """
 
-    def __init__(self,
-                 mlp_channels: List[int],
-                 num_voxels: List[int],
-                 max_neighbour_distance: float,
-                 nsample: int,
-                 neighbor_type: str = 'cube',
-                 use_xyz: bool = True,
-                 neighbour_distance_multiplier: float = 1.0,
-                 norm_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        mlp_channels: List[int],
+        num_voxels: List[int],
+        max_neighbour_distance: float,
+        nsample: int,
+        neighbor_type: str = 'cube',
+        use_xyz: bool = True,
+        neighbour_distance_multiplier: float = 1.0,
+        norm_cfg: dict = dict(type='BN2d')
+    ) -> None:
         super().__init__()
         self.num_voxels = num_voxels
         self.num_total_grids = self.num_voxels[0] * self.num_voxels[
@@ -73,22 +78,22 @@ class VectorPoolLocalInterpolateModule(nn.Module):
         self.num_avg_length_of_neighbor_idxs = 1000
 
     def forward(self, support_xyz: Tensor, support_features: Tensor,
-                xyz_batch_cnt: Tensor, new_xyz: Tensor,
+                batch_num_xyzs: Tensor, new_xyz: Tensor,
                 new_xyz_grid_centers: Tensor,
-                new_xyz_batch_cnt: Tensor) -> Tensor:
+                batch_num_new_xyzs: Tensor) -> Tensor:
         """
         Args:
             support_xyz (Tensor): Tensor of the xyz coordinates shape
                 with (N1 + N2 ..., 3).
             support_features (Tensor): Features of each point with shape
                 (N1 + N2 ..., C). C is features channel number.
-            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates num in
+            batch_num_xyzs: (Tensor): Stacked input xyz coordinates num in
                 each batch, just like (N1, N2, ...).
             new_xyz (Tensor): Target points xyz coordinates shape with
                 (M1 + M2 ..., 3).
             new_xyz_grid_centers (Tensor): Grids centers of each grid shape
                 with  (M1 + M2 ..., num_total_grids, 3) .
-            new_xyz_batch_cnt: (Tensor): Stacked target points xyz coordinates
+            batch_num_new_xyzs: (Tensor): Stacked target points xyz coordinates
                 num in each batch, just like (M1, M2, ...).
 
         Returns:
@@ -102,8 +107,8 @@ class VectorPoolLocalInterpolateModule(nn.Module):
                 neighbor_type = 0
             dist, idx, num_avg_length_of_neighbor_idxs = \
                 three_nn_vector_pool_by_two_step(
-                    support_xyz, xyz_batch_cnt, new_xyz, new_xyz_grid_centers,
-                    new_xyz_batch_cnt, self.max_neighbour_distance,
+                    support_xyz, batch_num_xyzs, new_xyz, new_xyz_grid_centers,
+                    batch_num_new_xyzs, self.max_neighbour_distance,
                     self.nsample, neighbor_type,
                     self.num_avg_length_of_neighbor_idxs,
                     self.num_total_grids, self.neighbor_distance_multiplier)
@@ -159,7 +164,7 @@ class VectorPoolAggregationModule(nn.Module):
             Default to 'local_interpolation'.
         num_reduced_channels (int): Num reduced channels for vector pool
             module. Default to 1.
-        num_channels_of_local_aggregation (int): Num of local aggregation model
+        num_aggregation_channels (int): Num of local aggregation model
             feature channels.
         post_mlps (Tuple[int]): Post encode mlp channels.
         neighbour_distance_multiplier (float): Multiplier of neighbor
@@ -182,7 +187,7 @@ class VectorPoolAggregationModule(nn.Module):
                  num_local_voxel: Tuple[int] = (3, 3, 3),
                  local_aggregation_type: str = 'local_interpolation',
                  num_reduced_channels: int = 1,
-                 num_channels_of_local_aggregation: int = 32,
+                 num_aggregation_channels: int = 32,
                  post_mlps: Tuple[int] = (128, ),
                  neighbour_distance_multiplier: float = 2.0,
                  max_neighbour_distance: float = None,
@@ -203,8 +208,8 @@ class VectorPoolAggregationModule(nn.Module):
         self.input_channels = in_channels
         self.num_reduced_channels = in_channels \
             if num_reduced_channels is None else num_reduced_channels
-        self.num_channels_of_local_aggregation = \
-            num_channels_of_local_aggregation
+        self.num_aggregation_channels = \
+            num_aggregation_channels
         self.max_neighbour_distance = max_neighbour_distance
         self.neighbor_nsample = neighbor_nsample
         self.neighbor_type = neighbor_type
@@ -225,7 +230,7 @@ class VectorPoolAggregationModule(nn.Module):
             self.local_interpolate_module = None
             num_c_in = (self.num_reduced_channels + 3) * self.total_voxels
 
-        num_c_out = self.total_voxels * self.num_channels_of_local_aggregation
+        num_c_out = self.total_voxels * self.num_aggregation_channels
 
         self.separate_local_aggregation_layer = nn.Sequential(
             nn.Conv1d(
@@ -266,7 +271,7 @@ class VectorPoolAggregationModule(nn.Module):
               f'num_c_reduction={self.input_channels}' \
               f'->{self.num_reduced_channels}, ' \
               f'num_c_local_aggregation=' \
-              f'{self.num_channels_of_local_aggregation}'
+              f'{self.num_aggregation_channels}'
         return ret
 
     @staticmethod
@@ -311,19 +316,19 @@ class VectorPoolAggregationModule(nn.Module):
         return voxel_centers
 
     def vector_pool_with_local_interpolate(
-            self, xyz: Tensor, xyz_batch_cnt: Tensor, features: Tensor,
-            new_xyz: Tensor, new_xyz_batch_cnt: Tensor) -> Tensor:
+            self, xyz: Tensor, batch_num_xyzs: Tensor, features: Tensor,
+            new_xyz: Tensor, batch_num_new_xyzs: Tensor) -> Tensor:
         """
         Args:
             xyz (Tensor): Tensor of the xyz coordinates shape
                 with (N1 + N2 ..., 3).
-            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates num in
+            batch_num_xyzs: (Tensor): Stacked input xyz coordinates num in
                 each batch, just like (N1, N2, ...).
             features (Tensor): Features of each point shape with
                 (N1 + N2 ..., C). C is feature channels number.
             new_xyz (Tensor): Target points xyz coordinates shape with
                 (M1 + M2 ..., 3).
-            new_xyz_batch_cnt: (Tensor): Stacked target points xyz coordinates
+            batch_num_new_xyzs: (Tensor): Stacked target points xyz coordinates
                 num in each batch, just like (M1, M2, ...).
 
         Returns:
@@ -338,10 +343,10 @@ class VectorPoolAggregationModule(nn.Module):
         voxel_features = self.local_interpolate_module.forward(
             support_xyz=xyz,
             support_features=features,
-            xyz_batch_cnt=xyz_batch_cnt,
+            batch_num_xyzs=batch_num_xyzs,
             new_xyz=new_xyz,
             new_xyz_grid_centers=voxel_centers,
-            new_xyz_batch_cnt=new_xyz_batch_cnt
+            batch_num_new_xyzs=batch_num_new_xyzs
         )  # ((M1 + M2 ...) * total_voxels, C)
 
         voxel_features = voxel_features.contiguous().view(
@@ -349,19 +354,19 @@ class VectorPoolAggregationModule(nn.Module):
         return voxel_features
 
     def vector_pool_with_voxel_query(
-            self, xyz: Tensor, xyz_batch_cnt: Tensor, features: Tensor,
-            new_xyz: Tensor, new_xyz_batch_cnt: Tensor) -> Tuple[Tensor]:
+            self, xyz: Tensor, batch_num_xyzs: Tensor, features: Tensor,
+            new_xyz: Tensor, batch_num_new_xyzs: Tensor) -> Tuple[Tensor]:
         """
         Args:
             xyz (Tensor): Tensor of the xyz coordinates shape
                 with (N1 + N2 ..., 3).
-            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates num in
+            batch_num_xyzs: (Tensor): Stacked input xyz coordinates num in
                 each batch, just like (N1, N2, ...).
             features (Tensor): Features of each point with shape
                 (N1 + N2 ..., C). C is features channel number.
             new_xyz (Tensor): Target points xyz coordinates shape with
                 (M1 + M2 ..., 3).
-            new_xyz_batch_cnt: (Tensor): Stacked target points xyz coordinates
+            batch_num_new_xyzs: (Tensor): Stacked target points xyz coordinates
                 num in each batch, just like (M1, M2, ...).
 
         Returns:
@@ -374,7 +379,7 @@ class VectorPoolAggregationModule(nn.Module):
         use_xyz = int(self.use_xyz)
         new_features, new_local_xyz, num_mean_points_per_grid,\
             point_cnt_of_grid = vector_pool_with_voxel_query(
-                xyz, xyz_batch_cnt, features, new_xyz, new_xyz_batch_cnt,
+                xyz, batch_num_xyzs, features, new_xyz, batch_num_new_xyzs,
                 self.num_local_voxel[0], self.num_local_voxel[1],
                 self.num_local_voxel[2], self.max_neighbour_distance,
                 self.num_reduced_channels, use_xyz,
@@ -393,17 +398,17 @@ class VectorPoolAggregationModule(nn.Module):
 
         return new_features, point_cnt_of_grid
 
-    def forward(self, xyz, xyz_batch_cnt, new_xyz, new_xyz_batch_cnt, features,
-                **kwargs) -> Tuple[Tensor, Tensor]:
+    def forward(self, xyz, batch_num_xyzs, new_xyz, batch_num_new_xyzs,
+                features, **kwargs) -> Tuple[Tensor, Tensor]:
         """
         Args:
             xyz (Tensor): Tensor of the xyz coordinates shape
                 with (N1 + N2 ..., 3).
-            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates num in
+            batch_num_xyzs: (Tensor): Stacked input xyz coordinates num in
                 each batch, just like (N1, N2, ...).
             new_xyz (Tensor): Target points xyz coordinates shape with
                 (M1 + M2 ..., 3).
-            new_xyz_batch_cnt: (Tensor): Stacked target points xyz coordinates
+            batch_num_new_xyzs: (Tensor): Stacked target points xyz coordinates
                 num in each batch, just like (M1, M2, ...).
             features (Tensor): Features of each point shape with
                 (N1 + N2 ..., C). C is feature channels num.
@@ -419,10 +424,10 @@ class VectorPoolAggregationModule(nn.Module):
         if self.local_aggregation_type == 'local_interpolation':
             vector_features = self.vector_pool_with_local_interpolate(
                 xyz=xyz,
-                xyz_batch_cnt=xyz_batch_cnt,
+                batch_num_xyzs=batch_num_xyzs,
                 features=features,
                 new_xyz=new_xyz,
-                new_xyz_batch_cnt=new_xyz_batch_cnt
+                batch_num_new_xyzs=batch_num_new_xyzs
             )  # (M1 + M2 + ..., total_voxels * C)
         elif self.local_aggregation_type in [
                 'voxel_avg_pool', 'voxel_random_choice'
@@ -430,10 +435,10 @@ class VectorPoolAggregationModule(nn.Module):
             vector_features, point_cnt_of_grid = \
                 self.vector_pool_with_voxel_query(
                     xyz=xyz.contiguous(),
-                    xyz_batch_cnt=xyz_batch_cnt,
+                    batch_num_xyzs=batch_num_xyzs,
                     features=features.contiguous(),
                     new_xyz=new_xyz.contiguous(),
-                    new_xyz_batch_cnt=new_xyz_batch_cnt)
+                    batch_num_new_xyzs=batch_num_new_xyzs)
         else:
             raise NotImplementedError
 
@@ -460,16 +465,16 @@ class VectorPoolAggregationModuleMSG(nn.Module):
         local_aggregation_type (str): Type of local aggregation func.
             Include ['local_interpolation', 'voxel_avg_pool',
             'voxel_random_choice'].
-        num_channels_of_local_aggregation (int): Num of local aggregation model
+        num_aggregation_channels (int): Num of local aggregation model
             feature channels.
         neighbour_distance_multiplier (float): The multiplier of neighbor
             distance is used to calculate the distance by
             neighbor_distance_multiplier * max_neighbour_distance.
         filter_neighbor_with_roi (bool): Whether use roi boxes to filter
-            points. Default to False.
-        radius_of_neighbor_with_roi (float): Sample points radius of each roi
+            points. Default to True.
+        roi_neighbour_radius (float): Sample points radius of each roi
             boxes. And needs filter_neighbour_with_roi = True. Default to 4.0
-        num_max_points_of_part (int): Max points num in each part.
+        part_max_points_num (int): Max points num in each part.
             Default to 200000.
         num_reduced_channels (int): Num reduced channels for vector pool
             module. Default to 1.
@@ -481,18 +486,18 @@ class VectorPoolAggregationModuleMSG(nn.Module):
                  in_channels: int,
                  mlp_channels: List[List[int]],
                  local_aggregation_type: str,
-                 num_channels_of_local_aggregation: int,
+                 num_aggregation_channels: int,
                  neighbour_distance_multiplier: float = 2.0,
-                 filter_neighbor_with_roi: bool = False,
-                 radius_of_neighbor_with_roi: float = 4.0,
-                 num_max_points_of_part: int = 200000,
+                 filter_neighbor_with_roi: bool = True,
+                 roi_neighbour_radius: float = 4.0,
+                 part_max_points_num: int = 200000,
                  num_reduced_channels: int = 1,
                  groups_cfg_list: List[dict] = None,
                  **kwargs) -> None:
         super().__init__()
         self.filter_neighbor_with_roi = filter_neighbor_with_roi
-        self.radius_of_neighbor_with_roi = radius_of_neighbor_with_roi
-        self.num_max_points_of_part = num_max_points_of_part
+        self.roi_neighbour_radius = roi_neighbour_radius
+        self.part_max_points_num = part_max_points_num
         self.layers = nn.Sequential()
         c_in = 0
         for k, cur_config in enumerate(groups_cfg_list):
@@ -506,9 +511,8 @@ class VectorPoolAggregationModuleMSG(nn.Module):
                                                       local_aggregation_type),
                 num_reduced_channels=cur_config.get('num_reduced_channels',
                                                     num_reduced_channels),
-                num_channels_of_local_aggregation=cur_config.get(
-                    'num_channels_of_local_aggregation',
-                    num_channels_of_local_aggregation),
+                num_aggregation_channels=cur_config.get(
+                    'num_aggregation_channels', num_aggregation_channels),
                 neighbour_distance_multiplier=cur_config.get(
                     'neighbour_distance_multiplier',
                     neighbour_distance_multiplier))
@@ -540,37 +544,39 @@ class VectorPoolAggregationModuleMSG(nn.Module):
             torch.Tensor: (N_out, 3)  Sampled points close to roi boxes.
                 N_out is sampled points num.
         """
-        if points.shape[0] < self.num_max_points_of_part:
-            distance = (points[:, None, :] - rois[None, :, 0:3]).norm(dim=-1)
+        rois_center = rois[None, :, 0:3].clone()
+        rois_center[:, :, 2] += rois[:, 5] / 2
+        if points.shape[0] < self.part_max_points_num:
+
+            distance = (points[:, None, :] - rois_center).norm(dim=-1)
             min_dis, min_dis_roi_idx = distance.min(dim=-1)
             roi_max_dim = (rois[min_dis_roi_idx, 3:6] / 2).norm(dim=-1)
             point_mask = \
-                min_dis < roi_max_dim + self.radius_of_neighbor_with_roi
+                min_dis < roi_max_dim + self.roi_neighbour_radius
         else:
             start_idx = 0
             point_mask_list = []
             while start_idx < points.shape[0]:
                 distance = (points[start_idx:start_idx +
-                                   self.num_max_points_of_part, None, :] -
-                            rois[None, :, 0:3]).norm(dim=-1)
+                                   self.part_max_points_num, None, :] -
+                            rois_center).norm(dim=-1)
                 min_dis, min_dis_roi_idx = distance.min(dim=-1)
                 roi_max_dim = (rois[min_dis_roi_idx, 3:6] / 2).norm(dim=-1)
                 cur_point_mask = \
-                    min_dis < roi_max_dim + self.radius_of_neighbor_with_roi
+                    min_dis < roi_max_dim + self.roi_neighbour_radius
                 point_mask_list.append(cur_point_mask)
-                start_idx += self.num_max_points_of_part
+                start_idx += self.part_max_points_num
             point_mask = torch.cat(point_mask_list, dim=0)
 
         sampled_points = points[:1] if point_mask.sum() == 0 else points[
             point_mask, :]
-
         return sampled_points, point_mask
 
     def forward(self,
                 xyz: Tensor,
-                xyz_batch_cnt: Tensor,
+                batch_num_xyzs: Tensor,
                 new_xyz: Tensor,
-                new_xyz_batch_cnt: Tensor,
+                batch_num_new_xyzs: Tensor,
                 features: Tensor = None,
                 roi_boxes_list: InstanceList = None,
                 **kwargs) -> Tuple[Tensor, Tensor]:
@@ -579,11 +585,11 @@ class VectorPoolAggregationModuleMSG(nn.Module):
         Args:
             xyz (Tensor): Tensor of the xyz coordinates shape
                 with (N1 + N2 ..., 3).
-            xyz_batch_cnt: (Tensor): Stacked input xyz coordinates num in
+            batch_num_xyzs: (Tensor): Stacked input xyz coordinates num in
                 each batch, just like (N1, N2, ...).
             new_xyz (Tensor): Target points xyz coordinates shape with
                 (M1 + M2 ..., 3).
-            new_xyz_batch_cnt: (Tensor): Stacked target points xyz coordinates
+            batch_num_new_xyzs: (Tensor): Stacked target points xyz coordinates
                 num in each batch, just like (M1, M2, ...).
             features (Tensor, optional): Features of each point with shape
                 (N1 + N2 ..., C). C is features channel number. Default: None.
@@ -597,29 +603,22 @@ class VectorPoolAggregationModuleMSG(nn.Module):
                 - new_features (Tensor): Target point features with shape
                     (M1 + M2 ..., sum_k(mlps[k][-1])).
         """
-        gemo_center_boxes_list = []
         if roi_boxes_list is not None:
-            for roi_boxes in roi_boxes_list:
-                gemo_center_roi_boxes = roi_boxes.clone().detach()
-                gemo_center_roi_boxes[:,
-                                      2] = roi_boxes[:,
-                                                     2] + roi_boxes[:, 5] / 2
-                gemo_center_boxes_list.append(gemo_center_roi_boxes)
             if self.filter_neighbor_with_roi:
                 point_features = torch.cat(
                     (xyz, features), dim=-1) if features is not None else xyz
                 point_features_list = []
                 cur_start = 0
-                for bs_idx in range(len(xyz_batch_cnt)):
+                for batch_idx in range(len(batch_num_xyzs)):
                     _, valid_mask = self.sample_points_with_roi(
-                        rois=gemo_center_boxes_list[bs_idx],
+                        rois=roi_boxes_list[batch_idx],
                         points=xyz[cur_start:cur_start +
-                                   xyz_batch_cnt[bs_idx]])
+                                   batch_num_xyzs[batch_idx]])
                     point_features_list.append(
                         point_features[cur_start:cur_start +
-                                       xyz_batch_cnt[bs_idx]][valid_mask])
-                    cur_start += xyz_batch_cnt[bs_idx]
-                    xyz_batch_cnt[bs_idx] = valid_mask.sum()
+                                       batch_num_xyzs[batch_idx]][valid_mask])
+                    cur_start += batch_num_xyzs[batch_idx]
+                    batch_num_xyzs[batch_idx] = valid_mask.sum()
 
                 valid_point_features = torch.cat(point_features_list, dim=0)
                 xyz = valid_point_features[:, 0:3]
@@ -628,8 +627,9 @@ class VectorPoolAggregationModuleMSG(nn.Module):
 
         features_list = []
         for i in range(len(self.layers)):
-            cur_xyz, cur_features = self.layers[i](xyz, xyz_batch_cnt, new_xyz,
-                                                   new_xyz_batch_cnt, features)
+            cur_xyz, cur_features = self.layers[i](xyz, batch_num_xyzs,
+                                                   new_xyz, batch_num_new_xyzs,
+                                                   features)
             features_list.append(cur_features)
 
         features = torch.cat(features_list, dim=-1)

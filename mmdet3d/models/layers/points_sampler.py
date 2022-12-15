@@ -25,8 +25,14 @@ class FPSSampler(nn.Module):
         super().__init__()
         self.num_keypoints = num_keypoints
 
-    def forward(self, points_list: List[Tensor], **kwargs) -> Tensor:
-        """Sampling points with D-FPS."""
+    def forward(self, points_list: List[Tensor], **kwargs) -> List[Tensor]:
+        """Sampling points with D-FPS.
+        Args:
+            points_list (List[torch.Tensor]): Input batch points cloud list.
+
+        Returns:
+            List[torch.Tensor]: Batch sampled points results.
+        """
         sampled_points = []
         for batch_idx in range(len(points_list)):
             points = points_list[batch_idx]
@@ -51,23 +57,24 @@ class SPCSampler(nn.Module):
     Args:
         num_keypoints (int): Num of key points which sampler
             from raw points cloud.
-        sample_radius_with_roi (float): Sample points radius of each roi boxes.
+        roi_neighbour_radius (float): Sample neighbour points radius
+            of each roi boxes.
         num_sectors (int): Divide 3D space into `num_sectors` sectors.
-        num_max_points_of_part (int): Max points num in each part.
+        part_max_points_num (int): Max points num in each part.
             Default to 200000.
     """
 
     def __init__(
         self,
         num_keypoints: int,
-        sample_radius_with_roi: float,
+        roi_neighbour_radius: float,
         num_sectors: int,
-        num_max_points_of_part: int = 200000,
+        part_max_points_num: int = 200000,
     ) -> None:
         super().__init__()
         self.num_keypoints = num_keypoints
-        self.sample_radius_with_roi = sample_radius_with_roi
-        self.num_max_points_of_part = num_max_points_of_part
+        self.roi_neighbour_radius = roi_neighbour_radius
+        self.part_max_points_num = part_max_points_num
         self.num_sectors = num_sectors
 
     def sample_points_with_roi(self, rois: Tensor, points: Tensor) -> Tensor:
@@ -82,29 +89,32 @@ class SPCSampler(nn.Module):
             torch.Tensor: (N_out, 3) Sampled points close to roi boxes.
                 N_out is sampled points num.
         """
-        if points.shape[0] < self.num_max_points_of_part:
-            distance = (points[:, None, :] - rois[None, :, 0:3]).norm(dim=-1)
+        rois_center = rois[None, :, 0:3].clone()
+        rois_center[:, :, 2] += rois[:, 5] / 2
+        if points.shape[0] < self.part_max_points_num:
+
+            distance = (points[:, None, :] - rois_center).norm(dim=-1)
             min_dis, min_dis_roi_idx = distance.min(dim=-1)
             roi_max_dim = (rois[min_dis_roi_idx, 3:6] / 2).norm(dim=-1)
-            point_mask = min_dis < roi_max_dim + self.sample_radius_with_roi
+            point_mask = \
+                min_dis < roi_max_dim + self.roi_neighbour_radius
         else:
             start_idx = 0
             point_mask_list = []
             while start_idx < points.shape[0]:
                 distance = (points[start_idx:start_idx +
-                                   self.num_max_points_of_part, None, :] -
-                            rois[None, :, 0:3]).norm(dim=-1)
+                                   self.part_max_points_num, None, :] -
+                            rois_center).norm(dim=-1)
                 min_dis, min_dis_roi_idx = distance.min(dim=-1)
                 roi_max_dim = (rois[min_dis_roi_idx, 3:6] / 2).norm(dim=-1)
                 cur_point_mask = \
-                    min_dis < roi_max_dim + self.sample_radius_with_roi
+                    min_dis < roi_max_dim + self.roi_neighbour_radius
                 point_mask_list.append(cur_point_mask)
-                start_idx += self.num_max_points_of_part
+                start_idx += self.part_max_points_num
             point_mask = torch.cat(point_mask_list, dim=0)
 
         sampled_points = points[:1] if point_mask.sum() == 0 else points[
             point_mask, :]
-
         return sampled_points, point_mask
 
     def sector_fps(self, points: Tensor) -> Tensor:
