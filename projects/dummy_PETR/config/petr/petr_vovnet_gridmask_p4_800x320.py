@@ -191,7 +191,7 @@ train_pipeline = [
         keys=[
             'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels',
             'gt_bboxes_3d', 'gt_labels_3d', 'centers_2d', 'depths'
-        ]),
+        ])
 ]
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
@@ -271,6 +271,7 @@ optimizer = dict(
 optim_wrapper = dict(
     # TODO Add Amp
     # type='AmpOptimWrapper',
+    # loss_scale='dynamic',
     optimizer=dict(type='AdamW', lr=2e-4, weight_decay=0.01),
     paramwise_cfg=dict(custom_keys={
         'img_backbone': dict(lr_mult=0.1),
@@ -298,7 +299,7 @@ train_cfg = dict(max_epochs=12, val_interval=12)
 find_unused_parameters = False
 
 load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
-# resume_from = None
+resume = False
 
 # --------------Original---------------
 # mAP: 0.3778
@@ -323,7 +324,7 @@ load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
 # traffic_cone    0.531   0.582   0.320   nan     nan     nan
 # barrier 0.472   0.673   0.281   0.145   nan     nan
 
-# --------------Refactored---------------
+# --------------Refactored in mmdet3d v1.0---------------
 # mAP: 0.3827
 # mATE: 0.7375
 # mASE: 0.2703
@@ -345,3 +346,26 @@ load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
 # bicycle	      0.347	  0.639	  0.264	  0.788	  0.472	  0.016
 # traffic_cone	  0.538	  0.553	  0.325	  nan	  nan	  nan
 # barrier	      0.464	  0.662	 0.287	  0.137	  nan	  nan
+
+# --------------Refactored in mmdet3d v1.1---------------
+# mAP: 0.3829
+# mATE: 0.7376
+# mASE: 0.2702
+# mAOE: 0.4803
+# mAVE: 0.8703
+# mAAE: 0.2040
+# NDS: 0.4352
+# Eval time: 117.6s
+
+# Per-class results:
+# Object Class	  AP	  ATE	  ASE	  AOE	  AVE	  AAE
+# car	  0.574	  0.519	  0.150	  0.087	  0.866	  0.206
+# truck	  0.349	  0.774	  0.213	  0.117	  0.855	  0.221
+# bus	  0.424	  0.782	  0.204	  0.123	  1.904	  0.319
+# trailer 0.219	  1.035	  0.231	  0.609	  0.830	  0.149
+# construction_vehicle	  0.084	  1.058	  0.485	  1.248	  0.172	  0.361
+# pedestrian	  0.452	  0.682	  0.293	  0.645	  0.529	  0.231
+# motorcycle	  0.378	  0.671	  0.250	  0.567	  1.334	  0.130
+# bicycle	      0.347	  0.640	  0.264	  0.788	  0.473	  0.016
+# traffic_cone	  0.538	  0.553	  0.325	  nan	  nan	  nan
+# barrier	      0.463	  0.663	  0.287	  0.138	  nan	  nan

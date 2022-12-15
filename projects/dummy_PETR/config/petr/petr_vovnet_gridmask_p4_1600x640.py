@@ -1,9 +1,11 @@
 _base_ = [
     '../../../../configs/_base_/datasets/nus-3d.py',
-    '../../../../configs/_base_/default_runtime.py'
+    '../../../../configs/_base_/default_runtime.py',
+    '../../../../configs/_base_/schedules/cyclic-20e.py'
 ]
 backbone_norm_cfg = dict(type='LN', requires_grad=True)
 
+randomness = dict(seed=1, deterministic=False, diff_rank_seed=False)
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
@@ -17,6 +19,8 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
+metainfo = dict(classes=class_names)
+
 input_modality = dict(
     use_lidar=False,
     use_camera=True,
@@ -25,6 +29,12 @@ input_modality = dict(
     use_external=True)
 model = dict(
     type='Petr3D',
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        mean=[103.530, 116.280, 123.675],
+        std=[57.375, 57.120, 58.395],
+        bgr_to_rgb=False,
+        pad_size_divisor=32),
     use_grid_mask=True,
     img_backbone=dict(
         type='VoVNetCP',
@@ -61,7 +71,8 @@ model = dict(
                             type='MultiheadAttention',
                             embed_dims=256,
                             num_heads=8,
-                            dropout=0.1),
+                            attn_drop=0.1,
+                            dropout_layer=dict(type='Dropout', drop_prob=0.1)),
                         dict(
                             type='PETRMultiheadAttention',
                             embed_dims=256,
@@ -76,7 +87,6 @@ model = dict(
             )),
         bbox_coder=dict(
             type='NMSFreeCoder',
-            # type='NMSFreeClsCoder',
             post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
             pc_range=point_cloud_range,
             max_num=300,
@@ -85,13 +95,13 @@ model = dict(
         positional_encoding=dict(
             type='SinePositionalEncoding3D', num_feats=128, normalize=True),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=2.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=0.25),
-        loss_iou=dict(type='GIoULoss', loss_weight=0.0)),
+        loss_bbox=dict(type='mmdet.L1Loss', loss_weight=0.25),
+        loss_iou=dict(type='mmdet.GIoULoss', loss_weight=0.0)),
     # model training and testing settings
     train_cfg=dict(
         pts=dict(
@@ -110,7 +120,6 @@ model = dict(
 
 dataset_type = 'PETRNuScenesDataset'
 data_root = 'data/nuscenes/'
-
 file_client_args = dict(backend='disk')
 
 db_sampler = dict(
@@ -168,6 +177,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='LidarBox3dVersionTransfrom'),
+    dict(type='AddPETR'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     dict(
@@ -177,87 +187,109 @@ train_pipeline = [
         scale_ratio_range=[0.95, 1.05],
         reverse_angle=False,
         training=True),
-    dict(type='NormalizeMultiviewImage', **img_norm_cfg),
     dict(type='PadMultiViewImage', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['gt_bboxes_3d', 'gt_labels_3d', 'img'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=[
+            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels',
+            'gt_bboxes_3d', 'gt_labels_3d', 'centers_2d', 'depths'
+        ])
 ]
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
+    dict(type='AddPETR'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
         training=False),
-    dict(type='NormalizeMultiviewImage', **img_norm_cfg),
     dict(type='PadMultiViewImage', size_divisor=32),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['img'])
-        ])
+    dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
-data = dict(
-    samples_per_gpu=1,
-    workers_per_gpu=4,
-    train=dict(
+train_dataloader = dict(
+    batch_size=1,
+    num_workers=4,
+    dataset=dict(
         type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_train.pkl',
+        data_prefix=dict(
+            pts='samples/LIDAR_TOP',
+            CAM_FRONT='samples/CAM_FRONT',
+            CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+            CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+            CAM_BACK='samples/CAM_BACK',
+            CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+            CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         pipeline=train_pipeline,
-        classes=class_names,
-        modality=input_modality,
+        box_type_3d='LiDAR',
+        metainfo=metainfo,
         test_mode=False,
-        use_valid_flag=True,
-        # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-        # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-        box_type_3d='LiDAR'),
-    val=dict(
+        modality=input_modality,
+        use_valid_flag=True))
+test_dataloader = dict(
+    dataset=dict(
         type=dataset_type,
+        data_prefix=dict(
+            pts='samples/LIDAR_TOP',
+            CAM_FRONT='samples/CAM_FRONT',
+            CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+            CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+            CAM_BACK='samples/CAM_BACK',
+            CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+            CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality),
-    test=dict(
+        box_type_3d='LiDAR',
+        metainfo=metainfo,
+        test_mode=True,
+        modality=input_modality,
+        use_valid_flag=True))
+val_dataloader = dict(
+    dataset=dict(
         type=dataset_type,
+        data_prefix=dict(
+            pts='samples/LIDAR_TOP',
+            CAM_FRONT='samples/CAM_FRONT',
+            CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+            CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+            CAM_BACK='samples/CAM_BACK',
+            CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+            CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
         pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality))
+        box_type_3d='LiDAR',
+        metainfo=metainfo,
+        test_mode=True,
+        modality=input_modality,
+        use_valid_flag=True))
 
-optimizer = dict(
-    type='AdamW',
-    lr=2e-4,
+optim_wrapper = dict(
+    # TODO Add Amp
+    # type='AmpOptimWrapper',
+    optimizer=dict(type='AdamW', lr=2e-4, weight_decay=0.01),
     paramwise_cfg=dict(custom_keys={
         'img_backbone': dict(lr_mult=0.1),
     }),
-    weight_decay=0.01)
-
-optimizer_config = dict(
-    type='Fp16OptimizerHook',
-    loss_scale=512.,
-    grad_clip=dict(max_norm=35, norm_type=2))
+    clip_grad=dict(max_norm=35, norm_type=2))
 
 # learning policy
-lr_config = dict(
-    policy='CosineAnnealing',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=1.0 / 3,
-    min_lr_ratio=1e-3,
-    # by_epoch=False
-)
-total_epochs = 24
-evaluation = dict(interval=24, pipeline=test_pipeline)
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=1.0 / 3,
+        begin=0,
+        end=500,
+        by_epoch=False),
+    dict(
+        type='CosineAnnealingLR',
+        eta_min=1e-3,
+        # TODO Figure out what T_max
+        T_max=12,
+        by_epoch=True,
+    )
+]
+
+train_cfg = dict(max_epochs=12, val_interval=12)
+
 find_unused_parameters = False
 
-runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
-load_from = 'ckpts/fcos3d_vovnet_imgbackbone-remapped.pth'
-resume_from = None
+load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
 
 # mAP: 0.4035
 # mATE: 0.7362

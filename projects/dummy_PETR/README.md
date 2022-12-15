@@ -39,27 +39,27 @@ This Result is trained by petr_vovnet_gridmask_p4_800x320.py and use [weights](h
 | [petr_vovnet_gridmask_p4_800x320](projects/dummy_PETR/configs/petr/petr_vovnet_gridmask_p4_800x320.py) |   1x    |   7.62   |      18.7      | 38.3 | 43.5 | [model](<>) \| [log](<>) |
 
 ```
-mAP: 0.3827
-mATE: 0.7375
-mASE: 0.2703
-mAOE: 0.4799
-mAVE: 0.8699
-mAAE: 0.2038
+mAP: 0.3829
+mATE: 0.7376
+mASE: 0.2702
+mAOE: 0.4803
+mAVE: 0.8703
+mAAE: 0.2040
 NDS: 0.4352
-Eval time: 124.8s
+Eval time: 117.6s
 
 Per-class results:
 Object Class	  AP	  ATE	  ASE	  AOE	  AVE	  AAE
-car	  0.574	  0.519	  0.150	  0.087	  0.865	  0.206
-truck	  0.349	  0.773	  0.213	  0.117	  0.855	  0.220
-bus	  0.423	  0.781	  0.204	  0.122	  1.902	  0.319
-trailer 0.219	  1.034	  0.231	  0.608	  0.830	  0.149
-construction_vehicle	  0.084	  1.062	  0.486	  1.245	  0.172	  0.360
-pedestrian	  0.452	  0.681	  0.293	  0.646	  0.529	  0.231
-motorcycle	  0.378	  0.670	  0.250	  0.567	  1.334	  0.130
-bicycle	      0.347	  0.639	  0.264	  0.788	  0.472	  0.016
+car	  0.574	  0.519	  0.150	  0.087	  0.866	  0.206
+truck	  0.349	  0.774	  0.213	  0.117	  0.855	  0.221
+bus	  0.424	  0.782	  0.204	  0.123	  1.904	  0.319
+trailer 0.219	  1.035	  0.231	  0.609	  0.830	  0.149
+construction_vehicle	  0.084	  1.058	  0.485	  1.248	  0.172	  0.361
+pedestrian	  0.452	  0.682	  0.293	  0.645	  0.529	  0.231
+motorcycle	  0.378	  0.671	  0.250	  0.567	  1.334	  0.130
+bicycle	      0.347	  0.640	  0.264	  0.788	  0.473	  0.016
 traffic_cone	  0.538	  0.553	  0.325	  nan	  nan	  nan
-barrier	      0.464	  0.662	 0.287	  0.137	  nan	  nan
+barrier	      0.463	  0.663	  0.287	  0.138	  nan	  nan
 ```
 
 ## Checklist

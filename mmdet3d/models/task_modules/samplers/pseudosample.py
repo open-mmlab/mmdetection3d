@@ -41,8 +41,8 @@ class PseudoSampler(BaseSampler):
         Returns:
             :obj:`SamplingResult`: sampler results
         """
-        gt_bboxes = gt_instances.bboxes_3d
-        priors = pred_instances.priors
+        gt_bboxes = gt_instances
+        priors = pred_instances
 
         pos_inds = torch.nonzero(
             assign_result.gt_inds > 0, as_tuple=False).squeeze(-1).unique()

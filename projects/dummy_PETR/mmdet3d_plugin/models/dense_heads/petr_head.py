@@ -497,8 +497,9 @@ class PETRHead(AnchorFreeHead):
         for lvl in range(outs_dec.shape[0]):
             reference = inverse_sigmoid(reference_points.clone())
             assert reference.shape[-1] == 3
-            outputs_class = self.cls_branches[lvl](outs_dec[lvl])
-            tmp = self.reg_branches[lvl](outs_dec[lvl])
+            outputs_class = self.cls_branches[lvl](outs_dec[lvl]).to(
+                torch.float32)
+            tmp = self.reg_branches[lvl](outs_dec[lvl]).to(torch.float32)
 
             tmp[..., 0:2] += reference[..., 0:2]
             tmp[..., 0:2] = tmp[..., 0:2].sigmoid()

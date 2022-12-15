@@ -13,11 +13,10 @@ from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 @TRANSFORMS.register_module()
 class AddPETR(BaseTransform):
 
-    def __init__(self, data_aug_conf=None, training=True):
-        self.data_aug_conf = data_aug_conf
+    def __init__(self, training: bool = True) -> None:
         self.training = training
 
-    def transform(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to pad images, masks, semantic segmentation maps.
 
         Args:
@@ -57,9 +56,9 @@ class AddPETR(BaseTransform):
                 extrinsics=extrinsics))
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = self.__class__.__name__
-        repr_str += f'(dir={self.data_aug_conf}, '
+        repr_str += f'(dir={self.training}, '
         return repr_str
 
 
@@ -374,11 +373,11 @@ class LidarBox3dVersionTransfrom(BaseTransform):
         dir(bool): transform forward or backward (Fake parameter)
     """
 
-    def __init__(self, dir=1):
+    def __init__(self, dir: int = 1) -> None:
 
         self.dir = dir
 
-    def transform(self, input_dict):
+    def transform(self, input_dict: dict) -> dict:
         """Call function to transform the LiDARInstance3DBoxes from mmdet3d
         v1.x to v0.x.
 
@@ -403,7 +402,7 @@ class LidarBox3dVersionTransfrom(BaseTransform):
             # End hack adaptation to mmdet3d v1.0 ####
         return input_dict
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(dir={self.dir}, '
         return repr_str
