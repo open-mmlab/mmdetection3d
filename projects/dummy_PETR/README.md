@@ -69,7 +69,7 @@ barrier	      0.463	  0.663	  0.287	  0.138	  nan	  nan
  Note that keeping this section up-to-date is crucial not only for this project's developers but the entire community, since there might be some other contributors joining this project and deciding their starting point from this list. It also helps maintainers accurately estimate time and effort on further code polishing, if needed.
  A project does not necessarily have to be finished in a single PR, but it's essential for the project to at least reach the first milestone in its very first PR. -->
 
-- [ ] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
+- [x] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
 
   - [x] Finish the code
 
@@ -79,7 +79,7 @@ barrier	      0.463	  0.663	  0.287	  0.138	  nan	  nan
 
     <!-- Each major object should contain a docstring, describing its functionality and arguments. If you have adapted the code from other open-source projects, don't forget to cite the source project in docstring and make sure your behavior is not against its license. Typically, we do not accept any code snippet under GPL license. [A Short Guide to Open Source Licenses](https://medium.com/nationwide-technology/a-short-guide-to-open-source-licenses-cf5b1c329edd) -->
 
-  - [ ] Test-time correctness
+  - [x] Test-time correctness
 
     <!-- If you are reproducing the result from a paper, make sure your model's inference-time performance matches that in the original paper. The weights usually could be obtained by simply renaming the keys in the official pre-trained weights. This test could be skipped though, if you are able to prove the training-time correctness and check the second milestone. -->
 
