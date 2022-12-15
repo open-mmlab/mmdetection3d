@@ -180,6 +180,7 @@ class VectorPoolAggregationModule(nn.Module):
         use_xyz (bool): Whether use xyz coordinates as features.
             Default to True.
         norm_cfg (dict, optional): Config dict of normalization layers.
+            Default to dict(type='BN2d').
     """
 
     def __init__(self,
@@ -190,11 +191,11 @@ class VectorPoolAggregationModule(nn.Module):
                  num_aggregation_channels: int = 32,
                  post_mlps: Tuple[int] = (128, ),
                  neighbour_distance_multiplier: float = 2.0,
-                 max_neighbour_distance: float = None,
+                 max_neighbour_distance: Optional[float] = None,
                  neighbor_nsample: int = -1,
                  neighbor_type: str = 'cube',
                  use_xyz: bool = True,
-                 norm_cfg: Optional[dict] = None):
+                 norm_cfg: dict = dict(type='BN2d')):
         super().__init__()
         self.num_local_voxel = num_local_voxel
         self.use_xyz = use_xyz
@@ -492,7 +493,7 @@ class VectorPoolAggregationModuleMSG(nn.Module):
                  roi_neighbour_radius: float = 4.0,
                  part_max_points_num: int = 200000,
                  num_reduced_channels: int = 1,
-                 groups_cfg_list: List[dict] = None,
+                 groups_cfg_list: Optional[List[dict]] = None,
                  **kwargs) -> None:
         super().__init__()
         self.filter_neighbor_with_roi = filter_neighbor_with_roi
@@ -577,8 +578,8 @@ class VectorPoolAggregationModuleMSG(nn.Module):
                 batch_num_xyzs: Tensor,
                 new_xyz: Tensor,
                 batch_num_new_xyzs: Tensor,
-                features: Tensor = None,
-                roi_boxes_list: InstanceList = None,
+                features: Optional[Tensor] = None,
+                roi_boxes_list: Optional[InstanceList] = None,
                 **kwargs) -> Tuple[Tensor, Tensor]:
         """Forward.
 
