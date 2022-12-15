@@ -80,8 +80,7 @@ test_dataloader = val_dataloader
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox',
-    pred_box_type_3d='Camera')
+    metric='bbox')
 
 test_evaluator = val_evaluator
 
