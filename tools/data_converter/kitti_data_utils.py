@@ -46,8 +46,9 @@ def get_image_path(idx,
                    relative_path=True,
                    exist_check=True,
                    info_type='image_2',
+                   file_tail='.png',
                    use_prefix_id=False):
-    return get_kitti_info_path(idx, prefix, info_type, '.png', training,
+    return get_kitti_info_path(idx, prefix, info_type, file_tail, training,
                                relative_path, exist_check, use_prefix_id)
 
 
@@ -378,6 +379,7 @@ class WaymoInfoGatherer:
             self.training,
             self.relative_path,
             info_type='image_0',
+            file_tail='.jpg',
             use_prefix_id=True)
         if self.with_imageshape:
             img_path = image_info['image_path']
