@@ -95,7 +95,7 @@ class Attention(nn.Module):
             if project_out else nn.Identity())
 
     def forward(self, x):
-        b, n, _, h = *x.shape, self.heads
+        _, _, _, h = *x.shape, self.heads
         qkv = self.to_qkv(x).chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv)
 
@@ -137,7 +137,7 @@ class Cross_attention(nn.Module):
             if project_out else nn.Identity())
 
     def forward(self, x, y):
-        b, n, m, _, h = *y.shape, self.heads
+        b, _, _, _, h = *y.shape, self.heads
         q = self.to_q(x)
         kv = self.to_kv(y).chunk(2, dim=-1)
         q = rearrange(q, 'b n (h d) -> (b n) h 1 d', h=h)

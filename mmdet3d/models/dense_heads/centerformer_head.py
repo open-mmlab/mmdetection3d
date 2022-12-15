@@ -1,22 +1,21 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-from torch import nn
-from torch import Tensor
 from mmcv.cnn import build_norm_layer
+from mmdet.models.utils import multi_apply
 from mmengine.logging import print_log
 from mmengine.model import BaseModule
-from mmengine.structures import InstanceData, Det3DDataSample
-from mmdet.models.utils import multi_apply
+from mmengine.structures import Det3DDataSample, InstanceData
+from torch import Tensor, nn
 
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
-from mmdet3d.structures import center_to_corner_box2d
 from mmdet3d.models.utils.transformer import Deform_Transformer
-from mmdet3d.structures.bbox_3d.box_torch_ops import rotate_nms_pcdet
 from mmdet3d.registry import MODELS
-from mmdet3d.structures import bbox_overlaps_3d
+from mmdet3d.structures import bbox_overlaps_3d, center_to_corner_box2d
+from mmdet3d.structures.bbox_3d.box_torch_ops import rotate_nms_pcdet
 from mmdet3d.structures.ops.iou3d_calculator import boxes_iou3d_gpu_pcdet
 from ..layers import circle_nms, nms_bev
 
