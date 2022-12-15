@@ -35,7 +35,7 @@ class KittiMetric(BaseMetric):
             the file path and the prefix of filename, e.g., "a/b/prefix".
             If not specified, a temp file will be created. Defaults to None.
         default_cam_key (str): The default camera for lidar to camera
-            conversion. By default, KITTI: CAM2, Waymo: CAM_FRONT.
+            conversion. By default, KITTI: 'CAM2', Waymo: 'CAM_FRONT'.
             Defaults to 'CAM2'
         format_only (bool): Format the output results without perform
             evaluation. It is useful when you want to format the result
@@ -58,10 +58,10 @@ class KittiMetric(BaseMetric):
         metric: Union[str, List[str]] = 'bbox',
         pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
         prefix: Optional[str] = None,
-        pklfile_prefix: str = None,
+        pklfile_prefix: Optional[str] = None,
         default_cam_key: str = 'CAM2',
         format_only: bool = False,
-        submission_prefix: str = None,
+        submission_prefix: Optional[str] = None,
         collect_device: str = 'cpu',
         file_client_args: dict = dict(backend='disk')
     ) -> None:
@@ -261,9 +261,9 @@ class KittiMetric(BaseMetric):
     def format_results(
         self,
         results: List[dict],
-        pklfile_prefix: str = None,
-        submission_prefix: str = None,
-        classes: List[str] = None
+        pklfile_prefix: Optional[str] = None,
+        submission_prefix: Optional[str] = None,
+        classes: Optional[List[str]] = None
     ) -> Tuple[dict, Union[tempfile.TemporaryDirectory, None]]:
         """Format the results to pkl file.
 
@@ -566,7 +566,7 @@ class KittiMetric(BaseMetric):
         Args:
             box_dict (dict): Box dictionaries to be converted.
 
-                - boxes_3d (:obj:`BaseInstance3DBoxes`): 3D bounding boxes.
+                - bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bounding boxes.
                 - scores_3d (Tensor): Scores of boxes.
                 - labels_3d (Tensor): Class labels of boxes.
             info (dict): Data info.

@@ -617,7 +617,7 @@ class WaymoMetric(KittiMetric):
         Args:
             box_dict (dict): Box dictionaries to be converted.
 
-                - boxes_3d (:obj:`BaseInstance3DBoxes`): 3D bounding boxes.
+                - bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bounding boxes.
                 - scores_3d (Tensor): Scores of boxes.
                 - labels_3d (Tensor): Class labels of boxes.
             info (dict): Data info.

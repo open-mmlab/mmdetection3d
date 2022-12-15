@@ -214,7 +214,7 @@ class NuScenesMetric(BaseMetric):
             ret_dict = self._evaluate_single(
                 result_dict[name], classes=classes, result_name=name)
         metric_dict.update(ret_dict)
-        return metric
+        return metric_dict
 
     def _evaluate_single(
             self,
