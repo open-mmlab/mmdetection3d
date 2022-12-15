@@ -337,6 +337,18 @@ def yaw2local(yaw, loc):
 
 
 def normalize_bbox(bboxes, pc_range):
+    """Bbox coder used in PETR.
+
+    Args:
+        bboxes (torch.Tensor): bboxes.
+            shape: (N, 8) or (N, 10)
+        pc_range (torch.Tensor): Useless actually.
+            shape: (6)
+
+    Returns:
+        torch.Tensor: normalized bboxes
+            shape: (N, 8) or (N, 10)
+    """
 
     cx = bboxes[..., 0:1]
     cy = bboxes[..., 1:2]
@@ -358,6 +370,18 @@ def normalize_bbox(bboxes, pc_range):
 
 
 def denormalize_bbox(normalized_bboxes, pc_range):
+    """Bbox decoder used in PETR.
+
+    Args:
+        bboxes (torch.Tensor): normalized bboxes.
+            shape: (N, 8) or (N, 10)
+        pc_range (torch.Tensor): Useless actually.
+            shape: (6)
+
+    Returns:
+        torch.Tensor: denormalized bboxes
+            shape: (N, 8) or (N, 10)
+    """
     # rotation
     rot_sine = normalized_bboxes[..., 6:7]
 
@@ -386,7 +410,7 @@ def denormalize_bbox(normalized_bboxes, pc_range):
     else:
         denormalized_bboxes = torch.cat([cx, cy, cz, w, length, h, rot],
                                         dim=-1)
-
+    # Need some transformation in MMDet3d v1.x
     if int(mmdet3d.__version__[0]) >= 1:
         denormalized_bboxes_clone = denormalized_bboxes.clone()
         denormalized_bboxes[:, 3] = denormalized_bboxes_clone[:, 4]
