@@ -89,7 +89,7 @@ class SeparateHead(BaseModule):
         """Initialize weights."""
         super().init_weights()
         for head in self.heads:
-            if head == 'heatmap':
+            if 'heatmap' in head:
                 self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
 
     def forward(self, x):
