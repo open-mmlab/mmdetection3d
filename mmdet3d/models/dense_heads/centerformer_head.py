@@ -8,11 +8,12 @@ from mmcv.cnn import build_norm_layer
 from mmdet.models.utils import multi_apply
 from mmengine.logging import print_log
 from mmengine.model import BaseModule
-from mmengine.structures import Det3DDataSample, InstanceData
+from mmengine.structures import InstanceData
 from torch import Tensor, nn
 
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.models.utils.transformer import Deform_Transformer
+from mmdet3d.structures import Det3DDataSample
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import bbox_overlaps_3d, center_to_corner_box2d
 from mmdet3d.structures.bbox_3d.box_torch_ops import rotate_nms_pcdet
@@ -63,6 +64,7 @@ class CenterFormerHead(BaseModule):
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
+        self.tasks = tasks
         self.bbox_code_size = bbox_code_size
         self.iou_factor = iou_factor
 
@@ -78,7 +80,6 @@ class CenterFormerHead(BaseModule):
 
         self.box_n_dim = 9 if 'vel' in common_heads else 7
 
-        self.pos_embedding = nn.Linear(2, in_channels)
         self.transformer_layer = Deform_Transformer(
             in_channels,
             depth=transformer_config.depth,
@@ -89,14 +90,7 @@ class CenterFormerHead(BaseModule):
             out_attention=transformer_config.out_att,
             n_points=transformer_config.get('n_points', 9),
         )
-
-        # a shared convolution
-        self.shared_conv = nn.Sequential(
-            nn.Conv1d(
-                in_channels, share_conv_channel, kernel_size=1, bias=True),
-            build_norm_layer(norm_cfg, share_conv_channel)[1],
-            nn.ReLU(inplace=True),
-        )
+        self.pos_embedding = nn.Linear(2, in_channels)
 
         heatmap_head = copy.deepcopy(separate_head)
         heatmap_head['conv_cfg'] = dict(type='Conv2d')
@@ -110,6 +104,13 @@ class CenterFormerHead(BaseModule):
             head_conv=share_conv_channel)
         self.heatmap_head = MODELS.build(heatmap_head)
 
+        # a shared convolution
+        self.shared_conv = nn.Sequential(
+            nn.Conv1d(
+                in_channels, share_conv_channel, kernel_size=1, bias=True),
+            build_norm_layer(norm_cfg, share_conv_channel)[1],
+            nn.ReLU(inplace=True),
+        )
         self.task_heads = nn.ModuleList()
         for num_cls in num_classes:
             heads = copy.deepcopy(common_heads)
@@ -125,7 +126,7 @@ class CenterFormerHead(BaseModule):
         y = self.shared_conv(x)
 
         for task in self.task_heads:
-            ret_dicts.append(task(x, y))
+            ret_dicts.append(task(y))
 
         return ret_dicts
 
@@ -136,8 +137,8 @@ class CenterFormerHead(BaseModule):
     def forward_heatmap(self, feat):
         outs = dict()
         outs.update(self.heatmap_head(feat))
-        outs['hm'] = torch.sigmoid(outs['center_heatmap'])
-        outs['corner_hm'] = torch.sigmoid(outs['corner_heatmap'])
+        outs['hm'] = self._sigmoid(outs['center_heatmap'])
+        outs['corner_hm'] = self._sigmoid(outs['corner_heatmap'])
 
         return outs
 
@@ -255,7 +256,7 @@ class CenterFormerHead(BaseModule):
         gt_bboxes_3d = torch.cat(
             (gt_bboxes_3d.gravity_center, gt_bboxes_3d.tensor[:, 3:]),
             dim=1).to(device)
-        max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
+        max_objs = self.train_cfg['num_center_proposals']
         grid_size = torch.tensor(self.train_cfg['grid_size'])
         pc_range = torch.tensor(self.train_cfg['point_cloud_range'])
         voxel_size = torch.tensor(self.train_cfg['voxel_size'])
@@ -593,15 +594,15 @@ class CenterFormerHead(BaseModule):
         outs = dict()
         outs.update(self.forward_heatmap(fpn_feat))
 
-        # results_list = self.predict_by_feat(
-        #     preds_dict, batch_input_metas, rescale=rescale, **kwargs)
-
         batch, num_cls, H, W = outs['hm'].size()
         scores, labels = torch.max(
             outs['hm'].reshape(batch, num_cls, H * W), dim=1)  # b, H*W
 
         order = scores.sort(1, descending=True)[1]
         order = order[:, :self.test_cfg['num_center_proposals']]
+
+        scores = torch.gather(scores, 1, order)
+        labels = torch.gather(labels, 1, order)
 
         batch_id_gt = torch.from_numpy(
             np.indices(
@@ -615,7 +616,8 @@ class CenterFormerHead(BaseModule):
         outs.update(self(ct_feat)[0])
 
         masks = scores > self.test_cfg['score_threshold']
-        outs.update(dict(masks=masks))
+        outs.update(
+            dict(order=order, masks=masks, scores=scores, labels=labels))
 
         ret_list = self.predict_by_feat(outs, batch_input_metas)
 
@@ -672,10 +674,10 @@ class CenterFormerHead(BaseModule):
 
         xs = (
             xs * self.test_cfg.out_size_factor * self.test_cfg.voxel_size[0] +
-            self.test_cfg.pc_range[0])
+            self.test_cfg.point_cloud_range[0])
         ys = (
             ys * self.test_cfg.out_size_factor * self.test_cfg.voxel_size[1] +
-            self.test_cfg.pc_range[1])
+            self.test_cfg.point_cloud_range[1])
 
         if 'vel' in outs:
             batch_vel = outs['vel']
@@ -756,7 +758,6 @@ class CenterFormerHead(BaseModule):
 
             distance_mask = (box_preds[..., :3] >= post_center_range[:3]).all(
                 1) & (box_preds[..., :3] <= post_center_range[3:]).all(1)
-
             mask = mask & distance_mask
 
             box_preds = box_preds[mask]
@@ -782,16 +783,16 @@ class CenterFormerHead(BaseModule):
                     # select = nms_bev(
                     #     boxes_for_nms[class_mask].float(),
                     #     scores[class_mask].float(),
-                    #     thresh=test_cfg.nms.nms_iou_threshold[c],
-                    #     pre_max_size=test_cfg.nms.nms_pre_max_size[c],
-                    #     post_max_size=test_cfg.nms.nms_post_max_size[c],
+                    #     thresh=test_cfg.nms_iou_threshold[c],
+                    #     pre_max_size=test_cfg.nms_pre_max_size[c],
+                    #     post_max_size=test_cfg.nms_post_max_size[c],
                     # )
                     select = rotate_nms_pcdet(
                         boxes_for_nms[class_mask].float(),
                         scores[class_mask].float(),
-                        thresh=test_cfg.nms.nms_iou_threshold[c],
-                        pre_maxsize=test_cfg.nms.nms_pre_max_size[c],
-                        post_max_size=test_cfg.nms.nms_post_max_size[c],
+                        thresh=test_cfg.nms_iou_thres[c],
+                        pre_maxsize=test_cfg.nms_pre_max_size[c],
+                        post_max_size=test_cfg.nms_post_max_size[c],
                     )
                     selected.append(class_idx[select, 0])
             if len(selected) > 0:
@@ -827,9 +828,9 @@ def get_box(pred_boxs, order, test_cfg, H, W):
                                                                          1:2]
 
     xs = xs * test_cfg.out_size_factor * test_cfg.voxel_size[
-        0] + test_cfg.pc_range[0]
+        0] + test_cfg.point_cloud_range[0]
     ys = ys * test_cfg.out_size_factor * test_cfg.voxel_size[
-        1] + test_cfg.pc_range[1]
+        1] + test_cfg.point_cloud_range[1]
 
     rot = torch.atan2(pred_boxs[:, 6:7], pred_boxs[:, 7:8])
     pred = torch.cat(
@@ -859,9 +860,9 @@ def get_box_gt(gt_boxs, order, test_cfg, H, W):
                                                                        1:2]
 
     xs = xs * test_cfg.out_size_factor * test_cfg.voxel_size[
-        0] + test_cfg.pc_range[0]
+        0] + test_cfg.point_cloud_range[0]
     ys = ys * test_cfg.out_size_factor * test_cfg.voxel_size[
-        1] + test_cfg.pc_range[1]
+        1] + test_cfg.point_cloud_range[1]
 
     batch_box_targets = torch.cat(
         [xs, ys, batch_gt_hei, batch_gt_dim, batch_gt_rot], dim=-1)

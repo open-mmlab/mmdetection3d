@@ -50,13 +50,11 @@ class CenterFormer(Base3DDetector):
                  **kwargs):
         super(CenterFormer, self).__init__(
             init_cfg=init_cfg, data_preprocessor=data_preprocessor, **kwargs)
-
         if voxel_encoder:
             self.voxel_encoder = MODELS.build(voxel_encoder)
         if middle_encoder:
             self.middle_encoder = MODELS.build(middle_encoder)
         if backbone:
-            backbone.update(train_cfg=train_cfg, test_cfg=test_cfg)
             self.backbone = MODELS.build(backbone)
         if neck is not None:
             self.neck = MODELS.build(neck)
@@ -68,7 +66,13 @@ class CenterFormer(Base3DDetector):
         self.test_cfg = test_cfg
 
     def init_weights(self):
-        super(CenterFormer, self).__init__()
+        # if self.with_backbone:
+        #     self.backbone.init_weights()
+        # if self.with_neck:
+        #     self.neck.init_weights()
+        # if self.with_bbox:
+        #     self.bbox_head.init_weights()
+        super().init_weights()
         for m in self.modules():
             if isinstance(m, _BatchNorm):
                 torch.nn.init.uniform_(m.weight)
@@ -128,6 +132,9 @@ class CenterFormer(Base3DDetector):
             voxel_dict['voxels'], voxel_dict['coors'])
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
         x = self.middle_encoder(voxel_features, feature_coors, batch_size)
+        x = self.backbone(x)
+        if self.with_neck:
+            x = self.neck(x)
 
         return x
 
@@ -150,9 +157,8 @@ class CenterFormer(Base3DDetector):
 
         batch_input_metas = [item.metainfo for item in batch_data_samples]
         pts_feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
-        preds, batch_tatgets = self.backbone(pts_feats, batch_data_samples)
         losses = dict()
-        losses.update(self.bbox_head.loss(preds, batch_tatgets))
+        losses.update(self.bbox_head.loss(pts_feats, batch_data_samples))
         return losses
         # return self.bbox_head.predict(preds, batch_tatgets)
 
@@ -181,10 +187,7 @@ class CenterFormer(Base3DDetector):
         """
         batch_input_metas = [item.metainfo for item in batch_data_samples]
         pts_feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
-        preds, _ = self.backbone(pts_feats, batch_data_samples)
-
-        preds = self.bbox_head(preds)
-        results_list_3d = self.bbox_head.predict(preds, batch_input_metas)
+        results_list_3d = self.bbox_head.predict(pts_feats, batch_data_samples)
 
         detsamples = self.add_pred_to_datasample(batch_data_samples,
                                                  results_list_3d)

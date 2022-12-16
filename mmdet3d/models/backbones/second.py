@@ -7,6 +7,7 @@ from mmengine.model import BaseModule
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
+from ..layers import ChannelAttention, SpatialAttention
 
 
 @MODELS.register_module()
@@ -92,44 +93,6 @@ class SECOND(BaseModule):
         return tuple(outs)
 
 
-class ChannelAttention(BaseModule):
-
-    def __init__(self, in_planes, ratio=16):
-        super(ChannelAttention, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.max_pool = nn.AdaptiveMaxPool2d(1)
-
-        self.fc = nn.Sequential(
-            nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False),
-            nn.ReLU(),
-            nn.Conv2d(in_planes // ratio, in_planes, 1, bias=False),
-        )
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        avg_out = self.fc(self.avg_pool(x))
-        max_out = self.fc(self.max_pool(x))
-        out = avg_out + max_out
-        return self.sigmoid(out) * x
-
-
-class SpatialAttention(BaseModule):
-
-    def __init__(self, kernel_size=7):
-        super(SpatialAttention, self).__init__()
-
-        self.conv1 = nn.Conv2d(
-            2, 1, kernel_size, padding=kernel_size // 2, bias=False)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        avg_out = torch.mean(x, dim=1, keepdim=True)
-        max_out, _ = torch.max(x, dim=1, keepdim=True)
-        y = torch.cat([avg_out, max_out], dim=1)
-        y = self.conv1(y)
-        return self.sigmoid(y) * x
-
-
 @MODELS.register_module()
 class SECOND_WithAtten(BaseModule):
     """Backbone network for CenterFormer.
@@ -152,7 +115,7 @@ class SECOND_WithAtten(BaseModule):
                  conv_cfg=dict(type='Conv2d', bias=False),
                  init_cfg=None,
                  pretrained=None):
-        super(SECOND, self).__init__(init_cfg=init_cfg)
+        super(SECOND_WithAtten, self).__init__(init_cfg=init_cfg)
         assert len(layer_strides) == len(layer_nums)
         assert len(out_channels) == len(layer_nums)
 
@@ -182,8 +145,8 @@ class SECOND_WithAtten(BaseModule):
                         padding=1))
                 block.append(build_norm_layer(norm_cfg, out_channels[i])[1])
                 block.append(nn.ReLU(inplace=True))
-            block.append(ChannelAttention)
-            block.append(SpatialAttention)
+            block.append(ChannelAttention(out_channels[i]))
+            block.append(SpatialAttention())
 
             block = nn.Sequential(*block)
             blocks.append(block)

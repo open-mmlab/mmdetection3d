@@ -32,6 +32,7 @@ model = dict(
         in_channels=5,
         sparse_shape=[41, 1504, 1504],
         order=('conv', 'norm', 'act'),
+        norm_cfg=dict(type='naiveSyncBN1d', eps=0.001, momentum=0.01),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
                                                                       128)),
         encoder_paddings=((1, 1, 1), (1, 1, 1), (1, 1, [0, 1, 1]), (1, 1)),
@@ -45,7 +46,7 @@ model = dict(
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01)),
     # neck return up, down, norm 3 stirdes,
     neck=dict(
-        type='SECONDFPN',
+        type='SECONDFPN_WithAtten',
         in_channels=[256, 256],
         upsample_strides=[2, 4],
         out_channels=[128, 128],
@@ -58,7 +59,6 @@ model = dict(
         tasks=[
             dict(num_class=3, class_names=['car', 'pedestrian', 'cyclist'])
         ],
-        num_center_proposals=500,
         transformer_config=dict(
             depth=2,
             heads=6,
@@ -78,9 +78,11 @@ model = dict(
             type='SeparateHead',
             init_bias=-2.19,
             final_kernel=1,
+            # TODO: set False
+            bias=True,
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='naiveSyncBN1d')),
-        loss_cls=dict(type='FastFocalLoss', reduction='mean', loss_weight=1),
+        loss_cls=dict(type='FastFocalLoss'),
         loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=2),
         loss_corner=dict(
             type='mmdet.MSELoss', reduction='mean', loss_weight=1),
@@ -93,7 +95,6 @@ model = dict(
         grid_size=[1504, 1504, 40],
         voxel_size=voxel_size,
         out_size_factor=4,
-        dense_reg=1,
         gaussian_overlap=0.1,
         point_cloud_range=point_cloud_range,
         num_center_proposals=500,
@@ -131,7 +132,12 @@ db_sampler = dict(
         use_dim=[0, 1, 2, 3, 4]))
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=6, use_dim=5),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=6,
+        use_dim=5,
+        norm_intensity=True),
     # dict(
     #     type='LoadPointsFromMultiSweeps',
     #     sweeps_num=9,
@@ -161,6 +167,7 @@ test_pipeline = [
         coord_type='LIDAR',
         load_dim=6,
         use_dim=5,
+        norm_intensity=True,
         file_client_args=file_client_args),
     dict(
         type='MultiScaleFlipAug3D',
@@ -300,5 +307,7 @@ test_cfg = dict()
 #   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
-default_hooks = dict(logger=dict(type='LoggerHook', interval=5))
+default_hooks = dict(logger=dict(type='LoggerHook', interval=50))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
+
+load_from = './checkpoints/centerformer_our_refactor.pth'
