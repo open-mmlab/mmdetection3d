@@ -466,8 +466,8 @@ class BaseInstance3DBoxes(object):
         # Restrict the min values of W and H to avoid memory overflow in
         # ``box_iou_rotated``.
         boxes1_bev, boxes2_bev = boxes1.bev, boxes2.bev
-        boxes1_bev[:, 2:4] = boxes1_bev[:, 2:4].clamp_min(1e-4)
-        boxes2_bev[:, 2:4] = boxes2.bev[:, 2:4].clamp_min(1e-4)
+        boxes1_bev[:, 2:4] = boxes1_bev[:, 2:4].clamp(min=1e-4)
+        boxes2_bev[:, 2:4] = boxes2.bev[:, 2:4].clamp(min=1e-4)
 
         # bev overlap
         iou2d = box_iou_rotated(boxes1_bev, boxes2_bev)
