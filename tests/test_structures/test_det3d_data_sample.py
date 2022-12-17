@@ -16,7 +16,7 @@ def _equal(a, b):
         return a == b
 
 
-class TestDet3DataSample(TestCase):
+class TestDet3DDataSample(TestCase):
 
     def test_init(self):
         meta_info = dict(
@@ -33,7 +33,7 @@ class TestDet3DataSample(TestCase):
         det3d_data_sample = Det3DDataSample()
         # test gt_instances_3d
         gt_instances_3d_data = dict(
-            bboxes_3d=torch.rand(4, 4), labels_3d=torch.rand(4))
+            bboxes_3d=torch.rand(4, 7), labels_3d=torch.rand(4))
         gt_instances_3d = InstanceData(**gt_instances_3d_data)
         det3d_data_sample.gt_instances_3d = gt_instances_3d
         assert 'gt_instances_3d' in det3d_data_sample
@@ -44,7 +44,7 @@ class TestDet3DataSample(TestCase):
 
         # test pred_instances_3d
         pred_instances_3d_data = dict(
-            bboxes_3d=torch.rand(2, 4),
+            bboxes_3d=torch.rand(2, 7),
             labels_3d=torch.rand(2),
             scores_3d=torch.rand(2))
         pred_instances_3d = InstanceData(**pred_instances_3d_data)
@@ -59,7 +59,7 @@ class TestDet3DataSample(TestCase):
 
         # test pts_pred_instances_3d
         pts_pred_instances_3d_data = dict(
-            bboxes_3d=torch.rand(2, 4),
+            bboxes_3d=torch.rand(2, 7),
             labels_3d=torch.rand(2),
             scores_3d=torch.rand(2))
         pts_pred_instances_3d = InstanceData(**pts_pred_instances_3d_data)
@@ -74,7 +74,7 @@ class TestDet3DataSample(TestCase):
 
         # test img_pred_instances_3d
         img_pred_instances_3d_data = dict(
-            bboxes_3d=torch.rand(2, 4),
+            bboxes_3d=torch.rand(2, 7),
             labels_3d=torch.rand(2),
             scores_3d=torch.rand(2))
         img_pred_instances_3d = InstanceData(**img_pred_instances_3d_data)
@@ -87,7 +87,7 @@ class TestDet3DataSample(TestCase):
         assert _equal(det3d_data_sample.img_pred_instances_3d.scores_3d,
                       img_pred_instances_3d_data['scores_3d'])
 
-        # test gt_seg
+        # test gt_pts_seg
         gt_pts_seg_data = dict(
             pts_instance_mask=torch.rand(20), pts_semantic_mask=torch.rand(20))
         gt_pts_seg = PointData(**gt_pts_seg_data)
@@ -98,7 +98,7 @@ class TestDet3DataSample(TestCase):
         assert _equal(det3d_data_sample.gt_pts_seg.pts_semantic_mask,
                       gt_pts_seg_data['pts_semantic_mask'])
 
-        # test pred_seg
+        # test pred_pts_seg
         pred_pts_seg_data = dict(
             pts_instance_mask=torch.rand(20), pts_semantic_mask=torch.rand(20))
         pred_pts_seg = PointData(**pred_pts_seg_data)
@@ -109,12 +109,25 @@ class TestDet3DataSample(TestCase):
         assert _equal(det3d_data_sample.pred_pts_seg.pts_semantic_mask,
                       pred_pts_seg_data['pts_semantic_mask'])
 
+        # test eval_ann_info
+        eval_ann_info = dict(
+            pts_instance_mask=torch.rand(20), pts_semantic_mask=torch.rand(20))
+        det3d_data_sample.eval_ann_info = eval_ann_info
+        assert 'eval_ann_info' in det3d_data_sample
+        assert _equal(det3d_data_sample.eval_ann_info['pts_instance_mask'],
+                      eval_ann_info['pts_instance_mask'])
+        assert _equal(det3d_data_sample.eval_ann_info['pts_semantic_mask'],
+                      eval_ann_info['pts_semantic_mask'])
+
         # test type error
         with pytest.raises(AssertionError):
             det3d_data_sample.pred_instances_3d = torch.rand(2, 4)
 
         with pytest.raises(AssertionError):
             det3d_data_sample.pred_pts_seg = torch.rand(20)
+
+        with pytest.raises(AssertionError):
+            det3d_data_sample.eval_ann_info = torch.rand(20)
 
     def test_deleter(self):
         tmp_instances_3d_data = dict(
@@ -152,3 +165,10 @@ class TestDet3DataSample(TestCase):
         assert 'pred_pts_seg' in det3d_data_sample
         del det3d_data_sample.pred_pts_seg
         assert 'pred_pts_seg' not in det3d_data_sample
+
+        eval_ann_info = dict(
+            pts_instance_mask=torch.rand(20), pts_semantic_mask=torch.rand(20))
+        det3d_data_sample.eval_ann_info = eval_ann_info
+        assert 'eval_ann_info' in det3d_data_sample
+        del det3d_data_sample.eval_ann_info
+        assert 'eval_ann_info' not in det3d_data_sample
