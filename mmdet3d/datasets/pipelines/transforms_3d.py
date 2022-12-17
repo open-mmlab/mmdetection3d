@@ -434,13 +434,16 @@ class ObjectSample(object):
             3D labels.
     """
 
-    def __init__(self, db_sampler, sample_2d=False, use_ground_plane=False):
+    def __init__(self, db_sampler, sample_2d=False, use_ground_plane=False, last_epoch=None):
         self.sampler_cfg = db_sampler
         self.sample_2d = sample_2d
         if 'type' not in db_sampler.keys():
             db_sampler['type'] = 'DataBaseSampler'
         self.db_sampler = build_from_cfg(db_sampler, OBJECTSAMPLERS)
         self.use_ground_plane = use_ground_plane
+
+        self.last_epoch = last_epoch
+        self.cur_epoch = 0
 
     @staticmethod
     def remove_points_in_boxes(points, boxes):
@@ -468,6 +471,10 @@ class ObjectSample(object):
                 'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated
                 in the result dict.
         """
+        if self.last_epoch is not None:
+            if self.cur_epoch > self.last_epoch:
+                return input_dict
+        
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 
