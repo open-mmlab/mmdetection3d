@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.models import build_backbone
+from mmdet3d.registry import MODELS
 
 
 def test_pointnet2_sa_ssg():
@@ -18,7 +18,7 @@ def test_pointnet2_sa_ssg():
         num_samples=(16, 8),
         sa_channels=((8, 16), (16, 16)),
         fp_channels=((16, 16), (16, 16)))
-    self = build_backbone(cfg)
+    self = MODELS.build(cfg)
     self.cuda()
     assert self.SA_modules[0].mlps[0].layer0.conv.in_channels == 6
     assert self.SA_modules[0].mlps[0].layer0.conv.out_channels == 8
@@ -61,7 +61,7 @@ def test_pointnet2_sa_ssg():
 
     # test only xyz input without features
     cfg['in_channels'] = 3
-    self = build_backbone(cfg)
+    self = MODELS.build(cfg)
     self.cuda()
     ret_dict = self(xyz[..., :3])
     assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
