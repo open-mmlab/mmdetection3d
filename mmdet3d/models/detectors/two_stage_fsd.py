@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Union
 
+from mmengine.structures import InstanceData
+from torch import Tensor
+
 from .single_stage_fsd import SingleStageFSD
 import torch
 from mmdet3d.structures import bbox3d2result
@@ -50,7 +53,7 @@ class FSD(SingleStageFSD):
         self.roi_head = builder.build_head(roi_head)
         self.num_classes = self.bbox_head.num_classes
         self.runtime_info = dict()
-    
+
     # def loss(self,
     #                   points,
     #                   img_metas,
@@ -102,7 +105,7 @@ class FSD(SingleStageFSD):
 
         losses.update(roi_losses)
         return losses
-    
+
     def prepare_roi_input(self, points, cluster_pts_feats, pts_seg_feats, pts_mask, pts_batch_inds, cluster_pts_xyz):
         assert isinstance(pts_mask, list)
         pts_mask = pts_mask[0]
@@ -113,7 +116,7 @@ class FSD(SingleStageFSD):
 
         if self.training and self.train_cfg.get('detach_cluster_feats', False):
             cluster_pts_feats = cluster_pts_feats.detach()
-        
+
         pad_feats = cluster_pts_feats.new_zeros(points.shape[0], cluster_pts_feats.shape[1])
         pad_feats[pts_mask] = cluster_pts_feats
         assert torch.isclose(points[pts_mask], cluster_pts_xyz).all()
@@ -174,16 +177,11 @@ class FSD(SingleStageFSD):
         cat_feats = cat_feats[inds]
 
         return all_points, cat_feats, all_batch_inds
-    
-    def simple_test(self, points, img_metas, imgs=None, rescale=False, gt_bboxes_3d=None, gt_labels_3d=None):
 
+    # def predict(self, points, img_metas, imgs=None, rescale=False, gt_bboxes_3d=None, gt_labels_3d=None):
+    def predict(self, batch_inputs: Tensor, batch_data_samples: SampleList) -> SampleList:
 
-        rpn_outs = super().simple_test(
-            points=points,
-            img_metas=img_metas,
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-        )
+        rpn_outs = super().predict(batch_inputs, batch_data_samples)
 
         proposal_list = rpn_outs['proposal_list']
 
@@ -212,14 +210,20 @@ class FSD(SingleStageFSD):
             pts_xyz,
             pts_feats,
             pts_batch_inds,
-            img_metas,
-            proposal_list,
-            gt_bboxes_3d,
-            gt_labels_3d,
+            batch_data_samples,
+            proposal_list
         )
 
+        results_3d = []
+        for res in results:
+            pred_instances_3d = InstanceData()
+            pred_instances_3d.bboxes_3d = res['bboxes_3d']
+            pred_instances_3d.scores_3d = res['scores_3d']
+            pred_instances_3d.labels_3d = res['labels_3d']
+            results_3d.append(pred_instances_3d)
+
+        results = self.add_pred_to_datasample(batch_data_samples, results_3d)
         return results
-    
 
     def extract_fg_by_gt(self, point_list, gt_bboxes_3d, gt_labels_3d, extra_width):
         if isinstance(gt_bboxes_3d[0], list):
@@ -253,6 +257,6 @@ class FSD(SingleStageFSD):
                 this_fg_mask = pts_inds > -1
                 if not this_fg_mask.any():
                     this_fg_mask[:min(1000, len(points))] = True
-            
+
             new_point_list.append(points[this_fg_mask])
         return new_point_list

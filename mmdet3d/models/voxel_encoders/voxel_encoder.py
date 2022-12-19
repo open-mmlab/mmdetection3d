@@ -7,7 +7,7 @@ from torch import Tensor, nn
 from mmdet3d.registry import MODELS
 from .. import builder
 from .utils import VFELayer, get_paddings_indicator, DynamicVFELayerV2, DynamicVFELayer
-from mmdet3d.models.layers.sst import build_mlp
+from mmdet3d.models.layers.sst import build_mlp, scatter_v2
 
 
 @MODELS.register_module()
@@ -560,7 +560,7 @@ class DynamicScatterVFE(DynamicVFE):
             new_coors = unq_inv_once = None
 
         features_ls = [features]
-        origin_point_coors = features[:, :3]
+        # origin_point_coors = features[:, :3]
         # Find distance of x, y, and z from cluster center
         if self._with_cluster_center:
             voxel_mean, _, unq_inv = scatter_v2(features[:, :3], coors, mode='avg', new_coors=new_coors,

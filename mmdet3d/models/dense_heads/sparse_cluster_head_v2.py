@@ -549,7 +549,7 @@ class SparseClusterHeadV2(SparseClusterHead):
             cluster_xyz = cluster_xyz[topk_inds, :]
 
         bboxes = self.bbox_coder.decode(reg_preds, cluster_xyz)
-        bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](bboxes, box_dim=bboxes.size(1)).bev)
+        bboxes_for_nms = xywhr2xyxyr(input_meta.box_type_3d(bboxes, box_dim=bboxes.size(1)).bev)
 
         # Add a dummy background class to the front when using sigmoid
         padding = scores.new_zeros(scores.shape[0], 1)
@@ -562,7 +562,7 @@ class SparseClusterHeadV2(SparseClusterHead):
 
         out_bboxes, out_scores, out_labels = results
 
-        out_bboxes = input_meta['box_type_3d'](out_bboxes, out_bboxes.size(1))
+        out_bboxes = input_meta.box_type_3d(out_bboxes, out_bboxes.size(1))
 
         # modify task labels to global label indices
         new_labels = torch.zeros_like(out_labels) - 1 # all -1 

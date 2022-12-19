@@ -236,7 +236,7 @@ class VoteSegmentor(Base3DSegmentor):
         voxel_info = self.middle_encoder(voxel_features, voxel_coors)
         x = self.backbone(voxel_info)[0]
         padding = -1
-        voxel_coors_dropped = x['voxel_feats'] # bug, leave it for feature modification
+        # voxel_coors_dropped = x['voxel_feats'] # bug, leave it for feature modification
         if 'shuffle_inds' not in voxel_info:
             voxel_feats_reorder = x['voxel_feats']
         else:
@@ -332,7 +332,10 @@ class VoteSegmentor(Base3DSegmentor):
 
         return output_dict
 
-    def simple_test(self, points, img_metas, gt_bboxes_3d=None, gt_labels_3d=None, rescale=False):
+    def predict(self, batch_inputs: Tensor, batch_data_samples: SampleList) -> SampleList:
+
+        points = batch_inputs['points']
+        img_metas = batch_data_samples[0].metainfo
 
         if self.tanh_dims is not None:
             for p in points:
@@ -343,14 +346,14 @@ class VoteSegmentor(Base3DSegmentor):
         if self.voxel_downsampling_size is not None:
             points = self.voxel_downsample(points)
 
-        seg_pred = []
+        # seg_pred = []
         x, pts_coors, points = self.extract_feat(points, img_metas)
         feats = x[0]
         valid_pts_mask = x[1]
         points = points[valid_pts_mask]
         pts_coors = pts_coors[valid_pts_mask]
 
-        seg_logits, vote_preds = self.segmentation_head.forward_test(feats, img_metas, self.test_cfg)
+        seg_logits, vote_preds = self.segmentation_head.forward(feats)
 
         offsets = self.segmentation_head.decode_vote_targets(vote_preds)
 
@@ -364,9 +367,6 @@ class VoteSegmentor(Base3DSegmentor):
         )
 
         return output_dict
-
-    def predict(self, batch_inputs: Tensor, batch_data_samples: SampleList) -> SampleList:
-        raise NotImplementedError
 
     def _forward(self, batch_inputs: Tensor, batch_data_samples: OptSampleList = None) -> Tuple[List[Tensor]]:
         raise NotImplementedError
@@ -596,16 +596,9 @@ class SingleStageFSD(SingleStage3DDetector):
         voxelized_data_dict['batch_idx'] = voxel_coors[:, 0]
         return voxelized_data_dict
 
-    def simple_test(self, points, img_metas, imgs=None, rescale=False, gt_bboxes_3d=None, gt_labels_3d=None):
-        """Test function without augmentaiton."""
-        if gt_bboxes_3d is not None:
-            gt_bboxes_3d = gt_bboxes_3d[0]
-            gt_labels_3d = gt_labels_3d[0]
-            assert isinstance(gt_bboxes_3d, list)
-            assert isinstance(gt_labels_3d, list)
-            assert len(gt_bboxes_3d) == len(gt_labels_3d) == 1, 'assuming single sample testing'
-
-        seg_out_dict = self.segmentor.simple_test(points, img_metas, rescale=False)
+    # def simple_test(self, points, img_metas, imgs=None, rescale=False, gt_bboxes_3d=None, gt_labels_3d=None):
+    def predict(self, batch_inputs: Tensor, batch_data_samples: SampleList) -> SampleList:
+        seg_out_dict = self.segmentor.predict(batch_inputs, batch_data_samples)
 
         seg_feats = seg_out_dict['seg_feats']
 
@@ -617,14 +610,16 @@ class SingleStageFSD(SingleStage3DDetector):
             batch_idx=seg_out_dict['batch_idx'],
             vote_offsets = seg_out_dict['offsets']
         )
+
         if self.cfg.get('pre_voxelization_size', None) is not None:
             dict_to_sample = self.pre_voxelize(dict_to_sample)
-        sampled_out = self.sample(dict_to_sample, dict_to_sample['vote_offsets'], gt_bboxes_3d, gt_labels_3d) # per cls list in sampled_out
+
+        sampled_out = self.sample(dict_to_sample, dict_to_sample['vote_offsets'])  # per cls list in sampled_out
 
         # we filter almost empty voxel in clustering, so here is a valid_mask
-        cluster_inds_list, valid_mask_list = self.cluster_assigner(sampled_out['center_preds'], sampled_out['batch_idx'], gt_bboxes_3d, gt_labels_3d, origin_points=sampled_out['seg_points']) # per cls list
+        cluster_inds_list, valid_mask_list = self.cluster_assigner(sampled_out['center_preds'], sampled_out['batch_idx'], origin_points=sampled_out['seg_points']) # per cls list
 
-        pts_cluster_inds = torch.cat(cluster_inds_list, dim=0) #[N, 3], (cls_id, batch_idx, cluster_id)
+        pts_cluster_inds = torch.cat(cluster_inds_list, dim=0) # [N, 3], (cls_id, batch_idx, cluster_id)
 
         sampled_out = self.update_sample_results_by_mask(sampled_out, valid_mask_list)
 
@@ -634,7 +629,7 @@ class SingleStageFSD(SingleStage3DDetector):
         pts_feats = torch.cat([combined_out['seg_logits'], combined_out['seg_vote_preds'], combined_out['seg_feats']], dim=1)
         assert len(pts_cluster_inds) == len(points) == len(pts_feats)
 
-        extracted_outs = self.extract_feat(points, pts_feats, pts_cluster_inds, img_metas,  combined_out['center_preds'])
+        extracted_outs = self.extract_feat(points, pts_feats, pts_cluster_inds, batch_data_samples, combined_out['center_preds'])
         cluster_feats = extracted_outs['cluster_feats']
         cluster_xyz = extracted_outs['cluster_xyz']
         cluster_inds = extracted_outs['cluster_inds']
@@ -644,8 +639,8 @@ class SingleStageFSD(SingleStage3DDetector):
 
         bbox_list = self.bbox_head.get_bboxes(
             outs['cls_logits'], outs['reg_preds'],
-            cluster_xyz, cluster_inds, img_metas,
-            rescale=rescale,
+            cluster_xyz, cluster_inds, batch_data_samples,
+            rescale=False,
             iou_logits=outs.get('iou_logits', None))
 
         if self.as_rpn:
@@ -666,9 +661,6 @@ class SingleStageFSD(SingleStage3DDetector):
             ]
             return bbox_results
 
-    def predict(self, batch_inputs: Tensor, batch_data_samples: SampleList) -> SampleList:
-        raise NotImplementedError
-
     def _forward(self, batch_inputs: Tensor, batch_data_samples: OptSampleList = None) -> Tuple[List[Tensor]]:
         raise NotImplementedError
 
@@ -682,10 +674,10 @@ class SingleStageFSD(SingleStage3DDetector):
         if self.cfg.get('group_sample', False):
             return self.group_sample(dict_to_sample, offset)
 
-        cfg = self.train_cfg if self.training else self.test_cfg
+        # cfg = self.train_cfg if self.training else self.test_cfg
 
         seg_logits = dict_to_sample['seg_logits']
-        assert (seg_logits < 0).any() # make sure no sigmoid applied
+        assert (seg_logits < 0).any()  # make sure no sigmoid applied
 
         if seg_logits.size(1) == self.num_classes:
             seg_scores = seg_logits.sigmoid()
@@ -700,9 +692,7 @@ class SingleStageFSD(SingleStage3DDetector):
         batch_idx = dict_to_sample['batch_idx']
         batch_size = batch_idx.max().item() + 1
         for cls in range(self.num_classes):
-            cls_score_thr = cfg['score_thresh'][cls]
-
-            fg_mask = self.get_fg_mask(seg_scores, seg_points, cls, batch_idx, gt_bboxes_3d, gt_labels_3d)
+            fg_mask = self.get_fg_mask(seg_scores, cls)
 
             if len(torch.unique(batch_idx[fg_mask])) < batch_size:
                 one_random_pos_per_sample = self.get_sample_beg_position(batch_idx, fg_mask)
@@ -735,7 +725,7 @@ class SingleStageFSD(SingleStage3DDetector):
         pos = torch.where(inner_inds == 0)[0]
         return pos
     
-    def get_fg_mask(self, seg_scores, seg_points, cls_id, batch_inds, gt_bboxes_3d, gt_labels_3d):
+    def get_fg_mask(self, seg_scores, cls_id):
         if self.training and self.train_cfg.get('disable_pretrain', False) and not self.runtime_info.get('enable_detection', False):
             seg_scores = seg_scores[:, cls_id]
             topks = self.train_cfg.get('disable_pretrain_topks', [100, 100, 100])
@@ -751,30 +741,6 @@ class SingleStageFSD(SingleStage3DDetector):
             else:
                 buffer_thr = 0
             fg_mask = seg_scores > cls_score_thr + buffer_thr
-
-        # add fg points
-        cfg = self.train_cfg if self.training else self.test_cfg
-
-        if cfg.get('add_gt_fg_points', False):
-            bsz = len(gt_bboxes_3d)
-            assert len(seg_scores) == len(seg_points) == len(batch_inds)
-            point_list = self.split_by_batch(seg_points, batch_inds, bsz)
-            gt_fg_mask_list = []
-
-            for i, points in enumerate(point_list):
-                
-                gt_mask = gt_labels_3d[i] == cls_id
-                gts = gt_bboxes_3d[i][gt_mask]
-
-                if not gt_mask.any() or len(points) == 0:
-                    gt_fg_mask_list.append(gt_mask.new_zeros(len(points), dtype=torch.bool))
-                    continue
-                
-                gt_fg_mask_list.append(gts.points_in_boxes(points) > -1)
-            
-            gt_fg_mask = self.combine_by_batch(gt_fg_mask_list, batch_inds, bsz)
-            fg_mask = fg_mask | gt_fg_mask
-            
 
         return fg_mask
 

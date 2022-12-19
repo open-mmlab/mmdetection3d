@@ -120,10 +120,7 @@ class GroupCorrectionHead(Base3DRoIHead):
         pts_feats,
         pts_batch_inds,
         img_metas,
-        proposal_list,
-        gt_bboxes_3d,
-        gt_labels_3d,
-        **kwargs):
+        proposal_list):
 
         """Simple testing forward function of PartAggregationROIHead.
 
@@ -139,7 +136,6 @@ class GroupCorrectionHead(Base3DRoIHead):
         Returns:
             dict: Bbox results of one frame.
         """
-
 
         assert len(proposal_list) == 1, 'only support bsz==1 to make cls_preds and labels_3d consistent with bbox_results'
         rois = bbox3d2roi([res[0].tensor for res in proposal_list])

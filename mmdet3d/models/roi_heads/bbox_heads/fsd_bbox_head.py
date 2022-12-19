@@ -10,12 +10,11 @@ from mmdet3d.structures import xywhr2xyxyr
 from mmdet3d.models.builder import build_loss
 from mmdet3d.models.layers.sst import build_mlp
 
-from mmdet3d.structures.ops.iou3d_calculator import nms_gpu, nms_normal_gpu
 from mmdet3d.models.task_modules.builder import build_bbox_coder
 from mmdet.models.utils import multi_apply
 from mmdet.utils import reduce_mean
 
-from mmdet3d.models import builder
+from mmdet3d.models import builder, nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS
 
 
@@ -626,7 +625,7 @@ class FullySparseBboxHead(BaseModule):
 
         if rois.numel() == 0:
             return [(
-                img_metas[0]['box_type_3d'](rois[:, 1:], rois.size(1) - 1),
+                img_metas[0].box_type_3d(rois[:, 1:], rois.size(1) - 1),
                 class_pred[0],
                 class_labels[0]
             ),]
@@ -680,7 +679,7 @@ class FullySparseBboxHead(BaseModule):
             selected_scores = cur_cls_score[selected]
 
             result_list.append(
-                (img_metas[batch_id]['box_type_3d'](selected_bboxes, selected_bboxes.size(1)),
+                (img_metas[batch_id].box_type_3d(selected_bboxes, selected_bboxes.size(1)),
                 selected_scores, selected_label_preds))
         return result_list
 
@@ -713,14 +712,14 @@ class FullySparseBboxHead(BaseModule):
             torch.Tensor: Selected indices.
         """
         if use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
 
         assert box_probs.ndim == 1
 
         selected_list = []
-        boxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
+        boxes_for_nms = xywhr2xyxyr(input_meta.box_type_3d(
             box_preds, box_preds.size(1)).bev)
 
         score_thresh = score_thr if isinstance(
@@ -758,14 +757,14 @@ class FullySparseBboxHead(BaseModule):
                         use_rotate_nms=True):
 
         if use_rotate_nms:
-            nms_func = nms_gpu
+            nms_func = nms_bev
         else:
-            nms_func = nms_normal_gpu
+            nms_func = nms_normal_bev
 
         assert box_probs.ndim == 1
 
         selected_list = []
-        boxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
+        boxes_for_nms = xywhr2xyxyr(input_meta.box_type_3d(
             box_preds, box_preds.size(1)).bev)
 
         assert isinstance(score_thr, float)
