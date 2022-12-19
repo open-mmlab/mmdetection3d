@@ -119,6 +119,10 @@ class TestDet3DDataSample(TestCase):
         assert _equal(det3d_data_sample.eval_ann_info['pts_semantic_mask'],
                       eval_ann_info['pts_semantic_mask'])
 
+        # test eval_ann_info for `None` value
+        det3d_data_sample.eval_ann_info = None
+        assert det3d_data_sample.eval_ann_info is None
+
         # test type error
         with pytest.raises(AssertionError):
             det3d_data_sample.pred_instances_3d = torch.rand(2, 4)
