@@ -11,7 +11,7 @@ from mmengine import track_iter_progress
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 
-from mmdet3d.datasets import build_dataset
+from mmdet3d.registry import DATASETS
 from mmdet3d.structures.ops import box_np_ops as box_np_ops
 
 
@@ -218,7 +218,7 @@ def create_groundtruth_database(dataset_class_name,
                     file_client_args=file_client_args)
             ])
 
-    dataset = build_dataset(dataset_cfg)
+    dataset = DATASETS.build(dataset_cfg)
 
     if database_save_path is None:
         database_save_path = osp.join(data_path, f'{info_prefix}_gt_database')
@@ -587,7 +587,7 @@ class GTDatabaseCreater:
                         file_client_args=file_client_args)
                 ])
 
-        self.dataset = build_dataset(dataset_cfg)
+        self.dataset = DATASETS.build(dataset_cfg)
         self.pipeline = self.dataset.pipeline
         if self.database_save_path is None:
             self.database_save_path = osp.join(

@@ -7,8 +7,8 @@ from mmcv import Config
 from mmcv.parallel import MMDataParallel
 from mmengine.runner import load_checkpoint
 
-from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_detector
+from mmdet3d.registry import DATASETS
 from tools.misc.fuse_conv_bn import fuse_module
 
 
@@ -40,7 +40,7 @@ def main():
 
     # build the dataloader
     # TODO: support multiple images per gpu (only minor changes are needed)
-    dataset = build_dataset(cfg.data.test)
+    dataset = DATASETS.build(cfg.data.test)
 
     # TODO fix this
     def build_dataloader():
