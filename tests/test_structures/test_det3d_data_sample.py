@@ -109,29 +109,12 @@ class TestDet3DDataSample(TestCase):
         assert _equal(det3d_data_sample.pred_pts_seg.pts_semantic_mask,
                       pred_pts_seg_data['pts_semantic_mask'])
 
-        # test eval_ann_info
-        eval_ann_info = dict(
-            pts_instance_mask=torch.rand(20), pts_semantic_mask=torch.rand(20))
-        det3d_data_sample.eval_ann_info = eval_ann_info
-        assert 'eval_ann_info' in det3d_data_sample
-        assert _equal(det3d_data_sample.eval_ann_info['pts_instance_mask'],
-                      eval_ann_info['pts_instance_mask'])
-        assert _equal(det3d_data_sample.eval_ann_info['pts_semantic_mask'],
-                      eval_ann_info['pts_semantic_mask'])
-
-        # test eval_ann_info for `None` value
-        det3d_data_sample.eval_ann_info = None
-        assert det3d_data_sample.eval_ann_info is None
-
         # test type error
         with pytest.raises(AssertionError):
             det3d_data_sample.pred_instances_3d = torch.rand(2, 4)
 
         with pytest.raises(AssertionError):
             det3d_data_sample.pred_pts_seg = torch.rand(20)
-
-        with pytest.raises(AssertionError):
-            det3d_data_sample.eval_ann_info = torch.rand(20)
 
     def test_deleter(self):
         tmp_instances_3d_data = dict(
