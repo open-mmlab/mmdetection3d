@@ -86,6 +86,8 @@ class SECONDFPN(BaseModule):
         """
         assert len(x) == len(self.in_channels)
         ups = [deblock(x[i]) for i, deblock in enumerate(self.deblocks)]
+        # hard code here to load converted model
+        ups = ups[::-1]
 
         if len(ups) > 1:
             out = torch.cat(ups, dim=1)

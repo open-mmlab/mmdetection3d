@@ -13,9 +13,9 @@ from torch import Tensor, nn
 
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.models.utils.transformer import Deform_Transformer
-from mmdet3d.structures import Det3DDataSample
 from mmdet3d.registry import MODELS
-from mmdet3d.structures import bbox_overlaps_3d, center_to_corner_box2d
+from mmdet3d.structures import (Det3DDataSample, bbox_overlaps_3d,
+                                center_to_corner_box2d)
 from mmdet3d.structures.bbox_3d.box_torch_ops import rotate_nms_pcdet
 from mmdet3d.structures.ops.iou3d_calculator import boxes_iou3d_gpu_pcdet
 from ..layers import circle_nms, nms_bev
@@ -94,7 +94,8 @@ class CenterFormerHead(BaseModule):
 
         heatmap_head = copy.deepcopy(separate_head)
         heatmap_head['conv_cfg'] = dict(type='Conv2d')
-        heatmap_head['norm_cfg'] = dict(type='naiveSyncBN2d')
+        heatmap_head['norm_cfg'] = dict(
+            type='naiveSyncBN2d', eps=0.001, momentum=0.01)
         heatmap_head['final_kernel'] = 3
         heatmap_head.update(
             in_channels=in_channels,
@@ -137,8 +138,8 @@ class CenterFormerHead(BaseModule):
     def forward_heatmap(self, feat):
         outs = dict()
         outs.update(self.heatmap_head(feat))
-        outs['hm'] = self._sigmoid(outs['center_heatmap'])
-        outs['corner_hm'] = self._sigmoid(outs['corner_heatmap'])
+        outs['hm'] = torch.sigmoid(outs['center_heatmap'])
+        outs['corner_hm'] = torch.sigmoid(outs['corner_heatmap'])
 
         return outs
 

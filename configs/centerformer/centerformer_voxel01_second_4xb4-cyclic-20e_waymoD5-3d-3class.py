@@ -169,21 +169,22 @@ test_pipeline = [
         use_dim=5,
         norm_intensity=True,
         file_client_args=file_client_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    # dict(
+    #     type='MultiScaleFlipAug3D',
+    #     img_scale=(1333, 800),
+    #     pts_scale_ratio=1,
+    #     flip=False,
+    #     transforms=[
+    #         dict(
+    #             type='GlobalRotScaleTrans',
+    #             rot_range=[0, 0],
+    #             scale_ratio_range=[1., 1.],
+    #             translation_std=[0, 0, 0]),
+    #         dict(type='RandomFlip3D'),
+    #         dict(
+    #             type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+    #     ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
@@ -310,4 +311,4 @@ auto_scale_lr = dict(enable=False, base_batch_size=16)
 default_hooks = dict(logger=dict(type='LoggerHook', interval=50))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
 
-load_from = './checkpoints/centerformer_our_refactor.pth'
+# load_from = './checkpoints/centerformer_our_refactor.pth'
