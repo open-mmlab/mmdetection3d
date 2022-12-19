@@ -1,13 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
-from mmcv.cnn import ConvModule
-from mmcv.cnn import build_conv_layer, build_norm_layer, build_upsample_layer
+from mmcv.cnn import (ConvModule, build_conv_layer, build_norm_layer,
+                      build_upsample_layer)
 from mmengine.model import BaseModule
 from torch import nn as nn
-from ..layers import ChannelAttention, SpatialAttention
 
 from mmdet3d.registry import MODELS
+from ..layers import ChannelAttention, SpatialAttention
 
 
 @MODELS.register_module()
@@ -135,10 +135,10 @@ class SECONDFPN_WithAtten(SECONDFPN):
             out_channels=out_channels[1],
             kernel_size=upsample_strides[1],
             stride=upsample_strides[1])
-        deblock = nn.Sequential(upsample_layer,
-                                build_norm_layer(norm_cfg, out_channels[1])[1],
-                                nn.ReLU(inplace=True))
-        deblock.append(
+        deblock = nn.Sequential(
+            upsample_layer,
+            build_norm_layer(norm_cfg, out_channels[1])[1],
+            nn.ReLU(inplace=True),
             ConvModule(
                 out_channels[1],
                 out_channels[1],
@@ -146,7 +146,6 @@ class SECONDFPN_WithAtten(SECONDFPN):
                 padding=1,
                 bias=False,
                 conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg))
-        deblock.append(ChannelAttention(out_channels[0]))
-        deblock.append(SpatialAttention())
+                norm_cfg=norm_cfg), ChannelAttention(out_channels[1]),
+            SpatialAttention())
         self.deblocks[1] = deblock
