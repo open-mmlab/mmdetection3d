@@ -231,21 +231,6 @@ class Det3DDataSample(DetDataSample):
     def pred_pts_seg(self) -> None:
         del self._pred_pts_seg
 
-    @property
-    def eval_ann_info(self) -> Union[dict, None]:
-        return self._eval_ann_info
-
-    @eval_ann_info.setter
-    def eval_ann_info(self, value: Union[dict, None]) -> None:
-        if value is None:
-            self.set_field(value, '_eval_ann_info')
-        else:
-            self.set_field(value, '_eval_ann_info', dtype=dict)
-
-    @eval_ann_info.deleter
-    def eval_ann_info(self) -> None:
-        del self._eval_ann_info
-
 
 SampleList = List[Det3DDataSample]
 OptSampleList = Optional[SampleList]
