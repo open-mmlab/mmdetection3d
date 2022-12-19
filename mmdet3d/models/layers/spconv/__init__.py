@@ -3,6 +3,7 @@ from .overwrite_spconv import register_spconv2
 
 try:
     import spconv
+    from spconv import pytorch
 except ImportError:
     IS_SPCONV2_AVAILABLE = False
 else:

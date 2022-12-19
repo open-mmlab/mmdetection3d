@@ -7,9 +7,11 @@ from .part_aggregation_roi_head import PartAggregationROIHead
 from .point_rcnn_roi_head import PointRCNNRoIHead
 from .pv_rcnn_roi_head import PVRCNNRoiHead
 from .roi_extractors import Single3DRoIAwareExtractor, SingleRoIExtractor
+from .fsd_roi_head import GroupCorrectionHead
 
 __all__ = [
     'Base3DRoIHead', 'PartAggregationROIHead', 'PointwiseSemanticHead',
     'Single3DRoIAwareExtractor', 'PartA2BboxHead', 'SingleRoIExtractor',
-    'H3DRoIHead', 'PrimitiveHead', 'PointRCNNRoIHead', 'PVRCNNRoiHead'
+    'H3DRoIHead', 'PrimitiveHead', 'PointRCNNRoIHead', 'PVRCNNRoiHead',
+    'GroupCorrectionHead'
 ]
