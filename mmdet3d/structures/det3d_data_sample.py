@@ -51,8 +51,8 @@ class Det3DDataSample(DetDataSample):
           segmentation.
         - ``pred_pts_seg``(PointData): Prediction of point cloud
           segmentation.
-        - ``eval_ann_info``(dict): Raw annotation, which will be passed to
-          evaluator and do the online evaluation.
+        - ``eval_ann_info``(dict or None): Raw annotation, which will be passed
+          to evaluator and do the online evaluation.
 
     Examples:
     >>> import torch
@@ -232,12 +232,15 @@ class Det3DDataSample(DetDataSample):
         del self._pred_pts_seg
 
     @property
-    def eval_ann_info(self) -> dict:
+    def eval_ann_info(self) -> Union[dict, None]:
         return self._eval_ann_info
 
     @eval_ann_info.setter
-    def eval_ann_info(self, value: dict) -> None:
-        self.set_field(value, '_eval_ann_info', dtype=dict)
+    def eval_ann_info(self, value: Union[dict, None]) -> None:
+        if value is None:
+            self.set_field(value, '_eval_ann_info')
+        else:
+            self.set_field(value, '_eval_ann_info', dtype=dict)
 
     @eval_ann_info.deleter
     def eval_ann_info(self) -> None:
