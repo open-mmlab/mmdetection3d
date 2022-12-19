@@ -1,97 +1,132 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import time
+import os
 
-import torch
-from mmcv import Config
-from mmcv.parallel import MMDataParallel
-from mmengine.runner import load_checkpoint
+from mmengine import Config, DictAction, MMLogger
+from mmengine.dist import init_dist
+from mmengine.utils import mkdir_or_exist
 
-from mmdet3d.datasets import build_dataset
-from mmdet3d.models import build_detector
-from tools.misc.fuse_conv_bn import fuse_module
+from mmdet3d.utils import register_all_modules
+from mmdet3d.utils.benchmark import (DataLoaderBenchmark, DatasetBenchmark,
+                                     InferenceBenchmark)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='MMDet benchmark a model')
+    parser = argparse.ArgumentParser(description='MMDet3D benchmark')
     parser.add_argument('config', help='test config file path')
-    parser.add_argument('checkpoint', help='checkpoint file')
-    parser.add_argument('--samples', default=2000, help='samples to benchmark')
+    parser.add_argument('--checkpoint', help='checkpoint file')
+    parser.add_argument(
+        '--task',
+        choices=['inference', 'dataloader', 'dataset'],
+        default='inference',
+        help='Which task do you want to go to benchmark')
+    parser.add_argument(
+        '--repeat-num',
+        type=int,
+        default=1,
+        help='number of repeat times of measurement for averaging the results')
+    parser.add_argument(
+        '--max-iter', type=int, default=2000, help='num of max iter')
     parser.add_argument(
         '--log-interval', default=50, help='interval of logging')
+    parser.add_argument(
+        '--num-warmup', type=int, default=5, help='Number of warmup')
     parser.add_argument(
         '--fuse-conv-bn',
         action='store_true',
         help='Whether to fuse conv and bn, this will slightly increase'
         'the inference speed')
+    parser.add_argument(
+        '--dataset-type',
+        choices=['train', 'val', 'test'],
+        default='test',
+        help='Benchmark dataset type. only supports train, val and test')
+    parser.add_argument(
+        '--work-dir',
+        help='the directory to save the file containing '
+        'benchmark metrics')
+    parser.add_argument(
+        '--cfg-options',
+        nargs='+',
+        action=DictAction,
+        help='override some settings in the used config, the key-value pair '
+        'in xxx=yyy format will be merged into config file. If the value to '
+        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+        'Note that the quotation marks are necessary and that no white space '
+        'is allowed.')
+    parser.add_argument(
+        '--launcher',
+        choices=['none', 'pytorch', 'slurm', 'mpi'],
+        default='none',
+        help='job launcher')
+    parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
+    if 'LOCAL_RANK' not in os.environ:
+        os.environ['LOCAL_RANK'] = str(args.local_rank)
     return args
 
 
+def inference_benchmark(args, cfg, distributed, logger):
+    benchmark = InferenceBenchmark(
+        cfg,
+        args.checkpoint,
+        distributed,
+        args.fuse_conv_bn,
+        args.max_iter,
+        args.log_interval,
+        args.num_warmup,
+        logger=logger)
+    return benchmark
+
+
+def dataloader_benchmark(args, cfg, distributed, logger):
+    benchmark = DataLoaderBenchmark(
+        cfg,
+        distributed,
+        args.dataset_type,
+        args.max_iter,
+        args.log_interval,
+        args.num_warmup,
+        logger=logger)
+    return benchmark
+
+
+def dataset_benchmark(args, cfg, distributed, logger):
+    benchmark = DatasetBenchmark(
+        cfg,
+        args.dataset_type,
+        args.max_iter,
+        args.log_interval,
+        args.num_warmup,
+        logger=logger)
+    return benchmark
+
+
 def main():
+    register_all_modules()
+
     args = parse_args()
-
     cfg = Config.fromfile(args.config)
-    # set cudnn_benchmark
-    if cfg.get('cudnn_benchmark', False):
-        torch.backends.cudnn.benchmark = True
-    cfg.model.pretrained = None
-    cfg.data.test.test_mode = True
 
-    # build the dataloader
-    # TODO: support multiple images per gpu (only minor changes are needed)
-    dataset = build_dataset(cfg.data.test)
+    if args.cfg_options is not None:
+        cfg.merge_from_dict(args.cfg_options)
 
-    # TODO fix this
-    def build_dataloader():
-        pass
+    distributed = False
+    if args.launcher != 'none':
+        init_dist(args.launcher, **cfg.get('env_cfg', {}).get('dist_cfg', {}))
+        distributed = True
 
-    data_loader = build_dataloader(
-        dataset,
-        samples_per_gpu=1,
-        workers_per_gpu=cfg.data.workers_per_gpu,
-        dist=False,
-        shuffle=False)
+    log_file = None
+    if args.work_dir:
+        log_file = os.path.join(args.work_dir, 'benchmark.log')
+        mkdir_or_exist(args.work_dir)
 
-    # build the model and load checkpoint
-    cfg.model.train_cfg = None
-    model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
-    load_checkpoint(model, args.checkpoint, map_location='cpu')
-    if args.fuse_conv_bn:
-        model = fuse_module(model)
+    logger = MMLogger.get_instance(
+        'mmdet', log_file=log_file, log_level='INFO')
 
-    model = MMDataParallel(model, device_ids=[0])
-
-    model.eval()
-
-    # the first several iterations may be very slow so skip them
-    num_warmup = 5
-    pure_inf_time = 0
-
-    # benchmark with several samples and take the average
-    for i, data in enumerate(data_loader):
-
-        torch.cuda.synchronize()
-        start_time = time.perf_counter()
-
-        with torch.no_grad():
-            model(return_loss=False, rescale=True, **data)
-
-        torch.cuda.synchronize()
-        elapsed = time.perf_counter() - start_time
-
-        if i >= num_warmup:
-            pure_inf_time += elapsed
-            if (i + 1) % args.log_interval == 0:
-                fps = (i + 1 - num_warmup) / pure_inf_time
-                print(f'Done image [{i + 1:<3}/ {args.samples}], '
-                      f'fps: {fps:.1f} img / s')
-
-        if (i + 1) == args.samples:
-            pure_inf_time += elapsed
-            fps = (i + 1 - num_warmup) / pure_inf_time
-            print(f'Overall fps: {fps:.1f} img / s')
-            break
+    benchmark = eval(f'{args.task}_benchmark')(args, cfg, distributed, logger)
+    benchmark.run(args.repeat_num)
 
 
 if __name__ == '__main__':
