@@ -11,8 +11,8 @@ from torch import nn as nn
 from mmdet3d.models.task_modules import PseudoSampler
 from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
 from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet3d.utils.typing import (ConfigType, InstanceList, OptConfigType,
-                                  OptInstanceList)
+from mmdet3d.utils.typing_utils import (ConfigType, InstanceList,
+                                        OptConfigType, OptInstanceList)
 from .base_3d_dense_head import Base3DDenseHead
 from .train_mixins import AnchorTrainMixin
 

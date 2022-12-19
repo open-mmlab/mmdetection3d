@@ -13,7 +13,7 @@ from torch import Tensor
 from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.structures import limit_period, xywhr2xyxyr
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils.typing import InstanceList, OptMultiConfig
+from mmdet3d.utils.typing_utils import InstanceList, OptMultiConfig
 
 
 class Base3DDenseHead(BaseModule, metaclass=ABCMeta):

@@ -8,7 +8,7 @@ from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import bbox3d2roi
-from mmdet3d.utils.typing import InstanceList, SampleList
+from mmdet3d.utils.typing_utils import InstanceList, SampleList
 from .base_3droi_head import Base3DRoIHead
 
 
