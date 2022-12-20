@@ -75,7 +75,6 @@ class TestAnchor3DHead(TestCase):
         ]
 
         gt_losses = fcaf3d_head.loss(x, data_samples)
-        print(gt_losses)
         self.assertGreaterEqual(gt_losses['cls_loss'], 0,
                                 'cls loss should be non-zero')
         self.assertGreaterEqual(gt_losses['bbox_loss'], 0,

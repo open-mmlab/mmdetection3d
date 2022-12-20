@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 import torch
 from torch import Tensor
 from torch.nn.modules.batchnorm import _BatchNorm
+from torch.nn.modules.conv import _ConvNd
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
@@ -66,13 +67,19 @@ class CenterFormer(Base3DDetector):
         self.test_cfg = test_cfg
 
     def init_weights(self):
-        # if self.with_backbone:
-        #     self.backbone.init_weights()
-        # if self.with_neck:
-        #     self.neck.init_weights()
-        # if self.with_bbox:
-        #     self.bbox_head.init_weights()
-        super().init_weights()
+        if self.with_backbone:
+            self.backbone.init_weights()
+            for name, m in self.backbone.named_modules():
+                if isinstance(m, _ConvNd):
+                    m.reset_parameters()
+        if self.with_neck:
+            self.neck.init_weights()
+            for name, m in self.neck.named_modules():
+                if isinstance(m, _ConvNd):
+                    m.reset_parameters()
+        if self.with_bbox:
+            self.bbox_head.init_weights()
+
         for m in self.modules():
             if isinstance(m, _BatchNorm):
                 torch.nn.init.uniform_(m.weight)
@@ -154,7 +161,9 @@ class CenterFormer(Base3DDetector):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
-
+        # torch.save(self.state_dict(),
+        #            'checkpoints/our_init_refactor_centerformer.pth')
+        # return
         batch_input_metas = [item.metainfo for item in batch_data_samples]
         pts_feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
         losses = dict()

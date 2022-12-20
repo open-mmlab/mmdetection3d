@@ -115,7 +115,7 @@ model = dict(
         nms_iou_thres=[0.8, 0.55, 0.55],
     ))
 
-data_root = 'data/waymo_mini/kitti_format/'
+data_root = 'data/waymo/kitti_format/'
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'waymo_dbinfos_train.pkl',
@@ -306,9 +306,11 @@ test_cfg = dict()
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
+auto_scale_lr = dict(enable=True, base_batch_size=16)
 
-default_hooks = dict(logger=dict(type='LoggerHook', interval=50))
+default_hooks = dict(
+    logger=dict(type='LoggerHook', interval=1),
+    checkpoint=dict(type='CheckpointHook', interval=5))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
 
-# load_from = './checkpoints/centerformer_our_refactor.pth'
+# load_from = './checkpoints/centerformer_refactor_init.pth'

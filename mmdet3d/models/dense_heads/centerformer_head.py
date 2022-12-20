@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import math
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -7,9 +8,10 @@ import torch
 from mmcv.cnn import build_norm_layer
 from mmdet.models.utils import multi_apply
 from mmengine.logging import print_log
-from mmengine.model import BaseModule
+from mmengine.model import BaseModule, kaiming_init
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
+from torch.nn.modules.conv import _ConvNd
 
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.models.utils.transformer import Deform_Transformer
@@ -59,8 +61,9 @@ class CenterFormerHead(BaseModule):
                      reduction='mean',
                      loss_weight=1),
                  test_cfg=None,
-                 train_cfg=None):
-        super(CenterFormerHead, self).__init__()
+                 train_cfg=None,
+                 init_cfg=None):
+        super(CenterFormerHead, self).__init__(init_cfg=init_cfg)
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
@@ -121,6 +124,14 @@ class CenterFormerHead(BaseModule):
                 head_conv=share_conv_channel)
             self.task_heads.append(MODELS.build(separate_head))
 
+    def init_weights(self):
+        self.heatmap_head.init_weights()
+        for name, m in self.named_modules():
+            if 'task_heads' in name and isinstance(m, _ConvNd):
+                kaiming_init(m)
+            elif 'heatmap_head' in name and isinstance(m, _ConvNd):
+                nn.init.kaiming_uniform_(m.weight, a=math.sqrt(5))
+
     def forward(self, x, *kwargs):
         ret_dicts = []
 
@@ -138,8 +149,8 @@ class CenterFormerHead(BaseModule):
     def forward_heatmap(self, feat):
         outs = dict()
         outs.update(self.heatmap_head(feat))
-        outs['hm'] = torch.sigmoid(outs['center_heatmap'])
-        outs['corner_hm'] = torch.sigmoid(outs['corner_heatmap'])
+        outs['hm'] = self._sigmoid(outs['center_heatmap'])
+        outs['corner_hm'] = self._sigmoid(outs['corner_heatmap'])
 
         return outs
 
@@ -470,7 +481,7 @@ class CenterFormerHead(BaseModule):
                 example['mask'][task_id],
                 example['cat'][task_id],
             )
-            losses.update({f'task_{task_id}:cls_loss': hm_loss})
+            losses.update({f'task{task_id}.loss_heatmap': hm_loss})
 
             target_box = example['anno_box'][task_id]
 
@@ -484,7 +495,7 @@ class CenterFormerHead(BaseModule):
                 mask_corner_loss,
                 avg_factor=(num_corners + 1e-4))
 
-            losses.update({f'task_{task_id}:corner_loss': corner_loss})
+            losses.update({f'task{task_id}.loss_corner': corner_loss})
 
             # reconstruct the anno_box from multiple reg heads
             # (B, 7, num_proposals)
@@ -521,7 +532,7 @@ class CenterFormerHead(BaseModule):
                 target_box,
                 bbox_weights,
                 avg_factor=(gt_num + 1e-4))
-            losses.update({f'task_{task_id}:bbox_loss': bbox_loss})
+            losses.update({f'task{task_id}.loss_bbox': bbox_loss})
 
             # IoU loss
             with torch.no_grad():
@@ -563,7 +574,7 @@ class CenterFormerHead(BaseModule):
                 iou_targets,
                 mask_iou_loss,
                 avg_factor=(gt_num + 1e-4))
-            losses.update({f'task_{task_id}:iou_loss': iou_loss})
+            losses.update({f'task{task_id}.loss_iou': iou_loss})
 
         return losses
 
