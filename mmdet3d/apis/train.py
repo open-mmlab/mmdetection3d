@@ -12,7 +12,7 @@ from mmcv.utils import build_from_cfg
 from torch import distributed as dist
 
 from mmdet3d.datasets import build_dataset
-from mmdet3d.utils import find_latest_checkpoint
+from mmdet3d.utils import find_latest_checkpoint, build_ddp, build_dp
 from mmdet.core import DistEvalHook as MMDET_DistEvalHook
 from mmdet.core import EvalHook as MMDET_EvalHook
 from mmdet.datasets import build_dataloader as build_mmdet_dataloader
@@ -103,14 +103,12 @@ def train_segmentor(model,
         find_unused_parameters = cfg.get('find_unused_parameters', False)
         # Sets the `find_unused_parameters` parameter in
         # torch.nn.parallel.DistributedDataParallel
-        model = MMDistributedDataParallel(
-            model.cuda(),
-            device_ids=[torch.cuda.current_device()],
-            broadcast_buffers=False,
-            find_unused_parameters=find_unused_parameters)
+        model = build_ddp(model, cfg.device,
+￼                          device_ids=[int(os.environ['LOCAL_RANK'])],
+￼                          broadcast_buffers=False,
+￼                          find_unused_parameters=find_unused_parameters)
     else:
-        model = MMDataParallel(
-            model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
+        model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
 
     # build runner
     optimizer = build_optimizer(model, cfg.optimizer)
@@ -223,14 +221,12 @@ def train_detector(model,
         find_unused_parameters = cfg.get('find_unused_parameters', False)
         # Sets the `find_unused_parameters` parameter in
         # torch.nn.parallel.DistributedDataParallel
-        model = MMDistributedDataParallel(
-            model.cuda(),
-            device_ids=[torch.cuda.current_device()],
-            broadcast_buffers=False,
-            find_unused_parameters=find_unused_parameters)
+        model = build_ddp(model, cfg.device,
+￼                          device_ids=[int(os.environ['LOCAL_RANK'])],
+￼                          broadcast_buffers=False,
+￼                          find_unused_parameters=find_unused_parameters)
     else:
-        model = MMDataParallel(
-            model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
+        model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
 
     # build runner
     optimizer = build_optimizer(model, cfg.optimizer)

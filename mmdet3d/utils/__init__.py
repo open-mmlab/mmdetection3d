@@ -10,5 +10,5 @@ from .setup_env import setup_multi_processes
 __all__ = [
     'Registry', 'build_from_cfg', 'get_root_logger', 'collect_env',
     'print_log', 'setup_multi_processes', 'find_latest_checkpoint',
-    'compat_cfg'
+    'compat_cfg', 'build_ddp', 'build_dp', 'get_device'
 ]
