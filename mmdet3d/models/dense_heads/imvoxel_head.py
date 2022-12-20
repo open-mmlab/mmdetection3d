@@ -14,7 +14,7 @@ from torch import Tensor, nn
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d.utils import rotation_3d_in_axis
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils.typing import InstanceList, OptInstanceList
+from mmdet3d.utils.typing_utils import InstanceList, OptInstanceList
 
 
 @MODELS.register_module()
