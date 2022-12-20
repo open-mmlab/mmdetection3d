@@ -63,7 +63,7 @@ class PointData(BaseDataElement):
                               Sized), 'value must contain `__len__` attribute'
 
             if len(self) > 0:
-                assert len(value) == len(self), 'the length of ' \
+                assert len(value) == len(self), 'The length of ' \
                                                 f'values {len(value)} is ' \
                                                 'not consistent with ' \
                                                 'the length of this ' \
@@ -78,7 +78,7 @@ class PointData(BaseDataElement):
         Args:
             item (str, :obj:`slice`,
                 :obj:`torch.LongTensor`, :obj:`torch.BoolTensor`):
-                get the corresponding values according to item.
+                Get the corresponding values according to item.
 
         Returns:
             :obj:`PointData`: Corresponding values.
@@ -161,7 +161,7 @@ class PointData(BaseDataElement):
         return new_data  # type: ignore
 
     def __len__(self) -> int:
-        """int: the length of `PointData`."""
+        """int: The length of `PointData`."""
         if len(self._data_fields) > 0:
             return len(self.values()[0])
         else:
