@@ -76,7 +76,7 @@ class PointData(BaseDataElement):
     def __getitem__(self, item: IndexType) -> 'PointData':
         """
         Args:
-            item (str, :obj:`slice`,
+            item (str, int, list, :obj:`slice`, :obj:`numpy.ndarray`,
                 :obj:`torch.LongTensor`, :obj:`torch.BoolTensor`):
                 Get the corresponding values according to item.
 
