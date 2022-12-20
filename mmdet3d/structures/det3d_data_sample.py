@@ -14,15 +14,15 @@ class Det3DDataSample(DetDataSample):
 
     The attributes in ``Det3DDataSample`` are divided into several parts:
 
-        - ``proposals``(InstanceData): Region proposals used in two-stage
+        - ``proposals`` (InstanceData): Region proposals used in two-stage
           detectors.
-        - ``ignored_instances``(InstanceData): Instances to be ignored during
+        - ``ignored_instances`` (InstanceData): Instances to be ignored during
           training/testing.
-        - ``gt_instances_3d``(InstanceData): Ground truth of 3D instance
+        - ``gt_instances_3d`` (InstanceData): Ground truth of 3D instance
           annotations.
-        - ``gt_instances``(InstanceData): Ground truth of 2D instance
+        - ``gt_instances`` (InstanceData): Ground truth of 2D instance
           annotations.
-        - ``pred_instances_3d``(InstanceData): 3D instances of model
+        - ``pred_instances_3d`` (InstanceData): 3D instances of model
           predictions.
           - For point-cloud 3D object detection task whose input modality
             is `use_lidar=True, use_camera=False`, the 3D predictions results
@@ -30,29 +30,29 @@ class Det3DDataSample(DetDataSample):
           - For vision-only (monocular/multi-view) 3D object detection task
             whose input modality is `use_lidar=False, use_camera=True`, the 3D
             predictions are saved in `pred_instances_3d`.
-        - ``pred_instances``(InstanceData): 2D instances of model
+        - ``pred_instances`` (InstanceData): 2D instances of model
           predictions.
           - For multi-modality 3D detection task whose input modality is
             `use_lidar=True, use_camera=True`, the 2D predictions
             are saved in `pred_instances`.
-        - ``pts_pred_instances_3d``(InstanceData): 3D instances of model
+        - ``pts_pred_instances_3d`` (InstanceData): 3D instances of model
           predictions based on point cloud.
           - For multi-modality 3D detection task whose input modality is
             `use_lidar=True, use_camera=True`, the 3D predictions based on
             point cloud are saved in `pts_pred_instances_3d` to distinguish
             with `img_pred_instances_3d` which based on image.
-        - ``img_pred_instances_3d``(InstanceData): 3D instances of model
+        - ``img_pred_instances_3d`` (InstanceData): 3D instances of model
           predictions based on image.
           - For multi-modality 3D detection task whose input modality is
             `use_lidar=True, use_camera=True`, the 3D predictions based on
             image are saved in `img_pred_instances_3d` to distinguish with
             `pts_pred_instances_3d` which based on point cloud.
-        - ``gt_pts_seg``(PointData): Ground truth of point cloud
+        - ``gt_pts_seg`` (PointData): Ground truth of point cloud
           segmentation.
-        - ``pred_pts_seg``(PointData): Prediction of point cloud
+        - ``pred_pts_seg`` (PointData): Prediction of point cloud
           segmentation.
-        - ``eval_ann_info``(dict or None): Raw annotation, which will be passed
-          to evaluator and do the online evaluation.
+        - ``eval_ann_info`` (dict or None): Raw annotation, which will be
+          passed to evaluator and do the online evaluation.
 
     Examples:
     >>> import torch
@@ -71,16 +71,12 @@ class Det3DDataSample(DetDataSample):
     >>> assert 'img_shape' in data_sample.gt_instances_3d.metainfo_keys()
     >>> print(data_sample)
     <Det3DDataSample(
-
         META INFORMATION
-
         DATA FIELDS
         _gt_instances_3d: <InstanceData(
-
             META INFORMATION
             pad_shape: (800, 1216, 3)
             img_shape: (800, 1196, 3)
-
             DATA FIELDS
             labels_3d: tensor([0, 0, 1, 0, 2])
             bboxes_3d: BaseInstance3DBoxes(
@@ -91,11 +87,9 @@ class Det3DDataSample(DetDataSample):
                     [0.9693, 0.5315, 0.4642, 0.9079, 0.2481, 0.1781, 0.9557]]))
         ) at 0x7fb0d9354280>
         gt_instances_3d: <InstanceData(
-
             META INFORMATION
             pad_shape: (800, 1216, 3)
             img_shape: (800, 1196, 3)
-
             DATA FIELDS
             labels_3d: tensor([0, 0, 1, 0, 2])
             bboxes_3d: BaseInstance3DBoxes(
@@ -136,22 +130,16 @@ class Det3DDataSample(DetDataSample):
     >>> data_sample.gt_pts_seg = PointData(**gt_pts_seg_data)
     >>> print(data_sample)
     <Det3DDataSample(
-
         META INFORMATION
-
         DATA FIELDS
         gt_pts_seg: <PointData(
-
                 META INFORMATION
-
                 DATA FIELDS
                 pts_instance_mask: tensor([0.0576, 0.3067])
                 pts_semantic_mask: tensor([0.9267, 0.7455])
             ) at 0x7f654a9c1590>
         _gt_pts_seg: <PointData(
-
                 META INFORMATION
-
                 DATA FIELDS
                 pts_instance_mask: tensor([0.0576, 0.3067])
                 pts_semantic_mask: tensor([0.9267, 0.7455])
