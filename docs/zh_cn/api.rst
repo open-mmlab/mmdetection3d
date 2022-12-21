@@ -1,10 +1,10 @@
 mmdet3d.apis
-----------------
+--------------
 .. automodule:: mmdet3d.apis
     :members:
 
 mmdet3d.datasets
-----------------
+--------------
 
 datasets
 ^^^^^^^^^^
@@ -17,7 +17,7 @@ transforms
     :members:
 
 mmdet3d.engine
-----------------
+--------------
 
 hooks
 ^^^^^^^^^^
@@ -25,21 +25,21 @@ hooks
     :members:
 
 mmdet3d.evaluation
-----------------------
+--------------------
 
 functional
 ^^^^^^^^^^^^^^^^^
-.. automodule:: mmdet3d.engine.functional
+.. automodule:: mmdet3d.evaluation.functional
     :members:
 
 metrics
 ^^^^^^^^^^
-.. automodule:: mmdet3d.engine.metrics
+.. automodule:: mmdet3d.evaluation.metrics
     :members:
 
 
 mmdet3d.models
-----------------
+--------------
 
 backbones
 ^^^^^^^^^^^^^^^^^^
@@ -150,6 +150,6 @@ mmdet3d.utils
     :members:
 
 mmdet3d.visualization
----------------------
+--------------------
 .. automodule:: mmdet3d.visualization
     :members:
