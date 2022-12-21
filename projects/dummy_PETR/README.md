@@ -16,7 +16,7 @@ This is an implementation of *PETR*.
 In MMDet3D's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/example_project/configs/projects/dummy_PETR/config/petr/petr_vovnet_gridmask_p4_800x320.py
+python tools/train.py projects/dummy_PETR/config/petr/petr_vovnet_gridmask_p4_800x320.py
 ```
 
 ### Testing commands

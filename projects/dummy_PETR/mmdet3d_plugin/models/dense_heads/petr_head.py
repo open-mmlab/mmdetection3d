@@ -22,6 +22,7 @@ from mmdet.models.layers.transformer import inverse_sigmoid
 from mmdet.models.utils import multi_apply
 # from mmdet import reduce_mean
 from mmengine.model.weight_init import bias_init_with_prob
+from mmengine.structures import InstanceData
 
 from mmdet3d.registry import MODELS, TASK_UTILS
 
@@ -565,8 +566,10 @@ class PETRHead(AnchorFreeHead):
         # assigner and sampler
         assign_result = self.assigner.assign(bbox_pred, cls_score, gt_bboxes,
                                              gt_labels, gt_bboxes_ignore)
-        sampling_result = self.sampler.sample(assign_result, bbox_pred,
-                                              gt_bboxes)
+        pred_instance_3d = InstanceData(priors=bbox_pred)
+        gt_instances_3d = InstanceData(bboxes_3d=gt_bboxes)
+        sampling_result = self.sampler.sample(assign_result, pred_instance_3d,
+                                              gt_instances_3d)
         pos_inds = sampling_result.pos_inds
         neg_inds = sampling_result.neg_inds
 
