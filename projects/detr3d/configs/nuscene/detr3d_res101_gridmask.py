@@ -196,7 +196,7 @@ total_epochs = 24
 evaluation = dict(interval=2, pipeline=test_pipeline)
 checkpoint_config = dict(interval=1, max_keep_ckpts=1)
 runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
-load_from = 'ckpts/fcos3d.pth'
+load_from='pretrained/fcos3d.pth'
 
 # mAP: 0.3504
 # mATE: 0.7669

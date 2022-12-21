@@ -11,7 +11,7 @@ point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 voxel_size = [0.2, 0.2, 8]
 
 img_norm_cfg = dict(
-    mean=[103.530, 116.280, 123.675], std=[1.0, 1.0, 1.0], to_rgb=False)
+    mean=[103.530, 116.280, 123.675], std=[57.375, 57.120, 58.395], to_rgb=False)
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -23,27 +23,23 @@ input_modality = dict(
     use_camera=True,
     use_radar=False,
     use_map=False,
-    use_external=False)
+    use_external=True)
 
 model = dict(
     type='Detr3D_old',
     use_grid_mask=True,
     img_backbone=dict(
-        type='ResNet',
-        depth=101,
-        num_stages=4,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN2d', requires_grad=False),
+        type='VoVNet',
+        spec_name='V-99-eSE',
         norm_eval=True,
-        style='caffe',
-        dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, False, True, True)),
+        frozen_stages=1,
+        input_ch=3,
+        out_features=['stage2', 'stage3', 'stage4', 'stage5']),
     img_neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[256, 512, 768, 1024],
         out_channels=256,
-        start_level=1,
+        start_level=0,
         add_extra_convs='on_output',
         num_outs=4,
         relu_before_extra_convs=True),
@@ -55,6 +51,7 @@ model = dict(
         sync_cls_avg_factor=True,
         with_box_refine=True,
         as_two_stage=False,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
         transformer=dict(
             type='Detr3DTransformer',
             decoder=dict(
@@ -115,6 +112,7 @@ model = dict(
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nus_rc2/'
 
+file_client_args = dict(backend='disk')
 
 train_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
@@ -150,18 +148,21 @@ data = dict(
     samples_per_gpu=1,
     workers_per_gpu=4,
     train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_train.pkl',
-        pipeline=train_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=False,
-        use_valid_flag=True,
-        # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-        # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-        box_type_3d='LiDAR'),
-   val=dict(
+        type='CBGSDataset',
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file=data_root + 'nuscenes_infos_trainval.pkl',
+            pipeline=train_pipeline,
+            classes=class_names,
+            modality=input_modality,
+            test_mode=False,
+            use_valid_flag=True,
+            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
+            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
+            box_type_3d='LiDAR'),
+    ),
+    val=dict(
         data_root=data_root,
         ann_file=data_root + 'nuscenes_infos_val.pkl',
         pipeline=test_pipeline, 
@@ -192,31 +193,29 @@ lr_config = dict(
     min_lr_ratio=1e-3)
 total_epochs = 24
 evaluation = dict(interval=2, pipeline=test_pipeline)
-checkpoint_config = dict(interval=1, max_keep_ckpts=1)
+
 runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
-load_from = 'ckpts/fcos3d.pth'
+load_from='pretrained/dd3d_det_final.pth'
 
-# The model is trained on mmdet3d-v0.17.3
-# and is evaluated on mmdet3d-v1.0.0rc2
-# Evaluating bboxes of pts_bbox
-# mAP: 0.3470
-# mATE: 0.7653
-# mASE: 0.2678
-# mAOE: 0.3920
-# mAVE: 0.8759
-# mAAE: 0.2108
-# NDS: 0.4223
-# Eval time: 187.8s
+find_unused_parameters=True
 
+# mAP: 0.8348
+# mATE: 0.3225
+# mASE: 0.1417
+# mAOE: 0.0677
+# mAVE: 0.2204
+# mAAE: 0.1822
+# NDS: 0.8239
+# Eval time: 140.0s
 # Per-class results:
 # Object Class    AP      ATE     ASE     AOE     AVE     AAE
-# car     0.546   0.544   0.152   0.070   0.911   0.208
-# truck   0.286   0.834   0.212   0.113   1.004   0.231
-# bus     0.346   0.871   0.196   0.116   2.061   0.382
-# trailer 0.167   1.106   0.233   0.549   0.687   0.093
-# construction_vehicle    0.082   1.061   0.449   0.962   0.120   0.384
-# pedestrian      0.424   0.700   0.295   0.512   0.462   0.194
-# motorcycle      0.341   0.710   0.259   0.488   1.291   0.176
-# bicycle 0.278   0.697   0.275   0.588   0.473   0.019
-# traffic_cone    0.529   0.526   0.313   nan     nan     nan
-# barrier 0.471   0.603   0.292   0.131   nan     nan
+# car     0.873   0.256   0.114   0.033   0.260   0.195
+# truck   0.833   0.327   0.115   0.033   0.191   0.216
+# bus     0.843   0.323   0.104   0.027   0.293   0.245
+# trailer 0.779   0.394   0.116   0.041   0.136   0.123
+# construction_vehicle    0.784   0.405   0.173   0.079   0.137   0.320
+# pedestrian      0.805   0.380   0.203   0.181   0.244   0.136
+# motorcycle      0.821   0.337   0.150   0.085   0.347   0.214
+# bicycle 0.871   0.271   0.169   0.079   0.154   0.009
+# traffic_cone    0.877   0.241   0.162   nan     nan     nan
+# barrier 0.862   0.289   0.110   0.050   nan     nan

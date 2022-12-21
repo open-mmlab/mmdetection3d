@@ -4,8 +4,6 @@ _base_ = [
 ]
 
 custom_imports = dict(imports=['projects.detr3d.mmdet3d_plugin'])
-# plugin=True
-# plugin_dir='projects/detr3d/mmdet3d_plugin/'
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
@@ -28,7 +26,7 @@ input_modality = dict(
     use_external=False)
 
 model = dict(
-    type='Detr3D',
+    type='Detr3D_old',
     use_grid_mask=True,
     img_backbone=dict(
         type='ResNet',
@@ -115,7 +113,7 @@ model = dict(
             pc_range=point_cloud_range))))
 
 dataset_type = 'NuScenesDataset'
-data_root = 'data/nus_rc2/' 
+data_root = 'data/nus_rc2/'
 
 
 train_pipeline = [
@@ -147,24 +145,23 @@ test_pipeline = [
         ])
 ]
 
+
 data = dict(
     samples_per_gpu=1,
     workers_per_gpu=4,
     train=dict(
-        type='CBGSDataset',
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'nuscenes_infos_train.pkl',
-            pipeline=train_pipeline,
-            classes=class_names,
-            modality=input_modality,
-            test_mode=False,
-            use_valid_flag=True,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
-    val=dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file=data_root + 'nuscenes_infos_train.pkl',
+        pipeline=train_pipeline,
+        classes=class_names,
+        modality=input_modality,
+        test_mode=False,
+        use_valid_flag=True,
+        # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
+        # and box_type_3d='Depth' in sunrgbd and scannet dataset.
+        box_type_3d='LiDAR'),
+   val=dict(
         data_root=data_root,
         ann_file=data_root + 'nuscenes_infos_val.pkl',
         pipeline=test_pipeline, 
@@ -197,4 +194,29 @@ total_epochs = 24
 evaluation = dict(interval=2, pipeline=test_pipeline)
 checkpoint_config = dict(interval=1, max_keep_ckpts=1)
 runner = dict(type='EpochBasedRunner', max_epochs=total_epochs)
-load_from = 'ckpts/fcos3d.pth'
+load_from='pretrained/fcos3d.pth'
+
+# The model is trained on mmdet3d-v0.17.3
+# and is evaluated on mmdet3d-v1.0.0rc2
+# Evaluating bboxes of pts_bbox
+# mAP: 0.3470
+# mATE: 0.7653
+# mASE: 0.2678
+# mAOE: 0.3920
+# mAVE: 0.8759
+# mAAE: 0.2108
+# NDS: 0.4223
+# Eval time: 187.8s
+
+# Per-class results:
+# Object Class    AP      ATE     ASE     AOE     AVE     AAE
+# car     0.546   0.544   0.152   0.070   0.911   0.208
+# truck   0.286   0.834   0.212   0.113   1.004   0.231
+# bus     0.346   0.871   0.196   0.116   2.061   0.382
+# trailer 0.167   1.106   0.233   0.549   0.687   0.093
+# construction_vehicle    0.082   1.061   0.449   0.962   0.120   0.384
+# pedestrian      0.424   0.700   0.295   0.512   0.462   0.194
+# motorcycle      0.341   0.710   0.259   0.488   1.291   0.176
+# bicycle 0.278   0.697   0.275   0.588   0.473   0.019
+# traffic_cone    0.529   0.526   0.313   nan     nan     nan
+# barrier 0.471   0.603   0.292   0.131   nan     nan
