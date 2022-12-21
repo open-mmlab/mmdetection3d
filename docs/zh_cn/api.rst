@@ -1,16 +1,15 @@
 mmdet3d.apis
---------------
+----------------
 .. automodule:: mmdet3d.apis
     :members:
 
 mmdet3d.datasets
---------------
+----------------
 
 datasets
 ^^^^^^^^^^
 .. automodule:: mmdet3d.datasets
     :members:
-
 
 transforms
 ^^^^^^^^^^^^
@@ -18,18 +17,18 @@ transforms
     :members:
 
 mmdet3d.engine
---------------
+----------------
 
-schedulers
+hooks
 ^^^^^^^^^^
-.. automodule:: mmdet3d.engine.schedulers
+.. automodule:: mmdet3d.engine.hooks
     :members:
 
 mmdet3d.evaluation
---------------
+----------------------
 
 functional
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.engine.functional
     :members:
 
@@ -40,26 +39,25 @@ metrics
 
 
 mmdet3d.models
---------------
+----------------
 
 backbones
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.backbones
     :members:
 
 data_preprocessors
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.data_preprocessors
     :members:
 
 decode_heads
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.decode_heads
     :members:
 
-
 dense_heads
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.dense_heads
     :members:
 
@@ -79,7 +77,7 @@ losses
     :members:
 
 middle_encoders
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.middle_encoders
     :members:
 
@@ -89,22 +87,22 @@ necks
     :members:
 
 roi_heads
-^^^^^^^^^^
+^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.roi_heads
     :members:
 
 segmentors
-^^^^^^^^^^
+^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.segmentors
     :members:
 
 task_modules
-^^^^^^^^^^
+^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.task_modules
     :members:
 
 test_time_augs
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.test_time_augs
     :members:
 
@@ -114,15 +112,15 @@ utils
     :members:
 
 voxel_encoders
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.models.voxel_encoders
     :members:
 
 mmdet3d.structures
---------------
+--------------------
 
 structures
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.structures
     :members:
 
@@ -141,12 +139,17 @@ points
 .. automodule:: mmdet3d.structures.points
     :members:
 
-mmdet3d.utils
---------------
-.. automodule::mmdet3d.utils
+mmdet3d.testing
+----------------
+.. automodule:: mmdet3d.testing
     :members:
 
-mmdet3d.visulization
+mmdet3d.utils
 --------------
-.. automodule::mmdet3d.visulization
+.. automodule:: mmdet3d.utils
+    :members:
+
+mmdet3d.visualization
+---------------------
+.. automodule:: mmdet3d.visualization
     :members:
