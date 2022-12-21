@@ -149,7 +149,7 @@ mmdet3d.utils
 .. automodule:: mmdet3d.utils
     :members:
 
-mmdet3d.visulization
+mmdet3d.visualization
 ---------------------
-.. automodule:: mmdet3d.visulization
+.. automodule:: mmdet3d.visualization
     :members:
