@@ -1,45 +1,45 @@
 mmdet3d.apis
---------------
+----------------
 .. automodule:: mmdet3d.apis
     :members:
 
 mmdet3d.datasets
---------------
+----------------
 
 datasets
-^^^^^^^^^^
+^^^^^^^^^^^^
 .. automodule:: mmdet3d.datasets
     :members:
 
 transforms
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.datasets.transforms
     :members:
 
 mmdet3d.engine
---------------
+----------------
 
 hooks
-^^^^^^^^^^
+^^^^^^^^^^^^
 .. automodule:: mmdet3d.engine.hooks
     :members:
 
 mmdet3d.evaluation
---------------------
+----------------------
 
 functional
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 .. automodule:: mmdet3d.evaluation.functional
     :members:
 
 metrics
-^^^^^^^^^^
+^^^^^^^^^^^^
 .. automodule:: mmdet3d.evaluation.metrics
     :members:
 
 
 mmdet3d.models
---------------
+----------------
 
 backbones
 ^^^^^^^^^^^^^^^^^^
@@ -117,7 +117,7 @@ voxel_encoders
     :members:
 
 mmdet3d.structures
---------------------
+----------------------
 
 structures
 ^^^^^^^^^^^^^^^^^
@@ -140,16 +140,16 @@ points
     :members:
 
 mmdet3d.testing
-----------------
+------------------
 .. automodule:: mmdet3d.testing
     :members:
 
 mmdet3d.utils
---------------
+----------------
 .. automodule:: mmdet3d.utils
     :members:
 
 mmdet3d.visualization
---------------------
+----------------------
 .. automodule:: mmdet3d.visualization
     :members:
