@@ -1,10 +1,10 @@
 mmdet3d.apis
-----------------
+------------------
 .. automodule:: mmdet3d.apis
     :members:
 
 mmdet3d.datasets
-----------------
+------------------
 
 datasets
 ^^^^^^^^^^^^
@@ -36,7 +36,6 @@ metrics
 ^^^^^^^^^^^^
 .. automodule:: mmdet3d.evaluation.metrics
     :members:
-
 
 mmdet3d.models
 ----------------
