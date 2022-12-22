@@ -1,18 +1,3 @@
-import copy
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from mmcv.cnn import Linear, bias_init_with_prob
-from mmcv.runner import force_fp32
-                        
-from mmdet.core import (multi_apply, multi_apply, reduce_mean)
-from mmdet.models.utils.transformer import inverse_sigmoid
-from mmdet.models import HEADS
-from mmdet.models.dense_heads import DETRHead
-from mmdet3d.core.bbox.coders import build_bbox_coder
-from projects.detr3d.mmdet3d_plugin.core.bbox.util import normalize_bbox
-
 
 @HEADS.register_module()
 class Detr3DHead(DETRHead):
@@ -44,7 +29,7 @@ class Detr3DHead(DETRHead):
 
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.pc_range = self.bbox_coder.pc_range
-        self.num_cls_fcs = num_cls_fcs - 1  #？？？这不就没用了么...
+        self.num_cls_fcs = num_cls_fcs - 1
         super(Detr3DHead, self).__init__(
             *args, transformer=transformer, **kwargs)
 
@@ -81,7 +66,7 @@ class Detr3DHead(DETRHead):
             self.reg_branches = _get_clones(reg_branch, num_pred)
         else:
             self.cls_branches = nn.ModuleList(
-                [fc_cls for _ in range(num_pred)])      #so shared weights？
+                [fc_cls for _ in range(num_pred)])
             self.reg_branches = nn.ModuleList(
                 [reg_branch for _ in range(num_pred)])
 
@@ -103,7 +88,6 @@ class Detr3DHead(DETRHead):
             mlvl_feats (tuple[Tensor]): Features from the upstream
                 network, each is a 5D-tensor with shape
                 (B, N, C, H, W).
-            kwargs: clear_prev = False, prev_img_feat=None, prev_img_metas=None(zltjohn)
         Returns:
             all_cls_scores (Tensor): Outputs from the classification head, \
                 shape [nb_dec, bs, num_query, cls_out_channels]. Note \
@@ -111,7 +95,7 @@ class Detr3DHead(DETRHead):
             all_bbox_preds (Tensor): Sigmoid outputs from the regression \
                 head with normalized coordinate format (cx, cy, w, l, cz, h, theta, vx, vy). \
                 Shape [nb_dec, bs, num_query, 9].
-        """         ###为什么是theta，不是costheta sintheta么？？
+        """
 
         query_embeds = self.query_embedding.weight
         hs, init_reference, inter_references = self.transformer(
@@ -121,7 +105,7 @@ class Detr3DHead(DETRHead):
             img_metas=img_metas,
             **kwargs
         )
-        hs = hs.permute(0, 2, 1, 3)#what is this
+        hs = hs.permute(0, 2, 1, 3)
         outputs_classes = []
         outputs_coords = []
 
@@ -131,16 +115,14 @@ class Detr3DHead(DETRHead):
             else:
                 reference = inter_references[lvl - 1]
             reference = inverse_sigmoid(reference)
-            outputs_class = self.cls_branches[lvl](hs[lvl])     #multiple forward？ 这里主要还是把format同步成target的样子
+            outputs_class = self.cls_branches[lvl](hs[lvl])
             tmp = self.reg_branches[lvl](hs[lvl])
-            # print('tmp shape: {}'.format(tmp.shape))  # tmp shape: torch.Size([1, 900, 8])
             # TODO: check the shape of reference
             assert reference.shape[-1] == 3
             tmp[..., 0:2] += reference[..., 0:2]
             tmp[..., 0:2] = tmp[..., 0:2].sigmoid()
             tmp[..., 4:5] += reference[..., 2:3]
             tmp[..., 4:5] = tmp[..., 4:5].sigmoid()
-
             tmp[..., 0:1] = (tmp[..., 0:1] * (self.pc_range[3] - self.pc_range[0]) + self.pc_range[0])
             tmp[..., 1:2] = (tmp[..., 1:2] * (self.pc_range[4] - self.pc_range[1]) + self.pc_range[1])
             tmp[..., 4:5] = (tmp[..., 4:5] * (self.pc_range[5] - self.pc_range[2]) + self.pc_range[2])
@@ -150,7 +132,6 @@ class Detr3DHead(DETRHead):
             outputs_classes.append(outputs_class)
             outputs_coords.append(outputs_coord)
 
-        # print('  '*3+'head: restrore outputs:',time.time()-__,'ms')
         outputs_classes = torch.stack(outputs_classes)
         outputs_coords = torch.stack(outputs_coords)
         outs = {
@@ -162,10 +143,10 @@ class Detr3DHead(DETRHead):
         return outs
 
     def _get_target_single(self,
-                           cls_score,   #[query, 1]
-                           bbox_pred,   #[query, 8]
-                           gt_labels,   #[num_gt, 1]
-                           gt_bboxes,   #[num_gt, 7]
+                           cls_score,
+                           bbox_pred,
+                           gt_labels,
+                           gt_bboxes,
                            gt_bboxes_ignore=None):
         """"Compute regression and classification targets for one image.
         Outputs from a single decoder layer of a single feature level are used.
@@ -205,18 +186,15 @@ class Detr3DHead(DETRHead):
                                     self.num_classes,
                                     dtype=torch.long)
         labels[pos_inds] = gt_labels[sampling_result.pos_assigned_gt_inds]
-        label_weights = gt_bboxes.new_ones(num_bboxes)  #all query should learn its classification
+        label_weights = gt_bboxes.new_ones(num_bboxes)
 
         # bbox targets
         bbox_targets = torch.zeros_like(bbox_pred)[..., :self.code_size-1]#theta in gt_bbox here is still a single scalar
         bbox_weights = torch.zeros_like(bbox_pred)
         bbox_weights[pos_inds] = 1.0        #only matched query will learn from bbox coord
-        # if (gt_labels.shape[0]==0):
-        #     breakpoint()
         # DETR
         if sampling_result.pos_gt_bboxes.shape[0]==0: #fix empty gt bug in multi gpu training
             sampling_result.pos_gt_bboxes = sampling_result.pos_gt_bboxes.reshape(0,self.code_size-1)
-
         bbox_targets[pos_inds] = sampling_result.pos_gt_bboxes
         return (labels, label_weights, bbox_targets, bbox_weights, 
                 pos_inds, neg_inds)
@@ -258,13 +236,13 @@ class Detr3DHead(DETRHead):
         """
         assert gt_bboxes_ignore_list is None, \
             'Only supports for gt_bboxes_ignore setting to None.'
-        num_imgs = len(cls_scores_list) #bs
+        num_imgs = len(cls_scores_list)
         gt_bboxes_ignore_list = [
             gt_bboxes_ignore_list for _ in range(num_imgs)
         ]
 
         (labels_list, label_weights_list, bbox_targets_list,
-         bbox_weights_list, pos_inds_list, neg_inds_list) = multi_apply(        #get targets each frame in batch, here bs = 1
+         bbox_weights_list, pos_inds_list, neg_inds_list) = multi_apply(
              self._get_target_single, cls_scores_list, bbox_preds_list,
              gt_labels_list, gt_bboxes_list, gt_bboxes_ignore_list)
         num_total_pos = sum((inds.numel() for inds in pos_inds_list))
@@ -296,14 +274,14 @@ class Detr3DHead(DETRHead):
             dict[str, Tensor]: A dictionary of loss components for outputs from
                 a single decoder layer.
         """
-        num_imgs = cls_scores.size(0)#batch size
+        num_imgs = cls_scores.size(0)
         cls_scores_list = [cls_scores[i] for i in range(num_imgs)]
-        bbox_preds_list = [bbox_preds[i] for i in range(num_imgs)]#tensor to list of tensor
+        bbox_preds_list = [bbox_preds[i] for i in range(num_imgs)]
         cls_reg_targets = self.get_targets(cls_scores_list, bbox_preds_list,
                                            gt_bboxes_list, gt_labels_list, 
                                            gt_bboxes_ignore_list)
         (labels_list, label_weights_list, bbox_targets_list, bbox_weights_list,
-         num_total_pos, num_total_neg) = cls_reg_targets    #here we get [bs, query, code_size-1]
+         num_total_pos, num_total_neg) = cls_reg_targets
         labels = torch.cat(labels_list, 0)
         label_weights = torch.cat(label_weights_list, 0)
         bbox_targets = torch.cat(bbox_targets_list, 0)
@@ -321,7 +299,6 @@ class Detr3DHead(DETRHead):
         cls_avg_factor = max(cls_avg_factor, 1)
         loss_cls = self.loss_cls(
             cls_scores, labels, label_weights, avg_factor=cls_avg_factor)
-        # weights is query-wise 用于为每个query的loss加权，加权后统计loss和，然后用avg_factor除一下。
         # Compute the average number of gt boxes accross all gpus, for
         # normalization purposes
         num_total_pos = loss_cls.new_tensor([num_total_pos])
@@ -384,8 +361,9 @@ class Detr3DHead(DETRHead):
 
         num_dec_layers = len(all_cls_scores)
         device = gt_labels_list[0].device
+        # turn bottm center into gravity center, key step
         gt_bboxes_list = [torch.cat(
-            (gt_bboxes.gravity_center, gt_bboxes.tensor[:, 3:]),        # turn bottm center into gravity center, key step
+            (gt_bboxes.gravity_center, gt_bboxes.tensor[:, 3:]),
             dim=1).to(device) for gt_bboxes in gt_bboxes_list]
 
         all_gt_bboxes_list = [gt_bboxes_list for _ in range(num_dec_layers)]
@@ -393,8 +371,8 @@ class Detr3DHead(DETRHead):
         all_gt_bboxes_ignore_list = [
             gt_bboxes_ignore for _ in range(num_dec_layers)
         ]
-
-        losses_cls, losses_bbox = multi_apply(          #calculate loss for each decoder layer
+        #calculate loss for each decoder layer
+        losses_cls, losses_bbox = multi_apply(
             self.loss_single, all_cls_scores, all_bbox_preds,
             all_gt_bboxes_list, all_gt_labels_list, 
             all_gt_bboxes_ignore_list)
@@ -411,7 +389,6 @@ class Detr3DHead(DETRHead):
                                  gt_bboxes_list, binary_labels_list, gt_bboxes_ignore)
             loss_dict['enc_loss_cls'] = enc_loss_cls
             loss_dict['enc_loss_bbox'] = enc_losses_bbox
-            print('detr3d now is two stage')
 
         # loss from the last decoder layer
         loss_dict['loss_cls'] = losses_cls[-1]
@@ -435,8 +412,8 @@ class Detr3DHead(DETRHead):
         Returns:
             list[dict]: Decoded bbox, scores and labels after nms.
         """
-        preds_dicts = self.bbox_coder.decode(preds_dicts)   #sin theta & cosine theta ---> theta
-        num_samples = len(preds_dicts)  #batch size 
+        preds_dicts = self.bbox_coder.decode(preds_dicts)
+        num_samples = len(preds_dicts)
         ret_list = []
         for i in range(num_samples):
             preds = preds_dicts[i]

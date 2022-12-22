@@ -82,7 +82,6 @@ class Detr3DTransformer(BaseModule):
         Args:
             mlvl_feats (list(Tensor)): Input queries from
                 different level. Each element has shape
-                xxxxxx[bs, embed_dims, h, w].xxxxxxxxx
                 (B, N, C, H, W).
             query_embed (Tensor): The query embedding for decoder,
                 with shape [num_query, c].
@@ -189,7 +188,7 @@ class Detr3DTransformerDecoder(TransformerLayerSequence):
                     ..., 4:5] + inverse_sigmoid(reference_points[..., 2:3])
                 new_reference_points = new_reference_points.sigmoid()
 
-                reference_points = new_reference_points.detach()    #ref point之间不参与back prop，是不是每层有自己的loss？
+                reference_points = new_reference_points.detach()
 
             output = output.permute(1, 0, 2)
             if self.return_intermediate:
@@ -233,8 +232,7 @@ class Detr3DCrossAtten(BaseModule):
                  dropout=0.1,
                  norm_cfg=None,
                  init_cfg=None,
-                 batch_first=False,
-                 waymo_with_nuscene=False):
+                 batch_first=False):
         super(Detr3DCrossAtten, self).__init__(init_cfg)
         if embed_dims % num_heads != 0:
             raise ValueError(f'embed_dims must be divisible by num_heads, '
@@ -280,7 +278,6 @@ class Detr3DCrossAtten(BaseModule):
             nn.ReLU(inplace=True),
         )
         self.batch_first = batch_first
-        self.waymo_with_nuscene = waymo_with_nuscene
         self.init_weight()
 
     def init_weight(self):
@@ -338,21 +335,17 @@ class Detr3DCrossAtten(BaseModule):
             value, reference_points, self.pc_range, kwargs['img_metas'])
         output = torch.nan_to_num(output)
         mask = torch.nan_to_num(mask)
-        if self.waymo_with_nuscene == True:
-            num_view = mask.shape[3]
-            attention_weights = attention_weights[:,:,:, :num_view,...]
         attention_weights = attention_weights.sigmoid() * mask
         output = output * attention_weights
         output = output.sum(-1).sum(-1).sum(-1)
         output = output.permute(2, 0, 1)
-        output = self.output_proj(output)#还调整么。。。后面有ffn按理说应该够用了吧？
+        output = self.output_proj(output)
         # (num_query, bs, embed_dims)
         pos_feat = self.position_encoder(inverse_sigmoid(reference_points_3d)).permute(1, 0, 2)
         return self.dropout(output) + inp_residual + pos_feat
 
 
-def feature_sampling(mlvl_feats, ref_pt, pc_range, img_metas, return_depth=False):
-    # breakpoint()
+def feature_sampling(mlvl_feats, ref_pt, pc_range, img_metas):
     lidar2img = [meta['lidar2img'] for meta in img_metas]
     lidar2img = np.asarray(lidar2img)
     lidar2img = ref_pt.new_tensor(lidar2img)                                        # (B, N, 4, 4)

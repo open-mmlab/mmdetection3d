@@ -1,9 +1,3 @@
-import cv2
-import numpy as np
-import time
-import torchvision.utils as vutils
-import torch
-import os
 from mmcv.runner import force_fp32, auto_fp16
 from mmdet.models import DETECTORS
 from mmdet3d.core import bbox3d2result
@@ -29,22 +23,15 @@ class Detr3D(MVXTwoStageDetector):
                  img_rpn_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None,
-                 debug_name=None,
-                 gtvis_range = [0,105],
-                 vis_count=None):
+                 pretrained=None):
         super(Detr3D,
               self).__init__(pts_voxel_layer, pts_voxel_encoder,
                              pts_middle_encoder, pts_fusion_layer,
                              img_backbone, pts_backbone, img_neck, pts_neck,
                              pts_bbox_head, img_roi_head, img_rpn_head,
                              train_cfg, test_cfg, pretrained)
-        # breakpoint()
         self.grid_mask = GridMask(True, True, rotate=1, offset=False, ratio=0.5, mode=1, prob=0.7)
         self.use_grid_mask = use_grid_mask
-        self.debug_name = debug_name
-        self.gtvis_range = gtvis_range
-        self.vis_count = vis_count
 
     def extract_img_feat(self, img, img_metas):
         """Extract features of images."""
@@ -69,7 +56,6 @@ class Detr3D(MVXTwoStageDetector):
             return None
         if self.with_img_neck:
             img_feats = self.img_neck(img_feats)
-        ## img_feats == super().extract_img_feat(self,img,img_metas)
         img_feats_reshaped = []
         for img_feat in img_feats:
             BN, C, H, W = img_feat.size()
