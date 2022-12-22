@@ -177,7 +177,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='LidarBox3dVersionTransfrom'),
-    dict(type='AddPETR'),
+    dict(type='AddCamInfo'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     dict(
@@ -197,7 +197,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
-    dict(type='AddPETR'),
+    dict(type='AddCamInfo'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
         training=False),

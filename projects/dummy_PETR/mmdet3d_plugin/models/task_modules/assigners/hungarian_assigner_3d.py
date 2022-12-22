@@ -137,9 +137,6 @@ class HungarianAssigner3D(BaseAssigner):
         assigned_gt_inds[:] = 0
         # assign foregrounds based on matching results
         assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
-        # print(matched_row_inds, matched_col_inds)
-        # print(gt_labels.shape)
-        # print(gt_labels)
         assigned_labels[matched_row_inds] = gt_labels[matched_col_inds]
         return AssignResult(
             num_gts, assigned_gt_inds, None, labels=assigned_labels)

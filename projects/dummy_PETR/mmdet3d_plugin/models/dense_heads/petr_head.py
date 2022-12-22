@@ -14,13 +14,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import Conv2d, Linear
-# from mmcv.runner.fp16_utils import force_fp32
 from mmdet3d_plugin.structures.utils import normalize_bbox
 from mmdet.models.dense_heads.anchor_free_head import AnchorFreeHead
 from mmdet.models.layers import NormedLinear
 from mmdet.models.layers.transformer import inverse_sigmoid
 from mmdet.models.utils import multi_apply
-# from mmdet import reduce_mean
 from mmengine.model.weight_init import bias_init_with_prob
 from mmengine.structures import InstanceData
 
@@ -585,7 +583,6 @@ class PETRHead(AnchorFreeHead):
         bbox_targets = torch.zeros_like(bbox_pred)[..., :code_size]
         bbox_weights = torch.zeros_like(bbox_pred)
         bbox_weights[pos_inds] = 1.0
-        # print(gt_bboxes.size(), bbox_pred.size())
         # DETR
         bbox_targets[pos_inds] = sampling_result.pos_gt_bboxes
         return (labels, label_weights, bbox_targets, bbox_weights, pos_inds,
@@ -632,7 +629,7 @@ class PETRHead(AnchorFreeHead):
         gt_bboxes_ignore_list = [
             gt_bboxes_ignore_list for _ in range(num_imgs)
         ]
-
+        gt_labels_list = gt_labels_list[0]
         (labels_list, label_weights_list, bbox_targets_list, bbox_weights_list,
          pos_inds_list,
          neg_inds_list) = multi_apply(self._get_target_single, cls_scores_list,
@@ -718,7 +715,6 @@ class PETRHead(AnchorFreeHead):
         loss_bbox = torch.nan_to_num(loss_bbox)
         return loss_cls, loss_bbox
 
-    # @force_fp32(apply_to=('preds_dicts'))
     def loss_by_feat(self,
                      gt_bboxes_list,
                      gt_labels_list,
@@ -763,24 +759,15 @@ class PETRHead(AnchorFreeHead):
         device = gt_labels_list[0].device
 
         gt_bboxes_list = [
-            torch.cat(
-                (gt_bboxes_list.gravity_center, gt_bboxes_list.tensor[:, 3:]),
-                dim=1).to(device)
+            torch.cat((gt_bboxes.gravity_center, gt_bboxes.tensor[:, 3:]),
+                      dim=1).to(device) for gt_bboxes in gt_bboxes_list
         ]
-
-        # gt_bboxes_list = LiDARInstance3DBoxes(gt_bboxes_list)
-
-        # gt_bboxes_list = [
-        #     torch.cat((gt_bboxes.gravity_center, gt_bboxes.tensor[:, 3:]),
-        #               dim=1).to(device) for gt_bboxes in gt_bboxes_list
-        # ]
 
         all_gt_bboxes_list = [gt_bboxes_list for _ in range(num_dec_layers)]
         all_gt_labels_list = [[gt_labels_list] for _ in range(num_dec_layers)]
         all_gt_bboxes_ignore_list = [
             gt_bboxes_ignore for _ in range(num_dec_layers)
         ]
-        # print(all_gt_labels_list)
 
         losses_cls, losses_bbox = multi_apply(self.loss_by_feat_single,
                                               all_cls_scores, all_bbox_preds,
@@ -814,7 +801,6 @@ class PETRHead(AnchorFreeHead):
             num_dec_layer += 1
         return loss_dict
 
-    # @force_fp32(apply_to=('preds_dicts'))
     def get_bboxes(self, preds_dicts, img_metas, rescale=False):
         """Generate bboxes from bbox head predictions.
 

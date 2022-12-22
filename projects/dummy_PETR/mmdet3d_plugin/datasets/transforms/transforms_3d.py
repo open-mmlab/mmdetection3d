@@ -11,7 +11,7 @@ from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 
 
 @TRANSFORMS.register_module()
-class AddPETR(BaseTransform):
+class AddCamInfo(BaseTransform):
 
     def __init__(self, training: bool = True) -> None:
         self.training = training
@@ -43,9 +43,9 @@ class AddPETR(BaseTransform):
             # please use np.linalg.inv(lidar2cam_rt.T)
             # and modify the ResizeCropFlipImage
             # and LoadMultiViewImageFromMultiSweepsFiles.
-            lidar2img_rts.append(lidar2img_rt)  # Different!!!
-            intrinsics.append(viewpad)  # Exactly same!!!
-            extrinsics.append(lidar2cam_rt)  # Different!!!
+            lidar2img_rts.append(lidar2img_rt)
+            intrinsics.append(viewpad)
+            extrinsics.append(lidar2cam_rt)
 
         input_dict.update(
             dict(
@@ -86,7 +86,6 @@ class ResizeCropFlipImage(BaseTransform):
         N = len(imgs)
         new_imgs = []
         resize, resize_dims, crop, flip, rotate = self._sample_augmentation()
-        # print(results.keys())
         for i in range(N):
             img = Image.fromarray(np.uint8(imgs[i]))
             # augmentation (resize, crop, horizontal flip, rotate)

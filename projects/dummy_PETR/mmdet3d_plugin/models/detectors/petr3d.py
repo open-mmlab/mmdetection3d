@@ -16,8 +16,6 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures.ops import bbox3d2result
 from ..utils.grid_mask import GridMask
 
-# from mmcv.runner import auto_fp16, force_fp32
-
 
 @MODELS.register_module()
 class Petr3D(MVXTwoStageDetector):
@@ -51,9 +49,7 @@ class Petr3D(MVXTwoStageDetector):
         self.use_grid_mask = use_grid_mask
 
     def extract_img_feat(self, img, img_metas):
-        # print(img_metas)
         """Extract features of images."""
-        # print(img[0].size())
         if isinstance(img, list):
             img = torch.stack(img, dim=0)
 
@@ -116,7 +112,6 @@ class Petr3D(MVXTwoStageDetector):
 
         return losses
 
-    # @force_fp32(apply_to=('img', 'points'))
     def forward(self, mode='loss', **kwargs):
         """Calls either forward_train or forward_test depending on whether
         return_loss=True.
@@ -175,9 +170,8 @@ class Petr3D(MVXTwoStageDetector):
         img = inputs['imgs']
         batch_img_metas = [ds.metainfo for ds in data_samples]
         batch_gt_instances_3d = [ds.gt_instances_3d for ds in data_samples]
-        batch_gt_instances_3d = InstanceData.cat(batch_gt_instances_3d)
-        gt_bboxes_3d = batch_gt_instances_3d.bboxes_3d
-        gt_labels_3d = batch_gt_instances_3d.labels_3d
+        gt_bboxes_3d = [gt.bboxes_3d for gt in batch_gt_instances_3d]
+        gt_labels_3d = [gt.labels_3d for gt in batch_gt_instances_3d]
         gt_bboxes_ignore = None
 
         img_feats = self.extract_feat(img=img, img_metas=batch_img_metas)
@@ -201,10 +195,6 @@ class Petr3D(MVXTwoStageDetector):
                 raise TypeError('{} must be a list, but got {}'.format(
                     name, type(var)))
         img = [img] if img is None else img
-
-        # print(img)
-        # while 1:
-        #     a=1
 
         results_list_3d = self.simple_test(batch_img_metas, img, **kwargs)
 

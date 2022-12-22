@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .transforms.transforms_3d import (AddPETR, GlobalRotScaleTransImage,
+from .transforms.transforms_3d import (AddCamInfo, GlobalRotScaleTransImage,
                                        LidarBox3dVersionTransfrom,
                                        NormalizeMultiviewImage,
                                        PadMultiViewImage, ResizeCropFlipImage)
@@ -7,5 +7,5 @@ from .transforms.transforms_3d import (AddPETR, GlobalRotScaleTransImage,
 __all__ = [
     'GlobalRotScaleTransImage', 'LidarBox3dVersionTransfrom',
     'NormalizeMultiviewImage', 'PadMultiViewImage', 'ResizeCropFlipImage',
-    'AddPETR'
+    'AddCamInfo'
 ]
