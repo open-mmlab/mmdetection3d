@@ -125,7 +125,7 @@ class Petr3D(MVXTwoStageDetector):
         """
         if mode == 'loss':
             return self.forward_train(**kwargs)
-        else:
+        elif mode == 'predict':
             return self.forward_test(**kwargs)
 
     def forward_train(self,
