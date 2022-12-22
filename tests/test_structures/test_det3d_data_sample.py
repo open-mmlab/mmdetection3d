@@ -152,10 +152,3 @@ class TestDet3DDataSample(TestCase):
         assert 'pred_pts_seg' in det3d_data_sample
         del det3d_data_sample.pred_pts_seg
         assert 'pred_pts_seg' not in det3d_data_sample
-
-        eval_ann_info = dict(
-            pts_instance_mask=torch.rand(20), pts_semantic_mask=torch.rand(20))
-        det3d_data_sample.eval_ann_info = eval_ann_info
-        assert 'eval_ann_info' in det3d_data_sample
-        del det3d_data_sample.eval_ann_info
-        assert 'eval_ann_info' not in det3d_data_sample
