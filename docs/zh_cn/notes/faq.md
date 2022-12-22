@@ -8,11 +8,12 @@
 
 - MMDetection3D 需要的 MMEngine, MMCV 和 MMDetection 的版本列在了下面。请安装正确版本的 MMEngine、MMCV 和 MMDetection 以避免相关的安装问题。
 
-  | MMDetection3D 版本 |       MMEngine 版本        |         MMCV 版本         |      MMDetection 版本      |
-  | ---------------- | :----------------------: | :---------------------: | :----------------------: |
-  | dev-1.x          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-  | v1.1.0rc1        | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-  | v1.1.0rc0        | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | MMDetection3D 版本 |      MMEngine 版本       |        MMCV 版本        |     MMDetection 版本     |
+  | ------------------ | :----------------------: | :---------------------: | :----------------------: |
+  | dev-1.x            | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc2          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc1          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc0          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 
   **注意**：如果你想安装 mmdet3d-v1.0.0rcx，可以在[此处](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation)找到 MMDetection，MMSegmentation 和 MMCV 的兼容版本。请选择正确版本的 MMCV、MMDetection 和 MMSegmentation 以避免安装问题。
 

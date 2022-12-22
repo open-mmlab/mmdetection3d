@@ -463,11 +463,17 @@ class BaseInstance3DBoxes(object):
         # height overlap
         overlaps_h = cls.height_overlaps(boxes1, boxes2)
 
+        # Restrict the min values of W and H to avoid memory overflow in
+        # ``box_iou_rotated``.
+        boxes1_bev, boxes2_bev = boxes1.bev, boxes2.bev
+        boxes1_bev[:, 2:4] = boxes1_bev[:, 2:4].clamp(min=1e-4)
+        boxes2_bev[:, 2:4] = boxes2.bev[:, 2:4].clamp(min=1e-4)
+
         # bev overlap
-        iou2d = box_iou_rotated(boxes1.bev, boxes2.bev)
-        areas1 = (boxes1.bev[:, 2] * boxes1.bev[:, 3]).unsqueeze(1).expand(
+        iou2d = box_iou_rotated(boxes1_bev, boxes2_bev)
+        areas1 = (boxes1_bev[:, 2] * boxes1_bev[:, 3]).unsqueeze(1).expand(
             rows, cols)
-        areas2 = (boxes2.bev[:, 2] * boxes2.bev[:, 3]).unsqueeze(0).expand(
+        areas2 = (boxes2_bev[:, 2] * boxes2_bev[:, 3]).unsqueeze(0).expand(
             rows, cols)
         overlaps_bev = iou2d * (areas1 + areas2) / (1 + iou2d)
 
