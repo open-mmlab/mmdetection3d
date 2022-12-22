@@ -8,6 +8,7 @@ from mmengine.config import Config, DictAction
 from mmengine.logging import print_log
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
+from mmengine.runner import set_random_seed
 
 from mmdet3d.utils import register_all_modules, replace_ceph_backend
 
@@ -116,6 +117,10 @@ def main():
         # if 'runner_type' is set in the cfg
         runner = RUNNERS.build(cfg)
 
+    set_random_seed(1, deterministic=True)
+    import torch
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
     # start training
     runner.train()
 

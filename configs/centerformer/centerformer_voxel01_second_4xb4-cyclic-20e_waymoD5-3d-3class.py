@@ -43,7 +43,7 @@ model = dict(
         layer_nums=[5, 5],
         layer_strides=[1, 2],
         out_channels=[256, 256],
-        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01)),
+        norm_cfg=dict(type='SyncBN', eps=1e-3, momentum=0.01)),
     # neck return up, down, norm 3 stirdes,
     neck=dict(
         type='SECONDFPN_WithAtten',
@@ -51,7 +51,7 @@ model = dict(
         upsample_strides=[2, 4],
         out_channels=[128, 128],
         upsample_cfg=dict(type='deconv', bias=False),
-        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
+        norm_cfg=dict(type='SyncBN', eps=1e-3, momentum=0.01),
         return_inputs=True),
     bbox_head=dict(
         type='CenterFormerHead',
@@ -73,7 +73,7 @@ model = dict(
         num_heatmap_convs=2,
         num_cornermap_convs=2,
         share_conv_channel=64,
-        norm_cfg=dict(type='naiveSyncBN1d', eps=1e-3, momentum=0.01),
+        norm_cfg=dict(type='SyncBN', eps=1e-3, momentum=0.01),
         separate_head=dict(
             type='SeparateHead',
             init_bias=-2.19,
@@ -81,7 +81,7 @@ model = dict(
             # TODO: set False
             bias=True,
             conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='naiveSyncBN1d')),
+            norm_cfg=dict(type='SyncBN', eps=0.001, momentum=0.01)),
         loss_cls=dict(type='FastFocalLoss'),
         loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=2),
         loss_corner=dict(
@@ -309,8 +309,8 @@ test_cfg = dict()
 auto_scale_lr = dict(enable=True, base_batch_size=16)
 
 default_hooks = dict(
-    logger=dict(type='LoggerHook', interval=1),
+    logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=5))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
 
-# load_from = './checkpoints/centerformer_refactor_init.pth'
+load_from = './checkpoints/centerformer_refactor_init.pth'

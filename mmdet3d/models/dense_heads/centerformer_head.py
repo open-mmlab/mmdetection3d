@@ -149,8 +149,8 @@ class CenterFormerHead(BaseModule):
     def forward_heatmap(self, feat):
         outs = dict()
         outs.update(self.heatmap_head(feat))
-        outs['hm'] = self._sigmoid(outs['center_heatmap'])
-        outs['corner_hm'] = self._sigmoid(outs['corner_heatmap'])
+        outs['hm'] = torch.sigmoid(outs['center_heatmap'])
+        outs['corner_hm'] = torch.sigmoid(outs['corner_heatmap'])
 
         return outs
 
