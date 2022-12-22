@@ -108,6 +108,7 @@ class MultiScaleFlipAug3D(BaseTransform):
                                     pcd_vertical_flip
                                 data = self.transforms(_results)
                                 aug_data_list.append(data)
+
         return aug_data_list
 
     def __repr__(self) -> str:
