@@ -185,8 +185,7 @@ class Detr3DTransformerDecoder(TransformerLayerSequence):
                                          reference_points[..., 2:3])
                 new_reference_points = new_reference_points.sigmoid()
 
-                reference_points = new_reference_points.detach(
-                )  #ref point之间不参与back prop，是不是每层有自己的loss？
+                reference_points = new_reference_points.detach()
 
             output = output.permute(1, 0, 2)
             if self.return_intermediate:
