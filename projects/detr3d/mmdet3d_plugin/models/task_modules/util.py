@@ -19,8 +19,8 @@ def normalize_bbox(bboxes: Tensor, pc_range: List) -> Tensor:
     cx = bboxes[..., 0:1]
     cy = bboxes[..., 1:2]
     cz = bboxes[..., 2:3]
-    w = bboxes[..., 3:4].log()
-    l = bboxes[..., 4:5].log()
+    l = bboxes[..., 3:4].log()
+    w = bboxes[..., 4:5].log()
     h = bboxes[..., 5:6].log()
 
     rot = bboxes[..., 6:7]
@@ -28,10 +28,10 @@ def normalize_bbox(bboxes: Tensor, pc_range: List) -> Tensor:
         vx = bboxes[..., 7:8]
         vy = bboxes[..., 8:9]
         normalized_bboxes = torch.cat(
-            (cx, cy, w, l, cz, h, rot.sin(), rot.cos(), vx, vy), dim=-1)
+            (cx, cy, l, w, cz, h, rot.sin(), rot.cos(), vx, vy), dim=-1)
     else:
         normalized_bboxes = torch.cat(
-            (cx, cy, w, l, cz, h, rot.sin(), rot.cos()), dim=-1)
+            (cx, cy, l, w, cz, h, rot.sin(), rot.cos()), dim=-1)
     return normalized_bboxes
 
 
@@ -57,20 +57,20 @@ def denormalize_bbox(normalized_bboxes, pc_range):
     cy = normalized_bboxes[..., 1:2]
     cz = normalized_bboxes[..., 4:5]
 
-    # size, the meaning of w,l may alter in different version of mmdet3d
-    w = normalized_bboxes[..., 2:3]
-    l = normalized_bboxes[..., 3:4]
+    # size, the meaning of l,w may alter in different version of mmdet3d
+    l = normalized_bboxes[..., 2:3]
+    w = normalized_bboxes[..., 3:4]
     h = normalized_bboxes[..., 5:6]
 
-    w = w.exp()
     l = l.exp()
+    w = w.exp()
     h = h.exp()
     if normalized_bboxes.size(-1) > 8:
         # velocity
         vx = normalized_bboxes[:, 8:9]
         vy = normalized_bboxes[:, 9:10]
-        denormalized_bboxes = torch.cat([cx, cy, cz, w, l, h, rot, vx, vy],
+        denormalized_bboxes = torch.cat([cx, cy, cz, l, w, h, rot, vx, vy],
                                         dim=-1)
     else:
-        denormalized_bboxes = torch.cat([cx, cy, cz, w, l, h, rot], dim=-1)
+        denormalized_bboxes = torch.cat([cx, cy, cz, l, w, h, rot], dim=-1)
     return denormalized_bboxes

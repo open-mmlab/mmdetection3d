@@ -7,7 +7,6 @@ from mmdet.models.task_modules.assigners import BaseAssigner
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-# from mmdet.core.bbox.match_costs import build_match_cost
 from .util import normalize_bbox
 
 try:

@@ -10,12 +10,8 @@ from mmdet3d.structures import Det3DDataSample
 from torch import Tensor
 
 from projects.detr3d.mmdet3d_plugin.models.utils.grid_mask import GridMask
+from mmdet3d.structures.bbox_3d.utils import get_lidar2img
 
-
-# import torchvision.utils as vutils
-# from mmdet3d.structures.bbox_3d.utils import get_lidar2img
-# from .visualizer_zlt import *
-# import cv2
 @MODELS.register_module()
 class Detr3D(MVXTwoStageDetector):
     """DETR3D: 3D Object Detection from Multi-view Images via 3D-to-2D Queries
@@ -211,34 +207,3 @@ class Detr3D(MVXTwoStageDetector):
         return batch_input_metas
 
 
-#https://github.com/open-mmlab/mmdetection3d/pull/2110
-update_info_BUG_FIX = True
-
-
-def get_lidar2img(cam2img, lidar2cam):
-    """Get the projection matrix of lidar2img.
-
-    Args:
-        cam2img (torch.Tensor): A 3x3 or 4x4 projection matrix.
-        lidar2cam (torch.Tensor): A 3x3 or 4x4 projection matrix.
-
-    Returns:
-        torch.Tensor: transformation matrix with shape 4x4.
-    """
-    if update_info_BUG_FIX == False:
-        lidar2cam_r = lidar2cam[:3, :3]
-        lidar2cam_t = lidar2cam[:3, 3]
-        lidar2cam_t = torch.matmul(lidar2cam_t, lidar2cam_r.T)
-        lidar2cam[:3, 3] = lidar2cam_t
-    if cam2img.shape == (3, 3):
-        temp = cam2img.new_zeros(4, 4)
-        temp[:3, :3] = cam2img
-        temp[3, 3] = 1
-        cam2img = temp
-
-    if lidar2cam.shape == (3, 3):
-        temp = lidar2cam.new_zeros(4, 4)
-        temp[:3, :3] = lidar2cam
-        temp[3, 3] = 1
-        lidar2cam = temp
-    return torch.matmul(cam2img, lidar2cam)

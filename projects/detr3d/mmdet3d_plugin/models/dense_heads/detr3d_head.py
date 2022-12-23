@@ -21,8 +21,6 @@ from torch import Tensor
 
 from projects.detr3d.mmdet3d_plugin.models.task_modules.util import normalize_bbox
 
-# from projects.mmdet3d_plugin.models.utils.old_env import force_fp32
-
 
 @MODELS.register_module()
 class Detr3DHead(DETRHead):
@@ -350,7 +348,6 @@ class Detr3DHead(DETRHead):
         return loss_cls, loss_bbox
 
     # original loss()
-    # @force_fp32(apply_to=('preds_dicts'))
     def loss_by_feat(
             self,
             batch_gt_instances_3d: InstanceList,
@@ -408,7 +405,6 @@ class Detr3DHead(DETRHead):
             num_dec_layer += 1
         return loss_dict
 
-    # @force_fp32(apply_to=('preds_dicts'))
     def predict_by_feat(self,
                         preds_dicts,
                         img_metas,

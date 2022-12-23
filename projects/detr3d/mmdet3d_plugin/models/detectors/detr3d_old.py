@@ -29,7 +29,7 @@ class Detr3D_old(Detr3D):
 
         # change the bboxes' format
         for item in results_list_3d:
-            #cx, cy, cz, w, l, h, rot, vx, vy
+            #(cx, cy, bottom_z, w, l, h, rot, vx, vy) -> (cx, cy, bottom_z, l, w, h, rot, vx, vy)
             item.bboxes_3d.tensor[..., [3, 4]] = item.bboxes_3d.tensor[...,
                                                                        [4, 3]]
             item.bboxes_3d.tensor[

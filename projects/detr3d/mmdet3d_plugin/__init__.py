@@ -1,5 +1,4 @@
 from .datasets.transforms import PhotoMetricDistortionMultiViewImage
-# from .datasets import custom_nuscenes
 from .models.backbones.vovnet import VoVNet
 from .models.dense_heads.detr3d_head import Detr3DHead
 from .models.detectors.detr3d import Detr3D

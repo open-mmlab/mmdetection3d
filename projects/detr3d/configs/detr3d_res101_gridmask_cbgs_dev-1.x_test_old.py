@@ -238,30 +238,6 @@ visualizer = dict(type='Det3DLocalVisualizer',
                   vis_backends=vis_backends,
                   name='visualizer')
 
-# before fixing h,w bug in feature-sampling
-# mAP: 0.3405
-# mATE: 0.7516
-# mASE: 0.2688
-# mAOE: 0.3750
-# mAVE: 0.8621
-# mAAE: 0.2080
-# NDS: 0.4237
-# Eval time: 124.2s
-
-# Per-class results:
-# Object Class    AP      ATE     ASE     AOE     AVE     AAE
-# car     0.513   0.590   0.153   0.066   0.932   0.197
-# truck   0.280   0.771   0.206   0.092   1.001   0.237
-# bus     0.356   0.860   0.193   0.131   1.826   0.370
-# trailer 0.179   1.110   0.234   0.564   0.950   0.159
-# construction_vehicle    0.080   0.988   0.444   0.947   0.120   0.330
-# pedestrian      0.397   0.683   0.305   0.532   0.469   0.200
-# motorcycle      0.338   0.712   0.255   0.359   1.194   0.158
-# bicycle 0.256   0.657   0.284   0.583   0.405   0.014
-# traffic_cone    0.508   0.542   0.323   nan     nan     nan
-# barrier 0.501   0.602   0.292   0.100   nan     nan
-
-# after fixing h,w bug in feature-sampling
 # mAP: 0.3493
 # mATE: 0.7162
 # mASE: 0.2682
@@ -270,16 +246,3 @@ visualizer = dict(type='Det3DLocalVisualizer',
 # mAAE: 0.1996
 # NDS: 0.4341
 # Eval time: 128.7s
-
-# Per-class results:
-# Object Class    AP      ATE     ASE     AOE     AVE     AAE
-# car     0.542   0.533   0.151   0.064   0.954   0.193
-# truck   0.285   0.774   0.208   0.093   1.016   0.239
-# bus     0.363   0.796   0.192   0.137   1.842   0.379
-# trailer 0.167   1.075   0.236   0.610   0.718   0.094
-# construction_vehicle    0.081   0.970   0.438   0.914   0.114   0.337
-# pedestrian      0.400   0.684   0.306   0.531   0.474   0.201
-# motorcycle      0.337   0.684   0.257   0.383   1.203   0.143
-# bicycle 0.261   0.631   0.280   0.582   0.411   0.012
-# traffic_cone    0.531   0.478   0.324   nan     nan     nan
-# barrier 0.525   0.536   0.291   0.102   nan     nan

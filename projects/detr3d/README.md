@@ -4,14 +4,7 @@ This directory contains the implementations of DETR3D (https://arxiv.org/abs/211
 We have updated DETR3D to be compatible with latest mmdet3d-dev1.x. The codebase and config files have all changed to adapt to the new mmdet3d version. All previous pretrained models are verified with the result listed below. However, newly trained models are yet to be uploaded.
 
 ### Prerequisite
-
-1. mmcv (https://github.com/open-mmlab/mmcv)
-
-2. mmdet (https://github.com/open-mmlab/mmdetection)
-
-3. mmseg (https://github.com/open-mmlab/mmsegmentation)
-
-4. mmdet3d-dev1.x (https://github.com/open-mmlab/mmdetection3d)
+Follow the installation instructions in: mmdet3d-dev1.x (https://github.com/open-mmlab/mmdetection3d/tree/dev-1.x)
 
 ### Data
 1. Follow the mmdet3d to process the data.
@@ -28,9 +21,9 @@ We have updated DETR3D to be compatible with latest mmdet3d-dev1.x. The codebase
 
 |  Backbone   | mAP | NDS | Download |
 | :---------: | :----: |:----: | :------: |
-|[DETR3D, ResNet101 w/ DCN(old)](./projects/configs/detr3d/detr3d_res101_gridmask.py)|34.7|42.2|[model](https://drive.google.com/file/d/1YWX-jIS6fxG5_JKUBNVcZtsPtShdjE4O/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1uvrf42seV4XbWtir-2XjrdGUZ2Qbykid/view?usp=sharing)|
-|[above, + CBGS(old)](./projects/configs/detr3d/detr3d_res101_gridmask_cbgs.py)|34.9|43.4|[model](https://drive.google.com/file/d/1sXPFiA18K9OMh48wkk9dF1MxvBDUCj2t/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1NJNggvFGqA423usKanqbsZVE_CzF4ltT/view?usp=sharing)|
-|[DETR3D, VoVNet on trainval, evaluation on test set(old)](./projects/configs/detr3d/detr3d_vovnet_gridmask_det_final_trainval_cbgs.py)| 41.2 | 47.9 |[model](https://drive.google.com/file/d/1d5FaqoBdUH6dQC3hBKEZLcqbvWK0p9Zv/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1ONEMm_2W9MZAutjQk1UzaqRywz5PMk3p/view?usp=sharing)|
+|[DETR3D, ResNet101 w/ DCN(old)](./configs/detr3d_res101_gridmask_dev-1.x_test_old.py)|34.7|42.2|[model](https://drive.google.com/file/d/1YWX-jIS6fxG5_JKUBNVcZtsPtShdjE4O/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1uvrf42seV4XbWtir-2XjrdGUZ2Qbykid/view?usp=sharing)|
+|[above, + CBGS(old)](./configs/detr3d_res101_gridmask_cbgs_dev-1.x_test_old.py)|34.9|43.4|[model](https://drive.google.com/file/d/1sXPFiA18K9OMh48wkk9dF1MxvBDUCj2t/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1NJNggvFGqA423usKanqbsZVE_CzF4ltT/view?usp=sharing)|
+|[DETR3D, VoVNet on trainval, evaluation on test set(old)](./configs/detr3d_vovnet_gridmask_det_final_trainval_cbgs_dev-1.x_test_old.py)| 41.2 | 47.9 |[model](https://drive.google.com/file/d/1d5FaqoBdUH6dQC3hBKEZLcqbvWK0p9Zv/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1ONEMm_2W9MZAutjQk1UzaqRywz5PMk3p/view?usp=sharing)|
 
 
 2. Testing
