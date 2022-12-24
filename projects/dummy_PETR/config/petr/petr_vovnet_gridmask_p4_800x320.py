@@ -349,24 +349,24 @@ resume = False
 # barrier	      0.464	  0.662	 0.287	  0.137	  nan	  nan
 
 # --------------Refactored in mmdet3d v1.1---------------
-# mAP: 0.3829
-# mATE: 0.7376
-# mASE: 0.2702
-# mAOE: 0.4803
-# mAVE: 0.8703
-# mAAE: 0.2040
-# NDS: 0.4352
-# Eval time: 117.6s
+# mAP: 0.3830
+# mATE: 0.7547
+# mASE: 0.2683
+# mAOE: 0.4948
+# mAVE: 0.8331
+# mAAE: 0.2056
+# NDS: 0.4358
+# Eval time: 118.7s
 
 # Per-class results:
 # Object Class	  AP	  ATE	  ASE	  AOE	  AVE	  AAE
-# car	  0.574	  0.519	  0.150	  0.087	  0.866	  0.206
-# truck	  0.349	  0.774	  0.213	  0.117	  0.855	  0.221
-# bus	  0.424	  0.782	  0.204	  0.123	  1.904	  0.319
-# trailer 0.219	  1.035	  0.231	  0.609	  0.830	  0.149
-# construction_vehicle	  0.084	  1.058	  0.485	  1.248	  0.172	  0.361
-# pedestrian	  0.452	  0.682	  0.293	  0.645	  0.529	  0.231
-# motorcycle	  0.378	  0.671	  0.250	  0.567	  1.334	  0.130
-# bicycle	      0.347	  0.640	  0.264	  0.788	  0.473	  0.016
-# traffic_cone	  0.538	  0.553	  0.325	  nan	  nan	  nan
-# barrier	      0.463	  0.663	  0.287	  0.138	  nan	  nan
+# car	  0.567	  0.538	  0.151	  0.086	  0.873	  0.212
+# truck	  0.341	  0.785	  0.213	  0.113	  0.821	  0.234
+# bus	  0.426	  0.766	  0.201	  0.128	  1.813	  0.343
+# trailer 0.216	  1.116	  0.227	  0.649	  0.640	  0.122
+# construction_vehicle	  0.093	  1.118	  0.483	  1.292	  0.217	  0.330
+# pedestrian	  0.453	  0.685	  0.293	  0.644	  0.535	  0.238
+# motorcycle	  0.374	  0.700	  0.253	  0.624	  1.291	  0.154
+# bicycle	      0.345	  0.622	  0.262	  0.775	  0.475	  0.011
+# traffic_cone	  0.539	  0.557	  0.319	  nan	  nan	  nan
+# barrier	      0.476	  0.661	  0.279	  0.142	  nan	  nan
