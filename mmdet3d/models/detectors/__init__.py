@@ -13,6 +13,7 @@ from .multiview_dfm import MultiViewDfM
 from .mvx_faster_rcnn import DynamicMVXFasterRCNN, MVXFasterRCNN
 from .mvx_two_stage import MVXTwoStageDetector
 from .parta2 import PartA2
+from .petr3d import Petr3D
 from .point_rcnn import PointRCNN
 from .pv_rcnn import PointVoxelRCNN
 from .sassd import SASSD
@@ -28,5 +29,5 @@ __all__ = [
     'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
     'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'PointRCNN', 'SMOKEMono3D',
     'SASSD', 'MinkSingleStage3DDetector', 'MultiViewDfM', 'DfM',
-    'PointVoxelRCNN'
+    'PointVoxelRCNN', 'Petr3D'
 ]
