@@ -11,18 +11,18 @@ def get_keypoints(
         gt_bboxes_3d_list: List[CameraInstance3DBoxes],
         centers2d_list: List[Tensor],
         img_metas: List[dict],
-        use_local_coords: str = True) -> Tuple[List[Tensor], List[Tensor]]:
+        use_local_coords: bool = True) -> Tuple[List[Tensor], List[Tensor]]:
     """Function to filter the objects label outside the image.
 
     Args:
-        gt_bboxes_3d_list (List[:objs:`CameraInstance3DBoxes`]): Ground truth
+        gt_bboxes_3d_list (List[:obj:`CameraInstance3DBoxes`]): Ground truth
             bboxes of each image.
         centers2d_list (List[Tensor]): Projected 3D centers onto 2D image,
             shape (num_gt, 2).
         img_metas (List[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
         use_local_coords (bool): Whether to use local coordinates
-            for keypoints. Default: True.
+            for keypoints. Defaults to True.
 
     Returns:
         Tuple[List[Tensor], List[Tensor]]: It contains two elements,

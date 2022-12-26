@@ -10,7 +10,7 @@ def get_edge_indices(img_metas: List[dict],
                      downsample_ratio: int,
                      step: int = 1,
                      pad_mode: str = 'default',
-                     dtype: torch.dtype = np.float32,
+                     dtype: type = np.float32,
                      device: str = 'cpu') -> List[Tensor]:
     """Function to filter the objects label outside the image.
     The edge_indices are generated using numpy on cpu rather
@@ -23,13 +23,13 @@ def get_edge_indices(img_metas: List[dict],
             image size, scaling factor, etc.
         downsample_ratio (int): Downsample ratio of output feature,
         step (int): Step size used for generateing
-            edge indices. Default: 1.
+            edge indices. Defaults to 1.
         pad_mode (str): Padding mode during data pipeline.
-            Default: 'default'.
-        dtype (torch.dtype): Dtype of edge indices tensor.
-            Default: np.float32.
+            Defaults to 'default'.
+        dtype (type): Dtype of edge indices tensor.
+            Defaults to np.float32.
         device (str): Device of edge indices tensor.
-            Default: 'cpu'.
+            Defaults to 'cpu'.
 
     Returns:
         List[Tensor]: Edge indices for each image in batch data.

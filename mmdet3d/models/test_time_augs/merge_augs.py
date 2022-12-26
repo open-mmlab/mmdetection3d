@@ -4,13 +4,13 @@ from typing import List
 import torch
 
 from mmdet3d.structures import bbox3d2result, bbox3d_mapping_back, xywhr2xyxyr
-from ...utils import OptConfigType
+from mmdet3d.utils import ConfigType
 from ..layers import nms_bev, nms_normal_bev
 
 
 def merge_aug_bboxes_3d(aug_results: List[dict],
                         aug_batch_input_metas: List[dict],
-                        test_cfg: OptConfigType) -> dict:
+                        test_cfg: ConfigType) -> dict:
     """Merge augmented detection 3D bboxes and scores.
 
     Args:
@@ -21,7 +21,7 @@ def merge_aug_bboxes_3d(aug_results: List[dict],
             - scores_3d (Tensor): Detection scores.
             - labels_3d (Tensor): Predicted box labels.
         aug_batch_input_metas (List[dict]): Meta information of each sample.
-        test_cfg (:obj:`OptConfigType`): Test config.
+        test_cfg (dict or :obj:`ConfigDict`): Test config.
 
     Returns:
         dict: Bounding boxes results in cpu mode, containing merged results.

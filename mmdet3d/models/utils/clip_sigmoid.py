@@ -1,11 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional
-
 import torch
 from torch import Tensor
 
 
-def clip_sigmoid(x: Tensor, eps: Optional[float] = 1e-4) -> Tensor:
+def clip_sigmoid(x: Tensor, eps: float = 1e-4) -> Tensor:
     """Sigmoid function for input feature.
 
     Args:

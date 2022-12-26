@@ -20,7 +20,7 @@ def filter_outside_objs(gt_bboxes_list: List[Tensor],
             each has shape (num_gt, 4).
         gt_labels_list (List[Tensor]): Ground truth labels of each box,
             each has shape (num_gt,).
-        gt_bboxes_3d_list (List[:objs:`CameraInstance3DBoxes`]): 3D Ground
+        gt_bboxes_3d_list (List[:obj:`CameraInstance3DBoxes`]): 3D Ground
             truth bboxes of each image, each has shape
             (num_gt, bbox_code_size).
         gt_labels_3d_list (List[Tensor]): 3D Ground truth labels of each
