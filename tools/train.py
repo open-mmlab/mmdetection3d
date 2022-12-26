@@ -22,6 +22,11 @@ def parse_args():
         default=False,
         help='enable automatic-mixed-precision training')
     parser.add_argument(
+        '--disable-tf32',
+        action='store_true',
+        default=False,
+        help='disable TF32 in A100 GPUs')
+    parser.add_argument(
         '--auto-scale-lr',
         action='store_true',
         help='enable automatically scaling LR.')
@@ -115,6 +120,11 @@ def main():
         # build customized runner from the registry
         # if 'runner_type' is set in the cfg
         runner = RUNNERS.build(cfg)
+
+    if args.disable_tf32:
+        import torch
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
 
     # start training
     runner.train()
