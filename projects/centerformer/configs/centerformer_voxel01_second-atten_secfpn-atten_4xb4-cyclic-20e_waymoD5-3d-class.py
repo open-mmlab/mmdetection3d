@@ -1,4 +1,6 @@
 _base_ = ['mmdet3d::_base_/default_runtime.py']
+custom_imports = dict(
+    imports=['projects.centerformer.centerformer'], allow_failed_imports=False)
 
 # model settings
 # Voxel size for voxel encoder
@@ -104,7 +106,7 @@ model = dict(
         obj_num=1000,
     ))
 
-data_root = 'data/waymo/kitti_format/'
+data_root = 'data/waymo_mini/kitti_format/'
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'waymo_dbinfos_train.pkl',
