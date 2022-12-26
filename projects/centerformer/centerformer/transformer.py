@@ -304,6 +304,12 @@ class Transformer(nn.Module):
 
 
 class Deform_Transformer(nn.Module):
+    '''Deformable transformer.
+    Note that the difference between this implementation and the implementation
+    in MMDet is that the dimension of input and hidden embedding in the
+    multi-attention-head can be specified respectively.
+
+    '''
 
     def __init__(
         self,

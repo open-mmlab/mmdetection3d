@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import center_to_corner_box2d
-from .utils import Deform_Transformer
+from .transformer import Deform_Transformer
 
 
 class ChannelAttention(nn.Module):
@@ -334,6 +334,10 @@ class RPN_transformer_base(nn.Module):
 
 @MODELS.register_module()
 class RPN_transformer_deformable(RPN_transformer_base):
+    '''The original implement of CenterFormer modules. It fusion the backbone
+    neck and heatmap head into one module.
+
+    '''
 
     def __init__(
             self,

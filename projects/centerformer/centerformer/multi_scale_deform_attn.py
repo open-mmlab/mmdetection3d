@@ -85,6 +85,17 @@ class MultiScaleDeformableAttnFunction(Function):
 
 
 class MSDeformAttn(nn.Module):
+    """Multi-Scale Deformable Attention Module.
+    Note that the difference between this implementation and the implementation
+    in MMCV is that the dimension of input and hidden embedding in the
+    multi-attention-head can be specified respectively.
+
+        :param d_model      input dimension
+        :param d_head       hidden dimension
+        :param n_levels     number of feature levels
+        :param n_heads      number of attention heads
+        :param n_points     number of sampling points per attention head per feature level # noqa: E501
+        """
 
     def __init__(self,
                  d_model=256,
@@ -93,13 +104,6 @@ class MSDeformAttn(nn.Module):
                  n_heads=8,
                  n_points=4,
                  out_sample_loc=False):
-        """Multi-Scale Deformable Attention Module.
-
-        :param d_model      hidden dimension
-        :param n_levels     number of feature levels
-        :param n_heads      number of attention heads
-        :param n_points     number of sampling points per attention head per feature level # noqa: E501
-        """
         super().__init__()
 
         self.im2col_step = 64

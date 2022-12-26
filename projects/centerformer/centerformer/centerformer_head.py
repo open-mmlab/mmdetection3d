@@ -20,7 +20,7 @@ from mmdet3d.models.layers import circle_nms, nms_bev
 from mmdet3d.registry import MODELS
 from .losses import FastFocalLoss
 from mmcv.ops import boxes_iou3d
-from .utils import nms_iou3d
+from .bbox_ops import nms_iou3d
 
 
 class SepHead(nn.Module):
