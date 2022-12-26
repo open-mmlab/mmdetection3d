@@ -13,6 +13,7 @@ from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
                                   gaussian_radius)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
+from mmdet3d.utils.typing import SampleList
 from .. import builder
 from ..layers import circle_nms, nms_bev
 
@@ -300,7 +301,7 @@ class CenterHead(BaseModule):
                  **kwargs):
         assert init_cfg is None, 'To prevent abnormal initialization ' \
             'behavior, init_cfg is not allowed to be set'
-        super(CenterHead, self).__init__(init_cfg=init_cfg, **kwargs)
+        super(CenterHead, self).__init__(init_cfg=init_cfg)
 
         # TODO we should rename this variable,
         # for example num_classes_per_task ?
@@ -354,8 +355,9 @@ class CenterHead(BaseModule):
         x = self.shared_conv(x)
 
         for task in self.task_heads:
-            ret_dicts.append(task(x))
-
+            ret = task(x)
+            ret['sigmoid_heatmap'] = clip_sigmoid(ret['heatmap'])
+            ret_dicts.append(ret)
         return ret_dicts
 
     def forward(self, feats: List[Tensor]) -> Tuple[List[Tensor]]:
@@ -467,6 +469,7 @@ class CenterHead(BaseModule):
         """
         gt_labels_3d = gt_instances_3d.labels_3d
         gt_bboxes_3d = gt_instances_3d.bboxes_3d
+        gt_bboxes_dim = gt_bboxes_3d.tensor.shape[-1]
         device = gt_labels_3d.device
         gt_bboxes_3d = torch.cat(
             (gt_bboxes_3d.gravity_center, gt_bboxes_3d.tensor[:, 3:]),
@@ -509,7 +512,7 @@ class CenterHead(BaseModule):
                 (len(self.class_names[idx]), feature_map_size[1],
                  feature_map_size[0]))
 
-            anno_box = gt_bboxes_3d.new_zeros((max_objs, 10),
+            anno_box = gt_bboxes_3d.new_zeros((max_objs, gt_bboxes_dim + 1),
                                               dtype=torch.float32)
 
             ind = gt_labels_3d.new_zeros((max_objs), dtype=torch.int64)
@@ -529,7 +532,7 @@ class CenterHead(BaseModule):
 
                 if width > 0 and length > 0:
                     radius = gaussian_radius(
-                        (length, width),
+                        (width, length),
                         min_overlap=self.train_cfg['gaussian_overlap'])
                     radius = max(self.train_cfg['min_radius'], int(radius))
 
@@ -567,19 +570,28 @@ class CenterHead(BaseModule):
                     ind[new_idx] = y * feature_map_size[0] + x
                     mask[new_idx] = 1
                     # TODO: support other outdoor dataset
-                    vx, vy = task_boxes[idx][k][7:]
                     rot = task_boxes[idx][k][6]
                     box_dim = task_boxes[idx][k][3:6]
                     if self.norm_bbox:
                         box_dim = box_dim.log()
-                    anno_box[new_idx] = torch.cat([
-                        center - torch.tensor([x, y], device=device),
-                        z.unsqueeze(0), box_dim,
-                        torch.sin(rot).unsqueeze(0),
-                        torch.cos(rot).unsqueeze(0),
-                        vx.unsqueeze(0),
-                        vy.unsqueeze(0)
-                    ])
+                    if gt_bboxes_dim == 9:
+                        vx, vy = task_boxes[idx][k][7:]
+                        anno_box[new_idx] = torch.cat([
+                            center - torch.tensor([x, y], device=device),
+                            z.unsqueeze(0), box_dim,
+                            torch.sin(rot).unsqueeze(0),
+                            torch.cos(rot).unsqueeze(0),
+                            vx.unsqueeze(0),
+                            vy.unsqueeze(0)
+                        ])
+                    else:
+                        anno_box[new_idx] = torch.cat([
+                            center - torch.tensor([x, y], device=device),
+                            z.unsqueeze(0),
+                            box_dim,
+                            torch.sin(rot).unsqueeze(0),
+                            torch.cos(rot).unsqueeze(0),
+                        ])
 
             heatmaps.append(heatmap)
             anno_boxes.append(anno_box)
@@ -631,7 +643,7 @@ class CenterHead(BaseModule):
         loss_dict = dict()
         for task_id, preds_dict in enumerate(preds_dicts):
             # heatmap focal loss
-            preds_dict[0]['heatmap'] = clip_sigmoid(preds_dict[0]['heatmap'])
+            preds_dict[0]['heatmap'] = preds_dict[0]['sigmoid_heatmap']
             num_pos = heatmaps[task_id].eq(1).float().sum().item()
             loss_heatmap = self.loss_cls(
                 preds_dict[0]['heatmap'],
@@ -639,11 +651,17 @@ class CenterHead(BaseModule):
                 avg_factor=max(num_pos, 1))
             target_box = anno_boxes[task_id]
             # reconstruct the anno_box from multiple reg heads
-            preds_dict[0]['anno_box'] = torch.cat(
-                (preds_dict[0]['reg'], preds_dict[0]['height'],
-                 preds_dict[0]['dim'], preds_dict[0]['rot'],
-                 preds_dict[0]['vel']),
-                dim=1)
+            if anno_boxes[task_id].shape[-1] == 10:
+                preds_dict[0]['anno_box'] = torch.cat(
+                    (preds_dict[0]['reg'], preds_dict[0]['height'],
+                     preds_dict[0]['dim'], preds_dict[0]['rot'],
+                     preds_dict[0]['vel']),
+                    dim=1)
+            else:
+                preds_dict[0]['anno_box'] = torch.cat(
+                    (preds_dict[0]['reg'], preds_dict[0]['height'],
+                     preds_dict[0]['dim'], preds_dict[0]['rot']),
+                    dim=1)
 
             # Regression loss for dimension, offset, height, rotation
             ind = inds[task_id]
@@ -670,7 +688,7 @@ class CenterHead(BaseModule):
                 **kwargs) -> List[InstanceData]:
         """
         Args:
-            pts_feats (dict): Point features..
+            pts_feats (list[torch.Tensor]): Point features.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 Samples. It usually includes meta information of data.
             rescale (bool): Whether rescale the resutls to
@@ -681,7 +699,10 @@ class CenterHead(BaseModule):
             InstanceData contains 3d Bounding boxes and corresponding
             scores and labels.
         """
-        preds_dict = self(pts_feats)
+        if isinstance(pts_feats, list):
+            preds_dict = self(pts_feats)
+        else:
+            preds_dict = self(pts_feats['neck_feats'])
         batch_size = len(batch_data_samples)
         batch_input_metas = []
         for batch_index in range(batch_size):
@@ -689,11 +710,15 @@ class CenterHead(BaseModule):
             batch_input_metas.append(metainfo)
 
         results_list = self.predict_by_feat(
-            preds_dict, batch_input_metas, rescale=rescale, **kwargs)
+            preds_dict, batch_input_metas, test_cfg=self.test_cfg, **kwargs)
         return results_list
 
-    def predict_by_feat(self, preds_dicts: Tuple[List[dict]],
-                        batch_input_metas: List[dict], *args,
+    @torch.no_grad()
+    def predict_by_feat(self,
+                        preds_dicts: Tuple[List[dict]],
+                        batch_input_metas: List[dict],
+                        test_cfg: dict = None,
+                        *args,
                         **kwargs) -> List[InstanceData]:
         """Generate bboxes from bbox head predictions.
 
@@ -704,6 +729,7 @@ class CenterHead(BaseModule):
                 FPN level.
             batch_input_metas (list[dict]): Meta info of multiple
                 inputs.
+            test_cfg (dict, optional): Config dict of test hyper-parameters.
 
         Returns:
             list[:obj:`InstanceData`]: Instance prediction
@@ -723,8 +749,8 @@ class CenterHead(BaseModule):
         rets = []
         for task_id, preds_dict in enumerate(preds_dicts):
             num_class_with_bg = self.num_classes[task_id]
-            batch_size = preds_dict[0]['heatmap'].shape[0]
-            batch_heatmap = preds_dict[0]['heatmap'].sigmoid()
+            batch_size = preds_dict[0]['sigmoid_heatmap'].shape[0]
+            batch_heatmap = preds_dict[0]['sigmoid_heatmap']
 
             batch_reg = preds_dict[0]['reg']
             batch_hei = preds_dict[0]['height']
@@ -765,7 +791,7 @@ class CenterHead(BaseModule):
                     keep = torch.tensor(
                         circle_nms(
                             boxes.detach().cpu().numpy(),
-                            self.test_cfg['min_radius'][task_id],
+                            test_cfg['min_radius'][task_id],
                             post_max_size=self.test_cfg['post_max_size']),
                         dtype=torch.long,
                         device=boxes.device)
@@ -780,7 +806,7 @@ class CenterHead(BaseModule):
                 rets.append(
                     self.get_task_detections(num_class_with_bg,
                                              batch_cls_preds, batch_reg_preds,
-                                             batch_cls_labels,
+                                             batch_cls_labels, test_cfg,
                                              batch_input_metas))
 
         # Merge branches results
@@ -810,7 +836,8 @@ class CenterHead(BaseModule):
         return ret_list
 
     def get_task_detections(self, num_class_with_bg, batch_cls_preds,
-                            batch_reg_preds, batch_cls_labels, img_metas):
+                            batch_reg_preds, batch_cls_labels, test_cfg,
+                            img_metas):
         """Rotate nms for each task.
 
         Args:
@@ -821,6 +848,7 @@ class CenterHead(BaseModule):
                 shape of [N, 9].
             batch_cls_labels (list[torch.Tensor]): Prediction label with the
                 shape of [N].
+            test_cfg (dict, optional): Config dict of test hyper-parameters.
             img_metas (list[dict]): Meta information of each sample.
 
         Returns:
@@ -834,7 +862,7 @@ class CenterHead(BaseModule):
                     shape of [N].
         """
         predictions_dicts = []
-        post_center_range = self.test_cfg['post_center_limit_range']
+        post_center_range = test_cfg['post_center_limit_range']
         if len(post_center_range) > 0:
             post_center_range = torch.tensor(
                 post_center_range,
@@ -859,15 +887,15 @@ class CenterHead(BaseModule):
                 top_labels = cls_labels.long()
                 top_scores = cls_preds.squeeze(-1)
 
-            if self.test_cfg['score_threshold'] > 0.0:
+            if test_cfg['score_threshold'] > 0.0:
                 thresh = torch.tensor(
-                    [self.test_cfg['score_threshold']],
+                    [test_cfg['score_threshold']],
                     device=cls_preds.device).type_as(cls_preds)
                 top_scores_keep = top_scores >= thresh
                 top_scores = top_scores.masked_select(top_scores_keep)
 
             if top_scores.shape[0] != 0:
-                if self.test_cfg['score_threshold'] > 0.0:
+                if test_cfg['score_threshold'] > 0.0:
                     box_preds = box_preds[top_scores_keep]
                     top_labels = top_labels[top_scores_keep]
 
@@ -878,9 +906,9 @@ class CenterHead(BaseModule):
                 selected = nms_bev(
                     boxes_for_nms,
                     top_scores,
-                    thresh=self.test_cfg['nms_thr'],
-                    pre_max_size=self.test_cfg['pre_max_size'],
-                    post_max_size=self.test_cfg['post_max_size'])
+                    thresh=test_cfg['nms_thr'],
+                    pre_max_size=test_cfg['pre_max_size'],
+                    post_max_size=test_cfg['post_max_size'])
             else:
                 selected = []
 
@@ -925,3 +953,39 @@ class CenterHead(BaseModule):
 
             predictions_dicts.append(predictions_dict)
         return predictions_dicts
+
+    def loss_and_predict(self,
+                         feats_dict: Dict,
+                         batch_data_samples: SampleList,
+                         proposal_cfg: dict = None,
+                         **kwargs):
+        """Perform forward propagation of the head, then calculate loss and
+        predictions from the features and data samples.
+
+        Args:
+            feats_dict (dict): Contains features from the first stage.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+            proposal_cfg (ConfigDict, optional): Proposal config.
+
+        Returns:
+            tuple: the return value is a tuple contains:
+
+            - losses: (dict[str, Tensor]): A dictionary of loss components.
+            - predictions (list[:obj:`InstanceData`]): Detection
+              results of each sample after the post process.
+        """
+        batch_gt_instances_3d = []
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+
+        preds_dicts = self(feats_dict['neck_feats'])
+
+        losses = self.loss_by_feat(preds_dicts, batch_gt_instances_3d)
+
+        predictions = self.predict_by_feat(preds_dicts, batch_input_metas,
+                                           proposal_cfg)
+        return losses, predictions
