@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -208,12 +207,6 @@ class RPN_transformer_base(nn.Module):
         block = nn.Sequential(*block)
 
         return block, planes
-
-    # default init_weights for conv(msra) and norm in ConvModule
-    # def init_weights(self):
-    #     for m in self.modules():
-    #         if isinstance(m, nn.Conv2d):
-    #             xavier_init(m, distribution='uniform')
 
     def forward(self, x, example=None):
         pass
@@ -432,10 +425,10 @@ class RPN_transformer_deformable(RPN_transformer_base):
 
         if self.corner and self.corner_head.training:
             corner_hm = self.corner_head(x_up)
-            corner_hm = torch.sigmoid(corner_hm)
+            corner_hm = self._sigmoid(corner_hm)
 
         # find top K center location
-        hm = torch.sigmoid(hm)
+        hm = self._sigmoid(hm)
         batch, num_cls, H, W = hm.size()
 
         scores, labels = torch.max(

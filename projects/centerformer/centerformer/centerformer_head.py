@@ -18,9 +18,9 @@ from torch import nn
 
 from mmdet3d.models.layers import circle_nms, nms_bev
 from mmdet3d.registry import MODELS
-from mmdet3d.structures import bbox_overlaps_3d
 from .losses import FastFocalLoss
-from .utils import boxes_iou3d_gpu_pcdet, rotate_nms_pcdet
+from mmcv.ops import boxes_iou3d
+from .utils import nms_iou3d
 
 
 class SepHead(nn.Module):
@@ -266,16 +266,8 @@ class CenterHeadIoU_1d(nn.Module):
                         preds_dict['hm'].shape[2],
                         preds_dict['hm'].shape[3],
                     )
-                    # iou_targets = bbox_overlaps_3d(
-                    #     preds_box.reshape(-1, 7),
-                    #     cur_gt.reshape(-1, 7),
-                    #     coordinate='lidar')[
-                    #         range(preds_box.reshape(-1, 7).shape[0]),
-                    #         range(cur_gt.reshape(-1, 7).shape[0])]
 
-                    preds_box[:, :, 2] += preds_box[:, :, 5] / 2
-                    cur_gt[:, :, 2] += cur_gt[:, :, 5] / 2
-                    iou_targets = boxes_iou3d_gpu_pcdet(
+                    iou_targets = boxes_iou3d(
                         preds_box.reshape(-1, 7), cur_gt.reshape(
                             -1, 7))[range(preds_box.reshape(-1, 7).shape[0]),
                                     range(cur_gt.reshape(-1, 7).shape[0])]
@@ -288,23 +280,10 @@ class CenterHeadIoU_1d(nn.Module):
                 losses.update(
                     {f'{task_id}_iou_loss': iou_loss * self.iou_weight})
 
-            # loss = hm_loss + self.weight * loc_loss
-            # if self.use_iou_loss:
-            #     loss = loss + self.iou_weight * iou_loss
-            # if self.corner_loss:
-            #     loss = loss + self.corner_weight * corner_loss
             losses.update({
                 f'{task_id}_hm_loss': hm_loss,
-                f'{task_id}_loc_loss': loc_loss * self.weight,
-                # 'loc_loss_elem': box_loss,
-                # 'num_positive': example['mask'][task_id].float().sum(),
+                f'{task_id}_loc_loss': loc_loss * self.weight
             })
-
-        # """convert batch-key to key-batch"""
-        # rets_merged = defaultdict(list)
-        # for ret in rets:
-        #     for k, v in ret.items():
-        #         rets_merged[k].append(v)
 
         return losses
 
@@ -314,9 +293,7 @@ class CenterHeadIoU_1d(nn.Module):
 
         Additionally support double flip testing
         """
-        # get loss info
         rets = []
-        metas = []
 
         post_center_range = self.test_cfg.post_center_limit_range
         if len(post_center_range) > 0:
@@ -333,13 +310,6 @@ class CenterHeadIoU_1d(nn.Module):
                     if len(preds_dict[key].shape) == 3:
                         preds_dict[key] = val.permute(0, 2, 1).contiguous()
 
-            batch_size = preds_dict['scores'].shape[0]
-
-            # if 'metadata' not in example or len(example['metadata']) == 0:
-            #     meta_list = [None] * batch_size
-            # else:
-            #     meta_list = example['metadata']
-
             batch_score = preds_dict['scores']
             batch_label = preds_dict['labels']
             batch_mask = preds_dict['mask']
@@ -347,10 +317,6 @@ class CenterHeadIoU_1d(nn.Module):
                 batch_iou = preds_dict['iou'].squeeze(2)
             else:
                 batch_iou = None
-            if 'corner_hm' in preds_dict:
-                batch_corner_hm = preds_dict['corner_hm']
-            else:
-                batch_corner_hm = None
 
             batch_dim = torch.exp(preds_dict['dim'])
 
@@ -396,8 +362,6 @@ class CenterHeadIoU_1d(nn.Module):
             else:
                 batch_box_preds = torch.cat(
                     [xs, ys, batch_hei, batch_dim, batch_rot], dim=2)
-
-            # metas.append(meta_list)
 
             if self.test_cfg.get('per_class_nms', False):
                 pass
@@ -515,7 +479,7 @@ class CenterHeadIoU_1d(nn.Module):
                         #     pre_max_size=test_cfg.nms.nms_pre_max_size[c],
                         #     post_max_size=test_cfg.nms.nms_post_max_size[c],
                         # )
-                        select = rotate_nms_pcdet(
+                        select = nms_iou3d(
                             boxes_for_nms[class_mask].float(),
                             scores[class_mask].float(),
                             thresh=test_cfg.nms.nms_iou_threshold[c],
@@ -582,7 +546,6 @@ def get_box(pred_boxs, order, test_cfg, H, W):
     pred = torch.cat(
         [xs, ys, pred_boxs[:, 2:3],
          torch.exp(pred_boxs[:, 3:6]), rot], dim=1)
-    pred[:, 2] = pred[:, 2] - pred[:, 5] / 2
 
     return torch.transpose(pred, 1, 2).contiguous()  # B M 7
 
@@ -612,10 +575,6 @@ def get_box_gt(gt_boxs, order, test_cfg, H, W):
 
     batch_box_targets = torch.cat(
         [xs, ys, batch_gt_hei, batch_gt_dim, batch_gt_rot], dim=-1)
-
-    batch_box_targets[...,
-                      2] = batch_box_targets[...,
-                                             2] - batch_box_targets[..., 5] / 2
 
     return batch_box_targets  # B M 7
 
