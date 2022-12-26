@@ -13,6 +13,7 @@ from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
                                   gaussian_radius)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
+from mmdet3d.utils.typing import SampleList
 from .. import builder
 from ..layers import circle_nms, nms_bev
 
@@ -955,8 +956,8 @@ class CenterHead(BaseModule):
 
     def loss_and_predict(self,
                          feats_dict: Dict,
-                         batch_data_samples,
-                         proposal_cfg=None,
+                         batch_data_samples: SampleList,
+                         proposal_cfg: dict = None,
                          **kwargs):
         """Perform forward propagation of the head, then calculate loss and
         predictions from the features and data samples.

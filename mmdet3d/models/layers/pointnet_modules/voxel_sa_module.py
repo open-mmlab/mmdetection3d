@@ -101,10 +101,7 @@ class VectorPoolLocalInterpolateModule(nn.Module):
                 (N1 + N2 ..., C_out).
         """
         with torch.no_grad():
-            if self.neighbor_type == 'ball':
-                neighbor_type = 1
-            else:
-                neighbor_type = 0
+            neighbor_type = 1 if self.neighbor_type == 'ball' else 0
             dist, idx, num_avg_length_of_neighbor_idxs = \
                 three_nn_vector_pool_by_two_step(
                     support_xyz, batch_num_xyzs, new_xyz, new_xyz_grid_centers,
@@ -209,8 +206,7 @@ class VectorPoolAggregationModule(nn.Module):
         self.input_channels = in_channels
         self.num_reduced_channels = in_channels \
             if num_reduced_channels is None else num_reduced_channels
-        self.num_aggregation_channels = \
-            num_aggregation_channels
+        self.num_aggregation_channels = num_aggregation_channels
         self.max_neighbour_distance = max_neighbour_distance
         self.neighbor_nsample = neighbor_nsample
         self.neighbor_type = neighbor_type
@@ -261,7 +257,7 @@ class VectorPoolAggregationModule(nn.Module):
                 nn.init.kaiming_normal_(m.weight)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
-            if isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
+            if isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1.0)
                 nn.init.constant_(m.bias, 0)
 
