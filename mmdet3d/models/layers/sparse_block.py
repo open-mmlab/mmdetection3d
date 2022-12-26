@@ -2,10 +2,13 @@
 from typing import Tuple, Union
 
 from mmcv.cnn import build_conv_layer, build_norm_layer
-from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
+# from mmdet.models.backbones.resnet import BasicBlock, Bottleneck
+from mmdet.models.backbones.resnet import Bottleneck
 from torch import nn
 
 from mmdet3d.utils import OptConfigType
+from projects.centerformer.centerformer.utils import \
+    BasicBlockBias as BasicBlock  # noqa: E501
 from .spconv import IS_SPCONV2_AVAILABLE
 
 if IS_SPCONV2_AVAILABLE:
