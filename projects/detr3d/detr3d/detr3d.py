@@ -1,16 +1,17 @@
 import os
 import time
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, OrderedDict, Sequence
 
 import numpy as np
 import torch
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.bbox_3d.utils import get_lidar2img
 from torch import Tensor
 
-from projects.detr3d.mmdet3d_plugin.models.utils.grid_mask import GridMask
-from mmdet3d.structures.bbox_3d.utils import get_lidar2img
+from .grid_mask import GridMask
+
 
 @MODELS.register_module()
 class Detr3D(MVXTwoStageDetector):
@@ -34,6 +35,9 @@ class Detr3D(MVXTwoStageDetector):
         init_cfg (dict, optional): Initialize config of
             model. Defaults to None.
     """
+    # by _version=2 we identify older checkpoints
+    # see self._load_from_state_dict()
+    _version = 2
 
     def __init__(self,
                  data_preprocessor=None,
@@ -43,10 +47,7 @@ class Detr3D(MVXTwoStageDetector):
                  pts_bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None,
-                 debug_name=None,
-                 gtvis_range=[0, 105],
-                 vis_count=None):
+                 pretrained=None):
         super(Detr3D, self).__init__(img_backbone=img_backbone,
                                      img_neck=img_neck,
                                      pts_bbox_head=pts_bbox_head,
@@ -61,9 +62,6 @@ class Detr3D(MVXTwoStageDetector):
                                   mode=1,
                                   prob=0.7)
         self.use_grid_mask = use_grid_mask
-        self.debug_name = debug_name
-        self.gtvis_range = gtvis_range
-        self.vis_count = vis_count
 
     def extract_img_feat(self, img: Tensor,
                          batch_input_metas: List[dict]) -> List[Tensor]:
@@ -182,6 +180,9 @@ class Detr3D(MVXTwoStageDetector):
 
         results_list_3d = self.pts_bbox_head.predict_by_feat(
             outs, batch_input_metas, **kwargs)
+        if self.old_ckpt:
+            results_list_3d = self.switch_box_xysize(results_list_3d)
+            # change the bboxes' format
         detsamples = self.add_pred_to_datasample(batch_data_samples,
                                                  results_list_3d)
         return detsamples
@@ -206,4 +207,34 @@ class Detr3D(MVXTwoStageDetector):
             meta['lidar2img'] = l2i
         return batch_input_metas
 
+    def switch_box_xysize(self, results_list_3d):
+        """Switch box xy size and the orientation. Since mmdet3d-v1.0.0 the box
+        definition has changed.
 
+        Args:
+            results_list_3d
+        """
+        for item in results_list_3d:
+            #cx, cy, cz, w, l, h, rot, vx, vy
+            item.bboxes_3d.tensor[..., [3, 4]] = \
+                item.bboxes_3d.tensor[...,[4, 3]]
+            item.bboxes_3d.tensor[..., 6] = \
+                -item.bboxes_3d.tensor[..., 6] - np.pi / 2
+        return results_list_3d
+
+    def _load_from_state_dict(self, state_dict: OrderedDict, prefix: str,
+                              local_metadata: Dict, strict: bool,
+                              missing_keys: List[str],
+                              unexpected_keys: List[str],
+                              error_msgs: List[str]) -> None:
+        """Determine if the checkpoint is trained on older version of
+        mmdet3d."""
+        version = local_metadata.get('version')
+        if version != 2:
+            self.old_ckpt = True
+            print('DETR3D using checkpoint trained on mmdet3d-0.17.3')
+        else:
+            self.old_ckpt = False
+        super()._load_from_state_dict(state_dict, prefix, local_metadata,
+                                      strict, missing_keys, unexpected_keys,
+                                      error_msgs)

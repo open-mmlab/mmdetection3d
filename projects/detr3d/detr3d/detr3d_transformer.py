@@ -349,13 +349,11 @@ class Detr3DCrossAtten(BaseModule):
         return self.dropout(output) + inp_residual + pos_feat
 
 
-def feature_sampling(
-    mlvl_feats,
-    ref_pt,
-    pc_range,
-    img_metas,
-    #  return_depth=False
-):
+def feature_sampling(mlvl_feats,
+                     ref_pt,
+                     pc_range,
+                     img_metas,
+                     no_sampling=False):
     """ sample multi-level features by projecting 3D reference points to 2D image
         Args:
             mlvl_feats (List[Tensor]): Image features from
@@ -366,6 +364,8 @@ def feature_sampling(
             pc_range: perception range of the detector
             img_metas (list[dict]): Meta information of multiple inputs
                 in a batch, containing `lidar2img`.
+            no_sampling (bool): If set 'True', the function will return
+                2D projected points and mask only.
         Returns:
             ref_pt_3d (Tensor): A copy of original ref_pt
             sampled_feats (Tensor): sampled features with shape \
@@ -420,6 +420,10 @@ def feature_sampling(
             & (pt_cam[..., 0:1] < 1.0)
             & (pt_cam[..., 1:2] > 0.0)
             & (pt_cam[..., 1:2] < 1.0))
+
+    if no_sampling:
+        return pt_cam, mask
+
     #(B num_cam num_q) -> (B 1 num_q num_cam 1 1)
     mask = mask.view(B, num_cam, 1, num_query, 1, 1).permute(0, 2, 3, 1, 4, 5)
     mask = torch.nan_to_num(mask)

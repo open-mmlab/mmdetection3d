@@ -1,9 +1,9 @@
 _base_ = [
     # '.../mmdetection3d/configs/_base_/datasets/nus-3d.py',
-    '../../../configs/_base_/default_runtime.py'
+    'mmdet3d::configs/_base_/default_runtime.py'
 ]
 
-custom_imports = dict(imports=['projects.detr3d.mmdet3d_plugin'])
+custom_imports = dict(imports=['projects.detr3d'])
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
@@ -226,15 +226,10 @@ train_cfg = dict(type='EpochBasedTrainLoop',
                  val_interval=2)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-# checkpoint_config = dict(interval=1, max_keep_ckpts=1)
 default_hooks = dict(checkpoint=dict(
     type='CheckpointHook', interval=1, max_keep_ckpts=1, save_last=True))
 load_from = 'ckpts/fcos3d_yue.pth'
 
-# ERROR: pip's dependency resolver does not currently take into account all the packages that are installed.
-# This behaviour is the source of the following dependency conflicts.
-# jupyter-packaging 0.12.3 requires setuptools>=60.2.0, but you have setuptools 58.0.4 which is incompatible.
-# setuptools 65 downgrades to 58.In mmlab-node we use setuptools 61 but occurs NO errors
 vis_backends = [dict(type='TensorboardVisBackend')]
 visualizer = dict(type='Det3DLocalVisualizer',
                   vis_backends=vis_backends,

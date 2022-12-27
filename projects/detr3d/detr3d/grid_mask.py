@@ -134,8 +134,7 @@ class GridMask(nn.Module):
             mask = 1 - mask
         mask = mask.expand_as(x)
         if self.offset:
-            offset = torch.from_numpy(
-                2 * (np.random.rand(h, w) - 0.5)).to(x)
+            offset = torch.from_numpy(2 * (np.random.rand(h, w) - 0.5)).to(x)
             x = x * mask + offset * (1 - mask)
         else:
             x = x * mask
