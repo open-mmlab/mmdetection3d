@@ -4,6 +4,7 @@ _base_ = [
     '../../../../configs/_base_/schedules/cyclic-20e.py'
 ]
 backbone_norm_cfg = dict(type='LN', requires_grad=True)
+custom_imports = dict(imports=['projects.PETR'])
 custom_imports = dict(imports=['projects.PETR.petr'])
 
 randomness = dict(seed=1, deterministic=False, diff_rank_seed=False)
