@@ -5,7 +5,6 @@ from mmdet.models.detectors import BaseDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.ops import bbox3d2result
 from mmdet3d.utils import ConfigType
-from ..builder import build_backbone, build_head, build_neck
 
 
 @MODELS.register_module()
@@ -55,34 +54,34 @@ class DfM(BaseDetector):
                  pretrained=None,
                  init_cfg=None):
         super().__init__(init_cfg=init_cfg)
-        self.backbone = build_backbone(backbone)
-        self.neck = build_neck(neck)
+        self.backbone = MODELS.build(backbone)
+        self.neck = MODELS.build(neck)
         if backbone_stereo is not None:
             backbone_stereo.update(cat_img_feature=self.neck.cat_img_feature)
             backbone_stereo.update(in_sem_channels=self.neck.sem_channels[-1])
-            self.backbone_stereo = build_backbone(backbone_stereo)
+            self.backbone_stereo = MODELS.build(backbone_stereo)
             assert self.neck.cat_img_feature == \
                 self.backbone_stereo.cat_img_feature
             assert self.neck.sem_channels[
                 -1] == self.backbone_stereo.in_sem_channels
         if backbone_3d is not None:
-            self.backbone_3d = build_backbone(backbone_3d)
+            self.backbone_3d = MODELS.build(backbone_3d)
         if neck_3d is not None:
-            self.neck_3d = build_neck(neck_3d)
+            self.neck_3d = MODELS.build(neck_3d)
         if neck_2d is not None:
-            self.neck_2d = build_neck(neck_2d)
+            self.neck_2d = MODELS.build(neck_2d)
         if bbox_head_2d is not None:
-            self.bbox_head_2d = build_head(bbox_head_2d)
+            self.bbox_head_2d = MODELS.build(bbox_head_2d)
         if depth_head_2d is not None:
-            self.depth_head_2d = build_head(depth_head_2d)
+            self.depth_head_2d = MODELS.build(depth_head_2d)
         if depth_head is not None:
-            self.depth_head = build_head(depth_head)
+            self.depth_head = MODELS.build(depth_head)
             self.depth_samples = self.depth_head.depth_samples
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         bbox_head_3d.update(train_cfg=train_cfg)
         bbox_head_3d.update(test_cfg=test_cfg)
-        self.bbox_head_3d = build_head(bbox_head_3d)
+        self.bbox_head_3d = MODELS.build(bbox_head_3d)
 
     @property
     def with_backbone_3d(self):

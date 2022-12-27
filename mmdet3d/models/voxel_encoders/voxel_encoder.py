@@ -5,7 +5,6 @@ from mmcv.ops import DynamicScatter
 from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
-from .. import builder
 from .utils import VFELayer, get_paddings_indicator
 
 
@@ -172,7 +171,7 @@ class DynamicVFE(nn.Module):
             voxel_size, point_cloud_range, average_points=True)
         self.fusion_layer = None
         if fusion_layer is not None:
-            self.fusion_layer = builder.build_fusion_layer(fusion_layer)
+            self.fusion_layer = MODELS.build(fusion_layer)
 
     def map_voxel_center_to_point(self, pts_coors, voxel_mean, voxel_coors):
         """Map voxel features to its corresponding points.
@@ -381,7 +380,7 @@ class HardVFE(nn.Module):
 
         self.fusion_layer = None
         if fusion_layer is not None:
-            self.fusion_layer = builder.build_fusion_layer(fusion_layer)
+            self.fusion_layer = MODELS.build(fusion_layer)
 
     def forward(self,
                 features,
