@@ -4,7 +4,7 @@ _base_ = [
     '../../../../configs/_base_/schedules/cyclic-20e.py'
 ]
 backbone_norm_cfg = dict(type='LN', requires_grad=True)
-custom_imports = dict(imports=['projects.PETR.mmdet3d_plugin'])
+custom_imports = dict(imports=['projects.PETR.petr'])
 
 randomness = dict(seed=1, deterministic=False, diff_rank_seed=False)
 # If point cloud range is changed, the models should also change their point
@@ -29,7 +29,7 @@ input_modality = dict(
     use_map=False,
     use_external=True)
 model = dict(
-    type='Petr',
+    type='PETR',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         mean=[103.530, 116.280, 123.675],

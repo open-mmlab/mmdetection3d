@@ -11,7 +11,7 @@ import torch
 from mmdet.models.task_modules import AssignResult, BaseAssigner
 
 from mmdet3d.registry import TASK_UTILS
-from projects.PETR.mmdet3d_plugin.structures.utils import normalize_bbox
+from projects.PETR.petr.structures.utils import normalize_bbox
 
 try:
     from scipy.optimize import linear_sum_assignment

@@ -18,8 +18,8 @@ from ..utils.grid_mask import GridMask
 
 
 @MODELS.register_module()
-class Petr(MVXTwoStageDetector):
-    """Petr."""
+class PETR(MVXTwoStageDetector):
+    """PETR."""
 
     def __init__(self,
                  use_grid_mask=False,
@@ -38,7 +38,7 @@ class Petr(MVXTwoStageDetector):
                  init_cfg=None,
                  data_preprocessor=None,
                  **kwargs):
-        super(Petr,
+        super(PETR,
               self).__init__(pts_voxel_layer, pts_middle_encoder,
                              pts_fusion_layer, img_backbone, pts_backbone,
                              img_neck, pts_neck, pts_bbox_head, img_roi_head,
