@@ -119,7 +119,7 @@ model = dict(
                 pc_range=point_cloud_range))))
 
 dataset_type = 'NuScenesDataset'
-data_root = '/mnt/d/nus/mmlab-v1.x-mini/'
+data_root = 'data/nuscenes/'
 file_client_args = dict(backend='disk')
 
 db_sampler = dict(
@@ -278,7 +278,7 @@ optim_wrapper = dict(
     }),
     clip_grad=dict(max_norm=35, norm_type=2))
 
-num_epochs = 12
+num_epochs = 24
 
 param_scheduler = [
     dict(
@@ -289,7 +289,6 @@ param_scheduler = [
         by_epoch=False),
     dict(
         type='CosineAnnealingLR',
-        # TODO Figure out what T_max
         T_max=num_epochs,
         by_epoch=True,
     )
@@ -299,6 +298,8 @@ train_cfg = dict(max_epochs=num_epochs, val_interval=num_epochs)
 
 find_unused_parameters = False
 
+# pretrain_path can be found here:
+# https://drive.google.com/file/d/1ABI5BoQCkCkP4B0pO5KBJ3Ni0tei0gZi/view
 load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
 resume = False
 
