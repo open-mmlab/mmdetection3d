@@ -10,9 +10,9 @@
 import torch
 import torch.nn.functional as F
 from mmdet.models.task_modules import BaseBBoxCoder
-from projects.PETR.mmdet3d_plugin.structures.utils import denormalize_bbox
 
 from mmdet3d.registry import TASK_UTILS
+from projects.PETR.mmdet3d_plugin.structures.utils import denormalize_bbox
 
 
 @TASK_UTILS.register_module()

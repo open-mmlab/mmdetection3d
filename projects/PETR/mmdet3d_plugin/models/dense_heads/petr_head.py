@@ -20,9 +20,9 @@ from mmdet.models.layers.transformer import inverse_sigmoid
 from mmdet.models.utils import multi_apply
 from mmengine.model.weight_init import bias_init_with_prob
 from mmengine.structures import InstanceData
-from projects.PETR.mmdet3d_plugin.structures.utils import normalize_bbox
 
 from mmdet3d.registry import MODELS, TASK_UTILS
+from projects.PETR.mmdet3d_plugin.structures.utils import normalize_bbox
 
 
 def pos2posemb3d(pos, num_pos_feats=128, temperature=10000):
