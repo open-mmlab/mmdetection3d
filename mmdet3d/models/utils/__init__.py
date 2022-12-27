@@ -6,10 +6,19 @@ from .gaussian import (draw_heatmap_gaussian, ellip_gaussian2D, gaussian_2d,
                        gaussian_radius, get_ellip_gaussian_2D)
 from .gen_keypoints import get_keypoints
 from .handle_objs import filter_outside_objs, handle_proj_objs
+from .petr_transformer import (PETRDNTransformer, PETRMultiheadAttention,
+                               PETRTransformer, PETRTransformerDecoder,
+                               PETRTransformerDecoderLayer,
+                               PETRTransformerEncoder)
+from .positional_encoding import (LearnedPositionalEncoding3D,
+                                  SinePositionalEncoding3D)
 
 __all__ = [
     'clip_sigmoid', 'get_edge_indices', 'filter_outside_objs',
     'handle_proj_objs', 'get_keypoints', 'gaussian_2d',
     'draw_heatmap_gaussian', 'gaussian_radius', 'get_ellip_gaussian_2D',
-    'ellip_gaussian2D', 'add_prefix'
+    'ellip_gaussian2D', 'add_prefix', 'SinePositionalEncoding3D',
+    'LearnedPositionalEncoding3D', 'PETRTransformer', 'PETRDNTransformer',
+    'PETRTransformerDecoderLayer', 'PETRMultiheadAttention',
+    'PETRTransformerEncoder', 'PETRTransformerDecoder'
 ]

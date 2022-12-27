@@ -6,12 +6,13 @@ from .anchor import (ANCHOR_GENERATORS, PRIOR_GENERATORS,
                      AlignedAnchor3DRangeGeneratorPerCls,
                      Anchor3DRangeGenerator, build_anchor_generator,
                      build_prior_generator)
-from .assigners import Max3DIoUAssigner
+from .assigners import HungarianAssigner3D, Max3DIoUAssigner
 from .coders import (AnchorFreeBBoxCoder, CenterPointBBoxCoder,
                      DeltaXYZWLHRBBoxCoder, FCOS3DBBoxCoder,
-                     GroupFree3DBBoxCoder, MonoFlexCoder,
+                     GroupFree3DBBoxCoder, MonoFlexCoder, NMSFreeCoder,
                      PartialBinBasedBBoxCoder, PGDBBoxCoder,
                      PointXYZWHLRBBoxCoder, SMOKECoder)
+from .match_cost import BBox3DL1Cost, FocalLossCost, IoUCost
 from .samplers import (BaseSampler, CombinedSampler,
                        InstanceBalancedPosSampler, IoUBalancedNegSampler,
                        IoUNegPiecewiseSampler, OHEMSampler, PseudoSampler,
@@ -28,5 +29,7 @@ __all__ = [
     'PGDBBoxCoder', 'SMOKECoder', 'MonoFlexCoder', 'VoxelGenerator',
     'AlignedAnchor3DRangeGenerator', 'Anchor3DRangeGenerator',
     'build_prior_generator', 'AlignedAnchor3DRangeGeneratorPerCls',
-    'build_anchor_generator', 'ANCHOR_GENERATORS', 'PRIOR_GENERATORS'
+    'build_anchor_generator', 'ANCHOR_GENERATORS', 'PRIOR_GENERATORS',
+    'HungarianAssigner3D', 'NMSFreeCoder', 'BBox3DL1Cost', 'FocalLossCost',
+    'IoUCost'
 ]
