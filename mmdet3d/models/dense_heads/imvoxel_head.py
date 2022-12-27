@@ -14,7 +14,8 @@ from torch import Tensor, nn
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d.utils import rotation_3d_in_axis
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils.typing_utils import InstanceList, OptInstanceList
+from mmdet3d.utils.typing_utils import (ConfigType, InstanceList,
+                                        OptInstanceList)
 
 
 @MODELS.register_module()
@@ -44,20 +45,20 @@ class ImVoxelHead(BaseModule):
     """
 
     def __init__(self,
-                 n_classes,
-                 n_levels,
-                 n_channels,
-                 n_reg_outs,
-                 pts_assign_threshold,
-                 pts_center_threshold,
-                 prior_generator,
-                 center_loss=dict(
+                 n_classes: int,
+                 n_levels: int,
+                 n_channels: int,
+                 n_reg_outs: int,
+                 pts_assign_threshold: int,
+                 pts_center_threshold: int,
+                 prior_generator: ConfigType,
+                 center_loss: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss', use_sigmoid=True),
-                 bbox_loss=dict(type='RotatedIoU3DLoss'),
-                 cls_loss=dict(type='mmdet.FocalLoss'),
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None):
+                 bbox_loss: ConfigType = dict(type='RotatedIoU3DLoss'),
+                 cls_loss: ConfigType = dict(type='mmdet.FocalLoss'),
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 init_cfg: OptConfigType = None):
         super(ImVoxelHead, self).__init__(init_cfg)
         self.pts_assign_threshold = pts_assign_threshold
         self.pts_center_threshold = pts_center_threshold
