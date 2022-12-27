@@ -1,6 +1,6 @@
-# Dummy PETR
+# PETR
 
-This is an README for `dummy_PETR`.
+This is an README for `PETR`.
 
 ## Description
 

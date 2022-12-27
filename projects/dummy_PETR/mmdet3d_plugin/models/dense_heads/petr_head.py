@@ -14,13 +14,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import Conv2d, Linear
-from mmdet3d_plugin.structures.utils import normalize_bbox
 from mmdet.models.dense_heads.anchor_free_head import AnchorFreeHead
 from mmdet.models.layers import NormedLinear
 from mmdet.models.layers.transformer import inverse_sigmoid
 from mmdet.models.utils import multi_apply
 from mmengine.model.weight_init import bias_init_with_prob
 from mmengine.structures import InstanceData
+from projects.PETR.mmdet3d_plugin.structures.utils import normalize_bbox
 
 from mmdet3d.registry import MODELS, TASK_UTILS
 

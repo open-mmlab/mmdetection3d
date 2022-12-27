@@ -1,7 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os
-import sys
-
 from mmdet3d.models.layers.fusion_layers import *  # noqa: F401,F403
 from .backbones import *  # noqa: F401,F403
 from .builder import (BACKBONES, DETECTORS, FUSION_LAYERS, HEADS, LOSSES,
@@ -33,11 +30,3 @@ __all__ = [
     'build_fusion_layer', 'build_model', 'build_middle_encoder',
     'build_voxel_encoder'
 ]
-
-pwd = os.getcwd()
-sys.path.append(os.path.join(pwd, 'projects/dummy_PETR'))
-from mmdet3d_plugin.models.backbones import *  # noqa: F401,E402,F403
-from mmdet3d_plugin.models.dense_heads import *  # noqa: F401,E402,F403
-from mmdet3d_plugin.models.detectors import *  # noqa: F401,E402,F403
-from mmdet3d_plugin.models.necks import *  # noqa: F401,E402,F403
-from mmdet3d_plugin.models.task_modules import *  # noqa: F401,E402,F403

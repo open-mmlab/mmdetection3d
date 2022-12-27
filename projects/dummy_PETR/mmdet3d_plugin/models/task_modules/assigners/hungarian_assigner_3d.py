@@ -8,8 +8,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
 import torch
-from mmdet3d_plugin.structures.utils import normalize_bbox
 from mmdet.models.task_modules import AssignResult, BaseAssigner
+from projects.PETR.mmdet3d_plugin.structures.utils import normalize_bbox
 
 from mmdet3d.registry import TASK_UTILS
 
