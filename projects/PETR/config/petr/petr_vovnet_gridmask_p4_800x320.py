@@ -23,11 +23,8 @@ class_names = [
 metainfo = dict(classes=class_names)
 
 input_modality = dict(
-    use_lidar=False,
     use_camera=True,
-    use_radar=False,
-    use_map=False,
-    use_external=True)
+    )
 model = dict(
     type='PETR',
     data_preprocessor=dict(
@@ -120,7 +117,7 @@ model = dict(
                 pc_range=point_cloud_range))))
 
 dataset_type = 'NuScenesDataset'
-data_root = 'data/nuscenes/'
+data_root = '/mnt/d/nus/mmlab-v1.x-mini/'
 file_client_args = dict(backend='disk')
 
 db_sampler = dict(
@@ -206,7 +203,7 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=2,
+    batch_size=1,
     num_workers=4,
     dataset=dict(
         type=dataset_type,
