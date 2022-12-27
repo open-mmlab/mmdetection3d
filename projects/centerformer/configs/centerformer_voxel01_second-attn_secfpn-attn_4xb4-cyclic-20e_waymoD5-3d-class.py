@@ -41,7 +41,7 @@ model = dict(
         encoder_paddings=((1, 1, 1), (1, 1, 1), (1, 1, [0, 1, 1]), (1, 1)),
         block_type='basicblock'),
     backbone=dict(
-        type='RPN_transformer_deformable',
+        type='DeformableDecoderRPN',
         layer_nums=[5, 5, 1],
         ds_num_filters=[256, 256, 128],
         num_input_features=256,
@@ -55,14 +55,14 @@ model = dict(
             depth=2,
             heads=6,
             dim_head=64,
-            MLP_dim=256,
-            DP_rate=0.3,
+            dim_ffn=256,
+            dropout_rate=0.3,
             out_att=False,
             n_points=15,
         ),
     ),
     bbox_head=dict(
-        type='CenterHeadIoU_1d',
+        type='CenterFormerBboxHead',
         in_channels=256,
         tasks=tasks,
         dataset='waymo',
@@ -129,6 +129,7 @@ train_pipeline = [
         load_dim=6,
         use_dim=5,
         norm_intensity=True),
+    # Add this if using `MultiFrameDeformableDecoderRPN`
     # dict(
     #     type='LoadPointsFromMultiSweeps',
     #     sweeps_num=9,
@@ -299,9 +300,6 @@ test_cfg = dict()
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 default_hooks = dict(
-    logger=dict(
-        type='LoggerHook',
-        interval=50,
-    ),
+    logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=5))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]

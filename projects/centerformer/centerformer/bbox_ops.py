@@ -1,10 +1,13 @@
 import torch
+from mmcv.utils import ext_loader
 
-from mmcv.ops import nms3d
+ext_module = ext_loader.load_ext('_ext', ['iou3d_nms3d_forward'])
 
 
 def nms_iou3d(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
-    """NMS function GPU implementation (using IoU3D)
+    """NMS function GPU implementation (using IoU3D) The difference of this
+    implementation with nms3d in MMCV is that we add `pre_maxsize` and
+    `post_max_size` before and after NMS respectively.
 
      Args:
         boxes (Tensor): Input boxes with the shape of [N, 5]
@@ -19,23 +22,20 @@ def nms_iou3d(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
     Returns:
         Tensor: Indexes after NMS.
     """
-
+    # TODO: directly refactor ``nms3d`` in MMCV
+    assert boxes.size(1) == 7, 'Input boxes shape should be (N, 7)'
     order = scores.sort(0, descending=True)[1]
     if pre_maxsize is not None:
         order = order[:pre_maxsize]
-
     boxes = boxes[order].contiguous()
 
-    keep = torch.LongTensor(boxes.size(0))
-
-    if len(boxes) == 0:
-        num_out = 0
-    else:
-        num_out = nms3d(boxes, keep, thresh)
-
-    selected = order[keep[:num_out].to(scores.device())].contiguous()
+    keep = boxes.new_zeros(boxes.size(0), dtype=torch.long)
+    num_out = boxes.new_zeros(size=(), dtype=torch.long)
+    ext_module.iou3d_nms3d_forward(
+        boxes, keep, num_out, nms_overlap_thresh=thresh)
+    keep = order[keep[:num_out].to(boxes.device)].contiguous()
 
     if post_max_size is not None:
-        selected = selected[:post_max_size]
+        keep = keep[:post_max_size]
 
-    return selected
+    return keep

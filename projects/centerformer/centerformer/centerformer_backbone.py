@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -7,12 +7,11 @@ from mmdet.models.utils import multi_apply
 from mmengine.logging import print_log
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
-from torch.nn import functional as F
 
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import center_to_corner_box2d
-from .transformer import Deform_Transformer
+from .transformer import DeformableTransformer
 
 
 class ChannelAttention(nn.Module):
@@ -53,10 +52,10 @@ class SpatialAttention(nn.Module):
         return self.sigmoid(y) * x
 
 
-class SpatialAttention_mtf(nn.Module):
+class MultiFrameSpatialAttention(nn.Module):
 
     def __init__(self, kernel_size=7):
-        super(SpatialAttention_mtf, self).__init__()
+        super(MultiFrameSpatialAttention, self).__init__()
 
         self.conv1 = nn.Conv2d(
             2, 1, kernel_size, padding=kernel_size // 2, bias=False)
@@ -70,7 +69,7 @@ class SpatialAttention_mtf(nn.Module):
         return self.sigmoid(y) * prev
 
 
-class RPN_transformer_base(nn.Module):
+class BaseDecoderRPN(nn.Module):
 
     def __init__(
             self,
@@ -90,7 +89,7 @@ class RPN_transformer_base(nn.Module):
             score_threshold=0.1,
             obj_num=500,
             **kwargs):
-        super(RPN_transformer_base, self).__init__()
+        super(BaseDecoderRPN, self).__init__()
         self._layer_strides = [1, 2, -4]
         self._num_filters = ds_num_filters
         self._layer_nums = layer_nums
@@ -246,7 +245,6 @@ class RPN_transformer_base(nn.Module):
             feat_id = (neighbor_coords[:, :, :, 1] * (W // (2**i)) +
                        neighbor_coords[:, :, :, 0])  # pixel id [B, 500, k]
             feat_id = feat_id.reshape(batch, -1)  # pixel id [B, 500*k]
-            # selected_feat = torch.gather(feats[i].reshape(batch, num_cls,(H*W)//(4**i)).permute(0, 2, 1).contiguous(),1,feat_id)
             selected_feat = (
                 feats[i].reshape(batch, num_cls, (H * W) // (4**i)).permute(
                     0, 2, 1).contiguous()[self.batch_id.repeat(1, k**2),
@@ -255,7 +253,6 @@ class RPN_transformer_base(nn.Module):
                 selected_feat.reshape(batch, center_num, -1,
                                       num_cls))  # B, 500, k, C
             relative_pos_list.append(neighbor_coords * (2**i))  # B, 500, k, 2
-            # relative_pos_list.append(F.pad(neighbor_coords*(2**i), (0,1), "constant", i)) # B, 500, k, 3
 
         neighbor_pos = torch.cat(relative_pos_list, dim=2)  # B, 500, K, 2/3
         neighbor_feats = torch.cat(neighbor_feat_list, dim=2)  # B, 500, K, C
@@ -333,35 +330,36 @@ class RPN_transformer_base(nn.Module):
 
 
 @MODELS.register_module()
-class RPN_transformer_deformable(RPN_transformer_base):
-    '''The original implement of CenterFormer modules. It fusion the backbone
-    neck and heatmap head into one module.
+class DeformableDecoderRPN(BaseDecoderRPN):
+    """The original implement of CenterFormer modules.
 
-    '''
+    It fuse the backbone neck and heatmap head into one module.
 
-    def __init__(
-            self,
-            layer_nums,  # [2,2,2]
-            ds_num_filters,  # [128,256,64]
-            num_input_features,
-            tasks=dict(),
-            transformer_config=None,
-            hm_head_layer=2,
-            corner_head_layer=2,
-            corner=False,
-            parametric_embedding=False,
-            assign_label_window_size=1,
-            classes=3,
-            use_gt_training=False,
-            norm_cfg=None,
-            logger=None,
-            init_bias=-2.19,
-            score_threshold=0.1,
-            obj_num=500,
-            train_cfg=None,
-            test_cfg=None,
-            **kwargs):
-        super(RPN_transformer_deformable, self).__init__(
+    TODO: split this module into backbone、neck and head.
+    """
+
+    def __init__(self,
+                 layer_nums,
+                 ds_num_filters,
+                 num_input_features,
+                 tasks=dict(),
+                 transformer_config=None,
+                 hm_head_layer=2,
+                 corner_head_layer=2,
+                 corner=False,
+                 parametric_embedding=False,
+                 assign_label_window_size=1,
+                 classes=3,
+                 use_gt_training=False,
+                 norm_cfg=None,
+                 logger=None,
+                 init_bias=-2.19,
+                 score_threshold=0.1,
+                 obj_num=500,
+                 train_cfg=None,
+                 test_cfg=None,
+                 **kwargs):
+        super(DeformableDecoderRPN, self).__init__(
             layer_nums,
             ds_num_filters,
             num_input_features,
@@ -381,16 +379,15 @@ class RPN_transformer_deformable(RPN_transformer_base):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self.tasks = tasks
-        num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
 
-        self.transformer_layer = Deform_Transformer(
+        self.transformer_layer = DeformableTransformer(
             self._num_filters[-1] * 2,
             depth=transformer_config.depth,
             heads=transformer_config.heads,
             dim_head=transformer_config.dim_head,
-            mlp_dim=transformer_config.MLP_dim,
-            dropout=transformer_config.DP_rate,
+            dim_ffn=transformer_config.dim_ffn,
+            dropout=transformer_config.dropout_rate,
             out_attention=transformer_config.out_att,
             n_points=transformer_config.get('n_points', 9),
         )
@@ -467,11 +464,8 @@ class RPN_transformer_deformable(RPN_transformer_base):
         labels = torch.gather(labels, 1, order)
         mask = scores > self.score_threshold
 
-        ct_feat = (x_up.reshape(batch, -1,
-                                H * W).transpose(2,
-                                                 1).contiguous()[self.batch_id,
-                                                                 order]
-                   )  # B, 500, C
+        ct_feat = x_up.reshape(batch, -1, H * W).transpose(2, 1).contiguous()
+        ct_feat = ct_feat[self.batch_id, order]  # B, 500, C
 
         # create position embedding for each center
         y_coor = order // W
@@ -548,7 +542,7 @@ class RPN_transformer_deformable(RPN_transformer_base):
                 [ tensor0, tensor1, tensor2, ... ]
         Args:
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instances. It usually includes ``bboxes_3d`` and\
+                gt_instances. It usually includes ``bboxes_3d`` and
                 ``labels_3d`` attributes.
         Returns:
             Returns:
@@ -560,8 +554,9 @@ class RPN_transformer_deformable(RPN_transformer_base):
                     position of the valid boxes.
                 - list[torch.Tensor]: Masks indicating which
                     boxes are valid.
+                - list[torch.Tensor]: catagrate labels.
         """
-        heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels = multi_apply(
+        heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels = multi_apply(  # noqa: E501
             self.get_targets_single, batch_gt_instances_3d)
         # Transpose heatmaps
         heatmaps = list(map(list, zip(*heatmaps)))
@@ -599,6 +594,7 @@ class RPN_transformer_deformable(RPN_transformer_base):
                     of the valid boxes.
                 - list[torch.Tensor]: Masks indicating which boxes
                     are valid.
+                - list[torch.Tensor]: catagrate labels.
         """
         gt_labels_3d = gt_instances_3d.labels_3d
         gt_bboxes_3d = gt_instances_3d.bboxes_3d
@@ -637,7 +633,7 @@ class RPN_transformer_deformable(RPN_transformer_base):
             task_classes.append(torch.cat(task_class).long().to(device))
             flag2 += len(mask)
         draw_gaussian = draw_heatmap_gaussian
-        heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels = [], [], [], [], [], []
+        heatmaps, anno_boxes, inds, masks, corner_heatmaps, cat_labels = [], [], [], [], [], []  # noqa: E501
 
         for idx in range(len(self.tasks)):
             heatmap = gt_bboxes_3d.new_zeros(
@@ -759,7 +755,7 @@ class RPN_transformer_deformable(RPN_transformer_base):
 
 
 @MODELS.register_module()
-class RPN_transformer_deformable_mtf(RPN_transformer_base):
+class MultiFrameDeformableDecoderRPN(BaseDecoderRPN):
 
     def __init__(
             self,
@@ -781,7 +777,7 @@ class RPN_transformer_deformable_mtf(RPN_transformer_base):
             obj_num=500,
             frame=1,
             **kwargs):
-        super(RPN_transformer_deformable_mtf, self).__init__(
+        super(MultiFrameDeformableDecoderRPN, self).__init__(
             layer_nums,
             ds_num_filters,
             num_input_features,
@@ -811,17 +807,17 @@ class RPN_transformer_deformable_mtf(RPN_transformer_base):
             build_norm_layer(self._norm_cfg, self._num_filters[0])[1],
             nn.ReLU(),
         )
-        self.mtf_attention = SpatialAttention_mtf()
+        self.mtf_attention = MultiFrameSpatialAttention()
         self.time_embedding = nn.Linear(1, self._num_filters[0])
 
-        self.transformer_layer = Deform_Transformer(
+        self.transformer_layer = DeformableTransformer(
             self._num_filters[-1] * 2,
             depth=transformer_config.depth,
             heads=transformer_config.heads,
             levels=2 + self.frame,
             dim_head=transformer_config.dim_head,
-            mlp_dim=transformer_config.MLP_dim,
-            dropout=transformer_config.DP_rate,
+            dim_ffn=transformer_config.dim_ffn,
+            dropout=transformer_config.dropout_rate,
             out_attention=transformer_config.out_att,
             n_points=transformer_config.get('n_points', 9),
         )

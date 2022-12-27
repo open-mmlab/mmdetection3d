@@ -11,6 +11,7 @@ import logging
 import numpy as np
 import torch
 from mmcv.cnn import build_norm_layer
+from mmcv.ops import boxes_iou3d
 from mmengine.logging import print_log
 from mmengine.model import kaiming_init
 from mmengine.structures import InstanceData
@@ -18,12 +19,15 @@ from torch import nn
 
 from mmdet3d.models.layers import circle_nms, nms_bev
 from mmdet3d.registry import MODELS
-from .losses import FastFocalLoss
-from mmcv.ops import boxes_iou3d
 from .bbox_ops import nms_iou3d
+from .losses import FastFocalLoss
 
 
 class SepHead(nn.Module):
+    """TODO: This module is the original implementation in CenterFormer and it
+    has few differences with ``SeperateHead`` in `mmdet3d` but refactor this
+    module will lower the performance a little.
+    """
 
     def __init__(
             self,
@@ -85,13 +89,11 @@ class SepHead(nn.Module):
 
 
 @MODELS.register_module()
-class CenterHeadIoU_1d(nn.Module):
+class CenterFormerBboxHead(nn.Module):
 
     def __init__(self,
-                 in_channels=[
-                     128,
-                 ],
-                 tasks=[],
+                 in_channels,
+                 tasks,
                  weight=0.25,
                  iou_weight=1,
                  corner_weight=1,
@@ -108,7 +110,7 @@ class CenterHeadIoU_1d(nn.Module):
                  bbox_code_size=7,
                  test_cfg=None,
                  **kawrgs):
-        super(CenterHeadIoU_1d, self).__init__()
+        super(CenterFormerBboxHead, self).__init__()
 
         num_classes = [len(t['class_names']) for t in tasks]
         self.class_names = [t['class_names'] for t in tasks]
@@ -136,7 +138,7 @@ class CenterHeadIoU_1d(nn.Module):
         self.use_direction_classifier = False
 
         if not logger:
-            logger = logging.getLogger('CenterHeadIoU_1d')
+            logger = logging.getLogger('CenterFormerBboxHead')
         self.logger = logger
 
         logger.info(f'num_classes: {num_classes}')
@@ -390,12 +392,6 @@ class CenterHeadIoU_1d(nn.Module):
                 if k == 'bboxes':
                     bboxes = torch.cat([ret[i][k] for ret in rets])
                     bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 5] * 0.5
-                    # The original CenterFormer model predict (..., w,l,h)
-                    # Note that this is used to align the precision of
-                    # converted model
-                    # bboxes[:, 4], bboxes[:, 3] = bboxes[:, 3].clone(
-                    # ), bboxes[:, 4].clone()
-                    # bboxes[:, 6] = -bboxes[:, 6] - np.pi / 2
                     bboxes = batch_input_metas[i]['box_type_3d'](
                         bboxes, self.bbox_code_size)
                 elif k == 'labels':
@@ -406,7 +402,6 @@ class CenterHeadIoU_1d(nn.Module):
                     labels = torch.cat([ret[i][k] for ret in rets])
                 elif k == 'scores':
                     scores = torch.cat([ret[i][k] for ret in rets])
-            # ret['metadata'] = metas[0][i]
 
             temp_instances.bboxes_3d = bboxes
             temp_instances.scores_3d = scores
@@ -469,16 +464,6 @@ class CenterHeadIoU_1d(nn.Module):
                     class_mask = labels == c
                     if class_mask.sum() > 0:
                         class_idx = class_mask.nonzero()
-                        # boxes_for_nms = xywhr2xyxyr(
-                        #     img_metas[i]['box_type_3d'](
-                        #         box_preds[:, :], self.bbox_code_size).bev)
-                        # select = nms_bev(
-                        #     boxes_for_nms[class_mask].float(),
-                        #     scores[class_mask].float(),
-                        #     thresh=test_cfg.nms.nms_iou_threshold[c],
-                        #     pre_max_size=test_cfg.nms.nms_pre_max_size[c],
-                        #     post_max_size=test_cfg.nms.nms_post_max_size[c],
-                        # )
                         select = nms_iou3d(
                             boxes_for_nms[class_mask].float(),
                             scores[class_mask].float(),

@@ -36,7 +36,7 @@ class DisableObjectSampleHook(Hook):
             model = model.module
         if epoch == self.disable_after_epoch:
             runner.logger.info('Disable ObjectSample')
-            for transform in runner.train_dataloader.dataset.pipeline.transforms:
+            for transform in runner.train_dataloader.dataset.pipeline.transforms:  # noqa: E501
                 if isinstance(transform, ObjectSample):
                     assert hasattr(transform, 'disabled')
                     transform.disabled = True

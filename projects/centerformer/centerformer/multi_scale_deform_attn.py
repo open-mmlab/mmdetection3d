@@ -1,9 +1,10 @@
 import math
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
 from mmcv.utils import ext_loader
-from torch import nn
+from torch import Tensor, nn
 from torch.autograd.function import Function, once_differentiable
 from torch.nn.init import constant_, xavier_uniform_
 
@@ -85,17 +86,21 @@ class MultiScaleDeformableAttnFunction(Function):
 
 
 class MSDeformAttn(nn.Module):
-    """Multi-Scale Deformable Attention Module.
-    Note that the difference between this implementation and the implementation
-    in MMCV is that the dimension of input and hidden embedding in the
-    multi-attention-head can be specified respectively.
+    """Multi-Scale Deformable Attention Module. Note that the difference
+    between this implementation and the implementation in MMCV is that the
+    dimension of input and hidden embedding in the multi-attention-head can be
+    specified respectively.
 
-        :param d_model      input dimension
-        :param d_head       hidden dimension
-        :param n_levels     number of feature levels
-        :param n_heads      number of attention heads
-        :param n_points     number of sampling points per attention head per feature level # noqa: E501
-        """
+    Args:
+        d_model (int, optional): input dimension. Defaults to 256.
+        d_head (int, optional): hidden dimension. Defaults to 64.
+        n_levels (int, optional): number of feature levels. Defaults to 4.
+        n_heads (int, optional): number of attention heads. Defaults to 8.
+        n_points (int, optional): number of sampling points per attention head
+            per feature level. Defaults to 4.
+        out_sample_loc (bool, optional): Whether to return the sampling
+            location. Defaults to False.
+    """
 
     def __init__(self,
                  d_model=256,
@@ -146,23 +151,36 @@ class MSDeformAttn(nn.Module):
         constant_(self.output_proj.bias.data, 0.)
 
     def forward(self,
-                query,
-                reference_points,
-                input_flatten,
-                input_spatial_shapes,
-                input_level_start_index,
-                input_padding_mask=None):
-        """
-        :param query: (N, Length_{query}, C)
-        :param reference_points
-        (N, Length_{query}, n_levels, 2), range in [0, 1], top-left (0,0), bottom-right (1, 1), including padding area # noqa: E501
-                                        or (N, Length_{query}, n_levels, 4), add additional (w, h) to form reference boxes  # noqa: E501
-        :param input_flatten : (N, \sum_{l=0}^{L-1} H_l \cdot W_l, C)
-        :param input_spatial_shapes:
-             (n_levels, 2), [(H_0, W_0), (H_1, W_1), ..., (H_{L-1}, W_{L-1})]
-        :param input_level_start_index: (n_levels, ), [0, H_0*W_0, H_0*W_0+H_1*W_1, H_0*W_0+H_1*W_1+H_2*W_2, ..., H_0*W_0+H_1*W_1+...+H_{L-1}*W_{L-1}]   # noqa: E501
-        :param input_padding_mask  (N, \sum_{l=0}^{L-1} H_l \cdot W_l), True for padding elements, False for non-padding elements   # noqa: E501
-        :return output      (N, Length_{query}, C)
+                query: Tensor,
+                reference_points: Tensor,
+                input_flatten: Tensor,
+                input_spatial_shapes: Tensor,
+                input_level_start_index: Tensor,
+                input_padding_mask: Optional[Tensor] = None):
+        """Forward Function of MultiScaleDeformAttention.
+
+        Args:
+            query (Tensor): (N, num_query, C)
+            reference_points (Tensor): (N, num_query, n_levels, 2). The
+                normalized reference points with shape
+                (bs, num_query, num_levels, 2),
+                all elements is range in [0, 1], top-left (0,0),
+                bottom-right (1, 1), including padding area.
+                or (N, Length_{query}, num_levels, 4), add
+                additional two dimensions is (w, h) to
+                form reference boxes.
+            input_flatten (Tensor): _description_
+            input_spatial_shapes (Tensor): Spatial shape of features in
+                different levels. With shape (num_levels, 2),
+                last dimension represents (h, w).
+            input_level_start_index (Tensor): The start index of each level.
+                A tensor has shape ``(num_levels, )`` and can be represented
+                as [0, h_0*w_0, h_0*w_0+h_1*w_1, ...].
+            input_padding_mask (Optional[Tensor], optional): The padding mask
+                for value. Defaults to None.
+
+        Returns:
+            Tuple[Tensor, Tensor]: forwarded results.
         """
         N, Len_q, _ = query.shape
         N, Len_in, _ = input_flatten.shape
@@ -186,8 +204,8 @@ class MSDeformAttn(nn.Module):
                 [input_spatial_shapes[..., 1], input_spatial_shapes[..., 0]],
                 -1).to(sampling_offsets)
 
-            sampling_locations = reference_points[:, :, None, :, None, :] \
-                                 + sampling_offsets / offset_normalizer[None, None, None, :, None, :]   # noqa: E501
+            sampling_locations = reference_points[:, :, None, :, None, :] + \
+                sampling_offsets / offset_normalizer[None, None, None, :, None, :]  # noqa: E501
         elif reference_points.shape[-1] == 4:
             sampling_locations = reference_points[:, :, None, :, None, :2] \
                                  + sampling_offsets / self.n_points * reference_points[:, :, None, :, None, 2:] * 0.5   # noqa: E501

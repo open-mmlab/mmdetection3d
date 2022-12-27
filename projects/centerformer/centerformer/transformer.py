@@ -1,37 +1,11 @@
-import math
-
 import torch
 from einops import rearrange
+from mmcv.cnn.bricks.activation import GELU
 from torch import einsum, nn
-from torch.nn import functional as F
 
 from .multi_scale_deform_attn import MSDeformAttn
 
 
-class MLP(nn.Module):
-    """Very simple multi-layer perceptron (also called FFN)"""
-
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
-        super().__init__()
-        self.num_layers = num_layers
-        h = [hidden_dim] * (num_layers - 1)
-        self.layers = nn.ModuleList(
-            nn.Linear(n, k) for n, k in zip([input_dim] + h, h + [output_dim]))
-
-    def forward(self, x):
-        for i, layer in enumerate(self.layers):
-            x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
-        return x
-
-
-class GELU(nn.Module):
-
-    def forward(self, x):
-        return 0.5 * x * (1 + torch.tanh(
-            math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
-
-
-# transformer layer
 class PreNorm(nn.Module):
 
     def __init__(self, dim, fn):
@@ -39,22 +13,14 @@ class PreNorm(nn.Module):
         self.norm = nn.LayerNorm(dim)
         self.fn = fn
 
-    def forward(self, x, **kwargs):
-        return self.fn(self.norm(x), **kwargs)
+    def forward(self, x, y=None, **kwargs):
+        if y is not None:
+            return self.fn(self.norm(x), self.norm(y), **kwargs)
+        else:
+            return self.fn(self.norm(x), **kwargs)
 
 
-class PreNorm_CA(nn.Module):
-
-    def __init__(self, dim, fn):
-        super().__init__()
-        self.norm = nn.LayerNorm(dim)
-        self.fn = fn
-
-    def forward(self, x, y, **kwargs):
-        return self.fn(self.norm(x), self.norm(y), **kwargs)
-
-
-class FeedForward(nn.Module):
+class FFN(nn.Module):
 
     def __init__(self, dim, hidden_dim, dropout=0.0):
         super().__init__()
@@ -70,7 +36,7 @@ class FeedForward(nn.Module):
         return self.net(x)
 
 
-class Attention(nn.Module):
+class SelfAttention(nn.Module):
 
     def __init__(self,
                  dim,
@@ -94,7 +60,7 @@ class Attention(nn.Module):
             if project_out else nn.Identity())
 
     def forward(self, x):
-        b, n, _, h = *x.shape, self.heads
+        _, _, _, h = *x.shape, self.heads
         qkv = self.to_qkv(x).chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv)
 
@@ -111,53 +77,7 @@ class Attention(nn.Module):
             return self.to_out(out)
 
 
-class Cross_attention(nn.Module):
-
-    def __init__(self,
-                 dim,
-                 heads=8,
-                 dim_head=64,
-                 dropout=0.0,
-                 out_attention=False):
-        super().__init__()
-        inner_dim = dim_head * heads
-        project_out = not (heads == 1 and dim_head == dim)
-
-        self.heads = heads
-        self.scale = dim_head**-0.5
-        self.out_attention = out_attention
-
-        self.attend = nn.Softmax(dim=-1)
-        self.to_kv = nn.Linear(dim, inner_dim * 2, bias=False)
-        self.to_q = nn.Linear(dim, inner_dim, bias=False)
-
-        self.to_out = (
-            nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(dropout))
-            if project_out else nn.Identity())
-
-    def forward(self, x, y):
-        b, n, m, _, h = *y.shape, self.heads
-        q = self.to_q(x)
-        kv = self.to_kv(y).chunk(2, dim=-1)
-        q = rearrange(q, 'b n (h d) -> (b n) h 1 d', h=h)
-        k, v = map(lambda t: rearrange(t, 'b n m (h d) -> (b n) h m d', h=h),
-                   kv)
-
-        dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.scale
-
-        attn = self.attend(dots)
-
-        out = einsum('b h i j, b h j d -> b h i d', attn, v)
-        out = rearrange(out, '(b n) h 1 d -> b n (h d)', b=b)
-
-        if self.out_attention:
-            return self.to_out(out), rearrange(
-                attn, '(b n) h i j -> b n h (i j)', b=b)
-        else:
-            return self.to_out(out)
-
-
-class DeformableTransformerCrossAttention(nn.Module):
+class DeformableCrossAttention(nn.Module):
 
     def __init__(
         self,
@@ -213,103 +133,15 @@ class DeformableTransformerCrossAttention(nn.Module):
             return tgt
 
 
-class Transformer(nn.Module):
+class DeformableTransformer(nn.Module):
+    """Deformable transformer.
 
-    def __init__(
-        self,
-        dim,
-        depth=2,
-        heads=4,
-        dim_head=64,
-        mlp_dim=256,
-        dropout=0.0,
-        out_attention=False,
-    ):
-        super().__init__()
-        self.out_attention = out_attention
-        self.layers = nn.ModuleList([])
-        self.depth = depth
-
-        for _ in range(depth):
-            self.layers.append(
-                nn.ModuleList([
-                    PreNorm(
-                        dim,
-                        Attention(
-                            dim,
-                            heads=heads,
-                            dim_head=dim_head,
-                            dropout=dropout,
-                            out_attention=self.out_attention,
-                        ),
-                    ),
-                    PreNorm_CA(
-                        dim,
-                        Cross_attention(
-                            dim,
-                            heads=heads,
-                            dim_head=dim_head,
-                            dropout=dropout,
-                            out_attention=self.out_attention,
-                        ),
-                    ),
-                    PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout)),
-                ]))
-
-    def forward(self,
-                x,
-                pos_embedding=None,
-                center_pos=None,
-                y=None,
-                neighbor_pos=None):
-        if self.out_attention:
-            out_cross_attention_list = []
-        if center_pos is not None and pos_embedding is not None:
-            center_pos_embedding = pos_embedding(center_pos)
-        if neighbor_pos is not None and pos_embedding is not None:
-            neighbor_pos_embedding = pos_embedding(neighbor_pos)
-        for i, (self_attn, cross_attn, ff) in enumerate(self.layers):
-            if self.out_attention:
-                if pos_embedding is not None:
-                    x_att, self_att = self_attn(x + center_pos_embedding)
-                    x = x_att + x
-                    x_att, cross_att = cross_attn(x + center_pos_embedding,
-                                                  y + neighbor_pos_embedding)
-                else:
-                    x_att, self_att = self_attn(x)
-                    x = x_att + x
-                    x_att, cross_att = cross_attn(x, y)
-                out_cross_attention_list.append(cross_att)
-            else:
-                if pos_embedding is not None:
-                    x_att = self_attn(x + center_pos_embedding)
-                    x = x_att + x
-                    x_att = cross_attn(x + center_pos_embedding,
-                                       y + neighbor_pos_embedding)
-                else:
-                    x_att = self_attn(x)
-                    x = x_att + x
-                    x_att = cross_attn(x, y)
-
-            x = x_att + x
-            x = ff(x) + x
-
-        out_dict = {'ct_feat': x}
-        if self.out_attention:
-            out_dict.update({
-                'out_attention':
-                torch.stack(out_cross_attention_list, dim=2)
-            })
-        return out_dict
-
-
-class Deform_Transformer(nn.Module):
-    '''Deformable transformer.
-    Note that the difference between this implementation and the implementation
-    in MMDet is that the dimension of input and hidden embedding in the
-    multi-attention-head can be specified respectively.
-
-    '''
+    Note that the ``DeformableDetrTransformerDecoder`` in MMDet has different
+    interfaces in multi-head-attention which is customized here. For example,
+    'embed_dims' is not a position argument in our customized multi-head-self-
+    attention, but is required in MMDet. Thus, we can not directly use the
+    ``DeformableDetrTransformerDecoder`` in MMDET.
+    """
 
     def __init__(
         self,
@@ -318,7 +150,7 @@ class Deform_Transformer(nn.Module):
         depth=2,
         heads=4,
         dim_head=32,
-        mlp_dim=256,
+        dim_ffn=256,
         dropout=0.0,
         out_attention=False,
         n_points=9,
@@ -335,7 +167,7 @@ class Deform_Transformer(nn.Module):
                 nn.ModuleList([
                     PreNorm(
                         dim,
-                        Attention(
+                        SelfAttention(
                             dim,
                             heads=heads,
                             dim_head=dim_head,
@@ -343,9 +175,9 @@ class Deform_Transformer(nn.Module):
                             out_attention=self.out_attention,
                         ),
                     ),
-                    PreNorm_CA(
+                    PreNorm(
                         dim,
-                        DeformableTransformerCrossAttention(
+                        DeformableCrossAttention(
                             dim,
                             dim_head,
                             n_levels=levels,
@@ -355,7 +187,7 @@ class Deform_Transformer(nn.Module):
                             out_sample_loc=self.out_attention,
                         ),
                     ),
-                    PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout)),
+                    PreNorm(dim, FFN(dim, dim_ffn, dropout=dropout)),
                 ]))
 
     def forward(self, x, pos_embedding, src, src_spatial_shapes,
