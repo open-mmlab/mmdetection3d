@@ -192,12 +192,10 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
-    dict(type='AddCamInfo'),
+    dict(type='AddCamInfo', size_divisor=32),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
         training=False),
-    # TODO Figure whether need Pad
-    dict(type='PadMultiViewImage', size_divisor=32),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
