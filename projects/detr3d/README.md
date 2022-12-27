@@ -1,33 +1,36 @@
 # DETR3D
 
-This directory contains the implementations of DETR3D (https://arxiv.org/abs/2110.06922). Our implementations are built on top of MMdetection3D.  
+This directory contains the implementations of DETR3D (https://arxiv.org/abs/2110.06922). Our implementations are built on top of MMdetection3D.
 We have updated DETR3D to be compatible with latest mmdet3d-dev1.x. The codebase and config files have all changed to adapt to the new mmdet3d version. All previous pretrained models are verified with the result listed below. However, newly trained models are yet to be uploaded.
 
 ### Prerequisite
+
 Follow the installation instructions in: mmdet3d-dev1.x (https://github.com/open-mmlab/mmdetection3d/tree/dev-1.x)
 
 ### Data
+
 1. Follow the mmdet3d to process the data.
 
 ### Train
-1. Downloads the [pretrained backbone weights](https://drive.google.com/drive/folders/1h5bDg7Oh9hKvkFL-dRhu5-ahrEp2lRNN?usp=sharing) to pretrained/ 
+
+1. Downloads the [pretrained backbone weights](https://drive.google.com/drive/folders/1h5bDg7Oh9hKvkFL-dRhu5-ahrEp2lRNN?usp=sharing) to pretrained/
 
 2. For example, to train DETR3D on 8 GPUs, please use
 
 `bash tools/dist_train.sh projects/detr3d/configs/detr3d_res101_gridmask.py 8`
 
 ### Evaluation using pretrained models
+
 1. Download the weights accordingly.
 
-|  Backbone   | mAP | NDS | Download |
-| :---------: | :----: |:----: | :------: |
-|[DETR3D, ResNet101 w/ DCN(old)](./configs/detr3d_res101_gridmask_dev-1.x_test_old.py)|34.7|42.2|[model](https://drive.google.com/file/d/1YWX-jIS6fxG5_JKUBNVcZtsPtShdjE4O/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1uvrf42seV4XbWtir-2XjrdGUZ2Qbykid/view?usp=sharing)|
-|[above, + CBGS(old)](./configs/detr3d_res101_gridmask_cbgs_dev-1.x_test_old.py)|34.9|43.4|[model](https://drive.google.com/file/d/1sXPFiA18K9OMh48wkk9dF1MxvBDUCj2t/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1NJNggvFGqA423usKanqbsZVE_CzF4ltT/view?usp=sharing)|
-|[DETR3D, VoVNet on trainval, evaluation on test set(old)](./configs/detr3d_vovnet_gridmask_det_final_trainval_cbgs_dev-1.x_test_old.py)| 41.2 | 47.9 |[model](https://drive.google.com/file/d/1d5FaqoBdUH6dQC3hBKEZLcqbvWK0p9Zv/view?usp=sharing) &#124; [log](https://drive.google.com/file/d/1ONEMm_2W9MZAutjQk1UzaqRywz5PMk3p/view?usp=sharing)|
-
+|                                                                Backbone                                                                 | mAP  | NDS  |                                                                                         Download                                                                                         |
+| :-------------------------------------------------------------------------------------------------------------------------------------: | :--: | :--: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|                          [DETR3D, ResNet101 w/ DCN(old)](./configs/detr3d_res101_gridmask_dev-1.x_test_old.py)                          | 34.7 | 42.2 | [model](https://drive.google.com/file/d/1YWX-jIS6fxG5_JKUBNVcZtsPtShdjE4O/view?usp=sharing) \| [log](https://drive.google.com/file/d/1uvrf42seV4XbWtir-2XjrdGUZ2Qbykid/view?usp=sharing) |
+|                             [above, + CBGS(old)](./configs/detr3d_res101_gridmask_cbgs_dev-1.x_test_old.py)                             | 34.9 | 43.4 | [model](https://drive.google.com/file/d/1sXPFiA18K9OMh48wkk9dF1MxvBDUCj2t/view?usp=sharing) \| [log](https://drive.google.com/file/d/1NJNggvFGqA423usKanqbsZVE_CzF4ltT/view?usp=sharing) |
+| [DETR3D, VoVNet on trainval, evaluation on test set(old)](./configs/detr3d_vovnet_gridmask_det_final_trainval_cbgs_dev-1.x_test_old.py) | 41.2 | 47.9 | [model](https://drive.google.com/file/d/1d5FaqoBdUH6dQC3hBKEZLcqbvWK0p9Zv/view?usp=sharing) \| [log](https://drive.google.com/file/d/1ONEMm_2W9MZAutjQk1UzaqRywz5PMk3p/view?usp=sharing) |
 
 2. Testing
-From v0.17.3 to v1.0.0, mmdet3d has changed its bbox representation. Given that Box(x,y,z,θ), we have x_new = y_old, y_new = x_old, θ_new = -θ_old - π/2.
+   From v0.17.3 to v1.0.0, mmdet3d has changed its bbox representation. Given that Box(x,y,z,θ), we have x_new = y_old, y_new = x_old, θ_new = -θ_old - π/2.
 
    Currently pretrained models( end with '(old)' ) are in trained on v0.17.3.
 
@@ -39,8 +42,6 @@ From v0.17.3 to v1.0.0, mmdet3d has changed its bbox representation. Given that 
 
    `bash tools/dist_test.sh projects/detr3d/configs/nuscene/detr3d_res101_gridmask.py ckpts/detr3d_r101_v1.0.0-rc2.pth 8 --eval=bbox`
 
-
- 
 If you find this repo useful for your research, please consider citing the papers
 
 ```

@@ -3,9 +3,10 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmdet3d.registry import MODELS
 from mmengine.model import BaseModule
 from torch.nn.modules.batchnorm import _BatchNorm
+
+from mmdet3d.registry import MODELS
 
 VoVNet19_slim_dw_eSE = {
     'stem': [64, 64, 64],
@@ -98,21 +99,23 @@ def dw_conv3x3(in_channels,
     """3x3 convolution with padding."""
     return [
         ('{}_{}/dw_conv3x3'.format(module_name, postfix),
-         nn.Conv2d(in_channels,
-                   out_channels,
-                   kernel_size=kernel_size,
-                   stride=stride,
-                   padding=padding,
-                   groups=out_channels,
-                   bias=False)),
+         nn.Conv2d(
+             in_channels,
+             out_channels,
+             kernel_size=kernel_size,
+             stride=stride,
+             padding=padding,
+             groups=out_channels,
+             bias=False)),
         ('{}_{}/pw_conv1x1'.format(module_name, postfix),
-         nn.Conv2d(in_channels,
-                   out_channels,
-                   kernel_size=1,
-                   stride=1,
-                   padding=0,
-                   groups=1,
-                   bias=False)),
+         nn.Conv2d(
+             in_channels,
+             out_channels,
+             kernel_size=1,
+             stride=1,
+             padding=0,
+             groups=1,
+             bias=False)),
         ('{}_{}/pw_norm'.format(module_name,
                                 postfix), nn.BatchNorm2d(out_channels)),
         ('{}_{}/pw_relu'.format(module_name, postfix), nn.ReLU(inplace=True)),
@@ -283,36 +286,37 @@ class _OSA_stage(nn.Sequential):
 
         if not stage_num == 2:
             self.add_module(
-                'Pooling', nn.MaxPool2d(kernel_size=3,
-                                        stride=2,
-                                        ceil_mode=True))
+                'Pooling',
+                nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True))
 
         if block_per_stage != 1:
             SE = False
         module_name = f'OSA{stage_num}_1'
         self.add_module(
             module_name,
-            _OSA_module(in_ch,
-                        stage_ch,
-                        concat_ch,
-                        layer_per_block,
-                        module_name,
-                        SE,
-                        depthwise=depthwise))
+            _OSA_module(
+                in_ch,
+                stage_ch,
+                concat_ch,
+                layer_per_block,
+                module_name,
+                SE,
+                depthwise=depthwise))
         for i in range(block_per_stage - 1):
             if i != block_per_stage - 2:  # last block
                 SE = False
             module_name = f'OSA{stage_num}_{i + 2}'
             self.add_module(
                 module_name,
-                _OSA_module(concat_ch,
-                            stage_ch,
-                            concat_ch,
-                            layer_per_block,
-                            module_name,
-                            SE,
-                            identity=True,
-                            depthwise=depthwise),
+                _OSA_module(
+                    concat_ch,
+                    stage_ch,
+                    concat_ch,
+                    layer_per_block,
+                    module_name,
+                    SE,
+                    identity=True,
+                    depthwise=depthwise),
             )
 
 

@@ -4,12 +4,12 @@ from typing import Dict, List, Optional, OrderedDict, Sequence
 
 import numpy as np
 import torch
+from torch import Tensor
+
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.structures.bbox_3d.utils import get_lidar2img
-from torch import Tensor
-
 from .grid_mask import GridMask
 
 
@@ -48,19 +48,15 @@ class Detr3D(MVXTwoStageDetector):
                  train_cfg=None,
                  test_cfg=None,
                  pretrained=None):
-        super(Detr3D, self).__init__(img_backbone=img_backbone,
-                                     img_neck=img_neck,
-                                     pts_bbox_head=pts_bbox_head,
-                                     train_cfg=train_cfg,
-                                     test_cfg=test_cfg,
-                                     data_preprocessor=data_preprocessor)
-        self.grid_mask = GridMask(True,
-                                  True,
-                                  rotate=1,
-                                  offset=False,
-                                  ratio=0.5,
-                                  mode=1,
-                                  prob=0.7)
+        super(Detr3D, self).__init__(
+            img_backbone=img_backbone,
+            img_neck=img_neck,
+            pts_bbox_head=pts_bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            data_preprocessor=data_preprocessor)
+        self.grid_mask = GridMask(
+            True, True, rotate=1, offset=False, ratio=0.5, mode=1, prob=0.7)
         self.use_grid_mask = use_grid_mask
 
     def extract_img_feat(self, img: Tensor,

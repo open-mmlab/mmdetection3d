@@ -1,7 +1,7 @@
 import torch
-from mmdet3d.registry import TASK_UTILS
 from mmdet.models.task_modules import BaseBBoxCoder
 
+from mmdet3d.registry import TASK_UTILS
 from .util import denormalize_bbox
 
 
@@ -66,8 +66,8 @@ class NMSFreeCoder(BaseBBoxCoder):
         if self.score_threshold is not None:
             thresh_mask = final_scores > self.score_threshold
         if self.post_center_range is not None:
-            self.post_center_range = torch.tensor(self.post_center_range,
-                                                  device=scores.device)
+            self.post_center_range = torch.tensor(
+                self.post_center_range, device=scores.device)
             mask = (final_box_preds[..., :3] >=
                     self.post_center_range[:3]).all(1)
             mask &= (final_box_preds[..., :3] <=

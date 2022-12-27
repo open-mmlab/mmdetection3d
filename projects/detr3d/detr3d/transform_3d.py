@@ -1,7 +1,8 @@
 import mmcv
 import numpy as np
-from mmdet3d.registry import TRANSFORMS
 from numpy import random
+
+from mmdet3d.registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()

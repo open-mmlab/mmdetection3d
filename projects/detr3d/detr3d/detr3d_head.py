@@ -5,9 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import Linear
-from mmdet3d.models.task_modules.builder import \
-    build_bbox_coder  # need to change
-from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.models.dense_heads import DETRHead
 from mmdet.models.layers import inverse_sigmoid
 from mmdet.models.utils import multi_apply
@@ -18,6 +15,9 @@ from mmengine.model import bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
+from mmdet3d.models.task_modules.builder import \
+    build_bbox_coder  # need to change
+from mmdet3d.registry import MODELS, TASK_UTILS
 from .task_modules.util import normalize_bbox
 
 
@@ -59,16 +59,15 @@ class Detr3DHead(DETRHead):
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.pc_range = self.bbox_coder.pc_range
         self.num_cls_fcs = num_cls_fcs - 1
-        super(Detr3DHead, self).__init__(*args,
-                                         transformer=transformer,
-                                         **kwargs)
+        super(Detr3DHead, self).__init__(
+            *args, transformer=transformer, **kwargs)
         # DETR sampling=False, so use PseudoSampler, format the result
         sampler_cfg = dict(type='PseudoSampler')
         self.sampler = TASK_UTILS.build(sampler_cfg)
 
-        self.code_weights = nn.Parameter(torch.tensor(self.code_weights,
-                                                      requires_grad=False),
-                                         requires_grad=False)
+        self.code_weights = nn.Parameter(
+            torch.tensor(self.code_weights, requires_grad=False),
+            requires_grad=False)
 
     # forward_train -> loss
     def _init_layers(self):
@@ -197,11 +196,8 @@ class Detr3DHead(DETRHead):
 
         gt_labels = gt_instances_3d.labels_3d  # [num_gt, num_cls]
         # assigner and sampler: PseudoSampler
-        assign_result = self.assigner.assign(bbox_pred,
-                                             cls_score,
-                                             gt_bboxes,
-                                             gt_labels,
-                                             gt_bboxes_ignore=None)
+        assign_result = self.assigner.assign(
+            bbox_pred, cls_score, gt_bboxes, gt_labels, gt_bboxes_ignore=None)
         sampling_result = self.sampler.sample(
             assign_result, InstanceData(priors=bbox_pred),
             InstanceData(bboxes_3d=gt_bboxes))
@@ -318,10 +314,8 @@ class Detr3DHead(DETRHead):
                 batch_cls_scores.new_tensor([cls_avg_factor]))
 
         cls_avg_factor = max(cls_avg_factor, 1)
-        loss_cls = self.loss_cls(batch_cls_scores,
-                                 labels,
-                                 label_weights,
-                                 avg_factor=cls_avg_factor)
+        loss_cls = self.loss_cls(
+            batch_cls_scores, labels, label_weights, avg_factor=cls_avg_factor)
 
         # Compute the average number of gt boxes across all gpus, for
         # normalization purposes

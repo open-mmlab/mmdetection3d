@@ -8,8 +8,9 @@ import torch.nn.functional as F
 from mmcv.cnn.bricks.transformer import (TransformerLayerSequence,
                                          build_transformer_layer_sequence)
 from mmcv.ops.multi_scale_deform_attn import MultiScaleDeformableAttention
-from mmdet3d.registry import MODELS
 from mmengine.model import BaseModule, constant_init, xavier_init
+
+from mmdet3d.registry import MODELS
 
 
 def inverse_sigmoid(x, eps=1e-5):
@@ -167,10 +168,11 @@ class Detr3DTransformerDecoder(TransformerLayerSequence):
         intermediate_reference_points = []
         for lid, layer in enumerate(self.layers):  ## iterative refinement
             reference_points_input = reference_points
-            output = layer(output,
-                           *args,
-                           reference_points=reference_points_input,
-                           **kwargs)
+            output = layer(
+                output,
+                *args,
+                reference_points=reference_points_input,
+                **kwargs)
             output = output.permute(1, 0, 2)
             if reg_branches is not None:
                 tmp = reg_branches[lid](output)
@@ -416,10 +418,11 @@ def feature_sampling(mlvl_feats,
     # pt_cam[..., 1] /= h                             #cam3~4: 886 *1920 padded to 1280*1920
     # mask[:, 3:5, :] &= (pt_cam[:, 3:5, :, 1:2] < 0.7) #filter pt_cam_y > 886
 
-    mask = (mask & (pt_cam[..., 0:1] > 0.0)
-            & (pt_cam[..., 0:1] < 1.0)
-            & (pt_cam[..., 1:2] > 0.0)
-            & (pt_cam[..., 1:2] < 1.0))
+    mask = (
+        mask & (pt_cam[..., 0:1] > 0.0)
+        & (pt_cam[..., 0:1] < 1.0)
+        & (pt_cam[..., 1:2] > 0.0)
+        & (pt_cam[..., 1:2] < 1.0))
 
     if no_sampling:
         return pt_cam, mask
