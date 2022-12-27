@@ -56,18 +56,18 @@ class_names = [
 ]
 metainfo = dict(CLASSES=class_names)
 
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/sunrgbd/':
-        's3://openmmlab/datasets/detection3d/sunrgbd_processed/',
-        'data/sunrgbd/':
-        's3://openmmlab/datasets/detection3d/sunrgbd_processed/'
-    }))
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/sunrgbd/':
+#         's3://openmmlab/datasets/detection3d/sunrgbd_processed/',
+#         'data/sunrgbd/':
+#         's3://openmmlab/datasets/detection3d/sunrgbd_processed/'
+#     }))
 
 train_pipeline = [
     dict(type='LoadAnnotations3D'),
