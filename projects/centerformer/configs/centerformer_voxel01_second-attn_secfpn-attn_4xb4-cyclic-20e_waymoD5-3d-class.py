@@ -106,7 +106,7 @@ model = dict(
         obj_num=1000,
     ))
 
-data_root = 'data/waymo_mini/kitti_format/'
+data_root = 'data/waymo/kitti_format/'
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'waymo_dbinfos_train.pkl',
