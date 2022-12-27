@@ -173,7 +173,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='LidarBox3dVersionTransfrom'),
-    dict(type='AddCamInfo'),
+    dict(type='AddCamInfo', size_divisor=32),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     dict(
@@ -183,7 +183,6 @@ train_pipeline = [
         scale_ratio_range=[0.95, 1.05],
         reverse_angle=False,
         training=True),
-    dict(type='PadMultiViewImage', size_divisor=32),
     dict(
         type='Pack3DDetInputs',
         keys=[
@@ -266,7 +265,7 @@ optim_wrapper = dict(
     }),
     clip_grad=dict(max_norm=35, norm_type=2))
 
-num_epochs = 12
+num_epochs = 24
 
 param_scheduler = [
     dict(
@@ -287,6 +286,8 @@ train_cfg = dict(max_epochs=num_epochs, val_interval=num_epochs)
 
 find_unused_parameters = False
 
+# pretrain_path can be found here:
+# https://drive.google.com/file/d/1ABI5BoQCkCkP4B0pO5KBJ3Ni0tei0gZi/view
 load_from = '/mnt/d/fcos3d_vovnet_imgbackbone-remapped.pth'
 resume = False
 

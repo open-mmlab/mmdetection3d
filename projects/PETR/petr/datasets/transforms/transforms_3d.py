@@ -13,8 +13,10 @@ from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 @TRANSFORMS.register_module()
 class AddCamInfo(BaseTransform):
 
-    def __init__(self, training: bool = True) -> None:
+    def __init__(self, training: bool = True, size: int = None, size_divisor: int = None) -> None:
         self.training = training
+        self.size = size
+        self.size_divisor = size_divisor
 
     def transform(self, input_dict: dict) -> dict:
         """Call function to pad images, masks, semantic segmentation maps.
@@ -54,6 +56,9 @@ class AddCamInfo(BaseTransform):
                 lidar2img=lidar2img_rts,
                 intrinsics=intrinsics,
                 extrinsics=extrinsics))
+        input_dict['img_shape'] = [img.shape for img in input_dict['img']]
+        input_dict['pad_fixed_size'] = self.size
+        input_dict['pad_size_divisor'] = self.size_divisor
         return input_dict
 
     def __repr__(self) -> str:
@@ -262,64 +267,6 @@ class GlobalRotScaleTransImage(BaseTransform):
             results['extrinsics'][view] = (torch.tensor(
                 rot_mat_inv.T @ results['extrinsics'][view]).float()).numpy()
         return
-
-
-@TRANSFORMS.register_module()
-class PadMultiViewImage(BaseTransform):
-    """Pad the multi-view image.
-
-    There are two padding modes: (1) pad to a fixed size and (2) pad to the
-    minimum size that is divisible by some number.
-    Added keys are "pad_shape", "pad_fixed_size", "pad_size_divisor",
-    Args:
-        size (tuple, optional): Fixed padding size.
-        size_divisor (int, optional): The divisor of padded size.
-        pad_val (float, optional): Padding value, 0 by default.
-    """
-
-    def __init__(self, size=None, size_divisor=None, pad_val=0):
-        self.size = size
-        self.size_divisor = size_divisor
-        self.pad_val = pad_val
-        # only one of size and size_divisor should be valid
-        assert size is not None or size_divisor is not None
-        assert size is None or size_divisor is None
-
-    def _pad_img(self, results):
-        """Pad images according to ``self.size``."""
-        if self.size is not None:
-            padded_img = [
-                mmcv.impad(img, shape=self.size, pad_val=self.pad_val)
-                for img in results['img']
-            ]
-        elif self.size_divisor is not None:
-            padded_img = [
-                mmcv.impad_to_multiple(
-                    img, self.size_divisor, pad_val=self.pad_val)
-                for img in results['img']
-            ]
-        results['img_shape'] = [img.shape for img in results['img']]
-        results['img'] = padded_img
-        results['pad_shape'] = [img.shape for img in padded_img]
-        results['pad_fixed_size'] = self.size
-        results['pad_size_divisor'] = self.size_divisor
-
-    def transform(self, results):
-        """Call function to pad images, masks, semantic segmentation maps.
-
-        Args:
-            results (dict): Result dict from loading pipeline.
-        Returns:
-            dict: Updated result dict.
-        """
-        self._pad_img(results)
-        return results
-
-    def __repr__(self):
-        repr_str = self.__class__.__name__
-        repr_str += f'(size={self.size}, '
-        repr_str += f'size_divisor={self.size_divisor}, '
-        repr_str += f'pad_val={self.pad_val})'
 
 
 @TRANSFORMS.register_module()
