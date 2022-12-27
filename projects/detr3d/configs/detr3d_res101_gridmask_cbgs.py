@@ -26,7 +26,7 @@ input_modality = dict(use_lidar=False,
                       use_external=False)
 
 dataset_type = 'NuScenesDataset'
-data_root = 'data/nus_v2/'
+data_root = 'data/nuscenes/'
 
 test_transforms = [
     dict(type='RandomResize3D',

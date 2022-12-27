@@ -47,7 +47,7 @@ model = dict(type='Detr3D',
                            relu_before_extra_convs=True))
 
 dataset_type = 'NuScenesDataset'
-data_root = 'data/nus_v2/'
+data_root = 'data/nuscenes/'
 
 test_transforms = [
     dict(type='RandomResize3D',
