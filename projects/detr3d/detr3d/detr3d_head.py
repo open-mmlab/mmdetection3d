@@ -7,11 +7,10 @@ import torch.nn.functional as F
 from mmcv.cnn import Linear
 from mmdet3d.models.task_modules.builder import \
     build_bbox_coder  # need to change
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.models.dense_heads import DETRHead
 from mmdet.models.layers import inverse_sigmoid
 from mmdet.models.utils import multi_apply
-from mmdet.registry import TASK_UTILS
 from mmdet.structures import SampleList
 from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
                          OptInstanceList, OptMultiConfig, reduce_mean)
@@ -19,7 +18,7 @@ from mmengine.model import bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from projects.detr3d.mmdet3d_plugin.models.task_modules.util import normalize_bbox
+from .task_modules.util import normalize_bbox
 
 
 @MODELS.register_module()
