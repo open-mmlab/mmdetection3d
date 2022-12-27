@@ -4,7 +4,7 @@ from .datasets.transforms import (AddCamInfo, GlobalRotScaleTransImage,
                                   ResizeCropFlipImage)
 from .models.backbones.vovnetcp import VoVNetCP
 from .models.dense_heads import PETRHead
-from .models.detectors import Petr3D
+from .models.detectors import Petr
 from .models.necks import CPFPN
 from .models.task_modules.assigners import HungarianAssigner3D
 from .models.task_modules.coders import NMSFreeCoder
@@ -21,6 +21,6 @@ __all__ = [
     'VoVNetCP', 'PETRHead', 'CPFPN', 'HungarianAssigner3D', 'NMSFreeCoder',
     'BBox3DL1Cost', 'LearnedPositionalEncoding3D', 'PETRDNTransformer',
     'PETRMultiheadAttention', 'PETRTransformer', 'PETRTransformerDecoder',
-    'PETRTransformerDecoderLayer', 'PETRTransformerEncoder', 'Petr3D',
+    'PETRTransformerDecoderLayer', 'PETRTransformerEncoder', 'Petr',
     'SinePositionalEncoding3D', 'denormalize_bbox', 'normalize_bbox'
 ]
