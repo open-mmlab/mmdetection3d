@@ -18,7 +18,7 @@ from mmdet3d import __version__ as mmdet3d_version
 from mmdet3d.apis import init_random_seed, train_model
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
-from mmdet3d.utils import collect_env, get_root_logger
+from mmdet3d.utils import collect_env, get_device, get_root_logger
 from mmdet.apis import set_random_seed
 from mmseg import __version__ as mmseg_version
 
@@ -206,8 +206,9 @@ def main():
     logger.info(f'Distributed training: {distributed}')
     logger.info(f'Config:\n{cfg.pretty_text}')
 
+    cfg.device = get_device()
     # set random seeds
-    seed = init_random_seed(args.seed)
+    seed = init_random_seed(args.seed, device=cfg.device)
     seed = seed + dist.get_rank() if args.diff_seed else seed
     logger.info(f'Set random seed to {seed}, '
                 f'deterministic: {args.deterministic}')
