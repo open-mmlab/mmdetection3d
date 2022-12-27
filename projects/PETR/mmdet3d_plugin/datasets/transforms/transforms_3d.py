@@ -265,46 +265,6 @@ class GlobalRotScaleTransImage(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class NormalizeMultiviewImage(BaseTransform):
-    """Normalize the image.
-
-    Added key is "img_norm_cfg".
-    Args:
-        mean (sequence): Mean values of 3 channels.
-        std (sequence): Std values of 3 channels.
-        to_rgb (bool): Whether to convert the image from BGR to RGB,
-            default is true.
-    """
-
-    def __init__(self, mean, std, to_rgb=True):
-        self.mean = np.array(mean, dtype=np.float32)
-        self.std = np.array(std, dtype=np.float32)
-        self.to_rgb = to_rgb
-
-    def transform(self, results):
-        """Call function to normalize images.
-
-        Args:
-            results (dict): Result dict from loading pipeline.
-        Returns:
-            dict: Normalized results, 'img_norm_cfg' key is added into
-                result dict.
-        """
-        results['img'] = [
-            mmcv.imnormalize(img, self.mean, self.std, self.to_rgb)
-            for img in results['img']
-        ]
-        results['img_norm_cfg'] = dict(
-            mean=self.mean, std=self.std, to_rgb=self.to_rgb)
-        return results
-
-    def __repr__(self):
-        repr_str = self.__class__.__name__
-        repr_str += f'(mean={self.mean}, std={self.std}, to_rgb={self.to_rgb})'
-        return repr_str
-
-
-@TRANSFORMS.register_module()
 class PadMultiViewImage(BaseTransform):
     """Pad the multi-view image.
 

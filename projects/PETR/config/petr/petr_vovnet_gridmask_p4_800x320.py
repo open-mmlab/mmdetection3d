@@ -259,16 +259,6 @@ val_dataloader = dict(
         modality=input_modality,
         use_valid_flag=True))
 
-# lr = 0.003  # max learning rate
-
-optimizer = dict(
-    type='AdamW',
-    lr=2e-4,
-    paramwise_cfg=dict(custom_keys={
-        'img_backbone': dict(lr_mult=0.1),
-    }),
-    weight_decay=0.01)
-
 optim_wrapper = dict(
     # TODO Add Amp
     # type='AmpOptimWrapper',
