@@ -18,7 +18,7 @@ from mmdet3d import __version__ as mmdet3d_version
 from mmdet3d.apis import init_random_seed, train_model
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
-from mmdet3d.utils import collect_env, get_root_logger, get_device
+from mmdet3d.utils import collect_env, get_device, get_root_logger
 from mmdet.apis import set_random_seed
 from mmseg import __version__ as mmseg_version
 

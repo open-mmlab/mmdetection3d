@@ -12,9 +12,9 @@ from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
 
 import mmdet
 from mmdet3d.apis import single_gpu_test
-from mmdet3d.utils import build_ddp, build_dp, get_device
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_model
+from mmdet3d.utils import build_ddp, build_dp, get_device
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
@@ -229,9 +229,11 @@ def main():
         model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
         outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
     else:
-        model = build_ddp(model, cfg.device,
-￼                          device_ids=[int(os.environ['LOCAL_RANK'])],
-￼                          broadcast_buffers=False)
+        model = build_ddp(
+            model,
+            cfg.device,
+            device_ids=[int(os.environ['LOCAL_RANK'])],
+            broadcast_buffers=False)
         outputs = multi_gpu_test(model, data_loader, args.tmpdir,
                                  args.gpu_collect)
 
