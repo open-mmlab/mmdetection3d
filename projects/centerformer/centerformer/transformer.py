@@ -40,16 +40,16 @@ class SelfAttention(nn.Module):
 
     def __init__(self,
                  dim,
-                 heads=8,
-                 dim_head=64,
+                 n_heads=8,
+                 dim_single_head=64,
                  dropout=0.0,
                  out_attention=False):
         super().__init__()
-        inner_dim = dim_head * heads
-        project_out = not (heads == 1 and dim_head == dim)
+        inner_dim = dim_single_head * n_heads
+        project_out = not (n_heads == 1 and dim_single_head == dim)
 
-        self.heads = heads
-        self.scale = dim_head**-0.5
+        self.n_heads = n_heads
+        self.scale = dim_single_head**-0.5
         self.out_attention = out_attention
 
         self.attend = nn.Softmax(dim=-1)
@@ -60,7 +60,7 @@ class SelfAttention(nn.Module):
             if project_out else nn.Identity())
 
     def forward(self, x):
-        _, _, _, h = *x.shape, self.heads
+        _, _, _, h = *x.shape, self.n_heads
         qkv = self.to_qkv(x).chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv)
 
@@ -81,8 +81,8 @@ class DeformableCrossAttention(nn.Module):
 
     def __init__(
         self,
-        d_model=256,
-        d_head=64,
+        dim_model=256,
+        dim_single_head=64,
         dropout=0.3,
         n_levels=3,
         n_heads=6,
@@ -93,8 +93,8 @@ class DeformableCrossAttention(nn.Module):
 
         # cross attention
         self.cross_attn = MSDeformAttn(
-            d_model,
-            d_head,
+            dim_model,
+            dim_single_head,
             n_levels,
             n_heads,
             n_points,
@@ -133,8 +133,8 @@ class DeformableCrossAttention(nn.Module):
             return tgt
 
 
-class DeformableTransformer(nn.Module):
-    """Deformable transformer.
+class DeformableTransformerDecoder(nn.Module):
+    """Deformable transformer decoder.
 
     Note that the ``DeformableDetrTransformerDecoder`` in MMDet has different
     interfaces in multi-head-attention which is customized here. For example,
@@ -146,10 +146,10 @@ class DeformableTransformer(nn.Module):
     def __init__(
         self,
         dim,
-        levels=3,
+        n_levels=3,
         depth=2,
-        heads=4,
-        dim_head=32,
+        n_heads=4,
+        dim_single_head=32,
         dim_ffn=256,
         dropout=0.0,
         out_attention=False,
@@ -159,7 +159,7 @@ class DeformableTransformer(nn.Module):
         self.out_attention = out_attention
         self.layers = nn.ModuleList([])
         self.depth = depth
-        self.levels = levels
+        self.n_levels = n_levels
         self.n_points = n_points
 
         for _ in range(depth):
@@ -169,8 +169,8 @@ class DeformableTransformer(nn.Module):
                         dim,
                         SelfAttention(
                             dim,
-                            heads=heads,
-                            dim_head=dim_head,
+                            n_heads=n_heads,
+                            dim_single_head=dim_single_head,
                             dropout=dropout,
                             out_attention=self.out_attention,
                         ),
@@ -179,9 +179,9 @@ class DeformableTransformer(nn.Module):
                         dim,
                         DeformableCrossAttention(
                             dim,
-                            dim_head,
-                            n_levels=levels,
-                            n_heads=heads,
+                            dim_single_head,
+                            n_levels=n_levels,
+                            n_heads=n_heads,
                             dropout=dropout,
                             n_points=n_points,
                             out_sample_loc=self.out_attention,
@@ -197,7 +197,7 @@ class DeformableTransformer(nn.Module):
         if pos_embedding is not None:
             center_pos_embedding = pos_embedding(center_pos)
         reference_points = center_pos[:, :,
-                                      None, :].repeat(1, 1, self.levels, 1)
+                                      None, :].repeat(1, 1, self.n_levels, 1)
         for i, (self_attn, cross_attn, ff) in enumerate(self.layers):
             if self.out_attention:
                 if center_pos_embedding is not None:

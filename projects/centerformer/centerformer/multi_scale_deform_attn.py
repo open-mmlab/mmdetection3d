@@ -92,8 +92,10 @@ class MSDeformAttn(nn.Module):
     specified respectively.
 
     Args:
-        d_model (int, optional): input dimension. Defaults to 256.
-        d_head (int, optional): hidden dimension. Defaults to 64.
+        dim_model (int, optional): The input and output dimension in the model.
+            Defaults to 256.
+        dim_single_head (int, optional): hidden dimension in the single head.
+            Defaults to 64.
         n_levels (int, optional): number of feature levels. Defaults to 4.
         n_heads (int, optional): number of attention heads. Defaults to 8.
         n_points (int, optional): number of sampling points per attention head
@@ -103,8 +105,8 @@ class MSDeformAttn(nn.Module):
     """
 
     def __init__(self,
-                 d_model=256,
-                 d_head=64,
+                 dim_model=256,
+                 dim_single_head=64,
                  n_levels=4,
                  n_heads=8,
                  n_points=4,
@@ -113,20 +115,20 @@ class MSDeformAttn(nn.Module):
 
         self.im2col_step = 64
 
-        self.d_model = d_model
-        self.d_head = d_head
+        self.dim_model = dim_model
+        self.dim_single_head = dim_single_head
         self.n_levels = n_levels
         self.n_heads = n_heads
         self.n_points = n_points
 
         self.out_sample_loc = out_sample_loc
 
-        self.sampling_offsets = nn.Linear(d_model,
+        self.sampling_offsets = nn.Linear(dim_model,
                                           n_heads * n_levels * n_points * 2)
-        self.attention_weights = nn.Linear(d_model,
+        self.attention_weights = nn.Linear(dim_model,
                                            n_heads * n_levels * n_points)
-        self.value_proj = nn.Linear(d_model, d_head * n_heads)
-        self.output_proj = nn.Linear(d_head * n_heads, d_model)
+        self.value_proj = nn.Linear(dim_model, dim_single_head * n_heads)
+        self.output_proj = nn.Linear(dim_single_head * n_heads, dim_model)
 
         self._reset_parameters()
 
@@ -190,7 +192,7 @@ class MSDeformAttn(nn.Module):
         value = self.value_proj(input_flatten)
         if input_padding_mask is not None:
             value = value.masked_fill(input_padding_mask[..., None], float(0))
-        value = value.view(N, Len_in, self.n_heads, self.d_head)
+        value = value.view(N, Len_in, self.n_heads, self.dim_single_head)
         sampling_offsets = self.sampling_offsets(query).view(
             N, Len_q, self.n_heads, self.n_levels, self.n_points, 2)
         attention_weights = self.attention_weights(query).view(

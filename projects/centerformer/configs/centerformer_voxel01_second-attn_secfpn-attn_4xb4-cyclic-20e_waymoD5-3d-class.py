@@ -53,11 +53,11 @@ model = dict(
         norm_cfg=dict(type='SyncBN', eps=1e-3, momentum=0.01),
         transformer_config=dict(
             depth=2,
-            heads=6,
-            dim_head=64,
+            n_heads=6,
+            dim_single_head=64,
             dim_ffn=256,
-            dropout_rate=0.3,
-            out_att=False,
+            dropout=0.3,
+            out_attn=False,
             n_points=15,
         ),
     ),
@@ -106,7 +106,7 @@ model = dict(
         obj_num=1000,
     ))
 
-data_root = 'data/waymo/kitti_format/'
+data_root = 'data/waymo_mini/kitti_format/'
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'waymo_dbinfos_train.pkl',

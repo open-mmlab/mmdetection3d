@@ -11,7 +11,7 @@ from torch import Tensor, nn
 from mmdet3d.models.utils import draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import center_to_corner_box2d
-from .transformer import DeformableTransformer
+from .transformer import DeformableTransformerDecoder
 
 
 class ChannelAttention(nn.Module):
@@ -333,7 +333,8 @@ class BaseDecoderRPN(nn.Module):
 class DeformableDecoderRPN(BaseDecoderRPN):
     """The original implement of CenterFormer modules.
 
-    It fuse the backbone neck and heatmap head into one module.
+    It fuse the backbone, neck and heatmap head into one module. The backbone
+    is `SECOND` with attention and the neck is `SECONDFPN` with attention.
 
     TODO: split this module into backbone、neck and head.
     """
@@ -381,14 +382,14 @@ class DeformableDecoderRPN(BaseDecoderRPN):
         self.tasks = tasks
         self.class_names = [t['class_names'] for t in tasks]
 
-        self.transformer_layer = DeformableTransformer(
+        self.transformer_decoder = DeformableTransformerDecoder(
             self._num_filters[-1] * 2,
             depth=transformer_config.depth,
-            heads=transformer_config.heads,
-            dim_head=transformer_config.dim_head,
+            n_heads=transformer_config.n_heads,
+            dim_single_head=transformer_config.dim_single_head,
             dim_ffn=transformer_config.dim_ffn,
-            dropout=transformer_config.dropout_rate,
-            out_attention=transformer_config.out_att,
+            dropout=transformer_config.dropout,
+            out_attention=transformer_config.out_attn,
             n_points=transformer_config.get('n_points', 9),
         )
         self.pos_embedding_type = transformer_config.get(
@@ -499,7 +500,7 @@ class DeformableDecoderRPN(BaseDecoderRPN):
             spatial_shapes.prod(1).cumsum(0)[:-1],
         ))
 
-        transformer_out = self.transformer_layer(
+        transformer_out = self.transformer_decoder(
             ct_feat,
             self.pos_embedding,
             src,
@@ -756,6 +757,14 @@ class DeformableDecoderRPN(BaseDecoderRPN):
 
 @MODELS.register_module()
 class MultiFrameDeformableDecoderRPN(BaseDecoderRPN):
+    """The original implementation of CenterFormer modules.
+
+    The difference between this module and
+    `DeformableDecoderRPN` is that this module uses information from multi
+    frames.
+
+    TODO: split this module into backbone、neck and head.
+    """
 
     def __init__(
             self,
@@ -810,15 +819,15 @@ class MultiFrameDeformableDecoderRPN(BaseDecoderRPN):
         self.mtf_attention = MultiFrameSpatialAttention()
         self.time_embedding = nn.Linear(1, self._num_filters[0])
 
-        self.transformer_layer = DeformableTransformer(
+        self.transformer_decoder = DeformableTransformerDecoder(
             self._num_filters[-1] * 2,
             depth=transformer_config.depth,
-            heads=transformer_config.heads,
-            levels=2 + self.frame,
-            dim_head=transformer_config.dim_head,
+            n_heads=transformer_config.n_heads,
+            n_levels=2 + self.frame,
+            dim_single_head=transformer_config.dim_single_head,
             dim_ffn=transformer_config.dim_ffn,
-            dropout=transformer_config.dropout_rate,
-            out_attention=transformer_config.out_att,
+            dropout=transformer_config.dropout,
+            out_attention=transformer_config.out_attn,
             n_points=transformer_config.get('n_points', 9),
         )
         self.pos_embedding_type = transformer_config.get(
@@ -939,7 +948,7 @@ class MultiFrameDeformableDecoderRPN(BaseDecoderRPN):
             spatial_shapes.prod(1).cumsum(0)[:-1],
         ))
 
-        transformer_out = self.transformer_layer(
+        transformer_out = self.transformer_decoder(
             ct_feat,
             self.pos_embedding,
             src,
