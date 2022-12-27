@@ -1,4 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .petr import Petr
+from .petr import PETR
 
-__all__ = ['Petr']
+__all__ = ['PETR']
