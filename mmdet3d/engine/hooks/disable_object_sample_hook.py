@@ -12,10 +12,9 @@ class DisableObjectSampleHook(Hook):
     """The hook of disabling augmentations during training.
 
     Args:
-        num_last_epochs (int): The number of latter epochs in the end of the
-            training to close the data augmentation. Default: 15.
-       skip_type_keys (list[str], optional): Sequence of type string to be
-            skipped in the data pipeline. Default: ('ObjectSample')
+        disable_after_epoch (int): The number of epochs after which
+            the ``ObjectSample`` will be closed in the training.
+            Defaults to 15.
     """
 
     def __init__(self, disable_after_epoch: int = 15):
