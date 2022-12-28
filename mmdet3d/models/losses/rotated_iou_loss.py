@@ -34,8 +34,8 @@ class RotatedIoU3DLoss(nn.Module):
 
     Args:
         reduction (str): Method to reduce losses.
-            The valid reduction method are none, sum or mean.
-            Defaults to mean.
+            The valid reduction method are 'none', 'sum' or 'mean'.
+            Defaults to 'mean'.
         loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 

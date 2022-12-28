@@ -27,22 +27,22 @@ def chamfer_distance(
         dst_weight (Tensor or float): Weight of destination loss.
             Defaults to 1.0.
         criterion_mode (str): Criterion mode to calculate distance.
-            The valid modes are smooth_l1, l1 or l2. Defaults to l2.
+            The valid modes are 'smooth_l1', 'l1' or 'l2'. Defaults to 'l2'.
         reduction (str): Method to reduce losses.
             The valid reduction method are 'none', 'sum' or 'mean'.
-            Defaults to mean.
+            Defaults to 'mean'.
 
     Returns:
         tuple: Source and Destination loss with the corresponding indices.
 
             - loss_src (Tensor): The min distance
-                from source to destination.
+              from source to destination.
             - loss_dst (Tensor): The min distance
-                from destination to source.
+              from destination to source.
             - indices1 (Tensor): Index the min distance point
-                for each point in source to destination.
+              for each point in source to destination.
             - indices2 (Tensor): Index the min distance point
-                for each point in destination to source.
+              for each point in destination to source.
     """
 
     if criterion_mode == 'smooth_l1':
@@ -84,10 +84,10 @@ class ChamferDistance(nn.Module):
 
     Args:
         mode (str): Criterion mode to calculate distance.
-            The valid modes are smooth_l1, l1 or l2. Defaults to l2.
+            The valid modes are 'smooth_l1', 'l1' or 'l2'. Defaults to 'l2'.
         reduction (str): Method to reduce losses.
-            The valid reduction method are none, sum or mean.
-            Defaults to mean.
+            The valid reduction method are 'none', 'sum' or 'mean'.
+            Defaults to 'mean'.
         loss_src_weight (float): Weight of loss_source. Defaults to l.0.
         loss_dst_weight (float): Weight of loss_target. Defaults to 1.0.
     """

@@ -55,7 +55,7 @@ def paconv_regularization_loss(modules: List[nn.Module],
         modules (List[nn.Module] | :obj:`generator`):
             A list or a python generator of torch.nn.Modules.
         reduction (str): Method to reduce losses among PAConv modules.
-            The valid reduction method are none, sum or mean.
+            The valid reduction method are 'none', 'sum' or 'mean'.
 
     Returns:
         Tensor: Correlation loss of kernel weights.
@@ -81,7 +81,8 @@ class PAConvRegularizationLoss(nn.Module):
     Args:
         reduction (str): Method to reduce losses. The reduction is performed
             among all PAConv modules instead of prediction tensors.
-            The valid reduction method are none, sum or mean. Defaults to mean.
+            The valid reduction method are 'none', 'sum' or 'mean'.
+            Defaults to 'mean'.
         loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 
