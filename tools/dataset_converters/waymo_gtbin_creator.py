@@ -1,27 +1,31 @@
-import mmengine
-import tensorflow.compat.v1 as tf
-
-tf.enable_eager_execution()
-
 from glob import glob
 from os.path import exists, join
 
+import mmengine
+import tensorflow.compat.v1 as tf
 from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset import label_pb2
 from waymo_open_dataset.protos import metrics_pb2
 
+tf.enable_eager_execution()
+
 
 class gt_bin_creator:
+    """waymo gt.bin creator.
+
+    Support create gt.bin from tfrecords and gt_subset.bin from gt.bin
+    """
 
     def __init__(
-        self,
-        ann_file,
-        data_root,
-        split,  #('training','validation')
-        waymo_bin_file=None,
-        load_interval=1,
-        for_cam_only_challenge=True,
-        file_client_args: dict = dict(backend='disk')):
+            self,
+            ann_file,
+            data_root,
+            split,  # ('training','validation')
+            waymo_bin_file=None,
+            load_interval=1,
+            for_cam_only_challenge=True,
+            file_client_args: dict = dict(backend='disk')):
+
         self.ann_file = ann_file
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
@@ -30,7 +34,7 @@ class gt_bin_creator:
         self.for_cam_only_challenge = for_cam_only_challenge
         self.file_client_args = file_client_args
         self.waymo_tfrecords_dir = join(self.data_root, self.split)
-        if self.waymo_bin_file == None:
+        if self.waymo_bin_file is None:
             self.waymo_bin_file = join(self.data_root,
                                        'gt_{}.bin'.format(self.split))
 
@@ -44,8 +48,8 @@ class gt_bin_creator:
     def create_subset(self):
         self.create_whole()
 
-        subset_path = \
-            self.waymo_bin_file.replace('.bin', f'_subset_{self.load_interval}.bin')
+        subset_path = self.waymo_bin_file.replace(
+            '.bin', f'_subset_{self.load_interval}.bin')
         if exists(subset_path):
             print(f'file {subset_path} exists. Skipping create_subset')
         else:
@@ -57,7 +61,8 @@ class gt_bin_creator:
             prog_bar = mmengine.ProgressBar(len(objs.objects))
             for obj in objs.objects:
                 prog_bar.update()
-                if obj.frame_timestamp_micros not in self.timestamp: continue
+                if obj.frame_timestamp_micros not in self.timestamp:
+                    continue
                 if self.for_cam_only_challenge and \
                    obj.object.type == label_pb2.Label.TYPE_SIGN:
                     continue
@@ -81,17 +86,17 @@ class gt_bin_creator:
             frame_num = 0
             prog_bar = mmengine.ProgressBar(len(tfnames))
             for i in range(len(tfnames)):
-                dataset = tf.data.TFRecordDataset(
-                    tfnames[i], compression_type='')
+                dataset = tf.data.TFRecordDataset(tfnames[i],
+                                                  compression_type='')
                 for data in dataset:
                     frame = open_dataset.Frame()
                     frame.ParseFromString(bytearray(data.numpy()))
                     frame_num += 1
                     for label in frame.laser_labels:
-                        if self.for_cam_only_challenge and \
-                        (label.type == 3 or
-                        label.camera_synced_box.ByteSize() == 0 or
-                        label.num_lidar_points_in_box < 1):
+                        if self.for_cam_only_challenge and (
+                                label.type == 3
+                                or label.camera_synced_box.ByteSize() == 0
+                                or label.num_lidar_points_in_box < 1):
                             continue
 
                         new_obj = metrics_pb2.Object()
@@ -129,18 +134,16 @@ class gt_bin_creator:
         print(len(self.waymo_tfrecord_pathnames), 'tfrecords found.')
 
 
-from argparse import ArgumentParser
-
-
 def parse_args():
+    from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument(
         '--ann_file',
         default='./data/waymo_dev1x/kitti_format/waymo_infos_val.pkl')
-    parser.add_argument(
-        '--data_root', default='./data/waymo_dev1x/waymo_format')
-    parser.add_argument(
-        '--split', default='validation')  #('training','validation')
+    parser.add_argument('--data_root',
+                        default='./data/waymo_dev1x/waymo_format')
+    parser.add_argument('--split',
+                        default='validation')  # ('training','validation')
     # parser.add_argument('waymo_bin_file')
     parser.add_argument('--load_interval', type=int, default=1)
     parser.add_argument('--for_cam_only_challenge', default=True)
@@ -156,6 +159,7 @@ def main():
                              args.load_interval, args.for_cam_only_challenge)
     waymo_bin_file = creator.create_whole()
     waymo_subset_bin_file = creator.create_subset()
+    print(waymo_bin_file, waymo_subset_bin_file)
     # breakpoint()
 
 
