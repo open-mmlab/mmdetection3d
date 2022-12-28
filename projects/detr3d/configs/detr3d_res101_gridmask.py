@@ -112,7 +112,7 @@ model = dict(
                 type='HungarianAssigner3D',
                 cls_cost=dict(type='mmdet.FocalLossCost', weight=2.0),
                 reg_cost=dict(type='BBox3DL1Cost', weight=0.25),
-                # ↓ Fake cost. This is just to make it compatible with DETR head.
+                # ↓ Fake cost. This is just to get compatible with DETR head
                 iou_cost=dict(type='mmdet.IoUCost', weight=0.0),
                 pc_range=point_cloud_range))))
 
