@@ -10,8 +10,8 @@ def nms_iou3d(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
     `post_max_size` before and after NMS respectively.
 
      Args:
-        boxes (Tensor): Input boxes with the shape of [N, 5]
-            ([x1, y1, x2, y2, ry]).
+        boxes (Tensor): Input boxes with the shape of [N, 7]
+            ([cx, cy, cz, l, w, h, theta]).
         scores (Tensor): Scores of boxes with the shape of [N].
         thresh (float): Overlap threshold of NMS.
         pre_max_size (int, optional): Max size of boxes before NMS.
