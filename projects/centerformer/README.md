@@ -71,7 +71,7 @@ python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${N
 
 ### Testing commands
 
-In MMDetection's root directory, run the following command to test the model:
+In MMDetection3D's root directory, run the following command to test the model:
 
 ```bash
 python tools/train.py projects/centerformer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py ${CHECKPOINT_PATH}

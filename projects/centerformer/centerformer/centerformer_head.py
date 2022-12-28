@@ -289,7 +289,6 @@ class CenterFormerBboxHead(nn.Module):
 
         return losses
 
-    @torch.no_grad()
     def predict(self, preds_dicts, batch_input_metas, **kwargs):
         """decode, nms, then return the detection result.
 
@@ -410,7 +409,6 @@ class CenterFormerBboxHead(nn.Module):
 
         return ret_list
 
-    @torch.no_grad()
     def post_processing(
         self,
         img_metas,

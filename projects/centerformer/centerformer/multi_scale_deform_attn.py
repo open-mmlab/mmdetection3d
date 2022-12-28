@@ -1,3 +1,5 @@
+# modify from https://github.com/TuSimple/centerformer/blob/master/det3d/models/ops/modules/ms_deform_attn.py # noqa
+
 import math
 from typing import Optional
 

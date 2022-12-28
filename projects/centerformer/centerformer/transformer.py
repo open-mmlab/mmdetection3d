@@ -1,3 +1,5 @@
+# modify from https://github.com/TuSimple/centerformer/blob/master/det3d/models/utils/transformer.py # noqa
+
 import torch
 from einops import rearrange
 from mmcv.cnn.bricks.activation import GELU

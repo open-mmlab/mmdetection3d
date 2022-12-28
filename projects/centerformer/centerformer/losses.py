@@ -1,3 +1,5 @@
+# modify from https://github.com/TuSimple/centerformer/blob/master/det3d/models/losses/centernet_loss.py # noqa
+
 import torch
 from torch import nn
 
@@ -35,10 +37,10 @@ class FastFocalLoss(nn.Module):
 
     def forward(self, out, target, ind, mask, cat):
         '''
-        Arguments:
-        out, target: B x C x H x W
-        ind, mask: B x M
-        cat (category id for peaks): B x M
+        Args:
+            out, target: B x C x H x W
+            ind, mask: B x M
+            cat (category id for peaks): B x M
         '''
         mask = mask.float()
         gt = torch.pow(1 - target, 4)

@@ -1,3 +1,5 @@
+# modify from https://github.com/TuSimple/centerformer/blob/master/det3d/models/necks/rpn_transformer.py # noqa
+
 from typing import List, Tuple
 
 import numpy as np
