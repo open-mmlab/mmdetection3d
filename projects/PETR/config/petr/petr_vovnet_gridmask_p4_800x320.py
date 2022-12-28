@@ -163,6 +163,24 @@ ida_aug_conf = {
     'W': 1600,
     'rand_flip': True,
 }
+
+# collected_keys = ['scale_factor', 'crop', 'pad_shape', 'flip', 'rotate']
+# process_fields = ['img', 'cam2img', 'lidar2cam', 'lidar2img', 'intrinsics', 'extrinsics']
+# multiview_transform = [dict(type='Resize',
+#                                           ratio_range=(0.94, 1.11),
+#                                           img_scale=(396, 704)),
+#                                      dict(type='RangeLimitedRandomCrop',
+#                                           relative_x_offset_range=(0.0, 1.0),
+#                                           relative_y_offset_range=(1.0, 1.0),
+#                                           crop_size=(256, 704)),
+#                                      dict(type='Pad', size=(256, 704)),
+#                                      dict(type='RandomFlip', flip_ratio=0.5),
+#                                      dict(type='RandomRotate',
+#                                           range=(-5.4, 5.4), img_fill_val=0,
+#                                           level=1, prob=1.0),
+#                                      dict(type='Normalize', **img_norm_cfg)]
+# MultiViewWrapper(transforms=multiview_transform,
+#                          collected_keys=collected_keys)
 train_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(
@@ -172,8 +190,8 @@ train_pipeline = [
         with_attr_label=False),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
-    dict(type='LidarBox3dVersionTransfrom'),
-    dict(type='AddCamInfo', size_divisor=32),
+    # dict(type='MultiViewWrapper', transforms=multiview_transform,
+    #                      collected_keys=collected_keys)
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     dict(
