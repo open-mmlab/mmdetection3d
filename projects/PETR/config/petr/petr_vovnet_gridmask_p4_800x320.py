@@ -192,7 +192,6 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
-    dict(type='AddCamInfo', size_divisor=32),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
         training=False),
@@ -253,6 +252,9 @@ val_dataloader = dict(
         modality=input_modality,
         use_valid_flag=True))
 
+# Different from original PETR:
+# We don't use special lr for image_backbone
+# This seems won't affect model performance
 optim_wrapper = dict(
     # TODO Add Amp
     # type='AmpOptimWrapper',

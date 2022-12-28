@@ -11,63 +11,6 @@ from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 
 
 @TRANSFORMS.register_module()
-class AddCamInfo(BaseTransform):
-
-    def __init__(self, training: bool = True, size: int = None, size_divisor: int = None) -> None:
-        self.training = training
-        self.size = size
-        self.size_divisor = size_divisor
-
-    def transform(self, input_dict: dict) -> dict:
-        """Call function to pad images, masks, semantic segmentation maps.
-
-        Args:
-            input_dict (dict): Result dict from loading pipeline.
-        Returns:
-            dict: Updated result dict.
-        """
-        image_paths = []
-        lidar2img_rts = []
-        intrinsics = []
-        extrinsics = []
-        img_timestamp = []
-        for cam_type, cam_info in input_dict['images'].items():
-            img_timestamp.append(cam_info['timestamp'] / 1e6)
-            image_paths.append(cam_info['img_path'])
-            # obtain lidar to image transformation matrix
-            lidar2cam_rt = np.array(cam_info['lidar2cam']).T
-            intrinsic = np.array(cam_info['cam2img'])
-            viewpad = np.eye(4)
-            viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
-            lidar2img_rt = (viewpad @ lidar2cam_rt.T)
-            # The extrinsics mean the transformation from lidar to camera.
-            # If anyone want to use the extrinsics as sensor to lidar,
-            # please use np.linalg.inv(lidar2cam_rt.T)
-            # and modify the ResizeCropFlipImage
-            # and LoadMultiViewImageFromMultiSweepsFiles.
-            lidar2img_rts.append(lidar2img_rt)
-            intrinsics.append(viewpad)
-            extrinsics.append(lidar2cam_rt)
-
-        input_dict.update(
-            dict(
-                img_timestamp=img_timestamp,
-                img_filename=image_paths,
-                lidar2img=lidar2img_rts,
-                intrinsics=intrinsics,
-                extrinsics=extrinsics))
-        input_dict['img_shape'] = [img.shape for img in input_dict['img']]
-        input_dict['pad_fixed_size'] = self.size
-        input_dict['pad_size_divisor'] = self.size_divisor
-        return input_dict
-
-    def __repr__(self) -> str:
-        repr_str = self.__class__.__name__
-        repr_str += f'(dir={self.training}, '
-        return repr_str
-
-
-@TRANSFORMS.register_module()
 class ResizeCropFlipImage(BaseTransform):
     """Random resize, Crop and flip the image
     Args:
@@ -91,7 +34,12 @@ class ResizeCropFlipImage(BaseTransform):
         N = len(imgs)
         new_imgs = []
         resize, resize_dims, crop, flip, rotate = self._sample_augmentation()
+        results['lidar2cam'] = np.array(results['lidar2cam'])
         for i in range(N):
+            intrinsic = np.array(results['cam2img'][i])
+            viewpad = np.eye(4)
+            viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
+            results['cam2img'][i] = viewpad
             img = Image.fromarray(np.uint8(imgs[i]))
             # augmentation (resize, crop, horizontal flip, rotate)
             # different view use different aug (BEV Det)
@@ -104,14 +52,10 @@ class ResizeCropFlipImage(BaseTransform):
                 rotate=rotate,
             )
             new_imgs.append(np.array(img).astype(np.float32))
-            results['intrinsics'][
-                i][:3, :3] = ida_mat @ results['intrinsics'][i][:3, :3]
+            results['cam2img'][
+                i][:3, :3] = ida_mat @ results['cam2img'][i][:3, :3]
 
         results['img'] = new_imgs
-        results['lidar2img'] = [
-            results['intrinsics'][i] @ results['extrinsics'][i].T
-            for i in range(len(results['extrinsics']))
-        ]
 
         return results
 
@@ -240,13 +184,10 @@ class GlobalRotScaleTransImage(BaseTransform):
                                 [rot_sin, rot_cos, 0, 0], [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
         rot_mat_inv = torch.inverse(rot_mat)
-
-        num_view = len(results['lidar2img'])
+        num_view = len(results['lidar2cam'])
         for view in range(num_view):
-            results['lidar2img'][view] = (torch.tensor(
-                results['lidar2img'][view]).float() @ rot_mat_inv).numpy()
-            results['extrinsics'][view] = (torch.tensor(
-                results['extrinsics'][view]).float() @ rot_mat_inv).numpy()
+            results['lidar2cam'][view] = (torch.tensor(
+                np.array(results['lidar2cam'][view])).float() @ rot_mat_inv).numpy()
 
         return
 
@@ -260,12 +201,10 @@ class GlobalRotScaleTransImage(BaseTransform):
 
         rot_mat_inv = torch.inverse(rot_mat)
 
-        num_view = len(results['lidar2img'])
+        num_view = len(results['lidar2cam'])
         for view in range(num_view):
-            results['lidar2img'][view] = (torch.tensor(
-                results['lidar2img'][view]).float() @ rot_mat_inv).numpy()
-            results['extrinsics'][view] = (torch.tensor(
-                rot_mat_inv.T @ results['extrinsics'][view]).float()).numpy()
+            results['lidar2cam'][view] = (torch.tensor(
+                rot_mat_inv.T @ results['lidar2cam'][view]).float()).numpy()
         return
 
 

@@ -1,4 +1,4 @@
-from .datasets.transforms import (AddCamInfo, GlobalRotScaleTransImage,
+from .datasets.transforms import (GlobalRotScaleTransImage,
                                   LidarBox3dVersionTransfrom, 
                                   ResizeCropFlipImage)
 from .models.backbones.vovnetcp import VoVNetCP
@@ -15,7 +15,7 @@ from .models.utils import (LearnedPositionalEncoding3D, PETRDNTransformer,
 from .structures.utils import denormalize_bbox, normalize_bbox
 
 __all__ = [
-    'AddCamInfo', 'GlobalRotScaleTransImage', 'LidarBox3dVersionTransfrom',
+    'GlobalRotScaleTransImage', 'LidarBox3dVersionTransfrom',
     'ResizeCropFlipImage',
     'VoVNetCP', 'PETRHead', 'CPFPN', 'HungarianAssigner3D', 'NMSFreeCoder',
     'BBox3DL1Cost', 'LearnedPositionalEncoding3D', 'PETRDNTransformer',
