@@ -79,11 +79,13 @@ python tools/train.py projects/centerformer/configs/centerformer_voxel01_second-
 
 ## Results and models
 
-### CenterFormer
+### Waymo
 
-|                                        Backbone                                         | Voxel type (voxel size) | Multi-Class NMS | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 | mAP@L2 | **mAPH@L2** |         Download         |
-| :-------------------------------------------------------------------------------------: | :---------------------: | :-------------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :----------------------: |
-| [SECFPN_WithAtten](./centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus.py) |       voxel (0.1)       |        ✓        |   5.2    |                |        |         |        |             | [model](<>) \| [log](<>) |
+|                                                      Backbone                                                      | Load Interval | Voxel type (voxel size) | Multi-Class NMS | Multi-frames | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 | mAP@L2 | **mAPH@L2** |                                                                                                                                 Download                                                                                                                                 |
+| :----------------------------------------------------------------------------------------------------------------: | :-----------: | :---------------------: | :-------------: | :----------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [SECFPN_WithAttention](./configs/centerformer_voxel01_second-attn_secfpn-attn_4xb4-cyclic-20e_waymoD5-3d-class.py) |       5       |       voxel (0.1)       |        ✓        |      ×       |   14.8   |                |  72.2  |  69.5   |  65.9  |    63.3     | [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/centerformer/centerformer_voxel01_second-attn_secfpn-attn_4xb4-cyclic-20e_waymoD5-3d-class/centerformer_voxel01_second-attn_secfpn-attn_4xb4-cyclic-20e_waymoD5-3d-class_20221227_205613-70c9ad37.json) |
+
+**Note** that `SECFPN_WithAttention` denotes both SECOND and SECONDFPN with ChannelAttention and SpatialAttention.
 
 ## Citation
 
