@@ -16,6 +16,7 @@ class gt_bin_creator:
     Support create gt.bin from tfrecords and gt_subset.bin from gt.bin
     """
 
+    # yapf: disable
     def __init__(
             self,
             ann_file,
@@ -25,7 +26,7 @@ class gt_bin_creator:
             load_interval=1,
             for_cam_only_challenge=True,
             file_client_args: dict = dict(backend='disk')):
-
+        # yapf: enable
         self.ann_file = ann_file
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
@@ -86,8 +87,8 @@ class gt_bin_creator:
             frame_num = 0
             prog_bar = mmengine.ProgressBar(len(tfnames))
             for i in range(len(tfnames)):
-                dataset = tf.data.TFRecordDataset(tfnames[i],
-                                                  compression_type='')
+                dataset = tf.data.TFRecordDataset(
+                    tfnames[i], compression_type='')
                 for data in dataset:
                     frame = open_dataset.Frame()
                     frame.ParseFromString(bytearray(data.numpy()))
@@ -140,10 +141,10 @@ def parse_args():
     parser.add_argument(
         '--ann_file',
         default='./data/waymo_dev1x/kitti_format/waymo_infos_val.pkl')
-    parser.add_argument('--data_root',
-                        default='./data/waymo_dev1x/waymo_format')
-    parser.add_argument('--split',
-                        default='validation')  # ('training','validation')
+    parser.add_argument(
+        '--data_root', default='./data/waymo_dev1x/waymo_format')
+    parser.add_argument(
+        '--split', default='validation')  # ('training','validation')
     # parser.add_argument('waymo_bin_file')
     parser.add_argument('--load_interval', type=int, default=1)
     parser.add_argument('--for_cam_only_challenge', default=True)
