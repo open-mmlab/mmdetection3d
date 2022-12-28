@@ -1,1 +1,0 @@
-from .vovnet import VoVNet
