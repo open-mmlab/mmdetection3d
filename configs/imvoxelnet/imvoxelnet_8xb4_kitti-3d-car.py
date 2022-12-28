@@ -52,6 +52,7 @@ model = dict(
             type='mmdet.CrossEntropyLoss', use_sigmoid=False,
             loss_weight=0.2)),
     n_voxels=[216, 248, 12],
+    coord_type='LIDAR',
     prior_generator=dict(
         type='AlignedAnchor3DRangeGenerator',
         ranges=[[-0.16, -39.68, -3.08, 68.96, 39.68, 0.76]],
