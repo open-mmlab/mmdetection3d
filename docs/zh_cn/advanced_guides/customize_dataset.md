@@ -1,6 +1,6 @@
 # 自定义数据集
 
-在本节中，您将了解如何使用自定义数据集训练和测试预训练模型。
+在本节中，您将了解如何使用自定义数据集训练和测试预定义模型。
 
 基本步骤如下：
 
@@ -10,13 +10,13 @@
 
 ## 数据准备
 
-理想情况下我们可以重新组织自定义的原始数据并将标注格式转换成 KITTI 风格。但是，考虑到对于自定义数据集而言，一些校准文件和 KITTI 格式的 3D 标注难以获得，我们在文档中介绍基本的数据格式。
+理想情况下我们可以重新组织自定义的原始数据并将标注格式转换成 KITTI 风格。但是，考虑到对于自定义数据集而言，KITTI 格式的校准文件和 3D 标注难以获得，因此我们在文档中介绍基本的数据格式。
 
 ### 基本数据格式
 
 #### 点云格式
 
-目前，我们只支持 `.bin` 格式的点云用于训练和推理。在训练自己的数据集之前，需要将其他格式的点云文件转换成 `.bin` 文件。常见的点云数据格式包括 `.pcd` 和 `.las`，我们列出一些开源工具作为参考。
+目前，我们只支持 `.bin` 格式的点云用于训练和推理。在训练自己的数据集之前，需要将其它格式的点云文件转换成 `.bin` 文件。常见的点云数据格式包括 `.pcd` 和 `.las`，我们列举了一些开源工具作为参考。
 
 1. `.pcd` 转换成 `.bin`：https://github.com/DanielPollithy/pypcd
 
@@ -26,7 +26,7 @@
   pip install git+https://github.com/DanielPollithy/pypcd.git
   ```
 
-- 您可以使用以下脚本读取 `.pcd` 文件，将其转换成 `.bin` 格式并保存。
+- 您可以使用以下脚本读取 `.pcd` 文件，并将其转换成 `.bin` 格式来保存：
 
   ```python
   import numpy as np
@@ -42,11 +42,11 @@
       f.write(points.tobytes())
   ```
 
-2. `.las` 转换成 `.bin`：常见的转换流程为 `.las -> .pcd -> .bin`，`.las -> .pcd` 的转换可以用该[工具](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor)。
+2. `.las` 转换成 `.bin`：常见的转换流程为 `.las -> .pcd -> .bin`，`.las -> .pcd` 的转换可以用该[工具](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor)实现。
 
 #### 标签格式
 
-最基本的信息：每个场景的 3D 边界框和类别标签应该包含在标注 `.txt` 文件中。每一行代表特定场景的一个 3D 框，如下所示：
+最基本的信息：每个场景的 3D 边界框和类别标签应该包含在 `.txt` 标注文件中。每一行代表特定场景的一个 3D 框，如下所示：
 
 ```
 # 格式：[x, y, z, dx, dy, dz, yaw, category_name]
@@ -55,13 +55,13 @@
 ...
 ```
 
-**注意**：对于自定义数据集评估目前我们只支持 KITTI 评估方法。
+**注意**：对于自定义数据集的评估我们目前只支持 KITTI 评估方法。
 
 3D 框应存储在统一的 3D 坐标系中。
 
 #### 校准格式
 
-对于每个激光雷达收集的点云数据，通常会进行融合并转换到特定的激光雷达坐标系。因此，校准信息文件中应该包含每个相机的内参矩阵和激光雷达到每个相机的外参转换矩阵，并保存在校准 `.txt` 文件中，其中 `Px` 表示 `camera_x` 的内参矩阵，`lidar2camx` 表示 `lidar` 到 `camera_x` 的外参转换矩阵。
+对于每个激光雷达收集的点云数据，通常会进行融合并转换到特定的激光雷达坐标系。因此，校准信息文件中通常应该包含每个相机的内参矩阵和激光雷达到每个相机的外参转换矩阵，并保存在 `.txt` 校准文件中，其中 `Px` 表示 `camera_x` 的内参矩阵，`lidar2camx` 表示 `lidar` 到 `camera_x` 的外参转换矩阵。
 
 ```
 P0
@@ -82,7 +82,7 @@ lidar2cam4
 
 #### 基于激光雷达的 3D 检测
 
-基于激光雷达的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`points` 包含存储成 `.bin` 格式的点云数据，`labels` 包含 3D 检测的标签文件。
+基于激光雷达的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件属于训练/验证集，`points` 包含存储成 `.bin` 格式的点云数据，`labels` 包含 3D 检测的标签文件。
 
 ```
 mmdetection3d
@@ -104,9 +104,9 @@ mmdetection3d
 │   │   │   ├── ...
 ```
 
-## 基于视觉的 3D 检测
+#### 基于视觉的 3D 检测
 
-基于视觉的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`images` 包含来自不同相机的图像，例如 `camera_x` 获得的图像应放在 `images/images_x` 下，`calibs` 包含校准信息文件，其中存储了每个相机的内参矩阵，`labels` 包含 3D 检测的标签文件。
+基于视觉的 3D 目标检测原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件属于训练/验证集，`images` 包含来自不同相机的图像，例如 `camera_x` 获得的图像应放在 `images/images_x` 下，`calibs` 包含校准信息文件，其中存储了每个相机的内参矩阵，`labels` 包含 3D 检测的标签文件。
 
 ```
 mmdetection3d
@@ -174,7 +174,7 @@ mmdetection3d
 
 #### 基于激光雷达的 3D 语义分割
 
-基于激光雷达的 3D 语义分割原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件数据属于训练/验证集，`points` 包含点云数据，`semantic_mask` 包含逐点级标签。
+基于激光雷达的 3D 语义分割原始数据通常组织成如下格式，其中 `ImageSets` 包含划分文件，指明哪些文件属于训练/验证集，`points` 包含点云数据，`semantic_mask` 包含逐点级标签。
 
 ```
 mmdetection3d
@@ -200,8 +200,8 @@ mmdetection3d
 
 按照我们的说明准备好原始数据后，您可以直接使用以下命令生成训练/验证信息文件。
 
-```
-python tools/create_data.py base --root-path ./data/custom --out-dir ./data/custom
+```bash
+python tools/create_data.py custom --root-path ./data/custom --out-dir ./data/custom --extra-tag custom
 ```
 
 ## 自定义数据集示例
@@ -211,8 +211,8 @@ python tools/create_data.py base --root-path ./data/custom --out-dir ./data/cust
 ```python
 import mmengine
 
-from mmdet3d.det3d_dataset import Det3DDataset
 from mmdet3d.registry import DATASETS
+from .det3d_dataset import Det3DDataset
 
 
 @DATASETS.register_module()
@@ -220,17 +220,21 @@ class MyDataset(Det3DDataset):
 
     # 替换成自定义 pkl 信息文件里的所有类别
     METAINFO = {
-       'classes': ('Pedestrian', 'Cyclist', 'Car')
+        'classes': ('Pedestrian', 'Cyclist', 'Car')
     }
 
     def parse_ann_info(self, info):
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
-            info (dict): Info dict.
+            info (dict): Data information of single data sample.
 
         Returns:
-            dict | None: Processed `ann_info`
+            dict: Annotation information consists of the following keys:
+
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                  3D ground truth bboxes.
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:
@@ -246,10 +250,10 @@ class MyDataset(Det3DDataset):
         return ann_info
 ```
 
-数据预处理后，用户可以通过两个步骤来训练自定义数据集：
+数据预处理后，用户可以通过以下两个步骤来训练自定义数据集：
 
 1. 修改配置文件来使用自定义数据集。
-2. 验证自定义数据集的正确性。
+2. 验证自定义数据集标注的正确性。
 
 这里我们以在自定义数据集上训练 PointPillars 为例：
 
@@ -265,8 +269,8 @@ class MyDataset(Det3DDataset):
 # 数据集设置
 dataset_type = 'MyDataset'
 data_root = 'data/custom/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']  # 替换成自己的数据集类别
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # 根据你的数据集进行调整
+class_names = ['Pedestrian', 'Cyclist', 'Car']  # 替换成您的数据集类别
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]  # 根据您的数据集进行调整
 input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(classes=class_names)
 
@@ -274,7 +278,7 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,  # 替换成你的点云数据维度
+        load_dim=4,  # 替换成您的点云数据维度
         use_dim=4),  # 替换成在训练和推理时实际使用的维度
     dict(
         type='LoadAnnotations3D',
@@ -302,7 +306,7 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,  # 替换成你的点云数据维度
+        load_dim=4,  # 替换成您的点云数据维度
         use_dim=4),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -322,7 +326,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='custom_infos_train.pkl', # 指定你的训练 pkl 信息
+            ann_file='custom_infos_train.pkl',  # 指定您的训练 pkl 信息
             data_prefix=dict(pts='points'),
             pipeline=train_pipeline,
             modality=input_modality,
@@ -339,7 +343,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='points'),
-        ann_file='custom_infos_val.pkl', # 指定你的验证 pkl 信息
+        ann_file='custom_infos_val.pkl',  # 指定您的验证 pkl 信息
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
@@ -347,25 +351,25 @@ val_dataloader = dict(
         box_type_3d='LiDAR'))
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # 指定你的验证 pkl 信息
+    ann_file=data_root + 'custom_infos_val.pkl',  # 指定您的验证 pkl 信息
     metric='bbox')
 ```
 
 #### 准备模型配置
 
-对于基于体素化的检测器如 SECOND，PointPillars 及 CenterPoint，点云范围（point cloud range）和体素大小（voxel size）应该根据你的数据集做调整。理论上，`voxel_size` 和 `point_cloud_range` 的设置是相关联的。设置较小的 `voxel_size` 将增加体素数以及相应的内存消耗。此外，需要注意以下问题：
+对于基于体素化的检测器如 SECOND，PointPillars 及 CenterPoint，点云范围（point cloud range）和体素大小（voxel size）应该根据您的数据集做调整。理论上，`voxel_size` 和 `point_cloud_range` 的设置是相关联的。设置较小的 `voxel_size` 将增加体素数以及相应的内存消耗。此外，需要注意以下问题：
 
-如果将 `point_cloud_range` 和 `voxel_size` 分别设置成 `[0, -40, -3, 70.4, 40, 1]` 和 `[0.05, 0.05, 0.1]`，则中间特征图的形状为 `[(1-(-3))/0.1+1, (40-(-40))/0.05, (70.4-0)/0.05]=[41, 1600, 1408]`。更改 `point_cloud_range` 时，请记得依据 `voxel_size` 更改 `middle_encoder` 里中间特征图的形状。
+如果将 `point_cloud_range` 和 `voxel_size` 分别设置成 `[0, -40, -3, 70.4, 40, 1]` 和 `[0.05, 0.05, 0.1]`，那么中间特征图的形状应该为 `[(1-(-3))/0.1+1, (40-(-40))/0.05, (70.4-0)/0.05]=[41, 1600, 1408]`。更改 `point_cloud_range` 时，请记得依据 `voxel_size` 更改 `middle_encoder` 里中间特征图的形状。
 
 关于 `anchor_range` 的设置，一般需要根据数据集做调整。需要注意的是，`z` 值需要根据点云的位置做相应调整，具体请参考此 [issue](https://github.com/open-mmlab/mmdetection3d/issues/986)。
 
 关于 `anchor_size` 的设置，通常需要计算整个训练集中目标的长、宽、高的平均值作为 `anchor_size`，以获得最好的结果。
 
-`configs/_base_/models/pointpillars_hv_secfpn_custom.py`：
+在 `configs/_base_/models/pointpillars_hv_secfpn_custom.py` 中：
 
 ```python
-voxel_size = [0.16, 0.16, 4]  # 根据你的数据集做调整
-point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]  # 根据你的数据集做调整
+voxel_size = [0.16, 0.16, 4]  # 根据您的数据集做调整
+point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]  # 根据您的数据集做调整
 model = dict(
     type='VoxelNet',
     data_preprocessor=dict(
@@ -404,7 +408,7 @@ model = dict(
         feat_channels=384,
         use_direction_classifier=True,
         assign_per_class=True,
-        # 根据你的数据集调整 `ranges` 和 `sizes`
+        # 根据您的数据集调整 `ranges` 和 `sizes`
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
             ranges=[
@@ -433,21 +437,21 @@ model = dict(
         assigner=[
             dict(  # for Pedestrian
                 type='Max3DIoUAssigner',
-                iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.5,
                 neg_iou_thr=0.35,
                 min_pos_iou=0.35,
                 ignore_iof_thr=-1),
             dict(  # for Cyclist
                 type='Max3DIoUAssigner',
-                iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.5,
                 neg_iou_thr=0.35,
                 min_pos_iou=0.35,
                 ignore_iof_thr=-1),
             dict(  # for Car
                 type='Max3DIoUAssigner',
-                iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
                 min_pos_iou=0.45,
@@ -468,7 +472,7 @@ model = dict(
 
 #### 准备整体配置
 
-我们将上诉的所有配置组合在 `configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py` 文件中：
+我们将上述的所有配置组合在 `configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py` 文件中：
 
 ```python
 _base_ = [
@@ -480,17 +484,17 @@ _base_ = [
 
 #### 可视化数据集（可选）
 
-为了验证准备的数据和配置是否正确，我们建议在训练和验证前使用 `tools/misc/browse_dataest.py` 脚本可视化数据集和标注，更多细节请参考[可视化](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/zh_cn/user_guides/visualization.md)文档。
+为了验证准备的数据和配置是否正确，我们建议在训练和验证前使用 `tools/misc/browse_dataset.py` 脚本可视化数据集和标注。更多细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/dev-1.x/user_guides/visualization.html)。
 
 ## 评估
 
-准备好数据和配置之后，你可以遵循我们的文档直接运行训练/测试脚本。
+准备好数据和配置之后，您可以遵循我们的文档直接运行训练/测试脚本。
 
 **注意**：我们为自定义数据集提供了 KITTI 风格的评估实现方法。在数据集配置中需要包含如下内容：
 
 ```python
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # 指定你的验证 pkl 信息
+    ann_file=data_root + 'custom_infos_val.pkl',  # 指定您的验证 pkl 信息
     metric='bbox')
 ```

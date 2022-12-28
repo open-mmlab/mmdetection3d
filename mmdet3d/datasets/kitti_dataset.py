@@ -3,7 +3,7 @@ from typing import Callable, List, Union
 
 import numpy as np
 
-from mmdet3d.datasets import DATASETS
+from mmdet3d.registry import DATASETS
 from mmdet3d.structures import CameraInstance3DBoxes
 from .det3d_dataset import Det3DDataset
 
