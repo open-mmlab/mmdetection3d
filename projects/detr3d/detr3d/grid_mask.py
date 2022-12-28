@@ -37,21 +37,21 @@ class Grid(object):
         ww = int(1.5 * w)
         d = np.random.randint(self.d1, self.d2)
         if self.ratio == 1:
-            self.l = np.random.randint(1, d)
+            self.L = np.random.randint(1, d)
         else:
-            self.l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
+            self.L = min(max(int(d * self.ratio + 0.5), 1), d - 1)
         mask = np.ones((hh, ww), np.float32)
         st_h = np.random.randint(d)
         st_w = np.random.randint(d)
         if self.use_h:
             for i in range(hh // d):
                 s = d * i + st_h
-                t = min(s + self.l, hh)
+                t = min(s + self.L, hh)
                 mask[s:t, :] *= 0
         if self.use_w:
             for i in range(ww // d):
                 s = d * i + st_w
-                t = min(s + self.l, ww)
+                t = min(s + self.L, ww)
                 mask[:, s:t] *= 0
 
         r = np.random.randint(self.rotate)
@@ -97,7 +97,7 @@ class GridMask(nn.Module):
         self.prob = prob
 
     def set_prob(self, epoch, max_epoch):
-        self.prob = self.st_prob * epoch / max_epoch  #+ 1.#0.5
+        self.prob = self.st_prob * epoch / max_epoch  # + 1.# 0.5
 
     def forward(self, x):
         if np.random.rand() > self.prob or not self.training:
@@ -107,19 +107,19 @@ class GridMask(nn.Module):
         hh = int(1.5 * h)
         ww = int(1.5 * w)
         d = np.random.randint(2, h)
-        self.l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
+        self.L = min(max(int(d * self.ratio + 0.5), 1), d - 1)
         mask = np.ones((hh, ww), np.float32)
         st_h = np.random.randint(d)
         st_w = np.random.randint(d)
         if self.use_h:
             for i in range(hh // d):
                 s = d * i + st_h
-                t = min(s + self.l, hh)
+                t = min(s + self.L, hh)
                 mask[s:t, :] *= 0
         if self.use_w:
             for i in range(ww // d):
                 s = d * i + st_w
-                t = min(s + self.l, ww)
+                t = min(s + self.L, ww)
                 mask[:, s:t] *= 0
 
         r = np.random.randint(self.rotate)
