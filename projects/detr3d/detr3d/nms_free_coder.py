@@ -1,7 +1,7 @@
 import torch
+from mmdet3d.registry import TASK_UTILS
 from mmdet.models.task_modules import BaseBBoxCoder
 
-from mmdet3d.registry import TASK_UTILS
 from .util import denormalize_bbox
 
 
@@ -40,11 +40,12 @@ class NMSFreeCoder(BaseBBoxCoder):
         """Decode bboxes.
 
         Args:
-            cls_scores (Tensor): Outputs from the classification head, \
-                shape [num_query, cls_out_channels]. Note \
+            cls_scores (Tensor): Outputs from the classification head,
+                shape [num_query, cls_out_channels]. Note that
                 cls_out_channels should includes background.
-            bbox_preds (Tensor): Outputs from the regression \
-                head with normalized coordinate format (cx, cy, l, w, cz, h, rot_sine, rot_cosine, vx, vy). \
+            bbox_preds (Tensor): Outputs from the regression
+                head with normalized coordinate
+                (cx, cy, l, w, cz, h, rot_sine, rot_cosine, vx, vy).
                 Shape [num_query, 10].
         Returns:
             list[dict]: Decoded boxes.
@@ -66,8 +67,8 @@ class NMSFreeCoder(BaseBBoxCoder):
         if self.score_threshold is not None:
             thresh_mask = final_scores > self.score_threshold
         if self.post_center_range is not None:
-            self.post_center_range = torch.tensor(
-                self.post_center_range, device=scores.device)
+            self.post_center_range = torch.tensor(self.post_center_range,
+                                                  device=scores.device)
             mask = (final_box_preds[..., :3] >=
                     self.post_center_range[:3]).all(1)
             mask &= (final_box_preds[..., :3] <=
@@ -95,17 +96,18 @@ class NMSFreeCoder(BaseBBoxCoder):
         """Decode bboxes.
 
         Args:
-            all_cls_scores (Tensor): Outputs from the classification head, \
-                shape [nb_dec, bs, num_query, cls_out_channels]. Note \
+            all_cls_scores (Tensor): Outputs from the classification head,
+                shape [nb_dec, bs, num_query, cls_out_channels]. Note
                 cls_out_channels should includes background.
-            all_bbox_preds (Tensor): Sigmoid outputs from the regression \
-                head with normalized coordinate format (cx, cy, l, w, cz, h, rot_sine, rot_cosine, vx, vy). \
+            all_bbox_preds (Tensor): Sigmoid outputs from the regression
+                head with normalized coordinate format
+                (cx, cy, l, w, cz, h, rot_sine, rot_cosine, vx, vy).
                 Shape [nb_dec, bs, num_query, 10].
         Returns:
             list[dict]: Decoded boxes.
         """
-        all_cls_scores = preds_dicts['all_cls_scores'][
-            -1]  #cls & reg target of last decoder layer
+        # cls & reg target of last decoder layer
+        all_cls_scores = preds_dicts['all_cls_scores'][-1]
         all_bbox_preds = preds_dicts['all_bbox_preds'][-1]
 
         batch_size = all_cls_scores.size()[0]

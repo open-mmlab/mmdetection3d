@@ -1,12 +1,12 @@
 from typing import List
 
 import torch
+from mmdet3d.registry import TASK_UTILS
 from mmdet.models.task_modules.assigners import AssignResult  # check
 from mmdet.models.task_modules.assigners import BaseAssigner
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmdet3d.registry import TASK_UTILS
 from .util import normalize_bbox
 
 try:
@@ -69,8 +69,8 @@ class HungarianAssigner3D(BaseAssigner):
            and assign the corresponding gt index (plus 1) to it.
         Args:
             bbox_pred (Tensor): Predicted boxes with normalized coordinates
-                (cx,cy,l,w,cz,h,sin(φ),cos(φ),v_x,v_y) which are all in range [0, 1].
-                Shape [num_query, 10].
+                (cx,cy,l,w,cz,h,sin(φ),cos(φ),v_x,v_y) which are all in
+                range [0, 1] and shape [num_query, 10].
             cls_pred (Tensor): Predicted classification logits, shape
                 [num_query, num_class].
             gt_bboxes (Tensor): Ground truth boxes with unnormalized
@@ -84,7 +84,7 @@ class HungarianAssigner3D(BaseAssigner):
         """
         assert gt_bboxes_ignore is None, \
             'Only case when gt_bboxes_ignore is None is supported.'
-        num_gts, num_bboxes = gt_bboxes.size(0), bbox_pred.size(0)  #9, 900
+        num_gts, num_bboxes = gt_bboxes.size(0), bbox_pred.size(0)  # 9, 900
 
         # 1. assign -1 by default
         assigned_gt_inds = bbox_pred.new_full((num_bboxes, ),
@@ -98,8 +98,10 @@ class HungarianAssigner3D(BaseAssigner):
             if num_gts == 0:
                 # No ground truth, assign all to background
                 assigned_gt_inds[:] = 0
-            return AssignResult(
-                num_gts, assigned_gt_inds, None, labels=assigned_labels)
+            return AssignResult(num_gts,
+                                assigned_gt_inds,
+                                None,
+                                labels=assigned_labels)
 
         # 2. compute the weighted costs
         # classification and bboxcost.
@@ -131,5 +133,7 @@ class HungarianAssigner3D(BaseAssigner):
         # assign foregrounds based on matching results
         assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
         assigned_labels[matched_row_inds] = gt_labels[matched_col_inds]
-        return AssignResult(
-            num_gts, assigned_gt_inds, None, labels=assigned_labels)
+        return AssignResult(num_gts,
+                            assigned_gt_inds,
+                            None,
+                            labels=assigned_labels)

@@ -1,4 +1,3 @@
-import time
 import warnings
 
 import numpy as np
@@ -8,9 +7,8 @@ import torch.nn.functional as F
 from mmcv.cnn.bricks.transformer import (TransformerLayerSequence,
                                          build_transformer_layer_sequence)
 from mmcv.ops.multi_scale_deform_attn import MultiScaleDeformableAttention
-from mmengine.model import BaseModule, constant_init, xavier_init
-
 from mmdet3d.registry import MODELS
+from mmengine.model import BaseModule, constant_init, xavier_init
 
 
 def inverse_sigmoid(x, eps=1e-5):
@@ -34,7 +32,7 @@ def inverse_sigmoid(x, eps=1e-5):
 
 @MODELS.register_module()
 class Detr3DTransformer(BaseModule):
-    """Implements the Detr3D transformer.
+    """Implements the DETR3D transformer.
 
     Args:
         as_two_stage (bool): Generate query from encoder features.
@@ -82,30 +80,31 @@ class Detr3DTransformer(BaseModule):
             mlvl_feats (list(Tensor)): Input queries from
                 different level. Each element has shape
                 (B, N, C, H_lvl, W_lvl).
-            query_embed (Tensor): The query positional and semantic embedding for decoder, with shape [num_query, c+c].
+            query_embed (Tensor): The query positional and semantic embedding
+                for decoder, with shape [num_query, c+c].
             mlvl_pos_embeds (list(Tensor)): The positional encoding
-                of feats from different level, has the shape [bs, N, embed_dims, h, w].
-                It is unused here.
+                of feats from different level, has the shape
+                [bs, N, embed_dims, h, w]. It is unused here.
             reg_branches (obj:`nn.ModuleList`): Regression heads for
                 feature maps from each decoder layer. Only would
                 be passed when `with_box_refine` is True. Default to None.
         Returns:
             tuple[Tensor]: results of decoder containing the following tensor.
                 - inter_states: Outputs from decoder. If
-                    return_intermediate_dec is True output has shape \
-                      (num_dec_layers, bs, num_query, embed_dims), else has \
+                    return_intermediate_dec is True output has shape
+                      (num_dec_layers, bs, num_query, embed_dims), else has
                       shape (1, bs, num_query, embed_dims).
-                - init_reference_out: The initial value of reference \
+                - init_reference_out: The initial value of reference
                     points, has shape (bs, num_queries, 4).
-                - inter_references_out: The internal value of reference \
-                    points in decoder, has shape \
+                - inter_references_out: The internal value of reference
+                    points in decoder, has shape
                     (num_dec_layers, bs, num_query, embed_dims)
         """
         assert query_embed is not None
         bs = mlvl_feats[0].size(0)
         query_pos, query = torch.split(query_embed, self.embed_dims, dim=1)
-        query_pos = query_pos.unsqueeze(0).expand(bs, -1, -1)  #[bs,num_q,c]
-        query = query.unsqueeze(0).expand(bs, -1, -1)  #[bs,num_q,c]
+        query_pos = query_pos.unsqueeze(0).expand(bs, -1, -1)  # [bs,num_q,c]
+        query = query.unsqueeze(0).expand(bs, -1, -1)  # [bs,num_q,c]
         reference_points = self.reference_points(query_pos)
         reference_points = reference_points.sigmoid()
         init_reference_out = reference_points
@@ -132,7 +131,7 @@ class Detr3DTransformerDecoder(TransformerLayerSequence):
 
     Args:
         return_intermediate (bool): Whether to return intermediate outputs.
-        coder_norm_cfg (dict): Config of last normalization layer. Default：
+        coder_norm_cfg (dict): Config of last normalization layer. Default:
             `LN`.
     """
 
@@ -153,7 +152,8 @@ class Detr3DTransformerDecoder(TransformerLayerSequence):
             reference_points (Tensor): The reference
                 points of offset. has shape
                 (bs, num_query, 4) when as_two_stage,
-                otherwise has shape self.reference_points = nn.Linear(self.embed_dims, 3)
+                otherwise has shape self.reference_points =
+                                        nn.Linear(self.embed_dims, 3)
             reg_branch: (obj:`nn.ModuleList`): Used for
                 refining the regression results. Only would
                 be passed when with_box_refine is True,
@@ -166,13 +166,12 @@ class Detr3DTransformerDecoder(TransformerLayerSequence):
         output = query
         intermediate = []
         intermediate_reference_points = []
-        for lid, layer in enumerate(self.layers):  ## iterative refinement
+        for lid, layer in enumerate(self.layers):  # iterative refinement
             reference_points_input = reference_points
-            output = layer(
-                output,
-                *args,
-                reference_points=reference_points_input,
-                **kwargs)
+            output = layer(output,
+                           *args,
+                           reference_points=reference_points_input,
+                           **kwargs)
             output = output.permute(1, 0, 2)
             if reg_branches is not None:
                 tmp = reg_branches[lid](output)
@@ -234,7 +233,7 @@ class Detr3DCrossAtten(BaseModule):
         norm_cfg=None,
         init_cfg=None,
         batch_first=False,
-        #  waymo_with_nuscene=False
+        # waymo_with_nuscene=False
     ):
         super(Detr3DCrossAtten, self).__init__(init_cfg)
         if embed_dims % num_heads != 0:
@@ -356,7 +355,8 @@ def feature_sampling(mlvl_feats,
                      pc_range,
                      img_metas,
                      no_sampling=False):
-    """ sample multi-level features by projecting 3D reference points to 2D image
+    """ sample multi-level features by projecting 3D reference points
+            to 2D image
         Args:
             mlvl_feats (List[Tensor]): Image features from
                 different level. Each element has shape
@@ -387,20 +387,20 @@ def feature_sampling(mlvl_feats,
     eps = 1e-5
 
     ref_pt[..., 0:1] = \
-        ref_pt[..., 0:1] * (pc_range[3] - pc_range[0]) + pc_range[0]  #x
+        ref_pt[..., 0:1] * (pc_range[3] - pc_range[0]) + pc_range[0]  # x
     ref_pt[..., 1:2] = \
-        ref_pt[..., 1:2] * (pc_range[4] - pc_range[1]) + pc_range[1]  #y
+        ref_pt[..., 1:2] * (pc_range[4] - pc_range[1]) + pc_range[1]  # y
     ref_pt[..., 2:3] = \
-        ref_pt[..., 2:3] * (pc_range[5] - pc_range[2]) + pc_range[2]  #z
+        ref_pt[..., 2:3] * (pc_range[5] - pc_range[2]) + pc_range[2]  # z
 
-    #(B num_q 3) -> (B num_q 4) -> (B 1 num_q 4) -> (B num_cam num_q 4 1)
+    # (B num_q 3) -> (B num_q 4) -> (B 1 num_q 4) -> (B num_cam num_q 4 1)
     ref_pt = torch.cat((ref_pt, torch.ones_like(ref_pt[..., :1])), -1)
     ref_pt = ref_pt.view(B, 1, num_query, 4)
     ref_pt = ref_pt.repeat(1, num_cam, 1, 1).unsqueeze(-1)
-    #(B num_cam 4 4) -> (B num_cam num_q 4 4)
+    # (B num_cam 4 4) -> (B num_cam num_q 4 4)
     lidar2img = lidar2img.view(B, num_cam, 1, 4, 4)\
                          .repeat(1, 1, num_query, 1, 1)
-    #(... 4 4) * (... 4 1) -> (B num_cam num_q 4)
+    # (... 4 4) * (... 4 1) -> (B num_cam num_q 4)
     pt_cam = torch.matmul(lidar2img, ref_pt).squeeze(-1)
 
     # (B num_cam num_q)
@@ -408,37 +408,36 @@ def feature_sampling(mlvl_feats,
     eps = eps * torch.ones_like(z)
     mask = (z > eps)
     pt_cam = pt_cam[..., 0:2] / torch.maximum(z, eps)  # prevent zero-division
-    #padded nuscene image: 928*1600
+    # padded nuscene image: 928*1600
     (h, w) = img_metas[0]['pad_shape']
     pt_cam[..., 0] /= w
     pt_cam[..., 1] /= h
     # else:
-    # (h,w,_) = img_metas[0]['ori_shape'][0]          #waymo image
-    # pt_cam[..., 0] /= w                             #cam0~2: 1280*1920
-    # pt_cam[..., 1] /= h                             #cam3~4: 886 *1920 padded to 1280*1920
-    # mask[:, 3:5, :] &= (pt_cam[:, 3:5, :, 1:2] < 0.7) #filter pt_cam_y > 886
+    # (h,w,_) = img_metas[0]['ori_shape'][0]          # waymo image
+    # pt_cam[..., 0] /= w # cam0~2: 1280*1920
+    # pt_cam[..., 1] /= h # cam3~4: 886 *1920 padded to 1280*1920
+    # mask[:, 3:5, :] &= (pt_cam[:, 3:5, :, 1:2] < 0.7) # filter pt_cam_y > 886
 
-    mask = (
-        mask & (pt_cam[..., 0:1] > 0.0)
-        & (pt_cam[..., 0:1] < 1.0)
-        & (pt_cam[..., 1:2] > 0.0)
-        & (pt_cam[..., 1:2] < 1.0))
+    mask = (mask & (pt_cam[..., 0:1] > 0.0)
+            & (pt_cam[..., 0:1] < 1.0)
+            & (pt_cam[..., 1:2] > 0.0)
+            & (pt_cam[..., 1:2] < 1.0))
 
     if no_sampling:
         return pt_cam, mask
 
-    #(B num_cam num_q) -> (B 1 num_q num_cam 1 1)
+    # (B num_cam num_q) -> (B 1 num_q num_cam 1 1)
     mask = mask.view(B, num_cam, 1, num_query, 1, 1).permute(0, 2, 3, 1, 4, 5)
     mask = torch.nan_to_num(mask)
 
-    pt_cam = (pt_cam - 0.5) * 2  #[0,1] to [-1,1] to do grid_sample
+    pt_cam = (pt_cam - 0.5) * 2  # [0,1] to [-1,1] to do grid_sample
     sampled_feats = []
     for lvl, feat in enumerate(mlvl_feats):
         B, N, C, H, W = feat.size()
         feat = feat.view(B * N, C, H, W)
         pt_cam_lvl = pt_cam.view(B * N, num_query, 1, 2)
         sampled_feat = F.grid_sample(feat, pt_cam_lvl)
-        #(B num_cam C num_query 1) -> List of (B C num_q num_cam 1)
+        # (B num_cam C num_query 1) -> List of (B C num_q num_cam 1)
         sampled_feat = sampled_feat.view(B, N, C, num_query, 1)
         sampled_feat = sampled_feat.permute(0, 2, 3, 1, 4)
         sampled_feats.append(sampled_feat)
