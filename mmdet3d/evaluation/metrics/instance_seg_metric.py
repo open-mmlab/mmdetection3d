@@ -14,27 +14,22 @@ class InstanceSegMetric(InstanceSeg):
         dataset_meta (dict): Provide dataset meta information.
     """
 
-    def __init__(
-        self,
-        dataset_meta: dict,
-        dist_backend: Optional[str] = None,
-        collect_device: Optional[str] = None,
-        prefix: Optional[str] = None,
-        **kwargs
-    ):
+    def __init__(self,
+                 dataset_meta: dict,
+                 dist_backend: Optional[str] = None,
+                 collect_device: Optional[str] = None,
+                 prefix: Optional[str] = None,
+                 **kwargs):
         if collect_device is not None:
             warnings.warn(
                 "DeprecationWarning: The `collect_device` parameter of "
                 "`InstanceSegMetric` is deprecated, use `dist_backend instead."
             )
         if prefix is not None:
-            warnings.warn(
-                "DeprecationWarning: The `prefix` parameter of "
-                "`InstanceSegMetric` is deprecated."
-            )
+            warnings.warn("DeprecationWarning: The `prefix` parameter of "
+                          "`InstanceSegMetric` is deprecated.")
         super(InstanceSegMetric, self).__init__(
-            dataset_meta=dataset_meta, dist_backend=dist_backend, **kwargs
-        )
+            dataset_meta=dataset_meta, dist_backend=dist_backend, **kwargs)
 
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
@@ -53,9 +48,13 @@ class InstanceSegMetric(InstanceSeg):
         for data_sample in data_samples:
             pred_3d = data_sample["pred_pts_seg"]
             eval_ann_info = data_sample["eval_ann_info"]
-            cpu_pred_3d = {k: v.clone().cpu().numpy() for k, v in pred_3d.items()}
+            cpu_pred_3d = {
+                k: v.clone().cpu().numpy()
+                for k, v in pred_3d.items()
+            }
             cpu_eval_ann_info = {
-                k: v.clone().cpu().numpy() for k, v in eval_ann_info.items()
+                k: v.clone().cpu().numpy()
+                for k, v in eval_ann_info.items()
             }
             for k, v in pred_3d.items():
                 if hasattr(v, "to"):
