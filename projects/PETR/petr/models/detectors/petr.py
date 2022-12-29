@@ -115,7 +115,7 @@ class PETR(MVXTwoStageDetector):
 
         return losses
 
-    def forward(self, mode='loss', **kwargs):
+    def _forward(self, mode='loss', **kwargs):
         """Calls either forward_train or forward_test depending on whether
         return_loss=True.
 
@@ -126,26 +126,23 @@ class PETR(MVXTwoStageDetector):
         list[list[dict]]), with the outer list indicating test time
         augmentations.
         """
-        if mode == 'loss':
-            return self.forward_train(**kwargs)
-        elif mode == 'predict':
-            return self.forward_test(**kwargs)
+        raise NotImplementedError('tensor mode is yet to add')
 
-    def forward_train(self,
-                      inputs=None,
-                      data_samples=None,
-                      mode=None,
-                      points=None,
-                      img_metas=None,
-                      gt_bboxes_3d=None,
-                      gt_labels_3d=None,
-                      gt_labels=None,
-                      gt_bboxes=None,
-                      img=None,
-                      proposals=None,
-                      gt_bboxes_ignore=None,
-                      img_depth=None,
-                      img_mask=None):
+    def loss(self,
+             inputs=None,
+             data_samples=None,
+             mode=None,
+             points=None,
+             img_metas=None,
+             gt_bboxes_3d=None,
+             gt_labels_3d=None,
+             gt_labels=None,
+             gt_bboxes=None,
+             img=None,
+             proposals=None,
+             gt_bboxes_ignore=None,
+             img_depth=None,
+             img_mask=None):
         """Forward training function.
 
         Args:
@@ -190,11 +187,7 @@ class PETR(MVXTwoStageDetector):
         losses.update(losses_pts)
         return losses
 
-    def forward_test(self,
-                     inputs=None,
-                     data_samples=None,
-                     mode=None,
-                     **kwargs):
+    def predict(self, inputs=None, data_samples=None, mode=None, **kwargs):
         img = inputs['imgs']
         batch_img_metas = [ds.metainfo for ds in data_samples]
         for var, name in [(batch_img_metas, 'img_metas')]:
