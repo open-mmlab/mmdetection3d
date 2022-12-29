@@ -1,6 +1,5 @@
 _base_ = [
-    'mmdet3d::_base_/datasets/nus-3d.py',
-    'mmdet3d::_base_/default_runtime.py',
+    'mmdet3d::_base_/datasets/nus-3d.py', 'mmdet3d::_base_/default_runtime.py',
     'mmdet3d::_base_/schedules/cyclic-20e.py'
 ]
 backbone_norm_cfg = dict(type='LN', requires_grad=True)
@@ -22,9 +21,7 @@ class_names = [
 ]
 metainfo = dict(classes=class_names)
 
-input_modality = dict(
-    use_camera=True,
-    )
+input_modality = dict(use_camera=True)
 model = dict(
     type='PETR',
     data_preprocessor=dict(

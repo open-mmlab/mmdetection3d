@@ -1,13 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
 import numpy as np
 import torch
 from mmcv.transforms import BaseTransform
 from PIL import Image
 
-import mmdet3d
 from mmdet3d.registry import TRANSFORMS
-from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
+from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes
 
 
 @TRANSFORMS.register_module()
@@ -186,8 +184,9 @@ class GlobalRotScaleTransImage(BaseTransform):
         rot_mat_inv = torch.inverse(rot_mat)
         num_view = len(results['lidar2cam'])
         for view in range(num_view):
-            results['lidar2cam'][view] = (torch.tensor(
-                np.array(results['lidar2cam'][view])).float() @ rot_mat_inv).numpy()
+            results['lidar2cam'][view] = (
+                torch.tensor(np.array(results['lidar2cam'][view])).float()
+                @ rot_mat_inv).numpy()
 
         return
 

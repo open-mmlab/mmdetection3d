@@ -8,16 +8,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
 
+import numpy as np
 import torch
 from mmengine.structures import InstanceData
 
+import mmdet3d
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
+from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 from mmdet3d.structures.ops import bbox3d2result
 from ..utils.grid_mask import GridMask
-import numpy as np
-import mmdet3d
-from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 
 
 @MODELS.register_module()
@@ -265,6 +265,7 @@ class PETR(MVXTwoStageDetector):
     # may need speed-up
     def add_lidar2img(self, img, batch_input_metas):
         """add 'lidar2img' transformation matrix into batch_input_metas.
+
         Args:
             batch_input_metas (list[dict]): Meta information of multiple inputs
                 in a batch.
@@ -300,8 +301,6 @@ class PETR(MVXTwoStageDetector):
             gt_bboxes_3d[:, 6] = limit_period(
                 gt_bboxes_3d[:, 6], period=np.pi * 2)
 
-            gt_bboxes_3d = LiDARInstance3DBoxes(
-                gt_bboxes_3d, box_dim=9)
+            gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d, box_dim=9)
             gt_bboxes_3d = [gt_bboxes_3d]
         return gt_bboxes_3d
-
