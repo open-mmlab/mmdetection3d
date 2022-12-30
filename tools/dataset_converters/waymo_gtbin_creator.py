@@ -48,9 +48,9 @@ class gt_bin_creator:
 
     def create_subset(self):
         self.create_whole()
+        name = 'gt_{}_subset_{}.bin'.format(self.split, self.load_interval)
+        subset_path = join(self.data_root, name)
 
-        subset_path = self.waymo_bin_file.replace(
-            '.bin', f'_subset_{self.load_interval}.bin')
         if exists(subset_path):
             print(f'file {subset_path} exists. Skipping create_subset')
         else:
@@ -71,7 +71,8 @@ class gt_bin_creator:
                 objs_subset.objects.append(obj)
 
             open(subset_path, 'wb').write(objs_subset.SerializeToString())
-            print(f'save subset bin file to {subset_path}')
+            print(f'Saved subset bin file to {subset_path}'
+                  f'It has {len(objs_subset.objects)} objects.')
 
         return subset_path
 
@@ -168,7 +169,7 @@ if __name__ == '__main__':
     main()
 """
 Usage:
-python tools/create_gt_bin.py \
+python tools/dataset_converters/waymo_gtbin_creator.py \
     --ann_file ./data/waymo_dev1x/kitti_format/waymo_infos_val.pkl \
     --data_root ./data/waymo_dev1x/waymo_format \
     --split validation \

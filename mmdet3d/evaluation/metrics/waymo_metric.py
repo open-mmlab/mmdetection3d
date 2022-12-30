@@ -74,9 +74,9 @@ class WaymoMetric(KittiMetric):
 
     def __init__(self,
                  ann_file: str,
-                 load_interval: int,
                  waymo_bin_file: str,
                  data_root: str,
+                 load_interval: int = 1,
                  split: str = 'validation',
                  metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
@@ -198,7 +198,10 @@ class WaymoMetric(KittiMetric):
             self.waymo_bin_file,
             self.load_interval,
             for_cam_only_challenge=True)
-        self.waymo_bin_file = creator.create_subset()
+        if self.load_interval == 1:
+            self.waymo_bin_file = creator.create_whole()
+        else:
+            self.waymo_bin_file = creator.create_subset()
 
     def waymo_evaluate(self,
                        pklfile_prefix: str,
