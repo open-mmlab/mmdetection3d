@@ -7,15 +7,15 @@ from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
                       NormalizePointsColor, PointSegClassMapping)
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
-from .transforms_3d import (AddCamInfo, AffineResize, BackgroundPointsFilter,
+from .transforms_3d import (AffineResize, BackgroundPointsFilter,
                             GlobalAlignment, GlobalRotScaleTrans,
                             GlobalRotScaleTransImage, IndoorPatchPointSample,
-                            IndoorPointSample, LidarBox3dVersionTransfrom,
-                            MultiViewWrapper, ObjectNameFilter, ObjectNoise,
-                            ObjectRangeFilter, ObjectSample, PadMultiViewImage,
-                            PhotoMetricDistortion3D, PointSample, PointShuffle,
-                            PointsRangeFilter, RandomDropPointsColor,
-                            RandomFlip3D, RandomJitterPoints, RandomResize3D,
+                            IndoorPointSample, MultiViewWrapper,
+                            ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
+                            ObjectSample, PhotoMetricDistortion3D, PointSample,
+                            PointShuffle, PointsRangeFilter,
+                            RandomDropPointsColor, RandomFlip3D,
+                            RandomJitterPoints, RandomResize3D,
                             RandomShiftScale, Resize3D, ResizeCropFlipImage,
                             VoxelBasedPointSampler)
 
@@ -31,6 +31,5 @@ __all__ = [
     'RandomDropPointsColor', 'RandomJitterPoints', 'AffineResize',
     'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
     'MultiViewWrapper', 'PhotoMetricDistortion3D', 'ResizeCropFlipImage',
-    'GlobalRotScaleTransImage', 'PadMultiViewImage',
-    'LidarBox3dVersionTransfrom', 'AddCamInfo'
+    'GlobalRotScaleTransImage'
 ]

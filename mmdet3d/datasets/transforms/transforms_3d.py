@@ -16,7 +16,7 @@ from PIL import Image
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
-                                LiDARInstance3DBoxes, limit_period)
+                                LiDARInstance3DBoxes)
 from mmdet3d.structures.ops import box_np_ops
 from mmdet3d.structures.points import BasePoints
 from .data_augment_utils import noise_per_object_v3_
@@ -2353,58 +2353,6 @@ class MultiViewWrapper(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class AddCamInfo(BaseTransform):
-
-    def __init__(self, training: bool = True) -> None:
-        self.training = training
-
-    def transform(self, input_dict: dict) -> dict:
-        """Call function to pad images, masks, semantic segmentation maps.
-
-        Args:
-            input_dict (dict): Result dict from loading pipeline.
-        Returns:
-            dict: Updated result dict.
-        """
-        image_paths = []
-        lidar2img_rts = []
-        intrinsics = []
-        extrinsics = []
-        img_timestamp = []
-        for cam_type, cam_info in input_dict['images'].items():
-            img_timestamp.append(cam_info['timestamp'] / 1e6)
-            image_paths.append(cam_info['img_path'])
-            # obtain lidar to image transformation matrix
-            lidar2cam_rt = np.array(cam_info['lidar2cam']).T
-            intrinsic = np.array(cam_info['cam2img'])
-            viewpad = np.eye(4)
-            viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
-            lidar2img_rt = (viewpad @ lidar2cam_rt.T)
-            # The extrinsics mean the transformation from lidar to camera.
-            # If anyone want to use the extrinsics as sensor to lidar,
-            # please use np.linalg.inv(lidar2cam_rt.T)
-            # and modify the ResizeCropFlipImage
-            # and LoadMultiViewImageFromMultiSweepsFiles.
-            lidar2img_rts.append(lidar2img_rt)
-            intrinsics.append(viewpad)
-            extrinsics.append(lidar2cam_rt)
-
-        input_dict.update(
-            dict(
-                img_timestamp=img_timestamp,
-                img_filename=image_paths,
-                lidar2img=lidar2img_rts,
-                intrinsics=intrinsics,
-                extrinsics=extrinsics))
-        return input_dict
-
-    def __repr__(self) -> str:
-        repr_str = self.__class__.__name__
-        repr_str += f'(dir={self.training}, '
-        return repr_str
-
-
-@TRANSFORMS.register_module()
 class ResizeCropFlipImage(BaseTransform):
     """Random resize, Crop and flip the image
     Args:
@@ -2428,7 +2376,12 @@ class ResizeCropFlipImage(BaseTransform):
         N = len(imgs)
         new_imgs = []
         resize, resize_dims, crop, flip, rotate = self._sample_augmentation()
+        results['lidar2cam'] = np.array(results['lidar2cam'])
         for i in range(N):
+            intrinsic = np.array(results['cam2img'][i])
+            viewpad = np.eye(4)
+            viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
+            results['cam2img'][i] = viewpad
             img = Image.fromarray(np.uint8(imgs[i]))
             # augmentation (resize, crop, horizontal flip, rotate)
             # different view use different aug (BEV Det)
@@ -2441,14 +2394,10 @@ class ResizeCropFlipImage(BaseTransform):
                 rotate=rotate,
             )
             new_imgs.append(np.array(img).astype(np.float32))
-            results['intrinsics'][
-                i][:3, :3] = ida_mat @ results['intrinsics'][i][:3, :3]
+            results['cam2img'][
+                i][:3, :3] = ida_mat @ results['cam2img'][i][:3, :3]
 
         results['img'] = new_imgs
-        results['lidar2img'] = [
-            results['intrinsics'][i] @ results['extrinsics'][i].T
-            for i in range(len(results['extrinsics']))
-        ]
 
         return results
 
@@ -2577,13 +2526,11 @@ class GlobalRotScaleTransImage(BaseTransform):
                                 [rot_sin, rot_cos, 0, 0], [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
         rot_mat_inv = torch.inverse(rot_mat)
-
-        num_view = len(results['lidar2img'])
+        num_view = len(results['lidar2cam'])
         for view in range(num_view):
-            results['lidar2img'][view] = (torch.tensor(
-                results['lidar2img'][view]).float() @ rot_mat_inv).numpy()
-            results['extrinsics'][view] = (torch.tensor(
-                results['extrinsics'][view]).float() @ rot_mat_inv).numpy()
+            results['lidar2cam'][view] = (
+                torch.tensor(np.array(results['lidar2cam'][view])).float()
+                @ rot_mat_inv).numpy()
 
         return
 
@@ -2597,111 +2544,8 @@ class GlobalRotScaleTransImage(BaseTransform):
 
         rot_mat_inv = torch.inverse(rot_mat)
 
-        num_view = len(results['lidar2img'])
+        num_view = len(results['lidar2cam'])
         for view in range(num_view):
-            results['lidar2img'][view] = (torch.tensor(
-                results['lidar2img'][view]).float() @ rot_mat_inv).numpy()
-            results['extrinsics'][view] = (torch.tensor(
-                rot_mat_inv.T @ results['extrinsics'][view]).float()).numpy()
+            results['lidar2cam'][view] = (torch.tensor(
+                rot_mat_inv.T @ results['lidar2cam'][view]).float()).numpy()
         return
-
-
-@TRANSFORMS.register_module()
-class PadMultiViewImage(BaseTransform):
-    """Pad the multi-view image.
-
-    There are two padding modes: (1) pad to a fixed size and (2) pad to the
-    minimum size that is divisible by some number.
-    Added keys are "pad_shape", "pad_fixed_size", "pad_size_divisor",
-    Args:
-        size (tuple, optional): Fixed padding size.
-        size_divisor (int, optional): The divisor of padded size.
-        pad_val (float, optional): Padding value, 0 by default.
-    """
-
-    def __init__(self, size=None, size_divisor=None, pad_val=0):
-        self.size = size
-        self.size_divisor = size_divisor
-        self.pad_val = pad_val
-        # only one of size and size_divisor should be valid
-        assert size is not None or size_divisor is not None
-        assert size is None or size_divisor is None
-
-    def _pad_img(self, results):
-        """Pad images according to ``self.size``."""
-        if self.size is not None:
-            padded_img = [
-                mmcv.impad(img, shape=self.size, pad_val=self.pad_val)
-                for img in results['img']
-            ]
-        elif self.size_divisor is not None:
-            padded_img = [
-                mmcv.impad_to_multiple(
-                    img, self.size_divisor, pad_val=self.pad_val)
-                for img in results['img']
-            ]
-        results['img_shape'] = [img.shape for img in results['img']]
-        results['img'] = padded_img
-        results['pad_shape'] = [img.shape for img in padded_img]
-        results['pad_fixed_size'] = self.size
-        results['pad_size_divisor'] = self.size_divisor
-
-    def transform(self, results):
-        """Call function to pad images, masks, semantic segmentation maps.
-
-        Args:
-            results (dict): Result dict from loading pipeline.
-        Returns:
-            dict: Updated result dict.
-        """
-        self._pad_img(results)
-        return results
-
-    def __repr__(self):
-        repr_str = self.__class__.__name__
-        repr_str += f'(size={self.size}, '
-        repr_str += f'size_divisor={self.size_divisor}, '
-        repr_str += f'pad_val={self.pad_val})'
-
-
-@TRANSFORMS.register_module()
-class LidarBox3dVersionTransfrom(BaseTransform):
-    """Transform the LiDARInstance3DBoxes from mmdet3d v1.x to v0.x. Due to the
-    Coordinate system refactoring: https://mmdetection3d.readthedocs.io/en/late
-    st/compatibility.html#v1-0-0rc0.
-
-    Args:
-        dir(bool): transform forward or backward (Fake parameter)
-    """
-
-    def __init__(self, dir: int = 1) -> None:
-
-        self.dir = dir
-
-    def transform(self, input_dict: dict) -> dict:
-        """Call function to transform the LiDARInstance3DBoxes from mmdet3d
-        v1.x to v0.x.
-
-        Args:
-            input_dict (dict): Result dict from loading pipeline.
-
-        Returns:
-            dict: Results after transformation,
-                'gt_bboxes_3d' key is updated in the result dict.
-        """
-        # Begin hack adaptation to mmdet3d v1.0 ####
-        gt_bboxes_3d = input_dict['gt_bboxes_3d'].tensor
-
-        gt_bboxes_3d[:, [3, 4]] = gt_bboxes_3d[:, [4, 3]]
-        gt_bboxes_3d[:, 6] = -gt_bboxes_3d[:, 6] - np.pi / 2
-        gt_bboxes_3d[:, 6] = limit_period(gt_bboxes_3d[:, 6], period=np.pi * 2)
-
-        input_dict['gt_bboxes_3d'] = LiDARInstance3DBoxes(
-            gt_bboxes_3d, box_dim=9)
-        # End hack adaptation to mmdet3d v1.0 ####
-        return input_dict
-
-    def __repr__(self) -> str:
-        repr_str = self.__class__.__name__
-        repr_str += f'(dir={self.dir}, '
-        return repr_str

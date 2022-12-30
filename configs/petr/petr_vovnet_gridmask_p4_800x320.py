@@ -169,8 +169,6 @@ train_pipeline = [
         with_attr_label=False),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
-    dict(type='LidarBox3dVersionTransfrom'),
-    dict(type='AddCamInfo'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
     dict(
@@ -180,7 +178,6 @@ train_pipeline = [
         scale_ratio_range=[0.95, 1.05],
         reverse_angle=False,
         training=True),
-    dict(type='PadMultiViewImage', size_divisor=32),
     dict(
         type='Pack3DDetInputs',
         keys=[
@@ -190,17 +187,14 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
-    dict(type='AddCamInfo'),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
         training=False),
-    # TODO Figure whether need Pad
-    dict(type='PadMultiViewImage', size_divisor=32),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
 train_dataloader = dict(
-    batch_size=2,
+    batch_size=1,
     num_workers=4,
     dataset=dict(
         type=dataset_type,
@@ -252,16 +246,6 @@ val_dataloader = dict(
         test_mode=True,
         modality=input_modality,
         use_valid_flag=True))
-
-# lr = 0.003  # max learning rate
-
-optimizer = dict(
-    type='AdamW',
-    lr=2e-4,
-    paramwise_cfg=dict(custom_keys={
-        'img_backbone': dict(lr_mult=0.1),
-    }),
-    weight_decay=0.01)
 
 optim_wrapper = dict(
     # TODO Add Amp

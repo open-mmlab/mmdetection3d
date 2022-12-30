@@ -8,11 +8,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
 
+import numpy as np
 import torch
 from mmengine.structures import InstanceData
 
+import mmdet3d
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
+from mmdet3d.structures import LiDARInstance3DBoxes, limit_period
 from mmdet3d.structures.ops import bbox3d2result
 from ..utils.grid_mask import GridMask
 
@@ -112,7 +115,7 @@ class PETR(MVXTwoStageDetector):
 
         return losses
 
-    def forward(self, mode='loss', **kwargs):
+    def _forward(self, mode='loss', **kwargs):
         """Calls either forward_train or forward_test depending on whether
         return_loss=True.
 
@@ -123,26 +126,23 @@ class PETR(MVXTwoStageDetector):
         list[list[dict]]), with the outer list indicating test time
         augmentations.
         """
-        if mode == 'loss':
-            return self.forward_train(**kwargs)
-        elif mode == 'predict':
-            return self.forward_test(**kwargs)
+        raise NotImplementedError('tensor mode is yet to add')
 
-    def forward_train(self,
-                      inputs=None,
-                      data_samples=None,
-                      mode=None,
-                      points=None,
-                      img_metas=None,
-                      gt_bboxes_3d=None,
-                      gt_labels_3d=None,
-                      gt_labels=None,
-                      gt_bboxes=None,
-                      img=None,
-                      proposals=None,
-                      gt_bboxes_ignore=None,
-                      img_depth=None,
-                      img_mask=None):
+    def loss(self,
+             inputs=None,
+             data_samples=None,
+             mode=None,
+             points=None,
+             img_metas=None,
+             gt_bboxes_3d=None,
+             gt_labels_3d=None,
+             gt_labels=None,
+             gt_bboxes=None,
+             img=None,
+             proposals=None,
+             gt_bboxes_ignore=None,
+             img_depth=None,
+             img_mask=None):
         """Forward training function.
 
         Args:
@@ -174,6 +174,10 @@ class PETR(MVXTwoStageDetector):
         gt_labels_3d = [gt.labels_3d for gt in batch_gt_instances_3d]
         gt_bboxes_ignore = None
 
+        gt_bboxes_3d = self.LidarBox3dVersionTransfrom(gt_bboxes_3d)
+
+        batch_img_metas = self.add_lidar2img(img, batch_img_metas)
+
         img_feats = self.extract_feat(img=img, img_metas=batch_img_metas)
 
         losses = dict()
@@ -183,11 +187,7 @@ class PETR(MVXTwoStageDetector):
         losses.update(losses_pts)
         return losses
 
-    def forward_test(self,
-                     inputs=None,
-                     data_samples=None,
-                     mode=None,
-                     **kwargs):
+    def predict(self, inputs=None, data_samples=None, mode=None, **kwargs):
         img = inputs['imgs']
         batch_img_metas = [ds.metainfo for ds in data_samples]
         for var, name in [(batch_img_metas, 'img_metas')]:
@@ -195,6 +195,8 @@ class PETR(MVXTwoStageDetector):
                 raise TypeError('{} must be a list, but got {}'.format(
                     name, type(var)))
         img = [img] if img is None else img
+
+        batch_img_metas = self.add_lidar2img(img, batch_img_metas)
 
         results_list_3d = self.simple_test(batch_img_metas, img, **kwargs)
 
@@ -252,3 +254,46 @@ class PETR(MVXTwoStageDetector):
         for result_dict, pts_bbox in zip(bbox_list, bbox_pts):
             result_dict['pts_bbox'] = pts_bbox
         return bbox_list
+
+    # may need speed-up
+    def add_lidar2img(self, img, batch_input_metas):
+        """add 'lidar2img' transformation matrix into batch_input_metas.
+
+        Args:
+            batch_input_metas (list[dict]): Meta information of multiple inputs
+                in a batch.
+        Returns:
+            batch_input_metas (list[dict]): Meta info with lidar2img added
+        """
+        lidar2img_rts = []
+        for meta in batch_input_metas:
+            # obtain lidar to image transformation matrix
+            for i in range(len(meta['cam2img'])):
+                lidar2cam_rt = torch.tensor(meta['lidar2cam'][i]).double()
+                intrinsic = torch.tensor(meta['cam2img'][i]).double()
+                viewpad = torch.eye(4).double()
+                viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
+                lidar2img_rt = (viewpad @ lidar2cam_rt)
+                # The extrinsics mean the transformation from lidar to camera.
+                # If anyone want to use the extrinsics as sensor to lidar,
+                # please use np.linalg.inv(lidar2cam_rt.T)
+                # and modify the ResizeCropFlipImage
+                # and LoadMultiViewImageFromMultiSweepsFiles.
+                lidar2img_rts.append(lidar2img_rt)
+            meta['lidar2img'] = lidar2img_rts
+            meta['img_shape'] = [i.shape for i in img[0]]
+        return batch_input_metas
+
+    def LidarBox3dVersionTransfrom(self, gt_bboxes_3d):
+        if int(mmdet3d.__version__[0]) >= 1:
+            # Begin hack adaptation to mmdet3d v1.0 ####
+            gt_bboxes_3d = gt_bboxes_3d[0].tensor
+
+            gt_bboxes_3d[:, [3, 4]] = gt_bboxes_3d[:, [4, 3]]
+            gt_bboxes_3d[:, 6] = -gt_bboxes_3d[:, 6] - np.pi / 2
+            gt_bboxes_3d[:, 6] = limit_period(
+                gt_bboxes_3d[:, 6], period=np.pi * 2)
+
+            gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d, box_dim=9)
+            gt_bboxes_3d = [gt_bboxes_3d]
+        return gt_bboxes_3d

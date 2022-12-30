@@ -1,4 +1,4 @@
-# Dummy PETR
+# PETR
 
 This is an README for `PETR`.
 
