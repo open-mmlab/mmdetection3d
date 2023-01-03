@@ -60,13 +60,13 @@ We follow the below style to name config files. Contributors are advised to foll
 In MMDetection3D's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/centerformer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py
+python tools/train.py projects/CenterFormer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py
 ```
 
 For multi-gpu training, run:
 
 ```bash
-python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${NUM_GPUS} --master_port=29506 --master_addr="127.0.0.1" tools/train.py projects/centerformer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py
+python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${NUM_GPUS} --master_port=29506 --master_addr="127.0.0.1" tools/train.py projects/CenterFormer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py
 ```
 
 ### Testing commands
@@ -74,7 +74,7 @@ python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${N
 In MMDetection3D's root directory, run the following command to test the model:
 
 ```bash
-python tools/train.py projects/centerformer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py ${CHECKPOINT_PATH}
+python tools/train.py projects/CenterFormer/configs/centerformer_voxel01_second-atten_secfpn-atten_4xb4-cyclic-20e_waymoD5-3d-class.py ${CHECKPOINT_PATH}
 ```
 
 ## Results and models
