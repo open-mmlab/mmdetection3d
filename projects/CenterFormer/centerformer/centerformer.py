@@ -83,17 +83,6 @@ class CenterFormer(Base3DDetector):
         return hasattr(self, 'backbone') and self.backbone is not None
 
     @property
-    def with_fusion(self):
-        """bool: Whether the detector has a fusion layer."""
-        return hasattr(self,
-                       'pts_fusion_layer') and self.fusion_layer is not None
-
-    @property
-    def with_neck(self):
-        """bool: Whether the detector has a neck in 3D detector branch."""
-        return hasattr(self, 'neck') and self.neck is not None
-
-    @property
     def with_voxel_encoder(self):
         """bool: Whether the detector has a voxel encoder."""
         return hasattr(self,
@@ -104,9 +93,6 @@ class CenterFormer(Base3DDetector):
         """bool: Whether the detector has a middle encoder."""
         return hasattr(self,
                        'middle_encoder') and self.middle_encoder is not None
-
-    def _forward(self):
-        pass
 
     def extract_feat(self, batch_inputs_dict: dict,
                      batch_input_metas: List[dict]) -> tuple:

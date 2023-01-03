@@ -5,8 +5,8 @@ ext_module = ext_loader.load_ext('_ext', ['iou3d_nms3d_forward'])
 
 
 def nms_iou3d(boxes, scores, thresh, pre_maxsize=None, post_max_size=None):
-    """NMS function GPU implementation (using IoU3D) The difference of this
-    implementation with nms3d in MMCV is that we add `pre_maxsize` and
+    """NMS function GPU implementation (using IoU3D) The difference between
+    this implementation and nms3d in MMCV is that we add `pre_maxsize` and
     `post_max_size` before and after NMS respectively.
 
      Args:
