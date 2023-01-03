@@ -94,6 +94,9 @@ class CenterFormer(Base3DDetector):
         return hasattr(self,
                        'middle_encoder') and self.middle_encoder is not None
 
+    def _forward(self):
+        pass
+
     def extract_feat(self, batch_inputs_dict: dict,
                      batch_input_metas: List[dict]) -> tuple:
         """Extract features from images and points.
