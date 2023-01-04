@@ -135,3 +135,4 @@ param_scheduler = [
 ]
 
 train_cfg = dict(max_epochs=48, val_interval=2)
+auto_scale_lr = dict(base_batch_size=12)

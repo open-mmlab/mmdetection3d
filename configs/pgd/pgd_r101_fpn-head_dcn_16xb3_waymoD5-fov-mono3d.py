@@ -109,3 +109,4 @@ param_scheduler = [
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+auto_scale_lr = dict(base_batch_size=48)
