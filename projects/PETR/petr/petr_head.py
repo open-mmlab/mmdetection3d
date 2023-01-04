@@ -22,7 +22,7 @@ from mmengine.model.weight_init import bias_init_with_prob
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import MODELS, TASK_UTILS
-from projects.PETR.petr.structures.utils import normalize_bbox
+from projects.PETR.petr.utils import normalize_bbox
 
 
 def pos2posemb3d(pos, num_pos_feats=128, temperature=10000):

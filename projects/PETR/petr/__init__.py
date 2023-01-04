@@ -1,16 +1,18 @@
-from .datasets.transforms import GlobalRotScaleTransImage, ResizeCropFlipImage
-from .models.backbones.vovnetcp import VoVNetCP
-from .models.dense_heads import PETRHead
-from .models.detectors import PETR
-from .models.necks import CPFPN
-from .models.task_modules.assigners import HungarianAssigner3D
-from .models.task_modules.coders import NMSFreeCoder
-from .models.task_modules.match_cost import BBox3DL1Cost
-from .models.utils import (LearnedPositionalEncoding3D, PETRDNTransformer,
-                           PETRMultiheadAttention, PETRTransformer,
-                           PETRTransformerDecoder, PETRTransformerDecoderLayer,
-                           PETRTransformerEncoder, SinePositionalEncoding3D)
-from .structures.utils import denormalize_bbox, normalize_bbox
+from .cp_fpn import CPFPN
+from .hungarian_assigner_3d import HungarianAssigner3D
+from .match_cost import BBox3DL1Cost
+from .nms_free_coder import NMSFreeCoder
+from .petr import PETR
+from .petr_head import PETRHead
+from .petr_transformer import (PETRDNTransformer, PETRMultiheadAttention,
+                               PETRTransformer, PETRTransformerDecoder,
+                               PETRTransformerDecoderLayer,
+                               PETRTransformerEncoder)
+from .positional_encoding import (LearnedPositionalEncoding3D,
+                                  SinePositionalEncoding3D)
+from .transforms_3d import GlobalRotScaleTransImage, ResizeCropFlipImage
+from .utils import denormalize_bbox, normalize_bbox
+from .vovnetcp import VoVNetCP
 
 __all__ = [
     'GlobalRotScaleTransImage', 'ResizeCropFlipImage', 'VoVNetCP', 'PETRHead',

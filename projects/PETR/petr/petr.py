@@ -17,7 +17,7 @@ from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 from mmdet3d.structures.ops import bbox3d2result
-from ..utils.grid_mask import GridMask
+from .grid_mask import GridMask
 
 
 @MODELS.register_module()
