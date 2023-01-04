@@ -931,3 +931,52 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class Mono3DInferencerLoader(BaseTransform):
+    """Load an image from ``results['img']``. Similar with
+    :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
+    :obj:`np.ndarray` in ``results['img']``. Can be used when loading image
+    from webcam. Required Keys:
+
+    - img
+    Modified Keys:
+    - img
+    - img_path
+    - img_shape
+    - ori_shape
+    Args:
+        to_float32 (bool): Whether to convert the loaded image to a float32
+            numpy array. If set to False, the loaded image is an uint8 array.
+            Defaults to False.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__()
+        self.from_file = TRANSFORMS.build(
+            dict(type='LoadImageFromFileMono3D', **kwargs))
+        self.from_ndarray = TRANSFORMS.build(
+            dict(type='LoadImageFromNDArray', **kwargs))
+
+    def transform(self, single_input: Union[str, np.ndarray, dict]) -> dict:
+        """Transform function to add image meta information.
+
+        Args:
+            single_input (dict): Result dict with Webcam read image in
+                ``results['img']``.
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        if isinstance(single_input, str):
+            inputs = dict(img_path=single_input)
+        elif isinstance(single_input, np.ndarray):
+            inputs = dict(img=single_input)
+        elif isinstance(single_input, dict):
+            inputs = single_input
+        else:
+            raise NotImplementedError
+
+        if 'img' in inputs:
+            return self.from_ndarray(inputs)
+        return self.from_file(inputs)
