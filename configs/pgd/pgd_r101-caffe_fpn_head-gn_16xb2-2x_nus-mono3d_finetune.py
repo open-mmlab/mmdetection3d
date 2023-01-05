@@ -5,5 +5,5 @@ model = dict(
         1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.05, 0.05, 0.2, 0.2, 0.2, 0.2
     ]))
 # optimizer
-optimizer = dict(lr=0.002)
+optim_wrapper = dict(optimizer=dict(lr=0.002))
 load_from = 'work_dirs/pgd_nus_benchmark_2x/latest.pth'

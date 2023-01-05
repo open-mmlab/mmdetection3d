@@ -9,6 +9,7 @@ from .fcaf3d_head import FCAF3DHead
 from .fcos_mono3d_head import FCOSMono3DHead
 from .free_anchor3d_head import FreeAnchor3DHead
 from .groupfree3d_head import GroupFree3DHead
+from .imvoxel_head import ImVoxelHead
 from .monoflex_head import MonoFlexHead
 from .parta2_rpn_head import PartA2RPNHead
 from .petr_head import PETRHead

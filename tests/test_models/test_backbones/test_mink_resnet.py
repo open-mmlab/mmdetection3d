@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.models import build_backbone
+from mmdet3d.registry import MODELS
 
 
 def test_mink_resnet():
@@ -30,7 +30,7 @@ def test_mink_resnet():
 
     # MinkResNet34 with 4 outputs
     cfg = dict(type='MinkResNet', depth=34, in_channels=3)
-    self = build_backbone(cfg).cuda()
+    self = MODELS.build(cfg).cuda()
     self.init_weights()
 
     y = self(x)
@@ -47,7 +47,7 @@ def test_mink_resnet():
     # MinkResNet50 with 2 outputs
     cfg = dict(
         type='MinkResNet', depth=34, in_channels=3, num_stages=2, pool=False)
-    self = build_backbone(cfg).cuda()
+    self = MODELS.build(cfg).cuda()
     self.init_weights()
 
     y = self(x)

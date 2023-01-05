@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.models import build_backbone
+from mmdet3d.registry import MODELS
 
 
 def test_multi_backbone():
@@ -58,7 +58,7 @@ def test_multi_backbone():
                 norm_cfg=dict(type='BN2d'))
         ])
 
-    self = build_backbone(cfg_list)
+    self = MODELS.build(cfg_list)
     self.cuda()
 
     assert len(self.backbone_list) == 4
@@ -89,7 +89,7 @@ def test_multi_backbone():
             fp_channels=((256, 256), (256, 256)),
             norm_cfg=dict(type='BN2d')))
 
-    self = build_backbone(cfg_dict)
+    self = MODELS.build(cfg_dict)
     self.cuda()
 
     assert len(self.backbone_list) == 2
@@ -104,14 +104,14 @@ def test_multi_backbone():
     # Length of backbone configs list should be equal to num_streams
     with pytest.raises(AssertionError):
         cfg_list['num_streams'] = 3
-        build_backbone(cfg_list)
+        MODELS.build(cfg_list)
 
     # Length of suffixes list should be equal to num_streams
     with pytest.raises(AssertionError):
         cfg_dict['suffixes'] = ['net0', 'net1', 'net2']
-        build_backbone(cfg_dict)
+        MODELS.build(cfg_dict)
 
     # Type of 'backbones' should be Dict or List[Dict].
     with pytest.raises(AssertionError):
         cfg_dict['backbones'] = 'PointNet2SASSG'
-        build_backbone(cfg_dict)
+        MODELS.build(cfg_dict)

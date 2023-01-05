@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .builder import DATASETS, PIPELINES, build_dataset
 from .dataset_wrappers import CBGSDataset
 from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
@@ -27,8 +26,7 @@ from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
 __all__ = [
-    'KittiDataset', 'DATASETS', 'CBGSDataset',
-    'build_dataset', 'NuScenesDataset', 'LyftDataset',
+    'KittiDataset', 'CBGSDataset', 'NuScenesDataset', 'LyftDataset',
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
     'PointShuffle', 'ObjectRangeFilter', 'PointsRangeFilter',
     'LoadPointsFromFile', 'S3DISSegDataset', 'S3DISDataset',
@@ -39,6 +37,5 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES',
-    'Resize3D', 'RandomResize3D',
+    'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
 ]
