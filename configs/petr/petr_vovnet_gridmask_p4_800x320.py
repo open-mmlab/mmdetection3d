@@ -151,15 +151,18 @@ db_sampler = dict(
         coord_type='LIDAR',
         load_dim=5,
         use_dim=[0, 1, 2, 3, 4]))
-ida_aug_conf = {
-    'resize_lim': (0.47, 0.625),
-    'final_dim': (320, 800),
-    'bot_pct_lim': (0.0, 0.0),
-    'rot_lim': (0.0, 0.0),
-    'H': 900,
-    'W': 1600,
-    'rand_flip': True,
-}
+
+multiview_transform_pipeline = [
+    dict(
+        type='RandomResize3D',
+        ratio_range=(0.47, 0.625),
+        scale=(900, 1600),
+        keep_ratio=True),
+    dict(type='RandomCrop3D', rel_offset_h=(1.0, 1.0), crop_size=(320, 800)),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5, flip_box3d=False)
+]
+collected_keys = ['scale_factor', 'crop', 'pad_shape', 'flip', 'rotate']
+
 train_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(
@@ -170,7 +173,10 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(
-        type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf, training=True),
+        type='MultiViewWrapper',
+        transforms=multiview_transform_pipeline,
+        collected_keys=collected_keys,
+        override_aug_config=True),
     dict(
         type='GlobalRotScaleTransImage',
         rot_range=[-0.3925, 0.3925],
@@ -188,8 +194,10 @@ train_pipeline = [
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(
-        type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
-        training=False),
+        type='MultiViewWrapper',
+        transforms=multiview_transform_pipeline,
+        collected_keys=collected_keys,
+        override_aug_config=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
