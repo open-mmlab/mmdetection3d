@@ -22,11 +22,6 @@ def parse_args():
         default=False,
         help='enable automatic-mixed-precision training')
     parser.add_argument(
-        '--disable-tf32',
-        action='store_true',
-        default=False,
-        help='disable TF32 on A100 GPUs')
-    parser.add_argument(
         '--auto-scale-lr',
         action='store_true',
         help='enable automatically scaling LR.')
@@ -98,12 +93,6 @@ def main():
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
-
-    if args.disable_tf32:
-        import torch
-        torch.backends.cuda.matmul.allow_tf32 = False
-        torch.backends.cudnn.allow_tf32 = False
-        print_log('Disable TF32 on A100 GPUs', logger='current')
 
     # enable automatically scaling LR
     if args.auto_scale_lr:
