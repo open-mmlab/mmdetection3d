@@ -32,7 +32,7 @@
 
 ### 🌟 Preview of 1.1.x version
 
-A brand new version of **MMDetection v1.1.0rc0** was released in 1/9/2022:
+A brand new version of **MMDetection v1.1.0rc3** was released in 7/1/2023:
 
 - Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
 - A standard data protocol defines and unifies the common keys across different datasets.
