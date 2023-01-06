@@ -18,7 +18,6 @@
 - Remove legacy builder.py (#2061)
 - Update `customize_dataset` documentation (#2153)
 - Update tutorial of LiDAR-based detection (#2120)
-- Update links f qq and zhihu (#2105)
 
 #### Bug Fixes
 
