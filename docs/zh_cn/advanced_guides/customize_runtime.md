@@ -118,7 +118,7 @@ class MyOptimizerWrapperConstructor(DefaultOptimWrapperConstructor):
                  paramwise_cfg: Optional[dict] = None):
         pass
 
-    def __call__(self, model: nn.Module) -> OptimWrapper
+    def __call__(self, model: nn.Module) -> OptimWrapper:
 
         return optim_wrapper
 ```
