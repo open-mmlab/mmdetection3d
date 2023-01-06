@@ -1,22 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import copy
 import os.path as osp
-import warnings
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import mmcv
 import mmengine
 import numpy as np
 import torch.nn as nn
-from mmdet.registry import DATASETS, MODELS
-from mmdet.utils import ConfigType, register_all_modules
 from mmengine.dataset import Compose
 from mmengine.infer.infer import BaseInferencer, ModelType
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer
 
-from ..evaluation import get_classes
+from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, register_all_modules
 
 InstanceList = List[InstanceData]
 InputType = Union[str, np.ndarray]
@@ -26,13 +23,30 @@ ImgType = Union[np.ndarray, Sequence[np.ndarray]]
 ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 
+def convert_SyncBN(config):
+    """Convert config's naiveSyncBN to BN.
+
+    Args:
+         config (str or :obj:`mmengine.Config`): Config file path or the config
+            object.
+    """
+    if isinstance(config, dict):
+        for item in config:
+            if item == 'norm_cfg':
+                config[item]['type'] = config[item]['type']. \
+                                    replace('naiveSyncBN', 'BN')
+            else:
+                convert_SyncBN(config[item])
+
+
 class Mono3DDetInferencer(BaseInferencer):
-    """MMDet inferencer.
+    """MMDet3D Mono3D inferencer.
 
     Args:
         model (str, optional): Path to the config file or the model name
             defined in metafile. For example, it could be
-            "yolox-s" or "configs/yolox/yolox_s_8xb8-300e_coco.py".
+            "pgd-kitti" or
+            "configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py".
         weights (str, optional): Path to the checkpoint. If it is not specified
             and model is a model name of metafile, the weights will be loaded
             from metafile. Defaults to None.
@@ -54,7 +68,7 @@ class Mono3DDetInferencer(BaseInferencer):
                  model: Union[ModelType, str],
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: Optional[str] = 'mmdet',
+                 scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
         # A global counter tracking the number of images processed, for
         # naming of the output images
@@ -70,47 +84,29 @@ class Mono3DDetInferencer(BaseInferencer):
         weights: str,
         device: str = 'cpu',
     ) -> nn.Module:
-        if 'init_cfg' in cfg.model.backbone:
-            cfg.model.backbone.init_cfg = None
+        convert_SyncBN(cfg.model)
+        cfg.model.train_cfg = None
         model = MODELS.build(cfg.model)
 
         checkpoint = load_checkpoint(model, weights, map_location='cpu')
-        checkpoint_meta = checkpoint.get('meta', {})
+        dataset_meta = checkpoint['meta'].get('dataset_meta', None)
         # save the dataset_meta in the model for convenience
-        if 'dataset_meta' in checkpoint_meta:
-            # mmdet 3.x, all keys should be lowercase
-            model.dataset_meta = {
-                k.lower(): v
-                for k, v in checkpoint_meta['dataset_meta'].items()
-            }
-        elif 'CLASSES' in checkpoint_meta:
-            # < mmdet 3.x
-            classes = checkpoint_meta['CLASSES']
-            model.dataset_meta = {'classes': classes}
-        else:
-            warnings.simplefilter('once')
-            warnings.warn(
-                'dataset_meta or class names are not saved in the '
-                'checkpoint\'s meta data, use COCO classes by default.')
-            model.dataset_meta = {'classes': get_classes('coco')}
+        if 'dataset_meta' in checkpoint.get('meta', {}):
+            # mmdet3d 1.x
+            model.dataset_meta = dataset_meta
+        elif 'CLASSES' in checkpoint.get('meta', {}):
+            # < mmdet3d 1.x
+            classes = checkpoint['meta']['CLASSES']
+            model.dataset_meta = {'CLASSES': classes}
 
-        # Priority:  args.palette -> config -> checkpoint
-        if self.palette != 'none':
-            model.dataset_meta['palette'] = self.palette
+            if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
+                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
         else:
-            test_dataset_cfg = copy.deepcopy(cfg.test_dataloader.dataset)
-            # lazy init. We only need the metainfo.
-            test_dataset_cfg['lazy_init'] = True
-            metainfo = DATASETS.build(test_dataset_cfg).metainfo
-            cfg_palette = metainfo.get('palette', None)
-            if cfg_palette is not None:
-                model.dataset_meta['palette'] = cfg_palette
-            else:
-                if 'palette' not in model.dataset_meta:
-                    warnings.warn(
-                        'palette does not exist, random is used by default. '
-                        'You can also set the palette to customize.')
-                    model.dataset_meta['palette'] = 'random'
+            # < mmdet3d 1.x
+            model.dataset_meta = {'CLASSES': cfg.class_names}
+
+            if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
+                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
 
         model.cfg = cfg  # save the config in the model for convenience
         model.to(device)
@@ -120,12 +116,6 @@ class Mono3DDetInferencer(BaseInferencer):
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
         pipeline_cfg = cfg.test_dataloader.dataset.pipeline
-
-        # For inference, the key of ``img_id`` is not used.
-        if 'meta_keys' in pipeline_cfg[-1]:
-            pipeline_cfg[-1]['meta_keys'] = tuple(
-                meta_key for meta_key in pipeline_cfg[-1]['meta_keys']
-                if meta_key != 'img_id')
 
         load_img_idx = self._get_transform_idx(pipeline_cfg,
                                                'LoadImageFromFileMono3D')
@@ -261,9 +251,10 @@ class Mono3DDetInferencer(BaseInferencer):
             out_file = osp.join(img_out_dir, img_name) if img_out_dir != '' \
                 else None
 
+            data_input = dict(img=img)
             self.visualizer.add_datasample(
                 img_name,
-                img,
+                data_input,
                 pred,
                 show=show,
                 wait_time=wait_time,
@@ -271,6 +262,7 @@ class Mono3DDetInferencer(BaseInferencer):
                 draw_pred=draw_pred,
                 pred_score_thr=pred_score_thr,
                 out_file=out_file,
+                vis_task='mono_det',
             )
             results.append(img)
             self.num_visualized_imgs += 1
@@ -334,11 +326,11 @@ class Mono3DDetInferencer(BaseInferencer):
         It's better to contain only basic data elements such as strings and
         numbers in order to guarantee it's json-serializable.
         """
-        pred_instances = data_sample.pred_instances.numpy()
+        pred_instances = data_sample.pred_instances_3d.numpy()
         result = {
-            'bboxes': pred_instances.bboxes.tolist(),
-            'labels': pred_instances.labels.tolist(),
-            'scores': pred_instances.scores.tolist()
+            'bboxes_3d': pred_instances.bboxes_3d.tolist(),
+            'labels_3d': pred_instances.labels_3d.tolist(),
+            'scores_3d': pred_instances.scores_3d.tolist()
         }
 
         return result
