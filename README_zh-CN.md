@@ -32,7 +32,7 @@
 
 ### 🌟 1.1.x 预览版本
 
-全新的 **v1.1.0rc0** 版本已经在 2022.9.1 发布：
+全新的 **v1.1.0rc3** 版本已经在 2023.1.7 发布：
 
 - 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 和 [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 通过一个标准的数据格式定义和统一了不同数据集的通用内容。
