@@ -28,11 +28,11 @@
 
 ### 💎 Stable version
 
-**v1.0.0rc6** was released in 2/12/2022
+**v1.0.0rc7** was released in 7/1/2023
 
 ### 🌟 Preview of 1.1.x version
 
-A brand new version of **MMDetection v1.1.0rc0** was released in 1/9/2022:
+A brand new version of **MMDetection v1.1.0rc3** was released in 7/1/2023:
 
 - Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
 - A standard data protocol defines and unifies the common keys across different datasets.
@@ -96,7 +96,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-**v1.0.0rc6** was released in 2/12/2022.
+**v1.0.0rc7** was released in 7/1/2023.
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
