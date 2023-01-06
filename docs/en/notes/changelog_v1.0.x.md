@@ -1,5 +1,16 @@
 # Changelog of v1.0.x
 
+### v1.0.0rc7 (7/1/2023)
+
+#### Improvements
+
+- Support training and testing on MLU (#2167)
+
+#### Contributors
+
+A total of 1 developers contributed to this release.
+@mengpenghui
+
 ### v1.0.0rc6 (2/12/2022)
 
 #### New Features
