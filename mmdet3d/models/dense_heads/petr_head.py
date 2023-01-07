@@ -585,6 +585,7 @@ class PETRHead(AnchorFreeHead):
         bbox_weights[pos_inds] = 1.0
         # DETR
         bbox_targets[pos_inds] = sampling_result.pos_gt_bboxes
+        print(code_size)
         return (labels, label_weights, bbox_targets, bbox_weights, pos_inds,
                 neg_inds)
 
