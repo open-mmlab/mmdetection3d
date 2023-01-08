@@ -235,7 +235,6 @@ class Detr3DCrossAtten(BaseModule):
         norm_cfg=None,
         init_cfg=None,
         batch_first=False,
-        # waymo_with_nuscene=False
     ):
         super(Detr3DCrossAtten, self).__init__(init_cfg)
         if embed_dims % num_heads != 0:
@@ -283,7 +282,6 @@ class Detr3DCrossAtten(BaseModule):
             nn.ReLU(inplace=True),
         )
         self.batch_first = batch_first
-        # self.waymo_with_nuscene = waymo_with_nuscene
         self.init_weight()
 
     def init_weight(self):
@@ -338,9 +336,6 @@ class Detr3DCrossAtten(BaseModule):
             value, reference_points, self.pc_range, kwargs['img_metas'])
         output = torch.nan_to_num(output)
         mask = torch.nan_to_num(mask)
-        # if self.waymo_with_nuscene == True:
-        #     num_view = mask.shape[3]
-        #     attention_weights = attention_weights[:, :, :, :num_view, ...]
         attention_weights = attention_weights.sigmoid() * mask
         output = output * attention_weights
         output = output.sum(-1).sum(-1).sum(-1)
