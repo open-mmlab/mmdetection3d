@@ -1,4 +1,4 @@
-_base_ = ['./detr3d_res101_gridmask_cbgs.py']
+_base_ = ['./detr3d_r101_gridmask_cbgs.py']
 
 custom_imports = dict(imports=['projects.detr3d'])
 
