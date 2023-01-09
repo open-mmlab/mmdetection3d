@@ -939,3 +939,41 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class LidarDet3DInferencerLoader(BaseTransform):
+    """Load point cloud in the Inferencer's pipeline.
+
+    Modified Keys:
+        - points
+        - points_path
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__()
+        self.from_file = TRANSFORMS.build(
+            dict(type='LoadPointsFromFile', **kwargs))
+        self.from_ndarray = TRANSFORMS.build(
+            dict(type='LoadPointsFromDict', **kwargs))
+
+    def transform(self, single_input: Union[str, np.ndarray, dict]) -> dict:
+        """Transform function to add image meta information.
+        Args:
+            single_input (Union[str, np.ndarray, dict]): Single input.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        if isinstance(single_input, str):
+            inputs = dict(points_path=single_input)
+        elif isinstance(single_input, np.ndarray):
+            inputs = dict(points=single_input)
+        elif isinstance(single_input, dict):
+            inputs = single_input
+        else:
+            raise NotImplementedError
+
+        if 'points' in inputs:
+            return self.from_ndarray(inputs)
+        return self.from_file(inputs)

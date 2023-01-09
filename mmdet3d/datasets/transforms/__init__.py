@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .dbsampler import DataBaseSampler
 from .formating import Pack3DDetInputs
-from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
-                      LoadMultiViewImageFromFiles, LoadPointsFromDict,
-                      LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                      NormalizePointsColor, PointSegClassMapping)
+from .loading import (LidarDet3DInferencerLoader, LoadAnnotations3D,
+                      LoadImageFromFileMono3D, LoadMultiViewImageFromFiles,
+                      LoadPointsFromDict, LoadPointsFromFile,
+                      LoadPointsFromMultiSweeps, NormalizePointsColor,
+                      PointSegClassMapping)
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,
@@ -28,5 +29,5 @@ __all__ = [
     'IndoorPatchPointSample', 'LoadImageFromFileMono3D', 'ObjectNameFilter',
     'RandomDropPointsColor', 'RandomJitterPoints', 'AffineResize',
     'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
-    'MultiViewWrapper', 'PhotoMetricDistortion3D'
+    'MultiViewWrapper', 'PhotoMetricDistortion3D', 'LidarDet3DInferencerLoader'
 ]
