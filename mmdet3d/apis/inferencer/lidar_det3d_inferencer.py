@@ -245,7 +245,8 @@ class LidarDet3DInferencer(BaseInferencer):
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
                 points = points.reshape(-1, self.load_dim)
                 points = points[:, self.use_dim]
-                pc_name = osp.basename(single_input)
+                pc_name = osp.basename(single_input).split('.bin')[0]
+                pc_name = f'{pc_name}.png'
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
                 pc_num = str(self.num_visualized_points).zfill(8)

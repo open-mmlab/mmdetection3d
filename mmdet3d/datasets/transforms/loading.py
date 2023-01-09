@@ -652,7 +652,21 @@ class LoadPointsFromDict(LoadPointsFromFile):
     """Load Points From Dict."""
 
     def transform(self, results: dict) -> dict:
+        """Convert the type of points from ndarray to corresponding
+        `point_class`.
+
+        Args:
+            results (dict): input result. The value of key `points` is a
+                numpy array.
+
+        Returns:
+            dict: The processed results.
+        """
         assert 'points' in results
+        points_class = get_points_type(self.coord_type)
+        points = results['points']
+        results['points'] = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=None)
         return results
 
 
