@@ -120,6 +120,13 @@ class LidarDet3DInferencer(BaseInferencer):
         if load_img_idx == -1:
             raise ValueError(
                 'LoadPointsFromFile is not found in the test pipeline')
+
+        load_cfg = pipeline_cfg[load_img_idx]
+        self.coord_type, self.load_dim = load_cfg['coord_type'], load_cfg[
+            'load_dim']
+        self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
+            load_cfg['use_dim'], int) else load_cfg['use_dim']
+
         pipeline_cfg[load_img_idx]['type'] = 'LidarDet3DInferencerLoader'
         return Compose(pipeline_cfg)
 
@@ -236,6 +243,8 @@ class LidarDet3DInferencer(BaseInferencer):
             if isinstance(single_input, str):
                 pts_bytes = mmengine.fileio.get(single_input)
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
+                points = points.reshape(-1, self.load_dim)
+                points = points[:, self.use_dim]
                 pc_name = osp.basename(single_input)
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
@@ -325,7 +334,7 @@ class LidarDet3DInferencer(BaseInferencer):
         """
         pred_instances = data_sample.pred_instances_3d.numpy()
         result = {
-            'bboxes_3d': pred_instances.bboxes_3d.tolist(),
+            'bboxes_3d': pred_instances.bboxes_3d.tensor.cpu().tolist(),
             'labels_3d': pred_instances.labels_3d.tolist(),
             'scores_3d': pred_instances.scores_3d.tolist()
         }
