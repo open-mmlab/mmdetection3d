@@ -8,17 +8,17 @@ import mmengine
 import numpy as np
 from mmengine.utils import is_list_of
 
-from mmdet3d.apis import Mono3DDetInferencer
+from mmdet3d.apis import MonoDet3DInferencer
 from mmdet3d.structures import Det3DDataSample
 
 
-class TestMono3DDetInferencer(TestCase):
+class TestMonoDet3DInferencer(TestCase):
 
     def test_init(self):
         # init from metafile
-        Mono3DDetInferencer('pgd-kitti')
+        MonoDet3DInferencer('pgd-kitti')
         # init from cfg
-        Mono3DDetInferencer(
+        MonoDet3DInferencer(
             'configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py')
 
     def assert_predictions_equal(self, preds1, preds2):
@@ -36,7 +36,7 @@ class TestMono3DDetInferencer(TestCase):
     def test_call(self, model):
         # single img
         img_path = 'tests/data/kitti/training/image_2/000007.png'
-        inferencer = Mono3DDetInferencer(model)
+        inferencer = MonoDet3DInferencer(model)
         res_path = inferencer(img_path, return_vis=True)
         # ndarray
         img = mmcv.imread(img_path)
@@ -78,7 +78,7 @@ class TestMono3DDetInferencer(TestCase):
             'tests/data/kitti/training/image_2/000007.png',
             'tests/data/kitti/training/image_2/000000.png'
         ]
-        inferencer = Mono3DDetInferencer(model)
+        inferencer = MonoDet3DInferencer(model)
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
             inferencer(img_paths, img_out_dir=tmp_dir)
@@ -88,7 +88,7 @@ class TestMono3DDetInferencer(TestCase):
     def test_postprocess(self, model):
         # return_datasample
         img_path = 'tests/data/kitti/training/image_2/000007.png'
-        inferencer = Mono3DDetInferencer(model)
+        inferencer = MonoDet3DInferencer(model)
         res = inferencer(img_path, return_datasamples=True)
         self.assertTrue(is_list_of(res['predictions'], Det3DDataSample))
 

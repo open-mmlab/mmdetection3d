@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .mono3d_det_inferencer import Mono3DDetInferencer
+from .base_det3d_inferencer import BaseDet3DInferencer
+from .mono_det3d_inferencer import MonoDet3DInferencer
 
-__all__ = ['Mono3DDetInferencer']
+__all__ = ['BaseDet3DInferencer', 'MonoDet3DInferencer']
