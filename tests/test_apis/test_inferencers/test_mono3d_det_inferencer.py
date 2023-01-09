@@ -12,7 +12,7 @@ from mmdet3d.apis import Mono3DDetInferencer
 from mmdet3d.structures import Det3DDataSample
 
 
-class TestDetInferencer(TestCase):
+class TestMono3DDetInferencer(TestCase):
 
     def test_init(self):
         # init from metafile
