@@ -960,9 +960,12 @@ class LoadAnnotations3D(LoadAnnotations):
 class LidarDet3DInferencerLoader(BaseTransform):
     """Load point cloud in the Inferencer's pipeline.
 
-    Modified Keys:
-        - points
-        - points_path
+    Added keys:
+      - lidar_points
+      - timestamp
+      - axis_align_matrix
+      - box_type_3d
+      - box_mode_3d
     """
 
     def __init__(self, coord_type='LIDAR', **kwargs) -> None:

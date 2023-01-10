@@ -39,18 +39,20 @@ def convert_SyncBN(config):
 
 
 class LidarDet3DInferencer(BaseInferencer):
-    """MMDet3D Mono3D inferencer.
+    """The inferencer of LiDAR-based detection.
 
     Args:
         model (str, optional): Path to the config file or the model name
             defined in metafile. For example, it could be
-            "pgd-kitti" or
-            "configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py".
+            "pointpillars-kitti-3d-3class" or
+            "configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py". # noqa: E501
         weights (str, optional): Path to the checkpoint. If it is not specified
             and model is a model name of metafile, the weights will be loaded
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
+        scope (str, optional): The scope of registry.
+        palette (str, optional): The palette of visualization.
     """
 
     preprocess_kwargs: set = set()
