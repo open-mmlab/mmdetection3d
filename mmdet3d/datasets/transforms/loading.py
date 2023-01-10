@@ -268,6 +268,46 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
 
 
 @TRANSFORMS.register_module()
+class LoadImageFromNDArray(LoadImageFromFile):
+    """Load an image from ``results['img']``.
+    Similar with :obj:`LoadImageFromFile`, but the image has been loaded as
+    :obj:`np.ndarray` in ``results['img']``. Can be used when loading image
+    from webcam.
+    Required Keys:
+    - img
+    Modified Keys:
+    - img
+    - img_path
+    - img_shape
+    - ori_shape
+    Args:
+        to_float32 (bool): Whether to convert the loaded image to a float32
+            numpy array. If set to False, the loaded image is an uint8 array.
+            Defaults to False.
+    """
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to add image meta information.
+
+        Args:
+            results (dict): Result dict with Webcam read image in
+                ``results['img']``.
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+
+        img = results['img']
+        if self.to_float32:
+            img = img.astype(np.float32)
+
+        results['img_path'] = None
+        results['img'] = img
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
+        return results
+
+
+@TRANSFORMS.register_module()
 class LoadPointsFromMultiSweeps(BaseTransform):
     """Load points from multiple sweeps.
 
@@ -935,17 +975,10 @@ class LoadAnnotations3D(LoadAnnotations):
 
 @TRANSFORMS.register_module()
 class Mono3DInferencerLoader(BaseTransform):
-    """Load an image from ``results['img']``. Similar with
+    """Load an image from ``results['images']['CAMX']['img']``. Similar with
     :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
-    :obj:`np.ndarray` in ``results['img']``. Can be used when loading image
-    from webcam. Required Keys:
+    :obj:`np.ndarray` in ``results['images']['CAMX']['img']``.
 
-    - img
-    Modified Keys:
-    - img
-    - img_path
-    - img_shape
-    - ori_shape
     Args:
         to_float32 (bool): Whether to convert the loaded image to a float32
             numpy array. If set to False, the loaded image is an uint8 array.
@@ -959,24 +992,18 @@ class Mono3DInferencerLoader(BaseTransform):
         self.from_ndarray = TRANSFORMS.build(
             dict(type='LoadImageFromNDArray', **kwargs))
 
-    def transform(self, single_input: Union[str, np.ndarray, dict]) -> dict:
+    def transform(self, single_input: dict) -> dict:
         """Transform function to add image meta information.
 
         Args:
             single_input (dict): Result dict with Webcam read image in
-                ``results['img']``.
+                ``results['images']['CAMX']['img']``.
         Returns:
             dict: The dict contains loaded image and meta information.
         """
-        if isinstance(single_input, str):
-            inputs = dict(img_path=single_input)
-        elif isinstance(single_input, np.ndarray):
-            inputs = dict(img=single_input)
-        elif isinstance(single_input, dict):
-            inputs = single_input
-        else:
-            raise NotImplementedError
-
-        if 'img' in inputs:
-            return self.from_ndarray(inputs)
+        inputs = single_input
+        camera_type = list(inputs['images'].keys())[0]
+        assert 'cam2img' in inputs['images'][camera_type]
+        if 'img' in inputs['images'][camera_type]:
+            return self.from_ndarray(inputs['images'][camera_type])
         return self.from_file(inputs)

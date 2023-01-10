@@ -83,11 +83,9 @@ class BaseDet3DInferencer(BaseInferencer):
         model = MODELS.build(cfg.model)
 
         checkpoint = load_checkpoint(model, weights, map_location='cpu')
-        dataset_meta = checkpoint['meta'].get('dataset_meta', None)
-        # save the dataset_meta in the model for convenience
         if 'dataset_meta' in checkpoint.get('meta', {}):
             # mmdet3d 1.x
-            model.dataset_meta = dataset_meta
+            model.dataset_meta = checkpoint['meta']['dataset_meta']
         elif 'CLASSES' in checkpoint.get('meta', {}):
             # < mmdet3d 1.x
             classes = checkpoint['meta']['CLASSES']
@@ -236,7 +234,7 @@ class BaseDet3DInferencer(BaseInferencer):
         """
         pred_instances = data_sample.pred_instances_3d.numpy()
         result = {
-            'bboxes_3d': pred_instances.bboxes_3d.tolist(),
+            'bboxes_3d': pred_instances.bboxes_3d.tensor.numpy().tolist(),
             'labels_3d': pred_instances.labels_3d.tolist(),
             'scores_3d': pred_instances.scores_3d.tolist()
         }
