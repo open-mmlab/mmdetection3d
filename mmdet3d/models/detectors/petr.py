@@ -276,5 +276,6 @@ class PETR(MVXTwoStageDetector):
                 # and LoadMultiViewImageFromMultiSweepsFiles.
                 lidar2img_rts.append(lidar2img_rt)
             meta['lidar2img'] = lidar2img_rts
-            meta['img_shape'] = [i.shape for i in img[0]]
+            img_shape = meta['img_shape'][:3]
+            meta['img_shape'] = [img_shape for i in img[0]]
         return batch_input_metas
