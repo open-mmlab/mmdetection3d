@@ -729,6 +729,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
+                    img = data_input['img']
                     if isinstance(data_input['img'], Tensor):
                         img = data_input['img'].permute(1, 2, 0).numpy()
                         img = img[..., [2, 1, 0]]  # bgr to rgb
@@ -760,6 +761,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     pred_instances = data_sample.pred_instances
                     pred_instances = pred_instances_3d[
                         pred_instances.scores > pred_score_thr].cpu()
+                    img = data_input['img']
                     if isinstance(data_input['img'], Tensor):
                         img = data_input['img'].permute(1, 2, 0).numpy()
                         img = img[..., [2, 1, 0]]  # bgr to rgb

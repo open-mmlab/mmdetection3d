@@ -10,6 +10,7 @@ from mmcv.transforms.base import BaseTransform
 from mmdet.datasets.transforms import LoadAnnotations
 
 from mmdet3d.registry import TRANSFORMS
+from mmdet3d.structures.bbox_3d import get_box_type
 from mmdet3d.structures.points import BasePoints, get_points_type
 
 
@@ -1001,9 +1002,37 @@ class Mono3DInferencerLoader(BaseTransform):
         Returns:
             dict: The dict contains loaded image and meta information.
         """
-        inputs = single_input
-        camera_type = list(inputs['images'].keys())[0]
-        assert 'cam2img' in inputs['images'][camera_type]
-        if 'img' in inputs['images'][camera_type]:
-            return self.from_ndarray(inputs['images'][camera_type])
+        box_type_3d, box_mode_3d = get_box_type('camera')
+        if isinstance(single_input['calib'], str):
+            calib_path = single_input['calib']
+            with open(calib_path, 'r') as f:
+                lines = f.readlines()
+            cam2img = np.array([
+                float(info) for info in lines[0].split(' ')[0:16]
+            ]).reshape([4, 4])
+        elif isinstance(single_input['calib'], np.ndarray):
+            cam2img = single_input['calib']
+        else:
+            raise ValueError('Unsupported input type: '
+                             f'{type(single_input)}')
+
+        if isinstance(single_input['img'], str):
+            inputs = dict(
+                images=dict(
+                    CAM_FRONT=dict(
+                        img_path=single_input['img'], cam2img=cam2img)),
+                box_mode_3d=box_mode_3d,
+                box_type_3d=box_type_3d)
+        elif isinstance(single_input['img'], np.ndarray):
+            inputs = dict(
+                img=single_input['img'],
+                cam2img=cam2img,
+                box_type_3d=box_type_3d,
+                box_mode_3d=box_mode_3d)
+        else:
+            raise ValueError('Unsupported input type: '
+                             f'{type(single_input)}')
+
+        if 'img' in inputs:
+            return self.from_ndarray(inputs)
         return self.from_file(inputs)

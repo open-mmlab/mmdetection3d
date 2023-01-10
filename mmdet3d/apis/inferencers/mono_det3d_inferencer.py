@@ -6,6 +6,8 @@ import mmcv
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
+from mmengine.fileio import (get_file_backend, isdir, join_path,
+                             list_dir_or_file)
 from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
@@ -54,12 +56,47 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         # A global counter tracking the number of images processed, for
         # naming of the output images
         self.num_visualized_imgs = 0
-        super().__init__(
+        super(MonoDet3DInferencer, self).__init__(
             model=model,
             weights=weights,
             device=device,
             scope=scope,
             palette=palette)
+
+    def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
+        """Preprocess the inputs to a list.
+
+        Preprocess inputs to a list according to its type:
+
+        - list or tuple: return inputs
+        - dict:
+            - Directory path: return all files in the directory
+            - other cases: return a list containing the string. The string
+              could be a path to file, a url or other types of string according
+              to the task.
+
+        Args:
+            inputs (Union[dict, list]): Inputs for the inferencer.
+
+        Returns:
+            list: List of input for the :meth:`preprocess`.
+        """
+
+        if isinstance(inputs, dict) and isinstance(inputs['img'], str):
+            img = inputs['img']
+            backend = get_file_backend(img)
+            if hasattr(backend, 'isdir') and isdir(img):
+                # Backends like HttpsBackend do not implement `isdir`, so only
+                # those backends that implement `isdir` could accept the inputs
+                # as a directory
+                filename_list = list_dir_or_file(img, list_dir=False)
+                img = [join_path(img, filename) for filename in filename_list]
+                inputs['img'] = img
+
+        if not isinstance(inputs, (list, tuple)):
+            inputs = [inputs]
+
+        return list(inputs)
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
@@ -85,7 +122,7 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         """Visualize predictions.
 
         Args:
-            inputs (List[Union[str, np.ndarray]]): Inputs for the inferencer.
+            inputs (List[Dict]): Inputs for the inferencer.
             preds (List[Dict]): Predictions of the model.
             return_vis (bool): Whether to return the visualization result.
                 Defaults to False.
@@ -113,13 +150,13 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         results = []
 
         for single_input, pred in zip(inputs, preds):
-            if isinstance(single_input, str):
-                img_bytes = mmengine.fileio.get(single_input)
+            if isinstance(single_input['img'], str):
+                img_bytes = mmengine.fileio.get(single_input['img'])
                 img = mmcv.imfrombytes(img_bytes)
                 img = img[:, :, ::-1]
-                img_name = osp.basename(single_input)
-            elif isinstance(single_input, np.ndarray):
-                img = single_input.copy()
+                img_name = osp.basename(single_input['img'])
+            elif isinstance(single_input['img'], np.ndarray):
+                img = single_input['img'].copy()
                 img_num = str(self.num_visualized_imgs).zfill(8)
                 img_name = f'{img_num}.jpg'
             else:

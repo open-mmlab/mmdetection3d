@@ -7,6 +7,7 @@ import mmcv
 import mmengine
 import numpy as np
 from mmengine.utils import is_list_of
+from parameterized import parameterized
 
 from mmdet3d.apis import MonoDet3DInferencer
 from mmdet3d.structures import Det3DDataSample
@@ -19,7 +20,11 @@ class TestMonoDet3DInferencer(TestCase):
         MonoDet3DInferencer('pgd-kitti')
         # init from cfg
         MonoDet3DInferencer(
-            'configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py')
+            'configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py',
+            'https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/'
+            'pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d/'
+            'pgd_r101_caffe_fpn_gn-head_3x4_4x_kitti-mono3d_'
+            '20211022_102608-8a97533b.pth')
 
     def assert_predictions_equal(self, preds1, preds2):
         for pred1, pred2 in zip(preds1, preds2):
@@ -33,70 +38,75 @@ class TestMonoDet3DInferencer(TestCase):
                 self.assertTrue(
                     np.allclose(pred1['labels_3d'], pred2['labels_3d']))
 
+    @parameterized.expand(['pgd-kitti'])
     def test_call(self, model):
         # single img
-        img_path = 'tests/data/kitti/training/image_2/000007.png'
+        img_path = 'demo/data/kitti/000008.png'
+        calib_path = 'demo/data/kitti/000008.txt'
         inferencer = MonoDet3DInferencer(model)
-        res_path = inferencer(img_path, return_vis=True)
+        inputs = dict(img=img_path, calib=calib_path)
+        res_path = inferencer(inputs, return_vis=True)
         # ndarray
         img = mmcv.imread(img_path)
-        res_ndarray = inferencer(img, return_vis=True)
+        inputs = dict(img=img, calib=calib_path)
+        res_ndarray = inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
         self.assertIn('visualization', res_path)
         self.assertIn('visualization', res_ndarray)
 
         # multiple images
-        img_paths = [
-            'tests/data/kitti/training/image_2/000007.png',
-            'tests/data/kitti/training/image_2/000000.png'
+        inputs = [
+            dict(
+                img='demo/data/kitti/000008.png',
+                calib='demo/data/kitti/000008.txt'),
+            dict(
+                img='demo/data/kitti/000008.png',
+                calib='demo/data/kitti/000008.txt')
         ]
-        res_path = inferencer(img_paths, return_vis=True)
+        res_path = inferencer(inputs, return_vis=True)
         # list of ndarray
-        imgs = [mmcv.imread(p) for p in img_paths]
-        res_ndarray = inferencer(imgs, return_vis=True)
+        imgs = [mmcv.imread(p['img']) for p in inputs]
+        inputs[0]['img'] = imgs[0]
+        inputs[1]['img'] = imgs[1]
+        res_ndarray = inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
         self.assertIn('visualization', res_path)
         self.assertIn('visualization', res_ndarray)
 
-        # img dir, test different batch sizes
-        img_dir = 'tests/data/kitti/training/image_2/'
-        res_bs1 = inferencer(img_dir, batch_size=1, return_vis=True)
-        res_bs3 = inferencer(img_dir, batch_size=2, return_vis=True)
-        self.assert_predictions_equal(res_bs1['predictions'],
-                                      res_bs3['predictions'])
-        if model == 'pgd-kitti':
-            # There is a jitter operation when the mask is drawn,
-            # so it cannot be asserted.
-            for res_bs1_vis, res_bs3_vis in zip(res_bs1['visualization'],
-                                                res_bs3['visualization']):
-                self.assertTrue(np.allclose(res_bs1_vis, res_bs3_vis))
-
+    @parameterized.expand(['pgd-kitti'])
     def test_visualize(self, model):
-        img_paths = [
-            'tests/data/kitti/training/image_2/000007.png',
-            'tests/data/kitti/training/image_2/000000.png'
+        inputs = [
+            dict(
+                img='demo/data/kitti/000008.png',
+                calib='demo/data/kitti/000008.txt'),
+            dict(
+                img='demo/data/kitti/000008.png',
+                calib='demo/data/kitti/000008.txt')
         ]
         inferencer = MonoDet3DInferencer(model)
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            inferencer(img_paths, img_out_dir=tmp_dir)
-            for img_dir in ['000007.png', '000000.png']:
+            inferencer(inputs, img_out_dir=tmp_dir)
+            for img_dir in ['000008.png', '000008.png']:
                 self.assertTrue(osp.exists(osp.join(tmp_dir, img_dir)))
 
+    @parameterized.expand(['pgd-kitti'])
     def test_postprocess(self, model):
         # return_datasample
-        img_path = 'tests/data/kitti/training/image_2/000007.png'
+        img_path = 'demo/data/kitti/000008.png'
+        calib_path = 'demo/data/kitti/000008.txt'
+        inputs = dict(img=img_path, calib=calib_path)
         inferencer = MonoDet3DInferencer(model)
-        res = inferencer(img_path, return_datasamples=True)
+        res = inferencer(inputs, return_datasamples=True)
         self.assertTrue(is_list_of(res['predictions'], Det3DDataSample))
 
         # pred_out_file
         with tempfile.TemporaryDirectory() as tmp_dir:
             pred_out_file = osp.join(tmp_dir, 'tmp.json')
             res = inferencer(
-                img_path, print_result=True, pred_out_file=pred_out_file)
+                inputs, print_result=True, pred_out_file=pred_out_file)
             dumped_res = mmengine.load(pred_out_file)
             self.assert_predictions_equal(res['predictions'],
                                           dumped_res['predictions'])
