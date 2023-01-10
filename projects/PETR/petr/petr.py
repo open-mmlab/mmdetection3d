@@ -283,6 +283,7 @@ class PETR(MVXTwoStageDetector):
             meta['lidar2img'] = lidar2img_rts
             img_shape = meta['img_shape'][:3]
             meta['img_shape'] = [img_shape for i in img[0]]
+
         return batch_input_metas
 
     def LidarBox3dVersionTransfrom(self, gt_bboxes_3d):

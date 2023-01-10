@@ -205,4 +205,5 @@ class GlobalRotScaleTransImage(BaseTransform):
             results['lidar2cam'][view] = (torch.tensor(
                 rot_mat_inv.T
                 @ results['lidar2cam'][view].T).float()).T.numpy()
+
         return

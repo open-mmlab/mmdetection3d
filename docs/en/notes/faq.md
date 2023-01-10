@@ -11,6 +11,7 @@ We list some potential troubles encountered by users and developers, along with 
   | MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
   | --------------------- | :----------------------: | :---------------------: | :----------------------: |
   | dev-1.x               | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc3             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc2             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc1             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc0             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
