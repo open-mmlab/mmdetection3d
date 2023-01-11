@@ -357,21 +357,24 @@ test_pipeline = [
         use_dim=5,
         file_client_args=file_client_args),
     dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=_base_.point_cloud_range),
-            dict(type='Pack3DDetInputs', keys=['points'])
-        ])
+        type='PointsRangeFilter', point_cloud_range=_base_.point_cloud_range),
+    dict(type='Pack3DDetInputs', keys=['points'])
+    # dict(
+    #     type='MultiScaleFlipAug3D',
+    #     img_scale=(1333, 800),
+    #     pts_scale_ratio=1,
+    #     flip=False,
+    #     transforms=[
+    #         dict(
+    #             type='GlobalRotScaleTrans',
+    #             rot_range=[0, 0],
+    #             scale_ratio_range=[1., 1.],
+    #             translation_std=[0, 0, 0]),
+    #         dict(type='RandomFlip3D'),
+    #         dict(
+    #             type='PointsRangeFilter', point_cloud_range=_base_.point_cloud_range),
+    #         dict(type='Pack3DDetInputs', keys=['points'])
+    #     ])
 ]
 
 train_dataloader = dict(

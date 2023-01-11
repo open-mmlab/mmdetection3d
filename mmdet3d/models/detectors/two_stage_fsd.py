@@ -10,6 +10,7 @@ from mmdet3d.structures import bbox3d2result
 from .. import builder
 
 from mmdet3d.registry import MODELS
+
 from ...structures.det3d_data_sample import SampleList
 
 
@@ -135,7 +136,6 @@ class FSD(SingleStageFSD):
 
         if self.training and self.train_cfg.get('detach_cluster_feats', False):
             cluster_pts_feats = cluster_pts_feats.detach()
-
 
         ##### prepare points for roi head
         fg_points_list = [points[m] for m in pts_mask]
