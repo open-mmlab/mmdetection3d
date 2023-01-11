@@ -282,7 +282,7 @@ class PETR(MVXTwoStageDetector):
                 lidar2img_rts.append(lidar2img_rt)
             meta['lidar2img'] = lidar2img_rts
             img_shape = meta['img_shape'][:3]
-            meta['img_shape'] = [img_shape for i in img[0]]
+            meta['img_shape'] = [img_shape] * len(img)
 
         return batch_input_metas
 
