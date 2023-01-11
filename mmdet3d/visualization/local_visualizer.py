@@ -49,12 +49,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         image (np.ndarray, optional): The origin image to draw. The format
             should be RGB. Defaults to None.
         pcd_mode (int): The point cloud mode (coordinates):
-            0 represents LiDAR, 1 represents CAMERA, 2
-            represents Depth. Defaults to 0.
+            0 represents LiDAR, 1 represents CAMERA, 2 represents Depth.
+            Defaults to 0.
         vis_backends (List[dict], optional): Visual backend config list.
             Defaults to None.
         save_dir (str, optional): Save file dir for all storage backends.
             If it is None, the backend storage will not save any data.
+            Defaults to None.
         bbox_color (str or Tuple[int], optional): Color of bbox lines.
             The tuple of color should be in BGR order. Defaults to None.
         text_color (str or Tuple[int]): Color of texts. The tuple of
@@ -78,8 +79,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         >>> from mmdet3d.visualization import Det3DLocalVisualizer
 
         >>> det3d_local_visualizer = Det3DLocalVisualizer()
-        >>> image = np.random.randint(0, 256,
-        ...                     size=(10, 12, 3)).astype('uint8')
+        >>> image = np.random.randint(0, 256, size=(10, 12, 3)).astype('uint8')
         >>> points = np.random.rand((1000, ))
         >>> gt_instances_3d = InstanceData()
         >>> gt_instances_3d.bboxes_3d = BaseInstance3DBoxes(torch.rand((5, 7)))
@@ -88,7 +88,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         >>> gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
         >>> data_input = dict(img=image, points=points)
         >>> det3d_local_visualizer.add_datasample('3D Scene', data_input,
-        ...                         gt_det3d_data_sample)
+        ...                                       gt_det3d_data_sample)
     """
 
     def __init__(self,
