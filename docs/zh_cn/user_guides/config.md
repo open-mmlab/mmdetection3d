@@ -377,7 +377,7 @@ resume = False  # 是否从 `load_from` 中定义的检查点恢复。如果 `lo
 
 ## 配置文件继承
 
-在 `config/_base_` 文件夹下有 4 个基本组件类型，分别是：数据集（dataset），模型（model），训练策略（schedule）和运行时的默认设置（default runtime）。许多方法，如 SECOND、PointPillars、PartA2、VoteNet 都能够很容易地构建出来。由 `_base_` 下的组件组成的配置，被我们称为 _原始配置（primitive）_。
+在 `configs/_base_` 文件夹下有 4 个基本组件类型，分别是：数据集（dataset），模型（model），训练策略（schedule）和运行时的默认设置（default runtime）。许多方法，如 SECOND、PointPillars、PartA2、VoteNet 都能够很容易地构建出来。由 `_base_` 下的组件组成的配置，被我们称为 _原始配置（primitive）_。
 
 对于同一个文件夹下的所有配置，推荐**只有一个**对应的 _原始配置_ 文件。所有其他的配置文件都应该继承自这个 _原始配置_ 文件。这样就能保证配置文件的最大继承深度为 3。
 
