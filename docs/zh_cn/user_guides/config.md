@@ -551,7 +551,7 @@ a = {{_base_.model}}  # 变量 `a` 等于 `_base_` 中定义的 `model`
 
 - `{algorithm name}`：算法的名称。它可以是检测器的名称，例如 `pointpillars`、`fcos3d` 等。
 - `{model component names}`：算法中使用的组件名称，如 voxel_encoder、backbone、neck 等。例如 `second_secfpn_head-dcn-circlenms` 表示使用 SECOND 的 SparseEncoder，SECONDFPN，以及带有 DCN 和 circle NMS 的检测头。
-- `{training settings}`：训练设置的信息，例如批量大小，数据增强，损失函数策略、调度器以及训练轮次/迭代。例如 `8xb4-tta-cyclic-20e` 表示使用 8 个 gpu，每个 gpu 有 4 个数据样本，测试增强，余弦退火学习率，训练 20 个 epoch。缩写介绍：
+- `{training settings}`：训练设置的信息，例如批量大小，数据增强，损失函数策略，调度器以及训练轮次/迭代。例如 `8xb4-tta-cyclic-20e` 表示使用 8 个 gpu，每个 gpu 有 4 个数据样本，测试增强，余弦退火学习率，训练 20 个 epoch。缩写介绍：
   - `{gpu x batch_per_gpu}`：GPU 数和每个 GPU 的样本数。`bN` 表示每个 GPU 上的批量大小为 N。例如 `4xb4` 是 4 个 GPU，每个 GPU 有 4 个样本数的缩写。
   - `{schedule}`：训练方案，可选项为 `schedule-2x`、`schedule-3x`、`cyclic-20e` 等。`schedule-2x` 和 `schedule-3x` 分别代表 24 epoch 和 36 epoch。`cyclic-20e` 表示 20 epoch。
 - `{training dataset information}`：训练数据集名，例如 `kitti-3d-3class`，`nus-3d`，`s3dis-seg`，`scannet-seg`，`waymoD5-3d-car`。这里 `3d` 表示数据集用于 3D 目标检测，`seg` 表示数据集用于点云分割。
