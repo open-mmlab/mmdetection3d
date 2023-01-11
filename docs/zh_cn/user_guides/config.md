@@ -411,7 +411,7 @@ _base_ = [
 
 有时，您也许会设置 `_delete_=True` 去忽略基础配置文件里的一些字段。您可以参考 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/zh_CN/latest/advanced_tutorials/config.html) 来获得一些简单的指导。
 
-在 MMDetection3D 里，例如，修改以下 PointPillars 配置中的的颈部网络。
+在 MMDetection3D 里，例如，修改以下 PointPillars 配置中的颈部网络。
 
 ```python
 model = dict(
