@@ -44,8 +44,11 @@ class LidarDet3DInferencer(BaseInferencer):
     Args:
         model (str, optional): Path to the config file or the model name
             defined in metafile. For example, it could be
-            "pointpillars-kitti-3d-3class" or
+            "pointpillars_kitti-3class" or
             "configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py". # noqa: E501
+            If model is not specified, user must provide the
+            `weights` saved by MMEngine which contains the config string.
+            Defaults to None.
         weights (str, optional): Path to the checkpoint. If it is not specified
             and model is a model name of metafile, the weights will be loaded
             from metafile. Defaults to None.
@@ -66,7 +69,7 @@ class LidarDet3DInferencer(BaseInferencer):
     }
 
     def __init__(self,
-                 model: Union[ModelType, str],
+                 model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
                  scope: Optional[str] = 'mmdet3d',
@@ -166,6 +169,8 @@ class LidarDet3DInferencer(BaseInferencer):
             return_datasamples (bool): Whether to return results as
                 :obj:`BaseDataElement`. Defaults to False.
             batch_size (int): Inference batch size. Defaults to 1.
+            return_vis (bool): Whether to return the visualization result.
+                Defaults to False.
             show (bool): Whether to display the visualization results in a
                 popup window. Defaults to False.
             wait_time (float): The interval of show (s). Defaults to 0.

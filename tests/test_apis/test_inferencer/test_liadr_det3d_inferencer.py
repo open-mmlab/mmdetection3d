@@ -15,11 +15,11 @@ class TestLidarDet3DInferencer(TestCase):
 
     def setUp(self):
         # init from alias
-        self.inferencer = LidarDet3DInferencer('pointpillars-kitti-3d-3class')
+        self.inferencer = LidarDet3DInferencer('pointpillars_kitti-3class')
 
     def test_init(self):
         # init from metafile
-        LidarDet3DInferencer('pointpillars-kitti-3d-3class')
+        LidarDet3DInferencer('pointpillars_waymod5-3class')
         # init from cfg
         LidarDet3DInferencer(
             'configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py',  # noqa
