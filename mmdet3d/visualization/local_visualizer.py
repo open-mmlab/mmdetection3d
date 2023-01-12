@@ -61,10 +61,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         text_color (str or Tuple[int]): Color of texts. The tuple of
             color should be in BGR order. Defaults to (200, 200, 200).
         mask_color (str or Tuple[int], optional): Color of masks.
-            The tuple of color should be in BGR order.
-            Defaults to None.
-        line_width (int or float): The linewidth of lines.
-            Defaults to 3.
+            The tuple of color should be in BGR order. Defaults to None.
+        line_width (int or float): The linewidth of lines. Defaults to 3.
         frame_cfg (dict): The coordinate frame config while Open3D
             visualization initialization.
             Defaults to dict(size=1, origin=[0, 0, 0]).
@@ -160,8 +158,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         Args:
             points (np.ndarray): Points to visualize with shape (N, 3+C).
             pcd_mode (int): The point cloud mode (coordinates):
-                0 represents LiDAR, 1 represents CAMERA, 2
-                represents Depth. Defaults to 0.
+                0 represents LiDAR, 1 represents CAMERA, 2 represents Depth.
+                Defaults to 0.
             vis_mode (str): The visualization mode in Open3D:
 
                 - 'replace': Replace the existing point cloud with
@@ -169,7 +167,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 - 'add': Add input point cloud into existing point
                   cloud.
                 Defaults to 'replace'.
-            frame_cfg (dict): The coordinate frame config while Open3D
+            frame_cfg (dict): The coordinate frame config for Open3D
                 visualization initialization.
                 Defaults to dict(size=1, origin=[0, 0, 0]).
             points_color (Tuple[float]): The color of points.
@@ -352,28 +350,26 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             scale (dict): Value to scale the bev bboxes for better
                 visualization. Defaults to 15.
-            edge_colors (str or Tuple[int] or List[str or Tuple[int]]): The
-                colors of bboxes. ``colors`` can have the same length with
+            edge_colors (str or Tuple[int] or List[str or Tuple[int]]):
+                The colors of bboxes. ``colors`` can have the same length with
                 lines or just single value. If ``colors`` is single value, all
                 the lines will have the same colors. Refer to `matplotlib.
                 colors` for full list of formats that are accepted.
                 Defaults to 'o'.
-            line_styles (str or List[str]): The linestyle
-                of lines. ``line_styles`` can have the same length with
-                texts or just single value. If ``line_styles`` is single
-                value, all the lines will have the same linestyle.
-                Reference to
+            line_styles (str or List[str]): The linestyle of lines.
+                ``line_styles`` can have the same length with texts or just
+                single value. If ``line_styles`` is single value, all the lines
+                will have the same linestyle. Reference to
                 https://matplotlib.org/stable/api/collections_api.html?highlight=collection#matplotlib.collections.AsteriskPolygonCollection.set_linestyle
                 for more details. Defaults to '-'.
             line_widths (int or float or List[int or float]):
-                The linewidth of lines. ``line_widths`` can have
-                the same length with lines or just single value.
-                If ``line_widths`` is single value, all the lines will
-                have the same linewidth. Defaults to 2.
+                The linewidth of lines. ``line_widths`` can have the same
+                length with lines or just single value. If ``line_widths``
+                is single value, all the lines will have the same linewidth.
+                Defaults to 2.
             face_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The face colors. Defaults to 'none'.
-            alpha (int or float): The transparency of bboxes.
-                Defaults to 1.
+            alpha (int or float): The transparency of bboxes. Defaults to 1.
         """
 
         check_type('bboxes', bboxes_3d, BaseInstance3DBoxes)
@@ -449,28 +445,26 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             bboxes_3d (:obj:`BaseInstance3DBoxes`):
                 3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             input_meta (dict): Input meta information.
-            edge_colors (str or Tuple[int] or List[str or Tuple[int]]): The
-                colors of bboxes. ``colors`` can have the same length with
+            edge_colors (str or Tuple[int] or List[str or Tuple[int]]):
+                The colors of bboxes. ``colors`` can have the same length with
                 lines or just single value. If ``colors`` is single value, all
                 the lines will have the same colors. Refer to `matplotlib.
                 colors` for full list of formats that are accepted.
                 Defaults to 'royalblue'.
-            line_styles (str or List[str]): The linestyle
-                of lines. ``line_styles`` can have the same length with
-                texts or just single value. If ``line_styles`` is single
-                value, all the lines will have the same linestyle.
-                Reference to
+            line_styles (str or List[str]): The linestyle of lines.
+                ``line_styles`` can have the same length with texts or just
+                single value. If ``line_styles`` is single value, all the lines
+                will have the same linestyle. Reference to
                 https://matplotlib.org/stable/api/collections_api.html?highlight=collection#matplotlib.collections.AsteriskPolygonCollection.set_linestyle
                 for more details. Defaults to '-'.
             line_widths (int or float or List[int or float]):
-                The linewidth of lines. ``line_widths`` can have
-                the same length with lines or just single value.
-                If ``line_widths`` is single value, all the lines will
-                have the same linewidth. Defaults to 2.
+                The linewidth of lines. ``line_widths`` can have the same
+                length with lines or just single value. If ``line_widths``
+                is single value, all the lines will have the same linewidth.
+                Defaults to 2.
             face_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The face colors. Defaults to 'royalblue'.
-            alpha (int or float): The transparency of bboxes.
-                Defaults to 0.4.
+            alpha (int or float): The transparency of bboxes. Defaults to 0.4.
         """
 
         check_type('bboxes', bboxes_3d, BaseInstance3DBoxes)
@@ -548,13 +542,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         Args:
             data_input (dict): The input dict to draw.
-            instances (:obj:`InstanceData`): Data structure for
-                instance-level annotations or predictions.
+            instances (:obj:`InstanceData`): Data structure for instance-level
+                annotations or predictions.
             input_meta (dict): Meta information.
-            vis_task (str): Visualization task, it includes:
-                'lidar_det', 'multi-modality_det', 'mono_det'.
-            palette (List[tuple], optional): Palette information
-                corresponding to the category. Defaults to None.
+            vis_task (str): Visualization task, it includes: 'lidar_det',
+                'multi-modality_det', 'mono_det'.
+            palette (List[tuple], optional): Palette information corresponding
+                to the category. Defaults to None.
 
         Returns:
             dict: The drawn point cloud and image whose channel is RGB.
@@ -605,14 +599,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Draw 3D semantic mask of GT or prediction.
 
         Args:
-            points (Tensor or np.ndarray): The input point
-                cloud to draw.
-            pts_seg (:obj:`PointData`): Data structure for
-                pixel-level annotations or predictions.
-            palette (List[tuple], optional): Palette information
-                corresponding to the category. Defaults to None.
-            ignore_index (int, optional): Ignore category.
-                Defaults to None.
+            points (Tensor or np.ndarray): The input point cloud to draw.
+            pts_seg (:obj:`PointData`): Data structure for pixel-level
+                annotations or predictions.
+            palette (List[tuple], optional): Palette information corresponding
+                to the category. Defaults to None.
+            ignore_index (int, optional): Ignore category. Defaults to None.
         """
         check_type('points', points, (np.ndarray, Tensor))
 
@@ -647,13 +639,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 drawn_img_3d is None, it will show the image got by Visualizer.
                 Defaults to None.
             drawn_img (np.ndarray, optional): The image to show. If drawn_img
-                is None, it will show the image got by Visualizer. Defaults
-                to None.
+                is None, it will show the image got by Visualizer.
+                Defaults to None.
             win_name (str): The image title. Defaults to 'image'.
-            wait_time (int): Delay in milliseconds. 0 is the special
-                value that means "forever". Defaults to 0.
-            continue_key (str): The key for users to continue. Defaults to
-                the space key.
+            wait_time (int): Delay in milliseconds. 0 is the special value that
+                means "forever". Defaults to 0.
+            continue_key (str): The key for users to continue. Defaults to ' '.
         """
         if hasattr(self, 'o3d_vis'):
             self.o3d_vis.run()
@@ -663,9 +654,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self._clear_o3d_vis()
 
         if hasattr(self, '_image'):
-            if drawn_img_3d is None:
+            if drawn_img_3d is not None:
+                super().show(drawn_img_3d, win_name, wait_time, continue_key)
+            if drawn_img is not None:
                 super().show(drawn_img, win_name, wait_time, continue_key)
-            super().show(drawn_img_3d, win_name, wait_time, continue_key)
 
     # TODO: Support Visualize the 3D results from image and point cloud
     # respectively
@@ -685,11 +677,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        step: int = 0) -> None:
         """Draw datasample and save to all backends.
 
-        - If GT and prediction are plotted at the same time, they are
-          displayed in a stitched image where the left image is the
-          ground truth and the right image is the prediction.
-        - If ``show`` is True, all storage backends are ignored, and
-          the images will be displayed in a local window.
+        - If GT and prediction are plotted at the same time, they are displayed
+          in a stitched image where the left image is the ground truth and the
+          right image is the prediction.
+        - If ``show`` is True, all storage backends are ignored, and the images
+          will be displayed in a local window.
         - If ``out_file`` is specified, the drawn image will be saved to
           ``out_file``. It is usually used when the display is not available.
 
@@ -703,8 +695,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 Defaults to True.
             draw_pred (bool): Whether to draw Prediction Det3DDataSample.
                 Defaults to True.
-            show (bool): Whether to display the drawn point clouds and
-                image. Defaults to False.
+            show (bool): Whether to display the drawn point clouds and image.
+                Defaults to False.
             wait_time (int): The interval of show (s). Defaults to 0.
             out_file (str, optional): Path to output file. Defaults to None.
             o3d_save_path (str, optional): Path to save open3d visualized
