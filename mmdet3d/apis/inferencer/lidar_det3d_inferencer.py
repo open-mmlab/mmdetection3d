@@ -11,7 +11,7 @@ from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer
 
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import INFERENCERS, MODELS
 from mmdet3d.utils import ConfigType, register_all_modules
 
 InstanceList = List[InstanceData]
@@ -38,6 +38,8 @@ def convert_SyncBN(config):
                 convert_SyncBN(config[item])
 
 
+@INFERENCERS.register_module(name='det3d-lidar')
+@INFERENCERS.register_module()
 class LidarDet3DInferencer(BaseInferencer):
     """The inferencer of LiDAR-based detection.
 
