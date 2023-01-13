@@ -1,4 +1,5 @@
 import copy
+from typing import List
 
 import numpy as np
 import torch
@@ -20,6 +21,23 @@ from .transformer import FFN, PositionEmbeddingLearned, TransformerDecoderLayer
 def clip_sigmoid(x, eps=1e-4):
     y = torch.clamp(x.sigmoid_(), min=eps, max=1 - eps)
     return y
+
+
+@MODELS.register_module()
+class ConvFuser(nn.Sequential):
+
+    def __init__(self, in_channels: int, out_channels: int) -> None:
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        super().__init__(
+            nn.Conv2d(
+                sum(in_channels), out_channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(True),
+        )
+
+    def forward(self, inputs: List[torch.Tensor]) -> torch.Tensor:
+        return super().forward(torch.cat(inputs, dim=1))
 
 
 @MODELS.register_module()
@@ -47,14 +65,9 @@ class TransFusionHead(nn.Module):
         norm_cfg=dict(type='BN1d'),
         bias='auto',
         # loss
-        loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-        loss_iou=dict(
-            type='VarifocalLoss',
-            use_sigmoid=True,
-            iou_weighted=True,
-            reduction='mean'),
-        loss_bbox=dict(type='L1Loss', reduction='mean'),
-        loss_heatmap=dict(type='GaussianFocalLoss', reduction='mean'),
+        loss_cls=dict(type='mmdet.GaussianFocalLoss', reduction='mean'),
+        loss_bbox=dict(type='mmdet.L1Loss', reduction='mean'),
+        loss_heatmap=dict(type='mmdet.GaussianFocalLoss', reduction='mean'),
         # others
         train_cfg=None,
         test_cfg=None,
@@ -80,7 +93,6 @@ class TransFusionHead(nn.Module):
             self.num_classes += 1
         self.loss_cls = MODELS.build(loss_cls)
         self.loss_bbox = MODELS.build(loss_bbox)
-        self.loss_iou = MODELS.build(loss_iou)
         self.loss_heatmap = MODELS.build(loss_heatmap)
 
         self.bbox_coder = build_bbox_coder(bbox_coder)

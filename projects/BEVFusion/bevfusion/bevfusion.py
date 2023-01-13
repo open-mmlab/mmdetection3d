@@ -10,6 +10,7 @@ from torch.nn import functional as F
 from mmdet3d.models import Base3DDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
+from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
 
 @MODELS.register_module()
@@ -17,27 +18,34 @@ class BEVFusion(Base3DDetector):
 
     def __init__(
         self,
+        data_preprocessor: OptConfigType = None,
         pts_voxel_encoder: Optional[dict] = None,
         pts_middle_encoder: Optional[dict] = None,
         fusion_layer: Optional[dict] = None,
         img_backbone: Optional[dict] = None,
         pts_backbone: Optional[dict] = None,
+        vtransform: Optional[dict] = None,
         img_neck: Optional[dict] = None,
         pts_neck: Optional[dict] = None,
         bbox_head: Optional[dict] = None,
+        init_cfg: OptMultiConfig = None,
         seg_head: Optional[dict] = None,
         **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
 
         self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
+
+        self.img_backbone = MODELS.build(img_backbone)
+        self.img_neck = MODELS.build(img_neck)
+        self.vtransform = MODELS.build(vtransform)
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
-        self.pts_neck = MODELS.build(pts_neck)
-        self.pts_backbone = MODELS.build(pts_backbone)
+
         self.fusion_layer = MODELS.build(fusion_layer)
 
-        self.img_bacbone = MODELS.build(img_backbone)
-        self.img_neck = MODELS.build(img_neck)
+        self.pts_backbone = MODELS.build(pts_backbone)
+        self.pts_neck = MODELS.build(pts_neck)
 
         self.bbox_head = MODELS.build(bbox_head)
 
@@ -77,6 +85,16 @@ class BEVFusion(Base3DDetector):
             log_vars[loss_name] = loss_value.item()
 
         return loss, log_vars
+
+    def _forward(self,
+                 batch_inputs: Tensor,
+                 batch_data_samples: OptSampleList = None):
+        """Network forward process.
+
+        Usually includes backbone, neck and head forward without any post-
+        processing.
+        """
+        pass
 
     def train_step(self, data, optimizer):
         """The iteration step during training.
@@ -129,8 +147,8 @@ class BEVFusion(Base3DDetector):
         return outputs
 
     def init_weights(self) -> None:
-        if 'camera' in self.encoders:
-            self.encoders['camera']['backbone'].init_weights()
+        if self.img_backbone is not None:
+            self.img_backbone.init_weights()
 
     @property
     def with_bbox_head(self):
@@ -159,8 +177,8 @@ class BEVFusion(Base3DDetector):
         B, N, C, H, W = x.size()
         x = x.view(B * N, C, H, W)
 
-        x = self.encoders['camera']['backbone'](x)
-        x = self.encoders['camera']['neck'](x)
+        x = self.img_backbone(x)
+        x = self.img_neck(x)
 
         if not isinstance(x, torch.Tensor):
             x = x[0]
@@ -168,7 +186,7 @@ class BEVFusion(Base3DDetector):
         BN, C, H, W = x.size()
         x = x.view(B, int(BN / B), C, H, W)
 
-        x = self.encoders['camera']['vtransform'](
+        x = self.vtransform(
             x,
             points,
             camera2ego,
@@ -183,40 +201,45 @@ class BEVFusion(Base3DDetector):
         )
         return x
 
-    def extract_pts_feat(self, x) -> torch.Tensor:
-        feats, coords, sizes = self.voxelize(x)
-        batch_size = coords[-1, 0] + 1
-        x = self.encoders['lidar']['backbone'](
-            feats, coords, batch_size, sizes=sizes)
+    def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
+        voxel_dict = batch_inputs_dict['voxels']
+        voxel_features = self.pts_voxel_encoder(voxel_dict['voxels'],
+                                                voxel_dict['num_points'],
+                                                voxel_dict['coors'])
+        batch_size = voxel_dict['coors'][-1, 0].item() + 1
+        x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
+                                    batch_size)
+        x = self.pts_backbone(x)
+        x = self.pts_neck(x)
         return x
 
-    @torch.no_grad()
-    def voxelize(self, points):
-        feats, coords, sizes = [], [], []
-        for k, res in enumerate(points):
-            ret = self.encoders['lidar']['voxelize'](res)
-            if len(ret) == 3:
-                # hard voxelize
-                f, c, n = ret
-            else:
-                assert len(ret) == 2
-                f, c = ret
-                n = None
-            feats.append(f)
-            coords.append(F.pad(c, (1, 0), mode='constant', value=k))
-            if n is not None:
-                sizes.append(n)
+    # @torch.no_grad()
+    # def voxelize(self, points):
+    #     feats, coords, sizes = [], [], []
+    #     for k, res in enumerate(points):
+    #         ret = self.encoders['lidar']['voxelize'](res)
+    #         if len(ret) == 3:
+    #             # hard voxelize
+    #             f, c, n = ret
+    #         else:
+    #             assert len(ret) == 2
+    #             f, c = ret
+    #             n = None
+    #         feats.append(f)
+    #         coords.append(F.pad(c, (1, 0), mode='constant', value=k))
+    #         if n is not None:
+    #             sizes.append(n)
 
-        feats = torch.cat(feats, dim=0)
-        coords = torch.cat(coords, dim=0)
-        if len(sizes) > 0:
-            sizes = torch.cat(sizes, dim=0)
-            if self.voxelize_reduce:
-                feats = feats.sum(
-                    dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
-                feats = feats.contiguous()
+    #     feats = torch.cat(feats, dim=0)
+    #     coords = torch.cat(coords, dim=0)
+    #     if len(sizes) > 0:
+    #         sizes = torch.cat(sizes, dim=0)
+    #         if self.voxelize_reduce:
+    #             feats = feats.sum(
+    #                 dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
+    #             feats = feats.contiguous()
 
-        return feats, coords, sizes
+    #     return feats, coords, sizes
 
     def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
                 batch_data_samples: List[Det3DDataSample],
@@ -300,7 +323,7 @@ class BEVFusion(Base3DDetector):
             lidar_aug_matrix,
             batch_input_metas,
         )
-        pts_feature = self.extract_pts_feat(points)
+        pts_feature = self.extract_pts_feat(batch_inputs_dict)
 
         features = [img_feature, pts_feature]
 

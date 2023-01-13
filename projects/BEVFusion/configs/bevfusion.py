@@ -50,8 +50,8 @@ model = dict(
         convert_weights=True,
         init_cfg=dict(
             type='Pretrained',
-            checkpoint=
-            'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'
+            checkpoint=  # noqa: E251
+            'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa: E501
         )),
     img_neck=dict(
         type='GeneralizedLSSFPN',
@@ -102,7 +102,7 @@ model = dict(
         norm_cfg=dict(type='SyncBN', eps=0.001, momentum=0.01),
         upsample_cfg=dict(type='deconv', bias=False),
         use_conv_for_no_stride=True),
-    heads=dict(
+    bbox_head=dict(
         type='TransFusionHead',
         num_proposals=200,
         auxiliary=True,
@@ -130,7 +130,10 @@ model = dict(
                 type='HungarianAssigner3D',
                 iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
                 cls_cost=dict(
-                    type='FocalLossCost', gamma=2.0, alpha=0.25, weight=0.15),
+                    type='mmdet.FocalLossCost',
+                    gamma=2.0,
+                    alpha=0.25,
+                    weight=0.15),
                 reg_cost=dict(type='BBoxBEVL1Cost', weight=0.25),
                 iou_cost=dict(type='IoU3DCost', weight=0.25))),
         test_cfg=dict(
@@ -151,15 +154,16 @@ model = dict(
             voxel_size=[0.075, 0.075],
             code_size=10),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             reduction='mean',
             loss_weight=1.0),
         loss_heatmap=dict(
-            type='GaussianFocalLoss', reduction='mean', loss_weight=1.0),
-        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25)))
+            type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.L1Loss', reduction='mean', loss_weight=0.25)))
 
 db_sampler = dict(
     data_root=data_root,
@@ -365,20 +369,56 @@ vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
-optimizer = dict(type='AdamW', lr=0.0002, weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(
-    policy='CosineAnnealing',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=0.33333333,
-    min_lr_ratio=0.001)
-momentum_config = dict(policy='cyclic')
+# lr_config = dict(
+#     policy='CosineAnnealing',
+#     warmup='linear',
+#     warmup_iters=500,
+#     warmup_ratio=0.33333333,
+#     min_lr_ratio=0.001)
+# momentum_config = dict(policy='cyclic')
+
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=0.33333333,
+        by_epoch=False,
+        begin=0,
+        end=500),
+    dict(
+        type='CosineAnnealingLR',
+        begin=0,
+        T_max=6,
+        end=6,
+        by_epoch=True,
+        eta_min_ratio=1e-3),
+    # momentum scheduler
+    # During the first 8 epochs, momentum increases from 1 to 0.85 / 0.95
+    # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
+    dict(
+        type='CosineAnnealingMomentum',
+        eta_min=0.85 / 0.95,
+        begin=0,
+        end=2.4,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        eta_min=1,
+        begin=2.4,
+        end=6,
+        by_epoch=True,
+        convert_to_iter_based=True)
+]
 
 # runtime settings
 train_cfg = dict(by_epoch=True, max_epochs=6, val_interval=6)
 val_cfg = dict()
 test_cfg = dict()
+
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=0.0002, weight_decay=0.01),
+    clip_grad=dict(max_norm=35, norm_type=2))
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
