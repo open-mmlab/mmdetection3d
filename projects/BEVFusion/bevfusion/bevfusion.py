@@ -2,17 +2,17 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
 import torch
+import torch.distributed as dist
 from mmengine.structures import InstanceData
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from mmdet3d.models import FUSIONMODELS, Base3DDetector
-from mmdet3d.ops import DynamicScatter, Voxelization
+from mmdet3d.models import Base3DDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 
 
-@FUSIONMODELS.register_module()
+@MODELS.register_module()
 class BEVFusion(Base3DDetector):
 
     def __init__(
@@ -191,7 +191,6 @@ class BEVFusion(Base3DDetector):
         return x
 
     @torch.no_grad()
-    @force_fp32()
     def voxelize(self, points):
         feats, coords, sizes = [], [], []
         for k, res in enumerate(points):

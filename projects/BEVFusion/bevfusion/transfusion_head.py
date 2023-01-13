@@ -4,15 +4,15 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule, build_conv_layer
-from mmdet.models.task_modules import (AssignResult, build_assigner,
-                                       build_bbox_coder, build_sampler)
-from mmdet.utils import multi_apply
+from mmdet.models.task_modules import (AssignResult, PseudoSampler,
+                                       build_assigner, build_bbox_coder,
+                                       build_sampler)
+from mmdet.models.utils import multi_apply
 from torch import nn
 
-from mmdet3d.models import (PseudoSampler, circle_nms, draw_heatmap_gaussian,
-                            gaussian_radius)
-from mmdet3d.models.builder import HEADS, build_loss
+from mmdet3d.models import circle_nms, draw_heatmap_gaussian, gaussian_radius
 from mmdet3d.models.layers import nms_bev
+from mmdet3d.registry import MODELS
 from mmdet3d.structures import xywhr2xyxyr
 from .transformer import FFN, PositionEmbeddingLearned, TransformerDecoderLayer
 
@@ -22,7 +22,7 @@ def clip_sigmoid(x, eps=1e-4):
     return y
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class TransFusionHead(nn.Module):
 
     def __init__(
@@ -78,10 +78,10 @@ class TransFusionHead(nn.Module):
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
         if not self.use_sigmoid_cls:
             self.num_classes += 1
-        self.loss_cls = build_loss(loss_cls)
-        self.loss_bbox = build_loss(loss_bbox)
-        self.loss_iou = build_loss(loss_iou)
-        self.loss_heatmap = build_loss(loss_heatmap)
+        self.loss_cls = MODELS.build(loss_cls)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.loss_iou = MODELS.build(loss_iou)
+        self.loss_heatmap = MODELS.build(loss_heatmap)
 
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.sampling = False

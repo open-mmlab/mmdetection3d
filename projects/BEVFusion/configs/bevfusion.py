@@ -1,6 +1,6 @@
 _base_ = ['mmdet3d::_base_/default_runtime.py']
 custom_imports = dict(
-    imports=['projects.bevfusion.bevfusion'], allow_failed_imports=False)
+    imports=['projects.BEVFusion.bevfusion'], allow_failed_imports=False)
 
 # model settings
 # Voxel size for voxel encoder
