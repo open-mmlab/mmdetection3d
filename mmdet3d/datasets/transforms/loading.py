@@ -686,6 +686,8 @@ class LoadAnnotations3D(LoadAnnotations):
       Only when `with_mask_3d` is True.
     - pts_semantic_mask_path (str): Path of semantic mask file.
       Only when `with_seg_3d` is True.
+    - pts_panoptic_mask_path (str): Path of panoptic mask file.
+      Only when `with_panoptic_seg_3d` is True.
 
     Added Keys:
 
@@ -708,6 +710,8 @@ class LoadAnnotations3D(LoadAnnotations):
       Only when `with_mask_3d` is True.
     - pts_semantic_mask (np.int64): Semantic mask of each point.
       Only when `with_seg_3d` is True.
+    - pts_panoptic_mask (np.int64): Panoptic mask of each point.
+      Only when `with_panoptic_seg_3d` is True.
 
     Args:
         with_bbox_3d (bool): Whether to load 3D boxes. Defaults to True.
@@ -718,6 +722,8 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to False.
         with_seg_3d (bool): Whether to load 3D semantic masks for points.
             Defaults to False.
+        with_panoptic_seg_3d (bool): Whether to load 3D panoptic masks
+            for points. Defaults to False.
         with_bbox (bool): Whether to load 2D boxes. Defaults to False.
         with_label (bool): Whether to load 2D labels. Defaults to False.
         with_mask (bool): Whether to load 2D instance masks. Defaults to False.
@@ -738,6 +744,7 @@ class LoadAnnotations3D(LoadAnnotations):
         with_attr_label: bool = False,
         with_mask_3d: bool = False,
         with_seg_3d: bool = False,
+        with_panoptic_seg_3d: bool = False,
         with_bbox: bool = False,
         with_label: bool = False,
         with_mask: bool = False,
@@ -760,6 +767,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_attr_label = with_attr_label
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
+        self.with_panoptic_seg_3d = with_panoptic_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
 
     def _load_bboxes_3d(self, results: dict) -> dict:
@@ -871,6 +879,35 @@ class LoadAnnotations3D(LoadAnnotations):
             results['eval_ann_info']['pts_semantic_mask'] = pts_semantic_mask
         return results
 
+    def _load_panoptic_seg_3d(self, results: dict) -> dict:
+        """Private function to load 3D panoptic segmentation annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing the panoptic segmentation annotations.
+        """
+        pts_panoptic_mask_path = results['pts_panoptic_mask_path']
+
+        if self.file_client is None:
+            self.file_client = mmengine.FileClient(**self.file_client_args)
+        try:
+            mask_bytes = self.file_client.get(pts_panoptic_mask_path)
+            # add .copy() to fix read-only bug
+            pts_panoptic_mask = np.frombuffer(
+                mask_bytes, dtype=self.seg_3d_dtype).copy()
+        except ConnectionError:
+            mmengine.check_file_exist(pts_panoptic_mask_path)
+            pts_panoptic_mask = np.fromfile(
+                pts_panoptic_mask_path, dtype=np.int64)
+
+        results['pts_panoptic_mask'] = pts_panoptic_mask
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['pts_panoptic_mask'] = pts_panoptic_mask
+        return results
+
     def _load_bboxes(self, results: dict) -> None:
         """Private function to load bounding box annotations.
 
@@ -920,6 +957,8 @@ class LoadAnnotations3D(LoadAnnotations):
             results = self._load_masks_3d(results)
         if self.with_seg_3d:
             results = self._load_semantic_seg_3d(results)
+        if self.with_panoptic_seg_3d:
+            results = self._load_panoptic_seg_3d(results)
 
         return results
 
@@ -938,4 +977,7 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_seg={self.with_seg}, '
         repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
+        repr_str += f'{indent_str}with_panoptic_seg_3d=\
+                        {self.with_panoptic_seg_3d}, '
+
         return repr_str
