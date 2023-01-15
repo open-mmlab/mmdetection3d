@@ -24,9 +24,9 @@ def multibin_loss(pred_orientations: Tensor,
             shape (N, num_dir_bins * 2).
         num_dir_bins(int): Number of bins to encode
             direction angle.
-            Defaults: 4.
+            Defaults to 4.
 
-    Return:
+    Returns:
         Tensor: Loss tensor.
     """
     cls_losses = 0
@@ -96,7 +96,7 @@ class MultiBinLoss(nn.Module):
                 override the original reduction method of the loss.
                 Defaults to None.
 
-        Return:
+        Returns:
             Tensor: Loss tensor.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')

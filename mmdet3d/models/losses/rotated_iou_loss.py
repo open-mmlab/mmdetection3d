@@ -15,11 +15,13 @@ def rotated_iou_3d_loss(pred: Tensor, target: Tensor) -> Tensor:
     """Calculate the IoU loss (1-IoU) of two sets of rotated bounding boxes.
 
     Note that predictions and targets are one-to-one corresponded.
+
     Args:
         pred (Tensor): Bbox predictions with shape [N, 7]
             (x, y, z, w, l, h, alpha).
         target (Tensor): Bbox targets (gt) with shape [N, 7]
             (x, y, z, w, l, h, alpha).
+
     Returns:
         Tensor: IoU loss between predictions and targets.
     """
