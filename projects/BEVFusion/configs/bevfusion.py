@@ -17,7 +17,15 @@ class_names = [
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
-data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
+data_prefix = dict(
+    pts='samples/LIDAR_TOP',
+    CAM_FRONT='samples/CAM_FRONT',
+    CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+    CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+    CAM_BACK='samples/CAM_BACK',
+    CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+    CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
+    sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=True)
 file_client_args = dict(backend='disk')
 
@@ -274,11 +282,11 @@ train_pipeline = [
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=True),
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_attr_label=False),
+    # dict(
+    #     type='LoadAnnotations3D',
+    #     with_bbox_3d=True,
+    #     with_label_3d=True,
+    #     with_attr_label=False),
     dict(
         type='ImageAug3D',
         final_dim=[256, 704],
@@ -313,12 +321,13 @@ test_pipeline = [
         type='Pack3DDetInputs',
         keys=['img', 'points', 'gt_bboxes_3d', 'gt_labels_3d'],
         meta_keys=[
-            'camera_intrinsics',
-            'camera2ego',
-            'lidar2ego',
-            'lidar2camera',
-            'camera2lidar',
-            'lidar2image',
+            'cam2img',
+            'ori_cam2img',
+            # 'cam2ego',   # under 'lidar_points' key
+            # 'lidar2ego', # under 'lidar_points' key
+            'lidar2cam',
+            'lidar2img',
+            'ori_lidar2img',
             'img_aug_matrix',
         ])
 ]
@@ -342,8 +351,8 @@ train_dataloader = dict(
         box_type_3d='LiDAR'))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=1,
-    persistent_workers=True,
+    num_workers=0,
+    # persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(

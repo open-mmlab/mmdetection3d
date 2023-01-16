@@ -2,13 +2,14 @@ from typing import Any, Dict
 
 import numpy as np
 import torch
+from mmcv.transforms import BaseTransform
 from PIL import Image
 
 from mmdet3d.registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()
-class ImageAug3D:
+class ImageAug3D(BaseTransform):
 
     def __init__(self, final_dim, resize_lim, bot_pct_lim, rot_lim, rand_flip,
                  is_train):
@@ -20,7 +21,7 @@ class ImageAug3D:
         self.is_train = is_train
 
     def sample_augmentation(self, results):
-        W, H = results['ori_shape']
+        H, W = results['ori_shape']
         fH, fW = self.final_dim
         if self.is_train:
             resize = np.random.uniform(*self.resize_lim)
@@ -48,6 +49,7 @@ class ImageAug3D:
     def img_transform(self, img, rotation, translation, resize, resize_dims,
                       crop, flip, rotate):
         # adjust image
+        img = Image.fromarray(img.astype('uint8'), mode='RGB')
         img = img.resize(resize_dims)
         img = img.crop(crop)
         if flip:
@@ -96,7 +98,7 @@ class ImageAug3D:
             transform = torch.eye(4)
             transform[:2, :2] = rotation
             transform[:2, 3] = translation
-            new_imgs.append(new_img)
+            new_imgs.append(np.array(new_img).astype(np.float32))
             transforms.append(transform.numpy())
         data['img'] = new_imgs
         # update the calibration matrices
@@ -105,7 +107,7 @@ class ImageAug3D:
 
 
 @TRANSFORMS.register_module()
-class GridMask:
+class GridMask(BaseTransform):
 
     def __init__(
         self,
@@ -139,7 +141,7 @@ class GridMask:
     def set_prob(self, epoch, max_epoch):
         self.prob = self.st_prob * self.epoch / self.max_epoch
 
-    def __call__(self, results):
+    def transform(self, results):
         if np.random.rand() > self.prob:
             return results
         imgs = results['img']

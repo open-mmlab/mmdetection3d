@@ -184,6 +184,8 @@ class Pack3DDetInputs(BaseTransform):
         gt_pts_seg = PointData()
 
         img_metas = {}
+        import pdb
+        pdb.set_trace()
         for key in self.meta_keys:
             if key in results:
                 img_metas[key] = results[key]

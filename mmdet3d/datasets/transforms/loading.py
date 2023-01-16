@@ -193,10 +193,10 @@ class LoadMultiViewImageFromFiles(BaseTransform):
         # unravel to list, see `DefaultFormatBundle` in formating.py
         # which will transpose each image separately and then stack into array
         results['img'] = [img[..., i] for i in range(img.shape[-1])]
-        results['img_shape'] = img.shape
-        results['ori_shape'] = img.shape
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
         # Set initial values for default meta_keys
-        results['pad_shape'] = img.shape
+        results['pad_shape'] = img.shape[:2]
         if self.set_default_scale:
             results['scale_factor'] = 1.0
         num_channels = 1 if len(img.shape) < 3 else img.shape[2]
@@ -744,8 +744,7 @@ class LoadAnnotations3D(LoadAnnotations):
             with_label=with_label,
             with_mask=with_mask,
             with_seg=with_seg,
-            poly2mask=poly2mask,
-            file_client_args=file_client_args)
+            poly2mask=poly2mask)
         self.with_bbox_3d = with_bbox_3d
         self.with_bbox_depth = with_bbox_depth
         self.with_label_3d = with_label_3d
@@ -753,6 +752,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
+        self.file_client_args = file_client_args
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from

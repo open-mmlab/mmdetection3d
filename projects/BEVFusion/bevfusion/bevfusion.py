@@ -164,9 +164,6 @@ class BEVFusion(Base3DDetector):
         self,
         x,
         points,
-        camera2ego,
-        lidar2ego,
-        lidar2camera,
         lidar2image,
         camera_intrinsics,
         camera2lidar,
@@ -189,9 +186,6 @@ class BEVFusion(Base3DDetector):
         x = self.vtransform(
             x,
             points,
-            camera2ego,
-            lidar2ego,
-            lidar2camera,
             lidar2image,
             camera_intrinsics,
             camera2lidar,
@@ -302,20 +296,17 @@ class BEVFusion(Base3DDetector):
     ):
         imgs = batch_inputs_dict.get('imgs', None)
         points = batch_inputs_dict.get('points', None)
-        camera2ego = batch_input_metas.get('camera2ego', None)
-        lidar2ego = batch_input_metas.get('lidar2ego', None)
-        lidar2camera = batch_input_metas.get('lidar2camera', None)
-        lidar2image = batch_input_metas.get('lidar2image', None)
-        camera_intrinsics = batch_input_metas.get('camera_intrinsics', None)
-        camera2lidar = batch_input_metas.get('camera2lidar', None)
-        img_aug_matrix = batch_input_metas.get('img_aug_matrix', None)
-        lidar_aug_matrix = batch_input_metas.get('lidar_aug_matrix', None)
+
+        lidar2image, camera_intrinsics, camera2lidar = [], [], []
+        for i, meta in enumerate(batch_input_metas):
+            lidar2image.append(meta['lidar2img'])
+            camera_intrinsics.append(meta['cam2img'])
+            camera2lidar.append(torch.inverse(meta['lidar2cam']))
+            img_aug_matrix = meta['img_aug_matrix']
+            lidar_aug_matrix = meta['lidar_aug_matrix']
         img_feature = self.extract_img_feat(
             imgs,
             points,
-            camera2ego,
-            lidar2ego,
-            lidar2camera,
             lidar2image,
             camera_intrinsics,
             camera2lidar,
