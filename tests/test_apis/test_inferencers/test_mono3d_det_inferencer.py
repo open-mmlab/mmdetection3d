@@ -17,7 +17,7 @@ class TestMonoDet3DInferencer(TestCase):
 
     def test_init(self):
         # init from metafile
-        MonoDet3DInferencer('pgd-kitti')
+        MonoDet3DInferencer('pgd_kitti')
         # init from cfg
         MonoDet3DInferencer(
             'configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py',
@@ -38,7 +38,7 @@ class TestMonoDet3DInferencer(TestCase):
                 self.assertTrue(
                     np.allclose(pred1['labels_3d'], pred2['labels_3d']))
 
-    @parameterized.expand(['pgd-kitti'])
+    @parameterized.expand(['pgd_kitti'])
     def test_call(self, model):
         # single img
         img_path = 'demo/data/kitti/000008.png'
@@ -75,7 +75,7 @@ class TestMonoDet3DInferencer(TestCase):
         self.assertIn('visualization', res_path)
         self.assertIn('visualization', res_ndarray)
 
-    @parameterized.expand(['pgd-kitti'])
+    @parameterized.expand(['pgd_kitti'])
     def test_visualize(self, model):
         inputs = [
             dict(
@@ -92,7 +92,7 @@ class TestMonoDet3DInferencer(TestCase):
             for img_dir in ['000008.png', '000008.png']:
                 self.assertTrue(osp.exists(osp.join(tmp_dir, img_dir)))
 
-    @parameterized.expand(['pgd-kitti'])
+    @parameterized.expand(['pgd_kitti'])
     def test_postprocess(self, model):
         # return_datasample
         img_path = 'demo/data/kitti/000008.png'

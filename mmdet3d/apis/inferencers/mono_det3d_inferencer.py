@@ -28,7 +28,7 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
     Args:
         model (str, optional): Path to the config file or the model name
             defined in metafile. For example, it could be
-            "pgd-kitti" or
+            "pgd_kitti" or
             "configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py".
             If model is not specified, user must provide the
             `weights` saved by MMEngine which contains the config string.
