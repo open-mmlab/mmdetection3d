@@ -20,22 +20,6 @@ ImgType = Union[np.ndarray, Sequence[np.ndarray]]
 ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 
-def convert_SyncBN(config):
-    """Convert config's naiveSyncBN to BN.
-
-    Args:
-         config (str or :obj:`mmengine.Config`): Config file path or the config
-            object.
-    """
-    if isinstance(config, dict):
-        for item in config:
-            if item == 'norm_cfg':
-                config[item]['type'] = config[item]['type']. \
-                                    replace('naiveSyncBN', 'BN')
-            else:
-                convert_SyncBN(config[item])
-
-
 class BaseDet3DInferencer(BaseInferencer):
     """Base 3D object detection inferencer.
 
@@ -44,11 +28,17 @@ class BaseDet3DInferencer(BaseInferencer):
             defined in metafile. For example, it could be
             "pgd-kitti" or
             "configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py".
+            If model is not specified, user must provide the
+            `weights` saved by MMEngine which contains the config string.
+            Defaults to None.
         weights (str, optional): Path to the checkpoint. If it is not specified
             and model is a model name of metafile, the weights will be loaded
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
+        scope (str, optional): The scope of the model. Defaults to mmdet3d.
+        palette (str): Color palette used for visualization. The order of
+            priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
 
     preprocess_kwargs: set = set()
@@ -62,7 +52,7 @@ class BaseDet3DInferencer(BaseInferencer):
     }
 
     def __init__(self,
-                 model: Union[ModelType, str],
+                 model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
                  scope: Optional[str] = 'mmdet3d',
@@ -72,13 +62,28 @@ class BaseDet3DInferencer(BaseInferencer):
         super().__init__(
             model=model, weights=weights, device=device, scope=scope)
 
+    def _convert_syncbn(self, cfg: ConfigType):
+        """Convert config's naiveSyncBN to BN.
+
+        Args:
+            config (str or :obj:`mmengine.Config`): Config file path
+                or the config object.
+        """
+        if isinstance(cfg, dict):
+            for item in cfg:
+                if item == 'norm_cfg':
+                    cfg[item]['type'] = cfg[item]['type']. \
+                                        replace('naiveSyncBN', 'BN')
+                else:
+                    self._convert_syncbn(cfg[item])
+
     def _init_model(
         self,
         cfg: ConfigType,
         weights: str,
         device: str = 'cpu',
     ) -> nn.Module:
-        convert_SyncBN(cfg.model)
+        self._convert_syncbn(cfg.model)
         cfg.model.train_cfg = None
         model = MODELS.build(cfg.model)
 
@@ -139,6 +144,8 @@ class BaseDet3DInferencer(BaseInferencer):
             return_datasamples (bool): Whether to return results as
                 :obj:`BaseDataElement`. Defaults to False.
             batch_size (int): Inference batch size. Defaults to 1.
+            return_vis (bool): Whether to return the visualization result.
+                Defaults to False.
             show (bool): Whether to display the visualization results in a
                 popup window. Defaults to False.
             wait_time (float): The interval of show (s). Defaults to 0.
@@ -216,7 +223,6 @@ class BaseDet3DInferencer(BaseInferencer):
             for pred in preds:
                 result = self.pred2dict(pred)
                 results.append(result)
-        # Add img to the results after printing and dumping
         result_dict['predictions'] = results
         if print_result:
             print(result_dict)
