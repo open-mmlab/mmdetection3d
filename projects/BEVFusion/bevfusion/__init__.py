@@ -2,6 +2,7 @@ from .bev_pool import bev_pool
 from .bevfusion import BEVFusion
 from .bevfusion_necks import GeneralizedLSSFPN
 from .depth_lss import DepthLSSTransform
+from .loading import BEVLoadMultiViewImageFromFiles
 from .transforms_3d import GridMask, ImageAug3D
 from .transfusion_head import ConvFuser, TransFusionHead
 from .utils import (BBoxBEVL1Cost, HeuristicAssigner3D, HungarianAssigner3D,
@@ -10,5 +11,6 @@ from .utils import (BBoxBEVL1Cost, HeuristicAssigner3D, HungarianAssigner3D,
 __all__ = [
     'BEVFusion', 'TransFusionHead', 'ConvFuser', 'ImageAug3D', 'GridMask',
     'GeneralizedLSSFPN', 'HungarianAssigner3D', 'BBoxBEVL1Cost', 'IoU3DCost',
-    'HeuristicAssigner3D', 'bev_pool', 'DepthLSSTransform'
+    'HeuristicAssigner3D', 'bev_pool', 'DepthLSSTransform',
+    'BEVLoadMultiViewImageFromFiles'
 ]

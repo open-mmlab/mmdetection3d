@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
+import numpy as np
 import torch
 import torch.distributed as dist
 from mmengine.structures import InstanceData
@@ -203,8 +204,6 @@ class BEVFusion(Base3DDetector):
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
         x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
                                     batch_size)
-        x = self.pts_backbone(x)
-        x = self.pts_neck(x)
         return x
 
     # @torch.no_grad()
@@ -266,23 +265,23 @@ class BEVFusion(Base3DDetector):
         batch_size = len(batch_input_metas)
         feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
 
-        outputs = [{} for _ in range(batch_size)]
+        outputs = []
         if self.with_bbox_head:
             pred_dict = self.bbox_head.predict(feats, batch_input_metas)
-            for k, (boxes, scores, labels) in enumerate(pred_dict):
-                outputs[k].update({
-                    'boxes_3d': boxes.to('cpu'),
-                    'scores_3d': scores.cpu(),
-                    'labels_3d': labels.cpu(),
-                })
-        if self.with_seg_head:
-            gt_masks_bev = batch_input_metas.get('gt_masks_bev', None)
-            logits = self.seg_head(feats, batch_input_metas)
-            for k in range(batch_size):
-                outputs[k].update({
-                    'masks_bev': logits[k].cpu(),
-                    'gt_masks_bev': gt_masks_bev[k].cpu(),
-                })
+            for k, (bboxes, scores, labels) in enumerate(pred_dict):
+                temp_instances = InstanceData()
+                temp_instances.bboxes_3d = bboxes
+                temp_instances.scores_3d = scores
+                temp_instances.labels_3d = labels
+                outputs.append(temp_instances)
+        # if self.with_seg_head:
+        #     gt_masks_bev = batch_input_metas.get('gt_masks_bev', None)
+        #     logits = self.seg_head(feats, batch_input_metas)
+        #     for k in range(batch_size):
+        #         outputs[k].update({
+        #             'masks_bev': logits[k].cpu(),
+        #             'gt_masks_bev': gt_masks_bev[k].cpu(),
+        #         })
 
         res = self.add_pred_to_datasample(batch_data_samples, outputs)
 
@@ -298,29 +297,30 @@ class BEVFusion(Base3DDetector):
         points = batch_inputs_dict.get('points', None)
 
         lidar2image, camera_intrinsics, camera2lidar = [], [], []
+        img_aug_matrix, lidar_aug_matrix = [], []
         for i, meta in enumerate(batch_input_metas):
             lidar2image.append(meta['lidar2img'])
             camera_intrinsics.append(meta['cam2img'])
-            camera2lidar.append(torch.inverse(meta['lidar2cam']))
-            img_aug_matrix = meta['img_aug_matrix']
-            lidar_aug_matrix = meta['lidar_aug_matrix']
-        img_feature = self.extract_img_feat(
-            imgs,
-            points,
-            lidar2image,
-            camera_intrinsics,
-            camera2lidar,
-            img_aug_matrix,
-            lidar_aug_matrix,
-            batch_input_metas,
-        )
+            camera2lidar.append(meta['cam2lidar'])
+            img_aug_matrix.append(meta.get('img_aug_matrix', np.eye(4)))
+            lidar_aug_matrix.append(meta.get('lidar_aug_matrix', np.eye(4)))
+
+        lidar2image = imgs.new_tensor(lidar2image)
+        camera_intrinsics = imgs.new_tensor(camera_intrinsics)
+        camera2lidar = imgs.new_tensor(camera2lidar)
+        img_aug_matrix = imgs.new_tensor(img_aug_matrix)
+        lidar_aug_matrix = imgs.new_tensor(lidar_aug_matrix)
+        img_feature = self.extract_img_feat(imgs, points, lidar2image,
+                                            camera_intrinsics, camera2lidar,
+                                            img_aug_matrix, lidar_aug_matrix,
+                                            batch_input_metas)
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
 
         features = [img_feature, pts_feature]
 
-        if not self.training:
-            # avoid OOM
-            features = features[::-1]
+        # if not self.training:
+        # avoid OOM
+        # features = features[::-1]
 
         if self.fusion_layer is not None:
             x = self.fusion_layer(features)

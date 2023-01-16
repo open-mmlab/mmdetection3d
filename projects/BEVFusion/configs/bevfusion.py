@@ -33,6 +33,10 @@ model = dict(
     type='BEVFusion',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=False,
+        pad_size_divisor=32,
         voxel=True,
         voxel_type='hard',
         voxel_layer=dict(
@@ -90,7 +94,7 @@ model = dict(
         norm_cfg=dict(type='SyncBN'),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
                                                                       128)),
-        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, [1, 1, 0]), (0, 0)),
+        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (0, 1, 1)), (0, 0)),
         block_type='basicblock'),
     fusion_layer=dict(
         type='ConvFuser', in_channels=[80, 256], out_channels=256),
@@ -200,7 +204,10 @@ db_sampler = dict(
         reduce_beams=32))
 
 train_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
+    dict(
+        type='BEVLoadMultiViewImageFromFiles',
+        to_float32=True,
+        color_type='color'),
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -280,7 +287,10 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
+    dict(
+        type='BEVLoadMultiViewImageFromFiles',
+        to_float32=True,
+        color_type='color'),
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
     # dict(
     #     type='LoadAnnotations3D',
@@ -321,14 +331,8 @@ test_pipeline = [
         type='Pack3DDetInputs',
         keys=['img', 'points', 'gt_bboxes_3d', 'gt_labels_3d'],
         meta_keys=[
-            'cam2img',
-            'ori_cam2img',
-            # 'cam2ego',   # under 'lidar_points' key
-            # 'lidar2ego', # under 'lidar_points' key
-            'lidar2cam',
-            'lidar2img',
-            'ori_lidar2img',
-            'img_aug_matrix',
+            'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
+            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx'
         ])
 ]
 

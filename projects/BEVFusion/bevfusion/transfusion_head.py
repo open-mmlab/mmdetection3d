@@ -346,7 +346,7 @@ class TransFusionHead(nn.Module):
         """
         if isinstance(feats, torch.Tensor):
             feats = [feats]
-        res = multi_apply(self.forward_single, feats, [None], [metas])
+        res = multi_apply(self.forward_single, feats, [metas])
         assert len(res) == 1, 'only support one level features.'
         return res
 
