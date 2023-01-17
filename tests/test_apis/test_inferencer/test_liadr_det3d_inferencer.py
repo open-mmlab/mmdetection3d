@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import mmengine
 import numpy as np
+import torch
 from mmengine.utils import is_list_of
 
 from mmdet3d.apis import LidarDet3DInferencer
@@ -40,6 +41,8 @@ class TestLidarDet3DInferencer(TestCase):
                     np.allclose(pred1['labels_3d'], pred2['labels_3d']))
 
     def test_call(self):
+        if not torch.cuda.is_available():
+            return
         # single img
         pc_path = 'tests/data/kitti/training/velodyne/000000.bin'
         res_path = self.inferencer(pc_path, return_vis=True)
@@ -80,6 +83,8 @@ class TestLidarDet3DInferencer(TestCase):
         self.assertIn('predictions', res_bs2)
 
     def test_visualize(self):
+        if not torch.cuda.is_available():
+            return
         pc_path = 'tests/data/kitti/training/velodyne/000000.bin',
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -89,6 +94,8 @@ class TestLidarDet3DInferencer(TestCase):
             # self.assertTrue(osp.exists(osp.join(tmp_dir, '000000.png')))
 
     def test_postprocess(self):
+        if not torch.cuda.is_available():
+            return
         # return_datasample
         pc_path = 'tests/data/kitti/training/velodyne/000000.bin'
         res = self.inferencer(pc_path, return_datasamples=True)
