@@ -265,18 +265,11 @@ class BEVFusion(Base3DDetector):
         batch_size = len(batch_input_metas)
         feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
 
-        outputs = []
         if self.with_bbox_head:
-            pred_dict = self.bbox_head.predict(feats, batch_input_metas)
-            for k, (bboxes, scores, labels) in enumerate(pred_dict):
-                temp_instances = InstanceData()
-                temp_instances.bboxes_3d = bboxes
-                temp_instances.scores_3d = scores
-                temp_instances.labels_3d = labels
-                outputs.append(temp_instances)
+            outputs = self.bbox_head.predict(feats, batch_input_metas)
         # if self.with_seg_head:
         #     gt_masks_bev = batch_input_metas.get('gt_masks_bev', None)
-        #     logits = self.seg_head(feats, batch_input_metas)
+        #     outputs = self.seg_head(feats, batch_input_metas)
         #     for k in range(batch_size):
         #         outputs[k].update({
         #             'masks_bev': logits[k].cpu(),

@@ -9,6 +9,7 @@ from mmdet.models.task_modules import (AssignResult, PseudoSampler,
                                        build_assigner, build_bbox_coder,
                                        build_sampler)
 from mmdet.models.utils import multi_apply
+from mmengine.structures import InstanceData
 from torch import nn
 
 from mmdet3d.models import circle_nms, draw_heatmap_gaussian, gaussian_radius
@@ -493,17 +494,23 @@ class TransFusionHead(nn.Module):
                     )
                 else:  # no nms
                     ret = dict(bboxes=boxes3d, scores=scores, labels=labels)
-                ret_layer.append(ret)
+
+                temp_instances = InstanceData()
+                ret['bboxes'][:, 2] = ret[
+                    'bboxes'][:, 2] - ret['bboxes'][:, 5] * 0.5  # noqa: E501
+                temp_instances.bboxes_3d = metas[0]['box_type_3d'](
+                    ret['bboxes'], box_dim=rets[0][0]['bboxes'].shape[-1])
+                temp_instances.scores_3d = ret['scores']
+                temp_instances.labels_3d = ret['labels'].int()
+
+                ret_layer.append(temp_instances)
+
             rets.append(ret_layer)
-        assert len(rets) == 1
-        assert len(rets[0]) == 1
-        res = [[
-            metas[0]['box_type_3d'](
-                rets[0][0]['bboxes'], box_dim=rets[0][0]['bboxes'].shape[-1]),
-            rets[0][0]['scores'],
-            rets[0][0]['labels'].int(),
-        ]]
-        return res
+        assert len(
+            rets
+        ) == 1, f'only support one layer now, but get {len(rets)} layers'
+
+        return rets[0]
 
     def get_targets(self, gt_bboxes_3d, gt_labels_3d, preds_dict):
         """Generate training targets.
