@@ -5,11 +5,10 @@ from .detr3d_transformer import (Detr3DCrossAtten, Detr3DTransformer,
 from .hungarian_assigner_3d import HungarianAssigner3D
 from .match_cost import BBox3DL1Cost
 from .nms_free_coder import NMSFreeCoder
-from .transform_3d import filename2img_path
 from .vovnet import VoVNet
 
 __all__ = [
     'VoVNet', 'DETR3D', 'DETR3DHead', 'Detr3DTransformer',
     'Detr3DTransformerDecoder', 'Detr3DCrossAtten', 'HungarianAssigner3D',
-    'BBox3DL1Cost', 'NMSFreeCoder', 'filename2img_path'
+    'BBox3DL1Cost', 'NMSFreeCoder'
 ]
