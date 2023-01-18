@@ -720,8 +720,6 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to False.
         with_seg_3d (bool): Whether to load 3D semantic masks for points.
             Defaults to False.
-        with_panoptic_seg_3d (bool): Whether to load 3D panoptic masks
-            for points. Defaults to False.
         with_bbox (bool): Whether to load 2D boxes. Defaults to False.
         with_label (bool): Whether to load 2D labels. Defaults to False.
         with_mask (bool): Whether to load 2D instance masks. Defaults to False.
