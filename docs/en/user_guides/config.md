@@ -257,7 +257,7 @@ test_dataloader = dict(
         box_type_3d='LiDAR'))
 test_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_val.pkl',
+    ann_file=data_root + 'kitti_infos_test.pkl',
     metric='bbox',
     format_only=True,
     submission_prefix='results/kitti-3class/kitti_results')
@@ -266,7 +266,7 @@ test_evaluator = dict(
 ### Training and testing config
 
 MMEngine's runner uses Loop to control the training, validation, and testing processes.
-Users can set the maximum training epochs and validation intervals with these fields.
+Users can set the maximum training epochs and validation intervals with these fields:
 
 ```python
 train_cfg = dict(
@@ -380,7 +380,7 @@ resume = False  # Whether to resume from the checkpoint defined in `load_from`. 
 
 There are 4 basic component types under `configs/_base_`, dataset, model, schedule, default_runtime.
 Many methods could be easily constructed with one of these models like SECOND, PointPillars, PartA2, VoteNet.
-The configs that are composed by components from `_base_` are called the _primitive_.
+The configs that are composed of components from `_base_` are called _primitive_.
 
 For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
 
@@ -416,7 +416,7 @@ If you wish to inspect the config file, you may run `python tools/misc/print_con
 Sometimes, you may set `_delete_=True` to ignore some of the fields in base configs.
 You may refer to [MMEngine config tutorial](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html) for a simple illustration.
 
-In MMDetection3D, for example, to change the neck of PointPillars with the following config.
+In MMDetection3D, for example, to change the neck of PointPillars with the following config:
 
 ```python
 model = dict(
@@ -436,7 +436,7 @@ model = dict(
     pts_bbox_head=dict(...))
 ```
 
-`FPN` and `SECONDFPN` use different keywords to construct.
+`FPN` and `SECONDFPN` use different keywords to construct:
 
 ```python
 _base_ = '../_base_/models/pointpillars_hv_fpn_nus.py'
