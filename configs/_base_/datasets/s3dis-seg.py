@@ -105,8 +105,8 @@ eval_pipeline = [
 # test on area 5
 train_dataloader = dict(
     batch_size=8,
-    num_workers=0,
-    persistent_workers=False,
+    num_workers=4,
+    persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
@@ -123,8 +123,8 @@ train_dataloader = dict(
         test_mode=False))
 test_dataloader = dict(
     batch_size=1,
-    num_workers=0,
-    persistent_workers=False,
+    num_workers=1,
+    persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
@@ -143,9 +143,6 @@ val_dataloader = test_dataloader
 val_evaluator = dict(type='SegMetric')
 test_evaluator = val_evaluator
 
-vis_backends = [
-    dict(type='LocalVisBackend'),
-    dict(type='TensorboardVisBackend')
-]
+vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
