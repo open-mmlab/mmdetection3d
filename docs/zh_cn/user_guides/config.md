@@ -257,7 +257,7 @@ test_dataloader = dict(
         box_type_3d='LiDAR'))
 test_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'kitti_infos_val.pkl',
+    ann_file=data_root + 'kitti_infos_test.pkl',
     metric='bbox',
     format_only=True,
     submission_prefix='results/kitti-3class/kitti_results')
@@ -265,7 +265,7 @@ test_evaluator = dict(
 
 ### 训练和测试配置
 
-MMEngine 的执行器使用循环（Loop）来控制训练，验证和测试过程。用户可以使用这些字段设置最大训练轮次和验证间隔。
+MMEngine 的执行器使用循环（Loop）来控制训练，验证和测试过程。用户可以使用这些字段设置最大训练轮次和验证间隔：
 
 ```python
 train_cfg = dict(
@@ -411,7 +411,7 @@ _base_ = [
 
 有时，您也许会设置 `_delete_=True` 去忽略基础配置文件里的一些字段。您可以参考 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/zh_CN/latest/advanced_tutorials/config.html) 来获得一些简单的指导。
 
-在 MMDetection3D 里，例如，修改以下 PointPillars 配置中的颈部网络。
+在 MMDetection3D 里，例如，修改以下 PointPillars 配置中的颈部网络：
 
 ```python
 model = dict(
@@ -431,7 +431,7 @@ model = dict(
     pts_bbox_head=dict(...))
 ```
 
-`FPN` 和 `SECONDFPN` 使用不同的关键字来构建。
+`FPN` 和 `SECONDFPN` 使用不同的关键字来构建：
 
 ```python
 _base_ = '../_base_/models/pointpillars_hv_fpn_nus.py'
