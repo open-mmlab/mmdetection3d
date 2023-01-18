@@ -15,6 +15,8 @@ class InstanceSegMetric(InstanceSeg):
 
     Args:
         dataset_meta (dict): Provide dataset meta information.
+        dist_backend (str, optional): The distributed backend name want to get.
+            if None, return the default distributed backend.
     """
 
     def __init__(self,
