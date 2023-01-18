@@ -25,7 +25,7 @@ def test_indoor_eval():
         1: 'bicycle',
         2: 'motorcycle',
         3: 'truck',
-        4: 'unlabeld'
+        4: 'unlabeled'
     }
     ret_value = seg_eval(gt_labels, seg_preds, label2cat, ignore_index=4)
 
