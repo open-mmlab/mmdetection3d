@@ -36,4 +36,4 @@ train_dataloader = dict(
         type='CBGSDataset',
         dataset=dict(ann_file='nuscenes_infos_trainval.pkl')))
 load_from = 'ckpts/dd3d_det_final.pth'
-find_unused_parameters=True
+find_unused_parameters = True
