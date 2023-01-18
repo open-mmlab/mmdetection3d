@@ -238,7 +238,7 @@ test_cfg = dict(type='TestLoop')
 default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook', interval=1, max_keep_ckpts=1, save_last=True))
-load_from = 'ckpts/fcos3d_yue.pth'
+load_from = 'ckpts/fcos3d.pth'
 
 # setuptools 65 downgrades to 58.
 # In mmlab-node we use setuptools 61 but occurs NO errors
