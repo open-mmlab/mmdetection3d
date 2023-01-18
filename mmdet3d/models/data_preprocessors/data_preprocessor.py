@@ -378,6 +378,22 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 coors.append(res_coors)
             voxels = torch.cat(points, dim=0)
             coors = torch.cat(coors, dim=0)
+        elif self.voxel_type == 'cylindrical':
+            voxels, coors = [], []
+            for i, res in enumerate(points):
+                rho = torch.sqrt(res[:, 0]**2 + res[:, 1]**2)
+                phi = torch.arctan2(res[:, 1], res[:, 0])
+                polar_res = torch.cat((rho, phi, res[:, 2]), dim=1)
+                res_coors = torch.floor(
+                    (polar_res - polar_res.new_tensor(
+                        self.voxel_layer.point_cloud_range[:3])) /
+                    polar_res.new_tensor(self.voxel_layer.voxel_size)).int()
+                res_coors = F.pad(res_coors, (1, 0), mode='constant', value=i)
+                voxels = torch.cat((polar_res, res[:, 0], res[:, 1], res[:,
+                                                                         3:]))
+                coors.append(res_coors)
+            voxels = torch.cat(voxels, dim=0)
+            coors = torch.cat(coors, dim=0)
         else:
             raise ValueError(f'Invalid voxelization type {self.voxel_type}')
 
