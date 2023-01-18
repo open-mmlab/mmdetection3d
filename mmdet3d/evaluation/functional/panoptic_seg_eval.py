@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Tuple
+
 import numpy as np
-from mmengine.logging import print_log
+from mmengine.logging import MMLogger, print_log
 
 
 class EvalPanoptic:
@@ -9,30 +11,30 @@ class EvalPanoptic:
     <https://github.com/PRBonn/semantic-kitti-api/>`_ for more details
     Args:
         classes (list): Classes used in the dataset.
-        things (list): Things classes used in the dataset.
-        stuff (list): Stuff classes used in the dataset.
+        things_classes (list): Things classes used in the dataset.
+        stuff_classes (list): Stuff classes used in the dataset.
         min_points (int): Minimum point number of object to be
             counted as ground truth in evaluation.
         offset (int): Offset for instance ids to concat with
             semantic labels.
-        label2cat (tuple): Map from label to category.
+        label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
             Default: None.
     """
 
     def __init__(self,
-                 classes,
-                 things,
-                 stuff,
-                 min_points,
-                 offset,
-                 label2cat,
-                 ignore_index,
-                 logger=None):
+                 classes: List[str],
+                 things_classes: List[str],
+                 stuff_classes: List[str],
+                 min_points: int,
+                 offset: int,
+                 label2cat: Dict[str, str],
+                 ignore_index: List[str],
+                 logger: MMLogger = None):
         self.classes = classes
-        self.things = things
-        self.stuff = stuff
+        self.things_classes = things_classes
+        self.stuff_classes = stuff_classes
         self.ignore_index = np.array(ignore_index, dtype=int)
         self.n_classes = len(classes)
         self.label2cat = label2cat
@@ -59,14 +61,16 @@ class EvalPanoptic:
 
         self.evaluated_fnames = []
 
-    def evaluate(self, gt_labels, seg_preds):
+    def evaluate(self, gt_labels: List[Dict[str, np.ndarray]],
+                 seg_preds: List[Dict[str, np.ndarray]]) -> Dict[str, float]:
         """Evaluate the predictions.
 
         Args:
-            gt_labels (list[torch.Tensor]): Ground Truth.
-            seg_preds (list[torch.Tensor]): Predictions.
+            gt_labels (list[dict[numpy.ndarray]]): Ground Truth.
+            seg_preds (list[dict[numpy.ndarray]]): Predictions.
         Returns:
-            tuple[dict]: Results of strings and evaluation metrics.
+            dict[float]: The computed metrics. The keys are the names of
+            the metrics, and the values are corresponding results.
         """
         assert len(seg_preds) == len(gt_labels)
         for f in range(len(seg_preds)):
@@ -79,20 +83,16 @@ class EvalPanoptic:
             self.add_panoptic_sample(pred_semantic_seg, gt_semantic_seg,
                                      pred_instance_seg, gt_instance_seg)
 
-        result_dicts = self.print_results(self.logger)
+        result_dicts = self.print_results()
 
         return result_dicts
 
-    def print_results(self, logger=None):
+    def print_results(self) -> Dict[str, float]:
         """Print results.
 
-        Args:
-            logger (logging.Logger | str, optional): The way to print the
-                summary. See `mmengine.logging.print_log()` for details.
-                Default: None.
-
         Returns:
-            dict[str, float]: Dict of results.
+            dict[float]: The computed metrics. The keys are the names of
+            the metrics, and the values are corresponding results.
         """
         pq, sq, rq, all_pq, all_sq, all_rq = self.get_pq()
         miou, iou = self.get_iou()
@@ -125,16 +125,22 @@ class EvalPanoptic:
             output_dict[class_str]['miou'] = _iou
 
         pq_dagger = np.mean(
-            [float(output_dict[c]['pq']) for c in self.things] +
-            [float(output_dict[c]['miou']) for c in self.stuff])
+            [float(output_dict[c]['pq']) for c in self.things_classes] +
+            [float(output_dict[c]['miou']) for c in self.stuff_classes])
 
-        pq_things = np.mean([float(output_dict[c]['pq']) for c in self.things])
-        rq_things = np.mean([float(output_dict[c]['rq']) for c in self.things])
-        sq_things = np.mean([float(output_dict[c]['sq']) for c in self.things])
+        pq_things = np.mean(
+            [float(output_dict[c]['pq']) for c in self.things_classes])
+        rq_things = np.mean(
+            [float(output_dict[c]['rq']) for c in self.things_classes])
+        sq_things = np.mean(
+            [float(output_dict[c]['sq']) for c in self.things_classes])
 
-        pq_stuff = np.mean([float(output_dict[c]['pq']) for c in self.stuff])
-        rq_stuff = np.mean([float(output_dict[c]['rq']) for c in self.stuff])
-        sq_stuff = np.mean([float(output_dict[c]['sq']) for c in self.stuff])
+        pq_stuff = np.mean(
+            [float(output_dict[c]['pq']) for c in self.stuff_classes])
+        rq_stuff = np.mean(
+            [float(output_dict[c]['rq']) for c in self.stuff_classes])
+        sq_stuff = np.mean(
+            [float(output_dict[c]['sq']) for c in self.stuff_classes])
 
         result_dicts = {}
         result_dicts['pq'] = float(pq)
@@ -149,19 +155,20 @@ class EvalPanoptic:
         result_dicts['rq_things'] = float(rq_things)
         result_dicts['sq_things'] = float(sq_things)
 
-        if logger is not None:
-            print_log('|        |   IoU   |   PQ   |   RQ   |  SQ   |', logger)
+        if self.logger is not None:
+            print_log('|        |   IoU   |   PQ   |   RQ   |  SQ   |',
+                      self.logger)
             for k, v in output_dict.items():
                 print_log(
                     '|{}| {:.4f} | {:.4f} | {:.4f} | {:.4f} |'.format(
                         k.ljust(8)[-8:], v['miou'], v['pq'], v['rq'], v['sq']),
-                    logger)
-            print_log('True Positive: ', logger)
-            print_log('\t|\t'.join([str(x) for x in self.pan_tp]), logger)
+                    self.logger)
+            print_log('True Positive: ', self.logger)
+            print_log('\t|\t'.join([str(x) for x in self.pan_tp]), self.logger)
             print_log('False Positive: ')
-            print_log('\t|\t'.join([str(x) for x in self.pan_fp]), logger)
+            print_log('\t|\t'.join([str(x) for x in self.pan_fp]), self.logger)
             print_log('False Negative: ')
-            print_log('\t|\t'.join([str(x) for x in self.pan_fn]), logger)
+            print_log('\t|\t'.join([str(x) for x in self.pan_fn]), self.logger)
 
         else:
             print('|        |   IoU   |   PQ   |   RQ   |  SQ   |')
@@ -177,7 +184,9 @@ class EvalPanoptic:
 
         return result_dicts
 
-    def get_pq(self):
+    def get_pq(
+        self
+    ) -> Tuple[np.double, np.double, np.ndarray, np.ndarray, np.ndarray]:
         """Get results of PQ metric.
 
         Returns:
@@ -198,7 +207,7 @@ class EvalPanoptic:
 
         return (pq, sq, rq, pq_all, sq_all, rq_all)
 
-    def get_iou(self):
+    def get_iou(self) -> Tuple[np.double, np.ndarray]:
         """Get results of IOU metric.
 
         Returns:
@@ -214,8 +223,12 @@ class EvalPanoptic:
 
         return iou_mean, iou
 
-    def get_iou_stats(self):
-        """Get IOU statistics of TP, FP and FN."""
+    def get_iou_stats(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Get IOU statistics of TP, FP and FN.
+
+        Returns:
+            tuple(numpy.array): TP, FP, FN of all class.
+        """
         # copy to avoid modifying the real deal
         conf = self.px_iou_conf_matrix.copy().astype(np.double)
         # remove fp from confusion on the ignore classes predictions
@@ -230,27 +243,30 @@ class EvalPanoptic:
         fn = conf.sum(axis=0) - tp
         return tp, fp, fn
 
-    def add_semantic_sample(self, semantic_preds, gt_semantics):
+    def add_semantic_sample(self, semantic_preds: np.ndarray,
+                            gt_semantics: np.ndarray):
         """Add one batch of semantic predictions and ground truths.
 
         Args:
-            semantic_preds (torch.Tensor): Semantic predictions.
-            gt_semantics (torch.Tensor): Semantic ground truths.
+            semantic_preds (np.ndarray): Semantic predictions.
+            gt_semantics (np.ndarray): Semantic ground truths.
         """
         idxs = np.stack([semantic_preds, gt_semantics], axis=0)
         # make confusion matrix (cols = gt, rows = pred)
         np.add.at(self.px_iou_conf_matrix, tuple(idxs), 1)
 
-    def add_panoptic_sample(self, semantic_preds, gt_semantics, instance_preds,
-                            gt_instances):
+    def add_panoptic_sample(self, semantic_preds: np.ndarray,
+                            gt_semantics: np.ndarray,
+                            instance_preds: np.ndarray,
+                            gt_instances: np.ndarray):
         """Add one sample of panoptic predictions and ground truths for
         evaluation.
 
         Args:
-            semantic_preds (torch.Tensor): Semantic predictions.
-            gt_semantics (torch.Tensor): Semantic ground truths.
-            instance_preds (torch.Tensor): Instance predictions.
-            gt_instances (torch.Tensor): Instance ground truths.
+            semantic_preds (np.ndarray): Semantic predictions.
+            gt_semantics (np.ndarray): Semantic ground truths.
+            instance_preds (np.ndarray): Instance predictions.
+            gt_instances (np.ndarray): Instance ground truths.
         """
         # avoid zero (ignored label)
         instance_preds = instance_preds + 1
@@ -327,3 +343,42 @@ class EvalPanoptic:
                 self.pan_fp[cl] += np.sum(
                     np.logical_and(counts_pred >= self.min_points,
                                    ~matched_pred))
+
+
+def panoptic_seg_eval(gt_labels: List[np.ndarray],
+                      seg_preds: List[np.ndarray],
+                      classes: List[str],
+                      things_classes: List[str],
+                      stuff_classes: List[str],
+                      min_points: int,
+                      offset: int,
+                      label2cat: Dict[str, str],
+                      ignore_index: List[int],
+                      logger: MMLogger = None) -> Dict[str, float]:
+    """Panoptic Segmentation Evaluation.
+
+    Evaluate the result of the panoptic segmentation.
+
+    Args:
+        gt_labels (list[dict[numpy.ndarray]]): Ground Truth.
+        seg_preds (list[dict[numpy.ndarray]]): Predictions.
+        classes (list[str]): Classes used in the dataset.
+        things_classes (list[str]): Things classes used in the dataset.
+        stuff_classes (list[str]): Stuff classes used in the dataset.
+        min_points (int): Minimum point number of object to be
+            counted as ground truth in evaluation.
+        offset (int): Offset for instance ids to concat with
+            semantic labels.
+        label2cat (dict[str]): Map from label to category.
+        ignore_index (list[int]): Ignored classes in evaluation.
+        logger (logging.Logger | str, optional): Logger used for printing.
+            Default: None.
+
+    Returns:
+        dict[float]: Dict of results.
+    """
+    panoptic_seg_eval = EvalPanoptic(classes, things_classes, stuff_classes,
+                                     min_points, offset, label2cat,
+                                     ignore_index, logger)
+    ret_dict = panoptic_seg_eval.evaluate(gt_labels, seg_preds)
+    return ret_dict

@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.evaluation.functional.panoptic_seg_eval import EvalPanoptic
+from mmdet3d.evaluation.functional.panoptic_seg_eval import panoptic_seg_eval
 
 
 def test_panoptic_seg_eval():
@@ -81,10 +81,6 @@ def test_panoptic_seg_eval():
     gt_semantic = np.array(gt_semantic, dtype=int).reshape(1, -1)
     gt_instance = np.array(gt_instance, dtype=int).reshape(1, -1)
 
-    panoptic_seg_eval = EvalPanoptic(classes, things_classes, stuff_classes,
-                                     min_points, offset, label2cat,
-                                     ignore_index)
-
     gt_labels = [{
         'pts_semantic_mask': gt_semantic,
         'pts_instance_mask': gt_instance
@@ -95,7 +91,9 @@ def test_panoptic_seg_eval():
         'pts_instance_mask': instance_preds
     }]
 
-    ret_value = panoptic_seg_eval.evaluate(gt_labels, seg_preds)
+    ret_value = panoptic_seg_eval(gt_labels, seg_preds, classes,
+                                  things_classes, stuff_classes, min_points,
+                                  offset, label2cat, ignore_index)
 
     assert np.isclose(ret_value['pq'], 0.47916666666666663)
     assert np.isclose(ret_value['rq_mean'], 0.6666666666666666)
