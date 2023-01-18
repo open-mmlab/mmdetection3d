@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from mmdet3d.models.builder import build_loss
+from mmdet3d.registry import MODELS
 
 
 def test_multibin_loss():
@@ -24,7 +24,7 @@ def test_multibin_loss():
                            [1, 1, 0, 0, 3.12, 3.12, 2.34, 1.23]])
     multibin_loss_cfg = dict(
         type='MultiBinLoss', reduction='none', loss_weight=1.0)
-    multibin_loss = build_loss(multibin_loss_cfg)
+    multibin_loss = MODELS.build(multibin_loss_cfg)
     output_multibin_loss = multibin_loss(pred, target, num_dir_bins=4)
     expected_multibin_loss = torch.tensor(2.1120)
     assert torch.allclose(

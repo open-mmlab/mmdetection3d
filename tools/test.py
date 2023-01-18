@@ -29,6 +29,14 @@ def parse_args():
         'If specified, it will be automatically saved '
         'to the work_dir/timestamp/show_dir')
     parser.add_argument(
+        '--task',
+        type=str,
+        choices=[
+            'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
+            'multi-modality_det'
+        ],
+        help='Determine the visualization method depending on the task.')
+    parser.add_argument(
         '--wait-time', type=float, default=2, help='the interval of show (s)')
     parser.add_argument(
         '--cfg-options',
@@ -63,6 +71,7 @@ def trigger_visualization_hook(cfg, args):
             visualization_hook['wait_time'] = args.wait_time
         if args.show_dir:
             visualization_hook['test_out_dir'] = args.show_dir
+        visualization_hook['vis_task'] = args.task
     else:
         raise RuntimeError(
             'VisualizationHook must be included in default_hooks.'

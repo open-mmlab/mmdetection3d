@@ -2,7 +2,7 @@
 
 import torch
 
-from mmdet3d.models.builder import build_neck
+from mmdet3d.registry import MODELS
 
 
 def test_dla_neck():
@@ -19,7 +19,7 @@ def test_dla_neck():
             start_level=2,
             end_level=5,
             norm_cfg=dict(type='GN', num_groups=32))
-        neck = build_neck(neck_cfg)
+        neck = MODELS.build(neck_cfg)
         neck.init_weights()
         neck.cuda()
         feats = [
@@ -37,7 +37,7 @@ def test_dla_neck():
             end_level=5,
             norm_cfg=dict(type='GN', num_groups=32),
             use_dcn=False)
-        neck = build_neck(neck_cfg)
+        neck = MODELS.build(neck_cfg)
         neck.init_weights()
         feats = [
             torch.rand(4, in_channels[i], feat_sizes[i], feat_sizes[i])
