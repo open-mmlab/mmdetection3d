@@ -58,13 +58,13 @@ bash tools/dist_train.sh projects/DETR3D/configs/detr3d_res101_gridmask.py 8
 
    To convert the old weights, please use
 
-   `python projects/DETR3D/detr3d/old_detr3d_converter.py ckpt/detr3d_resnet101.pth new_ckpt/detr3d_r101_v1.0.0.pth --code_size 10`
+   `python projects/DETR3D/detr3d/old_detr3d_converter.py ${CHECKPOINT_DIR}/detr3d_resnet101.pth ${CHECKPOINT_DIR}/detr3d_r101_v1.0.0.pth --code_size 10`
 
 3. Testing
 
    To test, use:
 
-   `bash tools/dist_test.sh projects/DETR3D/configs/nuscene/detr3d_res101_gridmask.py ckpts/detr3d_r101_v1.0.0.pth 8 --eval=bbox`
+   `bash tools/dist_test.sh projects/DETR3D/configs/detr3d_res101_gridmask.py ${CHECKPOINT_DIR}/detr3d_r101_v1.0.0.pth 8`
 
    <!-- Current pretrained models( end with '(old)' ) are in trained on v0.17.3. and we make them compatible with new mmdet3d by rewriting `_load_from_state_dict` method in [`detr3d.py`](./detr3d/detr3d.py) -->
 
