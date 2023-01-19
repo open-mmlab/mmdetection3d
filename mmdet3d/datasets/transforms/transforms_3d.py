@@ -359,6 +359,7 @@ class ObjectSample(BaseTransform):
             db_sampler['type'] = 'DataBaseSampler'
         self.db_sampler = TRANSFORMS.build(db_sampler)
         self.use_ground_plane = use_ground_plane
+        self.disabled = False
 
     @staticmethod
     def remove_points_in_boxes(points: BasePoints,
@@ -387,6 +388,9 @@ class ObjectSample(BaseTransform):
             'points', 'gt_bboxes_3d', 'gt_labels_3d' keys are updated
             in the result dict.
         """
+        if self.disabled:
+            return input_dict
+
         gt_bboxes_3d = input_dict['gt_bboxes_3d']
         gt_labels_3d = input_dict['gt_labels_3d']
 

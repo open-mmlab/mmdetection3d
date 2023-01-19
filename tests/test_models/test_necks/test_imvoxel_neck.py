@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from mmdet3d.models.builder import build_neck
+from mmdet3d.registry import MODELS
 
 
 def test_imvoxel_neck():
@@ -10,7 +10,7 @@ def test_imvoxel_neck():
 
     neck_cfg = dict(
         type='OutdoorImVoxelNeck', in_channels=64, out_channels=256)
-    neck = build_neck(neck_cfg).cuda()
+    neck = MODELS.build(neck_cfg).cuda()
     inputs = torch.rand([1, 64, 216, 248, 12], device='cuda')
     outputs = neck(inputs)
     assert outputs[0].shape == (1, 256, 248, 216)

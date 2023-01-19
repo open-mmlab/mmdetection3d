@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from mmdet3d.models.builder import build_middle_encoder
+from mmdet3d.registry import MODELS
 
 
 def test_sparse_encoder():
@@ -19,7 +19,7 @@ def test_sparse_encoder():
                                                                        1)),
         block_type='basicblock')
 
-    sparse_encoder = build_middle_encoder(sparse_encoder_cfg).cuda()
+    sparse_encoder = MODELS.build(sparse_encoder_cfg).cuda()
     voxel_features = torch.rand([207842, 5]).cuda()
     coors = torch.randint(0, 4, [207842, 4]).cuda()
 
@@ -41,7 +41,7 @@ def test_sparse_encoder_for_ssd():
                                                                        1)),
         block_type='basicblock')
 
-    sparse_encoder = build_middle_encoder(sparse_encoder_for_ssd_cfg).cuda()
+    sparse_encoder = MODELS.build(sparse_encoder_for_ssd_cfg).cuda()
     voxel_features = torch.rand([207842, 5]).cuda()
     coors = torch.randint(0, 4, [207842, 4]).cuda()
 

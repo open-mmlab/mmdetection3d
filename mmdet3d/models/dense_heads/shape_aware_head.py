@@ -15,7 +15,6 @@ from mmdet3d.models.layers import box3d_multiclass_nms
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import limit_period, xywhr2xyxyr
 from mmdet3d.utils import InstanceList, OptInstanceList
-from ..builder import build_head
 from .anchor3d_head import Anchor3DHead
 
 
@@ -220,7 +219,7 @@ class ShapeAwareHead(Anchor3DHead):
                 in_channels=self.in_channels,
                 shared_conv_channels=task['shared_conv_channels'],
                 shared_conv_strides=task['shared_conv_strides'])
-            self.heads.append(build_head(branch))
+            self.heads.append(MODELS.build(branch))
             cls_ptr += task['num_class']
 
     def forward_single(self, x: Tensor) -> Tuple[Tensor]:

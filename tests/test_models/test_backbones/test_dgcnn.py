@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.models import build_backbone
+from mmdet3d.registry import MODELS
 
 
 def test_dgcnn_gf():
@@ -21,7 +21,7 @@ def test_dgcnn_gf():
         fa_channels=(1024, ),
         act_cfg=dict(type='ReLU'))
 
-    self = build_backbone(cfg)
+    self = MODELS.build(cfg)
     self.cuda()
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)

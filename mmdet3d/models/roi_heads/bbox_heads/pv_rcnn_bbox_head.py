@@ -10,7 +10,6 @@ from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import nn as nn
 
-from mmdet3d.models.builder import build_loss
 from mmdet3d.models.layers import nms_bev, nms_normal_bev
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d import (LiDARInstance3DBoxes,
@@ -76,8 +75,8 @@ class PVRCNNBBoxHead(BaseModule):
         self.with_corner_loss = with_corner_loss
         self.class_agnostic = class_agnostic
         self.bbox_coder = TASK_UTILS.build(bbox_coder)
-        self.loss_bbox = build_loss(loss_bbox)
-        self.loss_cls = build_loss(loss_cls)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.loss_cls = MODELS.build(loss_cls)
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
 
         cls_out_channels = 1 if class_agnostic else num_classes
