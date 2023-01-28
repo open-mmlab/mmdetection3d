@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from mmdet3d.registry import MODELS
-from .bev_pool import bev_pool
+from .ops import bev_pool
 
 
 def gen_dx_bx(xbound, ybound, zbound):

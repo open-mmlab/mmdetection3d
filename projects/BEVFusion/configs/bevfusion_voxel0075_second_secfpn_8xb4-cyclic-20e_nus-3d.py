@@ -37,13 +37,12 @@ model = dict(
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=False,
         pad_size_divisor=32,
-        voxel=True,
-        voxel_type='hard',
-        voxel_layer=dict(
+        voxelize_cfg=dict(
             max_num_points=10,
-            point_cloud_range=point_cloud_range,
-            voxel_size=voxel_size,
-            max_voxels=(120000, 160000))),
+            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
+            voxel_size=[0.075, 0.075, 0.2],
+            max_voxels=[120000, 160000],
+            voxelize_reduce=True)),
     img_backbone=dict(
         type='mmdet.SwinTransformer',
         embed_dims=96,
@@ -87,14 +86,14 @@ model = dict(
         downsample=2),
     pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=5),
     pts_middle_encoder=dict(
-        type='SparseEncoder',
+        type='BEVFusionSparseEncoder',
         in_channels=5,
-        sparse_shape=[41, 1440, 1440],
+        sparse_shape=[1440, 1440, 41],
         order=('conv', 'norm', 'act'),
-        norm_cfg=dict(type='SyncBN'),
+        norm_cfg=dict(type='SyncBN', eps=0.001, momentum=0.01),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
                                                                       128)),
-        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (0, 1, 1)), (0, 0)),
+        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (1, 1, 0)), (0, 0)),
         block_type='basicblock'),
     fusion_layer=dict(
         type='ConvFuser', in_channels=[80, 256], out_channels=256),
@@ -292,6 +291,13 @@ test_pipeline = [
         to_float32=True,
         color_type='color'),
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=9,
+        load_dim=5,
+        use_dim=5,
+        pad_empty_sweeps=True,
+        remove_close=True),
     # dict(
     #     type='LoadAnnotations3D',
     #     with_bbox_3d=True,
@@ -305,12 +311,6 @@ test_pipeline = [
         rot_lim=[0.0, 0.0],
         rand_flip=False,
         is_train=False),
-    # dict(
-    #     type='GlobalRotScaleTrans',
-    #     scale_ratio_range=[1.0, 1.0],
-    #     rot_range=[0.0, 0.0],
-    #     translation_std=0.0,
-    #     is_train=False),
     # dict(
     #     type='LoadBEVSegmentation',
     #     dataset_root=data_root,
@@ -332,7 +332,8 @@ test_pipeline = [
         keys=['img', 'points', 'gt_bboxes_3d', 'gt_labels_3d'],
         meta_keys=[
             'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
-            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx'
+            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
+            'lidar_path', 'img_path'
         ])
 ]
 

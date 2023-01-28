@@ -1,17 +1,17 @@
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import torch
 import torch.distributed as dist
-from mmengine.structures import InstanceData
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.models import Base3DDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
+from .ops import Voxelization
 
 
 @MODELS.register_module()
@@ -33,8 +33,12 @@ class BEVFusion(Base3DDetector):
         seg_head: Optional[dict] = None,
         **kwargs,
     ) -> None:
+        voxelize_cfg = data_preprocessor.pop('voxelize_cfg')
         super().__init__(
             data_preprocessor=data_preprocessor, init_cfg=init_cfg)
+
+        self.voxelize_reduce = voxelize_cfg.pop('voxelize_reduce')
+        self.pts_voxel_layer = Voxelization(**voxelize_cfg)
 
         self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
 
@@ -49,6 +53,9 @@ class BEVFusion(Base3DDetector):
         self.pts_neck = MODELS.build(pts_neck)
 
         self.bbox_head = MODELS.build(bbox_head)
+        # hard code here where using converted checkpoint of original
+        # implementation of `BEVFusion`
+        self.use_converted_checkpoint = True
 
         self.init_weights()
 
@@ -197,42 +204,39 @@ class BEVFusion(Base3DDetector):
         return x
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
-        voxel_dict = batch_inputs_dict['voxels']
-        voxel_features = self.pts_voxel_encoder(voxel_dict['voxels'],
-                                                voxel_dict['num_points'],
-                                                voxel_dict['coors'])
-        batch_size = voxel_dict['coors'][-1, 0].item() + 1
-        x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
-                                    batch_size)
+        points = batch_inputs_dict['points']
+        feats, coords, sizes = self.voxelize(points)
+        batch_size = coords[-1, 0] + 1
+        x = self.pts_middle_encoder(feats, coords, batch_size)
         return x
 
-    # @torch.no_grad()
-    # def voxelize(self, points):
-    #     feats, coords, sizes = [], [], []
-    #     for k, res in enumerate(points):
-    #         ret = self.encoders['lidar']['voxelize'](res)
-    #         if len(ret) == 3:
-    #             # hard voxelize
-    #             f, c, n = ret
-    #         else:
-    #             assert len(ret) == 2
-    #             f, c = ret
-    #             n = None
-    #         feats.append(f)
-    #         coords.append(F.pad(c, (1, 0), mode='constant', value=k))
-    #         if n is not None:
-    #             sizes.append(n)
+    @torch.no_grad()
+    def voxelize(self, points):
+        feats, coords, sizes = [], [], []
+        for k, res in enumerate(points):
+            ret = self.pts_voxel_layer(res)
+            if len(ret) == 3:
+                # hard voxelize
+                f, c, n = ret
+            else:
+                assert len(ret) == 2
+                f, c = ret
+                n = None
+            feats.append(f)
+            coords.append(F.pad(c, (1, 0), mode='constant', value=k))
+            if n is not None:
+                sizes.append(n)
 
-    #     feats = torch.cat(feats, dim=0)
-    #     coords = torch.cat(coords, dim=0)
-    #     if len(sizes) > 0:
-    #         sizes = torch.cat(sizes, dim=0)
-    #         if self.voxelize_reduce:
-    #             feats = feats.sum(
-    #                 dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
-    #             feats = feats.contiguous()
+        feats = torch.cat(feats, dim=0)
+        coords = torch.cat(coords, dim=0)
+        if len(sizes) > 0:
+            sizes = torch.cat(sizes, dim=0)
+            if self.voxelize_reduce:
+                feats = feats.sum(
+                    dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
+                feats = feats.contiguous()
 
-    #     return feats, coords, sizes
+        return feats, coords, sizes
 
     def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
                 batch_data_samples: List[Det3DDataSample],
@@ -262,19 +266,15 @@ class BEVFusion(Base3DDetector):
                 contains a tensor with shape (num_instances, 7).
         """
         batch_input_metas = [item.metainfo for item in batch_data_samples]
-        batch_size = len(batch_input_metas)
         feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
 
         if self.with_bbox_head:
             outputs = self.bbox_head.predict(feats, batch_input_metas)
-        # if self.with_seg_head:
-        #     gt_masks_bev = batch_input_metas.get('gt_masks_bev', None)
-        #     outputs = self.seg_head(feats, batch_input_metas)
-        #     for k in range(batch_size):
-        #         outputs[k].update({
-        #             'masks_bev': logits[k].cpu(),
-        #             'gt_masks_bev': gt_masks_bev[k].cpu(),
-        #         })
+            if self.use_converted_checkpoint:
+                outputs[0]['bboxes_3d'].tensor[:, 6] = -outputs[0][
+                    'bboxes_3d'].tensor[:, 6] - np.pi / 2
+                outputs[0]['bboxes_3d'].tensor[:, 3:5] = outputs[0][
+                    'bboxes_3d'].tensor[:, [4, 3]]
 
         res = self.add_pred_to_datasample(batch_data_samples, outputs)
 
@@ -298,11 +298,11 @@ class BEVFusion(Base3DDetector):
             img_aug_matrix.append(meta.get('img_aug_matrix', np.eye(4)))
             lidar_aug_matrix.append(meta.get('lidar_aug_matrix', np.eye(4)))
 
-        lidar2image = imgs.new_tensor(lidar2image)
-        camera_intrinsics = imgs.new_tensor(camera_intrinsics)
-        camera2lidar = imgs.new_tensor(camera2lidar)
-        img_aug_matrix = imgs.new_tensor(img_aug_matrix)
-        lidar_aug_matrix = imgs.new_tensor(lidar_aug_matrix)
+        lidar2image = imgs.new_tensor(np.asarray(lidar2image))
+        camera_intrinsics = imgs.new_tensor(np.array(camera_intrinsics))
+        camera2lidar = imgs.new_tensor(np.asarray(camera2lidar))
+        img_aug_matrix = imgs.new_tensor(np.asarray(img_aug_matrix))
+        lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
         img_feature = self.extract_img_feat(imgs, points, lidar2image,
                                             camera_intrinsics, camera2lidar,
                                             img_aug_matrix, lidar_aug_matrix,
@@ -330,19 +330,3 @@ class BEVFusion(Base3DDetector):
              batch_data_samples: List[Det3DDataSample],
              **kwargs) -> List[Det3DDataSample]:
         pass
-        # outputs = {}
-        # for type, head in self.heads.items():
-        #     if type == "object":
-        #         pred_dict = head(x, metas)
-        #         losses = head.loss(gt_bboxes_3d, gt_labels_3d, pred_dict)
-        #     elif type == "map":
-        #         losses = head(x, gt_masks_bev)
-        #     else:
-        #         raise ValueError(f"unsupported head: {type}")
-        #     for name, val in losses.items():
-        #         if val.requires_grad:
-        #             outputs[
-        #                 f"loss/{type}/{name}"] = val * self.loss_scale[type]
-        #         else:
-        #             outputs[f"stats/{type}/{name}"] = val
-        # return outputs

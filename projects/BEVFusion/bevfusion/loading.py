@@ -131,7 +131,6 @@ class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
         filename, cam2img, lidar2cam, cam2lidar, lidar2img = [], [], [], [], []
         for _, cam_item in results['images'].items():
             filename.append(cam_item['img_path'])
-            cam2img.append(cam_item['cam2img'])
             lidar2cam.append(cam_item['lidar2cam'])
 
             lidar2cam_array = np.array(cam_item['lidar2cam']).astype(
@@ -147,14 +146,14 @@ class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
             cam2img_array = np.eye(4).astype(np.float32)
             cam2img_array[:3, :3] = np.array(cam_item['cam2img']).astype(
                 np.float32)
-
+            cam2img.append(cam2img_array)
             lidar2img.append(cam2img_array @ lidar2cam_array)
 
-        results['filename'] = filename
-        results['cam2img'] = cam2img
-        results['lidar2cam'] = lidar2cam
-        results['cam2lidar'] = cam2lidar
-        results['lidar2img'] = lidar2img
+        results['img_path'] = filename
+        results['cam2img'] = np.stack(cam2img, axis=0)
+        results['lidar2cam'] = np.stack(lidar2cam, axis=0)
+        results['cam2lidar'] = np.stack(cam2lidar, axis=0)
+        results['lidar2img'] = np.stack(lidar2img, axis=0)
 
         results['ori_cam2img'] = copy.deepcopy(results['cam2img'])
 

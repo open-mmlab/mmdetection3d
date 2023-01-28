@@ -163,7 +163,7 @@ class TransFusionHead(nn.Module):
         self.init_weights()
         self._init_assigner_sampler()
 
-        # Position Embedding for Cross-Attention, which is re-used during training
+        # Position Embedding for Cross-Attention, which is re-used during training # noqa: E501
         x_size = self.test_cfg['grid_size'][0] // self.test_cfg[
             'out_size_factor']
         y_size = self.test_cfg['grid_size'][1] // self.test_cfg[
@@ -236,7 +236,6 @@ class TransFusionHead(nn.Module):
         # image guided query initialization
         #################################
         dense_heatmap = self.heatmap_head(lidar_feat)
-        dense_heatmap_img = None
         heatmap = dense_heatmap.detach().sigmoid()
         padding = self.nms_kernel_size // 2
         local_max = torch.zeros_like(heatmap)
@@ -245,7 +244,7 @@ class TransFusionHead(nn.Module):
             heatmap, kernel_size=self.nms_kernel_size, stride=1, padding=0)
         local_max[:, :, padding:(-padding),
                   padding:(-padding)] = local_max_inner
-        ## for Pedestrian & Traffic_cone in nuScenes
+        # for Pedestrian & Traffic_cone in nuScenes
         if self.test_cfg['dataset'] == 'nuScenes':
             local_max[:, 8, ] = F.max_pool2d(
                 heatmap[:, 8], kernel_size=1, stride=1, padding=0)
@@ -290,9 +289,6 @@ class TransFusionHead(nn.Module):
         #################################
         ret_dicts = []
         for i in range(self.num_decoder_layers):
-            prefix = 'last_' if (i == self.num_decoder_layers -
-                                 1) else f'{i}head_'
-
             # Transformer Decoder Layer
             # :param query: B C Pq    :param query_pos: B Pq 3/6
             query_feat = self.decoder[i](query_feat, lidar_feat_flatten,
@@ -302,7 +298,6 @@ class TransFusionHead(nn.Module):
             res_layer = self.prediction_heads[i](query_feat)
             res_layer['center'] = res_layer['center'] + query_pos.permute(
                 0, 2, 1)
-            first_res_layer = res_layer
             ret_dicts.append(res_layer)
 
             # for next level positional embedding
@@ -367,7 +362,8 @@ class TransFusionHead(nn.Module):
         Args:
             preds_dicts (tuple[list[dict]]): Prediction results.
         Returns:
-            list[list[dict]]: Decoded bbox, scores and labels for each layer & each batch
+            list[list[dict]]: Decoded bbox, scores and labels for each layer
+            & each batch.
         """
         rets = []
         for layer_id, preds_dict in enumerate(preds_dicts):
@@ -375,7 +371,7 @@ class TransFusionHead(nn.Module):
             batch_score = preds_dict[0]['heatmap'][
                 ..., -self.num_proposals:].sigmoid()
             # if self.loss_iou.loss_weight != 0:
-            #    batch_score = torch.sqrt(batch_score * preds_dict[0]['iou'][..., -self.num_proposals:].sigmoid())
+            #    batch_score = torch.sqrt(batch_score * preds_dict[0]['iou'][..., -self.num_proposals:].sigmoid()) # noqa: E501
             one_hot = F.one_hot(
                 self.query_labels,
                 num_classes=self.num_classes).permute(0, 2, 1)
@@ -445,8 +441,8 @@ class TransFusionHead(nn.Module):
                 boxes3d = temp[i]['bboxes']
                 scores = temp[i]['scores']
                 labels = temp[i]['labels']
-                ## adopt circle nms for different categories
-                if self.test_cfg['nms_type'] != None:
+                # adopt circle nms for different categories
+                if self.test_cfg['nms_type'] is not None:
                     keep_mask = torch.zeros_like(scores)
                     for task in self.tasks:
                         task_mask = torch.zeros_like(scores)
@@ -499,7 +495,7 @@ class TransFusionHead(nn.Module):
                 ret['bboxes'][:, 2] = ret[
                     'bboxes'][:, 2] - ret['bboxes'][:, 5] * 0.5  # noqa: E501
                 temp_instances.bboxes_3d = metas[0]['box_type_3d'](
-                    ret['bboxes'], box_dim=rets[0][0]['bboxes'].shape[-1])
+                    ret['bboxes'], box_dim=ret['bboxes'].shape[-1])
                 temp_instances.scores_3d = ret['scores']
                 temp_instances.labels_3d = ret['labels'].int()
 
@@ -522,7 +518,8 @@ class TransFusionHead(nn.Module):
             tuple[torch.Tensor]: Tuple of target including \
                 the following results in order.
                 - torch.Tensor: classification target.  [BS, num_proposals]
-                - torch.Tensor: classification weights (mask)  [BS, num_proposals]
+                - torch.Tensor: classification weights (mask)
+                    [BS, num_proposals]
                 - torch.Tensor: regression target. [BS, num_proposals, 8]
                 - torch.Tensor: regression weights. [BS, num_proposals, 8]
         """
@@ -574,7 +571,7 @@ class TransFusionHead(nn.Module):
             tuple[torch.Tensor]: Tuple of target including \
                 the following results in order.
                 - torch.Tensor: classification target.  [1, num_proposals]
-                - torch.Tensor: classification weights (mask)  [1, num_proposals]
+                - torch.Tensor: classification weights (mask) [1, num_proposals] # noqa: E501
                 - torch.Tensor: regression target. [1, num_proposals, 8]
                 - torch.Tensor: regression weights. [1, num_proposals, 8]
                 - torch.Tensor: iou target. [1, num_proposals]
@@ -662,7 +659,8 @@ class TransFusionHead(nn.Module):
         if gt_labels_3d is not None:  # default label is -1
             labels += self.num_classes
 
-        # both pos and neg have classification loss, only pos has regression and iou loss
+        # both pos and neg have classification loss, only pos has regression
+        # and iou loss
         if len(pos_inds) > 0:
             pos_bbox_targets = self.bbox_coder.encode(
                 sampling_result.pos_gt_bboxes)
@@ -718,7 +716,7 @@ class TransFusionHead(nn.Module):
                 center_int = center.to(torch.int32)
 
                 # original
-                # draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]], center_int, radius)
+                # draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]], center_int, radius) # noqa: E501
                 # NOTE: fix
                 draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]],
                                       center_int[[1, 0]], radius)
@@ -832,7 +830,7 @@ class TransFusionHead(nn.Module):
                                               self.num_proposals:(idx_layer +
                                                                   1) *
                                               self.num_proposals, :, ]
-            layer_reg_weights = layer_bbox_weights * layer_bbox_weights.new_tensor(
+            layer_reg_weights = layer_bbox_weights * layer_bbox_weights.new_tensor(  # noqa: E501
                 code_weights)
             layer_bbox_targets = bbox_targets[:, idx_layer *
                                               self.num_proposals:(idx_layer +
@@ -848,6 +846,6 @@ class TransFusionHead(nn.Module):
             loss_dict[f'{prefix}_loss_bbox'] = layer_loss_bbox
             # loss_dict[f'{prefix}_loss_iou'] = layer_loss_iou
 
-        loss_dict[f'matched_ious'] = layer_loss_cls.new_tensor(matched_ious)
+        loss_dict['matched_ious'] = layer_loss_cls.new_tensor(matched_ious)
 
         return loss_dict
