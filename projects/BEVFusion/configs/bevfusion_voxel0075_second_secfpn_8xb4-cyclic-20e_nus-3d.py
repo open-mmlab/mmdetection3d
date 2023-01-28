@@ -243,15 +243,6 @@ train_pipeline = [
         rot_lim=[-0.78539816, 0.78539816],
         trans_lim=0.5,
         is_train=True),
-    # dict(
-    #     type='LoadBEVSegmentation',
-    #     dataset_root='data/nuscenes/',
-    #     xbound=[-50.0, 50.0, 0.5],
-    #     ybound=[-50.0, 50.0, 0.5],
-    #     classes=[
-    #         'drivable_area', 'ped_crossing', 'walkway', 'stop_line',
-    #         'carpark_area', 'divider'
-    #     ]),
     dict(type='RandomFlip3D'),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
@@ -261,10 +252,6 @@ train_pipeline = [
             'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
             'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
         ]),
-    # dict(
-    #     type='ImageNormalize',
-    #     mean=[0.485, 0.456, 0.406],
-    #     std=[0.229, 0.224, 0.225]),
     dict(
         type='GridMask',
         use_h=True,
@@ -298,11 +285,6 @@ test_pipeline = [
         use_dim=5,
         pad_empty_sweeps=True,
         remove_close=True),
-    # dict(
-    #     type='LoadAnnotations3D',
-    #     with_bbox_3d=True,
-    #     with_label_3d=True,
-    #     with_attr_label=False),
     dict(
         type='ImageAug3D',
         final_dim=[256, 704],
@@ -311,22 +293,9 @@ test_pipeline = [
         rot_lim=[0.0, 0.0],
         rand_flip=False,
         is_train=False),
-    # dict(
-    #     type='LoadBEVSegmentation',
-    #     dataset_root=data_root,
-    #     xbound=[-50.0, 50.0, 0.5],
-    #     ybound=[-50.0, 50.0, 0.5],
-    #     classes=[
-    #         'drivable_area', 'ped_crossing', 'walkway', 'stop_line',
-    #         'carpark_area', 'divider'
-    #     ]),
     dict(
         type='PointsRangeFilter',
         point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]),
-    # dict(
-    #     type='ImageNormalize',
-    #     mean=[0.485, 0.456, 0.406],
-    #     std=[0.229, 0.224, 0.225]),
     dict(
         type='Pack3DDetInputs',
         keys=['img', 'points', 'gt_bboxes_3d', 'gt_labels_3d'],
@@ -382,14 +351,6 @@ test_evaluator = val_evaluator
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
-
-# lr_config = dict(
-#     policy='CosineAnnealing',
-#     warmup='linear',
-#     warmup_iters=500,
-#     warmup_ratio=0.33333333,
-#     min_lr_ratio=0.001)
-# momentum_config = dict(policy='cyclic')
 
 param_scheduler = [
     dict(

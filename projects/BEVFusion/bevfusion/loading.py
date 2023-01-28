@@ -14,7 +14,10 @@ from mmdet3d.registry import TRANSFORMS
 class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
     """Load multi channel images from a list of separate channel files.
 
-    Expects results['img_filename'] to be a list of filenames.
+    ``BEVLoadMultiViewImageFromFiles`` adds the following keys for the
+    convenience of view transforms in the forward:
+        - 'cam2lidar'
+        - 'lidar2img'
 
     Args:
         to_float32 (bool): Whether to convert the img to float32.

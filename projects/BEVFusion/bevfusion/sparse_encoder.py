@@ -12,10 +12,11 @@ else:
 
 @MODELS.register_module()
 class BEVFusionSparseEncoder(SparseEncoder):
-    r"""Sparse encoder for BEVFusion. This difference between this
+    r"""Sparse encoder for BEVFusion. The difference between this
     implementation and that of ``SparseEncoder`` is that the shape order of 3D
     conv is (H, W, D) in ``BEVFusionSparseEncoder`` rather than (D, H, W) in
-    ``SparseEncoder``. This comes from the implementation of ``voxelization``.
+    ``SparseEncoder``. This difference comes from the implementation of
+    ``voxelization``.
 
     Args:
         in_channels (int): The number of input channels.

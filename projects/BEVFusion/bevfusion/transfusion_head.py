@@ -13,10 +13,11 @@ from mmengine.structures import InstanceData
 from torch import nn
 
 from mmdet3d.models import circle_nms, draw_heatmap_gaussian, gaussian_radius
+from mmdet3d.models.dense_heads.centerpoint_head import SeparateHead
 from mmdet3d.models.layers import nms_bev
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import xywhr2xyxyr
-from .transformer import FFN, PositionEmbeddingLearned, TransformerDecoderLayer
+from .transformer import PositionEmbeddingLearned, TransformerDecoderLayer
 
 
 def clip_sigmoid(x, eps=1e-4):
@@ -152,7 +153,7 @@ class TransFusionHead(nn.Module):
             heads = copy.deepcopy(common_heads)
             heads.update(dict(heatmap=(self.num_classes, num_heatmap_convs)))
             self.prediction_heads.append(
-                FFN(
+                SeparateHead(
                     hidden_channel,
                     heads,
                     conv_cfg=conv_cfg,
