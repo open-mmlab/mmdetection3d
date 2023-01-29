@@ -756,7 +756,8 @@ class LoadAnnotations3D(LoadAnnotations):
             with_label=with_label,
             with_mask=with_mask,
             with_seg=with_seg,
-            poly2mask=poly2mask)
+            poly2mask=poly2mask,
+            file_client_args=file_client_args)
         self.with_bbox_3d = with_bbox_3d
         self.with_bbox_depth = with_bbox_depth
         self.with_label_3d = with_label_3d
@@ -764,7 +765,6 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
-        self.file_client_args = file_client_args
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from
