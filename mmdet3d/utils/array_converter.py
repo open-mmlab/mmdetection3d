@@ -1,15 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import functools
 from inspect import getfullargspec
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 import torch
 
+TemplateArrayType = Union[tuple, list, int, float, np.ndarray, torch.Tensor]
+OptArrayType = Optional[Union[np.ndarray, torch.Tensor]]
 
-def array_converter(to_torch=True,
-                    apply_to=tuple(),
-                    template_arg_name_=None,
-                    recover=True):
+
+def array_converter(to_torch: bool = True,
+                    apply_to: Tuple[str, ...] = tuple(),
+                    template_arg_name_: Optional[str] = None,
+                    recover: bool = True) -> Callable:
     """Wrapper function for data-type agnostic processing.
 
     First converts input arrays to PyTorch tensors or NumPy ndarrays
@@ -17,15 +21,15 @@ def array_converter(to_torch=True,
     `recover=True`.
 
     Args:
-        to_torch (Bool, optional): Whether convert to PyTorch tensors
+        to_torch (bool): Whether convert to PyTorch tensors
             for middle calculation. Defaults to True.
-        apply_to (tuple[str], optional): The arguments to which we apply
+        apply_to (Tuple[str, ...]): The arguments to which we apply
             data-type conversion. Defaults to an empty tuple.
         template_arg_name_ (str, optional): Argument serving as the template (
             return arrays should have the same dtype and device
             as the template). Defaults to None. If None, we will use the
             first argument in `apply_to` as the template argument.
-        recover (Bool, optional): Whether or not recover the wrapped function
+        recover (bool): Whether or not recover the wrapped function
             outputs to the `template_arg_name_` type. Defaults to True.
 
     Raises:
@@ -200,16 +204,22 @@ def array_converter(to_torch=True,
 
 
 class ArrayConverter:
+    """Utility class for data-type agnostic processing.
 
+    Args:
+        template_array (tuple | list | int | float | np.ndarray |
+            torch.Tensor, optional): template array. Defaults to None.
+    """
     SUPPORTED_NON_ARRAY_TYPES = (int, float, np.int8, np.int16, np.int32,
                                  np.int64, np.uint8, np.uint16, np.uint32,
                                  np.uint64, np.float16, np.float32, np.float64)
 
-    def __init__(self, template_array=None):
+    def __init__(self,
+                 template_array: Optional[TemplateArrayType] = None) -> None:
         if template_array is not None:
             self.set_template(template_array)
 
-    def set_template(self, array):
+    def set_template(self, array: TemplateArrayType) -> None:
         """Set template array.
 
         Args:
@@ -250,16 +260,20 @@ class ArrayConverter:
             raise TypeError(f'Template type {self.array_type}'
                             f' is not supported.')
 
-    def convert(self, input_array, target_type=None, target_array=None):
+    def convert(
+            self,
+            input_array: TemplateArrayType,
+            target_type: Optional[type] = None,
+            target_array: OptArrayType = None
+    ) -> Union[np.ndarray, torch.Tensor]:
         """Convert input array to target data type.
 
         Args:
-            input_array (tuple | list | np.ndarray |
-                torch.Tensor | int | float ):
-                Input array. Defaults to None.
-            target_type (<class 'np.ndarray'> | <class 'torch.Tensor'>,
-                optional):
-                Type to which input array is converted. Defaults to None.
+            input_array (tuple | list | int | float | np.ndarray |
+                torch.Tensor): Input array.
+            target_type (:class:`np.ndarray` or :class:`torch.Tensor`,
+                optional): Type to which input array is converted.
+                Defaults to None.
             target_array (np.ndarray | torch.Tensor, optional):
                 Template array to which input array is converted.
                 Defaults to None.
@@ -270,6 +284,9 @@ class ArrayConverter:
             TypeError: If input type does not belong to the above range,
                 or the contents of a list or tuple do not share the
                 same data type, a TypeError is raised.
+
+        Returns:
+            np.ndarray or torch.Tensor: The converted array.
         """
         if isinstance(input_array, (list, tuple)):
             try:
@@ -309,7 +326,17 @@ class ArrayConverter:
                 converted_array = target_array.new_tensor(input_array)
         return converted_array
 
-    def recover(self, input_array):
+    def recover(
+        self, input_array: Union[np.ndarray, torch.Tensor]
+    ) -> Union[np.ndarray, torch.Tensor]:
+        """Recover input type to original array type.
+
+        Args:
+            input_array (np.ndarray | torch.Tensor): Input array.
+
+        Returns:
+            np.ndarray or torch.Tensor: Converted array.
+        """
         assert isinstance(input_array, (np.ndarray, torch.Tensor)), \
             'invalid input array type'
         if isinstance(input_array, self.array_type):

@@ -1,5 +1,41 @@
 # Changelog of v1.1
 
+### v1.1.0rc3 (7/1/2023)
+
+#### Highlights
+
+- Support [CenterFormer](https://arxiv.org/abs/2209.05588) in `projects` (#2175)
+- Support [PETR](https://arxiv.org/abs/2203.05625) in `projects` (#2173)
+
+#### New Features
+
+- Support [CenterFormer](https://arxiv.org/abs/2209.05588) in `projects` (#2175)
+- Support [PETR](https://arxiv.org/abs/2203.05625) in `projects` (#2173)
+- Refactor ImVoxelNet on SUN RGB-D into mmdet3d v1.1 (#2141)
+
+#### Improvements
+
+- Remove legacy builder.py (#2061)
+- Update `customize_dataset` documentation (#2153)
+- Update tutorial of LiDAR-based detection (#2120)
+
+#### Bug Fixes
+
+- Fix the configs of FCOS3D and PGD (#2191)
+- Fix numpy's `ValueError` in update_infos_to_v2.py (#2162)
+- Fix parameter missing in Det3DVisualizationHook (#2118)
+- Fix memory overflow in the rotated box IoU calculation (#2134)
+- Fix lidar2cam error in update_infos_to_v2.py for nus and lyft dataset (#2110)
+- Fix error of data type in Waymo metrics (#2109)
+- Update `bbox_3d` information in `cam_instances` for mono3d detection task (#2046)
+- Fix label saving of Waymo dataset (#2096)
+
+#### Contributors
+
+A total of 10 developers contributed to this release.
+
+@SekiroRong, @ZLTJohn, @vansin, @shanmo, @VVsssssk, @ZCMax, @Xiangxu-0103, @JingweiZhang12, @Tai-Wang, @lianqing11
+
 ### v1.1.0rc2 (2/12/2022)
 
 #### Highlights

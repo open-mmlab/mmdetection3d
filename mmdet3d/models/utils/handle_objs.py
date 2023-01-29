@@ -1,21 +1,31 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple
+
 import torch
+from torch import Tensor
+
+from mmdet3d.structures import CameraInstance3DBoxes
 
 
-def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
-                        gt_labels_3d_list, centers2d_list, img_metas):
+def filter_outside_objs(gt_bboxes_list: List[Tensor],
+                        gt_labels_list: List[Tensor],
+                        gt_bboxes_3d_list: List[CameraInstance3DBoxes],
+                        gt_labels_3d_list: List[Tensor],
+                        centers2d_list: List[Tensor],
+                        img_metas: List[dict]) -> None:
     """Function to filter the objects label outside the image.
 
     Args:
-        gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image,
+        gt_bboxes_list (List[Tensor]): Ground truth bboxes of each image,
             each has shape (num_gt, 4).
-        gt_labels_list (list[Tensor]): Ground truth labels of each box,
+        gt_labels_list (List[Tensor]): Ground truth labels of each box,
             each has shape (num_gt,).
-        gt_bboxes_3d_list (list[Tensor]): 3D Ground truth bboxes of each
-            image, each has shape (num_gt, bbox_code_size).
-        gt_labels_3d_list (list[Tensor]): 3D Ground truth labels of each
+        gt_bboxes_3d_list (List[:obj:`CameraInstance3DBoxes`]): 3D Ground
+            truth bboxes of each image, each has shape
+            (num_gt, bbox_code_size).
+        gt_labels_3d_list (List[Tensor]): 3D Ground truth labels of each
             box, each has shape (num_gt,).
-        centers2d_list (list[Tensor]): Projected 3D centers onto 2D image,
+        centers2d_list (List[Tensor]): Projected 3D centers onto 2D image,
             each has shape (num_gt, 2).
         img_metas (list[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
@@ -26,9 +36,9 @@ def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
         centers2d = centers2d_list[i].clone()
         img_shape = img_metas[i]['img_shape']
         keep_inds = (centers2d[:, 0] > 0) & \
-            (centers2d[:, 0] < img_shape[1]) & \
-            (centers2d[:, 1] > 0) & \
-            (centers2d[:, 1] < img_shape[0])
+                    (centers2d[:, 0] < img_shape[1]) & \
+                    (centers2d[:, 1] > 0) & \
+                    (centers2d[:, 1] < img_shape[0])
         centers2d_list[i] = centers2d[keep_inds]
         gt_labels_list[i] = gt_labels_list[i][keep_inds]
         gt_bboxes_list[i] = gt_bboxes_list[i][keep_inds]
@@ -36,7 +46,8 @@ def filter_outside_objs(gt_bboxes_list, gt_labels_list, gt_bboxes_3d_list,
         gt_labels_3d_list[i] = gt_labels_3d_list[i][keep_inds]
 
 
-def get_centers2d_target(centers2d, centers, img_shape):
+def get_centers2d_target(centers2d: Tensor, centers: Tensor,
+                         img_shape: tuple) -> Tensor:
     """Function to get target centers2d.
 
     Args:
@@ -80,24 +91,27 @@ def get_centers2d_target(centers2d, centers, img_shape):
     return centers2d_target
 
 
-def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
+def handle_proj_objs(
+        centers2d_list: List[Tensor], gt_bboxes_list: List[Tensor],
+        img_metas: List[dict]
+) -> Tuple[List[Tensor], List[Tensor], List[Tensor]]:
     """Function to handle projected object centers2d, generate target
     centers2d.
 
     Args:
-        gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image,
+        gt_bboxes_list (List[Tensor]): Ground truth bboxes of each image,
             shape (num_gt, 4).
-        centers2d_list (list[Tensor]): Projected 3D centers onto 2D image,
+        centers2d_list (List[Tensor]): Projected 3D centers onto 2D image,
             shape (num_gt, 2).
-        img_metas (list[dict]): Meta information of each image, e.g.,
+        img_metas (List[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
 
     Returns:
-        tuple[list[Tensor]]: It contains three elements. The first is the
-        target centers2d after handling the truncated objects. The second
-        is the offsets between target centers2d and round int dtype
-        centers2d,and the last is the truncation mask for each object in
-        batch data.
+        Tuple[List[Tensor], List[Tensor], List[Tensor]]: It contains three
+        elements. The first is the target centers2d after handling the
+        truncated objects. The second is the offsets between target centers2d
+        and round int dtype centers2d,and the last is the truncation mask
+        for each object in batch data.
     """
     bs = len(centers2d_list)
     centers2d_target_list = []
@@ -111,9 +125,9 @@ def handle_proj_objs(centers2d_list, gt_bboxes_list, img_metas):
         img_shape = img_metas[i]['img_shape']
         centers2d_target = centers2d.clone()
         inside_inds = (centers2d[:, 0] > 0) & \
-            (centers2d[:, 0] < img_shape[1]) & \
-            (centers2d[:, 1] > 0) & \
-            (centers2d[:, 1] < img_shape[0])
+                      (centers2d[:, 0] < img_shape[1]) & \
+                      (centers2d[:, 1] > 0) & \
+                      (centers2d[:, 1] < img_shape[0])
         outside_inds = ~inside_inds
 
         # if there are outside objects
