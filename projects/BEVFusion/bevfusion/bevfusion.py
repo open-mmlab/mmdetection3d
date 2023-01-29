@@ -311,10 +311,6 @@ class BEVFusion(Base3DDetector):
 
         features = [img_feature, pts_feature]
 
-        # if not self.training:
-        # avoid OOM
-        # features = features[::-1]
-
         if self.fusion_layer is not None:
             x = self.fusion_layer(features)
         else:

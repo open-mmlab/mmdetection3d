@@ -1,3 +1,4 @@
+# modify from https://github.com/mit-han-lab/bevfusion
 import torch
 from mmdet.models.task_modules import AssignResult, BaseAssigner, BaseBBoxCoder
 
@@ -35,14 +36,11 @@ class TransFusionBBoxCoder(BaseBBoxCoder):
             self.out_size_factor * self.voxel_size[0])
         targets[:, 1] = (dst_boxes[:, 1] - self.pc_range[1]) / (
             self.out_size_factor * self.voxel_size[1])
-        # targets[:, 2] = (dst_boxes[:, 2] - self.post_center_range[2]) / (self.post_center_range[5] - self.post_center_range[2])
         targets[:, 3] = dst_boxes[:, 3].log()
         targets[:, 4] = dst_boxes[:, 4].log()
         targets[:, 5] = dst_boxes[:, 5].log()
-        targets[:,
-                2] = dst_boxes[:,
-                               2] + dst_boxes[:,
-                                              5] * 0.5  # bottom center to gravity center
+        # bottom center to gravity center
+        targets[:, 2] = dst_boxes[:, 2] + dst_boxes[:, 5] * 0.5
         targets[:, 6] = torch.sin(dst_boxes[:, 6])
         targets[:, 7] = torch.cos(dst_boxes[:, 6])
         if self.code_size == 10:
@@ -52,7 +50,8 @@ class TransFusionBBoxCoder(BaseBBoxCoder):
     def decode(self, heatmap, rot, dim, center, height, vel, filter=False):
         """Decode bboxes.
         Args:
-            heat (torch.Tensor): Heatmap with the shape of [B, num_cls, num_proposals].
+            heat (torch.Tensor): Heatmap with the shape of
+                [B, num_cls, num_proposals].
             rot (torch.Tensor): Rotation with the shape of
                 [B, 1, num_proposals].
             dim (torch.Tensor): Dim of the boxes with the shape of
@@ -61,8 +60,10 @@ class TransFusionBBoxCoder(BaseBBoxCoder):
                 [B, 2, num_proposals]. (in feature map metric)
             height (torch.Tensor): height of the boxes with the shape of
                 [B, 2, num_proposals]. (in real world metric)
-            vel (torch.Tensor): Velocity with the shape of [B, 2, num_proposals].
-            filter: if False, return all box without checking score and center_range
+            vel (torch.Tensor): Velocity with the shape of
+                [B, 2, num_proposals].
+            filter: if False, return all box without checking score and
+                center_range
         Returns:
             list[dict]: Decoded boxes.
         """
@@ -79,7 +80,6 @@ class TransFusionBBoxCoder(BaseBBoxCoder):
                1, :] = center[:,
                               1, :] * self.out_size_factor * self.voxel_size[
                                   1] + self.pc_range[1]
-        # center[:, 2, :] = center[:, 2, :] * (self.post_center_range[5] - self.post_center_range[2]) + self.post_center_range[2]
         dim[:, 0, :] = dim[:, 0, :].exp()
         dim[:, 1, :] = dim[:, 1, :].exp()
         dim[:, 2, :] = dim[:, 2, :].exp()
@@ -214,15 +214,17 @@ class HeuristicAssigner3D(BaseAssigner):
             num_bboxes,
         ]).to(bboxes) * -1
         for idx_gts in range(num_gts):
-            # for idx_pred in torch.where(bev_dist[idx_gts] < dist_thre)[0]: # each gt match to all the pred box within some radius
+            # for idx_pred in torch.where(bev_dist[idx_gts] < dist_thre)[0]:
+            # # each gt match to all the pred box within some radius
             idx_pred = nearest_indices[
                 idx_gts]  # each gt only match to the nearest pred box
             if bev_dist[idx_gts, idx_pred] <= dist_thre:
-                if bev_dist[idx_gts, idx_pred] < assigned_gt_vals[
-                        idx_pred]:  # if this pred box is assigned, then compare
+                # if this pred box is assigned, then compare
+                if bev_dist[idx_gts, idx_pred] < assigned_gt_vals[idx_pred]:
                     assigned_gt_vals[idx_pred] = bev_dist[idx_gts, idx_pred]
-                    assigned_gt_inds[
-                        idx_pred] = idx_gts + 1  # for AssignResult, 0 is negative, -1 is ignore, 1-based indices are positive
+                    # for AssignResult, 0 is negative, -1 is ignore, 1-based
+                    # indices are positive
+                    assigned_gt_inds[idx_pred] = idx_gts + 1
                     assigned_gt_labels[idx_pred] = gt_labels[idx_gts]
 
         max_overlaps = torch.zeros([

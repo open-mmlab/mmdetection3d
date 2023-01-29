@@ -1,3 +1,4 @@
+# modify from https://github.com/mit-han-lab/bevfusion
 import copy
 from typing import List
 
@@ -17,7 +18,6 @@ from mmdet3d.models.dense_heads.centerpoint_head import SeparateHead
 from mmdet3d.models.layers import nms_bev
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import xywhr2xyxyr
-from .transformer import PositionEmbeddingLearned, TransformerDecoderLayer
 
 
 def clip_sigmoid(x, eps=1e-4):
@@ -54,12 +54,10 @@ class TransFusionHead(nn.Module):
         num_classes=4,
         # config for Transformer
         num_decoder_layers=3,
+        decoder_layer=dict(),
         num_heads=8,
         nms_kernel_size=1,
-        ffn_channel=256,
-        dropout=0.1,
         bn_momentum=0.1,
-        activation='relu',
         # config for FFN
         common_heads=dict(),
         num_heatmap_convs=2,
@@ -136,16 +134,7 @@ class TransFusionHead(nn.Module):
         # transformer decoder layers for object query with LiDAR feature
         self.decoder = nn.ModuleList()
         for i in range(self.num_decoder_layers):
-            self.decoder.append(
-                TransformerDecoderLayer(
-                    hidden_channel,
-                    num_heads,
-                    ffn_channel,
-                    dropout,
-                    activation,
-                    self_posembed=PositionEmbeddingLearned(2, hidden_channel),
-                    cross_posembed=PositionEmbeddingLearned(2, hidden_channel),
-                ))
+            self.decoder.append(MODELS.build(decoder_layer))
 
         # Prediction Head
         self.prediction_heads = nn.ModuleList()
@@ -224,19 +213,20 @@ class TransFusionHead(nn.Module):
             list[dict]: Output results for tasks.
         """
         batch_size = inputs.shape[0]
-        lidar_feat = self.shared_conv(inputs)
+        fusion_feat = self.shared_conv(inputs)
 
         #################################
         # image to BEV
         #################################
-        lidar_feat_flatten = lidar_feat.view(batch_size, lidar_feat.shape[1],
-                                             -1)  # [BS, C, H*W]
-        bev_pos = self.bev_pos.repeat(batch_size, 1, 1).to(lidar_feat.device)
+        fusion_feat_flatten = fusion_feat.view(batch_size,
+                                               fusion_feat.shape[1],
+                                               -1)  # [BS, C, H*W]
+        bev_pos = self.bev_pos.repeat(batch_size, 1, 1).to(fusion_feat.device)
 
         #################################
-        # image guided query initialization
+        # query initialization
         #################################
-        dense_heatmap = self.heatmap_head(lidar_feat)
+        dense_heatmap = self.heatmap_head(fusion_feat)
         heatmap = dense_heatmap.detach().sigmoid()
         padding = self.nms_kernel_size // 2
         local_max = torch.zeros_like(heatmap)
@@ -260,14 +250,14 @@ class TransFusionHead(nn.Module):
         heatmap = heatmap * (heatmap == local_max)
         heatmap = heatmap.view(batch_size, heatmap.shape[1], -1)
 
-        # top #num_proposals among all classes
+        # top num_proposals among all classes
         top_proposals = heatmap.view(batch_size, -1).argsort(
             dim=-1, descending=True)[..., :self.num_proposals]
         top_proposals_class = top_proposals // heatmap.shape[-1]
         top_proposals_index = top_proposals % heatmap.shape[-1]
-        query_feat = lidar_feat_flatten.gather(
+        query_feat = fusion_feat_flatten.gather(
             index=top_proposals_index[:, None, :].expand(
-                -1, lidar_feat_flatten.shape[1], -1),
+                -1, fusion_feat_flatten.shape[1], -1),
             dim=-1,
         )
         self.query_labels = top_proposals_class
@@ -284,16 +274,18 @@ class TransFusionHead(nn.Module):
                 -1, -1, bev_pos.shape[-1]),
             dim=1,
         )
-
         #################################
-        # transformer decoder layer (LiDAR feature as K,V)
+        # transformer decoder layer (Fusion feature as K,V)
         #################################
         ret_dicts = []
         for i in range(self.num_decoder_layers):
             # Transformer Decoder Layer
             # :param query: B C Pq    :param query_pos: B Pq 3/6
-            query_feat = self.decoder[i](query_feat, lidar_feat_flatten,
-                                         query_pos, bev_pos)
+            query_feat = self.decoder[i](
+                query_feat,
+                key=fusion_feat_flatten,
+                query_pos=query_pos,
+                key_pos=bev_pos)
 
             # Prediction
             res_layer = self.prediction_heads[i](query_feat)
@@ -304,9 +296,6 @@ class TransFusionHead(nn.Module):
             # for next level positional embedding
             query_pos = res_layer['center'].detach().clone().permute(0, 2, 1)
 
-        #################################
-        # transformer decoder layer (img feature as K,V)
-        #################################
         ret_dicts[0]['query_heatmap_score'] = heatmap.gather(
             index=top_proposals_index[:,
                                       None, :].expand(-1, self.num_classes,

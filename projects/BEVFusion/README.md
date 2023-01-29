@@ -10,7 +10,7 @@ Multi-sensor fusion is essential for an accurate and reliable autonomous driving
 results is available at https://github.com/mit-han-lab/bevfusion.
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/34888372/209500088-b707d7cd-d4d5-4f20-8fdf-a2c7ad15df34.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/34888372/215313913-4b43f8a1-e2e2-49ba-b631-992155351922.png" width="800"/>
 </div>
 
 ## Introduction
@@ -20,7 +20,7 @@ We implement BEVFusion and provide the result and checkpoints on Waymo dataset.
 We follow the below style to name config files. Contributors are advised to follow the same style.
 `{xxx}` is required field and `[yyy]` is optional.
 
-`{model}`: model type like `centerpoint`.
+`{model}`: model type like `bevfusion`.
 
 `{model setting}`: voxel size and voxel type like `01voxel`, `02pillar`.
 
@@ -40,7 +40,7 @@ We follow the below style to name config files. Contributors are advised to foll
 
 ### Compiling operations on CUDA
 
-**Note** that the voxelization OP in the original implementation of `BEVFusion` is different from the implementation in MMCV. If we want to use the original pretrained model [here](https://github.com/mit-han-lab/bevfusion/blob/main/README.md), we need to use the original implementation of voxelization OP.
+**Note** that the voxelization OP in the original implementation of `BEVFusion` is different from the implementation in MMCV. If you want to use the original pretrained model [here](https://github.com/mit-han-lab/bevfusion/blob/main/README.md), you need to use the original implementation of voxelization OP.
 
 ```python
 python setup.py develop
@@ -72,9 +72,9 @@ python tools/train.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secf
 
 ### NuScenes
 
-|                                    Backbone                                     | Load Interval | Voxel type (voxel size) | Multi-Class NMS | Multi-frames | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 | mAP@L2 | **mAPH@L2** |                                                                                                          Download                                                                                                          |
-| :-----------------------------------------------------------------------------: | :-----------: | :---------------------: | :-------------: | :----------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |       5       |       voxel (0.1)       |        ✓        |      ×       |   14.8   |                |  72.2  |  69.5   |  65.9  |    63.3     | [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20221227_205613-70c9ad37.log) |
+|                                    Backbone                                     | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) | NDS | mAP |                                                                                                         Download                                                                                                          |
+| :-----------------------------------------------------------------------------: | :-----------------: | :-------------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |   voxel (0.075)       |        ×       |   2.4G   |   -   |   71.6    | 68.79 | [converted_model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link) |
 
 ## Citation
 

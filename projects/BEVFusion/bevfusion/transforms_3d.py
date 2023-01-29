@@ -1,3 +1,4 @@
+# modify from https://github.com/mit-han-lab/bevfusion
 from typing import Any, Dict
 
 import numpy as np
@@ -153,21 +154,21 @@ class GridMask(BaseTransform):
         ww = int(1.5 * w)
         d = np.random.randint(self.d1, self.d2)
         if self.ratio == 1:
-            self.l = np.random.randint(1, d)
+            self.length = np.random.randint(1, d)
         else:
-            self.l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
+            self.length = min(max(int(d * self.ratio + 0.5), 1), d - 1)
         mask = np.ones((hh, ww), np.float32)
         st_h = np.random.randint(d)
         st_w = np.random.randint(d)
         if self.use_h:
             for i in range(hh // d):
                 s = d * i + st_h
-                t = min(s + self.l, hh)
+                t = min(s + self.length, hh)
                 mask[s:t, :] *= 0
         if self.use_w:
             for i in range(ww // d):
                 s = d * i + st_w
-                t = min(s + self.l, ww)
+                t = min(s + self.length, ww)
                 mask[:, s:t] *= 0
 
         r = np.random.randint(self.rotate)
