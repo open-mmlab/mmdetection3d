@@ -73,12 +73,12 @@ class BEVFusion(Base3DDetector):
 
     @property
     def with_bbox_head(self):
-        """bool: Whether the detector has a 2D RPN in image detector branch."""
+        """bool: Whether the detector has a box head."""
         return hasattr(self, 'bbox_head') and self.bbox_head is not None
 
     @property
     def with_seg_head(self):
-        """bool: Whether the detector has a Segmentation Head in image branch.
+        """bool: Whether the detector has a segmentation head.
         """
         return hasattr(self, 'seg_head') and self.seg_head is not None
 
