@@ -43,7 +43,7 @@ We follow the below style to name config files. Contributors are advised to foll
 **Note** that the voxelization OP in the original implementation of `BEVFusion` is different from the implementation in MMCV. If you want to use the original pretrained model [here](https://github.com/mit-han-lab/bevfusion/blob/main/README.md), you need to use the original implementation of voxelization OP.
 
 ```python
-python setup.py develop
+python projects/BEVFusion/setup.py develop
 ```
 
 ### Training commands
@@ -73,7 +73,7 @@ python tools/train.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secf
 ### NuScenes
 
 |                                    Backbone                                     | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) | NDS | mAP |                                                                                                         Download                                                                                                          |
-| :-----------------------------------------------------------------------------: | :-----------------: | :-------------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| :-----------------------------------------------------------------------------: | :-----------------: | :-------------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:
 | [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |   voxel (0.075)       |        ×       |   2.4G   |   -   |   71.6    | 68.79 | [converted_model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link) |
 
 ## Citation
