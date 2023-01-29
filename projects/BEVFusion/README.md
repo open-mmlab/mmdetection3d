@@ -74,7 +74,7 @@ python tools/train.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secf
 
 |                                    Backbone                                     | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) | NDS  |  mAP  |                                                 Download                                                 |
 | :-----------------------------------------------------------------------------: | :---------------------: | :-: | :------: | :------------: | :--: | :---: | :------------------------------------------------------------------------------------------------------: |
-| [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |   2.4G   |       -        | 71.6 | 68.79 | [converted_model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link) |
+| [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |    -     |       -        | 71.6 | 68.79 | [converted_model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link) |
 
 ## Citation
 
