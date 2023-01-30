@@ -7,7 +7,6 @@ import mmcv
 import torch
 from mmcv import Config, DictAction
 from mmcv.cnn import fuse_conv_bn
-from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
                          wrap_fp16_model)
 
@@ -15,6 +14,7 @@ import mmdet
 from mmdet3d.apis import single_gpu_test
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_model
+from mmdet3d.utils import build_ddp, build_dp, get_device
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
@@ -165,7 +165,7 @@ def main():
                       'in `gpu_ids` now.')
     else:
         cfg.gpu_ids = [args.gpu_id]
-
+    cfg.device = get_device()
     # init distributed env first, since logger depends on the dist info.
     if args.launcher == 'none':
         distributed = False
@@ -226,12 +226,13 @@ def main():
         model.PALETTE = dataset.PALETTE
 
     if not distributed:
-        model = MMDataParallel(model, device_ids=cfg.gpu_ids)
+        model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
         outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
     else:
-        model = MMDistributedDataParallel(
-            model.cuda(),
-            device_ids=[torch.cuda.current_device()],
+        model = build_ddp(
+            model,
+            cfg.device,
+            device_ids=[int(os.environ['LOCAL_RANK'])],
             broadcast_buffers=False)
         outputs = multi_gpu_test(model, data_loader, args.tmpdir,
                                  args.gpu_collect)

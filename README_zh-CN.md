@@ -24,15 +24,15 @@
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
 
-**新闻**: 我们发布了版本 v1.0.0rc6.
+**新闻**: 我们发布了版本 v1.0.0rc7.
 
 ### 💎 稳定版本
 
-最新的 **1.0.0rc6** 版本已经在 2022.12.2 发布。
+最新的 **1.0.0rc7** 版本已经在 2023.1.7 发布。
 
 ### 🌟 1.1.x 预览版本
 
-全新的 **v1.1.0rc0** 版本已经在 2022.9.1 发布：
+全新的 **v1.1.0rc3** 版本已经在 2023.1.7 发布：
 
 - 基于 [MMEngine](https://github.com/open-mmlab/mmengine) 和 [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 通过一个标准的数据格式定义和统一了不同数据集的通用内容。
@@ -96,7 +96,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱, 下一代�
 
 ## 更新日志
 
-最新的版本 v1.0.0rc5 在 2022.10.11 发布。
+最新的版本 v1.0.0rc7 在 2023.1.7 发布。
 
 如果想了解更多版本更新细节和历史信息，请阅读[更新日志](docs/zh_cn/changelog.md)。
 
