@@ -4,6 +4,8 @@ from typing import Dict, List, Tuple
 import numpy as np
 from mmengine.logging import MMLogger, print_log
 
+PQReturnsType = Tuple[np.double, np.double, np.ndarray, np.ndarray, np.ndarray]
+
 
 class EvalPanoptic:
     r"""Evaluate panoptic results for Semantickitti and NuScenes.
@@ -184,9 +186,7 @@ class EvalPanoptic:
 
         return result_dicts
 
-    def get_pq(
-        self
-    ) -> Tuple[np.double, np.double, np.ndarray, np.ndarray, np.ndarray]:
+    def get_pq(self) -> PQReturnsType:
         """Get results of PQ metric.
 
         Returns:
