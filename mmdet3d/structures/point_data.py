@@ -61,7 +61,7 @@ class PointData(BaseDataElement):
         else:
             assert isinstance(value,
                               Sized), 'value must contain `__len__` attribute'
-            # TODO: make sure the input value share the same length 
+            # TODO: make sure the input value share the same length
             super().__setattr__(name, value)
 
     __setitem__ = __setattr__
