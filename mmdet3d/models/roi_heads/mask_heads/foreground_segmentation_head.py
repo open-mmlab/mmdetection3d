@@ -8,7 +8,6 @@ from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import nn as nn
 
-from mmdet3d.models.builder import build_loss
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import InstanceList
 
@@ -72,7 +71,7 @@ class ForegroundSegmentationHead(BaseModule):
 
         self.seg_cls_layer = nn.Sequential(*mlps_layers)
 
-        self.loss_seg = build_loss(loss_seg)
+        self.loss_seg = MODELS.build(loss_seg)
 
     def forward(self, feats: torch.Tensor) -> dict:
         """Forward head.

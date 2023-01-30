@@ -11,7 +11,7 @@ from mmengine.dataset import BaseDataset
 from mmengine.logging import print_log
 from terminaltables import AsciiTable
 
-from mmdet3d.datasets import DATASETS
+from mmdet3d.registry import DATASETS
 from mmdet3d.structures import get_box_type
 
 

@@ -13,7 +13,6 @@ from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
                                   gaussian_radius)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
-from .. import builder
 from ..layers import circle_nms, nms_bev
 
 
@@ -337,7 +336,7 @@ class CenterHead(BaseModule):
             heads.update(dict(heatmap=(num_cls, num_heatmap_convs)))
             separate_head.update(
                 in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
-            self.task_heads.append(builder.build_head(separate_head))
+            self.task_heads.append(MODELS.build(separate_head))
 
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.

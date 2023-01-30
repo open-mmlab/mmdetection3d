@@ -1,18 +1,18 @@
-# 基于 LiDAR 的 3D 检测
+# 基于激光雷达的 3D 检测
 
-基于 LiDAR 的 3D 检测算法是 MMDetection3D 支持的最基础的任务之一。对于给定的算法模型，输入为任意数量的、附有 LiDAR 采集的特征的点，输出为每个感兴趣目标的 3D 矩形框 (Bounding Box) 和类别标签。接下来，我们将以在 KITTI 数据集上训练 PointPillars 为例，介绍如何准备数据，如何在标准 3D 检测基准数据集上训练和测试模型，以及如何可视化并验证结果。
+基于激光雷达的 3D 检测是 MMDetection3D 支持的最基础的任务之一。它期望给定的模型以激光雷达采集的任意数量的特征点为输入，并为每一个感兴趣的目标预测 3D 框及类别标签。接下来，我们以 KITTI 数据集上的 PointPillars 为例，展示如何准备数据，在标准的 3D 检测基准上训练并测试模型，以及可视化并验证结果。
 
-## 数据预处理
+## 数据准备
 
-最开始，我们需要下载原始数据，并按[文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/data_preparation.html)中介绍的那样，把数据重新整理成标准格式。值得注意的是，对于 KIITI 数据集，我们需要额外的 txt 文件用于数据整理。
+首先，我们需要下载原始数据并按照[数据准备文档](https://mmdetection3d.readthedocs.io/zh_CN/dev-1.x/user_guides/dataset_prepare.html)中提供的标准方式重新组织数据。
 
-由于不同数据集上的原始数据有不同的组织方式，我们通常需要用 .pkl 或者 .json 文件收集有用的数据信息。在准备好原始数据后，我们需要运行脚本 `create_data.py`，为不同的数据集生成数据。如，对于 KITTI 数据集，我们需要执行:
+由于不同数据集的原始数据有不同的组织方式，我们通常需要用 `.pkl` 文件收集有用的数据信息。因此，在准备好所有的原始数据之后，我们需要运行 `create_data.py` 中提供的脚本来为不同的数据集生成数据集信息。例如，对于 KITTI，我们需要运行如下命令：
 
-```
+```shell
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
 ```
 
-随后，相对目录结构将变成如下形式：
+随后，相关的目录结构将如下所示：
 
 ```
 mmdetection3d
@@ -43,17 +43,17 @@ mmdetection3d
 
 ## 训练
 
-接着，我们将使用提供的配置文件训练 PointPillars。当你使用不同的 GPU 设置进行训练时，你基本上可以按照这个[教程](https://mmdetection3d.readthedocs.io/zh_CN/latest/1_exist_data_model.html)的示例脚本进行训练。假设我们在一台具有 8 块 GPU 的机器上进行分布式训练：
+接着，我们将使用提供的配置文件训练 PointPillars。当您使用不同的 GPU 设置进行训练时，您可以按照这个[教程](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/train_test.html)的示例。假设我们在一台具有 8 块 GPU 的机器上使用分布式训练：
 
-```
-./tools/dist_train.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py 8
+```shell
+./tools/dist_train.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py 8
 ```
 
-注意到，配置文件名字中的 `6x8` 是指训练时是用了 8 块 GPU，每块 GPU 上有 6 个样本。如果你有不同的自定义的设置，那么有时你可能需要调整学习率。可以参考这篇[文献](https://arxiv.org/abs/1706.02677)。
+注意，配置文件名中的 `8xb6` 是指训练用了 8 块 GPU，每块 GPU 上有 6 个数据样本。如果您的自定义设置不同于此，那么有时候您需要相应地调整学习率。基本规则可以参考[此处](https://arxiv.org/abs/1706.02677)。我们已经支持了使用 `--auto-scale-lr` 来自动缩放学习率。
 
 ## 定量评估
 
-在训练期间，模型将会根据配置文件中的 `evaluation = dict(interval=xxx)` 设置，被周期性地评估。我们支持不同数据集的官方评估方案。对于 KITTI, 模型的评价指标为平均精度 (mAP, mean average precision)。3 种类型的 mAP 的交并比 (IoU, Intersection over Union) 阈值可以取 0.5/0.7。评估结果将会被打印到终端中，如下所示：
+在训练期间，模型权重文件将会根据配置文件中的 `train_cfg = dict(val_interval=xxx)` 设置被周期性地评估。我们支持不同数据集的官方评估方案。对于 KITTI，将对 3 个类别使用交并比（IoU）阈值分别为 0.5/0.7 的平均精度（mAP）来评估模型。评估结果将会被打印到终端中，如下所示：
 
 ```
 Car AP@0.70, 0.70, 0.70:
@@ -68,18 +68,16 @@ bev AP:98.4400, 90.1218, 89.6270
 aos AP:97.70, 88.73, 87.34
 ```
 
-评估某个特定的模型权重文件。你可以简单地执行下列的脚本：
+此外，在训练完成后您也可以评估特定的模型权重文件。您可以简单地执行以下脚本：
 
-```
-./tools/dist_test.sh configs/pointpillars/pointpillars_hv-secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
+```shell
+./tools/dist_test.sh configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py work_dirs/pointpillars/latest.pth 8
 ```
 
 ## 测试与提交
 
-如果你只想在线上基准上进行推理或者测试模型的表现，你只需要把修改配置文件中的 evaluator 部分。 例如， 在你的配置文件中修改 `test_evaluator = dict(type='KittiMetric', submission_prefix=work_dirs/pointpillars/test_submission)`，就可以在推理结束后得到结果文件。
+如果您只想在在线基准上进行推理或测试模型性能，您需要在相应的评估器中指定 `submission_prefix`，例如，在配置文件中添加 `test_evaluator = dict(type='KittiMetric', ann_file=data_root + 'kitti_infos_test.pkl', format_only=True, pklfile_prefix='results/kitti-3class/kitti_results', submission_prefix='results/kitti-3class/kitti_results')`，然后可以得到结果文件。请确保配置文件中的[测试信息](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/kitti-3d-3class.py#L117)的 `data_prefix` 和 `ann_file` 由验证集相应地改为测试集。在生成结果后，您可以压缩文件夹并上传至 KITTI 评估服务器上。
 
-。请确保配置文件中的 `data_prefix` 与 `ann_file` [测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/kitti-3d-3class.py#L113)与测试集对应，而不是验证集。在生成结果后，你可以压缩文件夹，并上传到 KITTI 的评估服务器上。
+## 定性评估
 
-## 定性验证
-
-MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型的预测结果有一个直观的感受。你可以使用 `tools/misc/visualize_results.py`, 离线地进行可视化存储的 pkl 结果文件。另外，我们还提供了脚本 `tools/misc/browse_dataset.py`， 可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/useful_tools.html#id2)
+MMDetection3D 还提供了通用的可视化工具，以便于我们可以对训练好的模型预测的检测结果有一个直观的感受。您也可以在评估阶段通过设置 `--show` 来在线可视化检测结果，或者使用 `tools/misc/visualize_results.py` 来离线地进行可视化。此外，我们还提供了脚本 `tools/misc/browse_dataset.py` 用于可视化数据集而不做推理。更多的细节请参考[可视化文档](https://mmdetection3d.readthedocs.io/zh_CN/dev-1.x/user_guides/visualization.html)。

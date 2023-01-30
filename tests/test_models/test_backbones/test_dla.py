@@ -1,6 +1,6 @@
 import torch
 
-from mmdet3d.models import build_backbone
+from mmdet3d.registry import MODELS
 
 
 def test_dla_net():
@@ -13,7 +13,7 @@ def test_dla_net():
         norm_cfg=dict(type='GN', num_groups=32))
 
     img = torch.randn((4, 3, 32, 32))
-    self = build_backbone(cfg)
+    self = MODELS.build(cfg)
     self.init_weights()
 
     results = self(img)

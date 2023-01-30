@@ -3,8 +3,8 @@ repos:
     rev: 5.0.4
     hooks:
       - id: flake8
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+  - repo: https://github.com/zhouzaida/isort
+    rev: 5.12.1
     hooks:
       - id: isort
   - repo: https://github.com/pre-commit/mirrors-yapf
@@ -29,12 +29,12 @@ repos:
     hooks:
       - id: codespell
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.14
+    rev: 0.7.9
     hooks:
       - id: mdformat
         args: [ "--number" ]
         additional_dependencies:
-          - mdformat-gfm
+          - mdformat-openmmlab
           - mdformat_frontmatter
           - linkify-it-py
   - repo: https://github.com/myint/docformatter

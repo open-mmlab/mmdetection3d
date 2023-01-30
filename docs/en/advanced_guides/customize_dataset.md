@@ -6,7 +6,7 @@ The basic steps are as below:
 
 1. Prepare data
 2. Prepare a config
-3. Train, test and inference models on the customized dataset.
+3. Train, test and inference models on the customized dataset
 
 ## Data Preparation
 
@@ -26,7 +26,7 @@ Currently, we only support `.bin` format point cloud for training and inference.
   pip install git+https://github.com/DanielPollithy/pypcd.git
   ```
 
-- You can use the following script to read the `.pcd` file and convert it to `.bin` format and save it:
+- You can use the following script to read the `.pcd` file and convert it to `.bin` format for saving:
 
   ```python
   import numpy as np
@@ -42,11 +42,11 @@ Currently, we only support `.bin` format point cloud for training and inference.
       f.write(points.tobytes())
   ```
 
-2. Convert `.las` to `.bin`: The common conversion path is `.las -> .pcd -> .bin`, and the conversion from `.las -> .pcd` can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
+2. Convert `.las` to `.bin`: The common conversion path is `.las -> .pcd -> .bin`, and the conversion path `.las -> .pcd` can be achieved through [this tool](https://github.com/Hitachi-Automotive-And-Industry-Lab/semantic-segmentation-editor).
 
 #### Label Format
 
-The most basic information: 3D bounding box and category label of each scene need to be contained in the annotation `.txt` file. Each line represents a 3D box in a certain scene as follow:
+The most basic information: 3D bounding box and category label of each scene need to be contained in the `.txt` annotation file. Each line represents a 3D box in a certain scene as follow:
 
 ```
 # format: [x, y, z, dx, dy, dz, yaw, category_name]
@@ -61,7 +61,7 @@ The 3D Box should be stored in unified 3D coordinates.
 
 #### Calibration Format
 
-For the point cloud data collected by each lidar, they are usually fused and converted to a certain LiDAR coordinate. So typically the calibration information file should contain the intrinsic matrix of each camera and the transformation extrinsic matrix from the lidar to each camera in calibration `.txt` file, while `Px` represents the intrinsic matrix of `camera_x` and `lidar2camx` represents the transformation extrinsic matrix from the `lidar` to `camera_x`.
+For the point cloud data collected by each LiDAR, they are usually fused and converted to a certain LiDAR coordinate. So typically the calibration information file should contain the intrinsic matrix of each camera and the transformation extrinsic matrix from the LiDAR to each camera in `.txt` calibration file, while `Px` represents the intrinsic matrix of `camera_x` and `lidar2camx` represents the transformation extrinsic matrix from the `lidar` to `camera_x`.
 
 ```
 P0
@@ -106,7 +106,7 @@ mmdetection3d
 
 #### Vision-Based 3D Detection
 
-The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images/images_x`. `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
+The raw data for vision-based 3D object detection are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `images` contains the images from different cameras, for example, images from `camera_x` need to be placed in `images/images_x`, `calibs` contains calibration information files which store the camera intrinsic matrix of each camera, and `labels` includes label files for 3D detection.
 
 ```
 mmdetection3d
@@ -138,7 +138,7 @@ mmdetection3d
 
 #### Multi-Modality 3D Detection
 
-The raw data for multi-modality 3D object detection are typically organized as follows. Different from vision-based 3D Object detection, calibration information files in `calibs` store the camera intrinsic matrix of each camera and extrinsic matrix.
+The raw data for multi-modality 3D object detection are typically organized as follows. Different from vision-based 3D object detection, calibration information files in `calibs` store the camera intrinsic matrix of each camera and extrinsic matrix.
 
 ```
 mmdetection3d
@@ -174,7 +174,7 @@ mmdetection3d
 
 #### LiDAR-Based 3D Semantic Segmentation
 
-The raw data for LiDAR-Based 3D semantic segmentation are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `points` includes point cloud data, and `semantic_mask` includes point-level label.
+The raw data for LiDAR-based 3D semantic segmentation are typically organized as follows, where `ImageSets` contains split files indicating which files belong to training/validation set, `points` includes point cloud data, and `semantic_mask` includes point-level label.
 
 ```
 mmdetection3d
@@ -200,8 +200,8 @@ mmdetection3d
 
 Once you prepared the raw data following our instruction, you can directly use the following command to generate training/validation information files.
 
-```
-python tools/create_data.py base --root-path ./data/custom --out-dir ./data/custom
+```bash
+python tools/create_data.py custom --root-path ./data/custom --out-dir ./data/custom --extra-tag custom
 ```
 
 ## An example of customized dataset
@@ -211,8 +211,8 @@ Once we finish data preparation, we can create a new dataset in `mmdet3d/dataset
 ```python
 import mmengine
 
-from mmdet3d.det3d_dataset import Det3DDataset
 from mmdet3d.registry import DATASETS
+from .det3d_dataset import Det3DDataset
 
 
 @DATASETS.register_module()
@@ -220,17 +220,21 @@ class MyDataset(Det3DDataset):
 
     # replace with all the classes in customized pkl info file
     METAINFO = {
-       'classes': ('Pedestrian', 'Cyclist', 'Car')
+        'classes': ('Pedestrian', 'Cyclist', 'Car')
     }
 
     def parse_ann_info(self, info):
-        """Process the `instances` in data info to `ann_info`
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
-            info (dict): Info dict.
+            info (dict): Data information of single data sample.
 
         Returns:
-            dict | None: Processed `ann_info`
+            dict: Annotation information consists of the following keys:
+
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                  3D ground truth bboxes.
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
         """
         ann_info = super().parse_ann_info(info)
         if ann_info is None:
@@ -255,7 +259,7 @@ Here we take training PointPillars on customized dataset as an example:
 
 ### Prepare a config
 
-Here we demonstrate a config sample for pure point cloud training:
+Here we demonstrate a config sample for pure point cloud training.
 
 #### Prepare dataset config
 
@@ -322,7 +326,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='custom_infos_train.pkl', # specify your training pkl info
+            ann_file='custom_infos_train.pkl',  # specify your training pkl info
             data_prefix=dict(pts='points'),
             pipeline=train_pipeline,
             modality=input_modality,
@@ -339,7 +343,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='points'),
-        ann_file='custom_infos_val.pkl', # specify your validation pkl info
+        ann_file='custom_infos_val.pkl',  # specify your validation pkl info
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
@@ -347,7 +351,7 @@ val_dataloader = dict(
         box_type_3d='LiDAR'))
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # specify your validation pkl info
+    ann_file=data_root + 'custom_infos_val.pkl',  # specify your validation pkl info
     metric='bbox')
 ```
 
@@ -356,7 +360,7 @@ val_evaluator = dict(
 For voxel-based detectors such as SECOND, PointPillars and CenterPoint, the point cloud range and voxel size should be adjusted according to your dataset.
 Theoretically, `voxel_size` is linked to the setting of `point_cloud_range`. Setting a smaller `voxel_size` will increase the voxel num and the corresponding memory consumption. In addition, the following issues need to be noted:
 
-If the `point_cloud_range` and `voxel_size` are set to be `[0, -40, -3, 70.4, 40, 1]` and `[0.05, 0.05, 0.1]` respectively, then the shape of intermediate feature map should be `[(1-(-3))/0.1+1, (40-(-40))/0.05, (70.4-0)/0.05]=[41, 1600, 1408]`. When changing `point_cloud_range`, remember to change the shape of intermediate feature map in `middel_encoder` according to the `voxel_size`.
+If the `point_cloud_range` and `voxel_size` are set to be `[0, -40, -3, 70.4, 40, 1]` and `[0.05, 0.05, 0.1]` respectively, then the shape of intermediate feature map should be `[(1-(-3))/0.1+1, (40-(-40))/0.05, (70.4-0)/0.05]=[41, 1600, 1408]`. When changing `point_cloud_range`, remember to change the shape of intermediate feature map in `middle_encoder` according to the `voxel_size`.
 
 Regarding the setting of `anchor_range`, it is generally adjusted according to dataset. Note that `z` value needs to be adjusted accordingly to the position of the point cloud, please refer to this [issue](https://github.com/open-mmlab/mmdetection3d/issues/986).
 
@@ -435,21 +439,21 @@ model = dict(
         assigner=[
             dict(  # for Pedestrian
                 type='Max3DIoUAssigner',
-                iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.5,
                 neg_iou_thr=0.35,
                 min_pos_iou=0.35,
                 ignore_iof_thr=-1),
             dict(  # for Cyclist
                 type='Max3DIoUAssigner',
-                iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.5,
                 neg_iou_thr=0.35,
                 min_pos_iou=0.35,
                 ignore_iof_thr=-1),
             dict(  # for Car
                 type='Max3DIoUAssigner',
-                iou_calculator=dict(type='mmdet3d.BboxOverlapsNearest3D'),
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
                 min_pos_iou=0.45,
@@ -482,18 +486,18 @@ _base_ = [
 
 #### Visualize your dataset (optional)
 
-To valiate whether your prepared data and config are correct, it's highly recommended to use `tools/misc/browse_dataest.py` script
-to visualize your dataset and annotations before training and validation, more details refer to the [visualization](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/user_guides/visualization.md) doc.
+To validate whether your prepared data and config are correct, it's highly recommended to use `tools/misc/browse_dataset.py` script
+to visualize your dataset and annotations before training and validation. Please refer to [visualization doc](https://mmdetection3d.readthedocs.io/en/dev-1.x/user_guides/visualization.html) for more details.
 
 ## Evaluation
 
 Once the data and config have been prepared, you can directly run the training/testing script following our doc.
 
-**Note**: we only provide an implementation for KITTI style evaluation for the customized dataset. It should be included in the dataset config:
+**Note**: We only provide an implementation for KITTI style evaluation for the customized dataset. It should be included in the dataset config:
 
 ```python
 val_evaluator = dict(
     type='KittiMetric',
-    ann_file=data_root + 'custom_infos_val.pkl', # specify your validation pkl info
+    ann_file=data_root + 'custom_infos_val.pkl',  # specify your validation pkl info
     metric='bbox')
 ```
