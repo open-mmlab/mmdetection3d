@@ -68,18 +68,18 @@ model = dict(
     ]),
     test_cfg=dict(nms_pre=100, nms_thr=0.05, score_thr=0.001, max_per_img=20))
 
-# file_client_args = dict(backend='disk')
+file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
 # See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
 # for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/',
-        'data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/'
-    }))
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/kitti/':
+#         's3://openmmlab/datasets/detection3d/kitti/',
+#         'data/kitti/':
+#         's3://openmmlab/datasets/detection3d/kitti/'
+#     }))
 
 train_pipeline = [
     dict(type='LoadImageFromFileMono3D'),
@@ -135,3 +135,4 @@ param_scheduler = [
 ]
 
 train_cfg = dict(max_epochs=48, val_interval=2)
+auto_scale_lr = dict(base_batch_size=12)

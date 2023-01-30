@@ -194,10 +194,10 @@ class LoadMultiViewImageFromFiles(BaseTransform):
         # unravel to list, see `DefaultFormatBundle` in formating.py
         # which will transpose each image separately and then stack into array
         results['img'] = [img[..., i] for i in range(img.shape[-1])]
-        results['img_shape'] = img.shape
-        results['ori_shape'] = img.shape
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
         # Set initial values for default meta_keys
-        results['pad_shape'] = img.shape
+        results['pad_shape'] = img.shape[:2]
         if self.set_default_scale:
             results['scale_factor'] = 1.0
         num_channels = 1 if len(img.shape) < 3 else img.shape[2]
@@ -338,9 +338,13 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                  test_mode: bool = False) -> None:
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
+        if isinstance(use_dim, int):
+            use_dim = list(range(use_dim))
+        assert max(use_dim) < load_dim, \
+            f'Expect all used dimensions < {load_dim}, got {use_dim}'
         self.use_dim = use_dim
         self.file_client_args = file_client_args.copy()
-        self.file_client = None
+        self.file_client = mmengine.FileClient(**self.file_client_args)
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
@@ -573,6 +577,8 @@ class LoadPointsFromFile(BaseTransform):
             or use_dim=[0, 1, 2, 3] to use the intensity dimension.
         shift_height (bool): Whether to use shifted height. Defaults to False.
         use_color (bool): Whether to use color features. Defaults to False.
+        norm_intensity (bool): Whether to normlize the intensity. Defaults to
+            False.
         file_client_args (dict): Arguments to instantiate a FileClient.
             See :class:`mmengine.fileio.FileClient` for details.
             Defaults to dict(backend='disk').
@@ -585,6 +591,7 @@ class LoadPointsFromFile(BaseTransform):
         use_dim: Union[int, List[int]] = [0, 1, 2],
         shift_height: bool = False,
         use_color: bool = False,
+        norm_intensity: bool = False,
         file_client_args: dict = dict(backend='disk')
     ) -> None:
         self.shift_height = shift_height
@@ -598,6 +605,7 @@ class LoadPointsFromFile(BaseTransform):
         self.coord_type = coord_type
         self.load_dim = load_dim
         self.use_dim = use_dim
+        self.norm_intensity = norm_intensity
         self.file_client_args = file_client_args.copy()
         self.file_client = None
 
@@ -640,6 +648,10 @@ class LoadPointsFromFile(BaseTransform):
         points = self._load_points(pts_file_path)
         points = points.reshape(-1, self.load_dim)
         points = points[:, self.use_dim]
+        if self.norm_intensity:
+            assert len(self.use_dim) >= 4, \
+                f'When using intensity norm, expect used dimensions >= 4, got {len(self.use_dim)}'  # noqa: E501
+            points[:, 3] = np.tanh(points[:, 3])
         attribute_dims = None
 
         if self.shift_height:
@@ -794,6 +806,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
+        self.file_client = None
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from

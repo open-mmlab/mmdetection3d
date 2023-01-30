@@ -1,14 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import numpy as np
 import torch
+from torch import Tensor
 
 
-def get_edge_indices(img_metas,
-                     downsample_ratio,
-                     step=1,
-                     pad_mode='default',
-                     dtype=np.float32,
-                     device='cpu'):
+def get_edge_indices(img_metas: List[dict],
+                     downsample_ratio: int,
+                     step: int = 1,
+                     pad_mode: str = 'default',
+                     dtype: type = np.float32,
+                     device: str = 'cpu') -> List[Tensor]:
     """Function to filter the objects label outside the image.
     The edge_indices are generated using numpy on cpu rather
     than on CUDA due to the latency issue. When batch size = 8,
@@ -16,20 +19,20 @@ def get_edge_indices(img_metas,
     with CUDA tensor (0.09s and 0.72s in 100 runs).
 
     Args:
-        img_metas (list[dict]): Meta information of each image, e.g.,
+        img_metas (List[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
         downsample_ratio (int): Downsample ratio of output feature,
-        step (int, optional): Step size used for generateing
-            edge indices. Default: 1.
-        pad_mode (str, optional): Padding mode during data pipeline.
-            Default: 'default'.
-        dtype (torch.dtype, optional): Dtype of edge indices tensor.
-            Default: np.float32.
-        device (str, optional): Device of edge indices tensor.
-            Default: 'cpu'.
+        step (int): Step size used for generateing
+            edge indices. Defaults to 1.
+        pad_mode (str): Padding mode during data pipeline.
+            Defaults to 'default'.
+        dtype (type): Dtype of edge indices tensor.
+            Defaults to np.float32.
+        device (str): Device of edge indices tensor.
+            Defaults to 'cpu'.
 
     Returns:
-        list[Tensor]: Edge indices for each image in batch data.
+        List[Tensor]: Edge indices for each image in batch data.
     """
     edge_indices_list = []
     for i in range(len(img_metas)):

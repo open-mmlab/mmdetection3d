@@ -26,6 +26,12 @@ Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNe
 | :--------------------------------------------: | :---: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | [ResNet-50](./imvoxelnet_8xb4_kitti-3d-car.py) |  Car  |   3x    |          |                | 17.26 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json) |
 
+### SUN RGB-D
+
+|                      Backbone                       | Lr schd | Mem (GB) | Inf time (fps) | mAP@0.25 | mAP@0.5 |                                                                                                                                                                           Download                                                                                                                                                                           |
+| :-------------------------------------------------: | :-----: | :------: | :------------: | :------: | :-----: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet-50](./imvoxelnet_4x2_sunrgbd-3d-10class.py) |   2x    |   7.2    |      22.5      |  40.96   |  13.50  | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416-29ca7d2e.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416.log.json) |
+
 ## Citation
 
 ```latex
