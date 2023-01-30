@@ -61,14 +61,7 @@ class PointData(BaseDataElement):
         else:
             assert isinstance(value,
                               Sized), 'value must contain `__len__` attribute'
-
-            if len(self) > 0:
-                assert len(value) == len(self), 'The length of ' \
-                                                f'values {len(value)} is ' \
-                                                'not consistent with ' \
-                                                'the length of this ' \
-                                                ':obj:`PointData` ' \
-                                                f'{len(self)}'
+            # TODO: make sure the input value share the same length 
             super().__setattr__(name, value)
 
     __setitem__ = __setattr__

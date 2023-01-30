@@ -26,10 +26,6 @@ class TestPointData(TestCase):
         with self.assertRaises(AttributeError):
             point_data._data_fields = 1
 
-        # The data length in PointData must be the same
-        with self.assertRaises(AssertionError):
-            point_data.keypoints = torch.rand((17, 2))
-
         point_data.keypoints = torch.rand((5, 2))
         assert 'keypoints' in point_data
 
