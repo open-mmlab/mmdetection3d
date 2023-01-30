@@ -32,14 +32,14 @@ class TestInstanceSegMetric(unittest.TestCase):
         n_points = 3300
         gt_labels = [0, 0, 0, 0, 0, 0, 14, 14, 2, 1]
         pred_instance_mask = np.ones(n_points, dtype=np.int) * -1
-        labels = []
-        scores = []
+        pred_semantic_mask = np.ones(n_points, dtype=np.int) * -1
+        pred_scores = np.zeros(n_points, dtype=np.float32)
         for i, gt_label in enumerate(gt_labels):
             begin = i * 300
             end = begin + 300
             pred_instance_mask[begin:end] = i
-            labels.append(gt_label)
-            scores.append(.99)
+            pred_semantic_mask[begin:end] = gt_label
+            pred_scores[begin:end] = 0.99
 
         results_dict['pts_instance_mask'] = torch.tensor(pred_instance_mask)
         results_dict['instance_labels'] = torch.tensor(labels)
