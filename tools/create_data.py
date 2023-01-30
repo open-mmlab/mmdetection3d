@@ -198,6 +198,49 @@ def waymo_data_prep(root_path,
         num_worker=workers).create()
 
 
+def once_data_prep(root_path,
+                   info_prefix,
+                   version,
+                   out_dir,
+                   workers):
+    """Prepare the info file for once dataset.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+        workers (int): Number of threads to be used.
+    """
+    from tools.data_converter import once_converter as once
+    
+    splits = ['training', 'validation', 'testing']
+    for i, split in enumerate(splits):
+        load_dir = osp.join(root_path, 'waymo_format', split)
+        if split == 'validation':
+            save_dir = osp.join(out_dir, 'kitti_format', 'training')
+        else:
+            save_dir = osp.join(out_dir, 'kitti_format', split)
+        converter = waymo.Waymo2KITTI(
+            load_dir,
+            save_dir,
+            prefix=str(i),
+            workers=workers,
+            test_mode=(split == 'testing'))
+        converter.convert()
+    # Generate waymo infos
+    out_dir = osp.join(out_dir, 'kitti_format')
+    kitti.create_waymo_info_file(
+        out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
+    GTDatabaseCreater(
+        'WaymoDataset',
+        out_dir,
+        info_prefix,
+        f'{out_dir}/{info_prefix}_infos_train.pkl',
+        relative_path=False,
+        with_mask=False,
+        num_worker=workers).create()
+
+
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
 parser.add_argument(
