@@ -10,7 +10,7 @@ MMDetection3D 需要的 MMCV, MMDetection 和 MMSegmentation 的版本列在了�
 
 | MMDetection3D version |   MMDetection version    | MMSegmentation version  |        MMCV version         |
 | :-------------------: | :----------------------: | :---------------------: | :-------------------------: |
-|        master         | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
+|        master         | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.8.0  |
 |       v1.0.0rc4       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
 |       v1.0.0rc3       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
 |       v1.0.0rc2       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.4.8, \<=1.6.0  |
