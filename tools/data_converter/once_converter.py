@@ -1,13 +1,31 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+f"""Partly adapted from `once_devkit
+    <https://github.com/once-for-auto-driving/once_devkit>`
+"""
 
 import shutil
 import json
+import functools
 from glob import glob
 from os.path import join
+import os.path as osp
 from typing import List
 
 import mmcv
 import numpy as np
+
+
+def split_info_loader_helper(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        split_file_path = func(*args, **kwargs)
+        if not osp.isfile(split_file_path):
+            split_list = []
+        else:
+            split_list = set(map(lambda x: x.strip(), open(split_file_path).readlines()))
+        return split_list
+    return wrapper
+
 
 class ONCE2KITTI(object):
     """Once to KITTI converter.
@@ -60,6 +78,31 @@ class ONCE2KITTI(object):
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.create_folder()
 
+    @property
+    @split_info_loader_helper
+    def train_split_list(self):
+        return osp.join(self.dataset_root, 'ImageSets', 'train.txt')
+
+    @property
+    @split_info_loader_helper
+    def val_split_list(self):
+        return osp.join(self.dataset_root, 'ImageSets', 'val.txt')
+
+    @property
+    @split_info_loader_helper
+    def test_split_list(self):
+        return osp.join(self.dataset_root, 'ImageSets', 'test.txt')
+
+    def _find_split_name(self, seq_id):
+        if seq_id in self.train_split_list:
+            return 'train'
+        elif seq_id in self.test_split_list:
+            return 'test'
+        elif seq_id in self.val_split_list:
+            return 'val'
+        print("sequence id {} corresponding to no split".format(seq_id))
+        raise NotImplementedError
+
     def __len__(self):
         """Length of the filename list."""
         return len(self.sequence_paths)
@@ -88,8 +131,8 @@ class ONCE2KITTI(object):
         used by Once dataset.
 
         Args:
-            sequence_path (str): path to the sequence file
-            frame_idss (list[str]): ids of the frame files in the current sequence
+            sequence_path (str): path to the sequence file.
+            frame_idss (list[str]): ids of the frame files in the current sequence.
         """
         sequence_id = sequence_path.split('/')[-1]
         for camera in self.camera_list:
@@ -103,7 +146,7 @@ class ONCE2KITTI(object):
         """Parse and save the calibration data.
 
         Args:
-            sequence_path (str): path to the sequence file
+            sequence_path (str): path to the sequence file.
         """
         sequence_id = sequence_path.split('/')[-1]
         # once camera 03 to kitti reference camera P0
@@ -123,6 +166,7 @@ class ONCE2KITTI(object):
                 Tr_cam03_to_velo = original_calibs[camera]['cam_to_velo'].reshape(4, 4)
                 Tr_velo_to_cam03 = np.linalg.inv(Tr_cam03_to_velo)
                 Tr_velo_to_cam = self.cart_to_homo(T_cam03_to_ref) @ Tr_velo_to_cam03
+                self.Tr_velo_to_cam = Tr_velo_to_cam.copy()
                 Tr_velo_to_cams.append(Tr_velo_to_cam)
             
             # intrinsic parameters
@@ -152,7 +196,8 @@ class ONCE2KITTI(object):
         """Parse and save the lidar data in psd format.
 
         Args:
-            sequence_path (str): path to the sequence file
+            sequence_path (str): path to the sequence file.
+            frame_idss (list[str]): ids of the frame files in the current sequence.
         """
         sequence_id = sequence_path.split('/')[-1]
         for frame_id in frame_ids:
@@ -160,6 +205,74 @@ class ONCE2KITTI(object):
             dist_path = f'{self.point_cloud_save_dir}{self.prefix}' + \
                         f'{sequence_id}{frame_id}.bin'
             shutil.copyfile(src_path, dist_path)
+
+    def save_label(self, sequence_path: str, frame_ids: List[str]):
+        """Parse and save the label data in txt format, originally in json format
+        The relation between once and kitti coordinates:
+        1. x, y, z correspond to l, w, h (once) -> l, h, w (kitti)
+        2. cx, cy, cz on the lidar coordinate (once) -> on the camera coordinate (kitti)
+        3. x-y-z: right-down-front (once) = right-down-front (kitti)
+        4. bbox origin at volumetric center (once) -> bottom center (kitti)
+        5. rotation: +x around z-axis yaw angle (once) -> +x around y-axis roll angle(kitti)
+
+        Args:
+            sequence_path (str): path to the sequence file.   
+            frame_idss (list[str]): ids of the frame files in the current sequence.
+        """
+        sequence_id = sequence_path.split['/'][-1]
+        for frame_id in frame_ids:
+            original_annos = self.get_frame_anno(sequence_id, frame_id)
+            # TODO: frames that have no annos
+            if not original_annos:
+                return
+            names = original_annos['names']
+            boxes_2d = original_annos['boxes_2d']
+            boxes_3d = original_annos['boxes_3d']
+
+            line = ''
+            for idx, once_type in enumerate(names):
+                kitti_type = self.once_to_kitti_class_map[once_type]
+                box_2d = boxes_2d[idx]
+                box_3d = boxes_3d[idx]
+
+                cx, cy, cz = box_3d[:3]
+                height, width, length = box_3d[-2:2:-1]
+                x, y, z = cx, cy, cz - height / 2
+
+                # project bounding box to the virtual reference frame
+                pt_ref = self.Tr_velo_to_cam @ \
+                    np.array([x, y, z, 1]).reshape((4, 1))
+                x, y, z, _ = pt_ref.flatten().tolist()
+                # TODO: project boxes_2d to reference camera
+
+                rotation_y = -box_3d[6] - np.pi / 2
+                
+                # not available for once
+                truncated = 0
+                occluded = 0
+                alpha = -10
+
+                line += kitti_type + \
+                    ' {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n'.format(
+                        round(truncated, 2), occluded, round(alpha, 2),
+                        round(box_2d[0], 2), round(box_2d[1], 2),
+                        round(box_2d[2], 2), round(box_2d[3], 2),
+                        round(height, 2), round(width, 2), round(length, 2),
+                        round(x, 2), round(y, 2), round(z, 2),
+                        round(rotation_y, 2))
+                
+            fp_label = open(
+                f'{self.label_save_dir}/' +
+                f'{sequence_id}{frame_id}.txt', 'a')
+            fp_label.write(line)
+            fp_label.close()
+
+    def get_frame_anno(self, sequence_id, frame_id):
+        split_name = self._find_split_name(sequence_id)
+        frame_info = getattr(self, '{}_info'.format(split_name))[sequence_id][frame_id]
+        if 'annos' in frame_info:
+            return frame_info['annos']
+        return None
 
     def create_folder(self):
         """Create folder for data preprossing"""
