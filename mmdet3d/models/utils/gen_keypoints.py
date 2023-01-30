@@ -1,29 +1,33 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple
+
 import torch
+from torch import Tensor
 
-from mmdet3d.structures import points_cam2img
+from mmdet3d.structures import CameraInstance3DBoxes, points_cam2img
 
 
-def get_keypoints(gt_bboxes_3d_list,
-                  centers2d_list,
-                  img_metas,
-                  use_local_coords=True):
+def get_keypoints(
+        gt_bboxes_3d_list: List[CameraInstance3DBoxes],
+        centers2d_list: List[Tensor],
+        img_metas: List[dict],
+        use_local_coords: bool = True) -> Tuple[List[Tensor], List[Tensor]]:
     """Function to filter the objects label outside the image.
 
     Args:
-        gt_bboxes_list (list[Tensor]): Ground truth bboxes of each image,
-            shape (num_gt, 4).
-        centers2d_list (list[Tensor]): Projected 3D centers onto 2D image,
+        gt_bboxes_3d_list (List[:obj:`CameraInstance3DBoxes`]): Ground truth
+            bboxes of each image.
+        centers2d_list (List[Tensor]): Projected 3D centers onto 2D image,
             shape (num_gt, 2).
-        img_metas (list[dict]): Meta information of each image, e.g.,
+        img_metas (List[dict]): Meta information of each image, e.g.,
             image size, scaling factor, etc.
-        use_local_coords (bool, optional): Wheher to use local coordinates
-            for keypoints. Default: True.
+        use_local_coords (bool): Whether to use local coordinates
+            for keypoints. Defaults to True.
 
     Returns:
-        tuple[list[Tensor]]: It contains two elements, the first is the
-        keypoints for each projected 2D bbox in batch data. The second is
-        the visible mask of depth calculated by keypoints.
+        Tuple[List[Tensor], List[Tensor]]: It contains two elements,
+        the first is the keypoints for each projected 2D bbox in batch data.
+        The second is the visible mask of depth calculated by keypoints.
     """
 
     assert len(gt_bboxes_3d_list) == len(centers2d_list)
@@ -56,8 +60,8 @@ def get_keypoints(gt_bboxes_3d_list,
         keypoints_z_visible = (keypoints3d[..., -1] > 0)
 
         # (N, 1O)
-        keypoints_visible = keypoints_x_visible & \
-            keypoints_y_visible & keypoints_z_visible
+        keypoints_visible = \
+            keypoints_x_visible & keypoints_y_visible & keypoints_z_visible
         # center, diag-02, diag-13
         keypoints_depth_valid = torch.stack(
             (keypoints_visible[:, [8, 9]].all(dim=1),
