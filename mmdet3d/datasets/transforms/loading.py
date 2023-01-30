@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 
 import mmcv
 import mmengine
+import mmengine.fileio as fileio
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
@@ -255,9 +256,21 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
                 'Currently we only support load image from kitti and'
                 'nuscenes datasets')
 
-        img_bytes = self.file_client.get(filename)
-        img = mmcv.imfrombytes(
-            img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        try:
+            if self.file_client_args is not None:
+                file_client = fileio.FileClient.infer_client(
+                    self.file_client_args, filename)
+                img_bytes = file_client.get(filename)
+            else:
+                img_bytes = fileio.get(
+                    filename, backend_args=self.backend_args)
+            img = mmcv.imfrombytes(
+                img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        except Exception as e:
+            if self.ignore_empty:
+                return None
+            else:
+                raise e
         if self.to_float32:
             img = img.astype(np.float32)
 
