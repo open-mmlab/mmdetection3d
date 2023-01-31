@@ -6,15 +6,16 @@ f"""Partly adapted from `once_devkit
 import shutil
 import json
 import functools
-from glob import glob
-from os.path import join
+import numpy as np
 import os.path as osp
-from typing import List
+from collections import defaultdict
 
 import mmcv
-import numpy as np
+from glob import glob
+from os.path import join
+from typing import List
 
-
+# TODO: reformat code
 def split_info_loader_helper(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -77,6 +78,7 @@ class ONCE2KITTI(object):
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.create_folder()
+        self._collect_basic_infos()
 
     @property
     @split_info_loader_helper
@@ -102,6 +104,21 @@ class ONCE2KITTI(object):
             return 'val'
         print("sequence id {} corresponding to no split".format(seq_id))
         raise NotImplementedError
+    
+    def _collect_basic_infos(self):
+        self.train_info = defaultdict(dict)
+        if self.train_split_list is not None:
+            for train_seq in self.train_split_list:
+                anno_file_path = osp.join(self.data_root, train_seq, '{}.json'.format(train_seq))
+                if not osp.isfile(anno_file_path):
+                    print("no annotation file for sequence {}".format(train_seq))
+                    raise FileNotFoundError
+                anno_file = json.load(open(anno_file_path, 'r'))
+                for frame_anno in anno_file['frames']:
+                    self.train_info[train_seq][frame_anno['frame_id']] = {
+                        'pose': frame_anno['pose'],
+                        'calib': anno_file['calib'],
+                    }
 
     def __len__(self):
         """Length of the filename list."""
@@ -159,16 +176,17 @@ class ONCE2KITTI(object):
 
         original_calibs = \
             json.load(open(f'{sequence_path}/{sequence_path.split[-1]}.json'))['calib']
+
+        # TODO: need to check
         for camera in self.camera_list:
-            # TODO: fix
             # extrinsic parameters
+            Tr_cam_to_velo = original_calibs[camera]['cam_to_velo'].reshape(4, 4)
+            Tr_velo_to_cam = np.linalg.inv(Tr_cam_to_velo)
+            Tr_velo_to_cam = self.cart_to_homo(T_cam03_to_ref) @ Tr_velo_to_cam
             if camera == 'cam03':
-                Tr_cam03_to_velo = original_calibs[camera]['cam_to_velo'].reshape(4, 4)
-                Tr_velo_to_cam03 = np.linalg.inv(Tr_cam03_to_velo)
-                Tr_velo_to_cam = self.cart_to_homo(T_cam03_to_ref) @ Tr_velo_to_cam03
                 self.Tr_velo_to_cam = Tr_velo_to_cam.copy()
-                Tr_velo_to_cams.append(Tr_velo_to_cam)
-            
+            Tr_velo_to_cams.append(Tr_velo_to_cam)
+
             # intrinsic parameters
             camera_calib = original_calibs[camera]['cam_intrinsic'].reshape(3, 3)
             camera_calib = np.hstack([camera_calib, np.zeros((3,1), dtype=np.float32)])
@@ -239,12 +257,15 @@ class ONCE2KITTI(object):
                 height, width, length = box_3d[-2:2:-1]
                 x, y, z = cx, cy, cz - height / 2
 
-                # project bounding box to the virtual reference frame
+                # project bounding box to the reference image frame
                 pt_ref = self.Tr_velo_to_cam @ \
                     np.array([x, y, z, 1]).reshape((4, 1))
                 x, y, z, _ = pt_ref.flatten().tolist()
-                # TODO: project boxes_2d to reference camera
+                # TODO: check if needed to project boxes 2d
+                # the boxes 2d of kitti are on reference image frame
+                # the boxes 2d of once are on each individual camera frame
 
+                # TODO: need to check
                 rotation_y = -box_3d[6] - np.pi / 2
                 
                 # not available for once
