@@ -17,6 +17,8 @@ Collections:
 
 Models:
   - Name: pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d
+    Alias:
+       - pgd_kitti
     In Collection: PGD
     Config: configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py
     Metadata:

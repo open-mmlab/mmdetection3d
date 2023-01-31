@@ -4,12 +4,14 @@ from typing import List, Optional, Union
 
 import mmcv
 import mmengine
+import mmengine.fileio as fileio
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
 from mmdet.datasets.transforms import LoadAnnotations
 
 from mmdet3d.registry import TRANSFORMS
+from mmdet3d.structures.bbox_3d import get_box_type
 from mmdet3d.structures.points import BasePoints, get_points_type
 
 
@@ -254,9 +256,21 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
                 'Currently we only support load image from kitti and'
                 'nuscenes datasets')
 
-        img_bytes = self.file_client.get(filename)
-        img = mmcv.imfrombytes(
-            img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        try:
+            if self.file_client_args is not None:
+                file_client = fileio.FileClient.infer_client(
+                    self.file_client_args, filename)
+                img_bytes = file_client.get(filename)
+            else:
+                img_bytes = fileio.get(
+                    filename, backend_args=self.backend_args)
+            img = mmcv.imfrombytes(
+                img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        except Exception as e:
+            if self.ignore_empty:
+                return None
+            else:
+                raise e
         if self.to_float32:
             img = img.astype(np.float32)
 
@@ -264,6 +278,46 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
         results['img_shape'] = img.shape[:2]
         results['ori_shape'] = img.shape[:2]
 
+        return results
+
+
+@TRANSFORMS.register_module()
+class LoadImageFromNDArray(LoadImageFromFile):
+    """Load an image from ``results['img']``.
+    Similar with :obj:`LoadImageFromFile`, but the image has been loaded as
+    :obj:`np.ndarray` in ``results['img']``. Can be used when loading image
+    from webcam.
+    Required Keys:
+    - img
+    Modified Keys:
+    - img
+    - img_path
+    - img_shape
+    - ori_shape
+    Args:
+        to_float32 (bool): Whether to convert the loaded image to a float32
+            numpy array. If set to False, the loaded image is an uint8 array.
+            Defaults to False.
+    """
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to add image meta information.
+
+        Args:
+            results (dict): Result dict with Webcam read image in
+                ``results['img']``.
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+
+        img = results['img']
+        if self.to_float32:
+            img = img.astype(np.float32)
+
+        results['img_path'] = None
+        results['img'] = img
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
         return results
 
 
@@ -944,3 +998,67 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_bbox_depth={self.with_bbox_depth}, '
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class Mono3DInferencerLoader(BaseTransform):
+    """Load an image from ``results['images']['CAMX']['img']``. Similar with
+    :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
+    :obj:`np.ndarray` in ``results['images']['CAMX']['img']``.
+
+    Args:
+        to_float32 (bool): Whether to convert the loaded image to a float32
+            numpy array. If set to False, the loaded image is an uint8 array.
+            Defaults to False.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__()
+        self.from_file = TRANSFORMS.build(
+            dict(type='LoadImageFromFileMono3D', **kwargs))
+        self.from_ndarray = TRANSFORMS.build(
+            dict(type='LoadImageFromNDArray', **kwargs))
+
+    def transform(self, single_input: dict) -> dict:
+        """Transform function to add image meta information.
+
+        Args:
+            single_input (dict): Result dict with Webcam read image in
+                ``results['images']['CAMX']['img']``.
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        box_type_3d, box_mode_3d = get_box_type('camera')
+        if isinstance(single_input['calib'], str):
+            calib_path = single_input['calib']
+            with open(calib_path, 'r') as f:
+                lines = f.readlines()
+            cam2img = np.array([
+                float(info) for info in lines[0].split(' ')[0:16]
+            ]).reshape([4, 4])
+        elif isinstance(single_input['calib'], np.ndarray):
+            cam2img = single_input['calib']
+        else:
+            raise ValueError('Unsupported input type: '
+                             f'{type(single_input)}')
+
+        if isinstance(single_input['img'], str):
+            inputs = dict(
+                images=dict(
+                    CAM_FRONT=dict(
+                        img_path=single_input['img'], cam2img=cam2img)),
+                box_mode_3d=box_mode_3d,
+                box_type_3d=box_type_3d)
+        elif isinstance(single_input['img'], np.ndarray):
+            inputs = dict(
+                img=single_input['img'],
+                cam2img=cam2img,
+                box_type_3d=box_type_3d,
+                box_mode_3d=box_mode_3d)
+        else:
+            raise ValueError('Unsupported input type: '
+                             f'{type(single_input)}')
+
+        if 'img' in inputs:
+            return self.from_ndarray(inputs)
+        return self.from_file(inputs)
