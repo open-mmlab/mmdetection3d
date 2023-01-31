@@ -52,7 +52,7 @@ class OnceDataset(Custom3DDataset):
             filter invalid predicted boxes.
             Default: [0, -40, -3, 70.4, 40, 0.0].
     """
-    CLASSES = ('car', 'pedestrian', 'cyclist')
+    CLASSES = ('Car', 'Bus', 'Truck', 'Pedestrain', 'Cyclist')
 
     def __init__(self,
                  data_root,
@@ -77,3 +77,121 @@ class OnceDataset(Custom3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
             **kwargs)
+
+        self.split = split
+        self.root_split = os.path.join(self.data_root, split)
+        assert self.modality is not None
+        self.pcd_limit_range = pcd_limit_range
+        self.pts_prefix = pts_prefix
+
+        self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
+
+    def load_annotations(self, ann_file):
+        """Load annotations from ann_file.
+
+        Args:
+            ann_file (str): Path of the annotation file.
+
+        Returns:
+            list[dict]: List of annotations sorted by timestamps(frame_id).
+        """
+        data = mmcv.load(ann_file, file_format='pkl')
+        data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
+        self.metadata = data['metadata']
+        return data_infos
+    
+    def get_data_info(self, index):
+        """Get data info according to the given index.
+
+        Args:
+            index (int): Index of the sample data to get.
+
+        Returns:
+            dict: Data information that will be passed to the data
+                preprocessing pipelines. It includes the following keys:
+
+                - sample_idx (str): Sample index.
+                - pts_filename (str): Filename of point clouds.
+                - img_prefix (str): Prefix of image files.
+                - img_filename (str, optional): image filename.
+                - lidar2img (list[np.ndarray], optional): Transformations
+                    from lidar to different cameras.
+                - ann_info (dict): Annotation info.
+        """
+        info = self.data_infos[index]
+        sample_idx = info['frame_id']
+        pts_filename = info['lidar_path']
+        
+        img_filenames = []
+        lidar2imgs = []
+        seq_id = info['sequence_id']
+        for camera in self.camera_list:
+            img_filename = os.path.join(self.data_root, 'data', \
+                                        seq_id, camera, f'{sample_idx}.jpg')
+            img_filenames.append(img_filename)
+            # obtain lidar to image transformation matrix
+            cam2lidar = info['calib'][camera]['cam_to_velo']
+            lidar2cam = np.linalg.inv(cam2lidar)
+            intrinsic = info['calib'][camera]['cam_intrinsic']
+            viewpad = np.eye(4)
+            viewpad[:3, :3] = intrinsic
+            lidar2img = viewpad @ lidar2cam.T
+            lidar2imgs.append(lidar2img)
+
+        input_dict = dict(
+            sample_idx=sample_idx,
+            pts_filename=pts_filename,
+            img_prefix=None,
+            img_filename=img_filenames,
+            lidar2img=lidar2imgs,
+        )
+
+        if not self.test_mode:
+            annos = self.get_ann_info(index)
+            input_dict['ann_info'] = annos
+
+        return input_dict
+
+    def get_ann_info(self, index):
+        """Get annotation info according to the given index.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: annotation information consists of the following keys:
+
+                - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
+                    3D ground truth bboxes.
+                - gt_labels_3d (np.ndarray): Labels of ground truths.
+                - gt_bboxes (np.ndarray): 2D ground truth bboxes.
+                - gt_labels (np.ndarray): Labels of ground truths.
+                - gt_names (list[str]): Class names of ground truths.
+        """
+        # Use index to get the annos, thus the evalhook could also use this api
+        info = self.data_infos[index]
+        annos = info['annos']
+
+        gt_bboxes_3d = annos['boxes_3d']
+        gt_bboxes_3d = LiDARInstance3DBoxes(
+            gt_bboxes_3d,
+            box_dim=gt_bboxes_3d.shape[-1],
+            origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
+
+        gt_names = annos['name']
+        gt_labels = []
+        for cat in gt_names:
+            if cat in self.CLASSES:
+                gt_labels.append(self.CLASSES.index(cat))
+            else:
+                gt_labels.append(-1)
+        gt_labels = np.array(gt_labels).astype(np.int64)
+        gt_labels_3d = copy.deepcopy(gt_labels)
+
+        anns_results = dict(
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=gt_labels_3d,
+            gt_labels=gt_labels,
+            gt_names=gt_names,
+        )
+        return anns_results
