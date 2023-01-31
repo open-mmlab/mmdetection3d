@@ -44,32 +44,33 @@ class TestLidarDet3DInferencer(TestCase):
         if not torch.cuda.is_available():
             return
         # single img
-        pc_path = 'tests/data/kitti/training/velodyne/000000.bin'
-        res_path = self.inferencer(pc_path, return_vis=True)
+        inputs = dict(points='tests/data/kitti/training/velodyne/000000.bin')
+        res_path = self.inferencer(inputs, return_vis=True)
         # ndarray
-        pts_bytes = mmengine.fileio.get(pc_path)
+        pts_bytes = mmengine.fileio.get(inputs['points'])
         points = np.frombuffer(pts_bytes, dtype=np.float32)
         points = points.reshape(-1, 4)
         points = points[:, :4]
-        res_ndarray = self.inferencer(points, return_vis=True)
+        inputs = dict(points=points)
+        res_ndarray = self.inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
         self.assertIn('visualization', res_path)
         self.assertIn('visualization', res_ndarray)
 
         # multiple images
-        pc_paths = [
-            'tests/data/kitti/training/velodyne/000000.bin',
-            'tests/data/kitti/training/velodyne/000000.bin'
+        inputs = [
+            dict(points='tests/data/kitti/training/velodyne/000000.bin'),
+            dict(points='tests/data/kitti/training/velodyne/000000.bin')
         ]
-        res_path = self.inferencer(pc_paths, return_vis=True)
+        res_path = self.inferencer(inputs, return_vis=True)
         # list of ndarray
         all_points = []
-        for p in pc_paths:
-            pts_bytes = mmengine.fileio.get(p)
+        for p in inputs:
+            pts_bytes = mmengine.fileio.get(p['points'])
             points = np.frombuffer(pts_bytes, dtype=np.float32)
             points = points.reshape(-1, 4)
-            all_points.append(points)
+            all_points.append(dict(points=points))
         res_ndarray = self.inferencer(all_points, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
@@ -77,7 +78,7 @@ class TestLidarDet3DInferencer(TestCase):
         self.assertIn('visualization', res_ndarray)
 
         # point cloud dir, test different batch sizes
-        pc_dir = 'tests/data/kitti/training/velodyne/'
+        pc_dir = dict(points='tests/data/kitti/training/velodyne/')
         res_bs2 = self.inferencer(pc_dir, batch_size=2, return_vis=True)
         self.assertIn('visualization', res_bs2)
         self.assertIn('predictions', res_bs2)
@@ -85,10 +86,10 @@ class TestLidarDet3DInferencer(TestCase):
     def test_visualize(self):
         if not torch.cuda.is_available():
             return
-        pc_path = 'tests/data/kitti/training/velodyne/000000.bin',
+        inputs = dict(points='tests/data/kitti/training/velodyne/000000.bin'),
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            self.inferencer(pc_path, img_out_dir=tmp_dir)
+            self.inferencer(inputs, img_out_dir=tmp_dir)
             # TODO: For LiDAR-based detection, the saved image only exists when
             # show=True.
             # self.assertTrue(osp.exists(osp.join(tmp_dir, '000000.png')))
@@ -97,15 +98,15 @@ class TestLidarDet3DInferencer(TestCase):
         if not torch.cuda.is_available():
             return
         # return_datasample
-        pc_path = 'tests/data/kitti/training/velodyne/000000.bin'
-        res = self.inferencer(pc_path, return_datasamples=True)
+        inputs = dict(points='tests/data/kitti/training/velodyne/000000.bin')
+        res = self.inferencer(inputs, return_datasamples=True)
         self.assertTrue(is_list_of(res['predictions'], Det3DDataSample))
 
         # pred_out_file
         with tempfile.TemporaryDirectory() as tmp_dir:
             pred_out_file = osp.join(tmp_dir, 'tmp.json')
             res = self.inferencer(
-                pc_path, print_result=True, pred_out_file=pred_out_file)
+                inputs, print_result=True, pred_out_file=pred_out_file)
             dumped_res = mmengine.load(pred_out_file)
             self.assert_predictions_equal(res['predictions'],
                                           dumped_res['predictions'])
