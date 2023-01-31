@@ -58,9 +58,9 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                  device: Optional[str] = None,
                  scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
-        # A global counter tracking the number of point cloud processed, for
+        # A global counter tracking the number of frames processed, for
         # naming of the output results
-        self.num_visualized_point_clouds = 0
+        self.num_visualized_frames = 0
         self.palette = palette
         register_all_modules()
         super().__init__(
@@ -155,7 +155,7 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                 pc_name = f'{pc_name}.png'
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
-                pc_num = str(self.num_visualized_point_clouds).zfill(8)
+                pc_num = str(self.num_visualized_frames).zfill(8)
                 pc_name = f'pc_{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
@@ -178,6 +178,6 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                 vis_task='lidar_det',
             )
             results.append(points)
-            self.num_visualized_point_clouds += 1
+            self.num_visualized_frames += 1
 
         return results
