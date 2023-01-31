@@ -111,7 +111,7 @@ def _fill_trainval_infos(
                 next_id = None
             else:
                 next_id = json_seq['frames'][f_idx+1]['frame_id']
-            lidar_path = osp.join(seq_path, 'lidar_roof', '{}.bin'.format(frame_id)))
+            lidar_path = osp.join(seq_path, 'lidar_roof', '{}.bin'.format(frame_id))
             mmcv.check_file_exist(lidar_path)
             pose = np.array(frame['pose'])
             frame_dict = {
