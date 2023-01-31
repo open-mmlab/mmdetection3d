@@ -66,6 +66,7 @@ class ONCE2KITTI(object):
         self.workers = int(workers)
         self.test_mode = test_mode
 
+        self.data_root = join(self.load_dir, 'data')
         self.seq_paths = sorted(
             glob(join(self.load_dir, 'data/*')))
 
@@ -83,17 +84,32 @@ class ONCE2KITTI(object):
     @property
     @split_info_loader_helper
     def train_split_list(self):
-        return osp.join(self.dataset_root, 'ImageSets', 'train.txt')
+        return osp.join(self.load_dir, 'ImageSets', 'train.txt')
 
     @property
     @split_info_loader_helper
     def val_split_list(self):
-        return osp.join(self.dataset_root, 'ImageSets', 'val.txt')
+        return osp.join(self.load_dir, 'ImageSets', 'val.txt')
 
     @property
     @split_info_loader_helper
     def test_split_list(self):
-        return osp.join(self.dataset_root, 'ImageSets', 'test.txt')
+        return osp.join(self.load_dir, 'ImageSets', 'test.txt')
+
+    @property
+    @split_info_loader_helper
+    def raw_small_split_list(self):
+        return osp.join(self.load_dir, 'ImageSets', 'raw_small.txt')
+
+    @property
+    @split_info_loader_helper
+    def raw_medium_split_list(self):
+        return osp.join(self.load_dir, 'ImageSets', 'raw_medium.txt')
+
+    @property
+    @split_info_loader_helper
+    def raw_large_split_list(self):
+        return osp.join(self.load_dir, 'ImageSets', 'raw_large.txt')
 
     def _find_split_name(self, seq_id):
         if seq_id in self.train_split_list:
@@ -102,23 +118,42 @@ class ONCE2KITTI(object):
             return 'test'
         elif seq_id in self.val_split_list:
             return 'val'
+        elif seq_id in self.raw_small_split_list:
+            return 'raw_small'
+        elif seq_id in self.raw_medium_split_list:
+            return 'raw_medium'
+        elif seq_id in self.raw_large_split_list:
+            return 'raw_large'
         print("sequence id {} corresponding to no split".format(seq_id))
         raise NotImplementedError
     
     def _collect_basic_infos(self):
         self.train_info = defaultdict(dict)
-        if self.train_split_list is not None:
-            for train_seq in self.train_split_list:
-                anno_file_path = osp.join(self.data_root, train_seq, '{}.json'.format(train_seq))
-                if not osp.isfile(anno_file_path):
-                    print("no annotation file for sequence {}".format(train_seq))
-                    raise FileNotFoundError
-                anno_file = json.load(open(anno_file_path, 'r'))
-                for frame_anno in anno_file['frames']:
-                    self.train_info[train_seq][frame_anno['frame_id']] = {
-                        'pose': frame_anno['pose'],
-                        'calib': anno_file['calib'],
-                    }
+        self.val_info = defaultdict(dict)
+        self.test_info = defaultdict(dict)
+        self.raw_small_info = defaultdict(dict)
+        self.raw_medium_info = defaultdict(dict)
+        self.raw_large_info = defaultdict(dict)
+
+        for attr in ['train', 'val', 'test', 'raw_small', 'raw_medium', 'raw_large']:
+            if getattr(self, '{}_split_list'.format(attr)) is not None:
+                split_list = getattr(self, '{}_split_list'.format(attr))
+                info_dict = getattr(self, '{}_info'.format(attr))
+                for seq_id in split_list:
+                    anno_file_path = osp.join(self.data_root, seq_id, '{}.json'.format(seq_id))
+                    if not osp.isfile(anno_file_path):
+                        print("no annotation file for sequence {}".format(seq_id))
+                        raise FileNotFoundError
+                    anno_file = json.load(open(anno_file_path, 'r'))
+                    info_dict[seq_id]['calib'] = anno_file['calib']
+                    frame_list = list()
+                    for frame_anno in anno_file['frames']:
+                        frame_id = frame_anno['frame_id']
+                        frame_list.append(str(frame_id))
+                        info_dict[seq_id][frame_id]['pose'] = frame_anno['pose']
+                        if 'annos' in frame_anno.keys():
+                            info_dict[seq_id][frame_id]['annos'] = frame_anno['annos']
+                    info_dict[seq_id]['frame_list'] = sorted(frame_list)
 
     def __len__(self):
         """Length of the filename list."""
@@ -131,41 +166,41 @@ class ONCE2KITTI(object):
                                      self.workers)
         print('\nFinished ...')
 
-    def convert_one(self, seqence_path: str):
+    def convert_one(self, seq_path: str):
         """Convert action for single file.
 
         Args:
             seq_path (str): path to the sequence file.
         """
-        frame_paths = sorted(glob(join(seqence_path, 'lidar_roof')))
-        frame_ids = [frame_path.split('/')[-1].split('.')[0] for frame_path in frame_paths]
-        self.save_image(seqence_path, frame_ids)
-        self.save_calib(seqence_path, frame_ids)
-        self.save_lidar(seqence_path, frame_ids)
+        seq_id = seq_path.split('/')[-1]
+        split = self._find_split_name(seq_id)
+        frame_list = getattr(self, '{}_info'.format(split))[seq_id]['frame_list']
+        self.save_image(seq_id, frame_list)
+        self.save_calib(seq_id, frame_list)
+        self.save_lidar(seq_id, frame_list)
 
-    def save_image(self, seq_path: str, frame_ids: List[str]):
+    def save_image(self, seq_id: str, frame_list: List[str]):
         """Parse and save the images in jpg format. Jpg is the original format
         used by Once dataset.
 
         Args:
-            seq_path (str): path to the sequence file.
-            frame_ids (list[str]): ids of the frame files in the current sequence.
+            seq_id (str): id of the sequence file.
+            frame_list (list[str]): ids of the frame files in the current sequence.
         """
-        seq_id = seq_path.split('/')[-1]
+        seq_path = join(self.data_root, seq_id)
         for camera in self.camera_list:
-            for frame_id in frame_ids:
+            for frame_id in frame_list:
                 src_path = f'{seq_path}/{camera}/{frame_id}.jpg'
                 dist_path = f'{self.image_save_dir}{seq_id}' + \
                             f'{frame_id}.jpg'
                 shutil.copyfile(src_path, dist_path)
 
-    def save_calib(self, seq_path: str):
+    def save_calib(self, seq_id: str):
         """Parse and save the calibration data.
 
         Args:
-            seq_path (str): path to the sequence file.
+            seq_id (str): id of the sequence file.
         """
-        seq_id = seq_path.split('/')[-1]
         # once camera 03 to kitti reference camera P0
         T_cam03_to_ref = np.eye(3)
 
@@ -174,8 +209,9 @@ class ONCE2KITTI(object):
         Tr_velo_to_cams = []
         calib_context = ''
 
-        original_calibs = \
-            json.load(open(f'{seq_path}/{seq_path.split[-1]}.json'))['calib']
+        # get sequence calib
+        split = self._find_split_name(seq_id)
+        original_calibs = getattr(self, '{}_info'.format(split))[seq_id]['calib']
 
         # TODO: need to check
         for camera in self.camera_list:
@@ -210,21 +246,21 @@ class ONCE2KITTI(object):
             fp_calib.write(calib_context)
             fp_calib.close()
 
-    def save_lidar(self, seq_path: str, frame_ids: List[str]):
+    def save_lidar(self, seq_id: str, frame_list: List[str]):
         """Parse and save the lidar data in psd format.
 
         Args:
-            seq_path (str): path to the sequence file.
-            frame_ids (list[str]): ids of the frame files in the current sequence.
+            seq_id (str): id of the sequence file.
+            frame_list (list[str]): ids of the frame files in the current sequence.
         """
-        seq_id = seq_path.split('/')[-1]
-        for frame_id in frame_ids:
+        seq_path = join(self.data_root, seq_id)
+        for frame_id in frame_list:
             src_path = f'{seq_path}/lidar_roof/{frame_id}.bin'
             dist_path = f'{self.point_cloud_save_dir}{self.prefix}' + \
                         f'{seq_id}{frame_id}.bin'
             shutil.copyfile(src_path, dist_path)
 
-    def save_label(self, seq_path: str, frame_ids: List[str]):
+    def save_label(self, seq_id: str, frame_list: List[str]):
         """Parse and save the label data in txt format, originally in json format
         The relation between once and kitti coordinates:
         1. x, y, z correspond to l, w, h (once) -> l, h, w (kitti)
@@ -234,11 +270,10 @@ class ONCE2KITTI(object):
         5. rotation: +x around z-axis yaw angle (once) -> +x around y-axis roll angle(kitti)
 
         Args:
-            seq_path (str): path to the sequence file.   
-            frame_ids (list[str]): ids of the frame files in the current sequence.
+            seq_id (str): id of the sequence file.   
+            frame_list (list[str]): ids of the frame files in the current sequence.
         """
-        seq_id = seq_path.split['/'][-1]
-        for frame_id in frame_ids:
+        for frame_id in frame_list:
             original_annos = self.get_frame_anno(seq_id, frame_id)
             # TODO: frames that have no annos
             if not original_annos:
@@ -288,20 +323,16 @@ class ONCE2KITTI(object):
             fp_label.write(line)
             fp_label.close()
 
-    def save_pose(self, seq_path: str, frame_ids: List[str]):
+    def save_pose(self, seq_id: str, frame_list: List[str]):
         """Parse and save the pose data.
 
         Args:
-            seq_path (str): path to the sequence file.   
-            frame_ids (list[str]): ids of the frame files in the current sequence.
+            seq_id (str): id of the sequence file.   
+            frame_list (list[str]): ids of the frame files in the current sequence.
         """
-        seq_id = seq_path.split['/'][-1]
-        for frame_id in frame_ids:
-            if self._find_split_name(seq_id) == 'train':
-                pose = np.array(self.train_info[seq_id][frame_id]['pose'])
-            else:
-                # TODO: reorganize code
-                pass
+        split = self._find_split_name(seq_id)
+        for frame_id in frame_list:
+            pose = np.array(getattr(self, '{}_info'.format(split))[seq_id][frame_id]['pose'])
 
             np.savetxt(join(f'{self.pose_save_dir}/' +
                         f'{seq_id}{frame_id}.txt'), pose)
