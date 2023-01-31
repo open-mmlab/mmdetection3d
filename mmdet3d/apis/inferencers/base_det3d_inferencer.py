@@ -4,6 +4,8 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import mmengine
 import numpy as np
 import torch.nn as nn
+from mmengine.fileio import (get_file_backend, isdir, join_path,
+                             list_dir_or_file)
 from mmengine.infer.infer import BaseInferencer, ModelType
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
@@ -109,6 +111,51 @@ class BaseDet3DInferencer(BaseInferencer):
         model.to(device)
         model.eval()
         return model
+
+    def _inputs_to_list(
+            self,
+            inputs: Union[dict, list],
+            modality_key: Union[str, List[str]] = 'points') -> list:
+        """Preprocess the inputs to a list.
+
+        Preprocess inputs to a list according to its type:
+
+        - list or tuple: return inputs
+        - dict: the value of key 'points'/`img` is
+            - Directory path: return all files in the directory
+            - other cases: return a list containing the string. The string
+              could be a path to file, a url or other types of string according
+              to the task.
+
+        Args:
+            inputs (Union[dict, list]): Inputs for the inferencer.
+            modality_key (Union[str, List[str]], optional): The key of the
+                modality. Defaults to 'points'.
+
+        Returns:
+            list: List of input for the :meth:`preprocess`.
+        """
+        if isinstance(modality_key, str):
+            modality_key = [modality_key]
+        assert set(modality_key).issubset({'points', 'img'})
+
+        for key in modality_key:
+            if isinstance(inputs, dict) and isinstance(inputs[key], str):
+                img = inputs[key]
+                backend = get_file_backend(img)
+                if hasattr(backend, 'isdir') and isdir(img):
+                    # Backends like HttpsBackend do not implement `isdir`, so
+                    # only those backends that implement `isdir` could accept
+                    # the inputs as a directory
+                    filename_list = list_dir_or_file(img, list_dir=False)
+                    inputs = [{
+                        f'{key}': join_path(img, filename)
+                    } for filename in filename_list]
+
+        if not isinstance(inputs, (list, tuple)):
+            inputs = [inputs]
+
+        return list(inputs)
 
     def _get_transform_idx(self, pipeline_cfg: ConfigType, name: str) -> int:
         """Returns the index of the transform in a pipeline.
@@ -240,7 +287,7 @@ class BaseDet3DInferencer(BaseInferencer):
         """
         pred_instances = data_sample.pred_instances_3d.numpy()
         result = {
-            'bboxes_3d': pred_instances.bboxes_3d.tensor.numpy().tolist(),
+            'bboxes_3d': pred_instances.bboxes_3d.tensor.cpu().tolist(),
             'labels_3d': pred_instances.labels_3d.tolist(),
             'scores_3d': pred_instances.scores_3d.tolist()
         }

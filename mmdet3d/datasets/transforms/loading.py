@@ -709,7 +709,21 @@ class LoadPointsFromDict(LoadPointsFromFile):
     """Load Points From Dict."""
 
     def transform(self, results: dict) -> dict:
+        """Convert the type of points from ndarray to corresponding
+        `point_class`.
+
+        Args:
+            results (dict): input result. The value of key `points` is a
+                numpy array.
+
+        Returns:
+            dict: The processed results.
+        """
         assert 'points' in results
+        points_class = get_points_type(self.coord_type)
+        points = results['points']
+        results['points'] = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=None)
         return results
 
 
@@ -1001,15 +1015,71 @@ class LoadAnnotations3D(LoadAnnotations):
 
 
 @TRANSFORMS.register_module()
-class Mono3DInferencerLoader(BaseTransform):
+class LidarDet3DInferencerLoader(BaseTransform):
+    """Load point cloud in the Inferencer's pipeline.
+
+    Added keys:
+      - points
+      - timestamp
+      - axis_align_matrix
+      - box_type_3d
+      - box_mode_3d
+    """
+
+    def __init__(self, coord_type='LIDAR', **kwargs) -> None:
+        super().__init__()
+        self.from_file = TRANSFORMS.build(
+            dict(type='LoadPointsFromFile', coord_type=coord_type, **kwargs))
+        self.from_ndarray = TRANSFORMS.build(
+            dict(type='LoadPointsFromDict', coord_type=coord_type, **kwargs))
+        self.box_type_3d, self.box_mode_3d = get_box_type(coord_type)
+
+    def transform(self, single_input: dict) -> dict:
+        """Transform function to add image meta information.
+        Args:
+            single_input (dict): Single input.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        assert 'points' in single_input, "key 'points' must be in input dict"
+        if isinstance(single_input['points'], str):
+            inputs = dict(
+                lidar_points=dict(lidar_path=single_input['points']),
+                timestamp=1,
+                # for ScanNet demo we need axis_align_matrix
+                axis_align_matrix=np.eye(4),
+                box_type_3d=self.box_type_3d,
+                box_mode_3d=self.box_mode_3d)
+        elif isinstance(single_input['points'], np.ndarray):
+            inputs = dict(
+                points=single_input['points'],
+                timestamp=1,
+                # for ScanNet demo we need axis_align_matrix
+                axis_align_matrix=np.eye(4),
+                box_type_3d=self.box_type_3d,
+                box_mode_3d=self.box_mode_3d)
+        else:
+            raise ValueError('Unsupported input points type: '
+                             f"{type(single_input['points'])}")
+
+        if 'points' in inputs:
+            return self.from_ndarray(inputs)
+        return self.from_file(inputs)
+
+
+@TRANSFORMS.register_module()
+class MonoDet3DInferencerLoader(BaseTransform):
     """Load an image from ``results['images']['CAMX']['img']``. Similar with
     :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
     :obj:`np.ndarray` in ``results['images']['CAMX']['img']``.
 
-    Args:
-        to_float32 (bool): Whether to convert the loaded image to a float32
-            numpy array. If set to False, the loaded image is an uint8 array.
-            Defaults to False.
+    Added keys:
+      - img
+      - cam2img
+      - box_type_3d
+      - box_mode_3d
+
     """
 
     def __init__(self, **kwargs) -> None:
@@ -1029,6 +1099,8 @@ class Mono3DInferencerLoader(BaseTransform):
             dict: The dict contains loaded image and meta information.
         """
         box_type_3d, box_mode_3d = get_box_type('camera')
+        assert 'calib' in single_input and 'img' in single_input, \
+            "key 'calib' and 'img' must be in input dict"
         if isinstance(single_input['calib'], str):
             calib_path = single_input['calib']
             with open(calib_path, 'r') as f:
@@ -1039,8 +1111,8 @@ class Mono3DInferencerLoader(BaseTransform):
         elif isinstance(single_input['calib'], np.ndarray):
             cam2img = single_input['calib']
         else:
-            raise ValueError('Unsupported input type: '
-                             f'{type(single_input)}')
+            raise ValueError('Unsupported input calib type: '
+                             f"{type(single_input['calib'])}")
 
         if isinstance(single_input['img'], str):
             inputs = dict(
@@ -1056,8 +1128,8 @@ class Mono3DInferencerLoader(BaseTransform):
                 box_type_3d=box_type_3d,
                 box_mode_3d=box_mode_3d)
         else:
-            raise ValueError('Unsupported input type: '
-                             f'{type(single_input)}')
+            raise ValueError('Unsupported input image type: '
+                             f"{type(single_input['img'])}")
 
         if 'img' in inputs:
             return self.from_ndarray(inputs)
