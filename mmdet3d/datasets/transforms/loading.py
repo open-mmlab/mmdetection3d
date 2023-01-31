@@ -1019,7 +1019,7 @@ class LidarDet3DInferencerLoader(BaseTransform):
     """Load point cloud in the Inferencer's pipeline.
 
     Added keys:
-      - lidar_points
+      - points
       - timestamp
       - axis_align_matrix
       - box_type_3d
@@ -1074,10 +1074,12 @@ class Mono3DInferencerLoader(BaseTransform):
     :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
     :obj:`np.ndarray` in ``results['images']['CAMX']['img']``.
 
-    Args:
-        to_float32 (bool): Whether to convert the loaded image to a float32
-            numpy array. If set to False, the loaded image is an uint8 array.
-            Defaults to False.
+    Added keys:
+      - img
+      - cam2img
+      - box_type_3d
+      - box_mode_3d
+
     """
 
     def __init__(self, **kwargs) -> None:

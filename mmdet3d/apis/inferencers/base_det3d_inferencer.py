@@ -129,8 +129,8 @@ class BaseDet3DInferencer(BaseInferencer):
 
         Args:
             inputs (Union[dict, list]): Inputs for the inferencer.
-            modality_key (str, optional): The key of the modality. Defaults to
-                'points'.
+            modality_key (Union[str, List[str]], optional): The key of the
+                modality. Defaults to 'points'.
 
         Returns:
             list: List of input for the :meth:`preprocess`.

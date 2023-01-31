@@ -58,8 +58,8 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                  device: Optional[str] = None,
                  scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
-        # A global counter tracking the number of images processed, for
-        # naming of the output images
+        # A global counter tracking the number of points processed, for
+        # naming of the output results
         self.num_visualized_points = 0
         self.palette = palette
         register_all_modules()
