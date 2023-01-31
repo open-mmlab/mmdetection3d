@@ -1069,7 +1069,7 @@ class LidarDet3DInferencerLoader(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class Mono3DInferencerLoader(BaseTransform):
+class MonoDet3DInferencerLoader(BaseTransform):
     """Load an image from ``results['images']['CAMX']['img']``. Similar with
     :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
     :obj:`np.ndarray` in ``results['images']['CAMX']['img']``.

@@ -99,7 +99,7 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         if load_img_idx == -1:
             raise ValueError(
                 'LoadImageFromFileMono3D is not found in the test pipeline')
-        pipeline_cfg[load_img_idx]['type'] = 'Mono3DInferencerLoader'
+        pipeline_cfg[load_img_idx]['type'] = 'MonoDet3DInferencerLoader'
         return Compose(pipeline_cfg)
 
     def visualize(self,

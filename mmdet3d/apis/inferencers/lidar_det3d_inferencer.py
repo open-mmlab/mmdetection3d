@@ -58,9 +58,9 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                  device: Optional[str] = None,
                  scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
-        # A global counter tracking the number of points processed, for
+        # A global counter tracking the number of point cloud processed, for
         # naming of the output results
-        self.num_visualized_points = 0
+        self.num_visualized_point_clouds = 0
         self.palette = palette
         register_all_modules()
         super().__init__(
@@ -117,8 +117,8 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
         """Visualize predictions.
 
         Args:
-            inputs (List[Union[str, np.ndarray]]): Inputs for the inferencer.
-            preds (List[Dict]): Predictions of the model.
+            inputs (InputsType): Inputs for the inferencer.
+            preds (PredType): Predictions of the model.
             return_vis (bool): Whether to return the visualization result.
                 Defaults to False.
             show (bool): Whether to display the image in a popup window.
@@ -155,7 +155,7 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                 pc_name = f'{pc_name}.png'
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
-                pc_num = str(self.num_visualized_points).zfill(8)
+                pc_num = str(self.num_visualized_point_clouds).zfill(8)
                 pc_name = f'pc_{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
@@ -178,6 +178,6 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                 vis_task='lidar_det',
             )
             results.append(points)
-            self.num_visualized_points += 1
+            self.num_visualized_point_clouds += 1
 
         return results
