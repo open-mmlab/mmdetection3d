@@ -215,6 +215,30 @@ def create_groundtruth_database(dataset_class_name,
                     with_label_3d=True,
                     file_client_args=file_client_args)
             ])
+    elif dataset_class_name == 'OnceDataset':
+        file_client_args = dict(backend='disk')
+        dataset_cfg.update(
+            test_mode=False,
+            split='training',
+            modality=dict(
+                use_lidar=True,
+                use_depth=False,
+                use_lidar_intensity=True,
+                use_camera=False,
+            ),
+            pipeline=[
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='LIDAR',
+                    load_dim=4,
+                    use_dim=4,
+                    file_client_args=file_client_args),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True,
+                    file_client_args=file_client_args)
+            ])
 
     dataset = build_dataset(dataset_cfg)
 
@@ -236,6 +260,9 @@ def create_groundtruth_database(dataset_class_name,
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
         input_dict = dataset.get_data_info(j)
+        # OnceDataset has some 'ann_info' being None
+        if input_dict['ann_info'] is None:
+            continue
         dataset.pre_pipeline(input_dict)
         example = dataset.pipeline(input_dict)
         annos = example['ann_info']

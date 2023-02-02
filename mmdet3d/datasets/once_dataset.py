@@ -85,20 +85,6 @@ class OnceDataset(Custom3DDataset):
         self.pts_prefix = pts_prefix
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
-
-    def load_annotations(self, ann_file):
-        """Load annotations from ann_file.
-
-        Args:
-            ann_file (str): Path of the annotation file.
-
-        Returns:
-            list[dict]: List of annotations sorted by timestamps(frame_id).
-        """
-        data = mmcv.load(ann_file, file_format='pkl')
-        data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
-        self.metadata = data['metadata']
-        return data_infos
     
     def get_data_info(self, index):
         """Get data info according to the given index.
@@ -170,6 +156,8 @@ class OnceDataset(Custom3DDataset):
         """
         # Use index to get the annos, thus the evalhook could also use this api
         info = self.data_infos[index]
+        if 'annos' not in info:
+            return None
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']

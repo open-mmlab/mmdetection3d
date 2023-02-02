@@ -6,6 +6,7 @@ from tools.data_converter import indoor_converter as indoor
 from tools.data_converter import kitti_converter as kitti
 from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
+from tools.data_converter import once_converter
 from tools.data_converter.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
 
@@ -198,6 +199,21 @@ def waymo_data_prep(root_path,
         num_worker=workers).create()
 
 
+def once_data_prep(root_path, info_prefix = 'once', split = 'trainval'):
+    """Prepare data related to ONCE dataset.
+
+    Related data consists of '.pkl' files recording basic infos.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        split (str): Dataset split.
+    """
+    once_converter.create_once_infos(
+        root_path, info_prefix, split=split)
+    create_groundtruth_database('OnceDataset', root_path, info_prefix,
+                                f'{root_path}/{info_prefix}_infos_train.pkl')
+
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
 parser.add_argument(
@@ -311,3 +327,8 @@ if __name__ == '__main__':
             num_points=args.num_points,
             out_dir=args.out_dir,
             workers=args.workers)
+    elif args.dataset == 'once':
+        once_data_prep(
+            root_path=args.root_path,
+            split=args.version,
+        )

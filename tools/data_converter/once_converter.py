@@ -17,13 +17,12 @@ camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
 def _read_imageset_file(path):
     with open(path, 'r') as f:
         lines = f.readlines()
-    return [str(line) for line in lines]
+    return [str(line).strip('\n') for line in lines]
 
 
 def create_once_infos(root_path,
                       info_prefix,
-                      version,
-                      max_sweeps=10):
+                      split):
     """Create info file of once dataset.
     
     Given the raw data, generate its related info file in pkl format.
@@ -31,19 +30,18 @@ def create_once_infos(root_path,
     Args:
         root_path (str): Path of the data root.
         info_prefix (str): Prefix of the info file to be generated.
-        version (str, optional): Version of the data.
+        split (str, optional): Version of the data.
         max_sweeps (int, optional): Max number of sweeps.
             Default: 10.
     """
-    available_vers = ['train', 'val', 'test']
-    assert version in available_vers
+    assert split in ['train', 'val', 'trainval', 'test']
 
     imageset_path = osp.join(root_path, 'ImageSets')
     train_seqs = _read_imageset_file(osp.join(imageset_path, 'train.txt'))
     val_seqs = _read_imageset_file(osp.join(imageset_path, 'val.txt'))
     test_seqs = _read_imageset_file(osp.join(imageset_path, 'test.txt'))
 
-    test = version == 'test'
+    test = split == 'test'
     if test:
         print('test sequences: {}'.format(len(train_seqs)))
     else:
@@ -55,21 +53,15 @@ def create_once_infos(root_path,
 
     if test:
         print(f'test frames: {len(train_once_infos)}')
-        data = dict(infos=train_once_infos)
-        info_name = f'{info_prefix}_infos_test'
-        info_path = osp.join(root_path, f'{info_name}.pkl')
-        mmcv.dump(data, info_path)
+        info_path = osp.join(root_path, f'{info_prefix}_infos_test.pkl')
+        mmcv.dump(train_once_infos, info_path)
     else:
         print(f'train frames: {len(train_once_infos)}, \
                 val frames: {len(val_once_infos)}')
-        data = dict(infos=train_once_infos)
-        train_info_name = f'{info_prefix}_infos_train'
-        info_path = osp.join(root_path, f'{train_info_name}.pkl')
-        mmcv.dump(data, info_path)
-        data['infos'] = val_once_infos
-        val_info_name = f'{info_prefix}_infos_val'
-        info_val_path = osp.join(root_path, f'{val_info_name}.pkl')
-        mmcv.dump(data, info_val_path)
+        info_path = osp.join(root_path, f'{info_prefix}_infos_train.pkl')
+        mmcv.dump(train_once_infos, info_path)
+        info_val_path = osp.join(root_path, f'{info_prefix}_infos_val.pkl')
+        mmcv.dump(val_once_infos, info_val_path)
 
 
 def _fill_trainval_infos(
@@ -103,6 +95,7 @@ def _fill_trainval_infos(
         calib = json_seq['calib']
         for f_idx, frame in enumerate(json_seq['frames']):
             frame_id = frame['frame_id']
+            print(f'Process seq_id: {seq_id}, frame_id: {frame_id}')
             if f_idx == 0:
                 prev_id = None
             else:
@@ -121,12 +114,12 @@ def _fill_trainval_infos(
                 'prev_id': prev_id,
                 'next_id': next_id,
                 'meta_info': meta_info,
-                'lidar': lidar_path,
+                'lidar_path': lidar_path,
                 'pose': pose
             }
             calib_dict = {}
             for camera in camera_list:
-                img_path = osp.join(seq_path / camera / '{}.jpg'.format(frame_id))
+                img_path = osp.join(seq_path, camera, '{}.jpg'.format(frame_id))
                 frame_dict.update({camera: img_path})
                 calib_dict[camera] = {}
                 calib_dict[camera]['cam_to_velo'] = np.array(calib[camera]['cam_to_velo'])
@@ -153,8 +146,8 @@ def _fill_trainval_infos(
                 frame_dict.update({'annos': annos_dict})
 
             if seq_id in train_seqs:
-                train_once_infos.extend(frame_dict)
+                train_once_infos.append(frame_dict)
             if seq_id in val_seqs:
-                val_once_infos.extend(frame_dict)
+                val_once_infos.append(frame_dict)
 
     return train_once_infos, val_once_infos
