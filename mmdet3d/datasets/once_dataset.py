@@ -165,6 +165,7 @@ class OnceDataset(Custom3DDataset):
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']
+        # TODO: need to check
         # Convert gt_bboxes_3d from once's lidar coordinates
         # to LiDARInstance3DBoxes standard lidar coordinates
         # once (lidar): x(left), y(back), z(up)
@@ -233,8 +234,13 @@ class OnceDataset(Custom3DDataset):
                 modifying the jsonfile_prefix. Default: None.
 
         Returns:
+            dict:
             str: Path of the output json file.
         """
+        assert isinstance(results, list), 'results must be a list'
+        assert len(results) == len(self), (
+            'The length of results is not equal to the dataset len: {} != {}'.
+            format(len(results), len(self)))
 
         annos = []
         for idx, result in enumerate(
@@ -259,12 +265,13 @@ class OnceDataset(Custom3DDataset):
             pred_dict['frame_id'] = sample_idx
             annos.append(pred_dict)
 
+        res_path = None
         if jsonfile_prefix is not None:
             mmcv.mkdir_or_exist(jsonfile_prefix)
             res_path = osp.join(jsonfile_prefix, 'results_once.json')
             print('Results writes to', res_path)
             mmcv.dump(annos, res_path)
-        return res_path
+        return annos, res_path
 
     def _format_boxes_3d(self, boxes_3d):
         """Format predicted boxes3d to once format
@@ -288,52 +295,6 @@ class OnceDataset(Custom3DDataset):
         boxes_3d[:, 6] -= np.pi / 2
 
         return boxes_3d
-
-    def format_results(self,
-                       results,
-                       jsonfile_prefix=None,
-                       submission_prefix=None):
-        """Format the results to json file.
-
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str): The prefix of json files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-            submission_prefix (str): The prefix of submitted files. It
-                includes the file path and the prefix of filename, e.g.,
-                "a/b/prefix". If not specified, a temp file will be created.
-                Default: None.
-
-        Returns:
-            tuple: (result_files, tmp_dir), result_files is a dict containing
-                the json filepaths, tmp_dir is the temporal directory created
-                for saving json files when jsonfile_prefix is not specified.
-        """
-        assert isinstance(results, list), 'results must be a list'
-        assert len(results) == len(self), (
-            'The length of results is not equal to the dataset len: {} != {}'.
-            format(len(results), len(self)))
-        
-        if jsonfile_prefix is None:
-            tmp_dir = tempfile.TemporaryDirectory()
-            jsonfile_prefix = osp.join(tmp_dir.name, 'results')
-        else:
-            tmp_dir = None
-
-        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
-            result_files = self._format_results(results, jsonfile_prefix)
-        else:
-            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
-            result_files = dict()
-            for name in results[0]:
-                print(f'\nFormating bboxes of {name}')
-                results_ = [out[name] for out in results]
-                tmp_file_ = osp.join(jsonfile_prefix, name)
-                result_files.update(
-                    {name: self._format_results(results_, tmp_file_)})
-        return result_files, tmp_dir
-
 
     def evaluate(self,
                  results,
@@ -365,27 +326,25 @@ class OnceDataset(Custom3DDataset):
         Returns:
             dict[str, float]: Results of each evaluation metric.
         """
-        result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
+        results_dict, tmp_dir = self._format_results(results, jsonfile_prefix)
+        assert isinstance(results_dict, dict)
+
         from mmdet3d.core.evaluation import once_eval
         gt_annos = [info['annos'] for info in self.filtered_data_infos]
 
-        if isinstance(result_files, dict):
-            ap_dict = dict()
-            for name, results_files_ in result_files.items():
-                eval_types = ['Overall&Distance']
-                ap_result_str, ap_dict_ = once_eval(
-                    gt_annos,
-                    results_files_,
-                    self.CLASSES,
-                    eval_types=eval_types)
-                for ap_type, ap in ap_dict_.items():
-                    ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
+        ap_dict = dict()
+        for name, results_dict_ in results_dict.items():
+            eval_types = ['Overall&Distance']
+            ap_result_str, ap_dict_ = once_eval(
+                gt_annos,
+                results_dict_,
+                self.CLASSES,
+                eval_types=eval_types)
+            for ap_type, ap in ap_dict_.items():
+                ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
 
-                print_log(
-                    f'Results of {name}:\n' + ap_result_str, logger=logger)
-        else:
-            ap_result_str, ap_dict = once_eval(gt_annos, result_files, self.CLASSES)
-            print_log('\n' + ap_result_str, logger=logger)
+            print_log(
+                f'Results of {name}:\n' + ap_result_str, logger=logger)
         
         if tmp_dir is not None:
             tmp_dir.cleanup()
