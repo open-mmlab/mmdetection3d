@@ -161,6 +161,17 @@ class OnceDataset(Custom3DDataset):
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']
+        # Convert gt_bboxes_3d from once's lidar coordinates
+        # to LiDARInstance3DBoxes standard lidar coordinates
+        # once (lidar): x(left), y(back), z(up)
+        # standard (kitti's lidar): x(front), y(left), z(up)
+        # and once `(cx, cy, cz)` is the center of the cubic
+        Tr_lidar_to_standard = np.array(
+            [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        )
+        gt_bboxes_3d[:, :3] = np.array([Tr_lidar_to_standard @ gt_bbox_3d for \
+                                gt_bbox_3d in gt_bboxes_3d[:, :3]])
+        gt_bboxes_3d[:, 6] += np.pi / 2
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,
             box_dim=gt_bboxes_3d.shape[-1],
@@ -205,11 +216,14 @@ class OnceDataset(Custom3DDataset):
             return None
         return example
 
-    def _format_bbox(self, results, jsonfile_prefix=None):
+    def _format_results(self, results, jsonfile_prefix=None):
         """Convert the results to the standard format.
 
         Args:
             results (list[dict]): Testing results of the dataset.
+                - boxes_3d (:obj:`LiDARInstance3DBoxes`): Detection bbox.
+                - scores_3d (torch.Tensor): Detection scores.
+                - labels_3d (torch.Tensor): Predicted box labels.
             jsonfile_prefix (str): The prefix of the output jsonfile.
                 You can specify the output directory/filename by
                 modifying the jsonfile_prefix. Default: None.
@@ -223,9 +237,9 @@ class OnceDataset(Custom3DDataset):
                 mmcv.track_iter_progress(results)):
             info = self.data_infos[idx]
             sample_idx = info['frame_id']
-            pred_scores = result['pred_scores'].cpu().numpy()
-            pred_boxes = result['pred_boxes'].cpu().numpy()
-            pred_labels = result['pred_labels'].cpu().numpy()
+            pred_scores = result['scores_3d'].numpy()
+            pred_labels = result['labels_3d'].numpy()
+            pred_boxes = self._format_boxes_3d(result['boxes_3d'])
 
             num_samples = pred_scores.shape[0]
             pred_dict = {
@@ -247,6 +261,29 @@ class OnceDataset(Custom3DDataset):
             print('Results writes to', res_path)
             mmcv.dump(annos, res_path)
         return res_path
+
+    def _format_boxes_3d(self, boxes_3d):
+        """Format predicted boxes3d to once format
+
+        Args:
+            boxes_3d: (:obj:`BaseInstance3DBoxes`): Detection bbox.
+
+        Returns:
+            np.ndarray: List of once boxes
+        """
+        boxes_3d = boxes_3d.tensor.numpy()
+        # x,y,z from LiDARInstance3DBoxes to once
+        # bottom center to gravity center
+        # transform the yaw angle
+        Tr_standard_to_lidar = np.array(
+            [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
+        )
+        boxes_3d[:, :3] = np.array([Tr_standard_to_lidar @ box_3d for \
+                                    box_3d in boxes_3d[:, :3]])
+        boxes_3d[:, 2] = boxes_3d[:, 2] + boxes_3d[:, 5] * 0.5
+        boxes_3d[:, 6] -= np.pi / 2
+
+        return boxes_3d
 
     def format_results(self,
                        results,
@@ -274,14 +311,14 @@ class OnceDataset(Custom3DDataset):
             'The length of results is not equal to the dataset len: {} != {}'.
             format(len(results), len(self)))
         
-        if pklfile_prefix is None:
+        if jsonfile_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()
-            pklfile_prefix = osp.join(tmp_dir.name, 'results')
+            jsonfile_prefix = osp.join(tmp_dir.name, 'results')
         else:
             tmp_dir = None
 
         if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
-            result_files = self._format_bbox(results, jsonfile_prefix)
+            result_files = self._format_results(results, jsonfile_prefix)
         else:
             # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
             result_files = dict()
@@ -290,7 +327,7 @@ class OnceDataset(Custom3DDataset):
                 results_ = [out[name] for out in results]
                 tmp_file_ = osp.join(jsonfile_prefix, name)
                 result_files.update(
-                    {name: self._format_bbox(results_, tmp_file_)})
+                    {name: self._format_results(results_, tmp_file_)})
         return result_files, tmp_dir
 
 
@@ -298,9 +335,10 @@ class OnceDataset(Custom3DDataset):
                  results,
                  metric='bbox',
                  logger=None,
-                 pklfile_prefix=None,
+                 jsonfile_prefix=None,
                  show=False,
-                 out_dir=None):
+                 out_dir=None,
+                 pipeline=None):
         """Evaluation in ONCE protocol.
 
         Args:
@@ -309,7 +347,7 @@ class OnceDataset(Custom3DDataset):
                 Default: None.
             logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            pklfile_prefix (str, optional): The prefix of pkl files, including
+            jsonfile_prefix (str, optional): The prefix of json files, including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
             submission_prefix (str, optional): The prefix of submission data.
@@ -317,11 +355,13 @@ class OnceDataset(Custom3DDataset):
                 Default: None.
             out_dir (str, optional): Path to save the visualization results.
                 Default: None.
+            pipeline (list[dict], optional): raw data loading for showing.
+                Default: None.
 
         Returns:
             dict[str, float]: Results of each evaluation metric.
         """
-        result_files, tmp_dir = self.format_results(results, pklfile_prefix)
+        result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
         from mmdet3d.core.evaluation import once_eval
         gt_annos = [info['annos'] for info in self.data_infos]
 
