@@ -367,7 +367,7 @@ class OnceDataset(Custom3DDataset):
         """
         result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
         from mmdet3d.core.evaluation import once_eval
-        gt_annos = [info['annos'] for info in self.data_infos]
+        gt_annos = [info['annos'] for info in self.filtered_data_infos]
 
         if isinstance(result_files, dict):
             ap_dict = dict()
