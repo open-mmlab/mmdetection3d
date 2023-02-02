@@ -204,3 +204,146 @@ class OnceDataset(Custom3DDataset):
                     ~(example['gt_labels_3d']._data != -1).any()):
             return None
         return example
+
+    def _format_bbox(self, results, jsonfile_prefix=None):
+        """Convert the results to the standard format.
+
+        Args:
+            results (list[dict]): Testing results of the dataset.
+            jsonfile_prefix (str): The prefix of the output jsonfile.
+                You can specify the output directory/filename by
+                modifying the jsonfile_prefix. Default: None.
+
+        Returns:
+            str: Path of the output json file.
+        """
+
+        annos = []
+        for idx, result in enumerate(
+                mmcv.track_iter_progress(results)):
+            info = self.data_infos[idx]
+            sample_idx = info['frame_id']
+            pred_scores = result['pred_scores'].cpu().numpy()
+            pred_boxes = result['pred_boxes'].cpu().numpy()
+            pred_labels = result['pred_labels'].cpu().numpy()
+
+            num_samples = pred_scores.shape[0]
+            pred_dict = {
+                'name': np.zeros(num_samples),
+                'score': np.zeros(num_samples),
+                'boxes_3d': np.zeros((num_samples, 7))
+            }
+            if num_samples != 0:
+                pred_dict['name'] = np.array(self.CLASSES)[pred_labels - 1]
+                pred_dict['score'] = pred_scores
+                pred_dict['boxes_3d'] = pred_boxes
+
+            pred_dict['frame_id'] = sample_idx
+            annos.append(pred_dict)
+
+        if jsonfile_prefix is not None:
+            mmcv.mkdir_or_exist(jsonfile_prefix)
+            res_path = osp.join(jsonfile_prefix, 'results_once.json')
+            print('Results writes to', res_path)
+            mmcv.dump(annos, res_path)
+        return res_path
+
+    def format_results(self,
+                       results,
+                       jsonfile_prefix=None,
+                       submission_prefix=None):
+        """Format the results to json file.
+
+        Args:
+            results (list[dict]): Testing results of the dataset.
+            jsonfile_prefix (str): The prefix of json files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+            submission_prefix (str): The prefix of submitted files. It
+                includes the file path and the prefix of filename, e.g.,
+                "a/b/prefix". If not specified, a temp file will be created.
+                Default: None.
+
+        Returns:
+            tuple: (result_files, tmp_dir), result_files is a dict containing
+                the json filepaths, tmp_dir is the temporal directory created
+                for saving json files when jsonfile_prefix is not specified.
+        """
+        assert isinstance(results, list), 'results must be a list'
+        assert len(results) == len(self), (
+            'The length of results is not equal to the dataset len: {} != {}'.
+            format(len(results), len(self)))
+        
+        if pklfile_prefix is None:
+            tmp_dir = tempfile.TemporaryDirectory()
+            pklfile_prefix = osp.join(tmp_dir.name, 'results')
+        else:
+            tmp_dir = None
+
+        if not ('pts_bbox' in results[0] or 'img_bbox' in results[0]):
+            result_files = self._format_bbox(results, jsonfile_prefix)
+        else:
+            # should take the inner dict out of 'pts_bbox' or 'img_bbox' dict
+            result_files = dict()
+            for name in results[0]:
+                print(f'\nFormating bboxes of {name}')
+                results_ = [out[name] for out in results]
+                tmp_file_ = osp.join(jsonfile_prefix, name)
+                result_files.update(
+                    {name: self._format_bbox(results_, tmp_file_)})
+        return result_files, tmp_dir
+
+
+    def evaluate(self,
+                 results,
+                 metric='bbox',
+                 logger=None,
+                 pklfile_prefix=None,
+                 show=False,
+                 out_dir=None):
+        """Evaluation in ONCE protocol.
+
+        Args:
+            results (list[dict]): Testing results of the dataset.
+            metric (str | list[str], optional): Metrics to be evaluated.
+                Default: None.
+            logger (logging.Logger | str, optional): Logger used for printing
+                related information during evaluation. Default: None.
+            pklfile_prefix (str, optional): The prefix of pkl files, including
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+            submission_prefix (str, optional): The prefix of submission data.
+                If not specified, the submission data will not be generated.
+                Default: None.
+            out_dir (str, optional): Path to save the visualization results.
+                Default: None.
+
+        Returns:
+            dict[str, float]: Results of each evaluation metric.
+        """
+        result_files, tmp_dir = self.format_results(results, pklfile_prefix)
+        from mmdet3d.core.evaluation import once_eval
+        gt_annos = [info['annos'] for info in self.data_infos]
+
+        if isinstance(result_files, dict):
+            ap_dict = dict()
+            for name, results_files_ in result_files.items():
+                eval_types = ['Overall&Distance']
+                ap_result_str, ap_dict_ = once_eval(
+                    gt_annos,
+                    results_files_,
+                    self.CLASSES,
+                    eval_types=eval_types)
+                for ap_type, ap in ap_dict_.items():
+                    ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
+
+                print_log(
+                    f'Results of {name}:\n' + ap_result_str, logger=logger)
+        else:
+            ap_result_str, ap_dict = once_eval(gt_annos, result_files, self.CLASSES)
+            print_log('\n' + ap_result_str, logger=logger)
+        
+        if tmp_dir is not None:
+            tmp_dir.cleanup()
+
+        return ap_dict
