@@ -17,7 +17,7 @@ camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
 def _read_imageset_file(path):
     with open(path, 'r') as f:
         lines = f.readlines()
-    return [str(line).strip('\n') for line in lines].pop(-1)
+    return [str(line).strip('\n') for line in lines]
 
 
 def create_once_infos(root_path,
@@ -40,6 +40,10 @@ def create_once_infos(root_path,
     train_seqs = _read_imageset_file(osp.join(imageset_path, 'train.txt'))
     val_seqs = _read_imageset_file(osp.join(imageset_path, 'val.txt'))
     test_seqs = _read_imageset_file(osp.join(imageset_path, 'test.txt'))
+    # last line of txt file '\n' introduce '' to seqs list
+    train_seqs.pop(-1)
+    val_seqs.pop(-1)
+    test_seqs.pop(-1)
 
     test = split == 'test'
     if test:
