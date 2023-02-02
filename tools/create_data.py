@@ -211,8 +211,8 @@ def once_data_prep(root_path, info_prefix = 'once', split = 'trainval'):
     """
     once_converter.create_once_infos(
         root_path, info_prefix, split=split)
-    create_groundtruth_database('OnceDataset', root_path, info_prefix,
-                                f'{root_path}/{info_prefix}_infos_train.pkl')
+    # create_groundtruth_database('OnceDataset', root_path, info_prefix,
+    #                             f'{root_path}/{info_prefix}_infos_train.pkl')
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')

@@ -40,10 +40,6 @@ def create_once_infos(root_path,
     train_seqs = _read_imageset_file(osp.join(imageset_path, 'train.txt'))
     val_seqs = _read_imageset_file(osp.join(imageset_path, 'val.txt'))
     test_seqs = _read_imageset_file(osp.join(imageset_path, 'test.txt'))
-    # last line of txt file '\n' introduce '' to seqs list
-    train_seqs.pop(-1)
-    val_seqs.pop(-1)
-    test_seqs.pop(-1)
 
     test = split == 'test'
     if test:
@@ -91,6 +87,9 @@ def _fill_trainval_infos(
     val_once_infos = []
 
     for seq_id in (train_seqs + val_seqs):
+        # last line of txt file '\n' introduce '' to seqs list sometimes
+        if seq_id == '':
+            continue
         seq_path = osp.join(root_path, 'data', seq_id)
         json_path = osp.join(seq_path, '{}.json'.format(seq_id))
         with open(json_path, 'r') as f:
