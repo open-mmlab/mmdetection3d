@@ -859,10 +859,10 @@ def update_waymo_infos(pkl_path, out_dir):
     # pkl generated in the waymo cam only challenage.
     camera_types = [
         'CAM_FRONT',
-        'CAM_FRONT_RIGHT',
         'CAM_FRONT_LEFT',
-        'CAM_SIDE_RIGHT',
+        'CAM_FRONT_RIGHT',
         'CAM_SIDE_LEFT',
+        'CAM_SIDE_RIGHT',
     ]
     print(f'{pkl_path} will be modified.')
     if out_dir in pkl_path:
