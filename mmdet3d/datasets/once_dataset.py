@@ -85,7 +85,11 @@ class OnceDataset(Custom3DDataset):
         self.pts_prefix = pts_prefix
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
+        self.filtered_data_infos = list(filter(self._check_annos, self.data_infos))
     
+    def _check_annos(self, info):
+        return 'annos' in info
+
     def get_data_info(self, index):
         """Get data info according to the given index.
 
