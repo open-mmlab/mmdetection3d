@@ -17,7 +17,7 @@ camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
 def _read_imageset_file(path):
     with open(path, 'r') as f:
         lines = f.readlines()
-    return [str(line).strip('\n') for line in lines]
+    return [str(line).strip('\n') for line in lines].pop(-1)
 
 
 def create_once_infos(root_path,
