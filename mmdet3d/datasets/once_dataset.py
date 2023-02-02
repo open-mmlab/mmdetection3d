@@ -183,3 +183,24 @@ class OnceDataset(Custom3DDataset):
             gt_names=gt_names,
         )
         return anns_results
+
+    def prepare_train_data(self, index):
+        """Training data preparation.
+
+        Args:
+            index (int): Index for accessing the target data.
+
+        Returns:
+            dict: Training data dict of the corresponding index.
+        """
+        input_dict = self.get_data_info(index)
+        # TODO: Need to check
+        if input_dict is None or input_dict['ann_info'] is None:
+            return None
+        self.pre_pipeline(input_dict)
+        example = self.pipeline(input_dict)
+        if self.filter_empty_gt and \
+                (example is None or
+                    ~(example['gt_labels_3d']._data != -1).any()):
+            return None
+        return example
