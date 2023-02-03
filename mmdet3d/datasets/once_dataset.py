@@ -256,7 +256,7 @@ class OnceDataset(Custom3DDataset):
             sample_idx = info['frame_id']
             pred_scores = result['scores_3d'].numpy()
             pred_labels = result['labels_3d'].numpy()
-            pred_boxes = self._format_boxes_3d(result['boxes_3d'])
+            pred_boxes = result['boxes_3d']
 
             num_samples = pred_scores.shape[0]
             pred_dict = {
@@ -267,7 +267,7 @@ class OnceDataset(Custom3DDataset):
             if num_samples != 0:
                 pred_dict['name'] = np.array(self.CLASSES)[pred_labels - 1]
                 pred_dict['score'] = pred_scores
-                pred_dict['boxes_3d'] = pred_boxes
+                pred_dict['boxes_3d'] = self._format_boxes_3d(pred_boxes)
 
             pred_dict['frame_id'] = sample_idx
             annos.append(pred_dict)
