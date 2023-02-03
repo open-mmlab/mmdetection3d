@@ -256,7 +256,7 @@ class OnceDataset(Custom3DDataset):
             sample_idx = info['frame_id']
             pred_scores = result['scores_3d'].numpy()
             pred_labels = result['labels_3d'].numpy()
-            pred_boxes = result['boxes_3d']
+            pred_boxes = result['boxes_3d'].tensor.numpy()
 
             num_samples = pred_scores.shape[0]
             pred_dict = {
@@ -284,12 +284,11 @@ class OnceDataset(Custom3DDataset):
         """Format predicted boxes3d to once format
 
         Args:
-            boxes_3d: (:obj:`BaseInstance3DBoxes`): Detection bbox.
+            boxes_3d: (np.ndarray): Detection bbox.
 
         Returns:
             np.ndarray: List of once boxes
         """
-        boxes_3d = boxes_3d.tensor.numpy()
         # x,y,z from LiDARInstance3DBoxes to once
         # bottom center to gravity center
         # transform the yaw angle
