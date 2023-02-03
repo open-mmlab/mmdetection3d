@@ -76,8 +76,7 @@ def once_eval(gt_annos,
                 dt_anno = dt_annos[sample_idx]
                 pred_score = dt_anno['score']
                 iou = ious[sample_idx]
-                gt_flag, dt_flag = filter_data(gt_anno, dt_anno, eval_mode,
-                                                    eval_level=eval_idx, class_name=cur_class)
+                gt_flag, dt_flag = filter_data(gt_anno, dt_anno, eval_mode, eval_idx, cur_class)
                 gt_flags.append(gt_flag)
                 dt_flags.append(dt_flag)
                 num_valid_gt += sum(gt_flag == 0)
@@ -257,7 +256,8 @@ def compute_statistics(iou, pred_scores, gt_flag, pred_flag, score_threshold, io
     return tp, fp, fn
 
 
-def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_name, use_superclass):
+# TODO: remove use superclass
+def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_name, use_superclass=False):
     """
     Filter data by class name and difficulty
 
