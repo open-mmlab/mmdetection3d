@@ -11,6 +11,7 @@ class EvalPanoptic:
     r"""Evaluate panoptic results for Semantickitti and NuScenes.
     Please refer to the `semantic kitti api
     <https://github.com/PRBonn/semantic-kitti-api/>`_ for more details
+
     Args:
         classes (list): Classes used in the dataset.
         things_classes (list): Things classes used in the dataset.
@@ -22,7 +23,7 @@ class EvalPanoptic:
         label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
-            Default: None.
+            Default to None.
     """
 
     def __init__(self,
@@ -68,8 +69,9 @@ class EvalPanoptic:
         """Evaluate the predictions.
 
         Args:
-            gt_labels (list[dict[numpy.ndarray]]): Ground Truth.
-            seg_preds (list[dict[numpy.ndarray]]): Predictions.
+            gt_labels (list[dict[np.ndarray]]): Ground Truth.
+            seg_preds (list[dict[np.ndarray]]): Predictions.
+
         Returns:
             dict[float]: The computed metrics. The keys are the names of
             the metrics, and the values are corresponding results.
@@ -190,7 +192,7 @@ class EvalPanoptic:
         """Get results of PQ metric.
 
         Returns:
-            tuple(numpy.array): PQ, SQ, RQ of each class and all class.
+            tuple(np.ndarray): PQ, SQ, RQ of each class and all class.
         """
         # get PQ and first calculate for all classes
         sq_all = self.pan_iou.astype(np.double) / np.maximum(
@@ -211,7 +213,7 @@ class EvalPanoptic:
         """Get results of IOU metric.
 
         Returns:
-            tuple(numpy.array): iou of all class and each class.
+            tuple(np.ndarray): iou of all class and each class.
         """
         tp, fp, fn = self.get_iou_stats()
         intersection = tp
@@ -227,7 +229,7 @@ class EvalPanoptic:
         """Get IOU statistics of TP, FP and FN.
 
         Returns:
-            tuple(numpy.array): TP, FP, FN of all class.
+            tuple(np.ndarray): TP, FP, FN of all class.
         """
         # copy to avoid modifying the real deal
         conf = self.px_iou_conf_matrix.copy().astype(np.double)
@@ -360,8 +362,8 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
     Evaluate the result of the panoptic segmentation.
 
     Args:
-        gt_labels (list[dict[numpy.ndarray]]): Ground Truth.
-        seg_preds (list[dict[numpy.ndarray]]): Predictions.
+        gt_labels (list[dict[np.ndarray]]): Ground Truth.
+        seg_preds (list[dict[np.ndarray]]): Predictions.
         classes (list[str]): Classes used in the dataset.
         things_classes (list[str]): Things classes used in the dataset.
         stuff_classes (list[str]): Stuff classes used in the dataset.
@@ -372,7 +374,7 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
         label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
-            Default: None.
+            Default to None.
 
     Returns:
         dict[float]: Dict of results.

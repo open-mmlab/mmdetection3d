@@ -26,13 +26,13 @@ class PanopticSegMetric(SegMetric):
         prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
             If prefix is not provided in the argument, self.default_prefix
-            will be used instead. Default: None.
+            will be used instead. Default to None.
         pklfile_prefix (str, optional): The prefix of pkl files, including
             the file path and the prefix of filename, e.g., "a/b/prefix".
-            If not specified, a temp file will be created. Default: None.
+            If not specified, a temp file will be created. Default to None.
         submission_prefix (str, optional): The prefix of submission data.
             If not specified, the submission data will not be generated.
-            Default: None.
+            Default to None.
     """
 
     def __init__(self,
