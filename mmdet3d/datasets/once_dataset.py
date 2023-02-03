@@ -86,6 +86,9 @@ class OnceDataset(Custom3DDataset):
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.data_infos = list(filter(self._check_annos, self.data_infos))
+        self.Tr_lidar_to_standard = np.array(
+            [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        )
     
     def __len__(self):
         """Return the length of data infos.
@@ -171,16 +174,12 @@ class OnceDataset(Custom3DDataset):
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']
-        # TODO: need to check
         # Convert gt_bboxes_3d from once's lidar coordinates
         # to LiDARInstance3DBoxes standard lidar coordinates
         # once (lidar): x(left), y(back), z(up)
         # standard (kitti's lidar): x(front), y(left), z(up)
         # and once `(cx, cy, cz)` is the center of the cubic
-        Tr_lidar_to_standard = np.array(
-            [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-        )
-        gt_bboxes_3d[:, :3] = np.array([Tr_lidar_to_standard @ gt_bbox_3d for \
+        gt_bboxes_3d[:, :3] = np.array([self.Tr_lidar_to_standard @ gt_bbox_3d for \
                                 gt_bbox_3d in gt_bboxes_3d[:, :3]])
         gt_bboxes_3d[:, 6] += np.pi / 2
         gt_bboxes_3d = LiDARInstance3DBoxes(
@@ -216,11 +215,17 @@ class OnceDataset(Custom3DDataset):
             dict: Training data dict of the corresponding index.
         """
         input_dict = self.get_data_info(index)
-        # TODO: Need to check
-        if input_dict is None or input_dict['ann_info'] is None:
-            return None
         self.pre_pipeline(input_dict)
         example = self.pipeline(input_dict)
+        # Transform points from once lidar coordinates
+        # Annotations3d has been transformed in `get_data_info`
+        # to standard LiDARPoints coordinates
+        # x(left), y(back), z(up) to x(front), y(left), z(up)
+        points = example['points'].tensor.numpy()
+        points[:, :3] = np.array([self.Tr_lidar_to_standard @ point \
+                                    for point in points[:, :3]])
+        example['points'].tensor = torch.Tensor(points)
+
         if self.filter_empty_gt and \
                 (example is None or
                     ~(example['gt_labels_3d']._data != -1).any()):
@@ -292,9 +297,7 @@ class OnceDataset(Custom3DDataset):
         # x,y,z from LiDARInstance3DBoxes to once
         # bottom center to gravity center
         # transform the yaw angle
-        Tr_standard_to_lidar = np.array(
-            [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
-        )
+        Tr_standard_to_lidar = np.linalg.inv(self.Tr_lidar_to_standard)
         boxes_3d[:, :3] = np.array([Tr_standard_to_lidar @ box_3d for \
                                     box_3d in boxes_3d[:, :3]])
         boxes_3d[:, 2] = boxes_3d[:, 2] + boxes_3d[:, 5] * 0.5
