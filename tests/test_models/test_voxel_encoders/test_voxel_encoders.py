@@ -32,5 +32,5 @@ def test_cylindrical_VFE():
         coor = F.pad(coor, (1, 0), mode='constant', value=i)
         coors.append(coor)
     coors = torch.cat(coors, dim=0).cuda()
-    outputs = cylindrical_VFE(features, coors)
-    assert outputs is not None
+    out_features, out_coors = cylindrical_VFE(features, coors)
+    assert out_features.shape[0] == out_coors.shape[0]

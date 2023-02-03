@@ -497,7 +497,7 @@ class CylindricalVFE(nn.Module):
     The number of points inside the voxel varies.
 
     Args:
-        in_channels (int): Input channels of VFE. Defaults to 4.
+        in_channels (int): Input channels of VFE. Defaults to 6.
         feat_channels (list(int)): Channels of features in VFE.
         with_voxel_center (bool): Whether to use the distance
             to center of voxel for each points inside a voxel.
@@ -517,7 +517,7 @@ class CylindricalVFE(nn.Module):
     """
 
     def __init__(self,
-                 in_channels=4,
+                 in_channels=6,
                  feat_channels=[],
                  with_voxel_center=False,
                  voxel_size=(0.10438413361169102, 1.0027855153203342,
