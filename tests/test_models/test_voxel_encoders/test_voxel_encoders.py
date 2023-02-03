@@ -34,7 +34,3 @@ def test_cylindrical_VFE():
     coors = torch.cat(coors, dim=0).cuda()
     outputs = cylindrical_VFE(features, coors)
     assert outputs is not None
-
-
-if __name__ == '__main__':
-    test_cylindrical_VFE()
