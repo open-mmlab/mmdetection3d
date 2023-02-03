@@ -101,16 +101,16 @@ def once_eval(gt_annos,
 
             ### draw p-r curve ###
             for th_idx in range(len(thresholds)):
-                recall[cls_idx, diff_idx, th_idx] = confusion_matrix[th_idx, 0] / \
+                recall[cls_idx, eval_idx, th_idx] = confusion_matrix[th_idx, 0] / \
                                                     (confusion_matrix[th_idx, 0] + confusion_matrix[th_idx, 2])
-                precision[cls_idx, diff_idx, th_idx] = confusion_matrix[th_idx, 0] / \
+                precision[cls_idx, eval_idx, th_idx] = confusion_matrix[th_idx, 0] / \
                                                        (confusion_matrix[th_idx, 0] + confusion_matrix[th_idx, 1])
 
             for th_idx in range(len(thresholds)):
-                precision[cls_idx, diff_idx, th_idx] = np.max(
-                    precision[cls_idx, diff_idx, th_idx:], axis=-1)
-                recall[cls_idx, diff_idx, th_idx] = np.max(
-                    recall[cls_idx, diff_idx, th_idx:], axis=-1)
+                precision[cls_idx, eval_idx, th_idx] = np.max(
+                    precision[cls_idx, eval_idx, th_idx:], axis=-1)
+                recall[cls_idx, eval_idx, th_idx] = np.max(
+                    recall[cls_idx, eval_idx, th_idx:], axis=-1)
 
     AP = 0
     for i in range(1, precision.shape[-1]):
@@ -125,19 +125,19 @@ def once_eval(gt_annos,
     ret_str += '\n'
     for cls_idx, cur_class in enumerate(classes):
         ret_str += "|%-12s|" % cur_class
-        for diff_idx in range(num_evals):
-            diff_type = eval_types[diff_idx]
-            key = 'AP_' + cur_class + '/' + diff_type
-            ap_score = AP[cls_idx,diff_idx]
+        for eval_idx in range(num_evals):
+            eval_type = eval_types[eval_idx]
+            key = 'AP_' + cur_class + '/' + eval_type
+            ap_score = AP[cls_idx,eval_idx]
             ret_dict[key] = ap_score
             ret_str += "%-12.2f|" % ap_score
         ret_str += "\n"
     mAP = np.mean(AP, axis=0)
     ret_str += "|%-12s|" % 'mAP'
-    for diff_idx in range(num_evals):
-        diff_type = eval_types[diff_idx]
-        key = 'AP_mean' + '/' + diff_type
-        ap_score = mAP[diff_idx]
+    for eval_idx in range(num_evals):
+        eval_type = eval_types[eval_idx]
+        key = 'AP_mean' + '/' + eval_type
+        ap_score = mAP[eval_idx]
         ret_dict[key] = ap_score
         ret_str += "%-12.2f|" % ap_score
     ret_str += "\n"
