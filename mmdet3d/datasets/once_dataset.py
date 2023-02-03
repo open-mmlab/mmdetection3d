@@ -229,10 +229,8 @@ class OnceDataset(Custom3DDataset):
         # Annotations3d has been transformed in `get_data_info`
         # to standard LiDARPoints coordinates
         # x(left), y(back), z(up) to x(front), y(left), z(up)
-        points = example['points'].tensor.numpy()
-        points[:, :3] = np.array([self.Tr_lidar_to_standard @ point \
-                                    for point in points[:, :3]])
-        example['points'].tensor = torch.Tensor(points)
+        example['points'].tensor = torch.Tensor(self._transform_points_xyz(
+                                        example['points'].tensor.numpy()))
         example = self.pipeline(example)
 
         if self.filter_empty_gt and \
@@ -240,6 +238,35 @@ class OnceDataset(Custom3DDataset):
                     ~(example['gt_labels_3d']._data != -1).any()):
             return None
         return example
+
+    def prepare_test_data(self, index):
+        """Prepare data for testing.
+
+        Args:
+            index (int): Index for accessing the target data.
+
+        Returns:
+            dict: Testing data dict of the corresponding index.
+        """
+        input_dict = self.get_data_info(index)
+        self.pre_pipeline(input_dict)
+        example = self.loadpoints_pipeline(input_dict)
+        example['points'].tensor = torch.Tensor(self._transform_points_xyz(
+                                        example['points'].tensor.numpy()))
+        example = self.pipeline(input_dict)
+        return example
+
+    def _transform_points_xyz(self, points):
+        """Transform the train and test data points from once lidar coordinates to standard.
+
+        Args:
+            points: x(left), y(back), z(up)
+            points: x(front), y(left), z(up)
+        """
+        points[:, :3] = np.array([self.Tr_lidar_to_standard @ point \
+                            for point in points[:, :3]])
+        return points
+
 
     def _format_results(self, results, jsonfile_prefix=None):
         """Convert the results to the standard format.
