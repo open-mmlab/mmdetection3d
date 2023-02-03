@@ -23,7 +23,7 @@ class EvalPanoptic:
         label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
-            Default to None.
+            Defaults to None.
     """
 
     def __init__(self,
@@ -374,7 +374,7 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
         label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
-            Default to None.
+            Defaults to None.
 
     Returns:
         dict[float]: Dict of results.
