@@ -80,7 +80,7 @@ def once_eval(gt_annos,
                 gt_flags.append(gt_flag)
                 dt_flags.append(dt_flag)
                 num_valid_gt += sum(gt_flag == 0)
-                accum_scores = accumulate_scores(iou, pred_score, gt_flag, pred_flag,
+                accum_scores = accumulate_scores(iou, pred_score, gt_flag, dt_flag,
                                                  iou_threshold=iou_threshold)
                 accum_all_scores.append(accum_scores)
             all_scores = np.concatenate(accum_all_scores, axis=0)
