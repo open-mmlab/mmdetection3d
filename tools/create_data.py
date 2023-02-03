@@ -6,6 +6,7 @@ from tools.dataset_converters import indoor_converter as indoor
 from tools.dataset_converters import kitti_converter as kitti
 from tools.dataset_converters import lyft_converter as lyft_converter
 from tools.dataset_converters import nuscenes_converter as nuscenes_converter
+from tools.dataset_converters import semantickitti_converter
 from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
 from tools.dataset_converters.update_infos_to_v2 import update_pkl_infos
@@ -220,74 +221,14 @@ def waymo_data_prep(root_path,
 
 
 def semantickitti_data_prep(info_prefix, out_dir):
-    import os
-    import pickle
+    """Prepare the info file for SemanticKITTI dataset.
 
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    total_num = {
-        0: 4541,
-        1: 1101,
-        2: 4661,
-        3: 801,
-        4: 271,
-        5: 2761,
-        6: 1101,
-        7: 1101,
-        8: 4071,
-        9: 1591,
-        10: 1201,
-        11: 921,
-        12: 1061,
-        13: 3281,
-        14: 631,
-        15: 1901,
-        16: 1731,
-        17: 491,
-        18: 1801,
-        19: 4981,
-        20: 831,
-        21: 2721,
-    }
-    split = {
-        'train': [0, 1, 2, 3, 4, 5, 6, 7, 9, 10],
-        'valid': [8],
-        'test': [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
-    }
-    split_list = ['train', 'valid', 'test']
-
-    def gen_annotations(split):
-        data_infos = dict()
-        data_infos['metainfo'] = dict(DATASET='SemanticKITTI')
-        data_list = []
-        for i_folder in split:
-            for j in range(0, total_num[i_folder]):
-                data_list.append({
-                    'lidar_points': {
-                        'lidar_path':
-                        os.path.join('sequences',
-                                     str(i_folder).zfill(2), 'velodyne',
-                                     str(j).zfill(6) + '.bin')
-                    },
-                    'pts_semantic_mask_path':
-                    os.path.join('sequences',
-                                 str(i_folder).zfill(2), 'labels',
-                                 str(j).zfill(6) + '.label'),
-                    'sample_id':
-                    str(i_folder) + str(j)
-                })
-        data_infos.update(dict(data_list=data_list))
-        return data_infos
-
-    for sl in split_list:
-        s = split[sl]
-        data_infos = gen_annotations(s)
-        ann_file = os.path.abspath(
-            os.path.join(out_dir, info_prefix + '_infos_' + sl + '.pkl'))
-        with open(ann_file, 'wb') as f:
-            pickle.dump(data_infos, f)
-            f.close()
+    Args:
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+    """
+    semantickitti_converter.create_semantickitti_info_file(
+        info_prefix, out_dir)
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
