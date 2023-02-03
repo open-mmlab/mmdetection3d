@@ -59,20 +59,21 @@ class EncoderDecoder3D(Base3DSegmentor):
             segmentor.
         decode_head (dict or :obj:`ConfigDict`): The config for the decode
             head of segmentor.
-        neck (dict or :obj:`ConfigDict`, None): The config for the neck of
+        neck (dict or :obj:`ConfigDict`, optional): The config for the neck of
             segmentor. Defaults to None.
         auxiliary_head (dict or :obj:`ConfigDict` or List[dict or
-            :obj:`ConfigDict`], None): The config for the auxiliary head of
+            :obj:`ConfigDict`], optional): The config for the auxiliary head of
             segmentor. Defaults to None.
         loss_regularization (dict or :obj:`ConfigDict` or List[dict or
-            :obj:`ConfigDict`], None): The config
-            for the regularization loass. Defaults to None.
-        train_cfg (dict or :obj:`ConfigDict`, None): The config for training.
+            :obj:`ConfigDict`], optional): The config for the regularization
+            loass. Defaults to None.
+        train_cfg (dict or :obj:`ConfigDict`, optional): The config for
+            training. Defaults to None.
+        test_cfg (dict or :obj:`ConfigDict`, optional): The config for testing.
             Defaults to None.
-        test_cfg (dict or :obj:`ConfigDict`, None): The config for testing.
+        data_preprocessor (dict or :obj:`ConfigDict`, optional): The
+            pre-process config of :class:`BaseDataPreprocessor`.
             Defaults to None.
-        data_preprocessor (dict or :obj:`ConfigDict`, None): The pre-process
-            config of :class:`BaseDataPreprocessor`. Defaults to None.
         init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`],
             optional): The weight initialized config for :class:`BaseModule`.
             Defaults to None.
@@ -144,9 +145,9 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         Args:
             batch_input (Tensor): Input point cloud sample
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
             Tensor: Segmentation logits of shape [B, num_classes, N].
@@ -159,8 +160,17 @@ class EncoderDecoder3D(Base3DSegmentor):
     def _decode_head_forward_train(
             self, batch_inputs_dict: dict,
             batch_data_samples: SampleList) -> Dict[str, Tensor]:
-        """Run forward function and calculate loss for decode head in
-        training."""
+        """Run forward function and calculate loss for decode head in training.
+
+        Args:
+            batch_input (Tensor): Input point cloud sample
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary of loss components for decode head.
+        """
         losses = dict()
         loss_decode = self.decode_head.loss(batch_inputs_dict,
                                             batch_data_samples, self.train_cfg)
@@ -174,7 +184,18 @@ class EncoderDecoder3D(Base3DSegmentor):
         batch_data_samples: SampleList,
     ) -> Dict[str, Tensor]:
         """Run forward function and calculate loss for auxiliary head in
-        training."""
+        training.
+
+        Args:
+            batch_input (Tensor): Input point cloud sample
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary of loss components for auxiliary
+            head.
+        """
         losses = dict()
         if isinstance(self.auxiliary_head, nn.ModuleList):
             for idx, aux_head in enumerate(self.auxiliary_head):
@@ -213,11 +234,10 @@ class EncoderDecoder3D(Base3DSegmentor):
                 includes 'points' and 'imgs' keys.
 
                 - points (List[Tensor]): Point cloud of each sample.
-                - imgs (Tensor, optional): Image tensor has shape
-                  (B, C, H, W).
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_sem_seg`.
+                - imgs (Tensor, optional): Image tensor has shape (B, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
             Dict[str, Tensor]: A dictionary of loss components.
@@ -252,15 +272,15 @@ class EncoderDecoder3D(Base3DSegmentor):
         """Generating model input.
 
         Generate input by subtracting patch center and adding additional
-            features. Currently support colors and normalized xyz as features.
+        features. Currently support colors and normalized xyz as features.
 
         Args:
             coords (Tensor): Sampled 3D point coordinate of shape [S, 3].
             patch_center (Tensor): Center coordinate of the patch.
             coord_max (Tensor): Max coordinate of all 3D points.
             feats (Tensor): Features of sampled points of shape [S, C].
-            use_normalized_coord (bool): Whether to use normalized
-                xyz as additional features. Defaults to False.
+            use_normalized_coord (bool): Whether to use normalized xyz as
+                additional features. Defaults to False.
 
         Returns:
             Tensor: The generated input data of shape [S, 3+C'].
@@ -295,20 +315,19 @@ class EncoderDecoder3D(Base3DSegmentor):
             points (Tensor): Input points of shape [N, 3+C].
             num_points (int): Number of points to be sampled in each patch.
             block_size (float): Size of a patch to sample.
-            sample_rate (float): Stride used in sliding patch.
-                Defaults to 0.5.
-            use_normalized_coord (bool): Whether to use normalized
-                xyz as additional features. Defaults to False.
-            eps (float): A value added to patch boundary to guarantee
-                points coverage. Defaults to 1e-3.
+            sample_rate (float): Stride used in sliding patch. Defaults to 0.5.
+            use_normalized_coord (bool): Whether to use normalized xyz as
+                additional features. Defaults to False.
+            eps (float): A value added to patch boundary to guarantee points
+                coverage. Defaults to 1e-3.
 
         Returns:
             Tuple[Tensor, Tensor]:
 
-                - patch_points (Tensor): Points of different patches of
-                  shape [K, N, 3+C].
-                - patch_idxs (Tensor): Index of each point in
-                  `patch_points`, of shape [K, N].
+            - patch_points (Tensor): Points of different patches of shape
+              [K, N, 3+C].
+            - patch_idxs (Tensor): Index of each point in `patch_points` of
+              shape [K, N].
         """
         device = points.device
         # we assume the first three dims are points' 3D coordinates
@@ -389,9 +408,9 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         Args:
             point (Tensor): Input points of shape [N, 3+C].
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
 
@@ -472,25 +491,24 @@ class EncoderDecoder3D(Base3DSegmentor):
         """Simple test with single scene.
 
         Args:
-            batch_inputs_dict (dict): Input sample dict which
-                includes 'points' and 'imgs' keys.
+            batch_inputs_dict (dict): Input sample dict which includes 'points'
+                and 'imgs' keys.
 
                 - points (List[Tensor]): Point cloud of each sample.
-                - imgs (Tensor, optional): Image tensor has shape
-                    (B, C, H, W).
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+                - imgs (Tensor, optional): Image tensor has shape (B, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
                 Defaults to True.
 
         Returns:
-            List[:obj:`Det3DDataSample`]: Segmentation results of the
-            input images. Each Det3DDataSample usually contains:
+            List[:obj:`Det3DDataSample`]: Segmentation results of the input
+            points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D
-              semantic segmentation.
+            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+              segmentation.
         """
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
@@ -514,15 +532,14 @@ class EncoderDecoder3D(Base3DSegmentor):
         """Network forward process.
 
         Args:
-            batch_inputs_dict (dict): Input sample dict which
-                includes 'points' and 'imgs' keys.
+            batch_inputs_dict (dict): Input sample dict which includes 'points'
+                and 'imgs' keys.
 
                 - points (List[Tensor]): Point cloud of each sample.
-                - imgs (Tensor, optional): Image tensor has shape
-                  (B, C, H, W).
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+                - imgs (Tensor, optional): Image tensor has shape (B, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
             Tensor: Forward output of model without any post-processes.

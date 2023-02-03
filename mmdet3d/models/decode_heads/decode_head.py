@@ -49,13 +49,10 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         act_cfg (dict or :obj:`ConfigDict`): Config of activation layers.
             Defaults to dict(type='ReLU').
         loss_decode (dict or :obj:`ConfigDict`): Config of decode loss.
-            Defaults to dict(type='mmdet.CrossEntropyLoss',
-                             use_sigmoid=False,
-                             class_weight=None,
-                             loss_weight=1.0).
-        ignore_index (int): The label index to be ignored.
-            When using masked BCE loss, ignore_index should be set to None.
-            Defaults to 255.
+            Defaults to dict(type='mmdet.CrossEntropyLoss', use_sigmoid=False,
+            class_weight=None, loss_weight=1.0).
+        ignore_index (int): The label index to be ignored. When using masked
+            BCE loss, ignore_index should be set to None. Defaults to 255.
         init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
             optional): Initialization config dict. Defaults to None.
     """
@@ -113,9 +110,9 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
 
         Args:
             inputs (dict): Feature dict from backbone.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
             train_cfg (dict or :obj:`ConfigDict`): The training config.
 
         Returns:
@@ -131,9 +128,9 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
 
         Args:
             inputs (dict): Feature dict from backbone.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
             test_cfg (dict or :obj:`ConfigDict`): The testing config.
 
         Returns:
@@ -155,11 +152,14 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         """Compute semantic segmentation loss.
 
         Args:
-            seg_logit (Tensor): Predicted per-point segmentation logits
-                of shape [B, num_classes, N].
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            seg_logit (Tensor): Predicted per-point segmentation logits of
+                shape [B, num_classes, N].
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary of loss components.
         """
         seg_label = self._stack_batch_gt(batch_data_samples)
         loss = dict()

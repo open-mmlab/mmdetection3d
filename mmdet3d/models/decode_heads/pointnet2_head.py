@@ -21,7 +21,7 @@ class PointNet2Head(Base3DDecodeHead):
     Args:
         fp_channels (Sequence[Sequence[int]]): Tuple of mlp channels in FP
             modules. Defaults to ((768, 256, 256), (384, 256, 256),
-                                  (320, 256, 128), (128, 128, 128, 128)).
+            (320, 256, 128), (128, 128, 128, 128)).
         fp_norm_cfg (dict or :obj:`ConfigDict`): Config of norm layers used
             in FP modules. Defaults to dict(type='BN2d').
     """
@@ -59,8 +59,8 @@ class PointNet2Head(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            List[Tensor]: Coordinates of multiple levels of points.
-            List[Tensor]: Features of multiple levels of points.
+            Tuple[List[Tensor], List[Tensor]]: Coordinates and features of
+            multiple levels of points.
         """
         sa_xyz = feat_dict['sa_xyz']
         sa_features = feat_dict['sa_features']

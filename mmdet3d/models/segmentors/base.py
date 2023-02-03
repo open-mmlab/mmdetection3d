@@ -17,8 +17,8 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
     Args:
         data_preprocessor (dict or ConfigDict, optional): Model preprocessing
             config for processing the input data. it usually includes
-            ``to_rgb``, ``pad_size_divisor``, ``pad_val``,
-            ``mean`` and ``std``. Defaults to None.
+            ``to_rgb``, ``pad_size_divisor``, ``pad_val``, ``mean`` and
+            ``std``. Defaults to None.
        init_cfg (dict or ConfigDict, optional): The config to control the
            initialization. Defaults to None.
     """
@@ -82,8 +82,8 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         optimizer updating, which are done in the :meth:`train_step`.
 
         Args:
-            inputs (dict or List[dict]): Input sample dict which
-                includes 'points' and 'imgs' keys.
+            inputs (dict or List[dict]): Input sample dict which includes
+                'points' and 'imgs' keys.
 
                 - points (List[Tensor]): Point cloud of each sample.
                 - imgs (Tensor): Image tensor has shape (B, C, H, W).
@@ -144,16 +144,16 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         Args:
             seg_logits_list (List[dict]): List of segmentation results,
                 seg_logits from model of each input point clouds sample.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
-            List[:obj:`Det3DDataSample`]: Segmentation results of the
-            input images. Each Det3DDataSample usually contains:
+            List[:obj:`Det3DDataSample`]: Segmentation results of the input
+            points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D
-              semantic segmentation.
+            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+              segmentation.
         """
 
         for i in range(len(seg_pred_list)):
