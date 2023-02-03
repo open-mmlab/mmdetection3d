@@ -87,6 +87,14 @@ class OnceDataset(Custom3DDataset):
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.filtered_data_infos = list(filter(self._check_annos, self.data_infos))
     
+    def __len__(self):
+        """Return the length of data infos.
+
+        Returns:
+            int: Length of filtered data infos.
+        """
+        return len(self.filtered_data_infos)
+    
     def _check_annos(self, info):
         return 'annos' in info
 
@@ -108,7 +116,7 @@ class OnceDataset(Custom3DDataset):
                     from lidar to different cameras.
                 - ann_info (dict): Annotation info.
         """
-        info = self.data_infos[index]
+        info = self.filtered_data_infos[index]
         sample_idx = info['frame_id']
         pts_filename = info['lidar_path']
         
@@ -159,9 +167,7 @@ class OnceDataset(Custom3DDataset):
                 - gt_names (list[str]): Class names of ground truths.
         """
         # Use index to get the annos, thus the evalhook could also use this api
-        info = self.data_infos[index]
-        if 'annos' not in info:
-            return None
+        info = self.filtered_data_infos[index]
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']
@@ -246,7 +252,7 @@ class OnceDataset(Custom3DDataset):
         print('\nConverting prediction to ONCE format')
         for idx, result in enumerate(
                 mmcv.track_iter_progress(results)):
-            info = self.data_infos[idx]
+            info = self.filtered_data_infos[idx]
             sample_idx = info['frame_id']
             pred_scores = result['scores_3d'].numpy()
             pred_labels = result['labels_3d'].numpy()
