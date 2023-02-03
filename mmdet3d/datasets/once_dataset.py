@@ -234,7 +234,7 @@ class OnceDataset(Custom3DDataset):
                 modifying the jsonfile_prefix. Default: None.
 
         Returns:
-            dict:
+            list[dict]: A list of dictionaries with the once format
             str: Path of the output json file.
         """
         assert isinstance(results, list), 'results must be a list'
@@ -243,6 +243,7 @@ class OnceDataset(Custom3DDataset):
             format(len(results), len(self)))
 
         annos = []
+        print('\nConverting prediction to ONCE format')
         for idx, result in enumerate(
                 mmcv.track_iter_progress(results)):
             info = self.data_infos[idx]
@@ -326,25 +327,15 @@ class OnceDataset(Custom3DDataset):
         Returns:
             dict[str, float]: Results of each evaluation metric.
         """
-        results_dict, tmp_dir = self._format_results(results, jsonfile_prefix)
-        assert isinstance(results_dict, dict)
+        results_list, tmp_dir = self._format_results(results, jsonfile_prefix)
+        # TODO: remove this
+        assert isinstance(results_list, list)
 
         from mmdet3d.core.evaluation import once_eval
         gt_annos = [info['annos'] for info in self.filtered_data_infos]
 
-        ap_dict = dict()
-        for name, results_dict_ in results_dict.items():
-            eval_types = ['Overall&Distance']
-            ap_result_str, ap_dict_ = once_eval(
-                gt_annos,
-                results_dict_,
-                self.CLASSES,
-                eval_types=eval_types)
-            for ap_type, ap in ap_dict_.items():
-                ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
-
-            print_log(
-                f'Results of {name}:\n' + ap_result_str, logger=logger)
+        ap_result_str, ap_dict = once_eval(gt_annos, results_list, self.CLASSES)
+        print_log('\n' + ap_result_str, logger=logger)
         
         if tmp_dir is not None:
             tmp_dir.cleanup()
