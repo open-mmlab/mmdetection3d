@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import Sequence
 
 from mmcv.cnn.bricks import ConvModule
 from torch import Tensor
@@ -17,16 +17,19 @@ class PAConvHead(PointNet2Head):
     Refer to the `official code <https://github.com/CVMI-Lab/PAConv>`_.
 
     Args:
-        fp_channels (tuple[tuple[int]]): Tuple of mlp channels in FP modules.
-        fp_norm_cfg (dict): Config of norm layers used in FP modules.
-            Default: dict(type='BN2d').
+        fp_channels (Sequence[Sequence[int]]): Tuple of mlp channels in FP
+            modules. Defaults to ((768, 256, 256), (384, 256, 256),
+            (320, 256, 128), (128 + 6, 128, 128, 128)).
+        fp_norm_cfg (dict or :obj:`ConfigDict`): Config of norm layers used in
+            FP modules. Defaults to dict(type='BN2d').
     """
 
     def __init__(self,
-                 fp_channels: Tuple[Tuple[int]] = ((768, 256, 256),
-                                                   (384, 256, 256), (320, 256,
-                                                                     128),
-                                                   (128 + 6, 128, 128, 128)),
+                 fp_channels: Sequence[Sequence[int]] = ((768, 256, 256),
+                                                         (384, 256, 256),
+                                                         (320, 256,
+                                                          128), (128 + 6, 128,
+                                                                 128, 128)),
                  fp_norm_cfg: ConfigType = dict(type='BN2d'),
                  **kwargs) -> None:
         super(PAConvHead, self).__init__(

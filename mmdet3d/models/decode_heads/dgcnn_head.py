@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import Sequence
 
 from mmcv.cnn.bricks import ConvModule
 from torch import Tensor
@@ -18,11 +18,12 @@ class DGCNNHead(Base3DDecodeHead):
     `reimplementation code <https://github.com/AnTao97/dgcnn.pytorch>`_.
 
     Args:
-        fp_channels (tuple[int], optional): Tuple of mlp channels in feature
+        fp_channels (Sequence[int]): Tuple of mlp channels in feature
             propagation (FP) modules. Defaults to (1216, 512).
     """
 
-    def __init__(self, fp_channels: Tuple = (1216, 512), **kwargs) -> None:
+    def __init__(self, fp_channels: Sequence[int] = (1216, 512),
+                 **kwargs) -> None:
         super(DGCNNHead, self).__init__(**kwargs)
 
         self.FP_module = DGCNNFPModule(
@@ -45,7 +46,7 @@ class DGCNNHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: points for decoder.
+            torch.Tensor: Points for decoder.
         """
         fa_points = feat_dict['fa_points']
 
@@ -58,7 +59,7 @@ class DGCNNHead(Base3DDecodeHead):
             feat_dict (dict): Feature dict from backbone.
 
         Returns:
-            torch.Tensor: Segmentation map of shape [B, num_classes, N].
+            Tensor: Segmentation map of shape [B, num_classes, N].
         """
         fa_points = self._extract_input(feat_dict)
 
