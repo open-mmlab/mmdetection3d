@@ -85,7 +85,7 @@ class OnceDataset(Custom3DDataset):
         self.pts_prefix = pts_prefix
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
-        self.filtered_data_infos = list(filter(self._check_annos, self.data_infos))
+        self.data_infos = list(filter(self._check_annos, self.data_infos))
     
     def __len__(self):
         """Return the length of data infos.
@@ -93,7 +93,7 @@ class OnceDataset(Custom3DDataset):
         Returns:
             int: Length of filtered data infos.
         """
-        return len(self.filtered_data_infos)
+        return len(self.data_infos)
     
     def _check_annos(self, info):
         return 'annos' in info
@@ -116,7 +116,7 @@ class OnceDataset(Custom3DDataset):
                     from lidar to different cameras.
                 - ann_info (dict): Annotation info.
         """
-        info = self.filtered_data_infos[index]
+        info = self.data_infos[index]
         sample_idx = info['frame_id']
         pts_filename = info['lidar_path']
         
@@ -167,7 +167,7 @@ class OnceDataset(Custom3DDataset):
                 - gt_names (list[str]): Class names of ground truths.
         """
         # Use index to get the annos, thus the evalhook could also use this api
-        info = self.filtered_data_infos[index]
+        info = self.data_infos[index]
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']
@@ -252,7 +252,7 @@ class OnceDataset(Custom3DDataset):
         print('\nConverting prediction to ONCE format')
         for idx, result in enumerate(
                 mmcv.track_iter_progress(results)):
-            info = self.filtered_data_infos[idx]
+            info = self.data_infos[idx]
             sample_idx = info['frame_id']
             pred_scores = result['scores_3d'].numpy()
             pred_labels = result['labels_3d'].numpy()
@@ -337,7 +337,7 @@ class OnceDataset(Custom3DDataset):
         assert isinstance(results_list, list)
 
         from mmdet3d.core.evaluation import once_eval
-        gt_annos = [info['annos'] for info in self.filtered_data_infos]
+        gt_annos = [info['annos'] for info in self.data_infos]
 
         ap_result_str, ap_dict = once_eval(gt_annos, results_list, self.CLASSES)
         print_log('\n' + ap_result_str, logger=logger)

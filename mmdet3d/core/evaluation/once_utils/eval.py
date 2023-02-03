@@ -24,7 +24,7 @@ def once_eval(gt_annos,
               num_parts=100,
               num_pr_points=50,
               iou_thresholds=None,
-              eval_mode=['Overall&Distance'],
+              eval_mode='Overall&Distance',
               ap_with_heading=True,
               print_ok=False):
     """ONCE evaluation.
