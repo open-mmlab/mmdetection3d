@@ -497,38 +497,32 @@ class CylindricalVFE(nn.Module):
     The number of points inside the voxel varies.
 
     Args:
-        in_channels (int, optional): Input channels of VFE. Defaults to 4.
-        feat_channels (list(int), optional): Channels of features in VFE.
-        with_distance (bool, optional): Whether to use the L2 distance of
-            points to the origin point. Defaults to False.
-        with_cluster_center (bool, optional): Whether to use the distance
-            to cluster center of points inside a voxel. Defaults to False.
-        with_voxel_center (bool, optional): Whether to use the distance
+        in_channels (int): Input channels of VFE. Defaults to 4.
+        feat_channels (list(int)): Channels of features in VFE.
+        with_voxel_center (bool): Whether to use the distance
             to center of voxel for each points inside a voxel.
             Defaults to False.
-        voxel_size (tuple[float], optional): Size of a single voxel.
+        voxel_size (tuple[float]): Size of a single voxel.
             Defaults to (0.2, 0.2, 4).
-        point_cloud_range (tuple[float], optional): The range of points
+        point_cloud_range (tuple[float]): The range of points
             or voxels. Defaults to (0, -40, -3, 70.4, 40, 1).
-        norm_cfg (dict, optional): Config dict of normalization layers.
-        mode (str, optional): The mode when pooling features of points
+        norm_cfg (dict): Config dict of normalization layers.
+        mode (str): The mode when pooling features of points
             inside a voxel. Available options include 'max' and 'avg'.
             Defaults to 'max'.
         feat_compression (str, optional): The voxel feature compression
             channels, Defaults to None
-        fusion_layer (dict, optional): The config dict of fusion
-            layer used in multi-modal detectors. Defaults to None.
-        return_point_feats (bool, optional): Whether to return the features
+        return_point_feats (bool): Whether to return the features
             of each points. Defaults to False.
     """
 
     def __init__(self,
-                 in_channels=6,
+                 in_channels=4,
                  feat_channels=[],
                  with_voxel_center=False,
-                 voxel_size=(0.10438413361169102, 0.017501908635097492,
+                 voxel_size=(0.10438413361169102, 1.0027855153203342,
                              0.1935483870967742),
-                 point_cloud_range=(0, -3.1415926, -4, 50, 3.1415926, 2),
+                 point_cloud_range=(0, -180, -4, 50, 180, 2),
                  norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.1),
                  mode='max',
                  feat_compression=None,
@@ -541,7 +535,6 @@ class CylindricalVFE(nn.Module):
         self.in_channels = in_channels
         self._with_voxel_center = with_voxel_center
         self.return_point_feats = return_point_feats
-        self.fp16_enabled = False
 
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = voxel_size[0]
@@ -576,7 +569,8 @@ class CylindricalVFE(nn.Module):
             self.compression_layers = nn.Linear(feat_channels[-1],
                                                 feat_compression)
 
-    def forward(self, features, coors, *args, **kwargs):
+    def forward(self, features: torch.Tensor, coors: torch.Tensor, *args,
+                **kwargs):
         """Forward functions.
 
         Args:
@@ -586,7 +580,7 @@ class CylindricalVFE(nn.Module):
         Returns:
             tuple: If `return_point_feats` is False, returns voxel features and
                 its coordinates. If `return_point_feats` is True, returns
-                feature of each points inside voxels.
+                feature of each points inside voxels additionally.
         """
         features_ls = [features]
 
@@ -611,5 +605,5 @@ class CylindricalVFE(nn.Module):
             voxel_feats = self.compression_layers(voxel_feats)
 
         if self.return_point_feats:
-            return point_feats
+            return voxel_feats, voxel_coors, point_feats
         return voxel_feats, voxel_coors
