@@ -7,7 +7,6 @@ from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
 from torch import nn as nn
 
-from mmdet3d.models.builder import build_backbone
 from mmdet3d.registry import MODELS
 
 
@@ -57,7 +56,7 @@ class MultiBackbone(BaseModule):
 
         for backbone_cfg in backbones:
             out_channels += backbone_cfg['fp_channels'][-1][-1]
-            self.backbone_list.append(build_backbone(backbone_cfg))
+            self.backbone_list.append(MODELS.build(backbone_cfg))
 
         # Feature aggregation layers
         if aggregation_mlp_channels is None:

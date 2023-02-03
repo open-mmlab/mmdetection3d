@@ -40,6 +40,7 @@ class Det3DVisualizationHook(Hook):
         score_thr (float): The threshold to visualize the bboxes
             and masks. Defaults to 0.3.
         show (bool): Whether to display the drawn image. Default to False.
+        vis_task (str): Visualization task. Defaults to 'mono_det'.
         wait_time (float): The interval of show (s). Defaults to 0.
         test_out_dir (str, optional): directory where painted images
             will be saved in testing process.
@@ -53,6 +54,7 @@ class Det3DVisualizationHook(Hook):
                  interval: int = 50,
                  score_thr: float = 0.3,
                  show: bool = False,
+                 vis_task: str = 'mono_det',
                  wait_time: float = 0.,
                  test_out_dir: Optional[str] = None,
                  file_client_args: dict = dict(backend='disk')):
@@ -67,6 +69,7 @@ class Det3DVisualizationHook(Hook):
                           'the prediction results are visualized '
                           'without storing data, so vis_backends '
                           'needs to be excluded.')
+        self.vis_task = vis_task
 
         self.wait_time = wait_time
         self.file_client_args = file_client_args.copy()
@@ -119,6 +122,7 @@ class Det3DVisualizationHook(Hook):
                 data_input,
                 data_sample=outputs[0],
                 show=self.show,
+                vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
                 step=total_curr_iter)
@@ -173,6 +177,7 @@ class Det3DVisualizationHook(Hook):
                 data_input,
                 data_sample=data_sample,
                 show=self.show,
+                vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
                 out_file=out_file,

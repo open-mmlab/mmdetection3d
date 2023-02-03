@@ -105,8 +105,8 @@ param_scheduler = [
         milestones=[16, 22],
         gamma=0.1)
 ]
-total_epochs = 24
-runner = dict(max_epochs=total_epochs)
+
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+auto_scale_lr = dict(base_batch_size=48)

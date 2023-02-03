@@ -2,22 +2,22 @@
 
 我们通常把模型的各个组成成分分成 6 种类型：
 
-- 编码器（encoder）：包括 voxel layer、voxel encoder 和 middle encoder 等进入 backbone 前所使用的基于 voxel 的方法，如 HardVFE 和 PointPillarsScatter。
-- 骨干网络（backbone）：通常采用 FCN 网络来提取特征图，如 ResNet 和 SECOND。
-- 颈部网络（neck）：位于 backbones 和 heads 之间的组成模块，如 FPN 和 SECONDFPN。
-- 检测头（head）：用于特定任务的组成模块，如检测框的预测和掩码的预测。
-- RoI 提取器（RoI extractor）：用于从特征图中提取 RoI 特征的组成模块，如 H3DRoIHead 和 PartAggregationROIHead。
-- 损失函数（loss）：heads 中用于计算损失函数的组成模块，如 FocalLoss、L1Loss 和 GHMLoss。
+- 编码器（encoder）：包括 voxel encoder 和 middle encoder 等进入 backbone 前所使用的基于体素的方法，如 `HardVFE` 和 `PointPillarsScatter`。
+- 骨干网络（backbone）：通常采用 FCN 网络来提取特征图，如 `ResNet` 和 `SECOND`。
+- 颈部网络（neck）：位于 backbones 和 heads 之间的组成模块，如 `FPN` 和 `SECONDFPN`。
+- 检测头（head）：用于特定任务的组成模块，如`检测框的预测`和`掩码的预测`。
+- RoI 提取器（RoI extractor）：用于从特征图中提取 RoI 特征的组成模块，如 `H3DRoIHead` 和 `PartAggregationROIHead`。
+- 损失函数（loss）：heads 中用于计算损失函数的组成模块，如 `FocalLoss`、`L1Loss` 和 `GHMLoss`。
 
 ## 开发新的组成模块
 
-### 添加新建 encoder
+### 添加新的编码器
 
 接下来我们以 HardVFE 为例展示如何开发新的组成模块。
 
-#### 1. 定义一个新的 voxel encoder（如 HardVFE：即 DV-SECOND 中所提出的 Voxel 特征提取器）
+#### 1. 定义一个新的体素编码器（如 HardVFE：即 HV-SECOND 中使用的体素特征编码器）
 
-创建一个新文件 `mmdet3d/models/voxel_encoders/voxel_encoder.py` ：
+创建一个新文件 `mmdet3d/models/voxel_encoders/voxel_encoder.py`。
 
 ```python
 import torch.nn as nn
@@ -31,27 +31,27 @@ class HardVFE(nn.Module):
     def __init__(self, arg1, arg2):
         pass
 
-    def forward(self, x):  # should return a tuple
+    def forward(self, x):  # 需要返回一个元组
         pass
 ```
 
-#### 2. 导入新建模块
+#### 2. 导入该模块
 
-用户可以通过添加下面这行代码到 `mmdet3d/models/voxel_encoders/__init__.py` 中
+您可以在 `mmdet3d/models/voxel_encoders/__init__.py` 中添加以下代码：
 
 ```python
 from .voxel_encoder import HardVFE
 ```
 
-或者添加以下的代码到配置文件中，从而能够在避免修改源码的情况下导入新建模块。
+或者在配置文件中添加以下代码，从而避免修改源码：
 
 ```python
 custom_imports = dict(
-    imports=['mmdet3d.models.voxel_encoders.HardVFE'],
+    imports=['mmdet3d.models.voxel_encoders.voxel_encoder'],
     allow_failed_imports=False)
 ```
 
-#### 3. 在配置文件中使用 voxel encoder
+#### 3. 在配置文件中使用体素编码器
 
 ```python
 model = dict(
@@ -59,20 +59,21 @@ model = dict(
     voxel_encoder=dict(
         type='HardVFE',
         arg1=xxx,
-        arg2=xxx),
+        arg2=yyy),
     ...
+)
 ```
 
-### 添加新建 backbone
+### 添加新的骨干网络
 
-接下来我们以 [SECOND](https://www.mdpi.com/1424-8220/18/10/3337)（Sparsely Embedded Convolutional Detection） 为例展示如何开发新的组成模块。
+接下来我们以 [SECOND](https://www.mdpi.com/1424-8220/18/10/3337)（Sparsely Embedded Convolutional Detection）为例展示如何开发新的组成模块。
 
-#### 1. 定义一个新的 backbone（如 SECOND）
+#### 1. 定义一个新的骨干网络（如 SECOND）
 
-创建一个新文件 `mmdet3d/models/backbones/second.py` ：
+创建一个新文件 `mmdet3d/models/backbones/second.py`。
 
 ```python
-import torch.nn as nn
+from mmengine.model import BaseModule
 
 from mmdet3d.registry import MODELS
 
@@ -83,19 +84,19 @@ class SECOND(BaseModule):
     def __init__(self, arg1, arg2):
         pass
 
-    def forward(self, x):  # should return a tuple
+    def forward(self, x):  # 需要返回一个元组
         pass
 ```
 
-#### 2. 导入新建模块
+#### 2. 导入该模块
 
-用户可以通过添加下面这行代码到 `mmdet3d/models/backbones/__init__.py` 中
+您可以在 `mmdet3d/models/backbones/__init__.py` 中添加以下代码：
 
 ```python
 from .second import SECOND
 ```
 
-或者添加以下的代码到配置文件中，从而能够在避免修改源码的情况下导入新建模块。
+或者在配置文件中添加以下代码，从而避免修改源码：
 
 ```python
 custom_imports = dict(
@@ -103,7 +104,7 @@ custom_imports = dict(
     allow_failed_imports=False)
 ```
 
-#### 3. 在配置文件中使用 backbone
+#### 3. 在配置文件中使用骨干网络
 
 ```python
 model = dict(
@@ -111,18 +112,22 @@ model = dict(
     backbone=dict(
         type='SECOND',
         arg1=xxx,
-        arg2=xxx),
+        arg2=yyy),
     ...
+)
 ```
 
-### 添加新建 necks
+### 添加新的颈部网络
 
-#### 1. 定义一个新的 neck（如 SECONDFPN）
+#### 1. 定义一个新的颈部网络（如 SECONDFPN）
 
-创建一个新文件 `mmdet3d/models/necks/second_fpn.py` ：
+创建一个新文件 `mmdet3d/models/necks/second_fpn.py`。
 
 ```python
+from mmengine.model import BaseModule
+
 from mmdet3d.registry import MODELS
+
 
 @MODELS.register_module()
 class SECONDFPN(BaseModule):
@@ -138,20 +143,20 @@ class SECONDFPN(BaseModule):
                  init_cfg=None):
         pass
 
-    def forward(self, X):
-        # implementation is ignored
+    def forward(self, x):
+        # 具体实现忽略
         pass
 ```
 
-#### 2. 导入新建模块
+#### 2. 导入该模块
 
-用户可以通过添加下面这行代码到 `mmdet3D/models/necks/__init__.py` 中
+您可以在 `mmdet3d/models/necks/__init__.py` 中添加以下代码：
 
 ```python
 from .second_fpn import SECONDFPN
 ```
 
-或者添加以下的代码到配置文件中，从而能够在避免修改源码的情况下导入新建模块。
+或者在配置文件中添加以下代码，从而避免修改源码：
 
 ```python
 custom_imports = dict(
@@ -159,7 +164,7 @@ custom_imports = dict(
     allow_failed_imports=False)
 ```
 
-#### 3. 在配置文件中使用 neck
+#### 3. 在配置文件中使用颈部网络
 
 ```python
 model = dict(
@@ -170,21 +175,22 @@ model = dict(
         upsample_strides=[1, 2, 4],
         out_channels=[128, 128, 128]),
     ...
+)
 ```
 
-### 添加新建 heads
+### 添加新的检测头
 
-接下来我们以 [PartA2 Head](https://arxiv.org/abs/1907.03670) 为例展示如何开发新的组成模块。
+接下来我们以 [PartA2 Head](https://arxiv.org/abs/1907.03670) 为例展示如何开发新的检测头。
 
-**注意**：此处展示的 PartA2 RoI Head 将应用于双阶段检测器中，对于单阶段检测器，请参考 `mmdet3d/models/dense_heads/` 中所展示的例子。由于这些 heads 简单高效，因此这些 heads 普遍应用在自动驾驶场景下的 3D 检测任务中。
+**注意**：此处展示的 `PartA2 RoI Head` 将用于检测器的第二阶段。对于单阶段的检测头，请参考 `mmdet3d/models/dense_heads/` 中的例子。由于其简单高效，它们更常用于自动驾驶场景下的 3D 检测中。
 
-首先，在 `mmdet3d/models/roi_heads/bbox_heads/parta2_bbox_head.py` 中创建一个新的 bbox head。
-PartA2 RoI Head 实现一个新的 bbox head ，并用于目标检测的任务中。
-为了实现一个新的 bbox head，通常需要在其中实现三个功能，如下所示，有时该模块还需要实现其他相关的功能，如 `loss` 和 `get_targets`。
+首先，在 `mmdet3d/models/roi_heads/bbox_heads/parta2_bbox_head.py` 中添加新的 bbox head。`PartA2 RoI Head` 为目标检测实现了一个新的 bbox head。为了实现一个 bbox head，我们通常需要在新模块中实现如下两个函数。有时还需要实现其他相关函数，如 `loss` 和 `get_targets`。
 
 ```python
-from mmdet3d.registry import MODELS
 from mmengine.model import BaseModule
+
+from mmdet3d.registry import MODELS
+
 
 @MODELS.register_module()
 class PartA2BboxHead(BaseModule):
@@ -218,13 +224,15 @@ class PartA2BboxHead(BaseModule):
         super(PartA2BboxHead, self).__init__(init_cfg=init_cfg)
 
     def forward(self, seg_feats, part_feats):
+        pass
 ```
 
-其次，如果有必要的话，用户还需要实现一个新的 RoI Head，此处我们从 `Base3DRoIHead` 中继承得到一个新类 `PartAggregationROIHead`，此时我们就能发现 `Base3DRoIHead` 已经实现了下面的功能：
+其次，如果有必要的话需要实现一个新的 RoI Head。我们从 `Base3DRoIHead` 中继承得到新的 `PartAggregationROIHead`。我们可以发现 `Base3DRoIHead` 已经实现了如下函数。
 
 ```python
-from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.models.roi_heads import BaseRoIHead
+
+from mmdet3d.registry import MODELS, TASK_UTILS
 
 
 class Base3DRoIHead(BaseRoIHead):
@@ -276,22 +284,21 @@ class Base3DRoIHead(BaseRoIHead):
         """Initialize mask head, skip since ``PartAggregationROIHead`` does not
         have one."""
         pass
-
 ```
 
-接着将会对 bbox_forward 的逻辑进行修改，同时，bbox_forward 还会继承来自 `Base3DRoIHead` 的其他逻辑，在 `mmdet3d/models/roi_heads/part_aggregation_roi_head.py` 中，我们实现了新的 RoI Head，如下所示：
+接下来主要对 bbox_forward 的逻辑进行修改，同时其继承了来自 `Base3DRoIHead` 的其它逻辑。在 `mmdet3d/models/roi_heads/part_aggregation_roi_head.py` 中，我们实现了新的 RoI Head，如下所示：
 
 ```python
 from typing import Dict, List, Tuple
 
-from mmcv import ConfigDict
+from mmdet.models.task_modules import AssignResult, SamplingResult
+from mmengine import ConfigDict
 from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import bbox3d2roi
 from mmdet3d.utils import InstanceList
-from mmdet.models.task_modules import AssignResult, SamplingResult
 from ...structures.det3d_data_sample import SampleList
 from .base_3droi_head import Base3DRoIHead
 
@@ -358,7 +365,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -405,7 +412,7 @@ class PartAggregationROIHead(Base3DRoIHead):
             voxel_dict (dict): Contains information of voxels.
             batch_input_metas (list[dict], Optional): Batch image meta info.
                 Defaults to None.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             test_cfg (Config): Test config.
 
@@ -431,7 +438,7 @@ class PartAggregationROIHead(Base3DRoIHead):
 
         Args:
             feats_dict (dict): Contains features from the first stage.
-            rpn_results_list (List[:obj:`InstancesData`]): Detection results
+            rpn_results_list (List[:obj:`InstanceData`]): Detection results
                 of rpn head.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
@@ -467,18 +474,19 @@ class PartAggregationROIHead(Base3DRoIHead):
         return losses
 ```
 
-此处我们省略相关函数的更多细节。请参考[代码](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/roi_heads/part_aggregation_roi_head.py)了解更多细节。
+此处我们省略了相关函数的更多细节。更多细节请参考[代码](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/roi_heads/part_aggregation_roi_head.py)。
 
-最后，用户需要在 `mmdet3d/models/bbox_heads/__init__.py` 和 `mmdet3d/models/roi_heads/__init__.py` 中添加模块以确保相应的注册器能够找到并加载它们。
+最后，用户需要在 `mmdet3d/models/roi_heads/bbox_heads/__init__.py` 和 `mmdet3d/models/roi_heads/__init__.py` 添加模块，从而能被相应的注册器找到并加载。
 
-此外，用户也可以添加以下的代码到配置文件中，从而实现相同的目标。
+此外，用户也可以在配置文件中添加以下代码以达到相同的目的。
 
 ```python
 custom_imports=dict(
-    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'])
+    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'],
+    allow_failed_imports=False)
 ```
 
-PartAggregationROIHead 的配置文件如下所示。
+`PartAggregationROIHead` 的配置文件如下所示：
 
 ```python
 model = dict(
@@ -544,30 +552,29 @@ model = dict(
                 reduction='sum',
                 loss_weight=1.0))),
     ...
-    )
+)
 ```
 
-MMDetection 2.0 支持配置文件之间的继承，使得用户能够更加关注自己的配置文件的修改。
-PartA2 Head 的第二阶段主要使用新建的 `PartAggregationROIHead` 和 `PartA2BboxHead`，需要根据对应模块的 `__init__` 参数来设置对应的参数。
+MMDetection 2.0 开始支持配置文件之间的继承，因此用户可以关注配置文件的修改。PartA2 Head 的第二阶段主要使用了新的 `PartAggregationROIHead` 和 `PartA2BboxHead`，需要根据对应模块的 `__init__` 函数来设置参数。
 
-### 添加新建 loss
+### 添加新的损失函数
 
-假定用户想要新添一个用于检测框回归的 loss，并命名为 `MyLoss`。
-为了添加一个新的 loss ，用于需要在 `mmdet3d/models/losses/my_loss.py` 中实现对应的逻辑。
-装饰器 `weighted_loss` 能够保证对 batch 中每个样本的 loss 进行加权平均。
+假设您想要为检测框的回归添加一个新的损失函数 `MyLoss`。为了添加一个新的损失函数，用户需要在 `mmdet3d/models/losses/my_loss.py` 中实现该函数。装饰器 `weighted_loss` 能够保证对每个元素的损失进行加权平均。
 
 ```python
 import torch
 import torch.nn as nn
+from mmdet.models.losses.utils import weighted_loss
 
 from mmdet3d.registry import MODELS
-from mmdet.models.losses.utils import weighted_loss
+
 
 @weighted_loss
 def my_loss(pred, target):
     assert pred.size() == target.size() and target.numel() > 0
     loss = torch.abs(pred - target)
     return loss
+
 
 @MODELS.register_module()
 class MyLoss(nn.Module):
@@ -591,23 +598,22 @@ class MyLoss(nn.Module):
         return loss_bbox
 ```
 
-接着，用户需要将 loss 添加到 `mmdet3d/models/losses/__init__.py`：
+接下来，用户需要在 `mmdet3d/models/losses/__init__.py` 添加该函数。
 
 ```python
 from .my_loss import MyLoss, my_loss
-
 ```
 
-此外，用户也可以添加以下的代码到配置文件中，从而实现相同的目标。
+或者在配置文件中添加以下代码以达到相同的目的。
 
 ```python
 custom_imports=dict(
-    imports=['mmdet3d.models.losses.my_loss'])
+    imports=['mmdet3d.models.losses.my_loss'],
+    allow_failed_imports=False)
 ```
 
-为了使用该 loss，需要对 `loss_xxx` 域进行修改。
-因为 MyLoss 主要用于检测框的回归，因此需要在对应的 head 中修改 `loss_bbox` 域的值。
+为了使用该函数，用户需要修改 `loss_xxx` 域。由于 `MyLoss` 是用于回归的，您需要修改 head 中的 `loss_bbox` 域。
 
 ```python
-loss_bbox=dict(type='MyLoss', loss_weight=1.0))
+loss_bbox=dict(type='MyLoss', loss_weight=1.0)
 ```

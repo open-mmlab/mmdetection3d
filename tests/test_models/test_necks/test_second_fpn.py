@@ -2,7 +2,7 @@
 import pytest
 import torch
 
-from mmdet3d.models.builder import build_backbone, build_neck
+from mmdet3d.registry import MODELS
 
 
 def test_secfpn():
@@ -12,8 +12,7 @@ def test_secfpn():
         upsample_strides=[1, 2],
         out_channels=[4, 6],
     )
-    from mmdet3d.models.builder import build_neck
-    neck = build_neck(neck_cfg)
+    neck = MODELS.build(neck_cfg)
     assert neck.deblocks[0][0].in_channels == 2
     assert neck.deblocks[1][0].in_channels == 3
     assert neck.deblocks[0][0].out_channels == 4
@@ -29,7 +28,7 @@ def test_secfpn():
         out_channels=[2, 2],
     )
     with pytest.raises(AssertionError):
-        build_neck(neck_cfg)
+        MODELS.build(neck_cfg)
 
     neck_cfg = dict(
         type='SECONDFPN',
@@ -38,7 +37,7 @@ def test_secfpn():
         out_channels=[2, 2],
     )
     with pytest.raises(AssertionError):
-        build_neck(neck_cfg)
+        MODELS.build(neck_cfg)
 
 
 def test_centerpoint_fpn():
@@ -52,7 +51,7 @@ def test_centerpoint_fpn():
         norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
         conv_cfg=dict(type='Conv2d', bias=False))
 
-    second = build_backbone(second_cfg)
+    second = MODELS.build(second_cfg)
 
     # centerpoint usage of fpn
     centerpoint_fpn_cfg = dict(
@@ -71,9 +70,9 @@ def test_centerpoint_fpn():
         upsample_strides=[1, 2, 4],
         out_channels=[2, 2, 2])
 
-    second_fpn = build_neck(fpn_cfg)
+    second_fpn = MODELS.build(fpn_cfg)
 
-    centerpoint_second_fpn = build_neck(centerpoint_fpn_cfg)
+    centerpoint_second_fpn = MODELS.build(centerpoint_fpn_cfg)
 
     input = torch.rand([2, 2, 32, 32])
     sec_output = second(input)

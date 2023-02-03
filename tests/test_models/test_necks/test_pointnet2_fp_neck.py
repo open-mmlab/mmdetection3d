@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from mmdet3d.models.builder import build_neck
+from mmdet3d.registry import MODELS
 
 
 def test_pointnet2_fp_neck():
@@ -22,7 +22,7 @@ def test_pointnet2_fp_neck():
         fp_channels=((1536, 512, 512), (768, 512, 512), (608, 256, 256),
                      (257, 128, 128)))
 
-    neck = build_neck(neck_cfg)
+    neck = MODELS.build(neck_cfg)
     neck.init_weights()
 
     if torch.cuda.is_available():
