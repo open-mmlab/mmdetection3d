@@ -70,7 +70,6 @@ class OnceDataset(Custom3DDataset):
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
-            pipeline=pipeline,
             classes=classes,
             modality=modality,
             box_type_3d=box_type_3d,
@@ -86,6 +85,15 @@ class OnceDataset(Custom3DDataset):
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.data_infos = list(filter(self._check_annos, self.data_infos))
+
+        # Need to transform points coordinates after load points
+        if pipeline is not None:
+            if pipeline[0]['type'] == 'LoadPointsFromFile':
+                if pipeline[0]['coord_type'] == 'LIDAR':
+                    self.loadpoints_pipeline = Compose([pipeline[0]])
+                else:
+                    raise NotImplementedError
+            self.pipeline = Compose(pipeline[1:])
         self.Tr_lidar_to_standard = np.array(
             [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
         )
@@ -216,7 +224,7 @@ class OnceDataset(Custom3DDataset):
         """
         input_dict = self.get_data_info(index)
         self.pre_pipeline(input_dict)
-        example = self.pipeline(input_dict)
+        example = self.loadpoints_pipeline(input_dict)
         # Transform points from once lidar coordinates
         # Annotations3d has been transformed in `get_data_info`
         # to standard LiDARPoints coordinates
@@ -225,6 +233,7 @@ class OnceDataset(Custom3DDataset):
         points[:, :3] = np.array([self.Tr_lidar_to_standard @ point \
                                     for point in points[:, :3]])
         example['points'].tensor = torch.Tensor(points)
+        example = self.pipeline(example)
 
         if self.filter_empty_gt and \
                 (example is None or
