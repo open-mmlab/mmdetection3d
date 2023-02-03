@@ -219,6 +219,77 @@ def waymo_data_prep(root_path,
         num_worker=workers).create()
 
 
+def semantickitti_data_prep(info_prefix, out_dir):
+    import os
+    import pickle
+
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    total_num = {
+        0: 4541,
+        1: 1101,
+        2: 4661,
+        3: 801,
+        4: 271,
+        5: 2761,
+        6: 1101,
+        7: 1101,
+        8: 4071,
+        9: 1591,
+        10: 1201,
+        11: 921,
+        12: 1061,
+        13: 3281,
+        14: 631,
+        15: 1901,
+        16: 1731,
+        17: 491,
+        18: 1801,
+        19: 4981,
+        20: 831,
+        21: 2721,
+    }
+    split = {
+        'train': [0, 1, 2, 3, 4, 5, 6, 7, 9, 10],
+        'valid': [8],
+        'test': [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+    }
+    split_list = ['train', 'valid', 'test']
+
+    def gen_annotations(split):
+        data_infos = dict()
+        data_infos['metainfo'] = dict(DATASET='SemanticKITTI')
+        data_list = []
+        for i_folder in split:
+            for j in range(0, total_num[i_folder]):
+                data_list.append({
+                    'lidar_points': {
+                        'lidar_path':
+                        os.path.join('sequences',
+                                     str(i_folder).zfill(2), 'velodyne',
+                                     str(j).zfill(6) + '.bin')
+                    },
+                    'pts_semantic_mask_path':
+                    os.path.join('sequences',
+                                 str(i_folder).zfill(2), 'labels',
+                                 str(j).zfill(6) + '.label'),
+                    'sample_id':
+                    str(i_folder) + str(j)
+                })
+        data_infos.update(dict(data_list=data_list))
+        return data_infos
+
+    for sl in split_list:
+        s = split[sl]
+        data_infos = gen_annotations(s)
+        ann_file = os.path.abspath(
+            os.path.join(out_dir, info_prefix + '_infos_' + sl + '.pkl'))
+        with open(ann_file, 'wb') as f:
+            pickle.dump(data_infos, f)
+            f.close()
+
+
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
 parser.add_argument(
@@ -333,5 +404,8 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,
             workers=args.workers)
+    elif args.dataset == 'semantickitti':
+        semantickitti_data_prep(
+            info_prefix=args.extra_tag, out_dir=args.out_dir)
     else:
         raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')
