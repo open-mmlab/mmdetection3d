@@ -266,19 +266,6 @@ def create_groundtruth_database(dataset_class_name,
         image_idx = example['sample_idx']
         points = example['points'].tensor.numpy()
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
-        # Transform points and gt_boxes_3d from once lidar coordinates
-        # to standard LiDARPoints coordinates
-        # x(left), y(back), z(up) to x(front), y(left), z(up)
-        if dataset_class_name == 'OnceDataset':
-            Tr_lidar_to_standard = np.array(
-                [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-            )
-            points[:, :3] = np.array([Tr_lidar_to_standard @ point \
-                                        for point in points[:, :3]])
-            if gt_boxes_3d.ndim == 2:
-                gt_boxes_3d[:, :3] = np.array([Tr_lidar_to_standard @ gt_box_3d \
-                                        for gt_box_3d in gt_boxes_3d[:, :3]])
-                gt_boxes_3d[:, 6] += np.pi / 2
         names = annos['gt_names']
         group_dict = dict()
         if 'group_ids' in annos:

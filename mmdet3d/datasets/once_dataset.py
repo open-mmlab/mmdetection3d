@@ -71,6 +71,7 @@ class OnceDataset(Custom3DDataset):
             data_root=data_root,
             ann_file=ann_file,
             classes=classes,
+            pipeline=pipeline,
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
@@ -85,19 +86,6 @@ class OnceDataset(Custom3DDataset):
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.data_infos = list(filter(self._check_annos, self.data_infos))
-
-        # TODO：need to check
-        # Need to transform points coordinates after load points
-        if pipeline is not None:
-            if pipeline[0]['type'] == 'LoadPointsFromFile':
-                if pipeline[0]['coord_type'] == 'LIDAR':
-                    self.loadpoints_pipeline = Compose([pipeline[0]])
-                else:
-                    raise NotImplementedError
-            self.pipeline = Compose(pipeline[1:])
-        self.Tr_lidar_to_standard = np.array(
-            [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-        )
     
     def __len__(self):
         """Return the length of data infos.
@@ -183,15 +171,6 @@ class OnceDataset(Custom3DDataset):
         annos = info['annos']
 
         gt_bboxes_3d = annos['boxes_3d']
-        # Convert gt_bboxes_3d from once's lidar coordinates
-        # to LiDARInstance3DBoxes standard lidar coordinates
-        # once (lidar): x(left), y(back), z(up)
-        # standard (kitti's lidar): x(front), y(left), z(up)
-        # and once `(cx, cy, cz)` is the center of the cubic
-        gt_bboxes_3d[:, :3] = np.array([self.Tr_lidar_to_standard @ gt_bbox_3d for \
-                                gt_bbox_3d in gt_bboxes_3d[:, :3]])
-        gt_bboxes_3d[:, 6] += np.pi / 2
-        gt_bboxes_3d[:, 6] = self._limit_period(gt_bboxes_3d[:, 6], period=np.pi * 2)
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,
             box_dim=gt_bboxes_3d.shape[-1],
@@ -214,76 +193,6 @@ class OnceDataset(Custom3DDataset):
             gt_names=gt_names,
         )
         return anns_results
-
-    def prepare_train_data(self, index):
-        """Training data preparation.
-
-        Args:
-            index (int): Index for accessing the target data.
-
-        Returns:
-            dict: Training data dict of the corresponding index.
-        """
-        input_dict = self.get_data_info(index)
-        self.pre_pipeline(input_dict)
-        example = self.loadpoints_pipeline(input_dict)
-        # Transform points from once lidar coordinates
-        # Annotations3d has been transformed in `get_data_info`
-        # to standard LiDARPoints coordinates
-        # x(left), y(back), z(up) to x(front), y(left), z(up)
-        example['points'].tensor = torch.Tensor(self._transform_points_xyz(
-                                        example['points'].tensor.numpy()))
-        example = self.pipeline(example)
-
-        if self.filter_empty_gt and \
-                (example is None or
-                    ~(example['gt_labels_3d']._data != -1).any()):
-            return None
-        return example
-
-    def prepare_test_data(self, index):
-        """Prepare data for testing.
-
-        Args:
-            index (int): Index for accessing the target data.
-
-        Returns:
-            dict: Testing data dict of the corresponding index.
-        """
-        input_dict = self.get_data_info(index)
-        self.pre_pipeline(input_dict)
-        example = self.loadpoints_pipeline(input_dict)
-        example['points'].tensor = torch.Tensor(self._transform_points_xyz(
-                                        example['points'].tensor.numpy()))
-        example = self.pipeline(input_dict)
-        return example
-
-    def _transform_points_xyz(self, points):
-        """Transform the train and test data points from once lidar coordinates to standard.
-
-        Args:
-            points: x(left), y(back), z(up)
-            points: x(front), y(left), z(up)
-        """
-        points[:, :3] = np.array([self.Tr_lidar_to_standard @ point \
-                            for point in points[:, :3]])
-        return points
-
-    def _limit_period(val, offset=0.5, period=np.pi):
-        """Limit the value into a period for periodic function.
-
-        Args:
-            val (np.ndarray): The value to be converted.
-            offset (float, optional): Offset to set the value range.
-                Defaults to 0.5.
-            period ([type], optional): Period of the value. Defaults to np.pi.
-
-        Returns:
-            (np.ndarray): Value in the range of
-                [-offset * period, (1-offset) * period]
-        """
-        limited_val = val - np.floor(val / period + offset) * period
-        return limited_val
 
     def _format_results(self, results, jsonfile_prefix=None):
         """Convert the results to the standard format.
@@ -325,7 +234,7 @@ class OnceDataset(Custom3DDataset):
             if num_samples != 0:
                 pred_dict['name'] = np.array(self.CLASSES)[pred_labels - 1]
                 pred_dict['score'] = pred_scores
-                pred_dict['boxes_3d'] = self._format_boxes_3d(pred_boxes)
+                pred_dict['boxes_3d'] = pred_boxes
 
             pred_dict['frame_id'] = sample_idx
             annos.append(pred_dict)
@@ -337,27 +246,6 @@ class OnceDataset(Custom3DDataset):
             print('Results writes to', res_path)
             mmcv.dump(annos, res_path)
         return annos, res_path
-
-    def _format_boxes_3d(self, boxes_3d):
-        """Format predicted boxes3d to once format
-
-        Args:
-            boxes_3d: (np.ndarray): Detection bbox.
-
-        Returns:
-            np.ndarray: List of once boxes
-        """
-        # x,y,z from LiDARInstance3DBoxes to once
-        # bottom center to gravity center
-        # transform the yaw angle
-        Tr_standard_to_lidar = np.linalg.inv(self.Tr_lidar_to_standard)
-        boxes_3d[:, :3] = np.array([Tr_standard_to_lidar @ box_3d for \
-                                    box_3d in boxes_3d[:, :3]])
-        boxes_3d[:, 2] = boxes_3d[:, 2] + boxes_3d[:, 5] * 0.5
-        boxes_3d[:, 6] -= np.pi / 2
-        boxes_3d[:, 6] = self._limit_period(boxes_3d[:, 6], period=np.pi * 2)
-
-        return boxes_3d
 
     def evaluate(self,
                  results,
