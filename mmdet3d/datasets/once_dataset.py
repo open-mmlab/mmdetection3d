@@ -86,6 +86,7 @@ class OnceDataset(Custom3DDataset):
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.data_infos = list(filter(self._check_annos, self.data_infos))
 
+        # TODO：need to check
         # Need to transform points coordinates after load points
         if pipeline is not None:
             if pipeline[0]['type'] == 'LoadPointsFromFile':
@@ -190,6 +191,7 @@ class OnceDataset(Custom3DDataset):
         gt_bboxes_3d[:, :3] = np.array([self.Tr_lidar_to_standard @ gt_bbox_3d for \
                                 gt_bbox_3d in gt_bboxes_3d[:, :3]])
         gt_bboxes_3d[:, 6] += np.pi / 2
+        gt_bboxes_3d[:, 6] = self._limit_period(gt_bboxes_3d[:, 6], period=np.pi * 2)
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,
             box_dim=gt_bboxes_3d.shape[-1],
@@ -267,6 +269,21 @@ class OnceDataset(Custom3DDataset):
                             for point in points[:, :3]])
         return points
 
+    def _limit_period(val, offset=0.5, period=np.pi):
+        """Limit the value into a period for periodic function.
+
+        Args:
+            val (np.ndarray): The value to be converted.
+            offset (float, optional): Offset to set the value range.
+                Defaults to 0.5.
+            period ([type], optional): Period of the value. Defaults to np.pi.
+
+        Returns:
+            (np.ndarray): Value in the range of
+                [-offset * period, (1-offset) * period]
+        """
+        limited_val = val - np.floor(val / period + offset) * period
+        return limited_val
 
     def _format_results(self, results, jsonfile_prefix=None):
         """Convert the results to the standard format.
@@ -338,6 +355,7 @@ class OnceDataset(Custom3DDataset):
                                     box_3d in boxes_3d[:, :3]])
         boxes_3d[:, 2] = boxes_3d[:, 2] + boxes_3d[:, 5] * 0.5
         boxes_3d[:, 6] -= np.pi / 2
+        boxes_3d[:, 6] = self._limit_period(boxes_3d[:, 6], period=np.pi * 2)
 
         return boxes_3d
 
