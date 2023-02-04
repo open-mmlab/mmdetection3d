@@ -1,8 +1,9 @@
-from mmdet3d.models.builder import BACKBONES
 from mmdet.models.backbones import ResNet
 
+from mmdet3d.registry import MODELS
 
-@BACKBONES.register_module()
+
+@MODELS.register_module()
 class DummyResNet(ResNet):
     """Implements a dummy ResNet wrapper for demonstration purpose.
     Args:

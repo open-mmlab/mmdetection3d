@@ -1,34 +1,42 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Adapted from https://github.com/SamsungLabs/fcaf3d/blob/master/mmdet3d/models/dense_heads/fcaf3d_neck_with_head.py # noqa
+from typing import List, Optional, Tuple
+
 try:
     import MinkowskiEngine as ME
+    from MinkowskiEngine import SparseTensor
 except ImportError:
     # Please follow getting_started.md to install MinkowskiEngine.
+    ME = SparseTensor = None
     pass
 
 import torch
-from mmcv.cnn import Scale, bias_init_with_prob
+from mmcv.cnn import Scale
 from mmcv.ops import nms3d, nms3d_normal
-from mmcv.runner.base_module import BaseModule
-from torch import nn
+from mmdet.utils import reduce_mean
+from mmengine.model import bias_init_with_prob
+from mmengine.structures import InstanceData
+from torch import Tensor, nn
 
-from mmdet3d.core.bbox.structures import rotation_3d_in_axis
-from mmdet3d.models import HEADS, build_loss
-from mmdet.core import reduce_mean
+from mmdet3d.registry import MODELS
+from mmdet3d.structures import BaseInstance3DBoxes, rotation_3d_in_axis
+from mmdet3d.utils import InstanceList, OptInstanceList
+from .base_3d_dense_head import Base3DDenseHead
 
 
-@HEADS.register_module()
-class FCAF3DHead(BaseModule):
+@MODELS.register_module()
+class FCAF3DHead(Base3DDenseHead):
     r"""Bbox head of `FCAF3D <https://arxiv.org/abs/2112.00322>`_.
+
     Actually here we store both the sparse 3D FPN and a head. The neck and
     the head can not be simply separated as pruning score on the i-th level
     of FPN requires classification scores from i+1-th level of the head.
 
     Args:
-        n_classes (int): Number of classes.
-        in_channels (tuple[int]): Number of channels in input tensors.
+        num_classes (int): Number of classes.
+        in_channels (int): Number of channels in input tensors.
         out_channels (int): Number of channels in the neck output tensors.
-        n_reg_outs (int): Number of regression layer channels.
+        num_reg_outs (int): Number of regression layer channels.
         voxel_size (float): Voxel size in meters.
         pts_prune_threshold (int): Pruning threshold on each feature level.
         pts_assign_threshold (int): Box to location assigner parameter.
@@ -37,9 +45,12 @@ class FCAF3DHead(BaseModule):
         pts_center_threshold (int): Box to location assigner parameter.
             After feature level for the box is determined, assigner selects
             pts_center_threshold locations closest to the box center.
-        center_loss (dict, optional): Config of centerness loss.
-        bbox_loss (dict, optional): Config of bbox loss.
-        cls_loss (dict, optional): Config of classification loss.
+        center_loss (dict): Config of centerness loss. Defaults to
+            dict(type='mmdet.CrossEntropyLoss', use_sigmoid=True).
+        bbox_loss (dict): Config of bbox loss. Defaults to
+            dict(type='AxisAlignedIoULoss').
+        cls_loss (dict): Config of classification loss. Defaults to
+            dict = dict(type='mmdet.FocalLoss').
         train_cfg (dict, optional): Config for train stage. Defaults to None.
         test_cfg (dict, optional): Config for test stage. Defaults to None.
         init_cfg (dict, optional): Config for weight initialization.
@@ -47,34 +58,39 @@ class FCAF3DHead(BaseModule):
     """
 
     def __init__(self,
-                 n_classes,
-                 in_channels,
-                 out_channels,
-                 n_reg_outs,
-                 voxel_size,
-                 pts_prune_threshold,
-                 pts_assign_threshold,
-                 pts_center_threshold,
-                 center_loss=dict(type='CrossEntropyLoss', use_sigmoid=True),
-                 bbox_loss=dict(type='AxisAlignedIoULoss'),
-                 cls_loss=dict(type='FocalLoss'),
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None):
+                 num_classes: int,
+                 in_channels: int,
+                 out_channels: int,
+                 num_reg_outs: int,
+                 voxel_size: float,
+                 pts_prune_threshold: int,
+                 pts_assign_threshold: int,
+                 pts_center_threshold: int,
+                 center_loss: dict = dict(
+                     type='mmdet.CrossEntropyLoss', use_sigmoid=True),
+                 bbox_loss: dict = dict(type='AxisAlignedIoULoss'),
+                 cls_loss: dict = dict(type='mmdet.FocalLoss'),
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(FCAF3DHead, self).__init__(init_cfg)
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
         self.voxel_size = voxel_size
         self.pts_prune_threshold = pts_prune_threshold
         self.pts_assign_threshold = pts_assign_threshold
         self.pts_center_threshold = pts_center_threshold
-        self.center_loss = build_loss(center_loss)
-        self.bbox_loss = build_loss(bbox_loss)
-        self.cls_loss = build_loss(cls_loss)
+        self.center_loss = MODELS.build(center_loss)
+        self.bbox_loss = MODELS.build(bbox_loss)
+        self.cls_loss = MODELS.build(cls_loss)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self._init_layers(in_channels, out_channels, n_reg_outs, n_classes)
+        self._init_layers(in_channels, out_channels, num_reg_outs, num_classes)
 
     @staticmethod
-    def _make_block(in_channels, out_channels):
+    def _make_block(in_channels: int, out_channels: int) -> nn.Module:
         """Construct Conv-Norm-Act block.
 
         Args:
@@ -90,7 +106,7 @@ class FCAF3DHead(BaseModule):
             ME.MinkowskiBatchNorm(out_channels), ME.MinkowskiELU())
 
     @staticmethod
-    def _make_up_block(in_channels, out_channels):
+    def _make_up_block(in_channels: int, out_channels: int) -> nn.Module:
         """Construct DeConv-Norm-Act-Conv-Norm-Act block.
 
         Args:
@@ -112,14 +128,15 @@ class FCAF3DHead(BaseModule):
                 out_channels, out_channels, kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(out_channels), ME.MinkowskiELU())
 
-    def _init_layers(self, in_channels, out_channels, n_reg_outs, n_classes):
+    def _init_layers(self, in_channels: Tuple[int], out_channels: int,
+                     num_reg_outs: int, num_classes: int):
         """Initialize layers.
 
         Args:
             in_channels (tuple[int]): Number of channels in input tensors.
             out_channels (int): Number of channels in the neck output tensors.
-            n_reg_outs (int): Number of regression layer channels.
-            n_classes (int): Number of classes.
+            num_reg_outs (int): Number of regression layer channels.
+            num_classes (int): Number of classes.
         """
         # neck layers
         self.pruning = ME.MinkowskiPruning()
@@ -135,9 +152,9 @@ class FCAF3DHead(BaseModule):
         self.conv_center = ME.MinkowskiConvolution(
             out_channels, 1, kernel_size=1, dimension=3)
         self.conv_reg = ME.MinkowskiConvolution(
-            out_channels, n_reg_outs, kernel_size=1, dimension=3)
+            out_channels, num_reg_outs, kernel_size=1, dimension=3)
         self.conv_cls = ME.MinkowskiConvolution(
-            out_channels, n_classes, kernel_size=1, bias=True, dimension=3)
+            out_channels, num_classes, kernel_size=1, bias=True, dimension=3)
         self.scales = nn.ModuleList(
             [Scale(1.) for _ in range(len(in_channels))])
 
@@ -148,14 +165,14 @@ class FCAF3DHead(BaseModule):
         nn.init.normal_(self.conv_cls.kernel, std=.01)
         nn.init.constant_(self.conv_cls.bias, bias_init_with_prob(.01))
 
-    def forward(self, x):
+    def forward(self, x: List[Tensor]) -> Tuple[List[Tensor], ...]:
         """Forward pass.
 
         Args:
             x (list[Tensor]): Features from the backbone.
 
         Returns:
-            list[list[Tensor]]: Predictions of the head.
+            Tuple[List[Tensor], ...]: Predictions of the head.
         """
         center_preds, bbox_preds, cls_preds, points = [], [], [], []
         inputs = x
@@ -177,38 +194,7 @@ class FCAF3DHead(BaseModule):
         return center_preds[::-1], bbox_preds[::-1], cls_preds[::-1], \
             points[::-1]
 
-    def forward_train(self, x, gt_bboxes, gt_labels, input_metas):
-        """Forward pass of the train stage.
-
-        Args:
-            x (list[SparseTensor]): Features from the backbone.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each sample.
-            gt_labels(list[torch.Tensor]): Labels of each sample.
-            input_metas (list[dict]): Contains scene meta info for each sample.
-
-        Returns:
-            dict: Centerness, bbox and classification loss values.
-        """
-        center_preds, bbox_preds, cls_preds, points = self(x)
-        return self._loss(center_preds, bbox_preds, cls_preds, points,
-                          gt_bboxes, gt_labels, input_metas)
-
-    def forward_test(self, x, input_metas):
-        """Forward pass of the test stage.
-
-        Args:
-            x (list[SparseTensor]): Features from the backbone.
-            input_metas (list[dict]): Contains scene meta info for each sample.
-
-        Returns:
-            list[list[Tensor]]: bboxes, scores and labels for each sample.
-        """
-        center_preds, bbox_preds, cls_preds, points = self(x)
-        return self._get_bboxes(center_preds, bbox_preds, cls_preds, points,
-                                input_metas)
-
-    def _prune(self, x, scores):
+    def _prune(self, x: SparseTensor, scores: SparseTensor) -> SparseTensor:
         """Prunes the tensor by score thresholding.
 
         Args:
@@ -233,7 +219,8 @@ class FCAF3DHead(BaseModule):
         x = self.pruning(x, prune_mask)
         return x
 
-    def _forward_single(self, x, scale):
+    def _forward_single(self, x: SparseTensor,
+                        scale: Scale) -> Tuple[Tensor, ...]:
         """Forward pass per level.
 
         Args:
@@ -267,9 +254,12 @@ class FCAF3DHead(BaseModule):
 
         return center_preds, bbox_preds, cls_preds, points, prune_scores
 
-    def _loss_single(self, center_preds, bbox_preds, cls_preds, points,
-                     gt_bboxes, gt_labels, input_meta):
-        """Per scene loss function.
+    def _loss_by_feat_single(self, center_preds: List[Tensor],
+                             bbox_preds: List[Tensor], cls_preds: List[Tensor],
+                             points: List[Tensor],
+                             gt_bboxes: BaseInstance3DBoxes, gt_labels: Tensor,
+                             input_meta: dict) -> Tuple[Tensor, ...]:
+        """Loss function of single sample.
 
         Args:
             center_preds (list[Tensor]): Centerness predictions for all levels.
@@ -277,14 +267,15 @@ class FCAF3DHead(BaseModule):
             cls_preds (list[Tensor]): Classification predictions for all
                 levels.
             points (list[Tensor]): Final location coordinates for all levels.
-            gt_bboxes (BaseInstance3DBoxes): Ground truth boxes.
+            gt_bboxes (:obj:`BaseInstance3DBoxes`): Ground truth boxes.
             gt_labels (Tensor): Ground truth labels.
             input_meta (dict): Scene meta info.
 
         Returns:
-            tuple[Tensor]: Centerness, bbox, and classification loss values.
+            tuple[Tensor, ...]: Centerness, bbox, and classification loss
+            values.
         """
-        center_targets, bbox_targets, cls_targets = self._get_targets(
+        center_targets, bbox_targets, cls_targets = self.get_targets(
             points, gt_bboxes, gt_labels)
 
         center_preds = torch.cat(center_preds)
@@ -321,36 +312,53 @@ class FCAF3DHead(BaseModule):
             bbox_loss = pos_bbox_preds.sum()
         return center_loss, bbox_loss, cls_loss
 
-    def _loss(self, center_preds, bbox_preds, cls_preds, points, gt_bboxes,
-              gt_labels, input_metas):
-        """Per scene loss function.
+    def loss_by_feat(self,
+                     center_preds: List[List[Tensor]],
+                     bbox_preds: List[List[Tensor]],
+                     cls_preds: List[List[Tensor]],
+                     points: List[List[Tensor]],
+                     batch_gt_instances_3d: InstanceList,
+                     batch_input_metas: List[dict],
+                     batch_gt_instances_ignore: OptInstanceList = None,
+                     **kwargs) -> dict:
+        """Loss function about feature.
 
         Args:
             center_preds (list[list[Tensor]]): Centerness predictions for
-                all scenes.
+                all scenes. The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
             bbox_preds (list[list[Tensor]]): Bbox predictions for all scenes.
+                The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
             cls_preds (list[list[Tensor]]): Classification predictions for all
-                scenes.
+                scenes. The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
             points (list[list[Tensor]]): Final location coordinates for all
-                scenes.
-            gt_bboxes (list[BaseInstance3DBoxes]): Ground truth boxes for all
-                scenes.
-            gt_labels (list[Tensor]): Ground truth labels for all scenes.
-            input_metas (list[dict]): Meta infos for all scenes.
+                scenes. The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instance_3d.  It usually includes ``bboxes_3d``、`
+                `labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
 
         Returns:
-            dict: Centerness, bbox, and classification loss values.
+            dict: Centerness, bbox, and classification losses.
         """
         center_losses, bbox_losses, cls_losses = [], [], []
-        for i in range(len(input_metas)):
-            center_loss, bbox_loss, cls_loss = self._loss_single(
+        for i in range(len(batch_input_metas)):
+            center_loss, bbox_loss, cls_loss = self._loss_by_feat_single(
                 center_preds=[x[i] for x in center_preds],
                 bbox_preds=[x[i] for x in bbox_preds],
                 cls_preds=[x[i] for x in cls_preds],
                 points=[x[i] for x in points],
-                input_meta=input_metas[i],
-                gt_bboxes=gt_bboxes[i],
-                gt_labels=gt_labels[i])
+                input_meta=batch_input_metas[i],
+                gt_bboxes=batch_gt_instances_3d[i].bboxes_3d,
+                gt_labels=batch_gt_instances_3d[i].labels_3d)
             center_losses.append(center_loss)
             bbox_losses.append(bbox_loss)
             cls_losses.append(cls_loss)
@@ -359,9 +367,11 @@ class FCAF3DHead(BaseModule):
             bbox_loss=torch.mean(torch.stack(bbox_losses)),
             cls_loss=torch.mean(torch.stack(cls_losses)))
 
-    def _get_bboxes_single(self, center_preds, bbox_preds, cls_preds, points,
-                           input_meta):
-        """Generate boxes for a single scene.
+    def _predict_by_feat_single(self, center_preds: List[Tensor],
+                                bbox_preds: List[Tensor],
+                                cls_preds: List[Tensor], points: List[Tensor],
+                                input_meta: dict) -> InstanceData:
+        """Generate boxes for single sample.
 
         Args:
             center_preds (list[Tensor]): Centerness predictions for all levels.
@@ -372,7 +382,7 @@ class FCAF3DHead(BaseModule):
             input_meta (dict): Scene meta info.
 
         Returns:
-            tuple[Tensor]: Predicted bounding boxes, scores and labels.
+            InstanceData: Predicted bounding boxes, scores and labels.
         """
         mlvl_bboxes, mlvl_scores = [], []
         for center_pred, bbox_pred, cls_pred, point in zip(
@@ -394,10 +404,24 @@ class FCAF3DHead(BaseModule):
         scores = torch.cat(mlvl_scores)
         bboxes, scores, labels = self._single_scene_multiclass_nms(
             bboxes, scores, input_meta)
-        return bboxes, scores, labels
 
-    def _get_bboxes(self, center_preds, bbox_preds, cls_preds, points,
-                    input_metas):
+        bboxes = input_meta['box_type_3d'](
+            bboxes,
+            box_dim=bboxes.shape[1],
+            with_yaw=bboxes.shape[1] == 7,
+            origin=(.5, .5, .5))
+
+        results = InstanceData()
+        results.bboxes_3d = bboxes
+        results.scores_3d = scores
+        results.labels_3d = labels
+        return results
+
+    def predict_by_feat(self, center_preds: List[List[Tensor]],
+                        bbox_preds: List[List[Tensor]], cls_preds,
+                        points: List[List[Tensor]],
+                        batch_input_metas: List[dict],
+                        **kwargs) -> List[InstanceData]:
         """Generate boxes for all scenes.
 
         Args:
@@ -408,25 +432,25 @@ class FCAF3DHead(BaseModule):
                 scenes.
             points (list[list[Tensor]]): Final location coordinates for all
                 scenes.
-            input_metas (list[dict]): Meta infos for all scenes.
+            batch_input_metas (list[dict]): Meta infos for all scenes.
 
         Returns:
-            list[tuple[Tensor]]: Predicted bboxes, scores, and labels for
-                all scenes.
+            list[InstanceData]: Predicted bboxes, scores, and labels for
+            all scenes.
         """
         results = []
-        for i in range(len(input_metas)):
-            result = self._get_bboxes_single(
+        for i in range(len(batch_input_metas)):
+            result = self._predict_by_feat_single(
                 center_preds=[x[i] for x in center_preds],
                 bbox_preds=[x[i] for x in bbox_preds],
                 cls_preds=[x[i] for x in cls_preds],
                 points=[x[i] for x in points],
-                input_meta=input_metas[i])
+                input_meta=batch_input_metas[i])
             results.append(result)
         return results
 
     @staticmethod
-    def _bbox_to_loss(bbox):
+    def _bbox_to_loss(bbox: Tensor) -> Tensor:
         """Transform box to the axis-aligned or rotated iou loss format.
 
         Args:
@@ -447,7 +471,7 @@ class FCAF3DHead(BaseModule):
             dim=-1)
 
     @staticmethod
-    def _bbox_pred_to_bbox(points, bbox_pred):
+    def _bbox_pred_to_bbox(points: Tensor, bbox_pred: Tensor) -> Tensor:
         """Transform predicted bbox parameters to bbox.
 
         Args:
@@ -492,7 +516,7 @@ class FCAF3DHead(BaseModule):
             dim=-1)
 
     @staticmethod
-    def _get_face_distances(points, boxes):
+    def _get_face_distances(points: Tensor, boxes: Tensor) -> Tensor:
         """Calculate distances from point to box faces.
 
         Args:
@@ -501,7 +525,7 @@ class FCAF3DHead(BaseModule):
 
         Returns:
             Tensor: Face distances of shape (N_points, N_boxes, 6),
-                (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
+            (dx_min, dx_max, dy_min, dy_max, dz_min, dz_max).
         """
         shift = torch.stack(
             (points[..., 0] - boxes[..., 0], points[..., 1] - boxes[..., 1],
@@ -520,7 +544,7 @@ class FCAF3DHead(BaseModule):
                            dim=-1)
 
     @staticmethod
-    def _get_centerness(face_distances):
+    def _get_centerness(face_distances: Tensor) -> Tensor:
         """Compute point centerness w.r.t containing box.
 
         Args:
@@ -539,7 +563,8 @@ class FCAF3DHead(BaseModule):
         return torch.sqrt(centerness_targets)
 
     @torch.no_grad()
-    def _get_targets(self, points, gt_bboxes, gt_labels):
+    def get_targets(self, points: Tensor, gt_bboxes: BaseInstance3DBoxes,
+                    gt_labels: Tensor) -> Tuple[Tensor, ...]:
         """Compute targets for final locations for a single scene.
 
         Args:
@@ -548,8 +573,8 @@ class FCAF3DHead(BaseModule):
             gt_labels (Tensor): Ground truth labels.
 
         Returns:
-            tuple[Tensor]: Centerness, bbox and classification
-                targets for all locations.
+            tuple[Tensor, ...]: Centerness, bbox and classification
+            targets for all locations.
         """
         float_max = points[0].new_tensor(1e8)
         n_levels = len(points)
@@ -617,7 +642,8 @@ class FCAF3DHead(BaseModule):
         cls_targets = torch.where(min_volumes == float_max, -1, cls_targets)
         return center_targets, bbox_targets, cls_targets
 
-    def _single_scene_multiclass_nms(self, bboxes, scores, input_meta):
+    def _single_scene_multiclass_nms(self, bboxes: Tensor, scores: Tensor,
+                                     input_meta: dict) -> Tuple[Tensor, ...]:
         """Multi-class nms for a single scene.
 
         Args:
@@ -627,12 +653,12 @@ class FCAF3DHead(BaseModule):
             input_meta (dict): Scene meta data.
 
         Returns:
-            tuple[Tensor]: Predicted bboxes, scores and labels.
+            tuple[Tensor, ...]: Predicted bboxes, scores and labels.
         """
-        n_classes = scores.shape[1]
+        num_classes = scores.shape[1]
         with_yaw = bboxes.shape[1] == 7
         nms_bboxes, nms_scores, nms_labels = [], [], []
-        for i in range(n_classes):
+        for i in range(num_classes):
             ids = scores[:, i] > self.test_cfg.score_thr
             if not ids.any():
                 continue
@@ -664,15 +690,7 @@ class FCAF3DHead(BaseModule):
             nms_scores = bboxes.new_zeros((0, ))
             nms_labels = bboxes.new_zeros((0, ))
 
-        if with_yaw:
-            box_dim = 7
-        else:
-            box_dim = 6
+        if not with_yaw:
             nms_bboxes = nms_bboxes[:, :6]
-        nms_bboxes = input_meta['box_type_3d'](
-            nms_bboxes,
-            box_dim=box_dim,
-            with_yaw=with_yaw,
-            origin=(.5, .5, .5))
 
         return nms_bboxes, nms_scores, nms_labels

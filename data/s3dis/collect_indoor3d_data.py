@@ -1,7 +1,7 @@
 import argparse
 from os import path as osp
 
-import mmcv
+import mmengine
 from indoor3d_util import export
 
 parser = argparse.ArgumentParser()
@@ -23,7 +23,7 @@ anno_paths = [line.rstrip() for line in open(args.ann_file)]
 anno_paths = [osp.join(args.data_dir, p) for p in anno_paths]
 
 output_folder = args.output_folder
-mmcv.mkdir_or_exist(output_folder)
+mmengine.mkdir_or_exist(output_folder)
 
 # Note: there is an extra character in the v1.2 data in Area_5/hallway_6.
 # It's fixed manually here.

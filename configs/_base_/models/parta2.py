@@ -4,12 +4,14 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='PartA2',
-    voxel_layer=dict(
-        max_num_points=5,  # max_points_per_voxel
-        point_cloud_range=point_cloud_range,
-        voxel_size=voxel_size,
-        max_voxels=(16000, 40000)  # (training, testing) max_voxels
-    ),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=5,  # max_points_per_voxel
+            point_cloud_range=point_cloud_range,
+            voxel_size=voxel_size,
+            max_voxels=(16000, 40000))),
     voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
         type='SparseUNet',
@@ -46,14 +48,16 @@ model = dict(
         assign_per_class=True,
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False,
+            loss_weight=0.2)),
     roi_head=dict(
         type='PartAggregationROIHead',
         num_classes=3,
@@ -64,14 +68,16 @@ model = dict(
             seg_score_thr=0.3,
             num_classes=3,
             loss_seg=dict(
-                type='FocalLoss',
+                type='mmdet.FocalLoss',
                 use_sigmoid=True,
                 reduction='sum',
                 gamma=2.0,
                 alpha=0.25,
                 loss_weight=1.0),
             loss_part=dict(
-                type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=True,
+                loss_weight=1.0)),
         seg_roi_extractor=dict(
             type='Single3DRoIAwareExtractor',
             roi_layer=dict(
@@ -79,7 +85,7 @@ model = dict(
                 out_size=14,
                 max_pts_per_voxel=128,
                 mode='max')),
-        part_roi_extractor=dict(
+        bbox_roi_extractor=dict(
             type='Single3DRoIAwareExtractor',
             roi_layer=dict(
                 type='RoIAwarePool3d',
@@ -103,12 +109,12 @@ model = dict(
             roi_feat_size=14,
             with_corner_loss=True,
             loss_bbox=dict(
-                type='SmoothL1Loss',
+                type='mmdet.SmoothL1Loss',
                 beta=1.0 / 9.0,
                 reduction='sum',
                 loss_weight=1.0),
             loss_cls=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 use_sigmoid=True,
                 reduction='sum',
                 loss_weight=1.0))),
@@ -117,21 +123,21 @@ model = dict(
         rpn=dict(
             assigner=[
                 dict(  # for Pedestrian
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.35,
                     min_pos_iou=0.35,
                     ignore_iof_thr=-1),
                 dict(  # for Cyclist
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.5,
                     neg_iou_thr=0.35,
                     min_pos_iou=0.35,
                     ignore_iof_thr=-1),
                 dict(  # for Car
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(type='BboxOverlapsNearest3D'),
                     pos_iou_thr=0.6,
                     neg_iou_thr=0.45,
@@ -151,7 +157,7 @@ model = dict(
         rcnn=dict(
             assigner=[
                 dict(  # for Pedestrian
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(
                         type='BboxOverlaps3D', coordinate='lidar'),
                     pos_iou_thr=0.55,
@@ -159,7 +165,7 @@ model = dict(
                     min_pos_iou=0.55,
                     ignore_iof_thr=-1),
                 dict(  # for Cyclist
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(
                         type='BboxOverlaps3D', coordinate='lidar'),
                     pos_iou_thr=0.55,
@@ -167,7 +173,7 @@ model = dict(
                     min_pos_iou=0.55,
                     ignore_iof_thr=-1),
                 dict(  # for Car
-                    type='MaxIoUAssigner',
+                    type='Max3DIoUAssigner',
                     iou_calculator=dict(
                         type='BboxOverlaps3D', coordinate='lidar'),
                     pos_iou_thr=0.55,

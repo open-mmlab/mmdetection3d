@@ -15,9 +15,15 @@ Collections:
       Version: v1.0.0rc4
 
 Models:
+<<<<<<< HEAD
   - Name: fcaf3d_8x2_scannet-3d-18class
     In Collection: FCAF3D
     Config: configs/fcaf3d/fcaf3d_8x2_scannet-3d-18class.py
+=======
+  - Name: fcaf3d_2xb8_scannet-3d-18class
+    In Collection: FCAF3D
+    Config: configs/fcaf3d/fcaf3d_2xb8_scannet-3d-18class.py
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 10.7
@@ -29,9 +35,15 @@ Models:
           AP@0.5: 55.2
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_scannet-3d-18class/fcaf3d_8x2_scannet-3d-18class_20220805_084956.pth
 
+<<<<<<< HEAD
   - Name: fcaf3d_8x2_sunrgbd-3d-10class
     In Collection: FCAF3D
     Config: configs/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class.py
+=======
+  - Name: fcaf3d_2xb8_sunrgbd-3d-10class
+    In Collection: FCAF3D
+    Config: configs/fcaf3d/fcaf3d_2xb8_sunrgbd-3d-10class.py
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
     Metadata:
       Training Data: SUNRGBD
       Training Memory (GB): 6.5
@@ -39,6 +51,7 @@ Models:
       - Task: 3D Object Detection
         Dataset: SUNRGBD
         Metrics:
+<<<<<<< HEAD
           AP@0.25: 64.75
           AP@0.5: 48.21
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.pth
@@ -46,6 +59,15 @@ Models:
   - Name: fcaf3d_8x2_s3dis-3d-5class
     In Collection: FCAF3D
     Config: configs/fcaf3d/fcaf3d_8x2_s3dis-3d-5class.py
+=======
+          AP@0.25: 63.76
+          AP@0.5: 47.31
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/fcaf3d/fcaf3d_8x2_sunrgbd-3d-10class/fcaf3d_8x2_sunrgbd-3d-10class_20220805_165017.pth
+
+  - Name: fcaf3d_2xb8_s3dis-3d-5class
+    In Collection: FCAF3D
+    Config: configs/fcaf3d/fcaf3d_2xb8_s3dis-3d-5class.py
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 23.5

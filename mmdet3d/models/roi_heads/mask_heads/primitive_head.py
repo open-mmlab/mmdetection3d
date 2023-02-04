@@ -1,18 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple
+
 import torch
 from mmcv.cnn import ConvModule
 from mmcv.ops import furthest_point_sample
-from mmcv.runner import BaseModule
+from mmdet.models.utils import multi_apply
+from mmengine.model import BaseModule
+from mmengine.structures import InstanceData
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.models.builder import HEADS, build_loss
-from mmdet3d.models.model_utils import VoteModule
-from mmdet3d.ops import build_sa_module
-from mmdet.core import multi_apply
+from mmdet3d.models.layers import VoteModule, build_sa_module
+from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class PrimitiveHead(BaseModule):
     r"""Primitive head of `H3DNet <https://arxiv.org/abs/2006.05682>`_.
 
@@ -23,40 +27,44 @@ class PrimitiveHead(BaseModule):
             available mode ['z', 'xy', 'line'].
         bbox_coder (:obj:`BaseBBoxCoder`): Bbox coder for encoding and
             decoding boxes.
-        train_cfg (dict): Config for training.
-        test_cfg (dict): Config for testing.
-        vote_module_cfg (dict): Config of VoteModule for point-wise votes.
-        vote_aggregation_cfg (dict): Config of vote aggregation layer.
+        train_cfg (dict, optional): Config for training.
+        test_cfg (dict, optional): Config for testing.
+        vote_module_cfg (dict, optional): Config of VoteModule for point-wise
+            votes.
+        vote_aggregation_cfg (dict, optional): Config of vote aggregation
+            layer.
         feat_channels (tuple[int]): Convolution channels of
             prediction layer.
         upper_thresh (float): Threshold for line matching.
         surface_thresh (float): Threshold for surface matching.
-        conv_cfg (dict): Config of convolution in prediction layer.
-        norm_cfg (dict): Config of BN in prediction layer.
-        objectness_loss (dict): Config of objectness loss.
-        center_loss (dict): Config of center loss.
-        semantic_loss (dict): Config of point-wise semantic segmentation loss.
+        conv_cfg (dict, optional): Config of convolution in prediction layer.
+        norm_cfg (dict, optional): Config of BN in prediction layer.
+        objectness_loss (dict, optional): Config of objectness loss.
+        center_loss (dict, optional): Config of center loss.
+        semantic_loss (dict, optional): Config of point-wise semantic
+            segmentation loss.
     """
 
     def __init__(self,
-                 num_dims,
-                 num_classes,
-                 primitive_mode,
-                 train_cfg=None,
-                 test_cfg=None,
-                 vote_module_cfg=None,
-                 vote_aggregation_cfg=None,
-                 feat_channels=(128, 128),
-                 upper_thresh=100.0,
-                 surface_thresh=0.5,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 objectness_loss=None,
-                 center_loss=None,
-                 semantic_reg_loss=None,
-                 semantic_cls_loss=None,
-                 init_cfg=None):
+                 num_dims: int,
+                 num_classes: int,
+                 primitive_mode: str,
+                 train_cfg: Optional[dict] = None,
+                 test_cfg: Optional[dict] = None,
+                 vote_module_cfg: Optional[dict] = None,
+                 vote_aggregation_cfg: Optional[dict] = None,
+                 feat_channels: tuple = (128, 128),
+                 upper_thresh: float = 100.0,
+                 surface_thresh: float = 0.5,
+                 conv_cfg: dict = dict(type='Conv1d'),
+                 norm_cfg: dict = dict(type='BN1d'),
+                 objectness_loss: Optional[dict] = None,
+                 center_loss: Optional[dict] = None,
+                 semantic_reg_loss: Optional[dict] = None,
+                 semantic_cls_loss: Optional[dict] = None,
+                 init_cfg: Optional[dict] = None):
         super(PrimitiveHead, self).__init__(init_cfg=init_cfg)
+        # bounding boxes centers,  face centers and edge centers
         assert primitive_mode in ['z', 'xy', 'line']
         # The dimension of primitive semantic information.
         self.num_dims = num_dims
@@ -69,10 +77,10 @@ class PrimitiveHead(BaseModule):
         self.upper_thresh = upper_thresh
         self.surface_thresh = surface_thresh
 
-        self.objectness_loss = build_loss(objectness_loss)
-        self.center_loss = build_loss(center_loss)
-        self.semantic_reg_loss = build_loss(semantic_reg_loss)
-        self.semantic_cls_loss = build_loss(semantic_cls_loss)
+        self.loss_objectness = MODELS.build(objectness_loss)
+        self.loss_center = MODELS.build(center_loss)
+        self.loss_semantic_reg = MODELS.build(semantic_reg_loss)
+        self.loss_semantic_cls = MODELS.build(semantic_cls_loss)
 
         assert vote_aggregation_cfg['mlp_channels'][0] == vote_module_cfg[
             'in_channels']
@@ -113,18 +121,26 @@ class PrimitiveHead(BaseModule):
         self.conv_pred.add_module('conv_out',
                                   nn.Conv1d(prev_channel, conv_out_channel, 1))
 
-    def forward(self, feats_dict, sample_mod):
+    @property
+    def sample_mode(self):
+        if self.training:
+            sample_mode = self.train_cfg.sample_mode
+        else:
+            sample_mode = self.test_cfg.sample_mode
+        assert sample_mode in ['vote', 'seed', 'random']
+        return sample_mode
+
+    def forward(self, feats_dict: dict) -> dict:
         """Forward pass.
 
         Args:
             feats_dict (dict): Feature dict from backbone.
-            sample_mod (str): Sample mode for vote aggregation layer.
-                valid modes are "vote", "seed" and "random".
+
 
         Returns:
             dict: Predictions of primitive head.
         """
-        assert sample_mod in ['vote', 'seed', 'random']
+        sample_mode = self.sample_mode
 
         seed_points = feats_dict['fp_xyz_net0'][-1]
         seed_features = feats_dict['hd_feature']
@@ -142,14 +158,14 @@ class PrimitiveHead(BaseModule):
         results['vote_features_' + self.primitive_mode] = vote_features
 
         # 2. aggregate vote_points
-        if sample_mod == 'vote':
+        if sample_mode == 'vote':
             # use fps in vote_aggregation
             sample_indices = None
-        elif sample_mod == 'seed':
+        elif sample_mode == 'seed':
             # FPS on seed and choose the votes corresponding to the seeds
             sample_indices = furthest_point_sample(seed_points,
                                                    self.num_proposal)
-        elif sample_mod == 'random':
+        elif sample_mode == 'random':
             # Random sampling from the votes
             batch_size, num_seed = seed_points.shape[:2]
             sample_indices = torch.randint(
@@ -184,63 +200,101 @@ class PrimitiveHead(BaseModule):
         results['pred_' + self.primitive_mode + '_center'] = center
         return results
 
-    def loss(self,
-             bbox_preds,
-             points,
-             gt_bboxes_3d,
-             gt_labels_3d,
-             pts_semantic_mask=None,
-             pts_instance_mask=None,
-             img_metas=None,
-             gt_bboxes_ignore=None):
+    def loss(self, points: List[torch.Tensor], feats_dict: Dict[str,
+                                                                torch.Tensor],
+             batch_data_samples: List[Det3DDataSample], **kwargs) -> dict:
+        """
+        Args:
+            points (list[tensor]): Points cloud of multiple samples.
+            feats_dict (dict): Predictions from backbone or FPN.
+            batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
+                contains the meta information of each sample and
+                corresponding annotations.
+
+        Returns:
+            dict:  A dictionary of loss components.
+        """
+        preds = self(feats_dict)
+        feats_dict.update(preds)
+
+        batch_gt_instance_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        batch_pts_semantic_mask = []
+        batch_pts_instance_mask = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instance_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+            batch_pts_semantic_mask.append(
+                data_sample.gt_pts_seg.get('pts_semantic_mask', None))
+            batch_pts_instance_mask.append(
+                data_sample.gt_pts_seg.get('pts_instance_mask', None))
+
+        loss_inputs = (points, feats_dict, batch_gt_instance_3d)
+        losses = self.loss_by_feat(
+            *loss_inputs,
+            batch_pts_semantic_mask=batch_pts_semantic_mask,
+            batch_pts_instance_mask=batch_pts_instance_mask,
+            batch_gt_instances_ignore=batch_gt_instances_ignore,
+        )
+        return losses
+
+    def loss_by_feat(
+            self,
+            points: List[torch.Tensor],
+            feats_dict: dict,
+            batch_gt_instances_3d: List[InstanceData],
+            batch_pts_semantic_mask: Optional[List[torch.Tensor]] = None,
+            batch_pts_instance_mask: Optional[List[torch.Tensor]] = None,
+            **kwargs):
         """Compute loss.
 
         Args:
-            bbox_preds (dict): Predictions from forward of primitive head.
             points (list[torch.Tensor]): Input points.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each sample.
-            gt_labels_3d (list[torch.Tensor]): Labels of each sample.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise
-                semantic mask.
-            pts_instance_mask (list[torch.Tensor]): Point-wise
-                instance mask.
-            img_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding.
+            feats_dict (dict): Predictions of previous modules.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes`` and ``labels``
+                attributes.
+            batch_pts_semantic_mask (list[tensor]): Semantic mask
+                of points cloud. Defaults to None.
+            batch_pts_instance_mask (list[tensor]): Instance mask
+                of points cloud. Defaults to None.
 
         Returns:
             dict: Losses of Primitive Head.
         """
-        targets = self.get_targets(points, gt_bboxes_3d, gt_labels_3d,
-                                   pts_semantic_mask, pts_instance_mask,
-                                   bbox_preds)
+
+        targets = self.get_targets(points, feats_dict, batch_gt_instances_3d,
+                                   batch_pts_semantic_mask,
+                                   batch_pts_instance_mask)
 
         (point_mask, point_offset, gt_primitive_center, gt_primitive_semantic,
          gt_sem_cls_label, gt_primitive_mask) = targets
 
         losses = {}
         # Compute the loss of primitive existence flag
-        pred_flag = bbox_preds['pred_flag_' + self.primitive_mode]
-        flag_loss = self.objectness_loss(pred_flag, gt_primitive_mask.long())
+        pred_flag = feats_dict['pred_flag_' + self.primitive_mode]
+        flag_loss = self.loss_objectness(pred_flag, gt_primitive_mask.long())
         losses['flag_loss_' + self.primitive_mode] = flag_loss
 
         # calculate vote loss
         vote_loss = self.vote_module.get_loss(
-            bbox_preds['seed_points'],
-            bbox_preds['vote_' + self.primitive_mode],
-            bbox_preds['seed_indices'], point_mask, point_offset)
+            feats_dict['seed_points'],
+            feats_dict['vote_' + self.primitive_mode],
+            feats_dict['seed_indices'], point_mask, point_offset)
         losses['vote_loss_' + self.primitive_mode] = vote_loss
 
-        num_proposal = bbox_preds['aggregated_points_' +
+        num_proposal = feats_dict['aggregated_points_' +
                                   self.primitive_mode].shape[1]
-        primitive_center = bbox_preds['center_' + self.primitive_mode]
+        primitive_center = feats_dict['center_' + self.primitive_mode]
         if self.primitive_mode != 'line':
-            primitive_semantic = bbox_preds['size_residuals_' +
+            primitive_semantic = feats_dict['size_residuals_' +
                                             self.primitive_mode].contiguous()
         else:
             primitive_semantic = None
-        semancitc_scores = bbox_preds['sem_cls_scores_' +
+        semancitc_scores = feats_dict['sem_cls_scores_' +
                                       self.primitive_mode].transpose(2, 1)
 
         gt_primitive_mask = gt_primitive_mask / \
@@ -255,44 +309,61 @@ class PrimitiveHead(BaseModule):
 
         return losses
 
-    def get_targets(self,
-                    points,
-                    gt_bboxes_3d,
-                    gt_labels_3d,
-                    pts_semantic_mask=None,
-                    pts_instance_mask=None,
-                    bbox_preds=None):
+    def get_targets(
+        self,
+        points,
+        bbox_preds: Optional[dict] = None,
+        batch_gt_instances_3d: List[InstanceData] = None,
+        batch_pts_semantic_mask: List[torch.Tensor] = None,
+        batch_pts_instance_mask: List[torch.Tensor] = None,
+    ):
         """Generate targets of primitive head.
 
         Args:
             points (list[torch.Tensor]): Points of each batch.
-            gt_bboxes_3d (list[:obj:`BaseInstance3DBoxes`]): Ground truth
-                bboxes of each batch.
-            gt_labels_3d (list[torch.Tensor]): Labels of each batch.
-            pts_semantic_mask (list[torch.Tensor]): Point-wise semantic
-                label of each batch.
-            pts_instance_mask (list[torch.Tensor]): Point-wise instance
-                label of each batch.
-            bbox_preds (dict): Predictions from forward of primitive head.
+            bbox_preds (torch.Tensor): Bounding box predictions of
+                primitive head.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d`` and
+                ``labels_3d`` attributes.
+            batch_pts_semantic_mask (list[tensor]): Semantic gt mask for
+                multiple images.
+            batch_pts_instance_mask (list[tensor]): Instance gt mask for
+                multiple images.
 
         Returns:
             tuple[torch.Tensor]: Targets of primitive head.
         """
-        for index in range(len(gt_labels_3d)):
-            if len(gt_labels_3d[index]) == 0:
-                fake_box = gt_bboxes_3d[index].tensor.new_zeros(
-                    1, gt_bboxes_3d[index].tensor.shape[-1])
-                gt_bboxes_3d[index] = gt_bboxes_3d[index].new_box(fake_box)
-                gt_labels_3d[index] = gt_labels_3d[index].new_zeros(1)
+        batch_gt_labels_3d = [
+            gt_instances_3d.labels_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        batch_gt_bboxes_3d = [
+            gt_instances_3d.bboxes_3d
+            for gt_instances_3d in batch_gt_instances_3d
+        ]
+        for index in range(len(batch_gt_labels_3d)):
+            if len(batch_gt_labels_3d[index]) == 0:
+                fake_box = batch_gt_bboxes_3d[index].tensor.new_zeros(
+                    1, batch_gt_bboxes_3d[index].tensor.shape[-1])
+                batch_gt_bboxes_3d[index] = batch_gt_bboxes_3d[index].new_box(
+                    fake_box)
+                batch_gt_labels_3d[index] = batch_gt_labels_3d[
+                    index].new_zeros(1)
 
-        if pts_semantic_mask is None:
-            pts_semantic_mask = [None for i in range(len(gt_labels_3d))]
-            pts_instance_mask = [None for i in range(len(gt_labels_3d))]
+        if batch_pts_semantic_mask is None:
+            batch_pts_semantic_mask = [
+                None for _ in range(len(batch_gt_labels_3d))
+            ]
+            batch_pts_instance_mask = [
+                None for _ in range(len(batch_gt_labels_3d))
+            ]
 
         (point_mask, point_sem,
          point_offset) = multi_apply(self.get_targets_single, points,
-                                     gt_bboxes_3d, gt_labels_3d,
-                                     pts_semantic_mask, pts_instance_mask)
+                                     batch_gt_bboxes_3d, batch_gt_labels_3d,
+                                     batch_pts_semantic_mask,
+                                     batch_pts_instance_mask)
 
         point_mask = torch.stack(point_mask)
         point_sem = torch.stack(point_sem)
@@ -323,12 +394,13 @@ class PrimitiveHead(BaseModule):
         return (point_mask, point_offset, gt_primitive_center,
                 gt_primitive_semantic, gt_sem_cls_label, gt_votes_mask)
 
-    def get_targets_single(self,
-                           points,
-                           gt_bboxes_3d,
-                           gt_labels_3d,
-                           pts_semantic_mask=None,
-                           pts_instance_mask=None):
+    def get_targets_single(
+            self,
+            points: torch.Tensor,
+            gt_bboxes_3d: BaseInstance3DBoxes,
+            gt_labels_3d: torch.Tensor,
+            pts_semantic_mask: torch.Tensor = None,
+            pts_instance_mask: torch.Tensor = None) -> Tuple[torch.Tensor]:
         """Generate targets of primitive head for single batch.
 
         Args:
@@ -599,7 +671,8 @@ class PrimitiveHead(BaseModule):
 
         return (point_mask, point_sem, point_offset)
 
-    def primitive_decode_scores(self, predictions, aggregated_points):
+    def primitive_decode_scores(self, predictions: torch.Tensor,
+                                aggregated_points: torch.Tensor) -> dict:
         """Decode predicted parts to primitive head.
 
         Args:
@@ -627,7 +700,7 @@ class PrimitiveHead(BaseModule):
 
         return ret_dict
 
-    def check_horizon(self, points):
+    def check_horizon(self, points: torch.Tensor) -> bool:
         """Check whether is a horizontal plane.
 
         Args:
@@ -640,7 +713,8 @@ class PrimitiveHead(BaseModule):
                (points[1][-1] == points[2][-1]) and \
                (points[2][-1] == points[3][-1])
 
-    def check_dist(self, plane_equ, points):
+    def check_dist(self, plane_equ: torch.Tensor,
+                   points: torch.Tensor) -> tuple:
         """Whether the mean of points to plane distance is lower than thresh.
 
         Args:
@@ -653,7 +727,8 @@ class PrimitiveHead(BaseModule):
         return (points[:, 2] +
                 plane_equ[-1]).sum() / 4.0 < self.train_cfg['lower_thresh']
 
-    def point2line_dist(self, points, pts_a, pts_b):
+    def point2line_dist(self, points: torch.Tensor, pts_a: torch.Tensor,
+                        pts_b: torch.Tensor) -> torch.Tensor:
         """Calculate the distance from point to line.
 
         Args:
@@ -672,7 +747,11 @@ class PrimitiveHead(BaseModule):
 
         return dist
 
-    def match_point2line(self, points, corners, with_yaw, mode='bottom'):
+    def match_point2line(self,
+                         points: torch.Tensor,
+                         corners: torch.Tensor,
+                         with_yaw: bool,
+                         mode: str = 'bottom') -> tuple:
         """Match points to corresponding line.
 
         Args:
@@ -713,7 +792,8 @@ class PrimitiveHead(BaseModule):
             selected_list = [sel1, sel2, sel3, sel4]
         return selected_list
 
-    def match_point2plane(self, plane, points):
+    def match_point2plane(self, plane: torch.Tensor,
+                          points: torch.Tensor) -> tuple:
         """Match points to plane.
 
         Args:
@@ -731,10 +811,14 @@ class PrimitiveHead(BaseModule):
                              min_dist) < self.train_cfg['dist_thresh']
         return point2plane_dist, selected
 
-    def compute_primitive_loss(self, primitive_center, primitive_semantic,
-                               semantic_scores, num_proposal,
-                               gt_primitive_center, gt_primitive_semantic,
-                               gt_sem_cls_label, gt_primitive_mask):
+    def compute_primitive_loss(self, primitive_center: torch.Tensor,
+                               primitive_semantic: torch.Tensor,
+                               semantic_scores: torch.Tensor,
+                               num_proposal: torch.Tensor,
+                               gt_primitive_center: torch.Tensor,
+                               gt_primitive_semantic: torch.Tensor,
+                               gt_sem_cls_label: torch.Tensor,
+                               gt_primitive_mask: torch.Tensor) -> Tuple:
         """Compute loss of primitive module.
 
         Args:
@@ -758,7 +842,7 @@ class PrimitiveHead(BaseModule):
         vote_xyz_reshape = primitive_center.view(batch_size * num_proposal, -1,
                                                  3)
 
-        center_loss = self.center_loss(
+        center_loss = self.loss_center(
             vote_xyz_reshape,
             gt_primitive_center,
             dst_weight=gt_primitive_mask.view(batch_size * num_proposal, 1))[1]
@@ -766,7 +850,7 @@ class PrimitiveHead(BaseModule):
         if self.primitive_mode != 'line':
             size_xyz_reshape = primitive_semantic.view(
                 batch_size * num_proposal, -1, self.num_dims).contiguous()
-            size_loss = self.semantic_reg_loss(
+            size_loss = self.loss_semantic_reg(
                 size_xyz_reshape,
                 gt_primitive_semantic,
                 dst_weight=gt_primitive_mask.view(batch_size * num_proposal,
@@ -775,12 +859,13 @@ class PrimitiveHead(BaseModule):
             size_loss = center_loss.new_tensor(0.0)
 
         # Semantic cls loss
-        sem_cls_loss = self.semantic_cls_loss(
+        sem_cls_loss = self.loss_semantic_cls(
             semantic_scores, gt_sem_cls_label, weight=gt_primitive_mask)
 
         return center_loss, size_loss, sem_cls_loss
 
-    def get_primitive_center(self, pred_flag, center):
+    def get_primitive_center(self, pred_flag: torch.Tensor,
+                             center: torch.Tensor) -> Tuple:
         """Generate primitive center from predictions.
 
         Args:
@@ -800,17 +885,17 @@ class PrimitiveHead(BaseModule):
         return center, pred_indices
 
     def _assign_primitive_line_targets(self,
-                                       point_mask,
-                                       point_offset,
-                                       point_sem,
-                                       coords,
-                                       indices,
-                                       cls_label,
-                                       point2line_matching,
-                                       corners,
-                                       center_axises,
-                                       with_yaw,
-                                       mode='bottom'):
+                                       point_mask: torch.Tensor,
+                                       point_offset: torch.Tensor,
+                                       point_sem: torch.Tensor,
+                                       coords: torch.Tensor,
+                                       indices: torch.Tensor,
+                                       cls_label: int,
+                                       point2line_matching: torch.Tensor,
+                                       corners: torch.Tensor,
+                                       center_axises: torch.Tensor,
+                                       with_yaw: bool,
+                                       mode: str = 'bottom') -> Tuple:
         """Generate targets of line primitive.
 
         Args:
@@ -865,15 +950,15 @@ class PrimitiveHead(BaseModule):
         return point_mask, point_offset, point_sem
 
     def _assign_primitive_surface_targets(self,
-                                          point_mask,
-                                          point_offset,
-                                          point_sem,
-                                          coords,
-                                          indices,
-                                          cls_label,
-                                          corners,
-                                          with_yaw,
-                                          mode='bottom'):
+                                          point_mask: torch.Tensor,
+                                          point_offset: torch.Tensor,
+                                          point_sem: torch.Tensor,
+                                          coords: torch.Tensor,
+                                          indices: torch.Tensor,
+                                          cls_label: int,
+                                          corners: torch.Tensor,
+                                          with_yaw: bool,
+                                          mode: str = 'bottom') -> Tuple:
         """Generate targets for primitive z and primitive xy.
 
         Args:
@@ -948,7 +1033,9 @@ class PrimitiveHead(BaseModule):
         point_offset[indices] = center - coords
         return point_mask, point_offset, point_sem
 
-    def _get_plane_fomulation(self, vector1, vector2, point):
+    def _get_plane_fomulation(self, vector1: torch.Tensor,
+                              vector2: torch.Tensor,
+                              point: torch.Tensor) -> torch.Tensor:
         """Compute the equation of the plane.
 
         Args:

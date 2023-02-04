@@ -1,17 +1,24 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional, Tuple
+
 import torch
-from mmcv.cnn import Scale, bias_init_with_prob, normal_init
+from mmcv.cnn import Scale
 from mmcv.ops import nms3d, nms3d_normal
-from mmcv.runner import BaseModule
-from torch import nn
+from mmdet.models.utils import multi_apply
+from mmdet.utils import reduce_mean
+from mmengine.config import ConfigDict
+from mmengine.model import BaseModule, bias_init_with_prob, normal_init
+from mmengine.structures import InstanceData
+from torch import Tensor, nn
 
-from mmdet3d.core import build_prior_generator
-from mmdet3d.core.bbox.structures import rotation_3d_in_axis
-from mmdet.core import multi_apply, reduce_mean
-from ..builder import HEADS, build_loss
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures.bbox_3d.utils import rotation_3d_in_axis
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils.typing_utils import (ConfigType, InstanceList,
+                                        OptConfigType, OptInstanceList)
 
 
-@HEADS.register_module()
+@MODELS.register_module()
 class ImVoxelHead(BaseModule):
     r"""`ImVoxelNet<https://arxiv.org/abs/2106.01178>`_ head for indoor
     datasets.
@@ -38,26 +45,27 @@ class ImVoxelHead(BaseModule):
     """
 
     def __init__(self,
-                 n_classes,
-                 n_levels,
-                 n_channels,
-                 n_reg_outs,
-                 pts_assign_threshold,
-                 pts_center_threshold,
-                 prior_generator,
-                 center_loss=dict(type='CrossEntropyLoss', use_sigmoid=True),
-                 bbox_loss=dict(type='RotatedIoU3DLoss'),
-                 cls_loss=dict(type='FocalLoss'),
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None):
+                 n_classes: int,
+                 n_levels: int,
+                 n_channels: int,
+                 n_reg_outs: int,
+                 pts_assign_threshold: int,
+                 pts_center_threshold: int,
+                 prior_generator: ConfigType,
+                 center_loss: ConfigType = dict(
+                     type='mmdet.CrossEntropyLoss', use_sigmoid=True),
+                 bbox_loss: ConfigType = dict(type='RotatedIoU3DLoss'),
+                 cls_loss: ConfigType = dict(type='mmdet.FocalLoss'),
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 init_cfg: OptConfigType = None):
         super(ImVoxelHead, self).__init__(init_cfg)
         self.pts_assign_threshold = pts_assign_threshold
         self.pts_center_threshold = pts_center_threshold
-        self.prior_generator = build_prior_generator(prior_generator)
-        self.center_loss = build_loss(center_loss)
-        self.bbox_loss = build_loss(bbox_loss)
-        self.cls_loss = build_loss(cls_loss)
+        self.prior_generator = TASK_UTILS.build(prior_generator)
+        self.center_loss = MODELS.build(center_loss)
+        self.bbox_loss = MODELS.build(bbox_loss)
+        self.cls_loss = MODELS.build(cls_loss)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self._init_layers(n_channels, n_reg_outs, n_classes, n_levels)
@@ -76,7 +84,7 @@ class ImVoxelHead(BaseModule):
         normal_init(self.conv_reg, std=.01)
         normal_init(self.conv_cls, std=.01, bias=bias_init_with_prob(.01))
 
-    def _forward_single(self, x, scale):
+    def _forward_single(self, x: Tensor, scale: Scale):
         """Forward pass per level.
 
         Args:
@@ -92,7 +100,7 @@ class ImVoxelHead(BaseModule):
         bbox_pred = torch.cat((reg_distance, reg_angle), dim=1)
         return self.conv_center(x), bbox_pred, self.conv_cls(x)
 
-    def forward(self, x):
+    def forward(self, x: Tensor):
         """Forward function.
 
         Args:
@@ -103,8 +111,129 @@ class ImVoxelHead(BaseModule):
         """
         return multi_apply(self._forward_single, x, self.scales)
 
-    def _loss_single(self, center_preds, bbox_preds, cls_preds, valid_preds,
-                     img_meta, gt_bboxes, gt_labels):
+    def loss(self, x: Tuple[Tensor], batch_data_samples: SampleList,
+             **kwargs) -> dict:
+        """Perform forward propagation and loss calculation of the detection
+        head on the features of the upstream network.
+
+        Args:
+            x (tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance`, `gt_panoptic_seg` and `gt_sem_seg`.
+
+        Returns:
+            dict: A dictionary of loss components.
+        """
+        valid_pred = x[-1]
+        outs = self(x[:-1])
+
+        batch_gt_instances_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+
+        loss_inputs = outs + (valid_pred, batch_gt_instances_3d,
+                              batch_input_metas, batch_gt_instances_ignore)
+        losses = self.loss_by_feat(*loss_inputs)
+        return losses
+
+    def loss_and_predict(self,
+                         x: Tuple[Tensor],
+                         batch_data_samples: SampleList,
+                         proposal_cfg: Optional[ConfigDict] = None,
+                         **kwargs) -> Tuple[dict, InstanceList]:
+        """Perform forward propagation of the head, then calculate loss and
+        predictions from the features and data samples.
+
+        Args:
+            x (tuple[Tensor]): Features from FPN.
+            batch_data_samples (list[:obj:`Det3DDataSample`]): Each item
+                contains the meta information of each image and
+                corresponding annotations.
+            proposal_cfg (ConfigDict, optional): Test / postprocessing
+                configuration, if None, test_cfg would be used.
+                Defaults to None.
+
+        Returns:
+            tuple: the return value is a tuple contains:
+
+                - losses: (dict[str, Tensor]): A dictionary of loss components.
+                - predictions (list[:obj:`InstanceData`]): Detection
+                  results of each image after the post process.
+        """
+        batch_gt_instances_3d = []
+        batch_gt_instances_ignore = []
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+            batch_gt_instances_ignore.append(
+                data_sample.get('ignored_instances', None))
+
+        valid_pred = x[-1]
+        outs = self(x[:-1])
+
+        loss_inputs = outs + (valid_pred, batch_gt_instances_3d,
+                              batch_input_metas, batch_gt_instances_ignore)
+        losses = self.loss_by_feat(*loss_inputs)
+
+        predictions = self.predict_by_feat(
+            *outs,
+            valid_pred=valid_pred,
+            batch_input_metas=batch_input_metas,
+            cfg=proposal_cfg)
+        return losses, predictions
+
+    def predict(self,
+                x: Tuple[Tensor],
+                batch_data_samples: SampleList,
+                rescale: bool = False) -> InstanceList:
+        """Perform forward propagation of the 3D detection head and predict
+        detection results on the features of the upstream network.
+
+        Args:
+            x (tuple[Tensor]): Multi-level features from the
+                upstream network, each is a 4D-tensor.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_pts_panoptic_seg` and
+                `gt_pts_sem_seg`.
+            rescale (bool, optional): Whether to rescale the results.
+                Defaults to False.
+
+        Returns:
+            list[:obj:`InstanceData`]: Detection results of each sample
+            after the post process.
+            Each item usually contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instances, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (BaseInstance3DBoxes): Prediction of bboxes,
+              contains a tensor with shape (num_instances, C), where
+              C >= 7.
+        """
+        batch_input_metas = [
+            data_samples.metainfo for data_samples in batch_data_samples
+        ]
+        valid_pred = x[-1]
+        outs = self(x[:-1])
+        predictions = self.predict_by_feat(
+            *outs,
+            valid_pred=valid_pred,
+            batch_input_metas=batch_input_metas,
+            rescale=rescale)
+        return predictions
+
+    def _loss_by_feat_single(self, center_preds, bbox_preds, cls_preds,
+                             valid_preds, input_meta, gt_bboxes, gt_labels):
         """Per scene loss function.
 
         Args:
@@ -113,7 +242,7 @@ class ImVoxelHead(BaseModule):
             cls_preds (list[Tensor]): Classification predictions for all
                 levels.
             valid_preds (list[Tensor]): Valid mask predictions for all levels.
-            img_meta (dict): Scene meta info.
+            input_meta (dict): Scene meta info.
             gt_bboxes (BaseInstance3DBoxes): Ground truth boxes.
             gt_labels (Tensor): Ground truth labels.
 
@@ -167,36 +296,52 @@ class ImVoxelHead(BaseModule):
             bbox_loss = pos_bbox_preds.sum()
         return center_loss, bbox_loss, cls_loss
 
-    def loss(self, center_preds, bbox_preds, cls_preds, valid_pred, gt_bboxes,
-             gt_labels, img_metas):
+    def loss_by_feat(self,
+                     center_preds: List[List[Tensor]],
+                     bbox_preds: List[List[Tensor]],
+                     cls_preds: List[List[Tensor]],
+                     valid_pred: Tensor,
+                     batch_gt_instances_3d: InstanceList,
+                     batch_input_metas: List[dict],
+                     batch_gt_instances_ignore: OptInstanceList = None,
+                     **kwargs) -> dict:
         """Per scene loss function.
 
         Args:
             center_preds (list[list[Tensor]]): Centerness predictions for
-                all scenes.
+                all scenes. The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
             bbox_preds (list[list[Tensor]]): Bbox predictions for all scenes.
+                The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
             cls_preds (list[list[Tensor]]): Classification predictions for all
-                scenes.
+                scenes. The first list contains predictions from different
+                levels. The second list contains predictions in a mini-batch.
             valid_pred (Tensor): Valid mask prediction for all scenes.
-            gt_bboxes (list[BaseInstance3DBoxes]): Ground truth boxes for all
-                scenes.
-            gt_labels (list[Tensor]): Ground truth labels for all scenes.
-            img_metas (list[dict]): Meta infos for all scenes.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instance_3d.  It usually includes ``bboxes_3d``、`
+                `labels_3d``、``depths``、``centers_2d`` and attributes.
+            batch_input_metas (list[dict]): Meta information of each image,
+                e.g., image size, scaling factor, etc.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
 
         Returns:
             dict: Centerness, bbox, and classification loss values.
         """
         valid_preds = self._upsample_valid_preds(valid_pred, center_preds)
         center_losses, bbox_losses, cls_losses = [], [], []
-        for i in range(len(img_metas)):
-            center_loss, bbox_loss, cls_loss = self._loss_single(
+        for i in range(len(batch_input_metas)):
+            center_loss, bbox_loss, cls_loss = self._loss_by_feat_single(
                 center_preds=[x[i] for x in center_preds],
                 bbox_preds=[x[i] for x in bbox_preds],
                 cls_preds=[x[i] for x in cls_preds],
                 valid_preds=[x[i] for x in valid_preds],
-                img_meta=img_metas[i],
-                gt_bboxes=gt_bboxes[i],
-                gt_labels=gt_labels[i])
+                input_meta=batch_input_metas[i],
+                gt_bboxes=batch_gt_instances_3d[i].bboxes_3d,
+                gt_labels=batch_gt_instances_3d[i].labels_3d)
             center_losses.append(center_loss)
             bbox_losses.append(bbox_loss)
             cls_losses.append(cls_loss)
@@ -205,17 +350,21 @@ class ImVoxelHead(BaseModule):
             bbox_loss=torch.mean(torch.stack(bbox_losses)),
             cls_loss=torch.mean(torch.stack(cls_losses)))
 
-    def _get_bboxes_single(self, center_preds, bbox_preds, cls_preds,
-                           valid_preds, img_meta):
-        """Generate boxes for a single scene.
+    def _predict_by_feat_single(self, center_preds: List[Tensor],
+                                bbox_preds: List[Tensor],
+                                cls_preds: List[Tensor],
+                                valid_preds: List[Tensor],
+                                input_meta: dict) -> InstanceData:
+        """Generate boxes for single sample.
 
         Args:
             center_preds (list[Tensor]): Centerness predictions for all levels.
             bbox_preds (list[Tensor]): Bbox predictions for all levels.
             cls_preds (list[Tensor]): Classification predictions for all
                 levels.
-            valid_preds (list[Tensor]): Valid mask predictions for all levels.
-            img_meta (dict): Scene meta info.
+            valid_preds (tuple[Tensor]): Upsampled valid masks for all feature
+                levels.
+            input_meta (dict): Scene meta info.
 
         Returns:
             tuple[Tensor]: Predicted bounding boxes, scores and labels.
@@ -247,11 +396,25 @@ class ImVoxelHead(BaseModule):
         bboxes = torch.cat(mlvl_bboxes)
         scores = torch.cat(mlvl_scores)
         bboxes, scores, labels = self._single_scene_multiclass_nms(
-            bboxes, scores, img_meta)
-        return bboxes, scores, labels
+            bboxes, scores, input_meta)
 
-    def get_bboxes(self, center_preds, bbox_preds, cls_preds, valid_pred,
-                   img_metas):
+        bboxes = input_meta['box_type_3d'](
+            bboxes,
+            box_dim=bboxes.shape[1],
+            with_yaw=bboxes.shape[1] == 7,
+            origin=(.5, .5, .5))
+
+        results = InstanceData()
+        results.bboxes_3d = bboxes
+        results.scores_3d = scores
+        results.labels_3d = labels
+        return results
+
+    def predict_by_feat(self, center_preds: List[List[Tensor]],
+                        bbox_preds: List[List[Tensor]],
+                        cls_preds: List[List[Tensor]], valid_pred: Tensor,
+                        batch_input_metas: List[dict],
+                        **kwargs) -> List[InstanceData]:
         """Generate boxes for all scenes.
 
         Args:
@@ -261,7 +424,7 @@ class ImVoxelHead(BaseModule):
             cls_preds (list[list[Tensor]]): Classification predictions for all
                 scenes.
             valid_pred (Tensor): Valid mask prediction for all scenes.
-            img_metas (list[dict]): Meta infos for all scenes.
+            batch_input_metas (list[dict]): Meta infos for all scenes.
 
         Returns:
             list[tuple[Tensor]]: Predicted bboxes, scores, and labels for
@@ -269,14 +432,14 @@ class ImVoxelHead(BaseModule):
         """
         valid_preds = self._upsample_valid_preds(valid_pred, center_preds)
         results = []
-        for i in range(len(img_metas)):
+        for i in range(len(batch_input_metas)):
             results.append(
-                self._get_bboxes_single(
+                self._predict_by_feat_single(
                     center_preds=[x[i] for x in center_preds],
                     bbox_preds=[x[i] for x in bbox_preds],
                     cls_preds=[x[i] for x in cls_preds],
                     valid_preds=[x[i] for x in valid_preds],
-                    img_meta=img_metas[i]))
+                    input_meta=batch_input_metas[i]))
         return results
 
     @staticmethod
@@ -528,11 +691,6 @@ class ImVoxelHead(BaseModule):
             box_dim = 7
         else:
             box_dim = 6
-            nms_bboxes = nms_bboxes[:, :6]
-        nms_bboxes = input_meta['box_type_3d'](
-            nms_bboxes,
-            box_dim=box_dim,
-            with_yaw=with_yaw,
-            origin=(.5, .5, .5))
+            nms_bboxes = nms_bboxes[:, :box_dim]
 
         return nms_bboxes, nms_scores, nms_labels

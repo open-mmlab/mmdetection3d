@@ -5,8 +5,8 @@ This is an example README for community `projects/`. We have provided detailed e
 ## Description
 
 <!-- Share any information you would like others to know. For example:
- Author: @xxx.
- This is an implementation of \[XXX\]. -->
+Author: @xxx.
+This is an implementation of \[XXX\]. -->
 
 This project implements a dummy ResNet wrapper, which literally does nothing new but prints "hello world" during initialization.
 
@@ -33,7 +33,7 @@ python tools/test.py projects/example_project/configs/fcos3d_dummy-resnet-caffe-
 ## Results
 
 <!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmdetection3d/edit/dev-1.x/configs/fcos3d/README.md)
- You should claim whether this is based on the pre-trained weights, which are converted from the official release; or it's a reproduced result obtained from retraining the model in this project. -->
+You should claim whether this is based on the pre-trained weights, which are converted from the official release; or it's a reproduced result obtained from retraining the model in this project. -->
 
 |                                                     Backbone                                                     | Lr schd | Mem (GB) | Inf time (fps) | mAP  | NDS  |         Download         |
 | :--------------------------------------------------------------------------------------------------------------: | :-----: | :------: | :------------: | :--: | :--: | :----------------------: |
@@ -62,9 +62,9 @@ python tools/test.py projects/example_project/configs/fcos3d_dummy-resnet-caffe-
 ## Checklist
 
 <!-- Here is a checklist illustrating a usual development workflow of a successful project, and also serves as an overview of this project's progress. The PIC (person in charge) or contributors of this project should check all the items that they believe have been finished, which will further be verified by codebase maintainers via a PR.
- OpenMMLab's maintainer will review the code to ensure the project's quality. Reaching the first milestone means that this project suffices the minimum requirement of being merged into 'projects/'. But this project is only eligible to become a part of the core package upon attaining the last milestone.
- Note that keeping this section up-to-date is crucial not only for this project's developers but the entire community, since there might be some other contributors joining this project and deciding their starting point from this list. It also helps maintainers accurately estimate time and effort on further code polishing, if needed.
- A project does not necessarily have to be finished in a single PR, but it's essential for the project to at least reach the first milestone in its very first PR. -->
+OpenMMLab's maintainer will review the code to ensure the project's quality. Reaching the first milestone means that this project suffices the minimum requirement of being merged into 'projects/'. But this project is only eligible to become a part of the core package upon attaining the last milestone.
+Note that keeping this section up-to-date is crucial not only for this project's developers but the entire community, since there might be some other contributors joining this project and deciding their starting point from this list. It also helps maintainers accurately estimate time and effort on further code polishing, if needed.
+A project does not necessarily have to be finished in a single PR, but it's essential for the project to at least reach the first milestone in its very first PR. -->
 
 - [ ] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
 

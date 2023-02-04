@@ -1,26 +1,29 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
+from typing import List, Tuple
+
 import numpy as np
 import torch
-from mmcv.runner import BaseModule, force_fp32
+from mmdet.models.utils import multi_apply
+from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.core import (PseudoSampler, box3d_multiclass_nms, limit_period,
-                          xywhr2xyxyr)
-from mmdet.core import (build_assigner, build_bbox_coder,
-                        build_prior_generator, build_sampler, multi_apply)
-from ..builder import HEADS, build_loss
+from mmdet3d.models.task_modules import PseudoSampler
+from mmdet3d.models.test_time_augs import merge_aug_bboxes_3d
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.utils.typing_utils import (ConfigType, InstanceList,
+                                        OptConfigType, OptInstanceList)
+from .base_3d_dense_head import Base3DDenseHead
 from .train_mixins import AnchorTrainMixin
 
 
-@HEADS.register_module()
-class Anchor3DHead(BaseModule, AnchorTrainMixin):
-    """Anchor head for SECOND/PointPillars/MVXNet/PartA2.
+@MODELS.register_module()
+class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
+    """Anchor-based head for SECOND/PointPillars/MVXNet/PartA2.
 
     Args:
         num_classes (int): Number of classes.
         in_channels (int): Number of channels in the input feature map.
-        train_cfg (dict): Train configs.
-        test_cfg (dict): Test configs.
         feat_channels (int): Number of channels of the feature map.
         use_direction_classifier (bool): Whether to add a direction classifier.
         anchor_generator(dict): Config dict of anchor generator.
@@ -37,16 +40,17 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
         loss_cls (dict): Config of classification loss.
         loss_bbox (dict): Config of localization loss.
         loss_dir (dict): Config of direction classifier loss.
+        train_cfg (dict): Train configs.
+        test_cfg (dict): Test configs.
+        init_cfg (dict or list[dict], optional): Initialization config dict.
     """
 
     def __init__(self,
-                 num_classes,
-                 in_channels,
-                 train_cfg,
-                 test_cfg,
-                 feat_channels=256,
-                 use_direction_classifier=True,
-                 anchor_generator=dict(
+                 num_classes: int,
+                 in_channels: int,
+                 feat_channels: int = 256,
+                 use_direction_classifier: bool = True,
+                 anchor_generator: ConfigType = dict(
                      type='Anchor3DRangeGenerator',
                      range=[0, -39.68, -1.78, 69.12, 39.68, -1.78],
                      strides=[2],
@@ -54,20 +58,25 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
                      rotations=[0, 1.57],
                      custom_values=[],
                      reshape_out=False),
-                 assigner_per_size=False,
-                 assign_per_class=False,
-                 diff_rad_by_sin=True,
-                 dir_offset=-np.pi / 2,
-                 dir_limit_offset=0,
-                 bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
-                 loss_cls=dict(
-                     type='CrossEntropyLoss',
+                 assigner_per_size: bool = False,
+                 assign_per_class: bool = False,
+                 diff_rad_by_sin: bool = True,
+                 dir_offset: float = -np.pi / 2,
+                 dir_limit_offset: int = 0,
+                 bbox_coder: ConfigType = dict(type='DeltaXYZWLHRBBoxCoder'),
+                 loss_cls: ConfigType = dict(
+                     type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
                      loss_weight=1.0),
-                 loss_bbox=dict(
-                     type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
-                 loss_dir=dict(type='CrossEntropyLoss', loss_weight=0.2),
-                 init_cfg=None):
+                 loss_bbox: ConfigType = dict(
+                     type='mmdet.SmoothL1Loss',
+                     beta=1.0 / 9.0,
+                     loss_weight=2.0),
+                 loss_dir: ConfigType = dict(
+                     type='mmdet.CrossEntropyLoss', loss_weight=0.2),
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 init_cfg: OptConfigType = None) -> None:
         super().__init__(init_cfg=init_cfg)
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -80,28 +89,29 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
         self.assign_per_class = assign_per_class
         self.dir_offset = dir_offset
         self.dir_limit_offset = dir_limit_offset
-        import warnings
         warnings.warn(
             'dir_offset and dir_limit_offset will be depressed and be '
             'incorporated into box coder in the future')
         self.fp16_enabled = False
 
         # build anchor generator
-        self.anchor_generator = build_prior_generator(anchor_generator)
+        self.prior_generator = TASK_UTILS.build(anchor_generator)
         # In 3D detection, the anchor stride is connected with anchor size
-        self.num_anchors = self.anchor_generator.num_base_anchors
+        self.num_anchors = self.prior_generator.num_base_anchors
         # build box coder
-        self.bbox_coder = build_bbox_coder(bbox_coder)
+        self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.box_code_size = self.bbox_coder.code_size
 
         # build loss function
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
-        self.sampling = loss_cls['type'] not in ['FocalLoss', 'GHMC']
+        self.sampling = loss_cls['type'] not in [
+            'mmdet.FocalLoss', 'mmdet.GHMC'
+        ]
         if not self.use_sigmoid_cls:
             self.num_classes += 1
-        self.loss_cls = build_loss(loss_cls)
-        self.loss_bbox = build_loss(loss_bbox)
-        self.loss_dir = build_loss(loss_dir)
+        self.loss_cls = MODELS.build(loss_cls)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.loss_dir = MODELS.build(loss_dir)
         self.fp16_enabled = False
 
         self._init_layers()
@@ -121,14 +131,14 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             return
 
         if self.sampling:
-            self.bbox_sampler = build_sampler(self.train_cfg.sampler)
+            self.bbox_sampler = TASK_UTILS.build(self.train_cfg.sampler)
         else:
             self.bbox_sampler = PseudoSampler()
         if isinstance(self.train_cfg.assigner, dict):
-            self.bbox_assigner = build_assigner(self.train_cfg.assigner)
+            self.bbox_assigner = TASK_UTILS.build(self.train_cfg.assigner)
         elif isinstance(self.train_cfg.assigner, list):
             self.bbox_assigner = [
-                build_assigner(res) for res in self.train_cfg.assigner
+                TASK_UTILS.build(res) for res in self.train_cfg.assigner
             ]
 
     def _init_layers(self):
@@ -141,37 +151,77 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             self.conv_dir_cls = nn.Conv2d(self.feat_channels,
                                           self.num_anchors * 2, 1)
 
-    def forward_single(self, x):
+    def forward_single(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
         """Forward function on a single-scale feature map.
 
         Args:
-            x (torch.Tensor): Input features.
+            x (Tensor): Features of a single scale level.
 
         Returns:
-            tuple[torch.Tensor]: Contain score of each class, bbox
-                regression and direction classification predictions.
+            tuple:
+                cls_score (Tensor): Cls scores for a single scale level
+                    the channels number is num_base_priors * num_classes.
+                bbox_pred (Tensor): Box energies / deltas for a single scale
+                    level, the channels number is num_base_priors * C.
+                dir_cls_pred (Tensor | None): Direction classification
+                    prediction for a single scale level, the channels
+                    number is num_base_priors * 2.
         """
         cls_score = self.conv_cls(x)
         bbox_pred = self.conv_reg(x)
-        dir_cls_preds = None
+        dir_cls_pred = None
         if self.use_direction_classifier:
-            dir_cls_preds = self.conv_dir_cls(x)
-        return cls_score, bbox_pred, dir_cls_preds
+            dir_cls_pred = self.conv_dir_cls(x)
+        return cls_score, bbox_pred, dir_cls_pred
 
-    def forward(self, feats):
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List[Tensor]]:
         """Forward pass.
 
         Args:
-            feats (list[torch.Tensor]): Multi-level features, e.g.,
-                features produced by FPN.
+            x (tuple[Tensor]): Features from the upstream network,
+                each is a 4D-tensor.
 
         Returns:
-            tuple[list[torch.Tensor]]: Multi-level class score, bbox
-                and direction predictions.
-        """
-        return multi_apply(self.forward_single, feats)
+            tuple: A tuple of classification scores, bbox and direction
+                classification prediction.
 
-    def get_anchors(self, featmap_sizes, input_metas, device='cuda'):
+                - cls_scores (list[Tensor]): Classification scores for all
+                    scale levels, each is a 4D-tensor, the channels number
+                    is num_base_priors * num_classes.
+                - bbox_preds (list[Tensor]): Box energies / deltas for all
+                    scale levels, each is a 4D-tensor, the channels number
+                    is num_base_priors * C.
+                - dir_cls_preds (list[Tensor|None]): Direction classification
+                    predictions for all scale levels, each is a 4D-tensor,
+                    the channels number is num_base_priors * 2.
+        """
+        return multi_apply(self.forward_single, x)
+
+    # TODO: Support augmentation test
+    def aug_test(self,
+                 aug_batch_feats,
+                 aug_batch_input_metas,
+                 rescale=False,
+                 **kwargs):
+        aug_bboxes = []
+        # only support aug_test for one sample
+        for x, input_meta in zip(aug_batch_feats, aug_batch_input_metas):
+            outs = self.forward(x)
+            bbox_list = self.get_results(*outs, [input_meta], rescale=rescale)
+            bbox_dict = dict(
+                bboxes_3d=bbox_list[0].bboxes_3d,
+                scores_3d=bbox_list[0].scores_3d,
+                labels_3d=bbox_list[0].labels_3d)
+            aug_bboxes.append(bbox_dict)
+        # after merging, bboxes will be rescaled to the original image size
+        merged_bboxes = merge_aug_bboxes_3d(aug_bboxes, aug_batch_input_metas,
+                                            self.test_cfg)
+        return [merged_bboxes]
+
+    def get_anchors(self,
+                    featmap_sizes: List[tuple],
+                    input_metas: List[dict],
+                    device: str = 'cuda') -> list:
         """Get anchors according to feature map sizes.
 
         Args:
@@ -186,27 +236,29 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
         num_imgs = len(input_metas)
         # since feature map sizes of all images are the same, we only compute
         # anchors for one time
-        multi_level_anchors = self.anchor_generator.grid_anchors(
+        multi_level_anchors = self.prior_generator.grid_anchors(
             featmap_sizes, device=device)
         anchor_list = [multi_level_anchors for _ in range(num_imgs)]
         return anchor_list
 
-    def loss_single(self, cls_score, bbox_pred, dir_cls_preds, labels,
-                    label_weights, bbox_targets, bbox_weights, dir_targets,
-                    dir_weights, num_total_samples):
+    def _loss_by_feat_single(self, cls_score: Tensor, bbox_pred: Tensor,
+                             dir_cls_pred: Tensor, labels: Tensor,
+                             label_weights: Tensor, bbox_targets: Tensor,
+                             bbox_weights: Tensor, dir_targets: Tensor,
+                             dir_weights: Tensor, num_total_samples: int):
         """Calculate loss of Single-level results.
 
         Args:
-            cls_score (torch.Tensor): Class score in single-level.
-            bbox_pred (torch.Tensor): Bbox prediction in single-level.
-            dir_cls_preds (torch.Tensor): Predictions of direction class
+            cls_score (Tensor): Class score in single-level.
+            bbox_pred (Tensor): Bbox prediction in single-level.
+            dir_cls_pred (Tensor): Predictions of direction class
                 in single-level.
-            labels (torch.Tensor): Labels of class.
-            label_weights (torch.Tensor): Weights of class loss.
-            bbox_targets (torch.Tensor): Targets of bbox predictions.
-            bbox_weights (torch.Tensor): Weights of bbox loss.
-            dir_targets (torch.Tensor): Targets of direction predictions.
-            dir_weights (torch.Tensor): Weights of direction loss.
+            labels (Tensor): Labels of class.
+            label_weights (Tensor): Weights of class loss.
+            bbox_targets (Tensor): Targets of bbox predictions.
+            bbox_weights (Tensor): Weights of bbox loss.
+            dir_targets (Tensor): Targets of direction predictions.
+            dir_weights (Tensor): Weights of direction loss.
             num_total_samples (int): The number of valid samples.
 
         Returns:
@@ -241,10 +293,10 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
 
         # dir loss
         if self.use_direction_classifier:
-            dir_cls_preds = dir_cls_preds.permute(0, 2, 3, 1).reshape(-1, 2)
+            dir_cls_pred = dir_cls_pred.permute(0, 2, 3, 1).reshape(-1, 2)
             dir_targets = dir_targets.reshape(-1)
             dir_weights = dir_weights.reshape(-1)
-            pos_dir_cls_preds = dir_cls_preds[pos_inds]
+            pos_dir_cls_pred = dir_cls_pred[pos_inds]
             pos_dir_targets = dir_targets[pos_inds]
             pos_dir_weights = dir_weights[pos_inds]
 
@@ -266,19 +318,19 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             loss_dir = None
             if self.use_direction_classifier:
                 loss_dir = self.loss_dir(
-                    pos_dir_cls_preds,
+                    pos_dir_cls_pred,
                     pos_dir_targets,
                     pos_dir_weights,
                     avg_factor=num_total_samples)
         else:
             loss_bbox = pos_bbox_pred.sum()
             if self.use_direction_classifier:
-                loss_dir = pos_dir_cls_preds.sum()
+                loss_dir = pos_dir_cls_pred.sum()
 
         return loss_cls, loss_bbox, loss_dir
 
     @staticmethod
-    def add_sin_difference(boxes1, boxes2):
+    def add_sin_difference(boxes1: Tensor, boxes2: Tensor) -> tuple:
         """Convert the rotation difference to difference in sine function.
 
         Args:
@@ -301,28 +353,30 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
                            dim=-1)
         return boxes1, boxes2
 
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'dir_cls_preds'))
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             dir_cls_preds,
-             gt_bboxes,
-             gt_labels,
-             input_metas,
-             gt_bboxes_ignore=None):
-        """Calculate losses.
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            dir_cls_preds: List[Tensor],
+            batch_gt_instances_3d: InstanceList,
+            batch_input_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
+        """Calculate the loss based on the features extracted by the detection
+        head.
 
         Args:
             cls_scores (list[torch.Tensor]): Multi-level class scores.
             bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
             dir_cls_preds (list[torch.Tensor]): Multi-level direction
                 class predictions.
-            gt_bboxes (list[:obj:`BaseInstance3DBoxes`]): Gt bboxes
-                of each sample.
-            gt_labels (list[torch.Tensor]): Gt labels of each sample.
-            input_metas (list[dict]): Contain pcd and img's meta info.
-            gt_bboxes_ignore (list[torch.Tensor]): Specify
-                which bounding boxes to ignore.
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
+                gt_instances. It usually includes ``bboxes_3d``
+                and ``labels_3d`` attributes.
+            batch_input_metas (list[dict]): Contain pcd and img's meta info.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
 
         Returns:
             dict[str, list[torch.Tensor]]: Classification, bbox, and
@@ -334,17 +388,16 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
                     losses.
         """
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
-        assert len(featmap_sizes) == self.anchor_generator.num_levels
+        assert len(featmap_sizes) == self.prior_generator.num_levels
         device = cls_scores[0].device
         anchor_list = self.get_anchors(
-            featmap_sizes, input_metas, device=device)
+            featmap_sizes, batch_input_metas, device=device)
         label_channels = self.cls_out_channels if self.use_sigmoid_cls else 1
         cls_reg_targets = self.anchor_target_3d(
             anchor_list,
-            gt_bboxes,
-            input_metas,
-            gt_bboxes_ignore_list=gt_bboxes_ignore,
-            gt_labels_list=gt_labels,
+            batch_gt_instances_3d,
+            batch_input_metas,
+            batch_gt_instances_ignore=batch_gt_instances_ignore,
             num_classes=self.num_classes,
             label_channels=label_channels,
             sampling=self.sampling)
@@ -359,7 +412,7 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
 
         # num_total_samples = None
         losses_cls, losses_bbox, losses_dir = multi_apply(
-            self.loss_single,
+            self._loss_by_feat_single,
             cls_scores,
             bbox_preds,
             dir_cls_preds,
@@ -372,145 +425,3 @@ class Anchor3DHead(BaseModule, AnchorTrainMixin):
             num_total_samples=num_total_samples)
         return dict(
             loss_cls=losses_cls, loss_bbox=losses_bbox, loss_dir=losses_dir)
-
-    def get_bboxes(self,
-                   cls_scores,
-                   bbox_preds,
-                   dir_cls_preds,
-                   input_metas,
-                   cfg=None,
-                   rescale=False):
-        """Get bboxes of anchor head.
-
-        Args:
-            cls_scores (list[torch.Tensor]): Multi-level class scores.
-            bbox_preds (list[torch.Tensor]): Multi-level bbox predictions.
-            dir_cls_preds (list[torch.Tensor]): Multi-level direction
-                class predictions.
-            input_metas (list[dict]): Contain pcd and img's meta info.
-            cfg (:obj:`ConfigDict`): Training or testing config.
-            rescale (list[torch.Tensor]): Whether th rescale bbox.
-
-        Returns:
-            list[tuple]: Prediction resultes of batches.
-        """
-        assert len(cls_scores) == len(bbox_preds)
-        assert len(cls_scores) == len(dir_cls_preds)
-        num_levels = len(cls_scores)
-        featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
-        device = cls_scores[0].device
-        mlvl_anchors = self.anchor_generator.grid_anchors(
-            featmap_sizes, device=device)
-        mlvl_anchors = [
-            anchor.reshape(-1, self.box_code_size) for anchor in mlvl_anchors
-        ]
-
-        result_list = []
-        for img_id in range(len(input_metas)):
-            cls_score_list = [
-                cls_scores[i][img_id].detach() for i in range(num_levels)
-            ]
-            bbox_pred_list = [
-                bbox_preds[i][img_id].detach() for i in range(num_levels)
-            ]
-            dir_cls_pred_list = [
-                dir_cls_preds[i][img_id].detach() for i in range(num_levels)
-            ]
-
-            input_meta = input_metas[img_id]
-            proposals = self.get_bboxes_single(cls_score_list, bbox_pred_list,
-                                               dir_cls_pred_list, mlvl_anchors,
-                                               input_meta, cfg, rescale)
-            result_list.append(proposals)
-        return result_list
-
-    def get_bboxes_single(self,
-                          cls_scores,
-                          bbox_preds,
-                          dir_cls_preds,
-                          mlvl_anchors,
-                          input_meta,
-                          cfg=None,
-                          rescale=False):
-        """Get bboxes of single branch.
-
-        Args:
-            cls_scores (torch.Tensor): Class score in single batch.
-            bbox_preds (torch.Tensor): Bbox prediction in single batch.
-            dir_cls_preds (torch.Tensor): Predictions of direction class
-                in single batch.
-            mlvl_anchors (List[torch.Tensor]): Multi-level anchors
-                in single batch.
-            input_meta (list[dict]): Contain pcd and img's meta info.
-            cfg (:obj:`ConfigDict`): Training or testing config.
-            rescale (list[torch.Tensor]): whether th rescale bbox.
-
-        Returns:
-            tuple: Contain predictions of single batch.
-
-                - bboxes (:obj:`BaseInstance3DBoxes`): Predicted 3d bboxes.
-                - scores (torch.Tensor): Class score of each bbox.
-                - labels (torch.Tensor): Label of each bbox.
-        """
-        cfg = self.test_cfg if cfg is None else cfg
-        assert len(cls_scores) == len(bbox_preds) == len(mlvl_anchors)
-        mlvl_bboxes = []
-        mlvl_scores = []
-        mlvl_dir_scores = []
-        for cls_score, bbox_pred, dir_cls_pred, anchors in zip(
-                cls_scores, bbox_preds, dir_cls_preds, mlvl_anchors):
-            assert cls_score.size()[-2:] == bbox_pred.size()[-2:]
-            assert cls_score.size()[-2:] == dir_cls_pred.size()[-2:]
-            dir_cls_pred = dir_cls_pred.permute(1, 2, 0).reshape(-1, 2)
-            dir_cls_score = torch.max(dir_cls_pred, dim=-1)[1]
-
-            cls_score = cls_score.permute(1, 2,
-                                          0).reshape(-1, self.num_classes)
-            if self.use_sigmoid_cls:
-                scores = cls_score.sigmoid()
-            else:
-                scores = cls_score.softmax(-1)
-            bbox_pred = bbox_pred.permute(1, 2,
-                                          0).reshape(-1, self.box_code_size)
-
-            nms_pre = cfg.get('nms_pre', -1)
-            if nms_pre > 0 and scores.shape[0] > nms_pre:
-                if self.use_sigmoid_cls:
-                    max_scores, _ = scores.max(dim=1)
-                else:
-                    max_scores, _ = scores[:, :-1].max(dim=1)
-                _, topk_inds = max_scores.topk(nms_pre)
-                anchors = anchors[topk_inds, :]
-                bbox_pred = bbox_pred[topk_inds, :]
-                scores = scores[topk_inds, :]
-                dir_cls_score = dir_cls_score[topk_inds]
-
-            bboxes = self.bbox_coder.decode(anchors, bbox_pred)
-            mlvl_bboxes.append(bboxes)
-            mlvl_scores.append(scores)
-            mlvl_dir_scores.append(dir_cls_score)
-
-        mlvl_bboxes = torch.cat(mlvl_bboxes)
-        mlvl_bboxes_for_nms = xywhr2xyxyr(input_meta['box_type_3d'](
-            mlvl_bboxes, box_dim=self.box_code_size).bev)
-        mlvl_scores = torch.cat(mlvl_scores)
-        mlvl_dir_scores = torch.cat(mlvl_dir_scores)
-
-        if self.use_sigmoid_cls:
-            # Add a dummy background class to the front when using sigmoid
-            padding = mlvl_scores.new_zeros(mlvl_scores.shape[0], 1)
-            mlvl_scores = torch.cat([mlvl_scores, padding], dim=1)
-
-        score_thr = cfg.get('score_thr', 0)
-        results = box3d_multiclass_nms(mlvl_bboxes, mlvl_bboxes_for_nms,
-                                       mlvl_scores, score_thr, cfg.max_num,
-                                       cfg, mlvl_dir_scores)
-        bboxes, scores, labels, dir_scores = results
-        if bboxes.shape[0] > 0:
-            dir_rot = limit_period(bboxes[..., 6] - self.dir_offset,
-                                   self.dir_limit_offset, np.pi)
-            bboxes[..., 6] = (
-                dir_rot + self.dir_offset +
-                np.pi * dir_scores.to(bboxes.dtype))
-        bboxes = input_meta['box_type_3d'](bboxes, box_dim=self.box_code_size)
-        return bboxes, scores, labels

@@ -2,13 +2,13 @@
 import numpy as np
 import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer, build_upsample_layer
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
 from torch import nn as nn
 
-from ..builder import NECKS
+from mmdet3d.registry import MODELS
 
 
-@NECKS.register_module()
+@MODELS.register_module()
 class SECONDFPN(BaseModule):
     """FPN used in SECOND/PointPillars/PartA2/MVXNet.
 
@@ -71,7 +71,6 @@ class SECONDFPN(BaseModule):
                 dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)
             ]
 
-    @auto_fp16()
     def forward(self, x):
         """Forward function.
 

@@ -21,9 +21,15 @@ Inference time is given for a single NVidia RTX 3090 GPU. Results for ScanNet an
 
 ### KITTI
 
+<<<<<<< HEAD
 |                   Backbone                    | Class | Lr schd | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                               Download                                                                                                                                                               |
 | :-------------------------------------------: | :---: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | [ResNet-50](./imvoxelnet_4x8_kitti-3d-car.py) |  Car  |   3x    |   14.8   |      8.4       | 17.26 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json) |
+=======
+|                    Backbone                    | Class | Lr schd | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                               Download                                                                                                                                                               |
+| :--------------------------------------------: | :---: | :-----: | :------: | :------------: | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet-50](./imvoxelnet_8xb4_kitti-3d-car.py) |  Car  |   3x    |          |                | 17.26 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014.log.json) |
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
 
 ### SUN RGB-D
 

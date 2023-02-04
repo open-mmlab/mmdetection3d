@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.cnn import ConvModule
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
 from torch import nn
 
-from ..builder import NECKS
+from mmdet3d.registry import MODELS
 
 
-@NECKS.register_module()
+@MODELS.register_module()
 class OutdoorImVoxelNeck(BaseModule):
     """Neck for ImVoxelNet outdoor scenario.
 
@@ -67,7 +67,7 @@ class OutdoorImVoxelNeck(BaseModule):
         pass
 
 
-@NECKS.register_module()
+@MODELS.register_module()
 class IndoorImVoxelNeck(BaseModule):
     """Neck for ImVoxelNet outdoor scenario.
 
@@ -170,7 +170,7 @@ class IndoorImVoxelNeck(BaseModule):
             nn.BatchNorm3d(out_channels), nn.ReLU(inplace=True))
 
 
-class ResModule(BaseModule):
+class ResModule(nn.Module):
     """3d residual block for ImVoxelNeck.
 
     Args:

@@ -3,10 +3,10 @@ import argparse
 import tempfile
 
 import torch
-from mmcv import Config
-from mmcv.runner import load_state_dict
+from mmengine import Config
+from mmengine.runner import load_state_dict
 
-from mmdet3d.models import build_detector
+from mmdet3d.registry import MODELS
 
 
 def parse_args():
@@ -79,7 +79,7 @@ def main():
     checkpoint = torch.load(args.checkpoint)
     cfg = parse_config(checkpoint['meta']['config'])
     # Build the model and load checkpoint
-    model = build_detector(
+    model = MODELS.build(
         cfg.model,
         train_cfg=cfg.get('train_cfg'),
         test_cfg=cfg.get('test_cfg'))

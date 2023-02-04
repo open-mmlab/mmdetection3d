@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from ..builder import DETECTORS
+from mmdet3d.registry import MODELS
 from .votenet import VoteNet
 
 
-@DETECTORS.register_module()
+@MODELS.register_module()
 class SSD3DNet(VoteNet):
     """3DSSDNet model.
 
@@ -16,11 +16,11 @@ class SSD3DNet(VoteNet):
                  train_cfg=None,
                  test_cfg=None,
                  init_cfg=None,
-                 pretrained=None):
+                 **kwargs):
         super(SSD3DNet, self).__init__(
             backbone=backbone,
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg,
-            pretrained=pretrained)
+            **kwargs)

@@ -1,21 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import tempfile
 from os import path as osp
+from typing import Callable, List, Union
 
-import mmcv
 import numpy as np
-import pyquaternion
-from nuscenes.utils.data_classes import Box as NuScenesBox
 
-from ..core import show_result
-from ..core.bbox import Box3DMode, Coord3DMode, LiDARInstance3DBoxes
-from .builder import DATASETS
-from .custom_3d import Custom3DDataset
-from .pipelines import Compose
+from mmdet3d.registry import DATASETS
+from mmdet3d.structures import LiDARInstance3DBoxes
+from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
+from .det3d_dataset import Det3DDataset
 
 
 @DATASETS.register_module()
-class NuScenesDataset(Custom3DDataset):
+class NuScenesDataset(Det3DDataset):
     r"""NuScenes Dataset.
 
     This class serves as the API for experiments on the NuScenes Dataset.
@@ -24,295 +20,186 @@ class NuScenesDataset(Custom3DDataset):
     for data downloading.
 
     Args:
-        ann_file (str): Path of annotation file.
-        pipeline (list[dict], optional): Pipeline used for data processing.
-            Defaults to None.
         data_root (str): Path of dataset root.
-        classes (tuple[str], optional): Classes used in the dataset.
-            Defaults to None.
-        load_interval (int, optional): Interval of loading the dataset. It is
-            used to uniformly sample the dataset. Defaults to 1.
-        with_velocity (bool, optional): Whether include velocity prediction
-            into the experiments. Defaults to True.
-        modality (dict, optional): Modality to specify the sensor data used
-            as input. Defaults to None.
-        box_type_3d (str, optional): Type of 3D box of this dataset.
+        ann_file (str): Path of annotation file.
+        pipeline (list[dict]): Pipeline used for data processing.
+            Defaults to [].
+        box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes.
+            Defaults to 'LiDAR' in this dataset. Available options includes:
+
             - 'LiDAR': Box in LiDAR coordinates.
             - 'Depth': Box in depth coordinates, usually for indoor dataset.
             - 'Camera': Box in camera coordinates.
-        filter_empty_gt (bool, optional): Whether to filter empty GT.
-            Defaults to True.
-        test_mode (bool, optional): Whether the dataset is in test mode.
+        load_type (str): Type of loading mode. Defaults to 'frame_based'.
+
+            - 'frame_based': Load all of the instances in the frame.
+            - 'mv_image_based': Load all of the instances in the frame and need
+                to convert to the FOV-based data type to support image-based
+                detector.
+            - 'fov_image_based': Only load the instances inside the default
+                cam, and need to convert to the FOV-based data type to support
+                image-based detector.
+        modality (dict): Modality to specify the sensor data used as input.
+            Defaults to dict(use_camera=False, use_lidar=True).
+        filter_empty_gt (bool): Whether to filter the data with empty GT.
+            If it's set to be True, the example with empty annotations after
+            data pipeline will be dropped and a random example will be chosen
+            in `__getitem__`. Defaults to True.
+        test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        eval_version (bool, optional): Configuration version of evaluation.
-            Defaults to  'detection_cvpr_2019'.
-        use_valid_flag (bool, optional): Whether to use `use_valid_flag` key
+        with_velocity (bool): Whether to include velocity prediction
+            into the experiments. Defaults to True.
+        use_valid_flag (bool): Whether to use `use_valid_flag` key
             in the info file as mask to filter gt_boxes and gt_names.
             Defaults to False.
     """
-    NameMapping = {
-        'movable_object.barrier': 'barrier',
-        'vehicle.bicycle': 'bicycle',
-        'vehicle.bus.bendy': 'bus',
-        'vehicle.bus.rigid': 'bus',
-        'vehicle.car': 'car',
-        'vehicle.construction': 'construction_vehicle',
-        'vehicle.motorcycle': 'motorcycle',
-        'human.pedestrian.adult': 'pedestrian',
-        'human.pedestrian.child': 'pedestrian',
-        'human.pedestrian.construction_worker': 'pedestrian',
-        'human.pedestrian.police_officer': 'pedestrian',
-        'movable_object.trafficcone': 'traffic_cone',
-        'vehicle.trailer': 'trailer',
-        'vehicle.truck': 'truck'
+    METAINFO = {
+        'classes':
+        ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
+         'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
+        'version':
+        'v1.0-trainval'
     }
-    DefaultAttribute = {
-        'car': 'vehicle.parked',
-        'pedestrian': 'pedestrian.moving',
-        'trailer': 'vehicle.parked',
-        'truck': 'vehicle.parked',
-        'bus': 'vehicle.moving',
-        'motorcycle': 'cycle.without_rider',
-        'construction_vehicle': 'vehicle.parked',
-        'bicycle': 'cycle.without_rider',
-        'barrier': '',
-        'traffic_cone': '',
-    }
-    AttrMapping = {
-        'cycle.with_rider': 0,
-        'cycle.without_rider': 1,
-        'pedestrian.moving': 2,
-        'pedestrian.standing': 3,
-        'pedestrian.sitting_lying_down': 4,
-        'vehicle.moving': 5,
-        'vehicle.parked': 6,
-        'vehicle.stopped': 7,
-    }
-    AttrMapping_rev = [
-        'cycle.with_rider',
-        'cycle.without_rider',
-        'pedestrian.moving',
-        'pedestrian.standing',
-        'pedestrian.sitting_lying_down',
-        'vehicle.moving',
-        'vehicle.parked',
-        'vehicle.stopped',
-    ]
-    # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
-    ErrNameMapping = {
-        'trans_err': 'mATE',
-        'scale_err': 'mASE',
-        'orient_err': 'mAOE',
-        'vel_err': 'mAVE',
-        'attr_err': 'mAAE'
-    }
-    CLASSES = ('car', 'truck', 'trailer', 'bus', 'construction_vehicle',
-               'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone',
-               'barrier')
 
     def __init__(self,
-                 ann_file,
-                 pipeline=None,
-                 data_root=None,
-                 classes=None,
-                 load_interval=1,
-                 with_velocity=True,
-                 modality=None,
-                 box_type_3d='LiDAR',
-                 filter_empty_gt=True,
-                 test_mode=False,
-                 eval_version='detection_cvpr_2019',
-                 use_valid_flag=False):
-        self.load_interval = load_interval
+                 data_root: str,
+                 ann_file: str,
+                 pipeline: List[Union[dict, Callable]] = [],
+                 box_type_3d: str = 'LiDAR',
+                 load_type: str = 'frame_based',
+                 modality: dict = dict(
+                     use_camera=False,
+                     use_lidar=True,
+                 ),
+                 filter_empty_gt: bool = True,
+                 test_mode: bool = False,
+                 with_velocity: bool = True,
+                 use_valid_flag: bool = False,
+                 **kwargs) -> None:
         self.use_valid_flag = use_valid_flag
+        self.with_velocity = with_velocity
+
+        # TODO: Redesign multi-view data process in the future
+        assert load_type in ('frame_based', 'mv_image_based',
+                             'fov_image_based')
+        self.load_type = load_type
+
+        assert box_type_3d.lower() in ('lidar', 'camera')
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
-            pipeline=pipeline,
-            classes=classes,
             modality=modality,
+            pipeline=pipeline,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
+            test_mode=test_mode,
+            **kwargs)
 
-        self.with_velocity = with_velocity
-        self.eval_version = eval_version
-        from nuscenes.eval.detection.config import config_factory
-        self.eval_detection_configs = config_factory(self.eval_version)
-        if self.modality is None:
-            self.modality = dict(
-                use_camera=False,
-                use_lidar=True,
-                use_radar=False,
-                use_map=False,
-                use_external=False,
-            )
-
-    def get_cat_ids(self, idx):
-        """Get category distribution of single scene.
+    def _filter_with_mask(self, ann_info: dict) -> dict:
+        """Remove annotations that do not need to be cared.
 
         Args:
-            idx (int): Index of the data_info.
+            ann_info (dict): Dict of annotation infos.
 
         Returns:
-            dict[list]: for each category, if the current scene
-                contains such boxes, store a list containing idx,
-                otherwise, store empty list.
+            dict: Annotations after filtering.
         """
-        info = self.data_infos[idx]
+        filtered_annotations = {}
         if self.use_valid_flag:
-            mask = info['valid_flag']
-            gt_names = set(info['gt_names'][mask])
+            filter_mask = ann_info['bbox_3d_isvalid']
         else:
-            gt_names = set(info['gt_names'])
+            filter_mask = ann_info['num_lidar_pts'] > 0
+        for key in ann_info.keys():
+            if key != 'instances':
+                filtered_annotations[key] = (ann_info[key][filter_mask])
+            else:
+                filtered_annotations[key] = ann_info[key]
+        return filtered_annotations
 
-        cat_ids = []
-        for name in gt_names:
-            if name in self.CLASSES:
-                cat_ids.append(self.cat2id[name])
-        return cat_ids
-
-    def load_annotations(self, ann_file):
-        """Load annotations from ann_file.
-
-        Args:
-            ann_file (str): Path of the annotation file.
-
-        Returns:
-            list[dict]: List of annotations sorted by timestamps.
-        """
-        data = mmcv.load(ann_file, file_format='pkl')
-        data_infos = list(sorted(data['infos'], key=lambda e: e['timestamp']))
-        data_infos = data_infos[::self.load_interval]
-        self.metadata = data['metadata']
-        self.version = self.metadata['version']
-        return data_infos
-
-    def get_data_info(self, index):
-        """Get data info according to the given index.
+    def parse_ann_info(self, info: dict) -> dict:
+        """Process the `instances` in data info to `ann_info`.
 
         Args:
-            index (int): Index of the sample data to get.
-
-        Returns:
-            dict: Data information that will be passed to the data
-                preprocessing pipelines. It includes the following keys:
-
-                - sample_idx (str): Sample index.
-                - pts_filename (str): Filename of point clouds.
-                - sweeps (list[dict]): Infos of sweeps.
-                - timestamp (float): Sample timestamp.
-                - img_filename (str, optional): Image filename.
-                - lidar2img (list[np.ndarray], optional): Transformations
-                    from lidar to different cameras.
-                - ann_info (dict): Annotation info.
-        """
-        info = self.data_infos[index]
-        # standard protocol modified from SECOND.Pytorch
-        input_dict = dict(
-            sample_idx=info['token'],
-            pts_filename=info['lidar_path'],
-            sweeps=info['sweeps'],
-            timestamp=info['timestamp'] / 1e6,
-        )
-
-        if self.modality['use_camera']:
-            image_paths = []
-            lidar2img_rts = []
-            for cam_type, cam_info in info['cams'].items():
-                image_paths.append(cam_info['data_path'])
-                # obtain lidar to image transformation matrix
-                lidar2cam_r = np.linalg.inv(cam_info['sensor2lidar_rotation'])
-                lidar2cam_t = cam_info[
-                    'sensor2lidar_translation'] @ lidar2cam_r.T
-                lidar2cam_rt = np.eye(4)
-                lidar2cam_rt[:3, :3] = lidar2cam_r.T
-                lidar2cam_rt[3, :3] = -lidar2cam_t
-                intrinsic = cam_info['cam_intrinsic']
-                viewpad = np.eye(4)
-                viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
-                lidar2img_rt = (viewpad @ lidar2cam_rt.T)
-                lidar2img_rts.append(lidar2img_rt)
-
-            input_dict.update(
-                dict(
-                    img_filename=image_paths,
-                    lidar2img=lidar2img_rts,
-                ))
-
-        if not self.test_mode:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
-
-        return input_dict
-
-    def get_ann_info(self, index):
-        """Get annotation info according to the given index.
-
-        Args:
-            index (int): Index of the annotation data to get.
+            info (dict): Data information of single data sample.
 
         Returns:
             dict: Annotation information consists of the following keys:
 
                 - gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-                    3D ground truth bboxes
+                  3D ground truth bboxes.
                 - gt_labels_3d (np.ndarray): Labels of ground truths.
-                - gt_names (list[str]): Class names of ground truths.
         """
-        info = self.data_infos[index]
-        # filter out bbox containing no points
-        if self.use_valid_flag:
-            mask = info['valid_flag']
-        else:
-            mask = info['num_lidar_pts'] > 0
-        gt_bboxes_3d = info['gt_boxes'][mask]
-        gt_names_3d = info['gt_names'][mask]
-        gt_labels_3d = []
-        for cat in gt_names_3d:
-            if cat in self.CLASSES:
-                gt_labels_3d.append(self.CLASSES.index(cat))
-            else:
-                gt_labels_3d.append(-1)
-        gt_labels_3d = np.array(gt_labels_3d)
+        ann_info = super().parse_ann_info(info)
+        if ann_info is not None:
 
-        if self.with_velocity:
-            gt_velocity = info['gt_velocity'][mask]
-            nan_mask = np.isnan(gt_velocity[:, 0])
-            gt_velocity[nan_mask] = [0.0, 0.0]
-            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
+            ann_info = self._filter_with_mask(ann_info)
+
+            if self.with_velocity:
+                gt_bboxes_3d = ann_info['gt_bboxes_3d']
+                gt_velocities = ann_info['velocities']
+                nan_mask = np.isnan(gt_velocities[:, 0])
+                gt_velocities[nan_mask] = [0.0, 0.0]
+                gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocities],
+                                              axis=-1)
+                ann_info['gt_bboxes_3d'] = gt_bboxes_3d
+        else:
+            # empty instance
+            ann_info = dict()
+            if self.with_velocity:
+                ann_info['gt_bboxes_3d'] = np.zeros((0, 9), dtype=np.float32)
+            else:
+                ann_info['gt_bboxes_3d'] = np.zeros((0, 7), dtype=np.float32)
+            ann_info['gt_labels_3d'] = np.zeros(0, dtype=np.int64)
+
+            if self.load_type in ['fov_image_based', 'mv_image_based']:
+                ann_info['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+                ann_info['gt_bboxes_labels'] = np.array(0, dtype=np.int64)
+                ann_info['attr_labels'] = np.array(0, dtype=np.int64)
+                ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
+                ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
-        gt_bboxes_3d = LiDARInstance3DBoxes(
-            gt_bboxes_3d,
-            box_dim=gt_bboxes_3d.shape[-1],
-            origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
+        # TODO: Unify the coordinates
+        if self.load_type in ['fov_image_based', 'mv_image_based']:
+            gt_bboxes_3d = CameraInstance3DBoxes(
+                ann_info['gt_bboxes_3d'],
+                box_dim=ann_info['gt_bboxes_3d'].shape[-1],
+                origin=(0.5, 0.5, 0.5))
+        else:
+            gt_bboxes_3d = LiDARInstance3DBoxes(
+                ann_info['gt_bboxes_3d'],
+                box_dim=ann_info['gt_bboxes_3d'].shape[-1],
+                origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
-        anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            gt_names=gt_names_3d)
-        return anns_results
+        ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 
-    def _format_bbox(self, results, jsonfile_prefix=None):
-        """Convert the results to the standard format.
+        return ann_info
+
+    def parse_data_info(self, info: dict) -> Union[List[dict], dict]:
+        """Process the raw data info.
+
+        The only difference with it in `Det3DDataset`
+        is the specific process for `plane`.
 
         Args:
-            results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str): The prefix of the output jsonfile.
-                You can specify the output directory/filename by
-                modifying the jsonfile_prefix. Default: None.
+            info (dict): Raw info dict.
 
         Returns:
-            str: Path of the output json file.
+            List[dict] or dict: Has `ann_info` in training stage. And
+            all path has been converted to absolute path.
         """
-        nusc_annos = {}
-        mapped_class_names = self.CLASSES
+        if self.load_type == 'mv_image_based':
+            data_list = []
+            if self.modality['use_lidar']:
+                info['lidar_points']['lidar_path'] = \
+                    osp.join(
+                        self.data_prefix.get('pts', ''),
+                        info['lidar_points']['lidar_path'])
 
+<<<<<<< HEAD
         print('Start to convert detection format...')
         for sample_id, det in enumerate(mmcv.track_iter_progress(results)):
             annos = []
@@ -337,118 +224,42 @@ class NuScenesDataset(Custom3DDataset):
                         attr = 'cycle.with_rider'
                     else:
                         attr = NuScenesDataset.DefaultAttribute[name]
+=======
+            if self.modality['use_camera']:
+                for cam_id, img_info in info['images'].items():
+                    if 'img_path' in img_info:
+                        if cam_id in self.data_prefix:
+                            cam_prefix = self.data_prefix[cam_id]
+                        else:
+                            cam_prefix = self.data_prefix.get('img', '')
+                        img_info['img_path'] = osp.join(
+                            cam_prefix, img_info['img_path'])
+
+            for idx, (cam_id, img_info) in enumerate(info['images'].items()):
+                camera_info = dict()
+                camera_info['images'] = dict()
+                camera_info['images'][cam_id] = img_info
+                if 'cam_instances' in info and cam_id in info['cam_instances']:
+                    camera_info['instances'] = info['cam_instances'][cam_id]
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
                 else:
-                    if name in ['pedestrian']:
-                        attr = 'pedestrian.standing'
-                    elif name in ['bus']:
-                        attr = 'vehicle.stopped'
-                    else:
-                        attr = NuScenesDataset.DefaultAttribute[name]
+                    camera_info['instances'] = []
+                # TODO: check whether to change sample_idx for 6 cameras
+                #  in one frame
+                camera_info['sample_idx'] = info['sample_idx'] * 6 + idx
+                camera_info['token'] = info['token']
+                camera_info['ego2global'] = info['ego2global']
 
-                nusc_anno = dict(
-                    sample_token=sample_token,
-                    translation=box.center.tolist(),
-                    size=box.wlh.tolist(),
-                    rotation=box.orientation.elements.tolist(),
-                    velocity=box.velocity[:2].tolist(),
-                    detection_name=name,
-                    detection_score=box.score,
-                    attribute_name=attr)
-                annos.append(nusc_anno)
-            nusc_annos[sample_token] = annos
-        nusc_submissions = {
-            'meta': self.modality,
-            'results': nusc_annos,
-        }
-
-        mmcv.mkdir_or_exist(jsonfile_prefix)
-        res_path = osp.join(jsonfile_prefix, 'results_nusc.json')
-        print('Results writes to', res_path)
-        mmcv.dump(nusc_submissions, res_path)
-        return res_path
-
-    def _evaluate_single(self,
-                         result_path,
-                         logger=None,
-                         metric='bbox',
-                         result_name='pts_bbox'):
-        """Evaluation for a single model in nuScenes protocol.
-
-        Args:
-            result_path (str): Path of the result file.
-            logger (logging.Logger | str, optional): Logger used for printing
-                related information during evaluation. Default: None.
-            metric (str, optional): Metric name used for evaluation.
-                Default: 'bbox'.
-            result_name (str, optional): Result name in the metric prefix.
-                Default: 'pts_bbox'.
-
-        Returns:
-            dict: Dictionary of evaluation details.
-        """
-        from nuscenes import NuScenes
-        from nuscenes.eval.detection.evaluate import NuScenesEval
-
-        output_dir = osp.join(*osp.split(result_path)[:-1])
-        nusc = NuScenes(
-            version=self.version, dataroot=self.data_root, verbose=False)
-        eval_set_map = {
-            'v1.0-mini': 'mini_val',
-            'v1.0-trainval': 'val',
-        }
-        nusc_eval = NuScenesEval(
-            nusc,
-            config=self.eval_detection_configs,
-            result_path=result_path,
-            eval_set=eval_set_map[self.version],
-            output_dir=output_dir,
-            verbose=False)
-        nusc_eval.main(render_curves=False)
-
-        # record metrics
-        metrics = mmcv.load(osp.join(output_dir, 'metrics_summary.json'))
-        detail = dict()
-        metric_prefix = f'{result_name}_NuScenes'
-        for name in self.CLASSES:
-            for k, v in metrics['label_aps'][name].items():
-                val = float('{:.4f}'.format(v))
-                detail['{}/{}_AP_dist_{}'.format(metric_prefix, name, k)] = val
-            for k, v in metrics['label_tp_errors'][name].items():
-                val = float('{:.4f}'.format(v))
-                detail['{}/{}_{}'.format(metric_prefix, name, k)] = val
-            for k, v in metrics['tp_errors'].items():
-                val = float('{:.4f}'.format(v))
-                detail['{}/{}'.format(metric_prefix,
-                                      self.ErrNameMapping[k])] = val
-
-        detail['{}/NDS'.format(metric_prefix)] = metrics['nd_score']
-        detail['{}/mAP'.format(metric_prefix)] = metrics['mean_ap']
-        return detail
-
-    def format_results(self, results, jsonfile_prefix=None):
-        """Format the results to json (standard format for COCO evaluation).
-
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str): The prefix of json files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-
-        Returns:
-            tuple: Returns (result_files, tmp_dir), where `result_files` is a
-                dict containing the json filepaths, `tmp_dir` is the temporal
-                directory created for saving json files when
-                `jsonfile_prefix` is not specified.
-        """
-        assert isinstance(results, list), 'results must be a list'
-        assert len(results) == len(self), (
-            'The length of results is not equal to the dataset len: {} != {}'.
-            format(len(results), len(self)))
-
-        if jsonfile_prefix is None:
-            tmp_dir = tempfile.TemporaryDirectory()
-            jsonfile_prefix = osp.join(tmp_dir.name, 'results')
+                if not self.test_mode:
+                    # used in traing
+                    camera_info['ann_info'] = self.parse_ann_info(camera_info)
+                if self.test_mode and self.load_eval_anns:
+                    camera_info['eval_ann_info'] = \
+                        self.parse_ann_info(camera_info)
+                data_list.append(camera_info)
+            return data_list
         else:
+<<<<<<< HEAD
             tmp_dir = None
 
         # currently the output prediction results could be in two formats
@@ -655,3 +466,7 @@ def lidar_nusc_box_to_global(info,
         box.translate(np.array(info['ego2global_translation']))
         box_list.append(box)
     return box_list
+=======
+            data_info = super().parse_data_info(info)
+            return data_info
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973

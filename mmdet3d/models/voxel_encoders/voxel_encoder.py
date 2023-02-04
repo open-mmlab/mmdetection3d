@@ -2,15 +2,13 @@
 import torch
 from mmcv.cnn import build_norm_layer
 from mmcv.ops import DynamicScatter
-from mmcv.runner import force_fp32
-from torch import nn
+from torch import Tensor, nn
 
-from .. import builder
-from ..builder import VOXEL_ENCODERS
+from mmdet3d.registry import MODELS
 from .utils import VFELayer, get_paddings_indicator
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class HardSimpleVFE(nn.Module):
     """Simple voxel feature encoder used in SECOND.
 
@@ -20,13 +18,13 @@ class HardSimpleVFE(nn.Module):
         num_features (int, optional): Number of features to use. Default: 4.
     """
 
-    def __init__(self, num_features=4):
+    def __init__(self, num_features: int = 4) -> None:
         super(HardSimpleVFE, self).__init__()
         self.num_features = num_features
         self.fp16_enabled = False
 
-    @force_fp32(out_fp16=True)
-    def forward(self, features, num_points, coors):
+    def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
+                *args, **kwargs) -> Tensor:
         """Forward function.
 
         Args:
@@ -45,7 +43,7 @@ class HardSimpleVFE(nn.Module):
         return points_mean.contiguous()
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class DynamicSimpleVFE(nn.Module):
     """Simple dynamic voxel feature encoder used in DV-SECOND.
 
@@ -65,8 +63,7 @@ class DynamicSimpleVFE(nn.Module):
         self.fp16_enabled = False
 
     @torch.no_grad()
-    @force_fp32(out_fp16=True)
-    def forward(self, features, coors):
+    def forward(self, features, coors, *args, **kwargs):
         """Forward function.
 
         Args:
@@ -84,7 +81,7 @@ class DynamicSimpleVFE(nn.Module):
         return features, features_coors
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class DynamicVFE(nn.Module):
     """Dynamic Voxel feature encoder used in DV-SECOND.
 
@@ -174,7 +171,7 @@ class DynamicVFE(nn.Module):
             voxel_size, point_cloud_range, average_points=True)
         self.fusion_layer = None
         if fusion_layer is not None:
-            self.fusion_layer = builder.build_fusion_layer(fusion_layer)
+            self.fusion_layer = MODELS.build(fusion_layer)
 
     def map_voxel_center_to_point(self, pts_coors, voxel_mean, voxel_coors):
         """Map voxel features to its corresponding points.
@@ -218,13 +215,14 @@ class DynamicVFE(nn.Module):
         center_per_point = voxel_mean[voxel_inds, ...]
         return center_per_point
 
-    @force_fp32(out_fp16=True)
     def forward(self,
                 features,
                 coors,
                 points=None,
                 img_feats=None,
-                img_metas=None):
+                img_metas=None,
+                *args,
+                **kwargs):
         """Forward functions.
 
         Args:
@@ -286,7 +284,7 @@ class DynamicVFE(nn.Module):
         return voxel_feats, voxel_coors
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class HardVFE(nn.Module):
     """Voxel feature encoder used in DV-SECOND.
 
@@ -382,15 +380,16 @@ class HardVFE(nn.Module):
 
         self.fusion_layer = None
         if fusion_layer is not None:
-            self.fusion_layer = builder.build_fusion_layer(fusion_layer)
+            self.fusion_layer = MODELS.build(fusion_layer)
 
-    @force_fp32(out_fp16=True)
     def forward(self,
                 features,
                 num_points,
                 coors,
                 img_feats=None,
-                img_metas=None):
+                img_metas=None,
+                *args,
+                **kwargs):
         """Forward functions.
 
         Args:

@@ -17,9 +17,22 @@ Collections:
       Version: v0.5.0
 
 Models:
-  - Name: hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
+  - Name: pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d
     In Collection: FreeAnchor
-    Config: free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py
+    Metadata:
+      Training Memory (GB): 17.1
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 40.0
+          NDS: 53.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d_20200620_230405-2fa62f3d.pth
+
+  - Name: pointpillars_hv_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d
+    In Collection: FreeAnchor
+    Config: free_anchor/pointpillars_hv_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 16.3
     Results:
@@ -28,11 +41,24 @@ Models:
         Metrics:
           mAP: 43.82
           NDS: 54.86
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210816_163441-ae0897e7.pth
+
+  - Name: pointpillars_hv_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d
+    In Collection: FreeAnchor
+    Config: configs/regnet/pointpillars_hv_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d.py
+    Metadata:
+      Training Memory (GB): 17.3
+    Results:
+      - Task: 3D Object Detection
+        Dataset: nuScenes
+        Metrics:
+          mAP: 44.8
+          NDS: 56.4
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210816_163441-ae0897e7.pth
 
-  - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
+  - Name: pointpillars_hv_regnet-400mf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-400mf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-400mf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 17.6
     Results:
@@ -45,7 +71,7 @@ Models:
 
   - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 24.3
     Results:
@@ -56,9 +82,9 @@ Models:
           NDS: 61.49
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210828_025608-bfbd506e.pth
 
-  - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
+  - Name: pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-1.6gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py
     Metadata:
       Training Memory (GB): 24.4
     Results:
@@ -69,9 +95,9 @@ Models:
           NDS: 62.45
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d_20210827_184909-14d2dbd1.pth
 
-  - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d
+  - Name: pointpillars_hv_regnet-3.2gf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-3.2gf_fpn_head-free-anchor_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Memory (GB): 29.4
     Results:
@@ -82,9 +108,9 @@ Models:
           NDS: 61.94
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_4x8_2x_nus-3d_20210827_181237-e385c35a.pth
 
-  - Name: hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d
+  - Name: pointpillars_hv_regnet-3.2gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d
     In Collection: FreeAnchor
-    Config: configs/free_anchor/hv_pointpillars_regnet-3.2gf_fpn_sbn-all_free-anchor_strong-aug_4x8_3x_nus-3d.py
+    Config: configs/free_anchor/pointpillars_hv_regnet-3.2gf_fpn_head-free-anchor_sbn-all_8xb4-strong-aug-3x_nus-3d.py
     Metadata:
       Training Memory (GB): 29.2
     Results:

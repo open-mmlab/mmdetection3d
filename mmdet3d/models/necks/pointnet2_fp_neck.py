@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
 from torch import nn as nn
 
-from mmdet3d.ops import PointFPModule
-from ..builder import NECKS
+from mmdet3d.models.layers.pointnet_modules import PointFPModule
+from mmdet3d.registry import MODELS
 
 
-@NECKS.register_module()
+@MODELS.register_module()
 class PointNetFPNeck(BaseModule):
     r"""PointNet FP Module used in PointRCNN.
 

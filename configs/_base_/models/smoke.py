@@ -1,5 +1,12 @@
+# model settings
 model = dict(
     type='SMOKEMono3D',
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=True,
+        pad_size_divisor=32),
     backbone=dict(
         type='DLANet',
         depth=34,
@@ -42,10 +49,11 @@ model = dict(
             base_dims=((0.88, 1.73, 0.67), (1.78, 1.70, 0.58), (3.88, 1.63,
                                                                 1.53)),
             code_size=7),
-        loss_cls=dict(type='GaussianFocalLoss', loss_weight=1.0),
-        loss_bbox=dict(type='L1Loss', reduction='sum', loss_weight=1 / 300),
+        loss_cls=dict(type='mmdet.GaussianFocalLoss', loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.L1Loss', reduction='sum', loss_weight=1 / 300),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_attr=None,
         conv_bias=True,
         dcn_on_last_conv=False),

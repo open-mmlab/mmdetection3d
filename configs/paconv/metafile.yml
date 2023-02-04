@@ -15,9 +15,9 @@ Collections:
       Version: v0.16.0
 
 Models:
-  - Name: paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
+  - Name: paconv_ssg_8xb8-cosine-150e_s3dis-seg.py
     In Collection: PAConv
-    Config: configs/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class.py
+    Config: configs/paconv/paconv_ssg_8xb8-cosine-150e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 5.8
@@ -27,3 +27,16 @@ Models:
         Metrics:
           mIoU: 66.65
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/paconv/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class/paconv_ssg_8x8_cosine_150e_s3dis_seg-3d-13class_20210729_200615-2147b2d1.pth
+
+  - Name: paconv_ssg-cuda_8xb8-cosine-200e_s3dis-seg
+    In Collection: PAConv
+    Config: configs/paconv/paconv_ssg-cuda_8xb8-cosine-200e_s3dis-seg.py
+    Metadata:
+      Training Data: S3DIS
+      Training Memory (GB): 5.8
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: S3DIS
+        Metrics:
+          mIoU: 66.65
+    Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/paconv/paconv_cuda_ssg_8x8_cosine_200e_s3dis_seg-3d-13class/paconv_cuda_ssg_8x8_cosine_200e_s3dis_seg-3d-13class_20210802_171802-e5ea9bb9.pth

@@ -1,6 +1,7 @@
 # model settings
 model = dict(
     type='EncoderDecoder3D',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(
         type='DGCNNBackbone',
         in_channels=9,  # [xyz, rgb, normal_xyz], modified with dataset
@@ -19,7 +20,7 @@ model = dict(
         norm_cfg=dict(type='BN1d'),
         act_cfg=dict(type='LeakyReLU', negative_slope=0.2),
         loss_decode=dict(
-            type='CrossEntropyLoss',
+            type='mmdet.CrossEntropyLoss',
             use_sigmoid=False,
             class_weight=None,  # modified with dataset
             loss_weight=1.0)),

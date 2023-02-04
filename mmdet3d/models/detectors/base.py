@@ -1,127 +1,152 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from os import path as osp
+from typing import List, Union
 
-import mmcv
-import torch
-from mmcv.parallel import DataContainer as DC
-from mmcv.runner import auto_fp16
+from mmdet.models import BaseDetector
+from mmengine.structures import InstanceData
 
-from mmdet3d.core import Box3DMode, Coord3DMode, show_result
-from mmdet.models.detectors import BaseDetector
+from mmdet3d.registry import MODELS
+from mmdet3d.structures.det3d_data_sample import (ForwardResults,
+                                                  OptSampleList, SampleList)
+from mmdet3d.utils.typing_utils import (OptConfigType, OptInstanceList,
+                                        OptMultiConfig)
 
 
+@MODELS.register_module()
 class Base3DDetector(BaseDetector):
-    """Base class for detectors."""
+    """Base class for 3D detectors.
 
-    def forward_test(self, points, img_metas, img=None, **kwargs):
-        """
-        Args:
-            points (list[torch.Tensor]): the outer list indicates test-time
-                augmentations and inner torch.Tensor should have a shape NxC,
-                which contains all points in the batch.
-            img_metas (list[list[dict]]): the outer list indicates test-time
-                augs (multiscale, flip, etc.) and the inner list indicates
-                images in a batch
-            img (list[torch.Tensor], optional): the outer
-                list indicates test-time augmentations and inner
-                torch.Tensor should have a shape NxCxHxW, which contains
-                all images in the batch. Defaults to None.
-        """
-        for var, name in [(points, 'points'), (img_metas, 'img_metas')]:
-            if not isinstance(var, list):
-                raise TypeError('{} must be a list, but got {}'.format(
-                    name, type(var)))
+    Args:
+       data_preprocessor (dict or ConfigDict, optional): The pre-process
+           config of :class:`BaseDataPreprocessor`.  it usually includes,
+            ``pad_size_divisor``, ``pad_value``, ``mean`` and ``std``.
+       init_cfg (dict or ConfigDict, optional): the config to control the
+           initialization. Defaults to None.
+    """
 
-        num_augs = len(points)
-        if num_augs != len(img_metas):
-            raise ValueError(
-                'num of augmentations ({}) != num of image meta ({})'.format(
-                    len(points), len(img_metas)))
+    def __init__(self,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None) -> None:
+        super().__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
 
-        if num_augs == 1:
-            img = [img] if img is None else img
-            return self.simple_test(points[0], img_metas[0], img[0], **kwargs)
-        else:
-            return self.aug_test(points, img_metas, img, **kwargs)
+    def forward(self,
+                inputs: Union[dict, List[dict]],
+                data_samples: OptSampleList = None,
+                mode: str = 'tensor',
+                **kwargs) -> ForwardResults:
+        """The unified entry for a forward process in both training and test.
 
-    @auto_fp16(apply_to=('img', 'points'))
-    def forward(self, return_loss=True, **kwargs):
-        """Calls either forward_train or forward_test depending on whether
-        return_loss=True.
+        The method should accept three modes: "tensor", "predict" and "loss":
 
-        Note this setting will change the expected inputs. When
-        `return_loss=True`, img and img_metas are single-nested (i.e.
-        torch.Tensor and list[dict]), and when `resturn_loss=False`, img and
-        img_metas should be double nested (i.e.  list[torch.Tensor],
-        list[list[dict]]), with the outer list indicating test time
-        augmentations.
-        """
-        if return_loss:
-            return self.forward_train(**kwargs)
-        else:
-            return self.forward_test(**kwargs)
+        - "tensor": Forward the whole network and return tensor or tuple of
+        tensor without any post-processing, same as a common nn.Module.
+        - "predict": Forward and return the predictions, which are fully
+        processed to a list of :obj:`Det3DDataSample`.
+        - "loss": Forward and return a dict of losses according to the given
+        inputs and data samples.
 
-    def show_results(self, data, result, out_dir, show=False, score_thr=None):
-        """Results visualization.
+        Note that this method doesn't handle neither back propagation nor
+        optimizer updating, which are done in the :meth:`train_step`.
 
         Args:
-            data (list[dict]): Input points and the information of the sample.
-            result (list[dict]): Prediction results.
-            out_dir (str): Output directory of visualization result.
-            show (bool, optional): Determines whether you are
-                going to show result by open3d.
-                Defaults to False.
-            score_thr (float, optional): Score threshold of bounding boxes.
-                Default to None.
+            inputs  (dict | list[dict]): When it is a list[dict], the
+                outer list indicate the test time augmentation. Each
+                dict contains batch inputs
+                which include 'points' and 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor): Image tensor has shape (B, C, H, W).
+            data_samples (list[:obj:`Det3DDataSample`],
+                list[list[:obj:`Det3DDataSample`]], optional): The
+                annotation data of every samples. When it is a list[list], the
+                outer list indicate the test time augmentation, and the
+                inter list indicate the batch. Otherwise, the list simply
+                indicate the batch. Defaults to None.
+            mode (str): Return what kind of value. Defaults to 'tensor'.
+
+        Returns:
+            The return type depends on ``mode``.
+
+            - If ``mode="tensor"``, return a tensor or a tuple of tensor.
+            - If ``mode="predict"``, return a list of :obj:`Det3DDataSample`.
+            - If ``mode="loss"``, return a dict of tensor.
         """
-        for batch_id in range(len(result)):
-            if isinstance(data['points'][0], DC):
-                points = data['points'][0]._data[0][batch_id].numpy()
-            elif mmcv.is_list_of(data['points'][0], torch.Tensor):
-                points = data['points'][0][batch_id]
+        if mode == 'loss':
+            return self.loss(inputs, data_samples, **kwargs)
+        elif mode == 'predict':
+            if isinstance(data_samples[0], list):
+                # aug test
+                assert len(data_samples[0]) == 1, 'Only support ' \
+                                                  'batch_size 1 ' \
+                                                  'in mmdet3d when ' \
+                                                  'do the test' \
+                                                  'time augmentation.'
+                return self.aug_test(inputs, data_samples, **kwargs)
             else:
-                ValueError(f"Unsupported data type {type(data['points'][0])} "
-                           f'for visualization!')
-            if isinstance(data['img_metas'][0], DC):
-                pts_filename = data['img_metas'][0]._data[0][batch_id][
-                    'pts_filename']
-                box_mode_3d = data['img_metas'][0]._data[0][batch_id][
-                    'box_mode_3d']
-            elif mmcv.is_list_of(data['img_metas'][0], dict):
-                pts_filename = data['img_metas'][0][batch_id]['pts_filename']
-                box_mode_3d = data['img_metas'][0][batch_id]['box_mode_3d']
-            else:
-                ValueError(
-                    f"Unsupported data type {type(data['img_metas'][0])} "
-                    f'for visualization!')
-            file_name = osp.split(pts_filename)[-1].split('.')[0]
+                return self.predict(inputs, data_samples, **kwargs)
+        elif mode == 'tensor':
+            return self._forward(inputs, data_samples, **kwargs)
+        else:
+            raise RuntimeError(f'Invalid mode "{mode}". '
+                               'Only supports loss, predict and tensor mode')
 
-            assert out_dir is not None, 'Expect out_dir, got none.'
+    def add_pred_to_datasample(
+        self,
+        data_samples: SampleList,
+        data_instances_3d: OptInstanceList = None,
+        data_instances_2d: OptInstanceList = None,
+    ) -> SampleList:
+        """Convert results list to `Det3DDataSample`.
 
-            pred_bboxes = result[batch_id]['boxes_3d']
-            pred_labels = result[batch_id]['labels_3d']
+        Subclasses could override it to be compatible for some multi-modality
+        3D detectors.
 
-            if score_thr is not None:
-                mask = result[batch_id]['scores_3d'] > score_thr
-                pred_bboxes = pred_bboxes[mask]
-                pred_labels = pred_labels[mask]
+        Args:
+            data_samples (list[:obj:`Det3DDataSample`]): The input data.
+            data_instances_3d (list[:obj:`InstanceData`], optional): 3D
+                Detection results of each sample.
+            data_instances_2d (list[:obj:`InstanceData`], optional): 2D
+                Detection results of each sample.
 
-            # for now we convert points and bbox into depth mode
-            if (box_mode_3d == Box3DMode.CAM) or (box_mode_3d
-                                                  == Box3DMode.LIDAR):
-                points = Coord3DMode.convert_point(points, Coord3DMode.LIDAR,
-                                                   Coord3DMode.DEPTH)
-                pred_bboxes = Box3DMode.convert(pred_bboxes, box_mode_3d,
-                                                Box3DMode.DEPTH)
-            elif box_mode_3d != Box3DMode.DEPTH:
-                ValueError(
-                    f'Unsupported box_mode_3d {box_mode_3d} for conversion!')
-            pred_bboxes = pred_bboxes.tensor.cpu().numpy()
-            show_result(
-                points,
-                None,
-                pred_bboxes,
-                out_dir,
-                file_name,
-                show=show,
-                pred_labels=pred_labels)
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input. Each Det3DDataSample usually contains
+            'pred_instances_3d'. And the ``pred_instances_3d`` normally
+            contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instance, )
+            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+              (num_instances, C) where C >=7.
+
+            When there are image prediction in some models, it should
+            contains  `pred_instances`, And the ``pred_instances`` normally
+            contains following keys.
+
+            - scores (Tensor): Classification scores of image, has a shape
+              (num_instance, )
+            - labels (Tensor): Predict Labels of 2D bboxes, has a shape
+              (num_instances, ).
+            - bboxes (Tensor): Contains a tensor with shape
+              (num_instances, 4).
+        """
+
+        assert (data_instances_2d is not None) or \
+               (data_instances_3d is not None),\
+               'please pass at least one type of data_samples'
+
+        if data_instances_2d is None:
+            data_instances_2d = [
+                InstanceData() for _ in range(len(data_instances_3d))
+            ]
+        if data_instances_3d is None:
+            data_instances_3d = [
+                InstanceData() for _ in range(len(data_instances_2d))
+            ]
+
+        for i, data_sample in enumerate(data_samples):
+            data_sample.pred_instances_3d = data_instances_3d[i]
+            data_sample.pred_instances = data_instances_2d[i]
+        return data_samples

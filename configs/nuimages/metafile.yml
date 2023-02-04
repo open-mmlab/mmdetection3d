@@ -17,11 +17,16 @@ Collections:
     Paper:
       URL: https://arxiv.org/abs/1703.06870v3
       Title: "Mask R-CNN"
+<<<<<<< HEAD
     README: https://github.com/open-mmlab/mmdetection/blob/master/configs/mask_rcnn/README.md
+=======
+    README: configs/nuimages/README.md
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
     Code:
       URL: https://github.com/open-mmlab/mmdetection/blob/v2.0.0/mmdet/models/detectors/mask_rcnn.py#L6
       Version: v2.0.0
 
+<<<<<<< HEAD
   - Name: Cascade R-CNN
     Metadata:
       Training Data: nuImages
@@ -65,6 +70,8 @@ Collections:
       URL: https://github.com/open-mmlab/mmdetection/blob/v2.0.0/mmdet/models/detectors/htc.py#L6
       Version: v2.0.0
 
+=======
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
 Models:
   - Name: mask_rcnn_r50_fpn_1x_nuim
     In Collection: Mask R-CNN
@@ -153,7 +160,7 @@ Models:
 
   - Name: mask_rcnn_r101_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_r101_fpn_1x_nuim.py
+    Config: configs/nuimages/mask-rcnn_r101_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 10.9
       Training Resources: 8x TITAN Xp
@@ -170,7 +177,7 @@ Models:
 
   - Name: mask_rcnn_x101_32x4d_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_x101_32x4d_fpn_1x_nuim.py
+    Config: configs/nuimages/mask-rcnn_x101_32x4d_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 13.3
       Training Resources: 8x TITAN Xp

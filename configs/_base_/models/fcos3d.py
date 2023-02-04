@@ -1,7 +1,14 @@
+# model settings
 model = dict(
     type='FCOSMono3D',
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=True,
+        pad_size_divisor=32),
     backbone=dict(
-        type='ResNet',
+        type='mmdet.ResNet',
         depth=101,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
@@ -13,7 +20,7 @@ model = dict(
             type='Pretrained',
             checkpoint='open-mmlab://detectron2/resnet101_caffe')),
     neck=dict(
-        type='FPN',
+        type='mmdet.FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         start_level=1,
@@ -45,18 +52,19 @@ model = dict(
         dir_branch=(256, ),
         attr_branch=(256, ),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
+        loss_bbox=dict(
+            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_attr=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_centerness=dict(
-            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         bbox_coder=dict(type='FCOS3DBBoxCoder', code_size=9),
         norm_on_bbox=True,
         centerness_on_reg=True,

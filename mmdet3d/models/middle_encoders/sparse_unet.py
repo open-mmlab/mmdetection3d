@@ -1,21 +1,21 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 
-from mmdet3d.ops.spconv import IS_SPCONV2_AVAILABLE
+from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
 else:
     from mmcv.ops import SparseConvTensor, SparseSequential
 
-from mmcv.runner import BaseModule, auto_fp16
+from mmengine.model import BaseModule
 
-from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
-from mmdet3d.ops.sparse_block import replace_feature
-from ..builder import MIDDLE_ENCODERS
+from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
+from mmdet3d.models.layers.sparse_block import replace_feature
+from mmdet3d.registry import MODELS
 
 
-@MIDDLE_ENCODERS.register_module()
+@MODELS.register_module()
 class SparseUNet(BaseModule):
     r"""SparseUNet for PartA^2.
 
@@ -102,7 +102,6 @@ class SparseUNet(BaseModule):
             indice_key='spconv_down2',
             conv_type='SparseConv3d')
 
-    @auto_fp16(apply_to=('voxel_features', ))
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseUNet.
 

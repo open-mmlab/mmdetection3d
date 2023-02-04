@@ -1,13 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
+import mmengine
 import numpy as np
 
-from mmdet.datasets import CustomDataset
-from .builder import DATASETS
+from mmdet3d.datasets import Det3DDataset
+from mmdet3d.registry import DATASETS
 
 
 @DATASETS.register_module()
-class Kitti2DDataset(CustomDataset):
+class Kitti2DDataset(Det3DDataset):
     r"""KITTI 2D Dataset.
 
     This class serves as the API for experiments on the `KITTI Dataset
@@ -36,7 +36,7 @@ class Kitti2DDataset(CustomDataset):
             Defaults to False.
     """
 
-    CLASSES = ('car', 'pedestrian', 'cyclist')
+    classes = ('car', 'pedestrian', 'cyclist')
     """
     Annotation format:
     [
@@ -87,10 +87,10 @@ class Kitti2DDataset(CustomDataset):
         Returns:
             list[dict]: List of annotations.
         """
-        self.data_infos = mmcv.load(ann_file)
+        self.data_infos = mmengine.load(ann_file)
         self.cat2label = {
             cat_name: i
-            for i, cat_name in enumerate(self.CLASSES)
+            for i, cat_name in enumerate(self.classes)
         }
         return self.data_infos
 
@@ -122,7 +122,7 @@ class Kitti2DDataset(CustomDataset):
         difficulty = annos['difficulty']
 
         # remove classes that is not needed
-        selected = self.keep_arrays_by_name(gt_names, self.CLASSES)
+        selected = self.keep_arrays_by_name(gt_names, self.classes)
         gt_bboxes = gt_bboxes[selected]
         gt_names = gt_names[selected]
         difficulty = difficulty[selected]
@@ -213,9 +213,9 @@ class Kitti2DDataset(CustomDataset):
         Returns:
             list[dict]: A list of dictionaries with the kitti 2D format.
         """
-        from mmdet3d.core.bbox.transforms import bbox2result_kitti2d
+        from mmdet3d.structures.ops.transforms import bbox2result_kitti2d
         sample_idx = [info['image']['image_idx'] for info in self.data_infos]
-        result_files = bbox2result_kitti2d(outputs, self.CLASSES, sample_idx,
+        result_files = bbox2result_kitti2d(outputs, self.classes, sample_idx,
                                            out)
         return result_files
 
@@ -231,11 +231,11 @@ class Kitti2DDataset(CustomDataset):
             tuple (str, dict): Average precision results in str format
                 and average precision results in dict format.
         """
-        from mmdet3d.core.evaluation import kitti_eval
+        from mmdet3d.evaluation import kitti_eval
         eval_types = ['bbox'] if not eval_types else eval_types
         assert eval_types in ('bbox', ['bbox'
                                        ]), 'KITTI data set only evaluate bbox'
         gt_annos = [info['annos'] for info in self.data_infos]
         ap_result_str, ap_dict = kitti_eval(
-            gt_annos, result_files, self.CLASSES, eval_types=['bbox'])
+            gt_annos, result_files, self.classes, eval_types=['bbox'])
         return ap_result_str, ap_dict

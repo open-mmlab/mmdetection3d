@@ -106,7 +106,15 @@ Please refer to [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master
 
 ### FCAF3D
 
+<<<<<<< HEAD
 Please refer to [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcaf3d) for details. We provide FCAF3D baselines on the ScanNet, S3DIS and SUN RGB-D dataset.
+=======
+Please refer to [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcaf3d) for details. We provide FCAF3D baselines on the ScanNet, S3DIS, and SUN RGB-D datasets.
+
+### PV-RCNN
+
+Please refer to [PV-RCNN](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/pv_rcnn) for details. We provide PV-RCNN baselines on the KITTI dataset.
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
 
 ### Mixed Precision (FP16) Training
 

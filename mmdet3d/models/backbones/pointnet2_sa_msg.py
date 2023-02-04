@@ -1,15 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.runner import auto_fp16
 from torch import nn as nn
 
-from mmdet3d.ops import build_sa_module
-from ..builder import BACKBONES
+from mmdet3d.models.layers.pointnet_modules import build_sa_module
+from mmdet3d.registry import MODELS
 from .base_pointnet import BasePointNet
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class PointNet2SAMSG(BasePointNet):
     """PointNet2 with Multi-scale grouping.
 
@@ -124,7 +123,6 @@ class PointNet2SAMSG(BasePointNet):
                         bias=True))
                 sa_in_channel = cur_aggregation_channel
 
-    @auto_fp16(apply_to=('points', ))
     def forward(self, points):
         """Forward pass.
 

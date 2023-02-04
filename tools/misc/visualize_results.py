@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 
-import mmcv
-from mmcv import Config
+import mmengine
+from mmengine import Config
 
-from mmdet3d.datasets import build_dataset
+from mmdet3d.registry import DATASETS
 
 
 def parse_args():
@@ -30,8 +30,8 @@ def main():
     cfg.data.test.test_mode = True
 
     # build the dataset
-    dataset = build_dataset(cfg.data.test)
-    results = mmcv.load(args.result)
+    dataset = DATASETS.build(cfg.data.test)
+    results = mmengine.load(args.result)
 
     if getattr(dataset, 'show', None) is not None:
         # data loading pipeline for showing

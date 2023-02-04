@@ -1,5 +1,6 @@
 model = dict(
     type='SSD3DNet',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
@@ -20,7 +21,6 @@ model = dict(
             normalize_xyz=False)),
     bbox_head=dict(
         type='SSD3DHead',
-        in_channels=256,
         vote_module_cfg=dict(
             in_channels=256,
             num_points=256,
@@ -48,30 +48,29 @@ model = dict(
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
         objectness_loss=dict(
-            type='CrossEntropyLoss',
+            type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='sum',
             loss_weight=1.0),
         center_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         dir_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         corner_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        vote_loss=dict(type='SmoothL1Loss', reduction='sum', loss_weight=1.0)),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+        vote_loss=dict(
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)),
     # model training and testing settings
     train_cfg=dict(
-        sample_mod='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
+        sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
     test_cfg=dict(
         nms_cfg=dict(type='nms', iou_thr=0.1),
-        sample_mod='spec',
+        sample_mode='spec',
         score_thr=0.0,
         per_class_proposal=True,
         max_output_num=100))

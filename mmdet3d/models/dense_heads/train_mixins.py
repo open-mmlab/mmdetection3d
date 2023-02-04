@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 import torch
+from mmdet.models.utils import images_to_levels, multi_apply
+from mmengine.structures import InstanceData
 
-from mmdet3d.core import limit_period
-from mmdet.core import images_to_levels, multi_apply
+from mmdet3d.structures import limit_period
 
 
 class AnchorTrainMixin(object):
@@ -11,10 +12,9 @@ class AnchorTrainMixin(object):
 
     def anchor_target_3d(self,
                          anchor_list,
-                         gt_bboxes_list,
-                         input_metas,
-                         gt_bboxes_ignore_list=None,
-                         gt_labels_list=None,
+                         batch_gt_instances_3d,
+                         batch_input_metas,
+                         batch_gt_instances_ignore=None,
                          label_channels=1,
                          num_classes=1,
                          sampling=True):
@@ -22,11 +22,10 @@ class AnchorTrainMixin(object):
 
         Args:
             anchor_list (list[list]): Multi level anchors of each image.
-            gt_bboxes_list (list[:obj:`BaseInstance3DBoxes`]): Ground truth
+            batch_gt_instances_3d (list[:obj:`InstanceData`]): Ground truth
                 bboxes of each image.
-            input_metas (list[dict]): Meta info of each image.
-            gt_bboxes_ignore_list (list): Ignore list of gt bboxes.
-            gt_labels_list (list[torch.Tensor]): Gt labels of batches.
+            batch_input_metas (list[dict]): Meta info of each image.
+            batch_gt_instances_ignore (list): Ignore list of gt bboxes.
             label_channels (int): The channel of labels.
             num_classes (int): The number of classes.
             sampling (bool): Whether to sample anchors.
@@ -38,8 +37,8 @@ class AnchorTrainMixin(object):
                 direction weights, number of positive anchors and
                 number of negative anchors.
         """
-        num_imgs = len(input_metas)
-        assert len(anchor_list) == num_imgs
+        num_inputs = len(batch_input_metas)
+        assert len(anchor_list) == num_inputs
 
         if isinstance(anchor_list[0][0], list):
             # sizes of anchors are different
@@ -48,7 +47,7 @@ class AnchorTrainMixin(object):
                 sum([anchor.size(0) for anchor in anchors])
                 for anchors in anchor_list[0]
             ]
-            for i in range(num_imgs):
+            for i in range(num_inputs):
                 anchor_list[i] = anchor_list[i][0]
         else:
             # anchor number of multi levels
@@ -57,24 +56,21 @@ class AnchorTrainMixin(object):
                 for anchors in anchor_list[0]
             ]
             # concat all level anchors and flags to a single tensor
-            for i in range(num_imgs):
+            for i in range(num_inputs):
                 anchor_list[i] = torch.cat(anchor_list[i])
 
         # compute targets for each image
-        if gt_bboxes_ignore_list is None:
-            gt_bboxes_ignore_list = [None for _ in range(num_imgs)]
-        if gt_labels_list is None:
-            gt_labels_list = [None for _ in range(num_imgs)]
+        if batch_gt_instances_ignore is None:
+            batch_gt_instances_ignore = [None for _ in range(num_inputs)]
 
         (all_labels, all_label_weights, all_bbox_targets, all_bbox_weights,
          all_dir_targets, all_dir_weights, pos_inds_list,
          neg_inds_list) = multi_apply(
              self.anchor_target_3d_single,
              anchor_list,
-             gt_bboxes_list,
-             gt_bboxes_ignore_list,
-             gt_labels_list,
-             input_metas,
+             batch_gt_instances_3d,
+             batch_gt_instances_ignore,
+             batch_input_metas,
              label_channels=label_channels,
              num_classes=num_classes,
              sampling=sampling)
@@ -101,9 +97,8 @@ class AnchorTrainMixin(object):
 
     def anchor_target_3d_single(self,
                                 anchors,
-                                gt_bboxes,
-                                gt_bboxes_ignore,
-                                gt_labels,
+                                gt_instance_3d,
+                                gt_instance_ignore,
                                 input_meta,
                                 label_channels=1,
                                 num_classes=1,
@@ -112,9 +107,8 @@ class AnchorTrainMixin(object):
 
         Args:
             anchors (torch.Tensor): Concatenated multi-level anchor.
-            gt_bboxes (:obj:`BaseInstance3DBoxes`): Gt bboxes.
-            gt_bboxes_ignore (torch.Tensor): Ignored gt bboxes.
-            gt_labels (torch.Tensor): Gt class labels.
+            gt_instance_3d (:obj:`InstanceData`): Gt bboxes.
+            gt_instance_ignore (:obj:`InstanceData`): Ignored gt bboxes.
             input_meta (dict): Meta info of each image.
             label_channels (int): The channel of labels.
             num_classes (int): The number of classes.
@@ -137,15 +131,19 @@ class AnchorTrainMixin(object):
                     -1, self.box_code_size)
                 current_anchor_num += current_anchors.size(0)
                 if self.assign_per_class:
-                    gt_per_cls = (gt_labels == i)
+                    gt_per_cls = (gt_instance_3d.labels_3d == i)
+                    gt_per_cls_instance = InstanceData()
+                    gt_per_cls_instance.labels_3d = gt_instance_3d.labels_3d[
+                        gt_per_cls]
+                    gt_per_cls_instance.bboxes_3d = gt_instance_3d.bboxes_3d[
+                        gt_per_cls, :]
                     anchor_targets = self.anchor_target_single_assigner(
-                        assigner, current_anchors, gt_bboxes[gt_per_cls, :],
-                        gt_bboxes_ignore, gt_labels[gt_per_cls], input_meta,
-                        num_classes, sampling)
+                        assigner, current_anchors, gt_per_cls_instance,
+                        gt_instance_ignore, input_meta, num_classes, sampling)
                 else:
                     anchor_targets = self.anchor_target_single_assigner(
-                        assigner, current_anchors, gt_bboxes, gt_bboxes_ignore,
-                        gt_labels, input_meta, num_classes, sampling)
+                        assigner, current_anchors, gt_instance_3d,
+                        gt_instance_ignore, input_meta, num_classes, sampling)
 
                 (labels, label_weights, bbox_targets, bbox_weights,
                  dir_targets, dir_weights, pos_inds, neg_inds) = anchor_targets
@@ -194,15 +192,19 @@ class AnchorTrainMixin(object):
                 current_anchors = anchors[i]
                 current_anchor_num += current_anchors.size(0)
                 if self.assign_per_class:
-                    gt_per_cls = (gt_labels == i)
+                    gt_per_cls = (gt_instance_3d.labels_3d == i)
+                    gt_per_cls_instance = InstanceData()
+                    gt_per_cls_instance.labels_3d = gt_instance_3d.labels_3d[
+                        gt_per_cls]
+                    gt_per_cls_instance.bboxes_3d = gt_instance_3d.bboxes_3d[
+                        gt_per_cls, :]
                     anchor_targets = self.anchor_target_single_assigner(
-                        assigner, current_anchors, gt_bboxes[gt_per_cls, :],
-                        gt_bboxes_ignore, gt_labels[gt_per_cls], input_meta,
-                        num_classes, sampling)
+                        assigner, current_anchors, gt_per_cls_instance,
+                        gt_instance_ignore, input_meta, num_classes, sampling)
                 else:
                     anchor_targets = self.anchor_target_single_assigner(
-                        assigner, current_anchors, gt_bboxes, gt_bboxes_ignore,
-                        gt_labels, input_meta, num_classes, sampling)
+                        assigner, current_anchors, gt_instance_3d,
+                        gt_instance_ignore, input_meta, num_classes, sampling)
 
                 (labels, label_weights, bbox_targets, bbox_weights,
                  dir_targets, dir_weights, pos_inds, neg_inds) = anchor_targets
@@ -230,17 +232,16 @@ class AnchorTrainMixin(object):
                     total_pos_inds, total_neg_inds)
         else:
             return self.anchor_target_single_assigner(self.bbox_assigner,
-                                                      anchors, gt_bboxes,
-                                                      gt_bboxes_ignore,
-                                                      gt_labels, input_meta,
-                                                      num_classes, sampling)
+                                                      anchors, gt_instance_3d,
+                                                      gt_instance_ignore,
+                                                      input_meta, num_classes,
+                                                      sampling)
 
     def anchor_target_single_assigner(self,
                                       bbox_assigner,
                                       anchors,
-                                      gt_bboxes,
-                                      gt_bboxes_ignore,
-                                      gt_labels,
+                                      gt_instance_3d,
+                                      gt_instance_ignore,
                                       input_meta,
                                       num_classes=1,
                                       sampling=True):
@@ -249,9 +250,8 @@ class AnchorTrainMixin(object):
         Args:
             bbox_assigner (BaseAssigner): assign positive and negative boxes.
             anchors (torch.Tensor): Concatenated multi-level anchor.
-            gt_bboxes (:obj:`BaseInstance3DBoxes`): Gt bboxes.
-            gt_bboxes_ignore (torch.Tensor): Ignored gt bboxes.
-            gt_labels (torch.Tensor): Gt class labels.
+            gt_instance_3d (:obj:`InstanceData`): Gt bboxes.
+            gt_instance_ignore (torch.Tensor): Ignored gt bboxes.
             input_meta (dict): Meta info of each image.
             num_classes (int): The number of classes.
             sampling (bool): Whether to sample anchors.
@@ -267,13 +267,17 @@ class AnchorTrainMixin(object):
         dir_weights = anchors.new_zeros((anchors.shape[0]), dtype=torch.float)
         labels = anchors.new_zeros(num_valid_anchors, dtype=torch.long)
         label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)
-        if len(gt_bboxes) > 0:
-            if not isinstance(gt_bboxes, torch.Tensor):
-                gt_bboxes = gt_bboxes.tensor.to(anchors.device)
-            assign_result = bbox_assigner.assign(anchors, gt_bboxes,
-                                                 gt_bboxes_ignore, gt_labels)
-            sampling_result = self.bbox_sampler.sample(assign_result, anchors,
-                                                       gt_bboxes)
+        if len(gt_instance_3d.bboxes_3d) > 0:
+            if not isinstance(gt_instance_3d.bboxes_3d, torch.Tensor):
+                gt_instance_3d.bboxes_3d = gt_instance_3d.bboxes_3d.tensor.to(
+                    anchors.device)
+            pred_instance_3d = InstanceData(priors=anchors)
+            assign_result = bbox_assigner.assign(pred_instance_3d,
+                                                 gt_instance_3d,
+                                                 gt_instance_ignore)
+            sampling_result = self.bbox_sampler.sample(assign_result,
+                                                       pred_instance_3d,
+                                                       gt_instance_3d)
             pos_inds = sampling_result.pos_inds
             neg_inds = sampling_result.neg_inds
         else:
@@ -284,7 +288,7 @@ class AnchorTrainMixin(object):
                 anchors.new_zeros((anchors.shape[0], ), dtype=torch.bool) == 0,
                 as_tuple=False).squeeze(-1).unique()
 
-        if gt_labels is not None:
+        if gt_instance_3d.labels_3d is not None:
             labels += num_classes
         if len(pos_inds) > 0:
             pos_bbox_targets = self.bbox_coder.encode(
@@ -300,10 +304,10 @@ class AnchorTrainMixin(object):
             dir_targets[pos_inds] = pos_dir_targets
             dir_weights[pos_inds] = 1.0
 
-            if gt_labels is None:
+            if gt_instance_3d.labels_3d is None:
                 labels[pos_inds] = 1
             else:
-                labels[pos_inds] = gt_labels[
+                labels[pos_inds] = gt_instance_3d.labels_3d[
                     sampling_result.pos_assigned_gt_inds]
             if self.train_cfg.pos_weight <= 0:
                 label_weights[pos_inds] = 1.0

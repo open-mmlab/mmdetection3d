@@ -16,7 +16,11 @@ Collections:
 Models:
   - Name: imvoxelnet_4x8_kitti-3d-car
     In Collection: ImVoxelNet
+<<<<<<< HEAD
     Config: configs/imvoxelnet/imvoxelnet_4x8_kitti-3d-car.py
+=======
+    Config: configs/imvoxelnet/imvoxelnet_8xb4_kitti-3d-car.py
+>>>>>>> bf9488d7e9839e3b785703788a42532d19c19973
     Metadata:
       Training Data: KITTI
       Training Resources: 8x Tesla V100

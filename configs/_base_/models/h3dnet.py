@@ -30,7 +30,7 @@ primitive_z_cfg = dict(
     conv_cfg=dict(type='Conv1d'),
     norm_cfg=dict(type='BN1d'),
     objectness_loss=dict(
-        type='CrossEntropyLoss',
+        type='mmdet.CrossEntropyLoss',
         class_weight=[0.4, 0.6],
         reduction='mean',
         loss_weight=30.0),
@@ -47,14 +47,16 @@ primitive_z_cfg = dict(
         loss_src_weight=0.5,
         loss_dst_weight=0.5),
     semantic_cls_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
     train_cfg=dict(
+        sample_mode='vote',
         dist_thresh=0.2,
         var_thresh=1e-2,
         lower_thresh=1e-6,
         num_point=100,
         num_point_line=10,
-        line_thresh=0.2))
+        line_thresh=0.2),
+    test_cfg=dict(sample_mode='seed'))
 
 primitive_xy_cfg = dict(
     type='PrimitiveHead',
@@ -88,7 +90,7 @@ primitive_xy_cfg = dict(
     conv_cfg=dict(type='Conv1d'),
     norm_cfg=dict(type='BN1d'),
     objectness_loss=dict(
-        type='CrossEntropyLoss',
+        type='mmdet.CrossEntropyLoss',
         class_weight=[0.4, 0.6],
         reduction='mean',
         loss_weight=30.0),
@@ -105,14 +107,16 @@ primitive_xy_cfg = dict(
         loss_src_weight=0.5,
         loss_dst_weight=0.5),
     semantic_cls_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+        type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
     train_cfg=dict(
+        sample_mode='vote',
         dist_thresh=0.2,
         var_thresh=1e-2,
         lower_thresh=1e-6,
         num_point=100,
         num_point_line=10,
-        line_thresh=0.2))
+        line_thresh=0.2),
+    test_cfg=dict(sample_mode='seed'))
 
 primitive_line_cfg = dict(
     type='PrimitiveHead',
@@ -146,7 +150,7 @@ primitive_line_cfg = dict(
     conv_cfg=dict(type='Conv1d'),
     norm_cfg=dict(type='BN1d'),
     objectness_loss=dict(
-        type='CrossEntropyLoss',
+        type='mmdet.CrossEntropyLoss',
         class_weight=[0.4, 0.6],
         reduction='mean',
         loss_weight=30.0),
@@ -163,17 +167,20 @@ primitive_line_cfg = dict(
         loss_src_weight=1.0,
         loss_dst_weight=1.0),
     semantic_cls_loss=dict(
-        type='CrossEntropyLoss', reduction='sum', loss_weight=2.0),
+        type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=2.0),
     train_cfg=dict(
+        sample_mode='vote',
         dist_thresh=0.2,
         var_thresh=1e-2,
         lower_thresh=1e-6,
         num_point=100,
         num_point_line=10,
-        line_thresh=0.2))
+        line_thresh=0.2),
+    test_cfg=dict(sample_mode='seed'))
 
 model = dict(
     type='H3DNet',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(
         type='MultiBackbone',
         num_streams=4,
@@ -221,10 +228,8 @@ model = dict(
             normalize_xyz=True),
         pred_layer_cfg=dict(
             in_channels=128, shared_conv_channels=(128, 128), bias=True),
-        conv_cfg=dict(type='Conv1d'),
-        norm_cfg=dict(type='BN1d'),
         objectness_loss=dict(
-            type='CrossEntropyLoss',
+            type='mmdet.CrossEntropyLoss',
             class_weight=[0.2, 0.8],
             reduction='sum',
             loss_weight=5.0),
@@ -235,15 +240,15 @@ model = dict(
             loss_src_weight=10.0,
             loss_dst_weight=10.0),
         dir_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),
         size_class_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0),
+            type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
-            type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),
         semantic_loss=dict(
-            type='CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
+            type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0)),
     roi_head=dict(
         type='H3DRoIHead',
         primitive_list=[primitive_z_cfg, primitive_xy_cfg, primitive_line_cfg],
@@ -267,7 +272,6 @@ model = dict(
                 mlp_channels=[128 + 12, 128, 64, 32],
                 use_xyz=True,
                 normalize_xyz=True),
-            feat_channels=(128, 128),
             primitive_refine_channels=[128, 128, 128],
             upper_thresh=100.0,
             surface_thresh=0.5,
@@ -275,7 +279,7 @@ model = dict(
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d'),
             objectness_loss=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 class_weight=[0.2, 0.8],
                 reduction='sum',
                 loss_weight=5.0),
@@ -286,41 +290,47 @@ model = dict(
                 loss_src_weight=10.0,
                 loss_dst_weight=10.0),
             dir_class_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
+                type='mmdet.CrossEntropyLoss',
+                reduction='sum',
+                loss_weight=0.1),
             dir_res_loss=dict(
-                type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+                type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),
             size_class_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
+                type='mmdet.CrossEntropyLoss',
+                reduction='sum',
+                loss_weight=0.1),
             size_res_loss=dict(
-                type='SmoothL1Loss', reduction='sum', loss_weight=10.0),
+                type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),
             semantic_loss=dict(
-                type='CrossEntropyLoss', reduction='sum', loss_weight=0.1),
+                type='mmdet.CrossEntropyLoss',
+                reduction='sum',
+                loss_weight=0.1),
             cues_objectness_loss=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 class_weight=[0.3, 0.7],
                 reduction='mean',
                 loss_weight=5.0),
             cues_semantic_loss=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 class_weight=[0.3, 0.7],
                 reduction='mean',
                 loss_weight=5.0),
             proposal_objectness_loss=dict(
-                type='CrossEntropyLoss',
+                type='mmdet.CrossEntropyLoss',
                 class_weight=[0.2, 0.8],
                 reduction='none',
                 loss_weight=5.0),
             primitive_center_loss=dict(
-                type='MSELoss', reduction='none', loss_weight=1.0))),
+                type='mmdet.MSELoss', reduction='none', loss_weight=1.0))),
     # model training and testing settings
     train_cfg=dict(
         rpn=dict(
-            pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mod='vote'),
+            pos_distance_thr=0.3, neg_distance_thr=0.6, sample_mode='vote'),
         rpn_proposal=dict(use_nms=False),
         rcnn=dict(
             pos_distance_thr=0.3,
             neg_distance_thr=0.6,
-            sample_mod='vote',
+            sample_mode='vote',
             far_threshold=0.6,
             near_threshold=0.3,
             mask_surface_threshold=0.3,
@@ -329,13 +339,13 @@ model = dict(
             label_line_threshold=0.3)),
     test_cfg=dict(
         rpn=dict(
-            sample_mod='seed',
+            sample_mode='seed',
             nms_thr=0.25,
             score_thr=0.05,
             per_class_proposal=True,
             use_nms=False),
         rcnn=dict(
-            sample_mod='seed',
+            sample_mode='seed',
             nms_thr=0.25,
             score_thr=0.05,
             per_class_proposal=True)))

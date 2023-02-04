@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmcv.cnn import build_norm_layer
-from mmcv.runner import auto_fp16
 from torch import nn
 from torch.nn import functional as F
 
@@ -61,7 +60,6 @@ class VFELayer(nn.Module):
         self.norm = build_norm_layer(norm_cfg, out_channels)[1]
         self.linear = nn.Linear(in_channels, out_channels, bias=False)
 
-    @auto_fp16(apply_to=('inputs'), out_fp32=True)
     def forward(self, inputs):
         """Forward function.
 
@@ -142,7 +140,6 @@ class PFNLayer(nn.Module):
         assert mode in ['max', 'avg']
         self.mode = mode
 
-    @auto_fp16(apply_to=('inputs'), out_fp32=True)
     def forward(self, inputs, num_voxels=None, aligned_distance=None):
         """Forward function.
 

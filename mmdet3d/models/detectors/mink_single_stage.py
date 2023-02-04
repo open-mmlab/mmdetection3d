@@ -1,109 +1,137 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Adapted from https://github.com/SamsungLabs/fcaf3d/blob/master/mmdet3d/models/detectors/single_stage_sparse.py # noqa
+from typing import Dict, List, OrderedDict, Tuple, Union
+
+import torch
+from torch import Tensor
+
 try:
     import MinkowskiEngine as ME
 except ImportError:
     # Please follow getting_started.md to install MinkowskiEngine.
+    ME = None
     pass
 
-from mmdet3d.core import bbox3d2result
-from mmdet3d.models import DETECTORS, build_backbone, build_head
-from .base import Base3DDetector
+from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from .single_stage import SingleStage3DDetector
 
 
-@DETECTORS.register_module()
-class MinkSingleStage3DDetector(Base3DDetector):
-    r"""Single stage detector based on MinkowskiEngine `GSDN
-    <https://arxiv.org/abs/2006.12356>`_.
+@MODELS.register_module()
+class MinkSingleStage3DDetector(SingleStage3DDetector):
+    r"""MinkSingleStage3DDetector.
+
+    This class serves as a base class for single-stage 3D detectors based on
+    MinkowskiEngine `GSDN <https://arxiv.org/abs/2006.12356>`_.
+
 
     Args:
-        backbone (dict): Config of the backbone.
-        head (dict): Config of the head.
-        voxel_size (float): Voxel size in meters.
-        train_cfg (dict, optional): Config for train stage. Defaults to None.
-        test_cfg (dict, optional): Config for test stage. Defaults to None.
-        init_cfg (dict, optional): Config for weight initialization.
+        backbone (dict): Config dict of detector's backbone.
+        neck (dict, optional): Config dict of neck. Defaults to None.
+        bbox_head (dict, optional): Config dict of box head. Defaults to None.
+        train_cfg (dict, optional): Config dict of training hyper-parameters.
             Defaults to None.
-        pretrained (str, optional): Deprecated initialization parameter.
+        test_cfg (dict, optional): Config dict of test hyper-parameters.
             Defaults to None.
+        data_preprocessor (dict or ConfigDict, optional): The pre-process
+            config of :class:`BaseDataPreprocessor`.  it usually includes,
+                ``pad_size_divisor``, ``pad_value``, ``mean`` and ``std``.
+        init_cfg (dict or ConfigDict, optional): the config to control the
+            initialization. Defaults to None.
     """
+    _version = 2
 
     def __init__(self,
-                 backbone,
-                 head,
-                 voxel_size,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None,
-                 pretrained=None):
-        super(MinkSingleStage3DDetector, self).__init__(init_cfg)
-        self.backbone = build_backbone(backbone)
-        head.update(train_cfg=train_cfg)
-        head.update(test_cfg=test_cfg)
-        self.head = build_head(head)
-        self.voxel_size = voxel_size
-        self.init_weights()
+                 backbone: ConfigType,
+                 neck: OptConfigType = None,
+                 bbox_head: OptConfigType = None,
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 data_preprocessor: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None) -> None:
+        super().__init__(
+            backbone=backbone,
+            neck=neck,
+            bbox_head=bbox_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            data_preprocessor=data_preprocessor,
+            init_cfg=init_cfg)
+        if ME is None:
+            raise ImportError(
+                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
+            )
+        self.voxel_size = bbox_head['voxel_size']
 
-    def extract_feat(self, points):
-        """Extract features from points.
+    def extract_feat(
+        self, batch_inputs_dict: Dict[str, Tensor]
+    ) -> Union[Tuple[torch.Tensor], Dict[str, Tensor]]:
+        """Directly extract features from the backbone+neck.
 
         Args:
-            points (list[Tensor]): Raw point clouds.
+            batch_inputs_dict (dict): The model input dict which includes
+                'points' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
 
         Returns:
-            SparseTensor: Voxelized point clouds.
+            tuple[Tensor] | dict:  For outside 3D object detection, we
+                typically obtain a tuple of features from the backbone + neck,
+                and for inside 3D object detection, usually a dict containing
+                features will be obtained.
         """
+        points = batch_inputs_dict['points']
+
         coordinates, features = ME.utils.batch_sparse_collate(
             [(p[:, :3] / self.voxel_size, p[:, 3:]) for p in points],
             device=points[0].device)
         x = ME.SparseTensor(coordinates=coordinates, features=features)
+
         x = self.backbone(x)
+        if self.with_neck:
+            x = self.neck(x)
         return x
 
-    def forward_train(self, points, gt_bboxes_3d, gt_labels_3d, img_metas):
-        """Forward of training.
+    def _load_from_state_dict(self, state_dict: OrderedDict, prefix: str,
+                              local_metadata: Dict, strict: bool,
+                              missing_keys: List[str],
+                              unexpected_keys: List[str],
+                              error_msgs: List[str]) -> None:
+        """Load checkpoint.
 
         Args:
-            points (list[Tensor]): Raw point clouds.
-            gt_bboxes (list[BaseInstance3DBoxes]): Ground truth
-                bboxes of each sample.
-            gt_labels(list[torch.Tensor]): Labels of each sample.
-            img_metas (list[dict]): Contains scene meta infos.
-
-        Returns:
-            dict: Centerness, bbox and classification loss values.
+            state_dict (dict): a dict containing parameters and
+                persistent buffers.
+            prefix (str): the prefix for parameters and buffers used in this
+                module
+            local_metadata (dict): a dict containing the metadata for this
+                module.
+            strict (bool): whether to strictly enforce that the keys in
+                :attr:`state_dict` with :attr:`prefix` match the names of
+                parameters and buffers in this module
+            missing_keys (list of str): if ``strict=True``, add missing keys to
+                this list
+            unexpected_keys (list of str): if ``strict=True``, add unexpected
+                keys to this list
+            error_msgs (list of str): error messages should be added to this
+                list, and will be reported together in
+                :meth:`~torch.nn.Module.load_state_dict`
         """
-        x = self.extract_feat(points)
-        losses = self.head.forward_train(x, gt_bboxes_3d, gt_labels_3d,
-                                         img_metas)
-        return losses
+        # The names of some parameters in FCAF3D has been changed
+        # since 2022.10.
+        version = local_metadata.get('version', None)
+        if (version is None or
+                version < 2) and self.__class__ is MinkSingleStage3DDetector:
+            convert_dict = {'head.': 'bbox_head.'}
+            state_dict_keys = list(state_dict.keys())
+            for k in state_dict_keys:
+                for ori_key, convert_key in convert_dict.items():
+                    if ori_key in k:
+                        convert_key = k.replace(ori_key, convert_key)
+                        state_dict[convert_key] = state_dict[k]
+                        del state_dict[k]
 
-    def simple_test(self, points, img_metas, *args, **kwargs):
-        """Test without augmentations.
-
-        Args:
-            points (list[torch.Tensor]): Points of each sample.
-            img_metas (list[dict]): Contains scene meta infos.
-
-        Returns:
-            list[dict]: Predicted 3d boxes.
-        """
-        x = self.extract_feat(points)
-        bbox_list = self.head.forward_test(x, img_metas)
-        bbox_results = [
-            bbox3d2result(bboxes, scores, labels)
-            for bboxes, scores, labels in bbox_list
-        ]
-        return bbox_results
-
-    def aug_test(self, points, img_metas, **kwargs):
-        """Test with augmentations.
-
-        Args:
-            points (list[list[torch.Tensor]]): Points of each sample.
-            img_metas (list[dict]): Contains scene meta infos.
-
-        Returns:
-            list[dict]: Predicted 3d boxes.
-        """
-        raise NotImplementedError
+        super(MinkSingleStage3DDetector,
+              self)._load_from_state_dict(state_dict, prefix, local_metadata,
+                                          strict, missing_keys,
+                                          unexpected_keys, error_msgs)

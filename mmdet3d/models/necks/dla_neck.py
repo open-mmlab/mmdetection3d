@@ -3,10 +3,10 @@ import math
 
 import numpy as np
 from mmcv.cnn import ConvModule, build_conv_layer
-from mmcv.runner import BaseModule
+from mmengine.model import BaseModule
 from torch import nn as nn
 
-from ..builder import NECKS
+from mmdet3d.registry import MODELS
 
 
 def fill_up_weights(up):
@@ -167,7 +167,7 @@ class DLAUpsample(BaseModule):
         return outs
 
 
-@NECKS.register_module()
+@MODELS.register_module()
 class DLANeck(BaseModule):
     """DLA Neck.
 

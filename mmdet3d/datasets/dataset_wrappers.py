@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 
-from .builder import DATASETS
+from mmdet3d.registry import DATASETS
 
 
 @DATASETS.register_module()
@@ -17,9 +17,10 @@ class CBGSDataset(object):
     """
 
     def __init__(self, dataset):
-        self.dataset = dataset
-        self.CLASSES = dataset.CLASSES
-        self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
+        self.dataset = DATASETS.build(dataset)
+        self.metainfo = self.dataset.metainfo
+        self.classes = self.metainfo['classes']
+        self.cat2id = {name: i for i, name in enumerate(self.classes)}
         self.sample_indices = self._get_sample_indices()
         # self.dataset.data_infos = self.data_infos
         if hasattr(self.dataset, 'flag'):
@@ -40,7 +41,10 @@ class CBGSDataset(object):
         for idx in range(len(self.dataset)):
             sample_cat_ids = self.dataset.get_cat_ids(idx)
             for cat_id in sample_cat_ids:
-                class_sample_idxs[cat_id].append(idx)
+                if cat_id != -1:
+                    # Filter categories that do not need to care.
+                    # -1 indicate dontcare in MMDet3d.
+                    class_sample_idxs[cat_id].append(idx)
         duplicated_samples = sum(
             [len(v) for _, v in class_sample_idxs.items()])
         class_distribution = {
@@ -50,7 +54,7 @@ class CBGSDataset(object):
 
         sample_indices = []
 
-        frac = 1.0 / len(self.CLASSES)
+        frac = 1.0 / len(self.classes)
         ratios = [frac / v for v in class_distribution.values()]
         for cls_inds, ratio in zip(list(class_sample_idxs.values()), ratios):
             sample_indices += np.random.choice(cls_inds,
