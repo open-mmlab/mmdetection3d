@@ -34,15 +34,14 @@ def once_eval(gt_annos,
         dt_annos (list[dict]): Contain detected information of each sample.
         classes (list[str]): Classes to evaluation.
         eval_types (list[str], optional): Types to eval.
-            Defaults to ['bbox', 'bev', '3d'].
+            Defaults to 'Overall&Distance'.
 
     Returns:
         tuple: String and dict of evaluation results.
     """
     assert len(gt_annos) == len(dt_annos), "the number of GT must match predictions"
-    assert eval_mode in ['Overall&Distance', 'Overall', 'Distance'], "eval mode only support " \
-                                                                     "'Overall&Distance', 'Overall', 'Distance', " \
-                                                                    f"but got {eval_mode}."
+    assert eval_mode in ['Overall&Distance', 'Overall', 'Distance'], "eval mode only support 'Overall&Distance'," \
+                                                                    f"'Overall', 'Distance', but got {eval_mode}."
     num_samples = len(gt_annos)
     split_parts = compute_split_parts(num_samples, num_parts)
     ious = compute_iou3d(gt_annos, dt_annos, split_parts, with_heading=ap_with_heading)
@@ -256,8 +255,7 @@ def compute_statistics(iou, pred_scores, gt_flag, pred_flag, score_threshold, io
     return tp, fp, fn
 
 
-# TODO: remove use superclass
-def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_name, use_superclass=False):
+def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_name):
     """
     Filter data by class name and difficulty
 
@@ -276,23 +274,12 @@ def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_nam
     """
     num_gt = len(gt_anno['name'])
     gt_flag = np.zeros(num_gt, dtype=np.int64)
-    if use_superclass:
-        if class_name == 'Vehicle':
-            reject = np.logical_or(gt_anno['name']=='Pedestrian', gt_anno['name']=='Cyclist')
-        else:
-            reject = gt_anno['name'] != class_name
-    else:
-        reject = gt_anno['name'] != class_name
+    reject = gt_anno['name'] != class_name
     gt_flag[reject] = -1
+
     num_pred = len(pred_anno['name'])
     pred_flag = np.zeros(num_pred, dtype=np.int64)
-    if use_superclass:
-        if class_name == 'Vehicle':
-            reject = np.logical_or(pred_anno['name']=='Pedestrian', pred_anno['name']=='Cyclist')
-        else:
-            reject = pred_anno['name'] != class_name
-    else:
-        reject = pred_anno['name'] != class_name
+    reject = pred_anno['name'] != class_name
     pred_flag[reject] = -1
 
     if difficulty_mode == 'Overall':

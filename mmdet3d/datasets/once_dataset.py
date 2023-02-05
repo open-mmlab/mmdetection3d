@@ -14,7 +14,6 @@ from ..core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
                          LiDARInstance3DBoxes, points_cam2img)
 from .builder import DATASETS
 from .custom_3d import Custom3DDataset
-from .pipelines import Compose
 
 
 @DATASETS.register_module()
@@ -52,7 +51,7 @@ class OnceDataset(Custom3DDataset):
             filter invalid predicted boxes.
             Default: [0, -40, -3, 70.4, 40, 0.0].
     """
-    CLASSES = ('Car', 'Bus', 'Truck', 'Pedestrain', 'Cyclist')
+    CLASSES = ('Car', 'Bus', 'Truck', 'Pedestrian', 'Cyclist')
 
     def __init__(self,
                  data_root,
@@ -278,8 +277,6 @@ class OnceDataset(Custom3DDataset):
             dict[str, float]: Results of each evaluation metric.
         """
         results_list, tmp_dir = self._format_results(results, jsonfile_prefix)
-        # TODO: remove this
-        assert isinstance(results_list, list)
 
         from mmdet3d.core.evaluation import once_eval
         gt_annos = [info['annos'] for info in self.data_infos]
