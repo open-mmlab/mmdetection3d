@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-r"""Adapted from `openpcdet/once_dataset
-    <https://github.com/open-mmlab/openpcdet>`_.
+r"""Adapted from `once_benchmark
+    <https://github.com/PointsCoder/ONCE_Benchmark>`_.
 """
 
 import numba
@@ -33,8 +33,7 @@ def once_eval(gt_annos,
         gt_annos (list[dict]): Contain gt information of each sample.
         dt_annos (list[dict]): Contain detected information of each sample.
         classes (list[str]): Classes to evaluation.
-        eval_types (list[str], optional): Types to eval.
-            Defaults to 'Overall&Distance'.
+        eval_mode (str, optional): Mode to eval. Defaults to 'Overall&Distance'.
 
     Returns:
         tuple: String and dict of evaluation results.

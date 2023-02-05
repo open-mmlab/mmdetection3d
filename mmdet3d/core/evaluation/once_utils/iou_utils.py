@@ -1,7 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-r"""Adapted from `openpcdet/once_dataset
-    <https://github.com/open-mmlab/openpcdet>`_.
-"""
+r"""Rotate IoU computation is referred from https://github.com/hongzhenwang/RRPN-revise"""
 import math
 import numba
 import numpy as np

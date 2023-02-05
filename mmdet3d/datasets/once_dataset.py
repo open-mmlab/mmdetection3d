@@ -248,26 +248,22 @@ class OnceDataset(Custom3DDataset):
 
     def evaluate(self,
                  results,
-                 metric='bbox',
+                 eval_mode='Overall&Distance',
                  logger=None,
                  jsonfile_prefix=None,
-                 show=False,
                  out_dir=None,
                  pipeline=None):
         """Evaluation in ONCE protocol.
 
         Args:
             results (list[dict]): Testing results of the dataset.
-            metric (str | list[str], optional): Metrics to be evaluated.
-                Default: None.
+            eval_mode (str, optional): Mode to eval.
+                Default: 'Overall&Distance'.
             logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
             jsonfile_prefix (str, optional): The prefix of json files, including
                 the file path and the prefix of filename, e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
-            submission_prefix (str, optional): The prefix of submission data.
-                If not specified, the submission data will not be generated.
-                Default: None.
             out_dir (str, optional): Path to save the visualization results.
                 Default: None.
             pipeline (list[dict], optional): raw data loading for showing.
