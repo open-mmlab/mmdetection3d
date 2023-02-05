@@ -6,6 +6,13 @@ import torch
 from mmdet3d.core.evaluation.once_utils import once_eval
 
 
+iou_threshold_dict = {
+    'Car': 0.7,
+    'Bus': 0.7,
+    'Truck': 0.7,
+    'Pedestrian': 0.3,
+    'Cyclist': 0.5
+}
 CLASSES = ('Car', 'Bus', 'Truck', 'Pedestrian', 'Cyclist')
 
 
@@ -41,7 +48,8 @@ def test_once_eval():
         boxes_3d=dt_boxes_3d,
         score=dt_score)
 
-    ap_result_str, ap_dict = once_eval([gt_anno], [dt_anno], CLASSES, print_ok=True)
+    ap_result_str, ap_dict = once_eval([gt_anno], [dt_anno], CLASSES, 
+                                        iou_thresholds=iou_threshold_dict, print_ok=True)
     assert ap_dict['AP_Car/overall'] == 100
     assert ap_dict['AP_Bus/overall'] == 100
     assert ap_dict['AP_Truck/overall'] == 100
