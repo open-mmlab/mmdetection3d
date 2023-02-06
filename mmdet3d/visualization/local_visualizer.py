@@ -48,9 +48,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             Defaults to None.
         image (np.ndarray, optional): The origin image to draw. The format
             should be RGB. Defaults to None.
-        pcd_mode (int): The point cloud mode (coordinates):
-            0 represents LiDAR, 1 represents CAMERA, 2 represents Depth.
-            Defaults to 0.
+        pcd_mode (int): The point cloud mode (coordinates): 0 represents LiDAR,
+            1 represents CAMERA, 2 represents Depth. Defaults to 0.
         vis_backends (List[dict], optional): Visual backend config list.
             Defaults to None.
         save_dir (str, optional): Save file dir for all storage backends.
@@ -58,10 +57,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             Defaults to None.
         bbox_color (str or Tuple[int], optional): Color of bbox lines.
             The tuple of color should be in BGR order. Defaults to None.
-        text_color (str or Tuple[int]): Color of texts. The tuple of
-            color should be in BGR order. Defaults to (200, 200, 200).
-        mask_color (str or Tuple[int], optional): Color of masks.
-            The tuple of color should be in BGR order. Defaults to None.
+        text_color (str or Tuple[int]): Color of texts. The tuple of color
+            should be in BGR order. Defaults to (200, 200, 200).
+        mask_color (str or Tuple[int], optional): Color of masks. The tuple of
+            color should be in BGR order. Defaults to None.
         line_width (int or float): The linewidth of lines. Defaults to 3.
         frame_cfg (dict): The coordinate frame config while Open3D
             visualization initialization.
@@ -73,20 +72,34 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         >>> import numpy as np
         >>> import torch
         >>> from mmengine.structures import InstanceData
-        >>> from mmdet3d.structures import Det3DDataSample
+        >>> from mmdet3d.structures import (DepthInstance3DBoxes
+        ...                                 Det3DDataSample)
         >>> from mmdet3d.visualization import Det3DLocalVisualizer
 
         >>> det3d_local_visualizer = Det3DLocalVisualizer()
         >>> image = np.random.randint(0, 256, size=(10, 12, 3)).astype('uint8')
-        >>> points = np.random.rand((1000, ))
+        >>> points = np.random.rand(1000, 3)
         >>> gt_instances_3d = InstanceData()
-        >>> gt_instances_3d.bboxes_3d = BaseInstance3DBoxes(torch.rand((5, 7)))
+        >>> gt_instances_3d.bboxes_3d = DepthInstance3DBoxes(
+        ...     torch.rand((5, 7)))
         >>> gt_instances_3d.labels_3d = torch.randint(0, 2, (5,))
         >>> gt_det3d_data_sample = Det3DDataSample()
         >>> gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
         >>> data_input = dict(img=image, points=points)
         >>> det3d_local_visualizer.add_datasample('3D Scene', data_input,
         ...                                       gt_det3d_data_sample)
+
+        >>> from mmdet3d.structures import PointData
+        >>> det3d_local_visualizer = Det3DLocalVisualizer()
+        >>> points = np.random.rand(1000, 3)
+        >>> gt_pts_seg = PointData()
+        >>> gt_pts_seg.pts_semantic_mask = torch.randint(0, 10, (1000, ))
+        >>> gt_det3d_data_sample = Det3DDataSample()
+        >>> gt_det3d_data_sample.gt_pts_seg = gt_pts_seg
+        >>> data_input = dict(points=points)
+        >>> det3d_local_visualizer.add_datasample('3D Scene', data_input,
+        ...                                       gt_det3d_data_sample,
+        ...                                       vis_task='lidar_seg')
     """
 
     def __init__(self,
@@ -128,8 +141,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Initialize open3d vis according to frame_cfg.
 
         Args:
-            frame_cfg (dict): The config to create coordinate frame
-                in open3d vis.
+            frame_cfg (dict): The config to create coordinate frame in open3d
+                vis.
 
         Returns:
             :obj:`o3d.visualization.Visualizer`: Created open3d vis.
@@ -157,15 +170,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         Args:
             points (np.ndarray): Points to visualize with shape (N, 3+C).
-            pcd_mode (int): The point cloud mode (coordinates):
-                0 represents LiDAR, 1 represents CAMERA, 2 represents Depth.
-                Defaults to 0.
+            pcd_mode (int): The point cloud mode (coordinates): 0 represents
+                LiDAR, 1 represents CAMERA, 2 represents Depth. Defaults to 0.
             vis_mode (str): The visualization mode in Open3D:
 
-                - 'replace': Replace the existing point cloud with
-                  input point cloud.
-                - 'add': Add input point cloud into existing point
+                - 'replace': Replace the existing point cloud with input point
                   cloud.
+                - 'add': Add input point cloud into existing point cloud.
+
                 Defaults to 'replace'.
             frame_cfg (dict): The coordinate frame config for Open3D
                 visualization initialization.
@@ -228,15 +240,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         bbox3d.
 
         Args:
-            bboxes_3d (:obj:`BaseInstance3DBoxes`):
-                3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bbox
+                (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             bbox_color (Tuple[float]): The color of 3D bboxes.
                 Defaults to (0, 1, 0).
-            points_in_box_color (Tuple[float]): The color of points inside
-                3D bboxes. Defaults to (1, 0, 0).
+            points_in_box_color (Tuple[float]): The color of points inside 3D
+                bboxes. Defaults to (1, 0, 0).
             rot_axis (int): Rotation axis of 3D bboxes. Defaults to 2.
-            center_mode (str): Indicates the center of bbox is
-                bottom center or gravity center. Available mode
+            center_mode (str): Indicates the center of bbox is bottom center or
+                gravity center. Available mode
                 ['lidar_bottom', 'camera_bottom']. Defaults to 'lidar_bottom'.
             mode (str): Indicates the type of input points, available mode
                 ['xyz', 'xyzrgb']. Defaults to 'xyz'.
@@ -346,8 +358,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Draw projected 3D boxes on the image.
 
         Args:
-            bboxes_3d (:obj:`BaseInstance3DBoxes`):
-                3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bbox
+                (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             scale (dict): Value to scale the bev bboxes for better
                 visualization. Defaults to 15.
             edge_colors (str or Tuple[int] or List[str or Tuple[int]]):
@@ -362,11 +374,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 will have the same linestyle. Reference to
                 https://matplotlib.org/stable/api/collections_api.html?highlight=collection#matplotlib.collections.AsteriskPolygonCollection.set_linestyle
                 for more details. Defaults to '-'.
-            line_widths (int or float or List[int or float]):
-                The linewidth of lines. ``line_widths`` can have the same
-                length with lines or just single value. If ``line_widths``
-                is single value, all the lines will have the same linewidth.
-                Defaults to 2.
+            line_widths (int or float or List[int or float]): The linewidth of
+                lines. ``line_widths`` can have the same length with lines or
+                just single value. If ``line_widths`` is single value, all the
+                lines will have the same linewidth. Defaults to 2.
             face_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The face colors. Defaults to 'none'.
             alpha (int or float): The transparency of bboxes. Defaults to 1.
@@ -405,8 +416,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         Args:
             points (np.ndarray or Tensor): Points to draw.
-            pts2img (np.ndarray): The transformation matrix from the
-                coordinate of point cloud to image plane.
+            pts2img (np.ndarray): The transformation matrix from the coordinate
+                of point cloud to image plane.
             sizes (np.ndarray or int): The marker size. Defaults to 10.
         """
         check_type('points', points, (np.ndarray, Tensor))
@@ -442,8 +453,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         """Draw projected 3D boxes on the image.
 
         Args:
-            bboxes_3d (:obj:`BaseInstance3DBoxes`):
-                3D bbox (x, y, z, x_size, y_size, z_size, yaw) to visualize.
+            bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bbox
+                (x, y, z, x_size, y_size, z_size, yaw) to visualize.
             input_meta (dict): Input meta information.
             edge_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The colors of bboxes. ``colors`` can have the same length with
@@ -457,11 +468,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 will have the same linestyle. Reference to
                 https://matplotlib.org/stable/api/collections_api.html?highlight=collection#matplotlib.collections.AsteriskPolygonCollection.set_linestyle
                 for more details. Defaults to '-'.
-            line_widths (int or float or List[int or float]):
-                The linewidth of lines. ``line_widths`` can have the same
-                length with lines or just single value. If ``line_widths``
-                is single value, all the lines will have the same linewidth.
-                Defaults to 2.
+            line_widths (int or float or List[int or float]): The linewidth of
+                lines. ``line_widths`` can have the same length with lines or
+                just single value. If ``line_widths`` is single value, all the
+                lines will have the same linewidth. Defaults to 2.
             face_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The face colors. Defaults to 'royalblue'.
             alpha (int or float): The transparency of bboxes. Defaults to 0.4.
@@ -516,8 +526,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         Args:
             seg_mask_colors (np.ndarray): The segmentation mask with shape
-                (N, 6), whose first 3 dims are point coordinates
-                and last 3 dims are converted colors.
+                (N, 6), whose first 3 dims are point coordinates and last 3
+                dims are converted colors.
         """
         # we can't draw the colors on existing points
         # in case gt and pred mask would overlap
@@ -636,10 +646,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             save_path (str, optional): Path to save open3d visualized results.
                 Defaults to None.
             drawn_img_3d (np.ndarray, optional): The image to show. If
-                drawn_img_3d is None, it will show the image got by Visualizer.
-                Defaults to None.
+                drawn_img_3d is not None, it will show the image got by
+                Visualizer. Defaults to None.
             drawn_img (np.ndarray, optional): The image to show. If drawn_img
-                is None, it will show the image got by Visualizer.
+                is not None, it will show the image got by Visualizer.
                 Defaults to None.
             win_name (str): The image title. Defaults to 'image'.
             wait_time (int): Delay in milliseconds. 0 is the special value that
@@ -669,7 +679,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        draw_gt: bool = True,
                        draw_pred: bool = True,
                        show: bool = False,
-                       wait_time: int = 0,
+                       wait_time: float = 0,
                        out_file: Optional[str] = None,
                        o3d_save_path: Optional[str] = None,
                        vis_task: str = 'mono_det',
@@ -697,7 +707,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 Defaults to True.
             show (bool): Whether to display the drawn point clouds and image.
                 Defaults to False.
-            wait_time (int): The interval of show (s). Defaults to 0.
+            wait_time (float): The interval of show (s). Defaults to 0.
             out_file (str, optional): Path to output file. Defaults to None.
             o3d_save_path (str, optional): Path to save open3d visualized
                 results. Defaults to None.
@@ -706,6 +716,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
         """
+        assert vis_task in (
+            'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
+            'multi-modality_det'), f'got unexpected vis_task {vis_task}.'
         classes = self.dataset_meta.get('classes', None)
         # For object detection datasets, no palette is saved
         palette = self.dataset_meta.get('palette', None)
@@ -718,9 +731,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
-                gt_data_3d = self._draw_instances_3d(
-                    data_input, data_sample.gt_instances_3d,
-                    data_sample.metainfo, vis_task, palette)
+                if len(data_sample.gt_instances_3d) > 0:
+                    gt_data_3d = self._draw_instances_3d(
+                        data_input, data_sample.gt_instances_3d,
+                        data_sample.metainfo, vis_task, palette)
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -729,7 +743,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         img = img[..., [2, 1, 0]]  # bgr to rgb
                     gt_img_data = self._draw_instances(
                         img, data_sample.gt_instances, classes, palette)
-            if 'gt_pts_seg' in data_sample and vis_task == 'seg':
+            if 'gt_pts_seg' in data_sample and vis_task == 'lidar_seg':
                 assert classes is not None, 'class information is ' \
                                             'not provided when ' \
                                             'visualizing semantic ' \
@@ -741,15 +755,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if draw_pred and data_sample is not None:
             if 'pred_instances_3d' in data_sample:
-                pred_instances_3d = data_sample.pred_instances_3d
-                # .cpu can not be used for BaseInstance3DBoxes
-                # so we need to use .to('cpu')
-                pred_instances_3d = pred_instances_3d[
-                    pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
-                pred_data_3d = self._draw_instances_3d(data_input,
-                                                       pred_instances_3d,
-                                                       data_sample.metainfo,
-                                                       vis_task, palette)
+                if len(data_sample.pred_instances_3d) > 0:
+                    pred_instances_3d = data_sample.pred_instances_3d
+                    # .cpu can not be used for BaseInstance3DBoxes
+                    # so we need to use .to('cpu')
+                    pred_instances_3d = pred_instances_3d[
+                        pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
+                    pred_data_3d = self._draw_instances_3d(
+                        data_input, pred_instances_3d, data_sample.metainfo,
+                        vis_task, palette)
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
