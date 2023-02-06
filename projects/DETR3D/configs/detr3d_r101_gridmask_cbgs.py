@@ -1,6 +1,6 @@
 _base_ = ['./detr3d_r101_gridmask.py']
 
-custom_imports = dict(imports=['projects.detr3d.detr3d'])
+custom_imports = dict(imports=['projects.DETR3D.detr3d'])
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
