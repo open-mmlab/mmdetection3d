@@ -23,3 +23,4 @@ SamplingResultList = List[SamplingResult]
 
 OptSamplingResultList = Optional[SamplingResultList]
 SampleList = List[Det3DDataSample]
+OptSampleList = Optional[SampleList]
