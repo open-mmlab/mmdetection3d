@@ -723,7 +723,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         if draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
-                if 'bboxes_3d' in data_sample.gt_instances_3d:
+                if len(data_sample.gt_instances_3d) > 0:
                     gt_data_3d = self._draw_instances_3d(
                         data_input, data_sample.gt_instances_3d,
                         data_sample.metainfo, vis_task, palette)
