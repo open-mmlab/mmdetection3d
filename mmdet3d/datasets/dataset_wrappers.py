@@ -160,3 +160,23 @@ class CBGSDataset:
             int: Length of data infos.
         """
         return len(self.sample_indices)
+
+    def get_subset_(self, indices: Union[List[int], int]) -> None:
+        """Not supported in ``CBGSDataset`` for the ambiguous meaning of sub-
+        dataset."""
+        raise NotImplementedError(
+            '`CBGSDataset` does not support `get_subset` and '
+            '`get_subset_` interfaces because this will lead to ambiguous '
+            'implementation of some methods. If you want to use `get_subset` '
+            'or `get_subset_` interfaces, please use them in the wrapped '
+            'dataset first and then use `CBGSDataset`.')
+
+    def get_subset(self, indices: Union[List[int], int]) -> Det3DDataset:
+        """Not supported in ``CBGSDataset`` for the ambiguous meaning of sub-
+        dataset."""
+        raise NotImplementedError(
+            '`CBGSDataset` does not support `get_subset` and '
+            '`get_subset_` interfaces because this will lead to ambiguous '
+            'implementation of some methods. If you want to use `get_subset` '
+            'or `get_subset_` interfaces, please use them in the wrapped '
+            'dataset first and then use `CBGSDataset`.')
