@@ -754,10 +754,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     # so we need to use .to('cpu')
                     pred_instances_3d = pred_instances_3d[
                         pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
-                    pred_data_3d = self._draw_instances_3d(data_input,
-                                                           pred_instances_3d,
-                                                           data_sample.metainfo,
-                                                           vis_task, palette)
+                    pred_data_3d = self._draw_instances_3d(
+                        data_input, pred_instances_3d, data_sample.metainfo,
+                        vis_task, palette)
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
