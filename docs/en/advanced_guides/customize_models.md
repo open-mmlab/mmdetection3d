@@ -1,13 +1,13 @@
 # Customize Models
 
-We basically categorize model components into 6 types.
+We basically categorize model components into 6 types:
 
-- encoder: including voxel layer, voxel encoder and middle encoder used in voxel-based methods before backbone, e.g., HardVFE and PointPillarsScatter.
-- backbone: usually an FCN network to extract feature maps, e.g., ResNet, SECOND.
-- neck: the component between backbones and heads, e.g., FPN, SECONDFPN.
-- head: the component for specific tasks, e.g., bbox prediction and mask prediction.
-- RoI extractor: the part for extracting RoI features from feature maps, e.g., H3DRoIHead and PartAggregationROIHead.
-- loss: the component in heads for calculating losses, e.g., FocalLoss, L1Loss, and GHMLoss.
+- encoder: Including voxel encoder and middle encoder used in voxel-based methods before backbone, e.g., `HardVFE` and `PointPillarsScatter`.
+- backbone: Usually an FCN network to extract feature maps, e.g., `ResNet`, `SECOND`.
+- neck: The component between backbones and heads, e.g., `FPN`, `SECONDFPN`.
+- head: The component for specific tasks, e.g., `bbox prediction` and `mask prediction`.
+- RoI extractor: The part for extracting RoI features from feature maps, e.g., `H3DRoIHead` and `PartAggregationROIHead`.
+- loss: The component in heads for calculating losses, e.g., `FocalLoss`, `L1Loss`, and `GHMLoss`.
 
 ## Develop new components
 
@@ -15,7 +15,7 @@ We basically categorize model components into 6 types.
 
 Here we show how to develop new components with an example of HardVFE.
 
-#### 1. Define a new voxel encoder (e.g. HardVFE: Voxel feature encoder used in DV-SECOND)
+#### 1. Define a new voxel encoder (e.g. HardVFE: Voxel feature encoder used in HV-SECOND)
 
 Create a new file `mmdet3d/models/voxel_encoders/voxel_encoder.py`.
 
@@ -37,7 +37,7 @@ class HardVFE(nn.Module):
 
 #### 2. Import the module
 
-You can either add the following line to `mmdet3d/models/voxel_encoders/__init__.py`
+You can either add the following line to `mmdet3d/models/voxel_encoders/__init__.py`:
 
 ```python
 from .voxel_encoder import HardVFE
@@ -47,7 +47,7 @@ or alternatively add
 
 ```python
 custom_imports = dict(
-    imports=['mmdet3d.models.voxel_encoders.HardVFE'],
+    imports=['mmdet3d.models.voxel_encoders.voxel_encoder'],
     allow_failed_imports=False)
 ```
 
@@ -61,8 +61,9 @@ model = dict(
     voxel_encoder=dict(
         type='HardVFE',
         arg1=xxx,
-        arg2=xxx),
+        arg2=yyy),
     ...
+)
 ```
 
 ### Add a new backbone
@@ -74,7 +75,7 @@ Here we show how to develop new components with an example of [SECOND](https://w
 Create a new file `mmdet3d/models/backbones/second.py`.
 
 ```python
-import torch.nn as nn
+from mmengine.model import BaseModule
 
 from mmdet3d.registry import MODELS
 
@@ -91,7 +92,7 @@ class SECOND(BaseModule):
 
 #### 2. Import the module
 
-You can either add the following line to `mmdet3d/models/backbones/__init__.py`
+You can either add the following line to `mmdet3d/models/backbones/__init__.py`:
 
 ```python
 from .second import SECOND
@@ -115,18 +116,22 @@ model = dict(
     backbone=dict(
         type='SECOND',
         arg1=xxx,
-        arg2=xxx),
+        arg2=yyy),
     ...
+)
 ```
 
-### Add new necks
+### Add a new neck
 
-#### 1. Define a neck (e.g. SECONDFPN)
+#### 1. Define a new neck (e.g. SECONDFPN)
 
 Create a new file `mmdet3d/models/necks/second_fpn.py`.
 
 ```python
+from mmengine.model import BaseModule
+
 from mmdet3d.registry import MODELS
+
 
 @MODELS.register_module()
 class SECONDFPN(BaseModule):
@@ -142,14 +147,14 @@ class SECONDFPN(BaseModule):
                  init_cfg=None):
         pass
 
-    def forward(self, X):
+    def forward(self, x):
         # implementation is ignored
         pass
 ```
 
 #### 2. Import the module
 
-You can either add the following line to `mmdet3D/models/necks/__init__.py`,
+You can either add the following line to `mmdet3d/models/necks/__init__.py`:
 
 ```python
 from .second_fpn import SECONDFPN
@@ -163,7 +168,7 @@ custom_imports = dict(
     allow_failed_imports=False)
 ```
 
-to the config file and avoid modifying the original code.
+to the config file to avoid modifying the original code.
 
 #### 3. Use the neck in your config file
 
@@ -176,21 +181,24 @@ model = dict(
         upsample_strides=[1, 2, 4],
         out_channels=[128, 128, 128]),
     ...
+)
 ```
 
-### Add new heads
+### Add a new head
 
 Here we show how to develop a new head with the example of [PartA2 Head](https://arxiv.org/abs/1907.03670) as the following.
 
-**Note**: Here the example of PartA2 RoI Head is used in the second stage. For one-stage heads, please refer to examples in `mmdet3d/models/dense_heads/`. They are more commonly used in 3D detection for autonomous driving due to its simplicity and high efficiency.
+**Note**: Here the example of `PartA2 RoI Head` is used in the second stage. For one-stage heads, please refer to examples in `mmdet3d/models/dense_heads/`. They are more commonly used in 3D detection for autonomous driving due to its simplicity and high efficiency.
 
 First, add a new bbox head in `mmdet3d/models/roi_heads/bbox_heads/parta2_bbox_head.py`.
-PartA2 RoI Head implements a new bbox head for object detection.
+`PartA2 RoI Head` implements a new bbox head for object detection.
 To implement a bbox head, basically we need to implement two functions of the new module as the following. Sometimes other related functions like `loss` and `get_targets` are also required.
 
 ```python
-from mmdet3d.registry import MODELS
 from mmengine.model import BaseModule
+
+from mmdet3d.registry import MODELS
+
 
 @MODELS.register_module()
 class PartA2BboxHead(BaseModule):
@@ -224,13 +232,15 @@ class PartA2BboxHead(BaseModule):
         super(PartA2BboxHead, self).__init__(init_cfg=init_cfg)
 
     def forward(self, seg_feats, part_feats):
+        pass
 ```
 
 Second, implement a new RoI Head if it is necessary. We plan to inherit the new `PartAggregationROIHead` from `Base3DRoIHead`. We can find that a `Base3DRoIHead` already implements the following functions.
 
 ```python
-from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet.models.roi_heads import BaseRoIHead
+
+from mmdet3d.registry import MODELS, TASK_UTILS
 
 
 class Base3DRoIHead(BaseRoIHead):
@@ -282,7 +292,6 @@ class Base3DRoIHead(BaseRoIHead):
         """Initialize mask head, skip since ``PartAggregationROIHead`` does not
         have one."""
         pass
-
 ```
 
 Double Head's modification is mainly in the bbox_forward logic, and it inherits other logics from the `Base3DRoIHead`.
@@ -291,14 +300,14 @@ In the `mmdet3d/models/roi_heads/part_aggregation_roi_head.py`, we implement the
 ```python
 from typing import Dict, List, Tuple
 
-from mmcv import ConfigDict
+from mmdet.models.task_modules import AssignResult, SamplingResult
+from mmengine import ConfigDict
 from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import bbox3d2roi
 from mmdet3d.utils import InstanceList
-from mmdet.models.task_modules import AssignResult, SamplingResult
 from ...structures.det3d_data_sample import SampleList
 from .base_3droi_head import Base3DRoIHead
 
@@ -477,18 +486,19 @@ class PartAggregationROIHead(Base3DRoIHead):
 Here we omit more details related to other functions. Please see the [code](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/roi_heads/part_aggregation_roi_head.py) for more details.
 
 Last, the users need to add the module in
-`mmdet3d/models/bbox_heads/__init__.py` and `mmdet3d/models/roi_heads/__init__.py` thus the corresponding registry could find and load them.
+`mmdet3d/models/roi_heads/bbox_heads/__init__.py` and `mmdet3d/models/roi_heads/__init__.py` thus the corresponding registry could find and load them.
 
 Alternatively, the users can add
 
 ```python
 custom_imports=dict(
-    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'])
+    imports=['mmdet3d.models.roi_heads.part_aggregation_roi_head', 'mmdet3d.models.roi_heads.bbox_heads.parta2_bbox_head'],
+    allow_failed_imports=False)
 ```
 
 to the config file and achieve the same goal.
 
-The config file of PartAggregationROIHead is as the following
+The config file of `PartAggregationROIHead` is as the following:
 
 ```python
 model = dict(
@@ -554,31 +564,33 @@ model = dict(
                 reduction='sum',
                 loss_weight=1.0))),
     ...
-    )
+)
 ```
 
 Since MMDetection 2.0, the config system supports to inherit configs such that the users can focus on the modification.
 The second stage of PartA2 Head mainly uses a new `PartAggregationROIHead` and a new
 `PartA2BboxHead`, the arguments are set according to the `__init__` function of each module.
 
-### Add new loss
+### Add a new loss
 
-Assume you want to add a new loss as `MyLoss`, for bounding box regression.
-To add a new loss function, the users need implement it in `mmdet3d/models/losses/my_loss.py`.
-The decorator `weighted_loss` enable the loss to be weighted for each element.
+Assume you want to add a new loss as `MyLoss` for bounding box regression.
+To add a new loss function, the users need to implement it in `mmdet3d/models/losses/my_loss.py`.
+The decorator `weighted_loss` enables the loss to be weighted for each element.
 
 ```python
 import torch
 import torch.nn as nn
+from mmdet.models.losses.utils import weighted_loss
 
 from mmdet3d.registry import MODELS
-from mmdet.models.losses.utils import weighted_loss
+
 
 @weighted_loss
 def my_loss(pred, target):
     assert pred.size() == target.size() and target.numel() > 0
     loss = torch.abs(pred - target)
     return loss
+
 
 @MODELS.register_module()
 class MyLoss(nn.Module):
@@ -606,21 +618,21 @@ Then the users need to add it in the `mmdet3d/models/losses/__init__.py`.
 
 ```python
 from .my_loss import MyLoss, my_loss
-
 ```
 
 Alternatively, you can add
 
 ```python
 custom_imports=dict(
-    imports=['mmdet3d.models.losses.my_loss'])
+    imports=['mmdet3d.models.losses.my_loss'],
+    allow_failed_imports=False)
 ```
 
 to the config file and achieve the same goal.
 
-To use it, modify the `loss_xxx` field.
-Since MyLoss is for regression, you need to modify the `loss_bbox` field in the head.
+To use it, users should modify the `loss_xxx` field.
+Since `MyLoss` is for regression, you need to modify the `loss_bbox` field in the head.
 
 ```python
-loss_bbox=dict(type='MyLoss', loss_weight=1.0))
+loss_bbox=dict(type='MyLoss', loss_weight=1.0)
 ```

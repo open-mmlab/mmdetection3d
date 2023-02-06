@@ -130,8 +130,7 @@ workflows:
                 - dev-1.x
   pr_stage_test:
     when:
-      not:
-        << pipeline.parameters.lint_only >>
+      not: << pipeline.parameters.lint_only >>
     jobs:
       - lint:
           name: lint
@@ -167,8 +166,7 @@ workflows:
             - hold
   merge_stage_test:
     when:
-      not:
-        << pipeline.parameters.lint_only >>
+      not: << pipeline.parameters.lint_only >>
     jobs:
       - build_cuda:
           name: minimum_version_gpu

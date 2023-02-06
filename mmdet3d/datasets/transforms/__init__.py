@@ -4,7 +4,8 @@ from .formating import Pack3DDetInputs
 from .loading import (LoadAnnotations3D, LoadImageFromFileMono3D,
                       LoadMultiViewImageFromFiles, LoadPointsFromDict,
                       LoadPointsFromFile, LoadPointsFromMultiSweeps,
-                      NormalizePointsColor, PointSegClassMapping)
+                      MonoDet3DInferencerLoader, NormalizePointsColor,
+                      PointSegClassMapping)
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,
@@ -28,5 +29,6 @@ __all__ = [
     'IndoorPatchPointSample', 'LoadImageFromFileMono3D', 'ObjectNameFilter',
     'RandomDropPointsColor', 'RandomJitterPoints', 'AffineResize',
     'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
-    'MultiViewWrapper', 'PhotoMetricDistortion3D'
+    'MultiViewWrapper', 'PhotoMetricDistortion3D', 'MonoDet3DInferencerLoader',
+    'LidarDet3DInferencerLoader'
 ]
