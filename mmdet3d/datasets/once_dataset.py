@@ -231,8 +231,11 @@ class OnceDataset(Custom3DDataset):
                 'boxes_3d': np.zeros((num_samples, 7))
             }
             if num_samples != 0:
-                pred_dict['name'] = np.array(self.CLASSES)[pred_labels - 1]
+                pred_dict['name'] = np.array(self.CLASSES)[pred_labels]
                 pred_dict['score'] = pred_scores
+                # the predicted box center is [0.5, 0.5, 0], we change it to be
+                # the same as OCNE (0.5, 0.5, 0.5)
+                pred_boxes[:, 2] += pred_boxes[:, 5] / 2
                 pred_dict['boxes_3d'] = pred_boxes
 
             pred_dict['frame_id'] = sample_idx

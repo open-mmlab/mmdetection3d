@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 r"""Adapted from `once_benchmark
-    <https://github.com/PointsCoder/ONCE_Benchmark>`_.
+    <https://github.com/PointsCoder/ONCE_Benchmark>`.
 """
 
 import numpy as np

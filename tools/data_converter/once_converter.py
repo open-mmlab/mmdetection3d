@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-r"""Adapted from `openpcdet/once_dataset
-    <https://github.com/open-mmlab/openpcdet>`_.
+r"""Adapted from `once_benchmark
+    <https://github.com/PointsCoder/ONCE_Benchmark>`.
 """
 
 import json
