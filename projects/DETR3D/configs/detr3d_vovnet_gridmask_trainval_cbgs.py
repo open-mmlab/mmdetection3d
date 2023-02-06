@@ -38,13 +38,12 @@ train_dataloader = dict(
 
 test_dataloader = dict(
     dataset=dict(
-        data_root='data/nuscenes-test',
-        ann_file='nuscenes_infos_test.pkl'))
+        data_root='data/nuscenes-test', ann_file='nuscenes_infos_test.pkl'))
 
 test_evaluator = dict(
     type='NuScenesMetric',
     data_root='data/nuscenes-test',
-    jsonfile_prefix = 'work_dirs/detr3d_vovnet_gridmask_trainval_cbgs/results_test',
+    jsonfile_prefix='work_dirs/detr3d_vovnet_results_test',
     format_only=True,
     metric=[])
 
