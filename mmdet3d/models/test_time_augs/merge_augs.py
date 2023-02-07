@@ -1,22 +1,27 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import torch
 
 from mmdet3d.structures import bbox3d2result, bbox3d_mapping_back, xywhr2xyxyr
+from mmdet3d.utils import ConfigType
 from ..layers import nms_bev, nms_normal_bev
 
 
-def merge_aug_bboxes_3d(aug_results, aug_batch_input_metas, test_cfg):
+def merge_aug_bboxes_3d(aug_results: List[dict],
+                        aug_batch_input_metas: List[dict],
+                        test_cfg: ConfigType) -> dict:
     """Merge augmented detection 3D bboxes and scores.
 
     Args:
-        aug_results (list[dict]): The dict of detection results.
+        aug_results (List[dict]): The dict of detection results.
             The dict contains the following keys
 
             - bbox_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
-            - scores_3d (torch.Tensor): Detection scores.
-            - labels_3d (torch.Tensor): Predicted box labels.
-        img_metas (list[dict]): Meta information of each sample.
-        test_cfg (dict): Test config.
+            - scores_3d (Tensor): Detection scores.
+            - labels_3d (Tensor): Predicted box labels.
+        aug_batch_input_metas (List[dict]): Meta information of each sample.
+        test_cfg (dict or :obj:`ConfigDict`): Test config.
 
     Returns:
         dict: Bounding boxes results in cpu mode, containing merged results.
@@ -27,9 +32,9 @@ def merge_aug_bboxes_3d(aug_results, aug_batch_input_metas, test_cfg):
     """
 
     assert len(aug_results) == len(aug_batch_input_metas), \
-        '"aug_results" should have the same length as "img_metas", got len(' \
-        f'aug_results)={len(aug_results)} and ' \
-        f'len(img_metas)={len(aug_batch_input_metas)}'
+        '"aug_results" should have the same length as ' \
+        f'"aug_batch_input_metas", got len(aug_results)={len(aug_results)} ' \
+        f'and len(aug_batch_input_metas)={len(aug_batch_input_metas)}'
 
     recovered_bboxes = []
     recovered_scores = []
