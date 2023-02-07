@@ -1,9 +1,9 @@
-voxel_size = [0.32, 0.32, 8]
+voxel_size = [0.2, 0.2, 8]
 
 model = dict(
     type='VoxelNet',
     voxel_layer=dict(
-        max_num_points=32,  # max_points_per_voxel
+        max_num_points=32,  # max_points_per_voxel (16 in pcdet)
         point_cloud_range=[-75.2, -75.2, -5.0, 75.2, 75.2, 3.0],
         voxel_size=voxel_size,
         max_voxels=(60000, 60000)  # (training, testing) max_voxels
@@ -16,7 +16,8 @@ model = dict(
         voxel_size=voxel_size,
         point_cloud_range=[-75.2, -75.2, -5.0, 75.2, 75.2, 3.0]),
     middle_encoder=dict(
-        type='PointPillarsScatter', in_channels=64, output_shape=[496, 432]),
+        # output_shape (y, x) = point_cloud_range // voxel_size (y, x)
+        type='PointPillarsScatter', in_channels=64, output_shape=[752, 752]),
     backbone=dict(
         type='SECOND',
         in_channels=64,
@@ -87,9 +88,9 @@ model = dict(
             dict(  # for Pedestrian
                 type='MaxIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
+                pos_iou_thr=0.3,
+                neg_iou_thr=0.15,
+                min_pos_iou=0.15,
                 ignore_iof_thr=-1),
             dict(  # for Cyclist
                 type='MaxIoUAssigner',
@@ -108,5 +109,5 @@ model = dict(
         nms_thr=0.01,
         score_thr=0.1,
         min_bbox_size=0,
-        nms_pre=100,
-        max_num=50))
+        nms_pre=4096,
+        max_num=500))
