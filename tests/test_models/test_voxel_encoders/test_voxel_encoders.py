@@ -18,13 +18,17 @@ def test_hard_simple_VFE():
     assert outputs.shape == torch.Size([240000, 5])
 
 
-def test_cylindrical_VFE():
+def test_seg_VFE():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
-    cylindrical_VFE_cfg = dict(
-        type='CylindricalVFE', feat_channels=[64, 128, 256, 256])
-    cylindrical_VFE = MODELS.build(cylindrical_VFE_cfg)
-    cylindrical_VFE = cylindrical_VFE.cuda()
+    seg_VFE_cfg = dict(
+        type='SegVFE',
+        feat_channels=[64, 128, 256, 256],
+        with_voxel_center=True,
+        feat_compression=16,
+        return_point_feats=True)
+    seg_VFE = MODELS.build(seg_VFE_cfg)
+    seg_VFE = seg_VFE.cuda()
     features = torch.rand([240000, 6]).cuda()
     coors = []
     for i in range(4):
@@ -32,5 +36,5 @@ def test_cylindrical_VFE():
         coor = F.pad(coor, (1, 0), mode='constant', value=i)
         coors.append(coor)
     coors = torch.cat(coors, dim=0).cuda()
-    out_features, out_coors = cylindrical_VFE(features, coors)
+    out_features, out_coors, out_point_features = seg_VFE(features, coors)
     assert out_features.shape[0] == out_coors.shape[0]

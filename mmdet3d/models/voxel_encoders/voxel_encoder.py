@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple
+
 import torch
 from mmcv.cnn import build_norm_layer
 from mmcv.ops import DynamicScatter
@@ -489,8 +491,8 @@ class HardVFE(nn.Module):
 
 
 @MODELS.register_module()
-class CylindricalVFE(nn.Module):
-    """Cylindrical Voxel feature encoder used in Cylinder3D.
+class SegVFE(nn.Module):
+    """Voxel feature encoder used in segmentation task.
 
     It encodes features of voxels and their points. It could also fuse
     image feature into voxel features in a point-wise manner.
@@ -510,24 +512,25 @@ class CylindricalVFE(nn.Module):
         mode (str): The mode when pooling features of points
             inside a voxel. Available options include 'max' and 'avg'.
             Defaults to 'max'.
-        feat_compression (str, optional): The voxel feature compression
+        feat_compression (int, optional): The voxel feature compression
             channels, Defaults to None
         return_point_feats (bool): Whether to return the features
             of each points. Defaults to False.
     """
 
     def __init__(self,
-                 in_channels=6,
-                 feat_channels=[],
-                 with_voxel_center=False,
-                 voxel_size=(0.10438413361169102, 1.0027855153203342,
-                             0.1935483870967742),
-                 point_cloud_range=(0, -180, -4, 50, 180, 2),
-                 norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.1),
-                 mode='max',
-                 feat_compression=None,
-                 return_point_feats=False):
-        super(CylindricalVFE, self).__init__()
+                 in_channels: int = 6,
+                 feat_channels: List[int] = [],
+                 with_voxel_center: bool = False,
+                 voxel_size: List[float] = (0.10438413361169102,
+                                            1.0027855153203342,
+                                            0.1935483870967742),
+                 point_cloud_range: Tuple[float] = (0, -180, -4, 50, 180, 2),
+                 norm_cfg: Dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
+                 mode: bool = 'max',
+                 feat_compression: Optional[int] = None,
+                 return_point_feats: bool = False):
+        super(SegVFE, self).__init__()
         assert mode in ['avg', 'max']
         assert len(feat_channels) > 0
         if with_voxel_center:
@@ -596,11 +599,13 @@ class CylindricalVFE(nn.Module):
             features_ls.append(f_center)
 
         # Combine together feature decorations
-        point_feats = torch.cat(features_ls[::-1], dim=-1)
+        features = torch.cat(features_ls[::-1], dim=-1)
+        point_feats = []
         for i, vfe in enumerate(self.vfe_layers):
-            point_feats = vfe(point_feats)
+            features = vfe(features)
+            point_feats.append(features)
             if i == self.num_vfe - 1:
-                voxel_feats, voxel_coors = self.vfe_scatter(point_feats, coors)
+                voxel_feats, voxel_coors = self.vfe_scatter(features, coors)
         if self.compression_layers is not None:
             voxel_feats = self.compression_layers(voxel_feats)
 

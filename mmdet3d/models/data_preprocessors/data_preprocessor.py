@@ -393,7 +393,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                     self.voxel_layer.point_cloud_range[:3])
                 max_bound = polar_res.new_tensor(
                     self.voxel_layer.point_cloud_range[3:])
-                polar_res = torch.clip(polar_res, min_bound, max_bound)
+                polar_res = torch.clamp(polar_res, min_bound, max_bound)
                 res_coors = torch.floor(
                     (polar_res - min_bound) /
                     polar_res.new_tensor(self.voxel_layer.voxel_size)).int()
