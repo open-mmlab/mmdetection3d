@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import torch
-from mmcv.ops import Voxelization, dynamic_scatter
 from mmdet.models import DetDataPreprocessor
 from mmengine.model import stack_batch
 from mmengine.utils import is_list_of
@@ -14,7 +13,7 @@ from torch.nn import functional as F
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
-from .utils import multiview_img_stack_batch
+from .utils import Voxelization, dynamic_scatter, multiview_img_stack_batch
 
 
 @MODELS.register_module()

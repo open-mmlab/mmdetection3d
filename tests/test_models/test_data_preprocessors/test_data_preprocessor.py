@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
 
+import pytest
 import torch
 
 from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
@@ -97,6 +98,8 @@ class TestDet3DDataPreprocessor(TestCase):
             self.assertEqual(data_sample.pad_shape, expected_shape)
 
         # test cylindrical voxelization
+        if not torch.cuda.is_available():
+            pytest.skip('test requires GPU and CUDA')
         point_cloud_range = [0, -180, -4, 50, 180, 2]
         grid_size = [480, 360, 32]
         voxel_layer = dict(
