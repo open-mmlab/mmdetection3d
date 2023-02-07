@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
 import torch
 from mmcv.cnn import build_norm_layer
@@ -520,16 +520,17 @@ class SegVFE(nn.Module):
 
     def __init__(self,
                  in_channels: int = 6,
-                 feat_channels: List[int] = [],
+                 feat_channels: Sequence[int] = [],
                  with_voxel_center: bool = False,
-                 voxel_size: List[float] = (0.10438413361169102,
-                                            1.0027855153203342,
-                                            0.1935483870967742),
-                 point_cloud_range: Tuple[float] = (0, -180, -4, 50, 180, 2),
-                 norm_cfg: Dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
+                 voxel_size: Sequence[float] = (0.10438413361169102,
+                                                1.0027855153203342,
+                                                0.1935483870967742),
+                 point_cloud_range: Sequence[float] = (0, -180, -4, 50, 180,
+                                                       2),
+                 norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
                  mode: bool = 'max',
                  feat_compression: Optional[int] = None,
-                 return_point_feats: bool = False):
+                 return_point_feats: bool = False) -> None:
         super(SegVFE, self).__init__()
         assert mode in ['avg', 'max']
         assert len(feat_channels) > 0
@@ -572,13 +573,13 @@ class SegVFE(nn.Module):
             self.compression_layers = nn.Linear(feat_channels[-1],
                                                 feat_compression)
 
-    def forward(self, features: torch.Tensor, coors: torch.Tensor, *args,
-                **kwargs):
+    def forward(self, features: Tensor, coors: Tensor, *args,
+                **kwargs) -> Tuple[Tensor]:
         """Forward functions.
 
         Args:
-            features (torch.Tensor): Features of voxels, shape is NxC.
-            coors (torch.Tensor): Coordinates of voxels, shape is  Nx(1+NDim).
+            features (Tensor): Features of voxels, shape is NxC.
+            coors (Tensor): Coordinates of voxels, shape is  Nx(1+NDim).
 
         Returns:
             tuple: If `return_point_feats` is False, returns voxel features and
