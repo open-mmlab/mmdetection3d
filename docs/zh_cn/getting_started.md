@@ -237,7 +237,7 @@ pip install mmcv -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/ind
 我们提供了 [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docker/Dockerfile) 来构建一个镜像。
 
 ```shell
-# 基于 PyTorch 1.6，CUDA 10.1 构建镜像
+# 基于 PyTorch 1.9，CUDA 11.1 构建镜像
 docker build -t mmdetection3d -f docker/Dockerfile .
 ```
 
