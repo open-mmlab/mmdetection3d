@@ -557,7 +557,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             dict: the drawn point cloud and image which channel is RGB.
         """
 
-        if not len(instances) > 0: # Only visualize when there is at least one instance
+        # Only visualize when there is at least one instance
+        if not len(instances) > 0:
             return None
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
@@ -789,7 +790,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 drawn_img_3d = gt_data_3d['img']
             elif pred_data_3d is not None:
                 drawn_img_3d = pred_data_3d['img']
-            else: # both instances of gt and pred are empty
+            else:  # both instances of gt and pred are empty
                 drawn_img_3d = None
         else:
             drawn_img_3d = None
