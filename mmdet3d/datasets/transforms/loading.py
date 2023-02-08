@@ -725,6 +725,8 @@ class LoadAnnotations3D(LoadAnnotations):
         with_mask (bool): Whether to load 2D instance masks. Defaults to False.
         with_seg (bool): Whether to load 2D semantic masks. Defaults to False.
         with_bbox_depth (bool): Whether to load 2.5D boxes. Defaults to False.
+        with_panoptic_3d (bool): Whether to load 3D panoptic masks for points.
+            Defaults to False.
         poly2mask (bool): Whether to convert polygon annotations to bitmasks.
             Defaults to True.
         seg_3d_dtype (dtype): Dtype of 3D semantic masks. Defaults to int64.
@@ -749,6 +751,7 @@ class LoadAnnotations3D(LoadAnnotations):
         with_mask: bool = False,
         with_seg: bool = False,
         with_bbox_depth: bool = False,
+        with_panoptic_3d: bool = False,
         poly2mask: bool = True,
         seg_3d_dtype: np.dtype = np.int64,
         seg_offset: int = None,
@@ -768,6 +771,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_attr_label = with_attr_label
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
+        self.with_panoptic_3d = with_panoptic_3d
         self.seg_3d_dtype = seg_3d_dtype
         self.seg_offset = seg_offset
         self.dataset_type = dataset_type
@@ -875,8 +879,8 @@ class LoadAnnotations3D(LoadAnnotations):
             pts_semantic_mask = np.fromfile(
                 pts_semantic_mask_path, dtype=np.int64)
 
-        pts_semantic_mask = pts_semantic_mask.astype(np.int64)
         if self.dataset_type == 'semantickitti':
+            pts_semantic_mask = pts_semantic_mask.astype(np.int64)
             pts_semantic_mask = pts_semantic_mask % self.seg_offset
         # nuScenes loads semantic and panoptic labels from different files.
 
@@ -910,8 +914,8 @@ class LoadAnnotations3D(LoadAnnotations):
             pts_panoptic_mask = np.fromfile(
                 pts_panoptic_mask_path, dtype=np.int64)
 
-        pts_semantic_mask = pts_panoptic_mask.astype(np.int64)
         if self.dataset_type == 'semantickitti':
+            pts_semantic_mask = pts_panoptic_mask.astype(np.int64)
             pts_semantic_mask = pts_semantic_mask % self.seg_offset
         elif self.dataset_type == 'nuscenes':
             pts_semantic_mask = pts_semantic_mask // self.seg_offset
@@ -973,11 +977,11 @@ class LoadAnnotations3D(LoadAnnotations):
             results = self._load_labels_3d(results)
         if self.with_attr_label:
             results = self._load_attr_labels(results)
-        if self.with_seg_3d and self.with_mask_3d:
+        if self.with_panoptic_3d:
             results = self._load_panoptic_3d(results)
-        elif self.with_mask_3d:
+        if self.with_mask_3d:
             results = self._load_masks_3d(results)
-        elif self.with_seg_3d:
+        if self.with_seg_3d:
             results = self._load_semantic_seg_3d(results)
         return results
 

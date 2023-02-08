@@ -58,9 +58,9 @@ class TestLoadAnnotations3D(unittest.TestCase):
         load_anns_transform = LoadAnnotations3D(
             with_bbox_3d=True,
             with_label_3d=True,
-            with_seg_3d=True,
-            with_mask_3d=True,
+            with_panoptic_3d=True,
             seg_offset=2**16,
+            dataset_type='semantickitti',
             seg_3d_dtype=np.uint32,
             file_client_args=file_client_args)
         self.assertIs(load_anns_transform.with_seg, False)
@@ -95,6 +95,7 @@ class TestLoadAnnotations3D(unittest.TestCase):
         self.assertIn('with_bbox_3d=True', repr_str)
         self.assertIn('with_label_3d=True', repr_str)
         self.assertIn('with_bbox_depth=False', repr_str)
+        self.assertIn('with_panoptic_3d=True', repr_str)
 
 
 class TestPointSegClassMapping(unittest.TestCase):
