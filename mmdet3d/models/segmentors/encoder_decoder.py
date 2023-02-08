@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -8,8 +8,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import (ConfigType, MultiConfig, OptConfigType,
-                           OptMultiConfig)
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
 from ...structures.det3d_data_sample import OptSampleList, SampleList
 from ..utils import add_prefix
 from .base import Base3DSegmentor
@@ -109,8 +108,8 @@ class EncoderDecoder3D(Base3DSegmentor):
         self.decode_head = MODELS.build(decode_head)
         self.num_classes = self.decode_head.num_classes
 
-    def _init_auxiliary_head(self, auxiliary_head: Union[MultiConfig,
-                                                         None]) -> None:
+    def _init_auxiliary_head(self,
+                             auxiliary_head: OptMultiConfig = None) -> None:
         """Initialize ``auxiliary_head``."""
         if auxiliary_head is not None:
             if isinstance(auxiliary_head, list):
@@ -120,8 +119,9 @@ class EncoderDecoder3D(Base3DSegmentor):
             else:
                 self.auxiliary_head = MODELS.build(auxiliary_head)
 
-    def _init_loss_regularization(
-            self, loss_regularization: Union[MultiConfig, None]) -> None:
+    def _init_loss_regularization(self,
+                                  loss_regularization: OptMultiConfig = None
+                                  ) -> None:
         """Initialize ``loss_regularization``."""
         if loss_regularization is not None:
             if isinstance(loss_regularization, list):
