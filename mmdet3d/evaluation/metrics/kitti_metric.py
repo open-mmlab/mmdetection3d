@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import tempfile
 from os import path as osp
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import mmengine
 import numpy as np
@@ -22,44 +22,49 @@ class KittiMetric(BaseMetric):
 
     Args:
         ann_file (str): Annotation file path.
-        metric (str | list[str]): Metrics to be evaluated.
-            Default to 'bbox'.
-        pcd_limit_range (list): The range of point cloud used to
+        metric (str or List[str]): Metrics to be evaluated.
+            Defaults to 'bbox'.
+        pcd_limit_range (List[float]): The range of point cloud used to
             filter invalid predicted boxes.
-            Default to [0, -40, -3, 70.4, 40, 0.0].
+            Defaults to [0, -40, -3, 70.4, 40, 0.0].
         prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
             If prefix is not provided in the argument, self.default_prefix
             will be used instead. Defaults to None.
         pklfile_prefix (str, optional): The prefix of pkl files, including
             the file path and the prefix of filename, e.g., "a/b/prefix".
-            If not specified, a temp file will be created. Default: None.
-        default_cam_key (str, optional): The default camera for lidar to
-            camear conversion. By default, KITTI: CAM2, Waymo: CAM_FRONT
+            If not specified, a temp file will be created. Defaults to None.
+        default_cam_key (str): The default camera for lidar to camera
+            conversion. By default, KITTI: 'CAM2', Waymo: 'CAM_FRONT'.
+            Defaults to 'CAM2'
         format_only (bool): Format the output results without perform
             evaluation. It is useful when you want to format the result
             to a specific format and submit it to the test server.
             Defaults to False.
         submission_prefix (str, optional): The prefix of submission data.
             If not specified, the submission data will not be generated.
-            Default: None.
+            Defaults to None.
         collect_device (str): Device name used for collecting results
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
+        file_client_args (dict): Arguments to instantiate a FileClient.
+            See :class:`mmengine.fileio.FileClient` for details.
+            Defaults to dict(backend='disk').
     """
 
-    def __init__(self,
-                 ann_file: str,
-                 metric: Union[str, List[str]] = 'bbox',
-                 pred_box_type_3d: str = 'LiDAR',
-                 pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
-                 prefix: Optional[str] = None,
-                 pklfile_prefix: str = None,
-                 default_cam_key: str = 'CAM2',
-                 format_only: bool = False,
-                 submission_prefix: str = None,
-                 collect_device: str = 'cpu',
-                 file_client_args: dict = dict(backend='disk')):
+    def __init__(
+        self,
+        ann_file: str,
+        metric: Union[str, List[str]] = 'bbox',
+        pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
+        prefix: Optional[str] = None,
+        pklfile_prefix: Optional[str] = None,
+        default_cam_key: str = 'CAM2',
+        format_only: bool = False,
+        submission_prefix: Optional[str] = None,
+        collect_device: str = 'cpu',
+        file_client_args: dict = dict(backend='disk')
+    ) -> None:
         self.default_prefix = 'Kitti metric'
         super(KittiMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -68,25 +73,23 @@ class KittiMetric(BaseMetric):
         self.pklfile_prefix = pklfile_prefix
         self.format_only = format_only
         if self.format_only:
-            assert submission_prefix is not None, 'submission_prefix must be'
-            'not None when format_only is True, otherwise the result files'
-            'will be saved to a temp directory which will be cleaned up at'
+            assert submission_prefix is not None, 'submission_prefix must be '
+            'not None when format_only is True, otherwise the result files '
+            'will be saved to a temp directory which will be cleaned up at '
             'the end.'
 
         self.submission_prefix = submission_prefix
-        self.pred_box_type_3d = pred_box_type_3d
         self.default_cam_key = default_cam_key
         self.file_client_args = file_client_args
-        self.default_cam_key = default_cam_key
 
         allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'LET_mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
         for metric in self.metrics:
             if metric not in allowed_metrics:
                 raise KeyError("metric should be one of 'bbox', 'img_bbox', "
-                               'but got {metric}.')
+                               f'but got {metric}.')
 
-    def convert_annos_to_kitti_annos(self, data_infos: dict) -> list:
+    def convert_annos_to_kitti_annos(self, data_infos: dict) -> List[dict]:
         """Convert loading annotations to Kitti annotations.
 
         Args:
@@ -169,13 +172,13 @@ class KittiMetric(BaseMetric):
             result['pred_instances'] = pred_2d
             sample_idx = data_sample['sample_idx']
             result['sample_idx'] = sample_idx
-        self.results.append(result)
+            self.results.append(result)
 
-    def compute_metrics(self, results: list) -> Dict[str, float]:
+    def compute_metrics(self, results: List[dict]) -> Dict[str, float]:
         """Compute the metrics from processed results.
 
         Args:
-            results (list): The processed results of the whole dataset.
+            results (List[dict]): The processed results of the whole dataset.
 
         Returns:
             Dict[str, float]: The computed metrics. The keys are the names of
@@ -220,25 +223,25 @@ class KittiMetric(BaseMetric):
         return metric_dict
 
     def kitti_evaluate(self,
-                       results_dict: List[dict],
+                       results_dict: dict,
                        gt_annos: List[dict],
-                       metric: str = None,
-                       classes: List[str] = None,
-                       logger: MMLogger = None) -> dict:
+                       metric: Optional[str] = None,
+                       classes: Optional[List[str]] = None,
+                       logger: Optional[MMLogger] = None) -> Dict[str, float]:
         """Evaluation in KITTI protocol.
 
         Args:
             results_dict (dict): Formatted results of the dataset.
-            gt_annos (list[dict]): Contain gt information of each sample.
+            gt_annos (List[dict]): Contain gt information of each sample.
             metric (str, optional): Metrics to be evaluated.
-                Default: None.
+                Defaults to None.
+            classes (List[str], optional): A list of class name.
+                Defaults to None.
             logger (MMLogger, optional): Logger used for printing
-                related information during evaluation. Default: None.
-            classes (list[String], optional): A list of class name. Defaults
-                to None.
+                related information during evaluation. Defaults to None.
 
         Returns:
-            dict[str, float]: Results of each evaluation metric.
+            Dict[str, float]: Results of each evaluation metric.
         """
         ap_dict = dict()
         for name in results_dict:
@@ -249,37 +252,38 @@ class KittiMetric(BaseMetric):
             ap_result_str, ap_dict_ = kitti_eval(
                 gt_annos, results_dict[name], classes, eval_types=eval_types)
             for ap_type, ap in ap_dict_.items():
-                ap_dict[f'{name}/{ap_type}'] = float('{:.4f}'.format(ap))
+                ap_dict[f'{name}/{ap_type}'] = float(f'{ap:.4f}')
 
             print_log(f'Results of {name}:\n' + ap_result_str, logger=logger)
 
         return ap_dict
 
-    def format_results(self,
-                       results: List[dict],
-                       pklfile_prefix: str = None,
-                       submission_prefix: str = None,
-                       classes: List[str] = None):
+    def format_results(
+        self,
+        results: List[dict],
+        pklfile_prefix: Optional[str] = None,
+        submission_prefix: Optional[str] = None,
+        classes: Optional[List[str]] = None
+    ) -> Tuple[dict, Union[tempfile.TemporaryDirectory, None]]:
         """Format the results to pkl file.
 
         Args:
-            results (list[dict]): Testing results of the
-                dataset.
+            results (List[dict]): Testing results of the dataset.
             pklfile_prefix (str, optional): The prefix of pkl files. It
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
-                Default: None.
+                Defaults to None.
             submission_prefix (str, optional): The prefix of submitted files.
                 It includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
-                Default: None.
-            classes (list[String], optional): A list of class name. Defaults
-                to None.
+                Defaults to None.
+            classes (List[str], optional): A list of class name.
+                Defaults to None.
 
         Returns:
             tuple: (result_dict, tmp_dir), result_dict is a dict containing
-                the formatted result, tmp_dir is the temporal directory created
-                for saving json files when jsonfile_prefix is not specified.
+            the formatted result, tmp_dir is the temporal directory created
+            for saving json files when jsonfile_prefix is not specified.
         """
         if pklfile_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()
@@ -287,7 +291,7 @@ class KittiMetric(BaseMetric):
         else:
             tmp_dir = None
         result_dict = dict()
-        sample_id_list = [result['sample_idx'] for result in results]
+        sample_idx_list = [result['sample_idx'] for result in results]
         for name in results[0]:
             if submission_prefix is not None:
                 submission_prefix_ = osp.join(submission_prefix, name)
@@ -301,7 +305,7 @@ class KittiMetric(BaseMetric):
                     0] != '_' and results[0][name]:
                 net_outputs = [result[name] for result in results]
                 result_list_ = self.bbox2result_kitti(net_outputs,
-                                                      sample_id_list, classes,
+                                                      sample_idx_list, classes,
                                                       pklfile_prefix_,
                                                       submission_prefix_)
                 result_dict[name] = result_list_
@@ -309,32 +313,33 @@ class KittiMetric(BaseMetric):
                     name]:
                 net_outputs = [result[name] for result in results]
                 result_list_ = self.bbox2result_kitti2d(
-                    net_outputs, sample_id_list, classes, pklfile_prefix_,
+                    net_outputs, sample_idx_list, classes, pklfile_prefix_,
                     submission_prefix_)
                 result_dict[name] = result_list_
         return result_dict, tmp_dir
 
-    def bbox2result_kitti(self,
-                          net_outputs: list,
-                          sample_id_list: list,
-                          class_names: list,
-                          pklfile_prefix: str = None,
-                          submission_prefix: str = None):
+    def bbox2result_kitti(
+            self,
+            net_outputs: List[dict],
+            sample_idx_list: List[int],
+            class_names: List[str],
+            pklfile_prefix: Optional[str] = None,
+            submission_prefix: Optional[str] = None) -> List[dict]:
         """Convert 3D detection results to kitti format for evaluation and test
         submission.
 
         Args:
-            net_outputs (list[dict]): List of array storing the
+            net_outputs (List[dict]): List of dict storing the
                 inferenced bounding boxes and scores.
-            sample_id_list (list[int]): List of input sample id.
-            class_names (list[String]): A list of class names.
+            sample_idx_list (List[int]): List of input sample idx.
+            class_names (List[str]): A list of class names.
             pklfile_prefix (str, optional): The prefix of pkl file.
                 Defaults to None.
             submission_prefix (str, optional): The prefix of submission file.
                 Defaults to None.
 
         Returns:
-            list[dict]: A list of dictionaries with the kitti format.
+            List[dict]: A list of dictionaries with the kitti format.
         """
         assert len(net_outputs) == len(self.data_infos), \
             'invalid list length of network outputs'
@@ -345,8 +350,7 @@ class KittiMetric(BaseMetric):
         print('\nConverting 3D prediction to KITTI format')
         for idx, pred_dicts in enumerate(
                 mmengine.track_iter_progress(net_outputs)):
-            annos = []
-            sample_idx = sample_id_list[idx]
+            sample_idx = sample_idx_list[idx]
             info = self.data_infos[sample_idx]
             # Here default used 'CAM2' to compute metric. If you want to
             # use another camera, please modify it.
@@ -393,7 +397,6 @@ class KittiMetric(BaseMetric):
                     anno['score'].append(score)
 
                 anno = {k: np.stack(v) for k, v in anno.items()}
-                annos.append(anno)
             else:
                 anno = {
                     'name': np.array([]),
@@ -406,7 +409,6 @@ class KittiMetric(BaseMetric):
                     'rotation_y': np.array([]),
                     'score': np.array([]),
                 }
-                annos.append(anno)
 
             if submission_prefix is not None:
                 curr_file = f'{submission_prefix}/{sample_idx:06d}.txt'
@@ -428,10 +430,10 @@ class KittiMetric(BaseMetric):
                                 anno['score'][idx]),
                             file=f)
 
-            annos[-1]['sample_id'] = np.array(
-                [sample_idx] * len(annos[-1]['score']), dtype=np.int64)
+            anno['sample_idx'] = np.array(
+                [sample_idx] * len(anno['score']), dtype=np.int64)
 
-            det_annos += annos
+            det_annos.append(anno)
 
         if pklfile_prefix is not None:
             if not pklfile_prefix.endswith(('.pkl', '.pickle')):
@@ -443,27 +445,28 @@ class KittiMetric(BaseMetric):
 
         return det_annos
 
-    def bbox2result_kitti2d(self,
-                            net_outputs: list,
-                            sample_id_list,
-                            class_names: list,
-                            pklfile_prefix: str = None,
-                            submission_prefix: str = None):
+    def bbox2result_kitti2d(
+            self,
+            net_outputs: List[dict],
+            sample_idx_list: List[int],
+            class_names: List[str],
+            pklfile_prefix: Optional[str] = None,
+            submission_prefix: Optional[str] = None) -> List[dict]:
         """Convert 2D detection results to kitti format for evaluation and test
         submission.
 
         Args:
-            net_outputs (list[dict]): List of array storing the
+            net_outputs (List[dict]): List of dict storing the
                 inferenced bounding boxes and scores.
-            sample_id_list (list[int]): List of input sample id.
-            class_names (list[String]): A list of class names.
+            sample_idx_list (List[int]): List of input sample idx.
+            class_names (List[str]): A list of class names.
             pklfile_prefix (str, optional): The prefix of pkl file.
                 Defaults to None.
             submission_prefix (str, optional): The prefix of submission file.
                 Defaults to None.
 
         Returns:
-            list[dict]: A list of dictionaries have the kitti format
+            List[dict]: A list of dictionaries with the kitti format.
         """
         assert len(net_outputs) == len(self.data_infos), \
             'invalid list length of network outputs'
@@ -471,7 +474,6 @@ class KittiMetric(BaseMetric):
         print('\nConverting 2D prediction to KITTI format')
         for i, bboxes_per_sample in enumerate(
                 mmengine.track_iter_progress(net_outputs)):
-            annos = []
             anno = dict(
                 name=[],
                 truncated=[],
@@ -482,7 +484,7 @@ class KittiMetric(BaseMetric):
                 location=[],
                 rotation_y=[],
                 score=[])
-            sample_idx = sample_id_list[i]
+            sample_idx = sample_idx_list[i]
 
             num_example = 0
             bbox = bboxes_per_sample['bboxes']
@@ -504,25 +506,23 @@ class KittiMetric(BaseMetric):
                 num_example += 1
 
             if num_example == 0:
-                annos.append(
-                    dict(
-                        name=np.array([]),
-                        truncated=np.array([]),
-                        occluded=np.array([]),
-                        alpha=np.array([]),
-                        bbox=np.zeros([0, 4]),
-                        dimensions=np.zeros([0, 3]),
-                        location=np.zeros([0, 3]),
-                        rotation_y=np.array([]),
-                        score=np.array([]),
-                    ))
+                anno = dict(
+                    name=np.array([]),
+                    truncated=np.array([]),
+                    occluded=np.array([]),
+                    alpha=np.array([]),
+                    bbox=np.zeros([0, 4]),
+                    dimensions=np.zeros([0, 3]),
+                    location=np.zeros([0, 3]),
+                    rotation_y=np.array([]),
+                    score=np.array([]),
+                )
             else:
                 anno = {k: np.stack(v) for k, v in anno.items()}
-                annos.append(anno)
 
-            annos[-1]['sample_id'] = np.array(
+            anno['sample_idx'] = np.array(
                 [sample_idx] * num_example, dtype=np.int64)
-            det_annos += annos
+            det_annos.append(anno)
 
         if pklfile_prefix is not None:
             if not pklfile_prefix.endswith(('.pkl', '.pickle')):
@@ -537,7 +537,7 @@ class KittiMetric(BaseMetric):
             mmengine.mkdir_or_exist(submission_prefix)
             print(f'Saving KITTI submission to {submission_prefix}')
             for i, anno in enumerate(det_annos):
-                sample_idx = sample_id_list[i]
+                sample_idx = sample_idx_list[i]
                 cur_det_file = f'{submission_prefix}/{sample_idx:06d}.txt'
                 with open(cur_det_file, 'w') as f:
                     bbox = anno['bbox']
@@ -560,15 +560,15 @@ class KittiMetric(BaseMetric):
 
         return det_annos
 
-    def convert_valid_bboxes(self, box_dict: dict, info: dict):
+    def convert_valid_bboxes(self, box_dict: dict, info: dict) -> dict:
         """Convert the predicted boxes into valid ones.
 
         Args:
             box_dict (dict): Box dictionaries to be converted.
 
-                - boxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bounding boxes.
-                - scores_3d (torch.Tensor): Scores of boxes.
-                - labels_3d (torch.Tensor): Class labels of boxes.
+                - bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bounding boxes.
+                - scores_3d (Tensor): Scores of boxes.
+                - labels_3d (Tensor): Class labels of boxes.
             info (dict): Data info.
 
         Returns:
@@ -576,9 +576,9 @@ class KittiMetric(BaseMetric):
 
                 - bbox (np.ndarray): 2D bounding boxes.
                 - box3d_camera (np.ndarray): 3D bounding boxes in
-                    camera coordinate.
+                  camera coordinate.
                 - box3d_lidar (np.ndarray): 3D bounding boxes in
-                    LiDAR coordinate.
+                  LiDAR coordinate.
                 - scores (np.ndarray): Scores of boxes.
                 - label_preds (np.ndarray): Class label predictions.
                 - sample_idx (int): Sample index.
@@ -654,5 +654,5 @@ class KittiMetric(BaseMetric):
                 box3d_camera=np.zeros([0, 7]),
                 box3d_lidar=np.zeros([0, 7]),
                 scores=np.zeros([0]),
-                label_preds=np.zeros([0, 4]),
+                label_preds=np.zeros([0]),
                 sample_idx=sample_idx)

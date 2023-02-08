@@ -1,13 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional
+
 import torch
 from mmdet.models.losses.utils import weight_reduce_loss
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
 from ..layers import PAConv, PAConvCUDA
 
 
-def weight_correlation(conv):
+def weight_correlation(conv: nn.Module) -> Tensor:
     """Calculate correlations between kernel weights in Conv's weight bank as
     regularization loss. The cosine similarity is used as metrics.
 
@@ -16,7 +19,7 @@ def weight_correlation(conv):
             Currently we only support `PAConv` and `PAConvCUDA`.
 
     Returns:
-        torch.Tensor: Correlations between each kernel weights in weight bank.
+        Tensor: Correlations between each kernel weights in weight bank.
     """
     assert isinstance(conv, (PAConv, PAConvCUDA)), \
         f'unsupported module type {type(conv)}'
@@ -44,17 +47,18 @@ def weight_correlation(conv):
     return corr
 
 
-def paconv_regularization_loss(modules, reduction):
+def paconv_regularization_loss(modules: List[nn.Module],
+                               reduction: str) -> Tensor:
     """Computes correlation loss of PAConv weight kernels as regularization.
 
     Args:
         modules (List[nn.Module] | :obj:`generator`):
             A list or a python generator of torch.nn.Modules.
         reduction (str): Method to reduce losses among PAConv modules.
-            The valid reduction method are none, sum or mean.
+            The valid reduction method are 'none', 'sum' or 'mean'.
 
     Returns:
-        torch.Tensor: Correlation loss of kernel weights.
+        Tensor: Correlation loss of kernel weights.
     """
     corr_loss = []
     for module in modules:
@@ -77,17 +81,23 @@ class PAConvRegularizationLoss(nn.Module):
     Args:
         reduction (str): Method to reduce losses. The reduction is performed
             among all PAConv modules instead of prediction tensors.
-            The valid reduction method are none, sum or mean.
-        loss_weight (float, optional): Weight of loss. Defaults to 1.0.
+            The valid reduction method are 'none', 'sum' or 'mean'.
+            Defaults to 'mean'.
+        loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 
-    def __init__(self, reduction='mean', loss_weight=1.0):
+    def __init__(self,
+                 reduction: str = 'mean',
+                 loss_weight: float = 1.0) -> None:
         super(PAConvRegularizationLoss, self).__init__()
         assert reduction in ['none', 'sum', 'mean']
         self.reduction = reduction
         self.loss_weight = loss_weight
 
-    def forward(self, modules, reduction_override=None, **kwargs):
+    def forward(self,
+                modules: List[nn.Module],
+                reduction_override: Optional[str] = None,
+                **kwargs) -> Tensor:
         """Forward function of loss calculation.
 
         Args:
@@ -98,7 +108,7 @@ class PAConvRegularizationLoss(nn.Module):
                 Defaults to None.
 
         Returns:
-            torch.Tensor: Correlation loss of kernel weights.
+            Tensor: Correlation loss of kernel weights.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
