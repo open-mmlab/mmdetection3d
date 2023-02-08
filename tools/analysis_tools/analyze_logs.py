@@ -22,7 +22,6 @@ def cal_train_time(log_dicts, args):
                 'Please reduce the log interval in the config so that '
                 'interval is less than iterations of one epoch.')
         epoch_ave_time = np.array(list(map(lambda x: np.mean(x), all_times)))
-        epoch_ave_time = all_times.mean(-1)
         slowest_epoch = epoch_ave_time.argmax()
         fastest_epoch = epoch_ave_time.argmin()
         std_over_epoch = epoch_ave_time.std()
