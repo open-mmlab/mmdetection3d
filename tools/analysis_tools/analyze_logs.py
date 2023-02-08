@@ -22,6 +22,7 @@ def cal_train_time(log_dicts, args):
                 'Please reduce the log interval in the config so that '
                 'interval is less than iterations of one epoch.')
         epoch_ave_time = np.array(list(map(lambda x: np.mean(x), all_times)))
+        epoch_ave_time = all_times.mean(-1)
         slowest_epoch = epoch_ave_time.argmax()
         fastest_epoch = epoch_ave_time.argmin()
         std_over_epoch = epoch_ave_time.std()
@@ -53,22 +54,40 @@ def plot_curve(log_dicts, args):
         for j, metric in enumerate(metrics):
             print(f'plot curve of {args.json_logs[i]}, metric is {metric}')
             if metric not in log_dict[epochs[int(args.eval_interval) - 1]]:
+                if args.eval:
+                    raise KeyError(
+                        f'{args.json_logs[i]} does not contain metric '
+                        f'{metric}. Please check if "--no-validate" is '
+                        'specified when you trained the model. Or check '
+                        f'if the eval_interval {args.eval_interval} in args '
+                        'is_equal to the eval_interval during training.')
                 raise KeyError(
                     f'{args.json_logs[i]} does not contain metric {metric}. '
                     'Please reduce the log interval in the config so that '
                     'interval is less than iterations of one epoch.')
 
-            xs = []
-            ys = []
-            for epoch in epochs:
-                iters = log_dict[epoch]['step']
-                xs.append(np.array(iters))
-                ys.append(np.array(log_dict[epoch][metric][:len(iters)]))
-            xs = np.concatenate(xs)
-            ys = np.concatenate(ys)
-            plt.xlabel('iter')
-            plt.plot(xs, ys, label=legend[i * num_metrics + j], linewidth=0.5)
-            plt.legend()
+            if args.eval:
+                xs = []
+                ys = []
+                for epoch in epochs:
+                    ys += log_dict[epoch][metric]
+                    if log_dict[epoch][metric]:
+                        xs += [epoch]
+                plt.xlabel('epoch')
+                plt.plot(xs, ys, label=legend[i * num_metrics + j], marker='o')
+            else:
+                xs = []
+                ys = []
+                for epoch in epochs:
+                    iters = log_dict[epoch]['step']
+                    xs.append(np.array(iters))
+                    ys.append(np.array(log_dict[epoch][metric][:len(iters)]))
+                xs = np.concatenate(xs)
+                ys = np.concatenate(ys)
+                plt.xlabel('iter')
+                plt.plot(
+                    xs, ys, label=legend[i * num_metrics + j], linewidth=0.5)
+                plt.legend()
         if args.title is not None:
             plt.title(args.title)
     if args.out is None:
@@ -94,10 +113,9 @@ def add_plot_parser(subparsers):
         default=['mAP_0.25'],
         help='the metric that you want to plot')
     parser_plt.add_argument(
-        '--start-epoch',
-        type=str,
-        default='1',
-        help='the epoch that you want to start')
+        '--eval',
+        action='store_true',
+        help='whether to plot evaluation metric')
     parser_plt.add_argument(
         '--eval-interval',
         type=str,
