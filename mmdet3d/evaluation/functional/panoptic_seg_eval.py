@@ -16,9 +16,9 @@ class EvalPanoptic:
         classes (list): Classes used in the dataset.
         things_classes (list): Things classes used in the dataset.
         stuff_classes (list): Stuff classes used in the dataset.
-        min_points (int): Minimum point number of object to be
+        min_num_points (int): Minimum number of points of an object to be
             counted as ground truth in evaluation.
-        offset (int): Offset for instance ids to concat with
+        id_offset (int): Offset for instance ids to concat with
             semantic labels.
         label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
@@ -30,8 +30,8 @@ class EvalPanoptic:
                  classes: List[str],
                  things_classes: List[str],
                  stuff_classes: List[str],
-                 min_points: int,
-                 offset: int,
+                 min_num_points: int,
+                 id_offset: int,
                  label2cat: Dict[str, str],
                  ignore_index: List[str],
                  logger: MMLogger = None):
@@ -45,9 +45,9 @@ class EvalPanoptic:
         self.include = np.array(
             [n for n in range(self.n_classes) if n not in self.ignore_index],
             dtype=int)
-        self.offset = offset
+        self.id_offset = id_offset
         self.eps = 1e-15
-        self.min_points = min_points
+        self.min_num_points = min_num_points
         self.reset()
 
     def reset(self):
@@ -312,14 +312,14 @@ class EvalPanoptic:
             valid_combos = np.logical_and(pred_inst_in_cl > 0,
                                           gt_inst_in_cl > 0)
             offset_combo = pred_inst_in_cl[
-                valid_combos] + self.offset * gt_inst_in_cl[valid_combos]
+                valid_combos] + self.id_offset * gt_inst_in_cl[valid_combos]
             unique_combo, counts_combo = np.unique(
                 offset_combo, return_counts=True)
 
             # generate an intersection map
             # count the intersections with over 0.5 IoU as TP
-            gt_labels = unique_combo // self.offset
-            pred_labels = unique_combo % self.offset
+            gt_labels = unique_combo // self.id_offset
+            pred_labels = unique_combo % self.id_offset
             gt_areas = np.array([counts_gt[id2idx_gt[id]] for id in gt_labels])
             pred_areas = np.array(
                 [counts_pred[id2idx_pred[id]] for id in pred_labels])
@@ -338,12 +338,13 @@ class EvalPanoptic:
             # count the FN
             if len(counts_gt) > 0:
                 self.pan_fn[cl] += np.sum(
-                    np.logical_and(counts_gt >= self.min_points, ~matched_gt))
+                    np.logical_and(counts_gt >= self.min_num_points,
+                                   ~matched_gt))
 
             # count the FP
             if len(matched_pred) > 0:
                 self.pan_fp[cl] += np.sum(
-                    np.logical_and(counts_pred >= self.min_points,
+                    np.logical_and(counts_pred >= self.min_num_points,
                                    ~matched_pred))
 
 
@@ -352,8 +353,8 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
                       classes: List[str],
                       things_classes: List[str],
                       stuff_classes: List[str],
-                      min_points: int,
-                      offset: int,
+                      min_num_points: int,
+                      id_offset: int,
                       label2cat: Dict[str, str],
                       ignore_index: List[int],
                       logger: MMLogger = None) -> Dict[str, float]:
@@ -367,9 +368,9 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
         classes (list[str]): Classes used in the dataset.
         things_classes (list[str]): Things classes used in the dataset.
         stuff_classes (list[str]): Stuff classes used in the dataset.
-        min_points (int): Minimum point number of object to be
+        min_num_points (int): Minimum point number of object to be
             counted as ground truth in evaluation.
-        offset (int): Offset for instance ids to concat with
+        id_offset (int): Offset for instance ids to concat with
             semantic labels.
         label2cat (dict[str]): Map from label to category.
         ignore_index (list[int]): Ignored classes in evaluation.
@@ -380,7 +381,7 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
         dict[float]: Dict of results.
     """
     panoptic_seg_eval = EvalPanoptic(classes, things_classes, stuff_classes,
-                                     min_points, offset, label2cat,
+                                     min_num_points, id_offset, label2cat,
                                      ignore_index, logger)
     ret_dict = panoptic_seg_eval.evaluate(gt_labels, seg_preds)
     return ret_dict

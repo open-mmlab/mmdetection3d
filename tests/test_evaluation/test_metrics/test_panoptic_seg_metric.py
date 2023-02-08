@@ -112,10 +112,10 @@ class TestPanopticSegMetric(unittest.TestCase):
         dataset_meta = dict(
             label2cat=label2cat, ignore_index=ignore_index, classes=classes)
         panoptic_seg_metric = PanopticSegMetric(
+            things_class_indices=[0, 1],
+            stuff_class_indices=[2, 3],
             min_points=min_points,
             offset=offset,
-            stuff_class_indices=[2, 3],
-            things_class_indices=[0, 1],
         )
         panoptic_seg_metric.dataset_meta = dataset_meta
         panoptic_seg_metric.process(data_batch, predictions)
