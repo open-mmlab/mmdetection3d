@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import os
 import platform
 import shutil
@@ -23,13 +24,7 @@ version_file = 'mmdet3d/version.py'
 def get_version():
     with open(version_file, 'r') as f:
         exec(compile(f.read(), version_file, 'exec'))
-    import sys
-
-    # return short version for sdist
-    if 'sdist' in sys.argv or 'bdist_wheel' in sys.argv:
-        return locals()['short_version']
-    else:
-        return locals()['__version__']
+    return locals()['__version__']
 
 
 def make_cuda_ext(name,
@@ -163,7 +158,7 @@ def add_mim_extention():
     else:
         return
 
-    filenames = ['tools', 'configs', 'model-index.yml']
+    filenames = ['tools', 'configs', 'demo', 'model-index.yml']
     repo_path = osp.dirname(__file__)
     mim_path = osp.join(repo_path, 'mmdet3d', '.mim')
     os.makedirs(mim_path, exist_ok=True)
@@ -205,16 +200,16 @@ if __name__ == '__main__':
         author_email='zwwdev@gmail.com',
         keywords='computer vision, 3D object detection',
         url='https://github.com/open-mmlab/mmdetection3d',
-        packages=find_packages(),
+        packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
-        package_data={'mmdet3d.ops': ['*/*.so']},
         classifiers=[
-            'Development Status :: 4 - Beta',
+            'Development Status :: 5 - Production/Stable',
             'License :: OSI Approved :: Apache Software License',
             'Operating System :: OS Independent',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
         ],
         license='Apache License 2.0',
         install_requires=parse_requirements('requirements/runtime.txt'),
@@ -225,5 +220,6 @@ if __name__ == '__main__':
             'optional': parse_requirements('requirements/optional.txt'),
             'mim': parse_requirements('requirements/mminstall.txt'),
         },
+        ext_modules=[],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
