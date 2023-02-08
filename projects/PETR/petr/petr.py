@@ -8,14 +8,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
 
-import numpy as np
 import torch
 from mmengine.structures import InstanceData
 
-import mmdet3d
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
-from mmdet3d.structures.bbox_3d import LiDARInstance3DBoxes, limit_period
 from mmdet3d.structures.ops import bbox3d2result
 from .grid_mask import GridMask
 
@@ -174,8 +171,6 @@ class PETR(MVXTwoStageDetector):
         gt_labels_3d = [gt.labels_3d for gt in batch_gt_instances_3d]
         gt_bboxes_ignore = None
 
-        gt_bboxes_3d = self.LidarBox3dVersionTransfrom(gt_bboxes_3d)
-
         batch_img_metas = self.add_lidar2img(img, batch_img_metas)
 
         img_feats = self.extract_feat(img=img, img_metas=batch_img_metas)
@@ -265,8 +260,8 @@ class PETR(MVXTwoStageDetector):
         Returns:
             batch_input_metas (list[dict]): Meta info with lidar2img added
         """
-        lidar2img_rts = []
         for meta in batch_input_metas:
+            lidar2img_rts = []
             # obtain lidar to image transformation matrix
             for i in range(len(meta['cam2img'])):
                 lidar2cam_rt = torch.tensor(meta['lidar2cam'][i]).double()
@@ -281,19 +276,7 @@ class PETR(MVXTwoStageDetector):
                 # and LoadMultiViewImageFromMultiSweepsFiles.
                 lidar2img_rts.append(lidar2img_rt)
             meta['lidar2img'] = lidar2img_rts
-            meta['img_shape'] = [i.shape for i in img[0]]
+            img_shape = meta['img_shape'][:3]
+            meta['img_shape'] = [img_shape] * len(img[0])
+
         return batch_input_metas
-
-    def LidarBox3dVersionTransfrom(self, gt_bboxes_3d):
-        if int(mmdet3d.__version__[0]) >= 1:
-            # Begin hack adaptation to mmdet3d v1.0 ####
-            gt_bboxes_3d = gt_bboxes_3d[0].tensor
-
-            gt_bboxes_3d[:, [3, 4]] = gt_bboxes_3d[:, [4, 3]]
-            gt_bboxes_3d[:, 6] = -gt_bboxes_3d[:, 6] - np.pi / 2
-            gt_bboxes_3d[:, 6] = limit_period(
-                gt_bboxes_3d[:, 6], period=np.pi * 2)
-
-            gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d, box_dim=9)
-            gt_bboxes_3d = [gt_bboxes_3d]
-        return gt_bboxes_3d

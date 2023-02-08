@@ -215,7 +215,7 @@ jobs:
       - name: Build MMCV from source
         run: pip install -e . -v
       - name: Install unit tests dependencies
-        run: pip install -r requirements/test.txt
+        run: pip install -r requirements/tests.txt
       - name: Run unittests and generate coverage report
         run: |
           coverage run --branch --source mmcv -m pytest tests

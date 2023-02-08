@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-def add_prefix(inputs, prefix):
+def add_prefix(inputs: dict, prefix: str) -> dict:
     """Add prefix for dict.
 
     Args:
