@@ -14,8 +14,8 @@ class PanopticSegMetric(SegMetric):
     """3D Panoptic segmentation evaluation metric.
 
     Args:
-        thing_class_indices (list[int]): Indices of thing classes.
-        stuff_class_indices (list[int]): Indices of stuff classes.
+        thing_class_inds (list[int]): Indices of thing classes.
+        stuff_class_inds (list[int]): Indices of stuff classes.
         min_points (int): Minimum point number of object to be
             counted as ground truth in evaluation.
         id_offset (int): Offset for instance ids to concat with
@@ -36,8 +36,8 @@ class PanopticSegMetric(SegMetric):
     """
 
     def __init__(self,
-                 thing_class_indices: List[int],
-                 stuff_class_indices: List[int],
+                 thing_class_inds: List[int],
+                 stuff_class_inds: List[int],
                  min_points: int,
                  id_offset: int,
                  collect_device: str = 'cpu',
@@ -45,8 +45,8 @@ class PanopticSegMetric(SegMetric):
                  pklfile_prefix: str = None,
                  submission_prefix: str = None,
                  **kwargs):
-        self.thing_class_indices = thing_class_indices
-        self.stuff_class_indices = stuff_class_indices
+        self.thing_class_inds = thing_class_inds
+        self.stuff_class_inds = stuff_class_inds
         self.min_points = min_points
         self.id_offset = id_offset
 
@@ -79,8 +79,8 @@ class PanopticSegMetric(SegMetric):
         label2cat = self.dataset_meta['label2cat']
         ignore_index = self.dataset_meta['ignore_index']
         classes = self.dataset_meta['classes']
-        things_classes = [classes[i] for i in self.thing_class_indices]
-        stuff_classes = [classes[i] for i in self.stuff_class_indices]
+        things_classes = [classes[i] for i in self.thing_class_inds]
+        stuff_classes = [classes[i] for i in self.stuff_class_inds]
 
         gt_labels = []
         seg_preds = []
