@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
