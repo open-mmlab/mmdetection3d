@@ -919,8 +919,9 @@ def update_waymo_infos(pkl_path, out_dir):
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['timestamp'] = ori_info_dict[
             'timestamp']
-        temp_data_info['lidar_points']['lidar_path'] = Path(
-            ori_info_dict['point_cloud']['velodyne_path']).name
+        velo_path = ori_info_dict['point_cloud'].get('velodyne_path')
+        if velo_path is not None:
+            temp_data_info['lidar_points']['lidar_path'] = Path(velo_path).name
 
         # TODO discuss the usage of Tr_velo_to_cam in lidar
         Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
@@ -953,93 +954,97 @@ def update_waymo_infos(pkl_path, out_dir):
             temp_data_info['lidar_sweeps'].append(lidar_sweep)
             temp_data_info['image_sweeps'].append(image_sweep)
 
-        anns = ori_info_dict['annos']
-        num_instances = len(anns['name'])
-
+        anns = ori_info_dict.get('annos')
         ignore_class_name = set()
-        instance_list = []
-        for instance_id in range(num_instances):
-            empty_instance = get_empty_instance()
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+        if anns is not None:
+            num_instances = len(anns['name'])
 
-            if anns['name'][instance_id] in METAINFO['classes']:
-                empty_instance['bbox_label'] = METAINFO['classes'].index(
-                    anns['name'][instance_id])
-            else:
-                ignore_class_name.add(anns['name'][instance_id])
-                empty_instance['bbox_label'] = -1
+            instance_list = []
+            for instance_id in range(num_instances):
+                empty_instance = get_empty_instance()
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                if anns['name'][instance_id] in METAINFO['classes']:
+                    empty_instance['bbox_label'] = METAINFO['classes'].index(
+                        anns['name'][instance_id])
+                else:
+                    ignore_class_name.add(anns['name'][instance_id])
+                    empty_instance['bbox_label'] = -1
 
-            loc = anns['location'][instance_id]
-            dims = anns['dimensions'][instance_id]
-            rots = anns['rotation_y'][:, None][instance_id]
-            gt_bboxes_3d = np.concatenate([loc, dims,
-                                           rots]).astype(np.float32).tolist()
-            empty_instance['bbox_3d'] = gt_bboxes_3d
-            empty_instance['bbox_label_3d'] = copy.deepcopy(
-                empty_instance['bbox_label'])
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
-            empty_instance['truncated'] = int(
-                anns['truncated'][instance_id].tolist())
-            empty_instance['occluded'] = anns['occluded'][instance_id].tolist()
-            empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
-            empty_instance['index'] = anns['index'][instance_id].tolist()
-            empty_instance['group_id'] = anns['group_ids'][instance_id].tolist(
-            )
-            empty_instance['difficulty'] = anns['difficulty'][
-                instance_id].tolist()
-            empty_instance['num_lidar_pts'] = anns['num_points_in_gt'][
-                instance_id].tolist()
-            empty_instance['camera_id'] = anns['camera_id'][
-                instance_id].tolist()
-            empty_instance = clear_instance_unused_keys(empty_instance)
-            instance_list.append(empty_instance)
-        temp_data_info['instances'] = instance_list
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+
+                loc = anns['location'][instance_id]
+                dims = anns['dimensions'][instance_id]
+                rots = anns['rotation_y'][:, None][instance_id]
+                gt_bboxes_3d = np.concatenate([loc, dims, rots
+                                               ]).astype(np.float32).tolist()
+                empty_instance['bbox_3d'] = gt_bboxes_3d
+                empty_instance['bbox_label_3d'] = copy.deepcopy(
+                    empty_instance['bbox_label'])
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                empty_instance['truncated'] = int(
+                    anns['truncated'][instance_id].tolist())
+                empty_instance['occluded'] = anns['occluded'][
+                    instance_id].tolist()
+                empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
+                empty_instance['index'] = anns['index'][instance_id].tolist()
+                empty_instance['group_id'] = anns['group_ids'][
+                    instance_id].tolist()
+                empty_instance['difficulty'] = anns['difficulty'][
+                    instance_id].tolist()
+                empty_instance['num_lidar_pts'] = anns['num_points_in_gt'][
+                    instance_id].tolist()
+                empty_instance['camera_id'] = anns['camera_id'][
+                    instance_id].tolist()
+                empty_instance = clear_instance_unused_keys(empty_instance)
+                instance_list.append(empty_instance)
+            temp_data_info['instances'] = instance_list
 
         # waymo provide the labels that sync with cam
-        anns = ori_info_dict['cam_sync_annos']
-        num_instances = len(anns['name'])
+        anns = ori_info_dict.get('cam_sync_annos')
         ignore_class_name = set()
-        instance_list = []
-        for instance_id in range(num_instances):
-            empty_instance = get_empty_instance()
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+        if anns is not None:
+            num_instances = len(anns['name'])
+            instance_list = []
+            for instance_id in range(num_instances):
+                empty_instance = get_empty_instance()
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            if anns['name'][instance_id] in METAINFO['classes']:
-                empty_instance['bbox_label'] = METAINFO['classes'].index(
-                    anns['name'][instance_id])
-            else:
-                ignore_class_name.add(anns['name'][instance_id])
-                empty_instance['bbox_label'] = -1
+                if anns['name'][instance_id] in METAINFO['classes']:
+                    empty_instance['bbox_label'] = METAINFO['classes'].index(
+                        anns['name'][instance_id])
+                else:
+                    ignore_class_name.add(anns['name'][instance_id])
+                    empty_instance['bbox_label'] = -1
 
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            loc = anns['location'][instance_id]
-            dims = anns['dimensions'][instance_id]
-            rots = anns['rotation_y'][:, None][instance_id]
-            gt_bboxes_3d = np.concatenate([loc, dims,
-                                           rots]).astype(np.float32).tolist()
-            empty_instance['bbox_3d'] = gt_bboxes_3d
-            empty_instance['bbox_label_3d'] = copy.deepcopy(
-                empty_instance['bbox_label'])
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
-            empty_instance['truncated'] = int(
-                anns['truncated'][instance_id].tolist())
-            empty_instance['occluded'] = anns['occluded'][instance_id].tolist()
-            empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
-            empty_instance['index'] = anns['index'][instance_id].tolist()
-            empty_instance['group_id'] = anns['group_ids'][instance_id].tolist(
-            )
-            empty_instance['camera_id'] = anns['camera_id'][
-                instance_id].tolist()
-            empty_instance = clear_instance_unused_keys(empty_instance)
-            instance_list.append(empty_instance)
-        temp_data_info['cam_sync_instances'] = instance_list
+                loc = anns['location'][instance_id]
+                dims = anns['dimensions'][instance_id]
+                rots = anns['rotation_y'][:, None][instance_id]
+                gt_bboxes_3d = np.concatenate([loc, dims, rots
+                                               ]).astype(np.float32).tolist()
+                empty_instance['bbox_3d'] = gt_bboxes_3d
+                empty_instance['bbox_label_3d'] = copy.deepcopy(
+                    empty_instance['bbox_label'])
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                empty_instance['truncated'] = int(
+                    anns['truncated'][instance_id].tolist())
+                empty_instance['occluded'] = anns['occluded'][
+                    instance_id].tolist()
+                empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
+                empty_instance['index'] = anns['index'][instance_id].tolist()
+                empty_instance['group_id'] = anns['group_ids'][
+                    instance_id].tolist()
+                empty_instance['camera_id'] = anns['camera_id'][
+                    instance_id].tolist()
+                empty_instance = clear_instance_unused_keys(empty_instance)
+                instance_list.append(empty_instance)
+            temp_data_info['cam_sync_instances'] = instance_list
 
-        cam_instances = generate_waymo_camera_instances(
-            ori_info_dict, camera_types)
-        temp_data_info['cam_instances'] = cam_instances
+            cam_instances = generate_waymo_camera_instances(
+                ori_info_dict, camera_types)
+            temp_data_info['cam_instances'] = cam_instances
 
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
