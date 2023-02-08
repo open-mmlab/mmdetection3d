@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import torch
@@ -139,21 +139,19 @@ class EncoderDecoder3D(Base3DSegmentor):
         return x
 
     def encode_decode(self, batch_inputs: Tensor,
-                      batch_data_samples: SampleList) -> Tensor:
+                      batch_input_metas: List[dict]) -> Tensor:
         """Encode points with backbone and decode into a semantic segmentation
         map of the same size as input.
 
         Args:
             batch_input (Tensor): Input point cloud sample
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`.
+            input_meta (List[dict]): Meta information of each sample.
 
         Returns:
             Tensor: Segmentation logits of shape [B, num_classes, N].
         """
         x = self.extract_feat(batch_inputs)
-        seg_logits = self.decode_head.predict(x, batch_data_samples,
+        seg_logits = self.decode_head.predict(x, batch_input_metas,
                                               self.test_cfg)
         return seg_logits
 
@@ -402,15 +400,13 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return patch_points, patch_idxs
 
-    def slide_inference(self, point: Tensor, batch_data_samples: SampleList,
+    def slide_inference(self, point: Tensor, input_meta: dict,
                         rescale: bool) -> Tensor:
         """Inference by sliding-window with overlap.
 
         Args:
             point (Tensor): Input points of shape [N, 3+C].
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`.
+            input_meta (dict): Meta information of input sample.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
 
@@ -434,7 +430,7 @@ class EncoderDecoder3D(Base3DSegmentor):
             batch_points = batch_points.view(-1, num_points, feats_dim)
             # batch_seg_logit is of shape [B, num_classes, N]
             batch_seg_logit = self.encode_decode(batch_points,
-                                                 batch_data_samples)
+                                                 [input_meta] * batch_size)
             batch_seg_logit = batch_seg_logit.transpose(1, 2).contiguous()
             seg_logits.append(batch_seg_logit.view(-1, self.num_classes))
 
@@ -450,22 +446,20 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         return preds.transpose(0, 1)  # to [num_classes, K*N]
 
-    def whole_inference(self, points: Tensor, batch_data_samples: SampleList,
+    def whole_inference(self, points: Tensor, batch_input_metas: List[dict],
                         rescale: bool) -> Tensor:
         """Inference with full scene (one forward pass without sliding)."""
-        seg_logit = self.encode_decode(points, batch_data_samples)
+        seg_logit = self.encode_decode(points, batch_input_metas)
         # TODO: if rescale and voxelization segmentor
         return seg_logit
 
-    def inference(self, points: Tensor, batch_data_samples: SampleList,
+    def inference(self, points: Tensor, batch_input_metas: List[dict],
                   rescale: bool) -> Tensor:
         """Inference with slide/whole style.
 
         Args:
             points (Tensor): Input points of shape [B, N, 3+C].
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            batch_input_metas (List[dict]): Meta information of each sample.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
 
@@ -475,11 +469,11 @@ class EncoderDecoder3D(Base3DSegmentor):
         assert self.test_cfg.mode in ['slide', 'whole']
         if self.test_cfg.mode == 'slide':
             seg_logit = torch.stack([
-                self.slide_inference(point, img_meta, rescale)
-                for point, img_meta in zip(points, batch_data_samples)
+                self.slide_inference(point, input_meta, rescale)
+                for point, input_meta in zip(points, batch_input_metas)
             ], 0)
         else:
-            seg_logit = self.whole_inference(points, batch_data_samples,
+            seg_logit = self.whole_inference(points, batch_input_metas,
                                              rescale)
         output = F.softmax(seg_logit, dim=1)
         return output
@@ -514,11 +508,14 @@ class EncoderDecoder3D(Base3DSegmentor):
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
         seg_pred_list = []
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
 
         points = batch_inputs_dict['points']
-        for point, data_sample in zip(points, batch_data_samples):
+        for point, input_meta in zip(points, batch_input_metas):
             seg_prob = self.inference(
-                point.unsqueeze(0), [data_sample], rescale)[0]
+                point.unsqueeze(0), [input_meta], rescale)[0]
             seg_map = seg_prob.argmax(0)  # [N]
             # to cpu tensor for consistency with det3d
             seg_map = seg_map.cpu()
