@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-from typing import Dict
+from typing import Dict, List
 
 import torch
 from mmengine.model import BaseModule, normal_init
@@ -122,15 +122,13 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         losses = self.loss_by_feat(seg_logits, batch_data_samples)
         return losses
 
-    def predict(self, inputs: dict, batch_data_samples: SampleList,
+    def predict(self, inputs: dict, batch_input_metas: List[dict],
                 test_cfg: ConfigType) -> Tensor:
         """Forward function for testing.
 
         Args:
             inputs (dict): Feature dict from backbone.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`.
+            batch_input_metas (List[dict]): Meta information of each sample.
             test_cfg (dict or :obj:`ConfigDict`): The testing config.
 
         Returns:
