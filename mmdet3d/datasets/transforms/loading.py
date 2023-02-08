@@ -729,7 +729,9 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to True.
         seg_3d_dtype (dtype): Dtype of 3D semantic masks. Defaults to int64.
         seg_offset (int): The offset to split semantic and instance labels from
-            panoptic labels. Defaults to 0.
+            panoptic labels. Defaults to None.
+        dataset_type (str): Type of dataset used for splitting semantic and
+            instance labels. Defaults to None.
         file_client_args (dict): Arguments to instantiate a FileClient.
             See :class:`mmengine.fileio.FileClient` for details.
             Defaults to dict(backend='disk').
@@ -748,8 +750,9 @@ class LoadAnnotations3D(LoadAnnotations):
         with_seg: bool = False,
         with_bbox_depth: bool = False,
         poly2mask: bool = True,
-        seg_offset: int = 0,
         seg_3d_dtype: np.dtype = np.int64,
+        seg_offset: int = None,
+        dataset_type: str = None,
         file_client_args: dict = dict(backend='disk')
     ) -> None:
         super().__init__(
@@ -767,6 +770,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_seg_3d = with_seg_3d
         self.seg_3d_dtype = seg_3d_dtype
         self.seg_offset = seg_offset
+        self.dataset_type = dataset_type
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from
@@ -871,8 +875,11 @@ class LoadAnnotations3D(LoadAnnotations):
             pts_semantic_mask = np.fromfile(
                 pts_semantic_mask_path, dtype=np.int64)
 
-        pts_semantic_mask = pts_semantic_mask.astype(
-            np.int64) // self.seg_offset
+        pts_semantic_mask = pts_semantic_mask.astype(np.int64)
+        if self.dataset_type == 'semantickitti':
+            pts_semantic_mask = pts_semantic_mask % self.seg_offset
+        # nuScenes loads semantic and panoptic labels from different files.
+
         results['pts_semantic_mask'] = pts_semantic_mask
 
         # 'eval_ann_info' will be passed to evaluator
@@ -903,8 +910,12 @@ class LoadAnnotations3D(LoadAnnotations):
             pts_panoptic_mask = np.fromfile(
                 pts_panoptic_mask_path, dtype=np.int64)
 
-        pts_semantic_mask = pts_panoptic_mask.astype(
-            np.int64) % self.seg_offset
+        pts_semantic_mask = pts_panoptic_mask.astype(np.int64)
+        if self.dataset_type == 'semantickitti':
+            pts_semantic_mask = pts_semantic_mask % self.seg_offset
+        elif self.dataset_type == 'nuscenes':
+            pts_semantic_mask = pts_semantic_mask // self.seg_offset
+
         results['pts_semantic_mask'] = pts_semantic_mask
 
         # We can directly take panoptic labels as instance ids.
