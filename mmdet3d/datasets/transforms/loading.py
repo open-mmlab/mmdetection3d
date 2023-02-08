@@ -994,6 +994,7 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}with_attr_label={self.with_attr_label}, '
         repr_str += f'{indent_str}with_mask_3d={self.with_mask_3d}, '
         repr_str += f'{indent_str}with_seg_3d={self.with_seg_3d}, '
+        repr_str += f'{indent_str}with_panoptic_3d={self.with_panoptic_3d}, '
         repr_str += f'{indent_str}with_bbox={self.with_bbox}, '
         repr_str += f'{indent_str}with_label={self.with_label}, '
         repr_str += f'{indent_str}with_mask={self.with_mask}, '
