@@ -29,6 +29,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pointpillars/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car/hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20220331_134606-d42d15ed.pth
 
   - Name: pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class
+    Alias: pointpillars_kitti-3class
     In Collection: PointPillars
     Config: configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py
     Metadata:
@@ -164,8 +165,9 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth
 
   - Name: hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class
+    Alias: pointpillars_waymod5-3class
     In Collection: PointPillars
-    Config: configs/pointpillars/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-3class.py
+    Config: configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py
     Metadata:
       Training Data: Waymo
       Training Memory (GB): 8.12

@@ -4,12 +4,14 @@ from typing import List, Optional, Union
 
 import mmcv
 import mmengine
+import mmengine.fileio as fileio
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
 from mmdet.datasets.transforms import LoadAnnotations
 
 from mmdet3d.registry import TRANSFORMS
+from mmdet3d.structures.bbox_3d import get_box_type
 from mmdet3d.structures.points import BasePoints, get_points_type
 
 
@@ -193,10 +195,10 @@ class LoadMultiViewImageFromFiles(BaseTransform):
         # unravel to list, see `DefaultFormatBundle` in formating.py
         # which will transpose each image separately and then stack into array
         results['img'] = [img[..., i] for i in range(img.shape[-1])]
-        results['img_shape'] = img.shape
-        results['ori_shape'] = img.shape
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
         # Set initial values for default meta_keys
-        results['pad_shape'] = img.shape
+        results['pad_shape'] = img.shape[:2]
         if self.set_default_scale:
             results['scale_factor'] = 1.0
         num_channels = 1 if len(img.shape) < 3 else img.shape[2]
@@ -254,9 +256,21 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
                 'Currently we only support load image from kitti and'
                 'nuscenes datasets')
 
-        img_bytes = self.file_client.get(filename)
-        img = mmcv.imfrombytes(
-            img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        try:
+            if self.file_client_args is not None:
+                file_client = fileio.FileClient.infer_client(
+                    self.file_client_args, filename)
+                img_bytes = file_client.get(filename)
+            else:
+                img_bytes = fileio.get(
+                    filename, backend_args=self.backend_args)
+            img = mmcv.imfrombytes(
+                img_bytes, flag=self.color_type, backend=self.imdecode_backend)
+        except Exception as e:
+            if self.ignore_empty:
+                return None
+            else:
+                raise e
         if self.to_float32:
             img = img.astype(np.float32)
 
@@ -264,6 +278,46 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
         results['img_shape'] = img.shape[:2]
         results['ori_shape'] = img.shape[:2]
 
+        return results
+
+
+@TRANSFORMS.register_module()
+class LoadImageFromNDArray(LoadImageFromFile):
+    """Load an image from ``results['img']``.
+    Similar with :obj:`LoadImageFromFile`, but the image has been loaded as
+    :obj:`np.ndarray` in ``results['img']``. Can be used when loading image
+    from webcam.
+    Required Keys:
+    - img
+    Modified Keys:
+    - img
+    - img_path
+    - img_shape
+    - ori_shape
+    Args:
+        to_float32 (bool): Whether to convert the loaded image to a float32
+            numpy array. If set to False, the loaded image is an uint8 array.
+            Defaults to False.
+    """
+
+    def transform(self, results: dict) -> dict:
+        """Transform function to add image meta information.
+
+        Args:
+            results (dict): Result dict with Webcam read image in
+                ``results['img']``.
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+
+        img = results['img']
+        if self.to_float32:
+            img = img.astype(np.float32)
+
+        results['img_path'] = None
+        results['img'] = img
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
         return results
 
 
@@ -297,9 +351,13 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                  test_mode: bool = False) -> None:
         self.load_dim = load_dim
         self.sweeps_num = sweeps_num
+        if isinstance(use_dim, int):
+            use_dim = list(range(use_dim))
+        assert max(use_dim) < load_dim, \
+            f'Expect all used dimensions < {load_dim}, got {use_dim}'
         self.use_dim = use_dim
         self.file_client_args = file_client_args.copy()
-        self.file_client = None
+        self.file_client = mmengine.FileClient(**self.file_client_args)
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
@@ -651,7 +709,21 @@ class LoadPointsFromDict(LoadPointsFromFile):
     """Load Points From Dict."""
 
     def transform(self, results: dict) -> dict:
+        """Convert the type of points from ndarray to corresponding
+        `point_class`.
+
+        Args:
+            results (dict): input result. The value of key `points` is a
+                numpy array.
+
+        Returns:
+            dict: The processed results.
+        """
         assert 'points' in results
+        points_class = get_points_type(self.coord_type)
+        points = results['points']
+        results['points'] = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=None)
         return results
 
 
@@ -775,6 +847,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.seg_3d_dtype = seg_3d_dtype
         self.seg_offset = seg_offset
         self.dataset_type = dataset_type
+        self.file_client = None
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from
@@ -1004,3 +1077,125 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}seg_offset={self.seg_offset})'
 
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class LidarDet3DInferencerLoader(BaseTransform):
+    """Load point cloud in the Inferencer's pipeline.
+
+    Added keys:
+      - points
+      - timestamp
+      - axis_align_matrix
+      - box_type_3d
+      - box_mode_3d
+    """
+
+    def __init__(self, coord_type='LIDAR', **kwargs) -> None:
+        super().__init__()
+        self.from_file = TRANSFORMS.build(
+            dict(type='LoadPointsFromFile', coord_type=coord_type, **kwargs))
+        self.from_ndarray = TRANSFORMS.build(
+            dict(type='LoadPointsFromDict', coord_type=coord_type, **kwargs))
+        self.box_type_3d, self.box_mode_3d = get_box_type(coord_type)
+
+    def transform(self, single_input: dict) -> dict:
+        """Transform function to add image meta information.
+        Args:
+            single_input (dict): Single input.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        assert 'points' in single_input, "key 'points' must be in input dict"
+        if isinstance(single_input['points'], str):
+            inputs = dict(
+                lidar_points=dict(lidar_path=single_input['points']),
+                timestamp=1,
+                # for ScanNet demo we need axis_align_matrix
+                axis_align_matrix=np.eye(4),
+                box_type_3d=self.box_type_3d,
+                box_mode_3d=self.box_mode_3d)
+        elif isinstance(single_input['points'], np.ndarray):
+            inputs = dict(
+                points=single_input['points'],
+                timestamp=1,
+                # for ScanNet demo we need axis_align_matrix
+                axis_align_matrix=np.eye(4),
+                box_type_3d=self.box_type_3d,
+                box_mode_3d=self.box_mode_3d)
+        else:
+            raise ValueError('Unsupported input points type: '
+                             f"{type(single_input['points'])}")
+
+        if 'points' in inputs:
+            return self.from_ndarray(inputs)
+        return self.from_file(inputs)
+
+
+@TRANSFORMS.register_module()
+class MonoDet3DInferencerLoader(BaseTransform):
+    """Load an image from ``results['images']['CAMX']['img']``. Similar with
+    :obj:`LoadImageFromFileMono3D`, but the image has been loaded as
+    :obj:`np.ndarray` in ``results['images']['CAMX']['img']``.
+
+    Added keys:
+      - img
+      - cam2img
+      - box_type_3d
+      - box_mode_3d
+
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__()
+        self.from_file = TRANSFORMS.build(
+            dict(type='LoadImageFromFileMono3D', **kwargs))
+        self.from_ndarray = TRANSFORMS.build(
+            dict(type='LoadImageFromNDArray', **kwargs))
+
+    def transform(self, single_input: dict) -> dict:
+        """Transform function to add image meta information.
+
+        Args:
+            single_input (dict): Result dict with Webcam read image in
+                ``results['images']['CAMX']['img']``.
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+        box_type_3d, box_mode_3d = get_box_type('camera')
+        assert 'calib' in single_input and 'img' in single_input, \
+            "key 'calib' and 'img' must be in input dict"
+        if isinstance(single_input['calib'], str):
+            calib_path = single_input['calib']
+            with open(calib_path, 'r') as f:
+                lines = f.readlines()
+            cam2img = np.array([
+                float(info) for info in lines[0].split(' ')[0:16]
+            ]).reshape([4, 4])
+        elif isinstance(single_input['calib'], np.ndarray):
+            cam2img = single_input['calib']
+        else:
+            raise ValueError('Unsupported input calib type: '
+                             f"{type(single_input['calib'])}")
+
+        if isinstance(single_input['img'], str):
+            inputs = dict(
+                images=dict(
+                    CAM_FRONT=dict(
+                        img_path=single_input['img'], cam2img=cam2img)),
+                box_mode_3d=box_mode_3d,
+                box_type_3d=box_type_3d)
+        elif isinstance(single_input['img'], np.ndarray):
+            inputs = dict(
+                img=single_input['img'],
+                cam2img=cam2img,
+                box_type_3d=box_type_3d,
+                box_mode_3d=box_mode_3d)
+        else:
+            raise ValueError('Unsupported input image type: '
+                             f"{type(single_input['img'])}")
+
+        if 'img' in inputs:
+            return self.from_ndarray(inputs)
+        return self.from_file(inputs)
