@@ -48,7 +48,6 @@ class TestCBGSDataset:
 
     def setup(self):
         dataset = NuScenesDataset
-        dataset.get_cat_ids - MagicMock(return_value=[0])
         self.dataset = dataset(
             data_root=osp.join(osp.dirname(__file__), '../data/nuscenes'),
             ann_file='nus_info.pkl',
