@@ -36,6 +36,22 @@ split_list = ['train', 'valid', 'test']
 
 
 def get_semantickitti_info(split):
+    """Create info file in the form of
+        data_infos={
+            'metainfo': {'DATASET': 'SemanticKITTI'},
+            'data_list': {
+                00000: {
+                    'lidar_points':{
+                        'lidat_path':'sequences/00/velodyne/000000.bin'
+                    },
+                    'pts_semantic_mask_path':
+                        'sequences/000/labels/000000.labbel',
+                    'sample_id': '00'
+                },
+                ...
+            }
+        }
+    """
     data_infos = dict()
     data_infos['metainfo'] = dict(DATASET='SemanticKITTI')
     data_list = []
@@ -59,16 +75,14 @@ def get_semantickitti_info(split):
     return data_infos
 
 
-def create_semantickitti_info_file(pkl_prefix='semantickitti', save_path=None):
+def create_semantickitti_info_file(pkl_prefix, save_path):
     """Create info file of SemanticKITTI dataset.
 
     Directly generate info file without raw data.
 
     Args:
-        pkl_prefix (str, optional): Prefix of the info file to be generated.
-            Default: 'semantickitti'.
-        save_path (str, optional): Path to save the info file.
-            Default: None.
+        pkl_prefix (str): Prefix of the info file to be generated.
+        save_path (str): Path to save the info file.
     """
     print('Generate info.')
     save_path = Path(save_path)
@@ -85,3 +99,6 @@ def create_semantickitti_info_file(pkl_prefix='semantickitti', save_path=None):
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'SemanticKITTI info test file is saved to {filename}')
     mmengine.dump(semantickitti_infos_test, filename)
+
+
+create_semantickitti_info_file('semantickitti', 'data/semantickitti')
