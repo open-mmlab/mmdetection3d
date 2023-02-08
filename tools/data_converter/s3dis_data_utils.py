@@ -79,9 +79,9 @@ class S3DISData(object):
 
             points = np.load(pts_filename).astype(np.float32)
             pts_instance_mask = \
-            np.load(pts_instance_mask_path).astype(np.int64)
+                np.load(pts_instance_mask_path).astype(np.int64)
             pts_semantic_mask = \
-            np.load(pts_semantic_mask_path).astype(np.int64)
+                np.load(pts_semantic_mask_path).astype(np.int64)
 
             mmcv.mkdir_or_exist(osp.join(self.root_dir, 'points'))
             mmcv.mkdir_or_exist(osp.join(self.root_dir, 'instance_mask'))
