@@ -759,7 +759,7 @@ class LoadAnnotations3D(LoadAnnotations):
     - pts_semantic_mask_path (str): Path of semantic mask file.
       Only when `with_seg_3d` is True.
     - pts_panoptic_mask_path (str): Path of panoptic mask file.
-      Only when both `with_mask_3d` and `with_seg_3d` is True.
+      Only when both `with_panoptic_3d` is True.
 
     Added Keys:
 
