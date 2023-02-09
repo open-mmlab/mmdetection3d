@@ -7,7 +7,8 @@ import torch
 from mmengine.testing import assert_allclose
 
 from mmdet3d.datasets import GlobalAlignment, RandomFlip3D
-from mmdet3d.datasets.transforms import GlobalRotScaleTrans
+from mmdet3d.datasets.transforms import GlobalRotScaleTrans, PolarMix
+from mmdet3d.structures import BasePoints
 from mmdet3d.testing import create_data_info_after_loading
 
 
@@ -99,3 +100,35 @@ class TestGlobalAlignment(unittest.TestCase):
         # assert the rot metric
         with self.assertRaises(AssertionError):
             global_align_transform(data_info)
+
+
+class TestPolarMix(unittest.TestCase):
+
+    def setUp(self):
+        points = np.random.random((100, 4))
+        self.results = {
+            'points': BasePoints(points, points_dim=4),
+            'pts_semantic_mask': np.random.randint(0, 5, (100, ))
+        }
+
+    def test_transform(self):
+        # test assertion for invalid instance_classes
+        with self.assertRaises(AssertionError):
+            transform = PolarMix(instance_classes=1)
+
+        with self.assertRaises(AssertionError):
+            transform = PolarMix(instance_classes=[1.0, 2.0])
+
+        transform = PolarMix(instance_classes=[1, 2])
+        # test assertion for invalid mix_results
+        with self.assertRaises(AssertionError):
+            results = transform(copy.deepcopy(self.results))
+
+        with self.assertRaises(AssertionError):
+            self.results['mix_results'] = [copy.deepcopy(self.results)] * 2
+            results = transform(copy.deepcopy(self.results))
+
+        self.results['mix_results'] = [copy.deepcopy(self.results)]
+        results = transform(copy.deepcopy(self.results))
+        self.assertTrue(results['points'].shape[0] ==
+                        results['pts_semantic_mask'].shape[0])
