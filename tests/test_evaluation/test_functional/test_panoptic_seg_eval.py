@@ -19,7 +19,7 @@ def test_panoptic_seg_eval():
         4: 'sky',
     }
 
-    things_classes = ['person', 'dog']
+    thing_classes = ['person', 'dog']
     stuff_classes = ['grass', 'sky']
     ignore_index = [0]  # only ignore ignore class
     min_points = 1  # for this example we care about all points
@@ -91,9 +91,9 @@ def test_panoptic_seg_eval():
         'pts_instance_mask': instance_preds
     }]
 
-    ret_value = panoptic_seg_eval(gt_labels, seg_preds, classes,
-                                  things_classes, stuff_classes, min_points,
-                                  offset, label2cat, ignore_index)
+    ret_value = panoptic_seg_eval(gt_labels, seg_preds, classes, thing_classes,
+                                  stuff_classes, min_points, offset, label2cat,
+                                  ignore_index)
 
     assert np.isclose(ret_value['pq'], 0.47916666666666663)
     assert np.isclose(ret_value['rq_mean'], 0.6666666666666666)
