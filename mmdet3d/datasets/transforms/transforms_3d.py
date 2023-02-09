@@ -9,7 +9,8 @@ import numpy as np
 from mmcv.transforms import BaseTransform, Compose, RandomResize, Resize
 from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
                                        RandomFlip)
-from mmengine import is_tuple_of
+from mmengine import is_list_of, is_tuple_of
+from mmengine.dataset import BaseDataset
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
@@ -2352,3 +2353,146 @@ class MultiViewWrapper(BaseTransform):
             if len(input_dict[key]) == 0:
                 input_dict.pop(key)
         return input_dict
+
+
+@TRANSFORMS.register_module()
+class PolarMix(BaseTransform):
+    """PolarMix data augmentation.
+
+    Required Keys:
+
+    - points (:obj:`BasePoints`)
+    - pts_semantic_mask (np.int64)
+    - mix_results (List[dict])
+
+    Modified Keys:
+
+    - points (:obj:`BasePoints`)
+    - pts_semantic_mask (np.int64)
+
+    Args:
+        instance_classes (List[int]): Semantic masks which represent the
+            instance.
+        swap_ratio (float): Swap ratio of two point cloud. Defaults to 0.5.
+    """
+
+    def __init__(self,
+                 instance_classes: List[int],
+                 swap_ratio: float = 0.5) -> None:
+        assert is_list_of(instance_classes, int)
+        self.instance_classes = instance_classes
+        self.swap_ratio = swap_ratio
+        self.omega = [
+            np.random.random() * np.pi * 2 / 3,
+            (np.random.random() + 1) * np.pi * 2 / 3
+        ]
+
+    def get_indexes(self, dataset: BaseDataset) -> int:
+        """Call function to collect indexes.
+
+        Args:
+            dataset (:obj:`BaseDataset`): The dataset.
+
+        Returns:
+            int: Index.
+        """
+        index = random.randint(0, len(dataset))
+        return index
+
+    def transform(self, input_dict: dict) -> dict:
+        """PolarMix transform function.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: output dict after transformtaion
+        """
+
+        assert 'mix_results' in input_dict
+        assert len(input_dict['mix_results']) == 1, \
+            'MixUp only support 2 point cloud now!'
+
+        retrieve_results = input_dict['mix_results'][0]
+        retrieve_points = retrieve_results['points']
+        retrieve_points_numpy = retrieve_points.tensor.numpy()
+        retrieve_pts_semantic_mask = retrieve_results['pts_semantic_mask']
+
+        points = input_dict['points']
+        attribute_dims = points.attribute_dims
+
+        points_numpy = points.tensor.numpy()
+        pts_semantic_mask = retrieve_results['pts_semantic_mask']
+
+        point_type = type(points)
+
+        # 1. swap point cloud
+        if np.random.random() < self.swap_ratio:
+            start_angle = (np.random.random() - 1) * np.pi  # -pi~pi
+            end_angle = start_angle + np.pi
+            # calculate horizontal angle for each point
+            yaw = -np.arctan2(points_numpy[:, 1], points_numpy[:, 0])
+            retrieve_yaw = -np.arctan2(retrieve_points_numpy[:, 1],
+                                       retrieve_points_numpy[:, 0])
+
+            # select points in sector
+            idx = np.where((yaw > start_angle) & (yaw < end_angle))
+            retrieve_idx = np.where((retrieve_yaw > start_angle)
+                                    & (retrieve_yaw < end_angle))
+
+            # swap
+            points_numpy = np.delete(points_numpy, idx, axis=0)
+            points_numpy = np.concatenate(
+                (points_numpy, retrieve_points_numpy[retrieve_idx]), axis=0)
+            pts_semantic_mask = np.delete(pts_semantic_mask, idx, axis=0)
+            pts_semantic_mask = np.concatenate(
+                (pts_semantic_mask, retrieve_pts_semantic_mask[retrieve_idx]),
+                axis=0)
+
+        # 2. rotate-pasting
+        # extract instance points
+        instance_points, instance_pts_semantic_mask = [], []
+        for instance_class in self.instance_classes:
+            retrieve_idx = np.where(
+                (retrieve_pts_semantic_mask == instance_class))
+            instance_points.append(retrieve_points_numpy[retrieve_idx])
+            instance_pts_semantic_mask.append(
+                retrieve_pts_semantic_mask[retrieve_idx])
+        instance_points = np.concatenate(instance_points, axis=0)
+        instance_pts_semantic_mask = np.concatenate(
+            instance_pts_semantic_mask, axis=0)
+
+        # rotate-copy
+        copy_points = [instance_points]
+        copy_pts_semantic_mask = [instance_pts_semantic_mask]
+        for omega in self.omega:
+            rot_mat = np.array([[np.cos(omega),
+                                 np.sin(omega), 0],
+                                [-np.sin(omega),
+                                 np.cos(omega), 0], [0, 0, 1]])
+            new_points = np.zeros_like(instance_points)
+            new_points[:, :3] = np.dot(instance_points[:, :3], rot_mat)
+            new_points[:, 3:] = instance_points[:, 3:]
+            copy_points.append(new_points)
+            copy_pts_semantic_mask.append(instance_pts_semantic_mask)
+        copy_points = np.concatenate(copy_points, axis=0)
+        copy_pts_semantic_mask = np.concatenate(copy_pts_semantic_mask, axis=0)
+
+        points_numpy = np.concatenate((points_numpy, copy_points), axis=0)
+        points = point_type(
+            points_numpy,
+            points_dim=points_numpy.shape[1],
+            attribute_dims=attribute_dims)
+        pts_semantic_mask = np.concatenate(
+            (pts_semantic_mask, copy_pts_semantic_mask), axis=0)
+
+        input_dict['points'] = points
+        input_dict['pts_semantic_mask'] = pts_semantic_mask
+        return input_dict
+
+    def __repr__(self) -> dict:
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(instance_classes={self.instance_classes}, '
+        repr_str += f'swap_ratio={self.swap_ratio})'
+        return repr_str
