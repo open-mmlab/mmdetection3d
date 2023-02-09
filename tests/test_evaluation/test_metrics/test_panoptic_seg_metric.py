@@ -106,16 +106,16 @@ class TestPanopticSegMetric(unittest.TestCase):
         }
 
         ignore_index = [0]  # only ignore ignore class
-        min_points = 1  # for this example we care about all points
-        offset = 2**16
+        min_num_points = 1  # for this example we care about all points
+        id_offset = 2**16
 
         dataset_meta = dict(
             label2cat=label2cat, ignore_index=ignore_index, classes=classes)
         panoptic_seg_metric = PanopticSegMetric(
-            things_class_indices=[0, 1],
-            stuff_class_indices=[2, 3],
-            min_points=min_points,
-            offset=offset,
+            things_class_inds=[0, 1],
+            stuff_class_inds=[2, 3],
+            min_num_points=min_num_points,
+            id_offset=id_offset,
         )
         panoptic_seg_metric.dataset_meta = dataset_meta
         panoptic_seg_metric.process(data_batch, predictions)

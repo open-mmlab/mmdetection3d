@@ -14,7 +14,7 @@ class EvalPanoptic:
 
     Args:
         classes (list): Classes used in the dataset.
-        things_classes (list): Things classes used in the dataset.
+        thing_classes (list): Things classes used in the dataset.
         stuff_classes (list): Stuff classes used in the dataset.
         min_num_points (int): Minimum number of points of an object to be
             counted as ground truth in evaluation.
@@ -28,7 +28,7 @@ class EvalPanoptic:
 
     def __init__(self,
                  classes: List[str],
-                 things_classes: List[str],
+                 thing_classes: List[str],
                  stuff_classes: List[str],
                  min_num_points: int,
                  id_offset: int,
@@ -36,7 +36,7 @@ class EvalPanoptic:
                  ignore_index: List[str],
                  logger: MMLogger = None):
         self.classes = classes
-        self.things_classes = things_classes
+        self.thing_classes = thing_classes
         self.stuff_classes = stuff_classes
         self.ignore_index = np.array(ignore_index, dtype=int)
         self.n_classes = len(classes)
@@ -129,15 +129,15 @@ class EvalPanoptic:
             output_dict[class_str]['miou'] = _iou
 
         pq_dagger = np.mean(
-            [float(output_dict[c]['pq']) for c in self.things_classes] +
+            [float(output_dict[c]['pq']) for c in self.thing_classes] +
             [float(output_dict[c]['miou']) for c in self.stuff_classes])
 
         pq_things = np.mean(
-            [float(output_dict[c]['pq']) for c in self.things_classes])
+            [float(output_dict[c]['pq']) for c in self.thing_classes])
         rq_things = np.mean(
-            [float(output_dict[c]['rq']) for c in self.things_classes])
+            [float(output_dict[c]['rq']) for c in self.thing_classes])
         sq_things = np.mean(
-            [float(output_dict[c]['sq']) for c in self.things_classes])
+            [float(output_dict[c]['sq']) for c in self.thing_classes])
 
         pq_stuff = np.mean(
             [float(output_dict[c]['pq']) for c in self.stuff_classes])
@@ -311,10 +311,10 @@ class EvalPanoptic:
             # generate intersection using offset
             valid_combos = np.logical_and(pred_inst_in_cl > 0,
                                           gt_inst_in_cl > 0)
-            offset_combo = pred_inst_in_cl[
+            id_offset_combo = pred_inst_in_cl[
                 valid_combos] + self.id_offset * gt_inst_in_cl[valid_combos]
             unique_combo, counts_combo = np.unique(
-                offset_combo, return_counts=True)
+                id_offset_combo, return_counts=True)
 
             # generate an intersection map
             # count the intersections with over 0.5 IoU as TP
@@ -351,7 +351,7 @@ class EvalPanoptic:
 def panoptic_seg_eval(gt_labels: List[np.ndarray],
                       seg_preds: List[np.ndarray],
                       classes: List[str],
-                      things_classes: List[str],
+                      thing_classes: List[str],
                       stuff_classes: List[str],
                       min_num_points: int,
                       id_offset: int,
@@ -366,7 +366,7 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
         gt_labels (list[dict[np.ndarray]]): Ground Truth.
         seg_preds (list[dict[np.ndarray]]): Predictions.
         classes (list[str]): Classes used in the dataset.
-        things_classes (list[str]): Things classes used in the dataset.
+        thing_classes (list[str]): Thing classes used in the dataset.
         stuff_classes (list[str]): Stuff classes used in the dataset.
         min_num_points (int): Minimum point number of object to be
             counted as ground truth in evaluation.
@@ -380,7 +380,7 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
     Returns:
         dict[float]: Dict of results.
     """
-    panoptic_seg_eval = EvalPanoptic(classes, things_classes, stuff_classes,
+    panoptic_seg_eval = EvalPanoptic(classes, thing_classes, stuff_classes,
                                      min_num_points, id_offset, label2cat,
                                      ignore_index, logger)
     ret_dict = panoptic_seg_eval.evaluate(gt_labels, seg_preds)

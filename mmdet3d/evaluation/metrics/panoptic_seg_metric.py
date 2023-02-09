@@ -16,7 +16,7 @@ class PanopticSegMetric(SegMetric):
     Args:
         thing_class_inds (list[int]): Indices of thing classes.
         stuff_class_inds (list[int]): Indices of stuff classes.
-        min_points (int): Minimum point number of object to be
+        min_num_points (int): Minimum number of points of an object to be
             counted as ground truth in evaluation.
         id_offset (int): Offset for instance ids to concat with
             semantic labels.
@@ -38,7 +38,7 @@ class PanopticSegMetric(SegMetric):
     def __init__(self,
                  thing_class_inds: List[int],
                  stuff_class_inds: List[int],
-                 min_points: int,
+                 min_num_points: int,
                  id_offset: int,
                  collect_device: str = 'cpu',
                  prefix: Optional[str] = None,
@@ -47,7 +47,7 @@ class PanopticSegMetric(SegMetric):
                  **kwargs):
         self.thing_class_inds = thing_class_inds
         self.stuff_class_inds = stuff_class_inds
-        self.min_points = min_points
+        self.min_num_points = min_num_points
         self.id_offset = id_offset
 
         super(PanopticSegMetric, self).__init__(
@@ -79,7 +79,7 @@ class PanopticSegMetric(SegMetric):
         label2cat = self.dataset_meta['label2cat']
         ignore_index = self.dataset_meta['ignore_index']
         classes = self.dataset_meta['classes']
-        things_classes = [classes[i] for i in self.thing_class_inds]
+        thing_classes = [classes[i] for i in self.thing_class_inds]
         stuff_classes = [classes[i] for i in self.stuff_class_inds]
 
         gt_labels = []
@@ -89,8 +89,8 @@ class PanopticSegMetric(SegMetric):
             seg_preds.append(sinlge_pred_results)
 
         ret_dict = panoptic_seg_eval(gt_labels, seg_preds, classes,
-                                     things_classes, stuff_classes,
-                                     self.min_points, self.id_offset,
+                                     thing_classes, stuff_classes,
+                                     self.min_num_points, self.id_offset,
                                      label2cat, [ignore_index], logger)
 
         return ret_dict
