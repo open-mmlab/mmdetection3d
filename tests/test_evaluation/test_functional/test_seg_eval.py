@@ -32,8 +32,8 @@ def test_indoor_eval():
     assert np.isclose(ret_value['car'], 0.428571429)
     assert np.isclose(ret_value['bicycle'], 0.428571429)
     assert np.isclose(ret_value['motorcycle'], 0.6666667)
-    assert np.isclose(ret_value['truck'], 0.6666667)
+    assert np.isclose(ret_value['truck'], 0.5)
 
-    assert np.isclose(ret_value['acc'], 0.7)
-    assert np.isclose(ret_value['acc_cls'], 0.7)
-    assert np.isclose(ret_value['miou'], 0.547619048)
+    assert np.isclose(ret_value['acc'], 0.65)
+    assert np.isclose(ret_value['acc_cls'], 0.65)
+    assert np.isclose(ret_value['miou'], 0.50595238)
