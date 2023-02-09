@@ -128,7 +128,8 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
 
         Args:
             inputs (dict): Feature dict from backbone.
-            batch_input_metas (List[dict]): Meta information of each sample.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
             test_cfg (dict or :obj:`ConfigDict`): The testing config.
 
         Returns:

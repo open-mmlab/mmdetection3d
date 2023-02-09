@@ -145,7 +145,8 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         Args:
             batch_input (Tensor): Input point cloud sample
-            input_meta (List[dict]): Meta information of each sample.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
 
         Returns:
             Tensor: Segmentation logits of shape [B, num_classes, N].
@@ -459,7 +460,8 @@ class EncoderDecoder3D(Base3DSegmentor):
 
         Args:
             points (Tensor): Input points of shape [B, N, 3+C].
-            batch_input_metas (List[dict]): Meta information of each sample.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
             rescale (bool): Whether transform to original number of points.
                 Will be used for voxelization based segmentors.
 
