@@ -34,7 +34,7 @@ class CBGSDataset:
         else:
             raise TypeError(
                 'elements in dataset should be config or '
-                f'`Det3DDataset` instance, but got {type(dataset)}')
+                f'`BaseDataset` instance, but got {type(dataset)}')
         self._metainfo = self.dataset.metainfo
 
         self._fully_initialized = False
@@ -65,7 +65,7 @@ class CBGSDataset:
         """Load sample indices according to ann_file.
 
         Args:
-            dataset (:obj:`Det3DDataset`): The dataset.
+            dataset (:obj:`BaseDataset`): The dataset.
 
         Returns:
             List[dict]: List of indices after class sampling.
