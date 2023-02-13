@@ -2435,8 +2435,7 @@ class PolarMix(BaseTransform):
                 retrieve_yaw < end_angle)
 
             # swap
-            points = points[idx]
-            points = points.cat([points, retrieve_points[retrieve_idx]])
+            points = points.cat([points[idx], retrieve_points[retrieve_idx]])
             pts_semantic_mask = np.concatenate(
                 (pts_semantic_mask[idx.numpy()],
                  retrieve_pts_semantic_mask[retrieve_idx.numpy()]),
@@ -2483,5 +2482,6 @@ class PolarMix(BaseTransform):
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(instance_classes={self.instance_classes}, '
-        repr_str += f'swap_ratio={self.swap_ratio})'
+        repr_str += f'swap_ratio={self.swap_ratio}, '
+        repr_str += f'rotate_paste_ratio={self.rotate_paste_ratio})'
         return repr_str
