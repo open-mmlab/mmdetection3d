@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import mmcv
 import numpy as np
+import torch
 from mmcv.transforms import BaseTransform, Compose, RandomResize, Resize
 from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
                                        RandomFlip)
@@ -2374,18 +2375,17 @@ class PolarMix(BaseTransform):
         instance_classes (List[int]): Semantic masks which represent the
             instance.
         swap_ratio (float): Swap ratio of two point cloud. Defaults to 0.5.
+        rotate_paste_ratio (float): Rotate paste ratio. Defaults to 1.0.
     """
 
     def __init__(self,
                  instance_classes: List[int],
-                 swap_ratio: float = 0.5) -> None:
+                 swap_ratio: float = 0.5,
+                 rotate_paste_ratio: float = 1.0) -> None:
         assert is_list_of(instance_classes, int)
         self.instance_classes = instance_classes
         self.swap_ratio = swap_ratio
-        self.omega = [
-            np.random.random() * np.pi * 2 / 3,
-            (np.random.random() + 1) * np.pi * 2 / 3
-        ]
+        self.rotate_paste_ratio = rotate_paste_ratio
 
     def get_indexes(self, dataset: BaseDataset) -> int:
         """Call function to collect indexes.
@@ -2415,76 +2415,65 @@ class PolarMix(BaseTransform):
 
         retrieve_results = input_dict['mix_results'][0]
         retrieve_points = retrieve_results['points']
-        retrieve_points_numpy = retrieve_points.tensor.numpy()
         retrieve_pts_semantic_mask = retrieve_results['pts_semantic_mask']
 
         points = input_dict['points']
-        attribute_dims = points.attribute_dims
-
-        points_numpy = points.tensor.numpy()
-        pts_semantic_mask = retrieve_results['pts_semantic_mask']
-
-        point_type = type(points)
+        pts_semantic_mask = input_dict['pts_semantic_mask']
 
         # 1. swap point cloud
         if np.random.random() < self.swap_ratio:
             start_angle = (np.random.random() - 1) * np.pi  # -pi~pi
             end_angle = start_angle + np.pi
             # calculate horizontal angle for each point
-            yaw = -np.arctan2(points_numpy[:, 1], points_numpy[:, 0])
-            retrieve_yaw = -np.arctan2(retrieve_points_numpy[:, 1],
-                                       retrieve_points_numpy[:, 0])
+            yaw = torch.atan2(points.coord[:, 1], points.coord[:, 0])
+            retrieve_yaw = torch.atan2(retrieve_points.coord[:, 1],
+                                       retrieve_points.coord[:, 0])
 
             # select points in sector
-            idx = np.where((yaw > start_angle) & (yaw < end_angle))
-            retrieve_idx = np.where((retrieve_yaw > start_angle)
-                                    & (retrieve_yaw < end_angle))
+            idx = (yaw <= start_angle) | (yaw >= end_angle)
+            retrieve_idx = (retrieve_yaw > start_angle) & (
+                retrieve_yaw < end_angle)
 
             # swap
-            points_numpy = np.delete(points_numpy, idx, axis=0)
-            points_numpy = np.concatenate(
-                (points_numpy, retrieve_points_numpy[retrieve_idx]), axis=0)
-            pts_semantic_mask = np.delete(pts_semantic_mask, idx, axis=0)
+            points = points[idx]
+            points = points.cat([points, retrieve_points[retrieve_idx]])
             pts_semantic_mask = np.concatenate(
-                (pts_semantic_mask, retrieve_pts_semantic_mask[retrieve_idx]),
+                (pts_semantic_mask[idx.numpy()],
+                 retrieve_pts_semantic_mask[retrieve_idx.numpy()]),
                 axis=0)
 
         # 2. rotate-pasting
-        # extract instance points
-        instance_points, instance_pts_semantic_mask = [], []
-        for instance_class in self.instance_classes:
-            retrieve_idx = np.where(
-                (retrieve_pts_semantic_mask == instance_class))
-            instance_points.append(retrieve_points_numpy[retrieve_idx])
-            instance_pts_semantic_mask.append(
-                retrieve_pts_semantic_mask[retrieve_idx])
-        instance_points = np.concatenate(instance_points, axis=0)
-        instance_pts_semantic_mask = np.concatenate(
-            instance_pts_semantic_mask, axis=0)
+        if np.random.random() < self.rotate_paste_ratio:
+            # extract instance points
+            instance_points, instance_pts_semantic_mask = [], []
+            for instance_class in self.instance_classes:
+                retrieve_idx = retrieve_pts_semantic_mask == instance_class
+                instance_points.append(retrieve_points[retrieve_idx])
+                instance_pts_semantic_mask.append(
+                    retrieve_pts_semantic_mask[retrieve_idx])
+            instance_points = retrieve_points.cat(instance_points)
+            instance_pts_semantic_mask = np.concatenate(
+                instance_pts_semantic_mask, axis=0)
 
-        # rotate-copy
-        copy_points = [instance_points]
-        copy_pts_semantic_mask = [instance_pts_semantic_mask]
-        for omega in self.omega:
-            rot_mat = np.array([[np.cos(omega),
-                                 np.sin(omega), 0],
-                                [-np.sin(omega),
-                                 np.cos(omega), 0], [0, 0, 1]])
-            new_points = np.zeros_like(instance_points)
-            new_points[:, :3] = np.dot(instance_points[:, :3], rot_mat)
-            new_points[:, 3:] = instance_points[:, 3:]
-            copy_points.append(new_points)
-            copy_pts_semantic_mask.append(instance_pts_semantic_mask)
-        copy_points = np.concatenate(copy_points, axis=0)
-        copy_pts_semantic_mask = np.concatenate(copy_pts_semantic_mask, axis=0)
+            # rotate-copy
+            copy_points = [instance_points]
+            copy_pts_semantic_mask = [instance_pts_semantic_mask]
+            angle_list = [
+                np.random.random() * np.pi * 2 / 3,
+                (np.random.random() + 1) * np.pi * 2 / 3
+            ]
+            for angle in angle_list:
+                new_points = instance_points.clone()
+                new_points.rotate(angle)
+                copy_points.append(new_points)
+                copy_pts_semantic_mask.append(instance_pts_semantic_mask)
+            copy_points = instance_points.cat(copy_points)
+            copy_pts_semantic_mask = np.concatenate(
+                copy_pts_semantic_mask, axis=0)
 
-        points_numpy = np.concatenate((points_numpy, copy_points), axis=0)
-        points = point_type(
-            points_numpy,
-            points_dim=points_numpy.shape[1],
-            attribute_dims=attribute_dims)
-        pts_semantic_mask = np.concatenate(
-            (pts_semantic_mask, copy_pts_semantic_mask), axis=0)
+            points = points.cat([points, copy_points])
+            pts_semantic_mask = np.concatenate(
+                (pts_semantic_mask, copy_pts_semantic_mask), axis=0)
 
         input_dict['points'] = points
         input_dict['pts_semantic_mask'] = pts_semantic_mask
