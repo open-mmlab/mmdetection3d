@@ -4,10 +4,9 @@ import warnings
 from typing import List, Set, Union
 
 import numpy as np
-from mmengine.dataset import force_full_init
+from mmengine.dataset import BaseDataset, force_full_init
 
 from mmdet3d.registry import DATASETS
-from .det3d_dataset import Det3DDataset
 
 
 @DATASETS.register_module()
@@ -19,17 +18,18 @@ class CBGSDataset:
     Balance the number of scenes under different classes.
 
     Args:
-        dataset (:obj:`Det3DDataset` or dict): The dataset to be class sampled.
+        dataset (:obj:`BaseDataset` or dict): The dataset to be class sampled.
         lazy_init (bool): Whether to load annotation during instantiation.
             Defaults to False.
     """
 
     def __init__(self,
-                 dataset: Union[Det3DDataset, dict],
+                 dataset: Union[BaseDataset, dict],
                  lazy_init: bool = False) -> None:
+        self.dataset: BaseDataset
         if isinstance(dataset, dict):
             self.dataset = DATASETS.build(dataset)
-        elif isinstance(dataset, Det3DDataset):
+        elif isinstance(dataset, BaseDataset):
             self.dataset = dataset
         else:
             raise TypeError(
@@ -61,7 +61,7 @@ class CBGSDataset:
 
         self._fully_initialized = True
 
-    def _get_sample_indices(self, dataset: Det3DDataset) -> List[int]:
+    def _get_sample_indices(self, dataset: BaseDataset) -> List[int]:
         """Load sample indices according to ann_file.
 
         Args:
@@ -171,7 +171,7 @@ class CBGSDataset:
             'or `get_subset_` interfaces, please use them in the wrapped '
             'dataset first and then use `CBGSDataset`.')
 
-    def get_subset(self, indices: Union[List[int], int]) -> Det3DDataset:
+    def get_subset(self, indices: Union[List[int], int]) -> BaseDataset:
         """Not supported in ``CBGSDataset`` for the ambiguous meaning of sub-
         dataset."""
         raise NotImplementedError(
