@@ -23,14 +23,14 @@ class TR3DNeck(BaseModule):
             if i > 0:
                 self.__setattr__(
                     f'up_block_{i}',
-                    make_up_block(in_channels[i], in_channels[i - 1], generative=True))
+                    self._make_up_block(in_channels[i], in_channels[i - 1]))
             if i < len(in_channels) - 1:
                 self.__setattr__(
                     f'lateral_block_{i}',
-                    make_block(in_channels[i], in_channels[i]))
+                    self._make_block(in_channels[i], in_channels[i]))
                 self.__setattr__(
                     f'out_block_{i}',
-                    make_block(in_channels[i], out_channels))
+                    self._make_block(in_channels[i], out_channels))
 
     def init_weights(self):
         for m in self.modules():
@@ -56,32 +56,22 @@ class TR3DNeck(BaseModule):
                 outs.append(out)
         return outs[::-1]
 
+    @staticmethod
+    def _make_block(in_channels, out_channels):
+        return nn.Sequential(
+            ME.MinkowskiConvolution(
+                in_channels, out_channels, kernel_size=3, dimension=3),
+            ME.MinkowskiBatchNorm(out_channels),
+            ME.MinkowskiReLU(inplace=True))
 
-def make_block(in_channels, out_channels, kernel_size=3):
-    return nn.Sequential(
-        ME.MinkowskiConvolution(in_channels, out_channels,
-                                kernel_size=kernel_size, dimension=3),
-        ME.MinkowskiBatchNorm(out_channels),
-        ME.MinkowskiReLU(inplace=True))
-
-
-def make_down_block(in_channels, out_channels):
-    return nn.Sequential(
-        ME.MinkowskiConvolution(in_channels, out_channels, kernel_size=3,
-                                stride=2, dimension=3),
-        ME.MinkowskiBatchNorm(out_channels),
-        ME.MinkowskiReLU(inplace=True))
-
-
-def make_up_block(in_channels, out_channels, generative=False):
-    conv = ME.MinkowskiGenerativeConvolutionTranspose if generative \
-        else ME.MinkowskiConvolutionTranspose
-    return nn.Sequential(
-        conv(
-            in_channels,
-            out_channels,
-            kernel_size=3,
-            stride=2,
-            dimension=3),
-        ME.MinkowskiBatchNorm(out_channels),
-        ME.MinkowskiReLU(inplace=True))
+    @staticmethod
+    def _make_up_block(in_channels, out_channels):
+        return nn.Sequential(
+            ME.MinkowskiGenerativeConvolutionTranspose(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                stride=2,
+                dimension=3),
+            ME.MinkowskiBatchNorm(out_channels),
+            ME.MinkowskiReLU(inplace=True))
