@@ -50,7 +50,7 @@ class CBGSDataset:
         """
         return copy.deepcopy(self._metainfo)
 
-    def full_init(self):
+    def full_init(self) -> None:
         """Loop to ``full_init`` each dataset."""
         if self._fully_initialized:
             return
