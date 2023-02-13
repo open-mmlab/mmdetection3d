@@ -119,7 +119,7 @@ class TestPolarMix(unittest.TestCase):
         with self.assertRaises(AssertionError):
             transform = PolarMix(instance_classes=[1.0, 2.0])
 
-        transform = PolarMix(instance_classes=[1, 2])
+        transform = PolarMix(instance_classes=[1, 2], swap_ratio=1.0)
         # test assertion for invalid mix_results
         with self.assertRaises(AssertionError):
             results = transform(copy.deepcopy(self.results))
