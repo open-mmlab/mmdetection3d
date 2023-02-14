@@ -12,7 +12,7 @@ from mmdet3d.structures import AxisAlignedBboxOverlaps3D
 
 
 @weighted_loss
-def axis_aligned_diou_loss(pred, target):
+def axis_aligned_diou_loss(pred: Tensor, target: Tensor) -> Tensor:
     """Calculate the DIoU loss (1-DIoU) of two sets of axis aligned bounding
     boxes. Note that predictions and targets are one-to-one corresponded.
 
@@ -23,7 +23,7 @@ def axis_aligned_diou_loss(pred, target):
             (x1, y1, z1, x2, y2, z2).
 
     Returns:
-        torch.Tensor: IoU loss between predictions and targets.
+        torch.Tensor: DIoU loss between predictions and targets.
     """
     axis_aligned_iou = AxisAlignedBboxOverlaps3D()(
         pred, target, is_aligned=True)
@@ -38,7 +38,7 @@ def axis_aligned_diou_loss(pred, target):
     xtc = (xt1 + xt2) / 2
     ytc = (yt1 + yt2) / 2
     ztc = (zt1 + zt2) / 2
-    r2 = (xpc - xtc) ** 2 + (ypc - ytc) ** 2 + (zpc - ztc) ** 2
+    r2 = (xpc - xtc)**2 + (ypc - ytc)**2 + (zpc - ztc)**2
 
     x_min = torch.minimum(xp1, xt1)
     x_max = torch.maximum(xp2, xt2)
@@ -46,7 +46,7 @@ def axis_aligned_diou_loss(pred, target):
     y_max = torch.maximum(yp2, yt2)
     z_min = torch.minimum(zp1, zt1)
     z_max = torch.maximum(zp2, zt2)
-    c2 = (x_min - x_max) ** 2 + (y_min - y_max) ** 2 + (z_min - z_max) ** 2
+    c2 = (x_min - x_max)**2 + (y_min - y_max)**2 + (z_min - z_max)**2
 
     diou_loss = iou_loss + (r2 / c2)[:, 0]
 
@@ -55,9 +55,9 @@ def axis_aligned_diou_loss(pred, target):
 
 @MODELS.register_module()
 class TR3DAxisAlignedIoULoss(nn.Module):
-    """Calculate the IoU loss (1-IoU) of axis aligned bounding boxes.
-    The only difference with original AxisAlignedIoULoss is the addition
-    of DIoU mode. These classes should be merged in the future.
+    """Calculate the IoU loss (1-IoU) of axis aligned bounding boxes. The only
+    difference with original AxisAlignedIoULoss is the addition of DIoU mode.
+    These classes should be merged in the future.
 
     Args:
         mode (str): 'iou' for intersection over union or 'diou' for

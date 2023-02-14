@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Optional, Tuple, Union
+
 import numpy as np
 
 from mmdet3d.datasets import PointSample
@@ -7,14 +8,15 @@ from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures.points import BasePoints
 
 
-
 @TRANSFORMS.register_module()
 class TR3DPointSample(PointSample):
-    """ The only difference with PointSample is the support of float
-    num_points parameter. In this case we sample random fraction of points
-    from num_points to 100% points. These classes should be merged in
-    the future.
+    """The only difference with PointSample is the support of float num_points
+    parameter.
+
+    In this case we sample random fraction of points from num_points to 100%
+    points. These classes should be merged in the future.
     """
+
     def _points_random_sampling(
         self,
         points: BasePoints,
@@ -43,7 +45,8 @@ class TR3DPointSample(PointSample):
                 - choices (np.ndarray, optional): The generated random samples.
         """
         if type(self.num_points) is float:
-            num_samples = int(np.random.uniform(self.num_points, 1.) * points.shape[0])
+            num_samples = int(
+                np.random.uniform(self.num_points, 1.) * points.shape[0])
 
         if not replace:
             replace = (points.shape[0] < num_samples)

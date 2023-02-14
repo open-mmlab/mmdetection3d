@@ -1,0 +1,43 @@
+# TR3D: Towards Real-Time Indoor 3D Object Detection
+
+> [TR3D: Towards Real-Time Indoor 3D Object Detection](https://arxiv.org/abs/2302.02858)
+
+## Abstract
+
+Recently, sparse 3D convolutions have changed 3D object detection. Performing on par with the voting-based approaches, 3D CNNs are memory-efficient and scale to large scenes better. However, there is still room for improvement. With a conscious, practice-oriented approach to problem-solving, we analyze the performance of such methods and localize the weaknesses. Applying modifications that resolve the found issues one by one, we end up with TR3D: a fast fully-convolutional 3D object detection model trained end-to-end, that achieves state-of-the-art results on the standard benchmarks, ScanNet v2, SUN RGB-D, and S3DIS. Moreover, to take advantage of both point cloud and RGB inputs, we introduce an early fusion of 2D and 3D features. We employ our fusion module to make conventional 3D object detection methods multimodal and demonstrate an impressive boost in performance. Our model with early feature fusion, which we refer to as TR3D+FF, outperforms existing 3D object detection approaches on the SUN RGB-D dataset. Overall, besides being accurate, both TR3D and TR3D+FF models are lightweight, memory-efficient, and fast, thereby marking another milestone on the way toward real-time 3D object detection.
+
+## Results and models
+
+### ScanNet
+
+|                          Backbone                          | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |         Download         |
+| :--------------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :----------------------: |
+| [MinkResNet34](./configs/tr3d_1xb16_scannet-3d-18class.py) |          |      23.7      | 72.9 (72.0) | 59.3 (57.4) | [model](<>) \| [log](<>) |
+
+### SUN RGB-D
+
+|                          Backbone                          | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |         Download         |
+| :--------------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :----------------------: |
+| [MinkResNet34](./configs/tr3d_1xb16_sunrgbd-3d-10class.py) |          |      27.5      | 67.1 (66.3) | 50.4 (49.6) | [model](<>) \| [log](<>) |
+
+### S3DIS
+
+|                        Backbone                         | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |         Download         |
+| :-----------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :----------------------: |
+| [MinkResNet34](./configs/tr3d_1xb16_s3dis-3d-5class.py) |          |      21.0      | 74.5 (72.1) | 51.7 (47.6) | [model](<>) \| [log](<>) |
+
+**Note**
+
+- We report the results across 5 train runs followed by 5 test runs. Median values are in round brackets.
+- Inference time is given for a single NVidia GeForce RTX 4090 GPU.
+
+## Citation
+
+```latex
+@article{rukhovich2023tr3d,
+  title={TR3D: Towards Real-Time Indoor 3D Object Detection},
+  author={Rukhovich, Danila and Vorontsova, Anna and Konushin, Anton},
+  journal={arXiv preprint arXiv:2302.02858},
+  year={2023}
+}
+```
