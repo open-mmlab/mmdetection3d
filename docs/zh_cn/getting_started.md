@@ -2,7 +2,7 @@
 
 在本节中，我们将展示如何使用 PyTorch 准备环境。MMDetection3D 支持在 Linux，Windows（实验性支持），MacOS 上运行，它具体需要下列安装包：
 
-- Python 3.6+
+- Python 3.7+
 - PyTorch 1.6+
 - CUDA 9.2+（如果您从源码编译 PyTorch，CUDA 9.0 也是兼容的）
 - GCC 5+

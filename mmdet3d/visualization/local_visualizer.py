@@ -564,6 +564,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             dict: The drawn point cloud and image whose channel is RGB.
         """
 
+        # Only visualize when there is at least one instance
+        if not len(instances) > 0:
+            return None
+
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
 
         data_3d = dict()
@@ -738,6 +742,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
+                    img = data_input['img']
                     if isinstance(data_input['img'], Tensor):
                         img = data_input['img'].permute(1, 2, 0).numpy()
                         img = img[..., [2, 1, 0]]  # bgr to rgb
@@ -769,6 +774,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     pred_instances = data_sample.pred_instances
                     pred_instances = pred_instances[
                         pred_instances.scores > pred_score_thr].cpu()
+                    img = data_input['img']
                     if isinstance(data_input['img'], Tensor):
                         img = data_input['img'].permute(1, 2, 0).numpy()
                         img = img[..., [2, 1, 0]]  # bgr to rgb
@@ -793,6 +799,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 drawn_img_3d = gt_data_3d['img']
             elif pred_data_3d is not None:
                 drawn_img_3d = pred_data_3d['img']
+            else:  # both instances of gt and pred are empty
+                drawn_img_3d = None
         else:
             drawn_img_3d = None
 
