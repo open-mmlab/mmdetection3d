@@ -93,8 +93,8 @@ def proj_lidar_bbox3d_to_img(bboxes_3d: LiDARInstance3DBoxes,
     """Project the 3D bbox on 2D plane.
 
     Args:
-        bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-            3D bbox in lidar coordinate system to visualize.
+        bboxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bbox in lidar coordinate
+            system to visualize.
         input_meta (dict): Meta information.
     """
     corners_3d = bboxes_3d.corners.cpu().numpy()
@@ -121,9 +121,9 @@ def proj_depth_bbox3d_to_img(bboxes_3d: DepthInstance3DBoxes,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes_3d (:obj:`DepthInstance3DBoxes`):
-            3D bbox in depth coordinate system to visualize.
-        input_meta (dict): Used in coordinates transformation.
+        bboxes_3d (:obj:`DepthInstance3DBoxes`): 3D bbox in depth coordinate
+            system to visualize.
+        input_meta (dict): Meta information.
     """
     from mmdet3d.models import apply_3d_transformation
     from mmdet3d.structures import points_cam2img
@@ -152,8 +152,8 @@ def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes_3d (:obj:`CameraInstance3DBoxes`):
-            3D bbox in camera coordinate system to visualize.
+        bboxes_3d (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate
+            system to visualize.
         input_meta (dict): Meta information.
     """
     from mmdet3d.structures import points_cam2img
