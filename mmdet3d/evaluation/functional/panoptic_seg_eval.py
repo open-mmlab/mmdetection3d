@@ -372,8 +372,8 @@ def panoptic_seg_eval(gt_labels: List[np.ndarray],
             counted as ground truth in evaluation.
         id_offset (int): Offset for instance ids to concat with
             semantic labels.
-        label2cat (dict[str]): Map from label to category.
-        ignore_index (list[int]): Ignored classes in evaluation.
+        label2cat (dict[str]): Mapping from label to category.
+        ignore_index (list[int]): Indices of ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
             Defaults to None.
 
