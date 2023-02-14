@@ -1,14 +1,10 @@
-# Prerequisites
+# Get Started
 
-In this section we demonstrate how to prepare an environment with PyTorch.
-MMDetection3D works on Linux, Windows (experimental support) and macOS and requires the following packages:
+## Prerequisites
 
-- Python 3.7+
-- PyTorch 1.6+
-- CUDA 9.2+ (If you build PyTorch from source, CUDA 9.0 is also compatible)
-- GCC 5+
-- [MMEngine](https://mmengine.readthedocs.io/en/latest/#installation)
-- [MMCV](https://mmcv.readthedocs.io/en/2.x/#installation)
+In this section, we demonstrate how to prepare an environment with PyTorch.
+
+MMDetection3D works on Linux, Windows (experimental support) and macOS. It requires Python 3.7+, CUDA 9.2+, and PyTorch 1.6+.
 
 ```{note}
 If you are experienced with PyTorch and have already installed it, just skip this part and jump to the [next section](#installation). Otherwise, you can follow these steps for the preparation.
@@ -19,8 +15,6 @@ If you are experienced with PyTorch and have already installed it, just skip thi
 **Step 1.** Create a conda environment and activate it.
 
 ```shell
-# We recommend to install python=3.8 since the waymo-open-dataset-tf-2-6-0 requires python>=3.7
-# If you want to install python<3.7, make sure to install waymo-open-dataset-tf-2-x-0 (x<=4)
 conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
@@ -39,88 +33,53 @@ On CPU platforms:
 conda install pytorch torchvision cpuonly -c pytorch
 ```
 
-# Installation
+## Installation
 
 We recommend that users follow our best practices to install MMDetection3D. However, the whole process is highly customizable. See [Customize Installation](#customize-installation) section for more information.
 
-## Best Practices
+### Best Practices
 
-Assuming that you already have CUDA 11.0 installed, here is a full script for quick installation of MMDetection3D with conda.
-Otherwise, you should refer to the step-by-step installation instructions in the next section.
-
-```shell
-pip install -U openmim
-mim install mmengine
-mim install 'mmcv>=2.0.0rc0'
-mim install 'mmdet>=3.0.0rc0'
-git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
-cd mmdetection3d
-pip install -e .
-```
-
-**Step 0.** Install [MMEngine](https://github.com/open-mmlab/mmengine) and [MMCV](https://github.com/open-mmlab/mmcv) using [MIM](https://github.com/open-mmlab/mim).
+**Step 0.** Install [MMEngine](https://github.com/open-mmlab/mmengine), [MMCV](https://github.com/open-mmlab/mmcv) and [MMDetection](https://github.com/open-mmlab/mmdetection) using [MIM](https://github.com/open-mmlab/mim).
 
 ```shell
 pip install -U openmim
 mim install mmengine
-mim install 'mmcv>=2.0.0rc0'
-```
-
-**Step 1.** Install [MMDetection](https://github.com/open-mmlab/mmdetection).
-
-```shell
+mim install 'mmcv>=2.0.0rc1'
 mim install 'mmdet>=3.0.0rc0'
 ```
 
-Optionally, you could also build MMDetection from source in case you want to modify the code:
+**Note**: In MMCV-v2.x, `mmcv-full` is renamed to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc1"` to install the lite version.
 
-```shell
-git clone https://github.com/open-mmlab/mmdetection.git -b dev-3.x
-# "-b dev-3.x" means checkout to the `dev-3.x` branch.
-cd mmdetection
-pip install -v -e .
-# "-v" means verbose, or more output
-# "-e" means installing a project in editable mode,
-# thus any local modifications made to the code will take effect without reinstallation.
-```
+**Step 1.** Install MMDetection3D.
 
-**Step 2.** Clone the MMDetection3D repository.
+Case a: If you develop and run mmdet3d directly, install it from source:
 
 ```shell
 git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
 # "-b dev-1.x" means checkout to the `dev-1.x` branch.
 cd mmdetection3d
+pip install -v -e .
+# "-v" means verbose, or more output
+# "-e" means installing a project in edtiable mode,
+# thus any local modifications made to the code will take effect without reinstallation.
 ```
 
-**Step 3.** Install build requirements and then install MMDetection3D.
+Case b: If you use mmdet3d as a dependency or third-party package, install it with MIM:
 
 ```shell
-pip install -v -e .  # or "python setup.py develop"
+mim install "mmdet3d>=1.1.0rc0"
 ```
 
 Note:
 
-1. The git commit id will be written to the version number with step 3, e.g. `0.6.0+2e7045c`. The version will also be saved in trained models.
-   It is recommended that you run step 3 each time you pull some updates from github. If C++/CUDA codes are modified, then this step is compulsory.
-
-   > Important: Be sure to remove the `./build` folder if you reinstall mmdet3d with a different CUDA/PyTorch version.
-
-   ```shell
-   pip uninstall mmdet3d
-   rm -rf ./build
-   find . -name "*.so" | xargs rm
-   ```
-
-2. Following the above instructions, MMDetection3D is installed on `dev` mode, any local modifications made to the code will take effect without the need to reinstall it (unless you submit some commits and want to update the version number).
-
-3. If you would like to use `opencv-python-headless` instead of `opencv-python`,
+1. If you would like to use `opencv-python-headless` instead of `opencv-python`,
    you can install it before installing MMCV.
 
-4. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
+2. Some dependencies are optional. Simply running `pip install -v -e .` will only install the minimum runtime requirements. To use optional dependencies like `albumentations` and `imagecorruptions` either install them manually with `pip install -r requirements/optional.txt` or specify desired extras when calling `pip` (e.g. `pip install -v -e .[optional]`). Valid keys for the extras field are: `all`, `tests`, `build`, and `optional`.
 
    We have supported `spconv 2.0`. If the user has installed `spconv 2.0`, the code will use `spconv 2.0` first, which will take up less GPU memory than using the default `mmcv spconv`. Users can use the following commands to install `spconv 2.0`:
 
-   ```bash
+   ```shell
    pip install cumm-cuxxx
    pip install spconv-cuxxx
    ```
@@ -138,23 +97,31 @@ Note:
    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
    ```
 
-5. The code can not be built for CPU only environment (where CUDA isn't available) for now.
+3. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
-## Verification
+### Verify the Installation
 
-### Verify with point cloud demo
+To verify whether MMDetection3D is installed correctly, we provide some sample codes to run an inference demo.
 
-We provide several demo scripts to test a single sample. Pre-trained models can be downloaded from [model zoo](model_zoo.md). To test a single-modality 3D detection on point cloud scenes:
-
-```shell
-python demo/pcd_demo.py ${PCD_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--score-thr ${SCORE_THR}] [--out-dir ${OUT_DIR}]
-```
-
-Examples:
+**Step 1.** We need to download config and checkpoint files.
 
 ```shell
-python demo/pcd_demo.py demo/data/kitti/000008.bin configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-car.py checkpoints/second_hv_secfpn_8xb6-80e_kitti-3d-car_20200620_230238-393f000c.pth
+mim download mmdet3d --config pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car --dest .
 ```
+
+The downloading will take several seconds or more, depending on your network environment. When it is done, you will find two files `pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car.py` and `hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20220331_134606-d42d15ed.pth` in your current folder.
+
+**Step 2.** Verify the inference demo.
+
+Case a: If you install MMDetection3D from source, just run the following command.
+
+```shell
+python demo/pcd_demo.py demo/data/kitti/000008.bin pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car.py hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20220331_134606-d42d15ed.pth --show
+```
+
+You will see a visualizer interface with point cloud, where bounding boxes are plotted on cars.
+
+**Note**:
 
 If you want to input a `.ply` file, you can use the following function and convert it to `.bin` format. Then you can use the converted `.bin` file to run demo.
 Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training `ply data`.
@@ -198,11 +165,24 @@ Examples:
 to_ply('./test.obj', './test.ply', 'obj')
 ```
 
-More demos about single/multi-modality and indoor/outdoor 3D detection can be found in [demo](user_guides/inference.md).
+Case b: If you install MMDetection3D with MIM, open your python interpreter and copy&paste the following codes.
 
-## Customize Installation
+```python
+from mmdet3d.apis import init_model, inference_detector
+from mmdet3d.utils import register_all_modules
 
-### CUDA Versions
+register_all_modules()
+config_file = 'pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car.py'
+checkpoint_file = 'hv_pointpillars_secfpn_6x8_160e_kitti-3d-car_20220331_134606-d42d15ed.pth'
+model = init_model(config_file, checkpoint_file)
+inference_detector(model, 'demo/data/kitti/000008.bin')
+```
+
+You will see a list of `Det3DDataSample`, and the predictions are in the `pred_instances_3d`, indicating the detected bounding boxes, labels, and scores.
+
+### Customize Installation
+
+#### CUDA Versions
 
 When installing PyTorch, you need to specify the version of CUDA. If you are not clear on which to choose, follow our recommendations:
 
@@ -215,7 +195,7 @@ Please make sure the GPU driver satisfies the minimum version requirements. See 
 Installing CUDA runtime libraries is enough if you follow our best practices, because no CUDA code will be compiled locally. However if you hope to compile MMCV from source or develop other CUDA operators, you need to install the complete CUDA toolkit from NVIDIA's [website](https://developer.nvidia.com/cuda-downloads), and its version should match the CUDA version of PyTorch. i.e., the specified version of cudatoolkit in `conda install` command.
 ```
 
-### Install MMEngine without MIM
+#### Install MMEngine without MIM
 
 To install MMEngine with pip instead of MIM, please follow [MMEngine installation guides](https://mmengine.readthedocs.io/en/latest/get_started/installation.html).
 
@@ -225,25 +205,59 @@ For example, you can install MMEngine by the following command:
 pip install mmengine
 ```
 
-### Install MMCV without MIM
+#### Install MMCV without MIM
 
 MMCV contains C++ and CUDA extensions, thus depending on PyTorch in a complex way. MIM solves such dependencies automatically and makes the installation easier. However, it is not a must.
 
 To install MMCV with pip instead of MIM, please follow [MMCV installation guides](https://mmcv.readthedocs.io/en/2.x/get_started/installation.html). This requires manually specifying a find-url based on PyTorch version and its CUDA version.
 
-For example, the following command install MMCV built for PyTorch 1.10.x and CUDA 11.3:
+For example, the following command install MMCV built for PyTorch 1.12.x and CUDA 11.6:
 
 ```shell
-pip install mmcv -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10/index.html
+pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
 ```
 
-### Using MMDetection3D with Docker
+#### Install on Google Colab
 
-We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docker/Dockerfile) to build an image.
+[Google Colab](https://colab.research.google.com/) usually has PyTorch installed, thus we only need to install MMEngine, MMCV, MMDetection, and MMDetection3D with the following commands.
+
+**Step 1.** Install [MMEngine](https://github.com/open-mmlab/mmengine), [MMCV](https://github.com/open-mmlab/mmcv) and [MMDetection](https://github.com/open-mmlab/mmdetection) using [MIM](https://github.com/open-mmlab/mim).
+
+```shell
+!pip3 install openmim
+!mim install mmengine
+!mim install "mmcv>=2.0.0rc1,<2.1.0"
+!mim install "mmdet>=3.0.0rc0,<3.1.0"
+```
+
+**Step 2.** Install MMDetection3D from source.
+
+```shell
+!git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
+%cd mmdetection3d
+!pip install -e .
+```
+
+**Step 3.** Verification.
+
+```python
+import mmdet3d
+print(mmdet3d.__version__)
+# Example output: 1.1.0rc0, or an another version.
+```
+
+```{note}
+Within Jupyter, the exclamation mark `!` is used to call external executables and `%cd` is a [magic command](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-cd) to change the current working directory of Python.
+```
+
+#### Using MMDetection3D with Docker
+
+We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docker/Dockerfile) to build an image. Ensure that your [docker version](https://docs.docker.com/engine/install/) >= 19.03.
 
 ```shell
 # build an image with PyTorch 1.6, CUDA 10.1
-docker build -t mmdetection3d -f docker/Dockerfile .
+# If you prefer other versions, just modified the Dockerfile
+docker build -t mmdetection3d docker/
 ```
 
 Run it with:
@@ -252,34 +266,17 @@ Run it with:
 docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
 ```
 
-### A from-scratch setup script
-
-Here is a full script for setting up MMDetection3D with conda.
-
-```shell
-# We recommend to install python=3.8 since the waymo-open-dataset-tf-2-6-0 requires python>=3.7
-# If you want to install python<3.7, make sure to install waymo-open-dataset-tf-2-x-0 (x<=4)
-conda create -n openmmlab python=3.8 -y
-conda activate openmmlab
-
-# install latest PyTorch prebuilt with the default prebuilt CUDA version (usually the latest)
-conda install -c pytorch pytorch torchvision -y
-
-# install mmengine and mmcv
-pip install -U openmim
-mim install mmengine
-mim install 'mmcv>=2.0.0rc0'
-
-# install mmdetection
-mim install 'mmdet>=3.0.0rc0'
-
-# install mmdetection3d
-git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x
-cd mmdetection3d
-pip install -e .
-```
-
-## Trouble shooting
+### Troubleshooting
 
 If you have some issues during the installation, please first view the [FAQ](notes/faq.md) page.
 You may [open an issue](https://github.com/open-mmlab/mmdetection3d/issues/new/choose) on GitHub if no solution is found.
+
+### Use Multiple Versions of MMDetection3D in Development
+
+Training and testing scripts have already been modified in `PYTHONPATH` in order to make sure the scripts are using their own versions of MMDetection3D.
+
+To install the default version of MMDetection3D in your environment, you can exclude the following code in the related scripts:
+
+```shell
+PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
+```
