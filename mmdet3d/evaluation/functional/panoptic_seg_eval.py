@@ -14,14 +14,14 @@ class EvalPanoptic:
 
     Args:
         classes (list): Classes used in the dataset.
-        thing_classes (list): Things classes used in the dataset.
+        thing_classes (list): Thing classes used in the dataset.
         stuff_classes (list): Stuff classes used in the dataset.
         min_num_points (int): Minimum number of points of an object to be
             counted as ground truth in evaluation.
         id_offset (int): Offset for instance ids to concat with
             semantic labels.
-        label2cat (dict[str]): Map from label to category.
-        ignore_index (list[int]): Ignored classes in evaluation.
+        label2cat (dict[str]): Mapping from label to category.
+        ignore_index (list[int]): Indices of ignored classes in evaluation.
         logger (logging.Logger | str, optional): Logger used for printing.
             Defaults to None.
     """
@@ -39,11 +39,11 @@ class EvalPanoptic:
         self.thing_classes = thing_classes
         self.stuff_classes = stuff_classes
         self.ignore_index = np.array(ignore_index, dtype=int)
-        self.n_classes = len(classes)
+        self.num_classes = len(classes)
         self.label2cat = label2cat
         self.logger = logger
         self.include = np.array(
-            [n for n in range(self.n_classes) if n not in self.ignore_index],
+            [n for n in range(self.num_classes) if n not in self.ignore_index],
             dtype=int)
         self.id_offset = id_offset
         self.eps = 1e-15
@@ -54,13 +54,13 @@ class EvalPanoptic:
         """Reset class variables."""
         # general things
         # iou stuff
-        self.px_iou_conf_matrix = np.zeros((self.n_classes, self.n_classes),
-                                           dtype=int)
+        self.confusion_matrix = np.zeros((self.num_classes, self.num_classes),
+                                         dtype=int)
         # panoptic stuff
-        self.pan_tp = np.zeros(self.n_classes, dtype=int)
-        self.pan_iou = np.zeros(self.n_classes, dtype=np.double)
-        self.pan_fp = np.zeros(self.n_classes, dtype=int)
-        self.pan_fn = np.zeros(self.n_classes, dtype=int)
+        self.pan_tp = np.zeros(self.num_classes, dtype=int)
+        self.pan_iou = np.zeros(self.num_classes, dtype=np.double)
+        self.pan_fp = np.zeros(self.num_classes, dtype=int)
+        self.pan_fn = np.zeros(self.num_classes, dtype=int)
 
         self.evaluated_fnames = []
 
@@ -232,7 +232,7 @@ class EvalPanoptic:
             tuple(np.ndarray): TP, FP, FN of all class.
         """
         # copy to avoid modifying the real deal
-        conf = self.px_iou_conf_matrix.copy().astype(np.double)
+        conf = self.confusion_matrix.copy().astype(np.double)
         # remove fp from confusion on the ignore classes predictions
         # points that were predicted of another class, but were ignore
         # (corresponds to zeroing the cols of those classes,
@@ -255,7 +255,7 @@ class EvalPanoptic:
         """
         idxs = np.stack([semantic_preds, gt_semantics], axis=0)
         # make confusion matrix (cols = gt, rows = pred)
-        np.add.at(self.px_iou_conf_matrix, tuple(idxs), 1)
+        np.add.at(self.confusion_matrix, tuple(idxs), 1)
 
     def add_panoptic_sample(self, semantic_preds: np.ndarray,
                             gt_semantics: np.ndarray,
