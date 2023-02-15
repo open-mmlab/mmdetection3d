@@ -70,11 +70,6 @@ class SemanticKITTIDataset(Seg3DDataset):
                  test_mode: bool = False,
                  **kwargs) -> None:
 
-        seg_label_mapping = np.zeros(metainfo['max_label'] + 1)
-        for idx in metainfo['seg_label_mapping']:
-            seg_label_mapping[idx] = metainfo['seg_label_mapping'][idx]
-        self.seg_label_mapping = seg_label_mapping
-
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -86,3 +81,9 @@ class SemanticKITTIDataset(Seg3DDataset):
             scene_idxs=scene_idxs,
             test_mode=test_mode,
             **kwargs)
+
+    def get_seg_label_mapping(self, metainfo):
+        seg_label_mapping = np.zeros(metainfo['max_label'] + 1)
+        for idx in metainfo['seg_label_mapping']:
+            seg_label_mapping[idx] = metainfo['seg_label_mapping'][idx]
+        return seg_label_mapping
