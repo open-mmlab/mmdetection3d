@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Follow https://github.com/NVIDIA/MinkowskiEngine/blob/master/examples/resnet.py # noqa
 # and mmcv.cnn.ResNet
-from typing import Union, List
+from typing import List, Union
 
 try:
     import MinkowskiEngine as ME
@@ -12,8 +12,8 @@ except ImportError:
     ME = BasicBlock = Bottleneck = SparseTensor = None
 
 import torch.nn as nn
-
 from mmengine.model import BaseModule
+
 from mmdet3d.registry import MODELS
 
 
@@ -90,7 +90,7 @@ class MinkResNet(BaseModule):
             planes (int): Number of convolution filters.
             blocks (int): Number of blocks in the layers.
             stride (int): Stride of the first convolutional layer.
-        
+
         Returns:
             nn.Module: With residual blocks.
         """
