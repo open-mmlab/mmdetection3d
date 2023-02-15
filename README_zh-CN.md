@@ -109,6 +109,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
         <li><a href="configs/regnet">RegNet (CVPR'2020)</a></li>
         <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
         <li>DLA (CVPR'2018)</li>
+        <li>MinkResNet (CVPR'2019)</li>
       </ul>
       </td>
       <td>
