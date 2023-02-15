@@ -38,17 +38,16 @@ class TR3DNeck(BaseModule):
         """
         for i in range(len(in_channels)):
             if i > 0:
-                self.__setattr__(
+                self.add_module(
                     f'up_block_{i}',
                     self._make_block(in_channels[i], in_channels[i - 1], True,
                                      2))
             if i < len(in_channels) - 1:
-                self.__setattr__(
+                self.add_module(
                     f'lateral_block_{i}',
                     self._make_block(in_channels[i], in_channels[i]))
-                self.__setattr__(
-                    f'out_block_{i}',
-                    self._make_block(in_channels[i], out_channels))
+                self.add_module(f'out_block_{i}',
+                                self._make_block(in_channels[i], out_channels))
 
     def init_weights(self):
         """Initialize weights."""

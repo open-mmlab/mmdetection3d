@@ -6,6 +6,26 @@
 
 Recently, sparse 3D convolutions have changed 3D object detection. Performing on par with the voting-based approaches, 3D CNNs are memory-efficient and scale to large scenes better. However, there is still room for improvement. With a conscious, practice-oriented approach to problem-solving, we analyze the performance of such methods and localize the weaknesses. Applying modifications that resolve the found issues one by one, we end up with TR3D: a fast fully-convolutional 3D object detection model trained end-to-end, that achieves state-of-the-art results on the standard benchmarks, ScanNet v2, SUN RGB-D, and S3DIS. Moreover, to take advantage of both point cloud and RGB inputs, we introduce an early fusion of 2D and 3D features. We employ our fusion module to make conventional 3D object detection methods multimodal and demonstrate an impressive boost in performance. Our model with early feature fusion, which we refer to as TR3D+FF, outperforms existing 3D object detection approaches on the SUN RGB-D dataset. Overall, besides being accurate, both TR3D and TR3D+FF models are lightweight, memory-efficient, and fast, thereby marking another milestone on the way toward real-time 3D object detection.
 
+## Usage
+
+Training and inference in this project were tested with `mmdet3d==1.1.0rc3`
+
+### Training commands
+
+In MMDet3D's root directory, run the following command to train the model:
+
+```bash
+python tools/train.py projects/TR3D/configs/tr3d_1xb16_scannet-3d-18class.py
+```
+
+### Testing commands
+
+In MMDet3D's root directory, run the following command to test the model:
+
+```bash
+python tools/test.py projects/TR3D/configs/tr3d_1xb16_scannet-3d-18class.py ${CHECKPOINT_PATH}
+```
+
 ## Results and models
 
 ### ScanNet
@@ -41,3 +61,33 @@ Recently, sparse 3D convolutions have changed 3D object detection. Performing on
   year={2023}
 }
 ```
+
+## Checklist
+
+- \[✓\] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
+
+  - \[✓\] Finish the code
+
+  - \[✓\] Basic docstrings & proper citation
+
+  - \[✓\] Test-time correctness
+
+  - \[✓\] A full README
+
+- \[✓\] Milestone 2: Indicates a successful model implementation.
+
+  - \[✓\] Training-time correctness
+
+- [ ] Milestone 3: Good to be a part of our core package!
+
+  - \[✓\] Type hints and docstrings
+
+  - [ ] Unit tests
+
+  - [ ] Code polishing
+
+  - [ ] Metafile.yml
+
+- [ ] Move your modules into the core package following the codebase's file hierarchy structure.
+
+- [ ] Refactor your modules into the core package following the codebase's file hierarchy structure.
