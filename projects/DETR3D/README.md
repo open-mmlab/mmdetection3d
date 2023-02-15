@@ -111,9 +111,9 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
     <!-- As this template does. -->
 
-- [ ] Milestone 2: Indicates a successful model implementation.
+- \[√\] Milestone 2: Indicates a successful model implementation.
 
-  - [ ] Training-time correctness
+  - \[√\] Training-time correctness
 
     <!-- If you are reproducing the result from a paper, checking this item means that you should have trained your model from scratch based on the original paper's specification and verified that the final result matches the report within a minor error range. -->
 
