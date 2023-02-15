@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import copy
 import random
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import cv2
 import mmcv
@@ -2376,16 +2377,24 @@ class PolarMix(BaseTransform):
             instance.
         swap_ratio (float): Swap ratio of two point cloud. Defaults to 0.5.
         rotate_paste_ratio (float): Rotate paste ratio. Defaults to 1.0.
+        pre_transform (Sequence[dict]): Sequence of transform object or config
+            dict to be composed.
     """
 
     def __init__(self,
                  instance_classes: List[int],
                  swap_ratio: float = 0.5,
-                 rotate_paste_ratio: float = 1.0) -> None:
+                 rotate_paste_ratio: float = 1.0,
+                 pre_transform: Optional[Sequence[dict]] = None) -> None:
         assert is_list_of(instance_classes, int)
         self.instance_classes = instance_classes
         self.swap_ratio = swap_ratio
         self.rotate_paste_ratio = rotate_paste_ratio
+
+        if pre_transform is None:
+            self.pre_transform = None
+        else:
+            self.pre_transform = Compose(pre_transform)
 
     def get_indexes(self, dataset: BaseDataset) -> int:
         """Call function to collect indexes.
@@ -2396,17 +2405,17 @@ class PolarMix(BaseTransform):
         Returns:
             int: Index.
         """
-        index = random.randint(0, len(dataset))
+        index = np.random.randint(0, len(dataset))
         return index
 
-    def transform(self, input_dict: dict) -> dict:
+    def polar_mix_transform(self, input_dict: dict) -> dict:
         """PolarMix transform function.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: output dict after transformtaion
+            dict: output dict after transformtaion.
         """
 
         assert 'mix_results' in input_dict
@@ -2422,7 +2431,7 @@ class PolarMix(BaseTransform):
 
         # 1. swap point cloud
         if np.random.random() < self.swap_ratio:
-            start_angle = (np.random.random() - 1) * np.pi  # -pi~pi
+            start_angle = (np.random.random() - 1) * np.pi  # -pi~0
             end_angle = start_angle + np.pi
             # calculate horizontal angle for each point
             yaw = torch.atan2(points.coord[:, 1], points.coord[:, 0])
@@ -2478,10 +2487,49 @@ class PolarMix(BaseTransform):
         input_dict['pts_semantic_mask'] = pts_semantic_mask
         return input_dict
 
+    def transform(self, input_dict: dict) -> dict:
+        """PolarMix transform function.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: output dict after transformtaion.
+        """
+
+        assert 'dataset' in input_dict
+        dataset = input_dict.pop('dataset', None)
+
+        # get index of other images
+        index = self.get_indexes(dataset)
+
+        mix_results = [copy.deepcopy(dataset.get_data_info(index))]
+
+        if self.pre_transform is not None:
+            for i, data in enumerate(mix_results):
+                # pre_transform may also require dataset
+                data.update({'dataset': dataset})
+                # before polarmix need to go through
+                # the necessary pre_transform
+                _results = self.pre_transform(data)
+                _results.pop('dataset')
+                mix_results[i] = _results
+
+        input_dict['mix_results'] = mix_results
+
+        input_dict = self.polar_mix_transform(input_dict)
+
+        if 'mix_results' in input_dict:
+            input_dict.pop('mix_results')
+        input_dict['dataset'] = dataset
+
+        return input_dict
+
     def __repr__(self) -> dict:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(instance_classes={self.instance_classes}, '
         repr_str += f'swap_ratio={self.swap_ratio}, '
-        repr_str += f'rotate_paste_ratio={self.rotate_paste_ratio})'
+        repr_str += f'rotate_paste_ratio={self.rotate_paste_ratio}, '
+        repr_str += f'pre_transform={self.pre_transform})'
         return repr_str

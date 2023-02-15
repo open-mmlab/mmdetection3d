@@ -6,10 +6,14 @@ import numpy as np
 import torch
 from mmengine.testing import assert_allclose
 
-from mmdet3d.datasets import GlobalAlignment, RandomFlip3D
+from mmdet3d.datasets import (GlobalAlignment, RandomFlip3D,
+                              SemanticKITTIDataset)
 from mmdet3d.datasets.transforms import GlobalRotScaleTrans, PolarMix
-from mmdet3d.structures import BasePoints
+from mmdet3d.structures import LiDARPoints
 from mmdet3d.testing import create_data_info_after_loading
+from mmdet3d.utils import register_all_modules
+
+register_all_modules()
 
 
 class TestGlobalRotScaleTrans(unittest.TestCase):
@@ -105,10 +109,61 @@ class TestGlobalAlignment(unittest.TestCase):
 class TestPolarMix(unittest.TestCase):
 
     def setUp(self):
+        self.pre_transform = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                shift_height=True,
+                load_dim=4,
+                use_dim=[0, 1, 2]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=False,
+                with_seg_3d=True,
+                seg_3d_dtype=np.int32),
+        ]
+        classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
+                   'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
+                   'sidewalk', 'other-ground', 'building', 'fence',
+                   'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign')
+        palette = [
+            [174, 199, 232],
+            [152, 223, 138],
+            [31, 119, 180],
+            [255, 187, 120],
+            [188, 189, 34],
+            [140, 86, 75],
+            [255, 152, 150],
+            [214, 39, 40],
+            [197, 176, 213],
+            [148, 103, 189],
+            [196, 156, 148],
+            [23, 190, 207],
+            [247, 182, 210],
+            [219, 219, 141],
+            [255, 127, 14],
+            [158, 218, 229],
+            [44, 160, 44],
+            [112, 128, 144],
+            [227, 119, 194],
+            [82, 84, 163],
+        ]
+        self.dataset = SemanticKITTIDataset(
+            './tests/data/semantickitti/',
+            'semantickitti_infos.pkl',
+            metainfo=dict(classes=classes, palette=palette),
+            data_prefix=dict(
+                pts='sequences/00/velodyne',
+                pts_semantic_mask='sequences/00/labels'),
+            pipeline=[],
+            modality=dict(use_lidar=True, use_camera=False))
         points = np.random.random((100, 4))
         self.results = {
-            'points': BasePoints(points, points_dim=4),
-            'pts_semantic_mask': np.random.randint(0, 5, (100, ))
+            'points': LiDARPoints(points, points_dim=4),
+            'pts_semantic_mask': np.random.randint(0, 20, (100, )),
+            'dataset': self.dataset
         }
 
     def test_transform(self):
@@ -119,16 +174,10 @@ class TestPolarMix(unittest.TestCase):
         with self.assertRaises(AssertionError):
             transform = PolarMix(instance_classes=[1.0, 2.0])
 
-        transform = PolarMix(instance_classes=[1, 2], swap_ratio=1.0)
-        # test assertion for invalid mix_results
-        with self.assertRaises(AssertionError):
-            results = transform(copy.deepcopy(self.results))
-
-        with self.assertRaises(AssertionError):
-            self.results['mix_results'] = [copy.deepcopy(self.results)] * 2
-            results = transform(copy.deepcopy(self.results))
-
-        self.results['mix_results'] = [copy.deepcopy(self.results)]
-        results = transform(copy.deepcopy(self.results))
+        transform = PolarMix(
+            instance_classes=[1, 2],
+            swap_ratio=1.0,
+            pre_transform=self.pre_transform)
+        results = transform.transform(copy.deepcopy(self.results))
         self.assertTrue(results['points'].shape[0] ==
                         results['pts_semantic_mask'].shape[0])

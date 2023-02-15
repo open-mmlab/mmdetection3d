@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Callable, List, Optional, Sequence, Union
+from typing import Any, Callable, List, Optional, Sequence, Union
 
 import mmengine
 import numpy as np
@@ -266,6 +266,22 @@ class Seg3DDataset(BaseDataset):
             info['eval_ann_info'] = dict()
 
         return info
+
+    def prepare_data(self, idx) -> Any:
+        """Get data processed by ``self.pipeline``.
+
+        Args:
+            idx (int): The index of ``data_info``.
+
+        Returns:
+            Any: Depends on ``self.pipeline``.
+        """
+        if self.test_mode is False:
+            data_info = self.get_data_info(idx)
+            data_info['dataset'] = self
+            return self.pipeline(data_info)
+        else:
+            return super().prepare_data(idx)
 
     def get_scene_idxs(self, scene_idxs: Union[None, str,
                                                np.ndarray]) -> np.ndarray:
