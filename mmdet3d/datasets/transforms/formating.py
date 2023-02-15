@@ -147,15 +147,15 @@ class Pack3DDetInputs(BaseTransform):
         if 'img' in results:
             if isinstance(results['img'], list):
                 # process multiple imgs in single frame
-                imgs = [img.transpose(2, 0, 1) for img in results['img']]
-                imgs = np.ascontiguousarray(np.stack(imgs, axis=0))
+                imgs = [to_tensor(img) for img in results['img']]
+                imgs = torch.stack(
+                    imgs, dim=0).permute(0, 3, 1, 2).contiguous()
                 results['img'] = to_tensor(imgs)
             else:
                 img = results['img']
                 if len(img.shape) < 3:
                     img = np.expand_dims(img, -1)
-                results['img'] = to_tensor(
-                    np.ascontiguousarray(img.transpose(2, 0, 1)))
+                results['img'] = to_tensor(img).permute(2, 0, 1).contiguous()
 
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
