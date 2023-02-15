@@ -48,27 +48,21 @@ class InstanceSegMetric(InstanceSeg):
             data_samples (Sequence[dict]): A batch of outputs from
                 the model.
         """
-        pred = []
-        gt = []
+        preds = []
+        gts = []
         for data_sample in data_samples:
-            pred_3d = data_sample['pred_pts_seg']
-            eval_ann_info = data_sample['eval_ann_info']
-            cpu_pred_3d = {
-                k: v.clone().cpu().numpy()
-                for k, v in pred_3d.items()
-            }
-            cpu_eval_ann_info = {
-                k: v.clone().cpu().numpy()
-                for k, v in eval_ann_info.items()
-            }
-            for k, v in pred_3d.items():
-                if hasattr(v, 'to'):
-                    cpu_pred_3d[k] = v.to('cpu').clone().numpy()
-                else:
-                    cpu_pred_3d[k] = v.clone().numpy()
-            pred.append(cpu_pred_3d)
-            gt.append(cpu_eval_ann_info)
-        self.add(pred, gt)
+            pred = data_sample['pred']
+            cpu_pred_3d = dict()
+            for idx, (mask, label_id, conf) in enumerate(
+                    zip(pred['mask_3d'], pred['label_3d'], pred['conf_3d'])):
+                cpu_pred_3d[f"{data_sample['scene_id']}_{idx}"] = {
+                    'mask': mask,
+                    'label_id': label_id,
+                    'conf': conf
+                }
+            preds.append(cpu_pred_3d)
+            gts.append(data_sample['gt'])
+        self.add(preds, gts)
 
     def evaluate(self, *args, **kwargs):
         """Evaluate the model performance of the whole dataset after processing
