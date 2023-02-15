@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
+import torch
 from mmcv.parallel import DataContainer as DC
 
 from mmdet3d.core.bbox import BaseInstance3DBoxes
@@ -16,7 +17,7 @@ class DefaultFormatBundle(object):
     "proposals", "gt_bboxes", "gt_labels", "gt_masks" and "gt_semantic_seg".
     These fields are formatted as follows.
 
-    - img: (1)transpose, (2)to tensor, (3)to DataContainer (stack=True)
+    - img: (1)transpose & to tensor, (2)to DataContainer (stack=True)
     - proposals: (1)to tensor, (2)to DataContainer
     - gt_bboxes: (1)to tensor, (2)to DataContainer
     - gt_bboxes_ignore: (1)to tensor, (2)to DataContainer
@@ -42,12 +43,13 @@ class DefaultFormatBundle(object):
         if 'img' in results:
             if isinstance(results['img'], list):
                 # process multiple imgs in single frame
-                imgs = [img.transpose(2, 0, 1) for img in results['img']]
-                imgs = np.ascontiguousarray(np.stack(imgs, axis=0))
+                imgs = [to_tensor(img) for img in results['img']]
+                imgs = torch.stack(
+                    imgs, dim=0).permute(0, 3, 1, 2).contiguous()
                 results['img'] = DC(to_tensor(imgs), stack=True)
             else:
-                img = np.ascontiguousarray(results['img'].transpose(2, 0, 1))
-                results['img'] = DC(to_tensor(img), stack=True)
+                img = to_tensor(results['img']).permute(2, 0, 1).contiguous()
+                results['img'] = DC(img, stack=True)
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
                 'gt_labels_3d', 'attr_labels', 'pts_instance_mask',
@@ -179,7 +181,7 @@ class DefaultFormatBundle3D(DefaultFormatBundle):
     "gt_semantic_seg".
     These fields are formatted as follows.
 
-    - img: (1)transpose, (2)to tensor, (3)to DataContainer (stack=True)
+    - img: (1)transpose & to tensor, (2)to DataContainer (stack=True)
     - proposals: (1)to tensor, (2)to DataContainer
     - gt_bboxes: (1)to tensor, (2)to DataContainer
     - gt_bboxes_ignore: (1)to tensor, (2)to DataContainer
