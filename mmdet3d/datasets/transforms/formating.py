@@ -155,6 +155,10 @@ class Pack3DDetInputs(BaseTransform):
                 img = results['img']
                 if len(img.shape) < 3:
                     img = np.expand_dims(img, -1)
+                # To improve the computational speed by by 3-5 times, apply:
+                # `torch.permute()` rather than `np.transpose()`.
+                # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
+                # for more details
                 results['img'] = to_tensor(img).permute(2, 0, 1).contiguous()
 
         for key in [
