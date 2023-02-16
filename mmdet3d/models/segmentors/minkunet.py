@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple
+from typing import Tuple
 
 from torch import Tensor
 
@@ -27,6 +27,10 @@ class MinkUNet(EncoderDecoder3D):
     """
 
     def __init__(self, voxel_encoder: ConfigType = None, **kwargs) -> None:
+        if not IS_TORCHSPARSE_AVAILABLE:
+            raise ImportError(
+                'Please follow `getting_started.md` to install Torchsparse.`'
+            )  # noqa: E501
         super().__init__(**kwargs)
         self.voxel_encoder = MODELS.build(voxel_encoder)
 
@@ -55,27 +59,37 @@ class MinkUNet(EncoderDecoder3D):
 
                 - semantic_mask (Tensor): Segmentation mask of shape [N].
         """
-        # 3D segmentation requires per-point prediction, so it's impossible
-        # to use down-sampling to get a batch of scenes with same num_points
-        # therefore, we only support testing one scene every time
-        seg_pred_list = []
-        batch_input_metas = []
-        for data_sample in batch_data_samples:
-            batch_input_metas.append(data_sample.metainfo)
-
-        points = batch_inputs_dict['points']
-        for point, input_meta in zip(points, batch_input_metas):
-            seg_prob = self.inference(batch_inputs_dict, [input_meta],
-                                      rescale)[0]
-            seg_map = seg_prob.argmax(0)  # [N]
-            # to cpu tensor for consistency with det3d
-            seg_map = seg_map.cpu()
-            seg_pred_list.append(seg_map)
+        seg_pred_list = self.inference(batch_inputs_dict, batch_data_samples)
 
         return self.postprocess_result(seg_pred_list, batch_data_samples)
 
+    def whole_inference(self,
+                        inputs: dict,
+                        data_samples: SampleList,
+                        rescale: bool = True) -> Tensor:
+        """Inference with full scene (one forward pass without sliding)."""
+        seg_pred_list = self.encode_decode(inputs, data_samples)
+        return seg_pred_list
+
+    def encode_decode(self, batch_inputs: Tensor,
+                      data_samples: SampleList) -> Tensor:
+        """Encode points with backbone and decode into a semantic segmentation
+        map of the same size as input.
+
+        Args:
+            batch_input (torch.Tensor): Input point cloud sample
+            batch_input_metas (list[dict]): Meta information of each sample.
+
+        Returns:
+            torch.Tensor: Segmentation logits of shape [B, num_classes, N].
+        """
+        x = self.extract_feat(batch_inputs)
+        seg_pred_list = self.decode_head.predict(x, data_samples,
+                                                 self.test_cfg)
+        return seg_pred_list
+
     def inference(self, inputs: SparseTensor,
-                  batch_img_metas: List[dict]) -> Tensor:
+                  batch_data_samples: SampleList) -> Tensor:
         """Inference with slide/whole style.
 
         Args:
@@ -93,11 +107,11 @@ class MinkUNet(EncoderDecoder3D):
 
         assert self.test_cfg.mode in ['slide', 'whole']
         if self.test_cfg.mode == 'slide':
-            seg_logit = self.slide_inference(inputs, batch_img_metas)
+            seg_pred_list = self.slide_inference(inputs, batch_data_samples)
         else:
-            seg_logit = self.whole_inference(inputs, batch_img_metas)
+            seg_pred_list = self.whole_inference(inputs, batch_data_samples)
 
-        return seg_logit
+        return seg_pred_list
 
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features from points."""

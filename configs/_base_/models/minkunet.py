@@ -24,4 +24,4 @@ model = dict(
         num_classes=19,
     ),
     train_cfg=dict(),
-    test_cfg=dict())
+    test_cfg=dict(mode='whole'))
