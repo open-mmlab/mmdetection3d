@@ -35,9 +35,11 @@ def kitti_data_prep(root_path,
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_train_path)
     update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_val_path)
     update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_trainval_path)
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_test_path)
     create_groundtruth_database(
         'KittiDataset',
         root_path,
@@ -122,11 +124,11 @@ def scannet_data_prep(root_path, info_prefix, out_dir, workers):
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
-    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
-    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_test_path)
     update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_test_path)
 
 
 def s3dis_data_prep(root_path, info_prefix, out_dir, workers):
@@ -210,11 +212,11 @@ def waymo_data_prep(root_path,
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
-    test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_train_path)
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_val_path)
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_trainval_path)
-    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=test_path)
+    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_test_path)
     GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
