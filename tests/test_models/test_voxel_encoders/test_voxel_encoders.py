@@ -38,3 +38,5 @@ def test_seg_VFE():
     coors = torch.cat(coors, dim=0).cuda()
     out_features, out_coors, out_point_features = seg_VFE(features, coors)
     assert out_features.shape[0] == out_coors.shape[0]
+    assert len(out_point_features) == 5
+    assert out_point_features[-1].shape[-1] == 256

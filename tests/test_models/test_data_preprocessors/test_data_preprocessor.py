@@ -110,11 +110,11 @@ class TestDet3DDataPreprocessor(TestCase):
         processor = Det3DDataPreprocessor(
             voxel=True, voxel_type='cylindrical',
             voxel_layer=voxel_layer).cuda()
-        num_points = 10000
+        num_points = 5000
         xy = torch.rand(num_points, 2) * 140 - 70
         z = torch.rand(num_points, 1) * 9 - 6
         ref = torch.rand(num_points, 1)
-        points = torch.cat([xy, z, ref], dim=-1).unsqueeze(0)
+        points = [torch.cat([xy, z, ref], dim=-1)] * 2
         data_sample = Det3DDataSample()
         gt_pts_seg = PointData()
         gt_pts_seg.pts_semantic_mask = torch.randint(0, 10, (num_points, ))
@@ -122,3 +122,7 @@ class TestDet3DDataPreprocessor(TestCase):
         data_samples = [data_sample] * 2
         inputs = dict(inputs=dict(points=points), data_samples=data_samples)
         out_data = processor(inputs)
+        batch_inputs, batch_data_samples = out_data['inputs'], out_data[
+            'data_samples']
+        self.assertEqual(batch_inputs['voxels']['voxels'].shape, (10000, 6))
+        self.assertEqual(batch_inputs['voxels']['coors'].shape, (10000, 4))
