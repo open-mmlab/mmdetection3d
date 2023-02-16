@@ -99,6 +99,9 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
         hist_list.append(fast_hist(pred_seg, gt_seg, num_classes))
 
     iou = per_class_iou(sum(hist_list))
+    # if ignore_index is in iou, replace it with nan
+    if ignore_index < len(iou):
+        iou[ignore_index] = np.nan
     miou = np.nanmean(iou)
     acc = get_acc(sum(hist_list))
     acc_cls = get_acc_cls(sum(hist_list))

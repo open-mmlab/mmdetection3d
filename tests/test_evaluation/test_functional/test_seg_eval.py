@@ -11,13 +11,12 @@ def test_indoor_eval():
         pytest.skip()
     seg_preds = [
         np.array([
-            0, 0, 1, 0, 0, 2, 1, 3, 1, 2, 1, 0, 2, 2, 2, 2, 1, 3, 0, 3, 3, 3, 3
+            0, 0, 1, 0, 0, 2, 1, 3, 1, 2, 1, 0, 2, 2, 2, 2, 1, 3, 0, 3, 3, 4, 0
         ])
     ]
     gt_labels = [
         np.array([
-            0, 0, 0, 255, 0, 0, 1, 1, 1, 255, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3,
-            3, 255
+            0, 0, 0, 4, 0, 0, 1, 1, 1, 4, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4
         ])
     ]
 
@@ -26,14 +25,15 @@ def test_indoor_eval():
         1: 'bicycle',
         2: 'motorcycle',
         3: 'truck',
+        4: 'unlabeled'
     }
-    ret_value = seg_eval(gt_labels, seg_preds, label2cat, ignore_index=255)
+    ret_value = seg_eval(gt_labels, seg_preds, label2cat, ignore_index=4)
 
     assert np.isclose(ret_value['car'], 0.428571429)
     assert np.isclose(ret_value['bicycle'], 0.428571429)
     assert np.isclose(ret_value['motorcycle'], 0.6666667)
-    assert np.isclose(ret_value['truck'], 0.6666667)
+    assert np.isclose(ret_value['truck'], 0.5)
 
-    assert np.isclose(ret_value['acc'], 0.7)
-    assert np.isclose(ret_value['acc_cls'], 0.7)
-    assert np.isclose(ret_value['miou'], 0.547619048)
+    assert np.isclose(ret_value['acc'], 0.65)
+    assert np.isclose(ret_value['acc_cls'], 0.65)
+    assert np.isclose(ret_value['miou'], 0.50595238)

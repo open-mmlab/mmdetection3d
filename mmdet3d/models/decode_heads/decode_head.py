@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import Dict, List
 
 import torch
 from mmengine.model import BaseModule, normal_init
@@ -9,7 +9,7 @@ from torch import nn as nn
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils.typing_utils import ConfigType
+from mmdet3d.utils.typing_utils import ConfigType, OptMultiConfig
 
 
 class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
@@ -42,35 +42,35 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         channels (int): Channels after modules, before conv_seg.
         num_classes (int): Number of classes.
         dropout_ratio (float): Ratio of dropout layer. Defaults to 0.5.
-        conv_cfg (dict): Config of conv layers.
+        conv_cfg (dict or :obj:`ConfigDict`): Config of conv layers.
             Defaults to dict(type='Conv1d').
-        norm_cfg (dict): Config of norm layers.
+        norm_cfg (dict or :obj:`ConfigDict`): Config of norm layers.
             Defaults to dict(type='BN1d').
-        act_cfg (dict): Config of activation layers.
+        act_cfg (dict or :obj:`ConfigDict`): Config of activation layers.
             Defaults to dict(type='ReLU').
-        loss_decode (dict): Config of decode loss.
-            Defaults to dict(type='CrossEntropyLoss').
-        ignore_index (int): The label index to be ignored.
-            When using masked BCE loss, ignore_index should be set to None.
-            Defaults to 255.
-        init_cfg (dict or list[dict], optional): Initialization config dict.
-            Defaults to None.
+        loss_decode (dict or :obj:`ConfigDict`): Config of decode loss.
+            Defaults to dict(type='mmdet.CrossEntropyLoss', use_sigmoid=False,
+            class_weight=None, loss_weight=1.0).
+        ignore_index (int): The label index to be ignored. When using masked
+            BCE loss, ignore_index should be set to None. Defaults to 255.
+        init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
+            optional): Initialization config dict. Defaults to None.
     """
 
     def __init__(self,
-                 channels,
-                 num_classes,
-                 dropout_ratio=0.5,
-                 conv_cfg=dict(type='Conv1d'),
-                 norm_cfg=dict(type='BN1d'),
-                 act_cfg=dict(type='ReLU'),
-                 loss_decode=dict(
+                 channels: int,
+                 num_classes: int,
+                 dropout_ratio: float = 0.5,
+                 conv_cfg: ConfigType = dict(type='Conv1d'),
+                 norm_cfg: ConfigType = dict(type='BN1d'),
+                 act_cfg: ConfigType = dict(type='ReLU'),
+                 loss_decode: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=False,
                      class_weight=None,
                      loss_weight=1.0),
-                 ignore_index=255,
-                 init_cfg=None) -> None:
+                 ignore_index: int = 255,
+                 init_cfg: OptMultiConfig = None) -> None:
         super(Base3DDecodeHead, self).__init__(init_cfg=init_cfg)
         self.channels = channels
         self.num_classes = num_classes
@@ -87,13 +87,13 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         else:
             self.dropout = None
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         """Initialize weights of classification layer."""
         super().init_weights()
         normal_init(self.conv_seg, mean=0, std=0.01)
 
     @abstractmethod
-    def forward(self, feats_dict: dict):
+    def forward(self, feats_dict: dict) -> Tensor:
         """Placeholder of forward function."""
         pass
 
@@ -104,34 +104,33 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         output = self.conv_seg(feat)
         return output
 
-    def loss(self, inputs: List[Tensor], batch_data_samples: SampleList,
-             train_cfg: ConfigType) -> dict:
+    def loss(self, inputs: dict, batch_data_samples: SampleList,
+             train_cfg: ConfigType) -> Dict[str, Tensor]:
         """Forward function for training.
 
         Args:
-            inputs (list[torch.Tensor]): List of multi-level point features.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
-            train_cfg (dict): The training config.
+            inputs (dict): Feature dict from backbone.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
+            train_cfg (dict or :obj:`ConfigDict`): The training config.
 
         Returns:
-            dict[str, Tensor]: a dictionary of loss components
+            Dict[str, Tensor]: A dictionary of loss components.
         """
         seg_logits = self.forward(inputs)
         losses = self.loss_by_feat(seg_logits, batch_data_samples)
         return losses
 
-    def predict(self, inputs: List[Tensor], batch_input_metas: List[dict],
-                test_cfg: ConfigType) -> List[Tensor]:
+    def predict(self, inputs: dict, batch_input_metas: List[dict],
+                test_cfg: ConfigType) -> Tensor:
         """Forward function for testing.
 
         Args:
-            inputs (list[Tensor]): List of multi-level point features.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
-            test_cfg (dict): The testing config.
+            inputs (dict): Feature dict from backbone.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
+            test_cfg (dict or :obj:`ConfigDict`): The testing config.
 
         Returns:
             Tensor: Output segmentation map.
@@ -148,15 +147,18 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         return torch.stack(gt_semantic_segs, dim=0)
 
     def loss_by_feat(self, seg_logit: Tensor,
-                     batch_data_samples: SampleList) -> dict:
+                     batch_data_samples: SampleList) -> Dict[str, Tensor]:
         """Compute semantic segmentation loss.
 
         Args:
-            seg_logit (torch.Tensor): Predicted per-point segmentation logits
-                of shape [B, num_classes, N].
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            seg_logit (Tensor): Predicted per-point segmentation logits of
+                shape [B, num_classes, N].
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary of loss components.
         """
         seg_label = self._stack_batch_gt(batch_data_samples)
         loss = dict()
