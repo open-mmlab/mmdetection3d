@@ -64,23 +64,23 @@ python tools/test.py projects/TR3D/configs/tr3d_1xb16_scannet-3d-18class.py ${CH
 
 ## Checklist
 
-- \[✓\] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
+- [x] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
 
-  - \[✓\] Finish the code
+  - [x] Finish the code
 
-  - \[✓\] Basic docstrings & proper citation
+  - [x] Basic docstrings & proper citation
 
-  - \[✓\] Test-time correctness
+  - [x] Test-time correctness
 
-  - \[✓\] A full README
+  - [x] A full README
 
-- \[✓\] Milestone 2: Indicates a successful model implementation.
+- [x] Milestone 2: Indicates a successful model implementation.
 
-  - \[✓\] Training-time correctness
+  - [x] Training-time correctness
 
 - [ ] Milestone 3: Good to be a part of our core package!
 
-  - \[✓\] Type hints and docstrings
+  - [x] Type hints and docstrings
 
   - [ ] Unit tests
 

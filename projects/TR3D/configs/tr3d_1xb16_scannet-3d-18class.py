@@ -1,4 +1,4 @@
-_base_ = ['./tr3d.py', '../../../configs/_base_/datasets/scannet-3d.py']
+_base_ = ['./tr3d.py', 'mmdet3d::_base_/datasets/scannet-3d.py']
 custom_imports = dict(imports=['projects.TR3D.tr3d'])
 
 model = dict(
