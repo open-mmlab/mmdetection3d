@@ -13,7 +13,8 @@ from torch.nn import functional as F
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
-from .utils import Voxelization, dynamic_scatter, multiview_img_stack_batch
+from .utils import multiview_img_stack_batch
+from .voxelize import Voxelization, dynamic_scatter
 
 
 @MODELS.register_module()
