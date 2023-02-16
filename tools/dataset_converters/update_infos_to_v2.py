@@ -1074,7 +1074,7 @@ def update_waymo_infos(pkl_path, out_dir):
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
     metainfo['dataset'] = 'waymo'
-    metainfo['version'] = '1.3'
+    metainfo['version'] = '1.4'
     metainfo['info_version'] = '1.1'
 
     converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
