@@ -9,10 +9,10 @@ from mmdet3d.models.dense_heads import FCAF3DHead
 from mmdet3d.testing import create_detector_inputs
 
 
-class TestAnchor3DHead(TestCase):
+class TestFCAF3DHead(TestCase):
 
     def test_fcaf3d_head_loss(self):
-        """Test anchor head loss when truth is empty and non-empty."""
+        """Test fcaf3d head loss when truth is empty and non-empty."""
         if not torch.cuda.is_available():
             pytest.skip('test requires GPU and torch+cuda')
 

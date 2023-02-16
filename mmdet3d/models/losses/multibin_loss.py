@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional
+
 import torch
 from mmdet.models.losses.utils import weighted_loss
+from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -8,21 +11,23 @@ from mmdet3d.registry import MODELS
 
 
 @weighted_loss
-def multibin_loss(pred_orientations, gt_orientations, num_dir_bins=4):
+def multibin_loss(pred_orientations: Tensor,
+                  gt_orientations: Tensor,
+                  num_dir_bins: int = 4) -> Tensor:
     """Multi-Bin Loss.
 
     Args:
-        pred_orientations(torch.Tensor): Predicted local vector
+        pred_orientations(Tensor): Predicted local vector
             orientation in [axis_cls, head_cls, sin, cos] format.
             shape (N, num_dir_bins * 4)
-        gt_orientations(torch.Tensor): Corresponding gt bboxes,
+        gt_orientations(Tensor): Corresponding gt bboxes,
             shape (N, num_dir_bins * 2).
-        num_dir_bins(int, optional): Number of bins to encode
+        num_dir_bins(int): Number of bins to encode
             direction angle.
-            Defaults: 4.
+            Defaults to 4.
 
-    Return:
-        torch.Tensor: Loss tensor.
+    Returns:
+        Tensor: Loss tensor.
     """
     cls_losses = 0
     reg_losses = 0
@@ -62,28 +67,37 @@ class MultiBinLoss(nn.Module):
     """Multi-Bin Loss for orientation.
 
     Args:
-        reduction (str, optional): The method to reduce the loss.
+        reduction (str): The method to reduce the loss.
             Options are 'none', 'mean' and 'sum'. Defaults to 'none'.
-        loss_weight (float, optional): The weight of loss. Defaults
+        loss_weight (float): The weight of loss. Defaults
             to 1.0.
     """
 
-    def __init__(self, reduction='none', loss_weight=1.0):
+    def __init__(self,
+                 reduction: str = 'none',
+                 loss_weight: float = 1.0) -> None:
         super(MultiBinLoss, self).__init__()
         assert reduction in ['none', 'sum', 'mean']
         self.reduction = reduction
         self.loss_weight = loss_weight
 
-    def forward(self, pred, target, num_dir_bins, reduction_override=None):
+    def forward(self,
+                pred: Tensor,
+                target: Tensor,
+                num_dir_bins: int,
+                reduction_override: Optional[str] = None) -> Tensor:
         """Forward function.
 
         Args:
-            pred (torch.Tensor): The prediction.
-            target (torch.Tensor): The learning target of the prediction.
+            pred (Tensor): The prediction.
+            target (Tensor): The learning target of the prediction.
             num_dir_bins (int): Number of bins to encode direction angle.
             reduction_override (str, optional): The reduction method used to
                 override the original reduction method of the loss.
                 Defaults to None.
+
+        Returns:
+            Tensor: Loss tensor.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (

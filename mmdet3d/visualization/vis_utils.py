@@ -1,15 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from typing import Tuple
 
 import numpy as np
 import torch
 import trimesh
 
-from mmdet3d.structures import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
+from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
+                                CameraInstance3DBoxes, Coord3DMode,
                                 DepthInstance3DBoxes, LiDARInstance3DBoxes)
 
 
-def write_obj(points, out_filename):
+def write_obj(points: np.ndarray, out_filename: str) -> None:
     """Write points into ``obj`` format for meshlab visualization.
 
     Args:
@@ -31,18 +33,18 @@ def write_obj(points, out_filename):
     fout.close()
 
 
-def write_oriented_bbox(scene_bbox, out_filename):
+def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str) -> None:
     """Export oriented (around Z axis) scene bbox to meshes.
 
     Args:
-        scene_bbox(list[ndarray] or ndarray): xyz pos of center and
-            3 lengths (x_size, y_size, z_size) and heading angle around Z axis.
-            Y forward, X right, Z upward. heading angle of positive X is 0,
+        scene_bbox (np.ndarray): xyz pos of center and 3 lengths
+            (x_size, y_size, z_size) and heading angle around Z axis.
+            Y forward, X right, Z upward, heading angle of positive X is 0,
             heading angle of positive Y is 90 degrees.
-        out_filename(str): Filename.
+        out_filename (str): Filename.
     """
 
-    def heading2rotmat(heading_angle):
+    def heading2rotmat(heading_angle: float) -> np.ndarray:
         rotmat = np.zeros((3, 3))
         rotmat[2, 2] = 1
         cosval = np.cos(heading_angle)
@@ -50,7 +52,8 @@ def write_oriented_bbox(scene_bbox, out_filename):
         rotmat[0:2, 0:2] = np.array([[cosval, -sinval], [sinval, cosval]])
         return rotmat
 
-    def convert_oriented_box_to_trimesh_fmt(box):
+    def convert_oriented_box_to_trimesh_fmt(
+            box: np.ndarray) -> trimesh.base.Trimesh:
         ctr = box[:3]
         lengths = box[3:6]
         trns = np.eye(4)
@@ -70,10 +73,10 @@ def write_oriented_bbox(scene_bbox, out_filename):
     # save to obj file
     trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='obj')
 
-    return
 
-
-def to_depth_mode(points, bboxes):
+def to_depth_mode(
+        points: np.ndarray,
+        bboxes: BaseInstance3DBoxes) -> Tuple[np.ndarray, BaseInstance3DBoxes]:
     """Convert points and bboxes to Depth Coord and Depth Box mode."""
     if points is not None:
         points = Coord3DMode.convert_point(points.copy(), Coord3DMode.LIDAR,
@@ -86,16 +89,15 @@ def to_depth_mode(points, bboxes):
 
 # TODO: refactor lidar2img to img_meta
 def proj_lidar_bbox3d_to_img(bboxes_3d: LiDARInstance3DBoxes,
-                             input_meta: dict) -> np.array:
+                             input_meta: dict) -> np.ndarray:
     """Project the 3D bbox on 2D plane.
 
     Args:
-        bboxes_3d (:obj:`LiDARInstance3DBoxes`):
-            3d bbox in lidar coordinate system to visualize.
-        lidar2img (numpy.array, shape=[4, 4]): The projection matrix
-            according to the camera intrinsic parameters.
+        bboxes_3d (:obj:`LiDARInstance3DBoxes`): 3D bbox in lidar coordinate
+            system to visualize.
+        input_meta (dict): Meta information.
     """
-    corners_3d = bboxes_3d.corners
+    corners_3d = bboxes_3d.corners.cpu().numpy()
     num_bbox = corners_3d.shape[0]
     pts_4d = np.concatenate(
         [corners_3d.reshape(-1, 3),
@@ -115,13 +117,13 @@ def proj_lidar_bbox3d_to_img(bboxes_3d: LiDARInstance3DBoxes,
 
 # TODO: remove third parameter in all functions here in favour of img_metas
 def proj_depth_bbox3d_to_img(bboxes_3d: DepthInstance3DBoxes,
-                             input_meta: dict) -> np.array:
+                             input_meta: dict) -> np.ndarray:
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes_3d (:obj:`DepthInstance3DBoxes`, shape=[M, 7]):
-            3d bbox in depth coordinate system to visualize.
-        input_meta (dict): Used in coordinates transformation.
+        bboxes_3d (:obj:`DepthInstance3DBoxes`): 3D bbox in depth coordinate
+            system to visualize.
+        input_meta (dict): Meta information.
     """
     from mmdet3d.models import apply_3d_transformation
     from mmdet3d.structures import points_cam2img
@@ -146,14 +148,13 @@ def proj_depth_bbox3d_to_img(bboxes_3d: DepthInstance3DBoxes,
 
 # project the camera bboxes 3d to image
 def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
-                              input_meta: dict) -> np.array:
+                              input_meta: dict) -> np.ndarray:
     """Project the 3D bbox on 2D plane and draw on input image.
 
     Args:
-        bboxes_3d (:obj:`CameraInstance3DBoxes`, shape=[M, 7]):
-            3d bbox in camera coordinate system to visualize.
-        cam2img (np.array)): Camera intrinsic matrix,
-            denoted as `K` in depth bbox coordinate system.
+        bboxes_3d (:obj:`CameraInstance3DBoxes`): 3D bbox in camera coordinate
+            system to visualize.
+        input_meta (dict): Meta information.
     """
     from mmdet3d.structures import points_cam2img
 
