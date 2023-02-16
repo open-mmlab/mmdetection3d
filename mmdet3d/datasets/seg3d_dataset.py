@@ -278,6 +278,8 @@ class Seg3DDataset(BaseDataset):
         """
         if self.test_mode is False:
             data_info = self.get_data_info(idx)
+            # Pass the dataset to the pipeline during training to support mixed
+            # data augmentation, such as polarmix.
             data_info['dataset'] = self
             return self.pipeline(data_info)
         else:
