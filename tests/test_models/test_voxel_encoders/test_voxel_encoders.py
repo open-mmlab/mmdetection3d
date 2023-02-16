@@ -24,6 +24,7 @@ def test_seg_VFE():
     seg_VFE_cfg = dict(
         type='SegVFE',
         feat_channels=[64, 128, 256, 256],
+        grid_size=[480, 360, 32],
         with_voxel_center=True,
         feat_compression=16,
         return_point_feats=True)
@@ -38,5 +39,8 @@ def test_seg_VFE():
     coors = torch.cat(coors, dim=0).cuda()
     out_features, out_coors, out_point_features = seg_VFE(features, coors)
     assert out_features.shape[0] == out_coors.shape[0]
-    assert len(out_point_features) == 5
-    assert out_point_features[-1].shape[-1] == 256
+    assert len(out_point_features) == 4
+    assert out_point_features[0].shape == torch.Size([240000, 64])
+    assert out_point_features[1].shape == torch.Size([240000, 128])
+    assert out_point_features[2].shape == torch.Size([240000, 256])
+    assert out_point_features[3].shape == torch.Size([240000, 256])

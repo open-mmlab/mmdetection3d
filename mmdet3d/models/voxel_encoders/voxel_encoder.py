@@ -522,13 +522,13 @@ class SegVFE(nn.Module):
                  in_channels: int = 6,
                  feat_channels: Sequence[int] = [],
                  with_voxel_center: bool = False,
-                 voxel_size: Sequence[float] = (0.10438413361169102,
-                                                1.0027855153203342,
-                                                0.1935483870967742),
+                 voxel_size: Sequence[float] = None,
+                 grid_size: Sequence[float] = None,
                  point_cloud_range: Sequence[float] = (0, -180, -4, 50, 180,
                                                        2),
                  norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
                  mode: bool = 'max',
+                 with_pre_norm: bool = True,
                  feat_compression: Optional[int] = None,
                  return_point_feats: bool = False) -> None:
         super(SegVFE, self).__init__()
@@ -540,23 +540,41 @@ class SegVFE(nn.Module):
         self._with_voxel_center = with_voxel_center
         self.return_point_feats = return_point_feats
 
+        self.point_cloud_range = point_cloud_range
+        point_cloud_range = torch.tensor(
+            point_cloud_range, dtype=torch.float32)
+        if voxel_size:
+            self.voxel_size = voxel_size
+            voxel_size = torch.tensor(voxel_size, dtype=torch.float32)
+            grid_size = (point_cloud_range[3:] -
+                         point_cloud_range[:3]) / voxel_size
+            grid_size = torch.round(grid_size).long().tolist()
+            self.grid_size = grid_size
+        elif grid_size:
+            grid_size = torch.tensor(grid_size, dtype=torch.float32)
+            voxel_size = (point_cloud_range[3:] - point_cloud_range[:3]) / (
+                grid_size - 1)
+            voxel_size = voxel_size.tolist()
+            self.voxel_size = voxel_size
+        else:
+            raise ValueError('must assign a value to voxel_size or grid_size')
+
         # Need pillar (voxel) size and x/y offset in order to calculate offset
-        self.vx = voxel_size[0]
-        self.vy = voxel_size[1]
-        self.vz = voxel_size[2]
+        self.vx = self.voxel_size[0]
+        self.vy = self.voxel_size[0]
+        self.vz = self.voxel_size[0]
         self.x_offset = self.vx / 2 + point_cloud_range[0]
         self.y_offset = self.vy / 2 + point_cloud_range[1]
         self.z_offset = self.vz / 2 + point_cloud_range[2]
-        self.point_cloud_range = point_cloud_range
 
         feat_channels = [self.in_channels] + list(feat_channels)
+        if with_pre_norm:
+            self.pre_norm = build_norm_layer(norm_cfg, self.in_channels)[1]
         vfe_layers = []
-        norm_name, norm_layer = build_norm_layer(norm_cfg, self.in_channels)
-        vfe_layers.append(norm_layer)
         for i in range(len(feat_channels) - 1):
             in_filters = feat_channels[i]
             out_filters = feat_channels[i + 1]
-            norm_name, norm_layer = build_norm_layer(norm_cfg, out_filters)
+            norm_layer = build_norm_layer(norm_cfg, out_filters)[1]
             if i == len(feat_channels) - 2:
                 vfe_layers.append(nn.Linear(in_filters, out_filters))
             else:
@@ -566,7 +584,8 @@ class SegVFE(nn.Module):
                         nn.ReLU(inplace=True)))
         self.vfe_layers = nn.ModuleList(vfe_layers)
         self.num_vfe = len(vfe_layers)
-        self.vfe_scatter = DynamicScatter(voxel_size, point_cloud_range,
+        self.vfe_scatter = DynamicScatter(self.voxel_size,
+                                          self.point_cloud_range,
                                           (mode != 'max'))
         self.compression_layers = None
         if feat_compression is not None:
@@ -601,12 +620,17 @@ class SegVFE(nn.Module):
 
         # Combine together feature decorations
         features = torch.cat(features_ls[::-1], dim=-1)
+
+        if self.pre_norm is not None:
+            features = self.pre_norm(features)
+
         point_feats = []
         for i, vfe in enumerate(self.vfe_layers):
             features = vfe(features)
             point_feats.append(features)
             if i == self.num_vfe - 1:
                 voxel_feats, voxel_coors = self.vfe_scatter(features, coors)
+
         if self.compression_layers is not None:
             voxel_feats = self.compression_layers(voxel_feats)
 
