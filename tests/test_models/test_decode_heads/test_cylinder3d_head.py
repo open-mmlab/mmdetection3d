@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
 
-import spconv
 import torch
+from mmcv.ops import SparseConvTensor
 
 from mmdet3d.models.decode_heads import Cylinder3DHead
 from mmdet3d.structures import Det3DDataSample, PointData
@@ -35,8 +35,8 @@ class TestCylinder3DHead(TestCase):
         grid_size = [480, 360, 32]
         batch_size = 1
 
-        sparse_voxels = spconv.SparseConvTensor(voxel_feats, coors, grid_size,
-                                                batch_size)
+        sparse_voxels = SparseConvTensor(voxel_feats, coors, grid_size,
+                                         batch_size)
         # Test forward
         seg_logits = cylinder3d_head.forward(sparse_voxels)
 

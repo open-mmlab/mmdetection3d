@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import spconv
 import torch
+from mmcv.ops import SparseConvTensor, SubMConv3d
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
@@ -74,8 +74,8 @@ class Cylinder3DHead(Base3DDecodeHead):
         self.ignore_index = ignore_index
 
     def build_conv_seg(self, channels: int, num_classes: int,
-                       kernel_size: int) -> spconv.SubMConv3d:
-        return spconv.SubMConv3d(
+                       kernel_size: int) -> SubMConv3d:
+        return SubMConv3d(
             channels,
             num_classes,
             indice_key='logit',
@@ -84,14 +84,12 @@ class Cylinder3DHead(Base3DDecodeHead):
             padding=1,
             bias=True)
 
-    def forward(
-            self,
-            sparse_voxels: spconv.SparseConvTensor) -> spconv.SparseConvTensor:
+    def forward(self, sparse_voxels: SparseConvTensor) -> SparseConvTensor:
         """Forward function."""
         sparse_logits = self.cls_seg(sparse_voxels)
         return sparse_logits
 
-    def loss_by_feat(self, seg_logit: spconv.SparseConvTensor,
+    def loss_by_feat(self, seg_logit: SparseConvTensor,
                      batch_data_samples: SampleList) -> dict:
         """Compute semantic segmentation loss.
 
