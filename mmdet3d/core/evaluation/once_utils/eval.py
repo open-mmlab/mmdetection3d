@@ -8,6 +8,7 @@ import numpy as np
 from .eval_utils import compute_split_parts
 from .iou_utils import rotate_iou_gpu_eval
 from .eval_utils import compute_split_parts, overall_filter, distance_filter, overall_distance_filter
+from ....core.bbox.iou_calculators import bbox_overlaps_3d
 
 
 iou_threshold_dict = {
@@ -302,65 +303,8 @@ def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_nam
     return gt_flag, pred_flag
 
 
-def iou3d_kernel(gt_boxes, pred_boxes):
-    """
-    Core iou3d computation (with cuda)
-
-    Args:
-        gt_boxes: [N, 7] (x, y, z, w, l, h, rot) in Lidar coordinates
-        pred_boxes: [M, 7]
-
-    Returns:
-        iou3d: [N, M]
-    """
-    intersection_2d = rotate_iou_gpu_eval(gt_boxes[:, [0, 1, 3, 4, 6]], pred_boxes[:, [0, 1, 3, 4, 6]], criterion=2)
-    gt_max_h = gt_boxes[:, [2]] + gt_boxes[:, [5]] * 0.5
-    gt_min_h = gt_boxes[:, [2]] - gt_boxes[:, [5]] * 0.5
-    pred_max_h = pred_boxes[:, [2]] + pred_boxes[:, [5]] * 0.5
-    pred_min_h = pred_boxes[:, [2]] - pred_boxes[:, [5]] * 0.5
-    max_of_min = np.maximum(gt_min_h, pred_min_h.T)
-    min_of_max = np.minimum(gt_max_h, pred_max_h.T)
-    inter_h = min_of_max - max_of_min
-    inter_h[inter_h <= 0] = 0
-    #inter_h[intersection_2d <= 0] = 0
-    intersection_3d = intersection_2d * inter_h
-    gt_vol = gt_boxes[:, [3]] * gt_boxes[:, [4]] * gt_boxes[:, [5]]
-    pred_vol = pred_boxes[:, [3]] * pred_boxes[:, [4]] * pred_boxes[:, [5]]
-    union_3d = gt_vol + pred_vol.T - intersection_3d
-    #eps = 1e-6
-    #union_3d[union_3d<eps] = eps
-    iou3d = intersection_3d / union_3d
-    return iou3d
-
-def iou3d_kernel_with_heading(gt_boxes, pred_boxes):
-    """
-    Core iou3d computation (with cuda)
-
-    Args:
-        gt_boxes: [N, 7] (x, y, z, w, l, h, rot) in Lidar coordinates
-        pred_boxes: [M, 7]
-
-    Returns:
-        iou3d: [N, M]
-    """
-    intersection_2d = rotate_iou_gpu_eval(gt_boxes[:, [0, 1, 3, 4, 6]], pred_boxes[:, [0, 1, 3, 4, 6]], criterion=2)
-    gt_max_h = gt_boxes[:, [2]] + gt_boxes[:, [5]] * 0.5
-    gt_min_h = gt_boxes[:, [2]] - gt_boxes[:, [5]] * 0.5
-    pred_max_h = pred_boxes[:, [2]] + pred_boxes[:, [5]] * 0.5
-    pred_min_h = pred_boxes[:, [2]] - pred_boxes[:, [5]] * 0.5
-    max_of_min = np.maximum(gt_min_h, pred_min_h.T)
-    min_of_max = np.minimum(gt_max_h, pred_max_h.T)
-    inter_h = min_of_max - max_of_min
-    inter_h[inter_h <= 0] = 0
-    #inter_h[intersection_2d <= 0] = 0
-    intersection_3d = intersection_2d * inter_h
-    gt_vol = gt_boxes[:, [3]] * gt_boxes[:, [4]] * gt_boxes[:, [5]]
-    pred_vol = pred_boxes[:, [3]] * pred_boxes[:, [4]] * pred_boxes[:, [5]]
-    union_3d = gt_vol + pred_vol.T - intersection_3d
-    #eps = 1e-6
-    #union_3d[union_3d<eps] = eps
-    iou3d = intersection_3d / union_3d
-
+def bbox_overlaps_3d_with_heading(gt_boxes, pred_boxes, coordinate='lidar'):
+    iou3d = bbox_overlaps_3d(gt_boxes, pred_boxes, coordinate=coordinate)
     # rotation orientation filtering
     diff_rot = gt_boxes[:, [6]] - pred_boxes[:, [6]].T
     diff_rot = np.abs(diff_rot)
@@ -395,9 +339,9 @@ def compute_iou3d(gt_annos, pred_annos, split_parts, with_heading):
         pred_boxes = np.concatenate([anno["boxes_3d"] for anno in pred_annos_part], 0)
 
         if with_heading:
-            iou3d_part = iou3d_kernel_with_heading(gt_boxes, pred_boxes)
+            iou3d_part = bbox_overlaps_3d_with_heading(gt_boxes, pred_boxes, coordinate='lidar')
         else:
-            iou3d_part = iou3d_kernel(gt_boxes, pred_boxes)
+            iou3d_part = bbox_overlaps_3d(gt_boxes, pred_boxes, coordinate='lidar')
 
         gt_num_idx, pred_num_idx = 0, 0
         for idx in range(num_part_samples):

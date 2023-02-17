@@ -62,6 +62,3 @@ def test_evaluate():
     assert ap_dict['AP_Truck/overall'] == 100
     assert ap_dict['AP_Pedestrian/overall'] == 100
     assert ap_dict['AP_Cyclist/overall'] == 0
-
-
-test_evaluate()

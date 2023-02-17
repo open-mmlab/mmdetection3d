@@ -121,19 +121,20 @@ class OnceDataset(Custom3DDataset):
         
         img_filenames = []
         lidar2imgs = []
-        seq_id = info['sequence_id']
-        for camera in self.camera_list:
-            img_filename = os.path.join(self.data_root, 'data', \
-                                        seq_id, camera, f'{sample_idx}.jpg')
-            img_filenames.append(img_filename)
-            # obtain lidar to image transformation matrix
-            cam2lidar = info['calib'][camera]['cam_to_velo']
-            lidar2cam = np.linalg.inv(cam2lidar)
-            intrinsic = info['calib'][camera]['cam_intrinsic']
-            viewpad = np.eye(4)
-            viewpad[:3, :3] = intrinsic
-            lidar2img = viewpad @ lidar2cam.T
-            lidar2imgs.append(lidar2img)
+        if self.modality['use_camera']:
+            seq_id = info['sequence_id']
+            for camera in self.camera_list:
+                img_filename = os.path.join(self.data_root, 'data', \
+                                            seq_id, camera, f'{sample_idx}.jpg')
+                img_filenames.append(img_filename)
+                # obtain lidar to image transformation matrix
+                cam2lidar = info['calib'][camera]['cam_to_velo']
+                lidar2cam = np.linalg.inv(cam2lidar)
+                intrinsic = info['calib'][camera]['cam_intrinsic']
+                viewpad = np.eye(4)
+                viewpad[:3, :3] = intrinsic
+                lidar2img = viewpad @ lidar2cam.T
+                lidar2imgs.append(lidar2img)
 
         input_dict = dict(
             sample_idx=sample_idx,
@@ -169,6 +170,8 @@ class OnceDataset(Custom3DDataset):
         info = self.data_infos[index]
         annos = info['annos']
 
+        # TODO: convert the box format in the original ONCE
+        # coordinate to that in the LiDAR coordiante in mmdet3d.
         gt_bboxes_3d = annos['boxes_3d']
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,

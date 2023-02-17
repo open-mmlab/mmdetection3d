@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'OnceDataset'
-data_root = '../data/once/'
+data_root = '/data/once/'
 class_names = ['Car', 'Bus', 'Truck', 'Pedestrian', 'Cyclist']
 point_cloud_range = [-75.2, -75.2, -5.0, 75.2, 75.2, 3.0]
 input_modality = dict(use_lidar=True, use_camera=False)
