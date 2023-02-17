@@ -107,14 +107,7 @@ class Seg3DDataset(BaseDataset):
         metainfo['palette'] = updated_palette
 
         # construct seg_label_mapping for semantic mask
-        seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
-        seg_valid_cat_ids = self.METAINFO['seg_valid_class_ids']
-        neg_label = len(seg_valid_cat_ids)
-        seg_label_mapping = np.ones(
-            seg_max_cat_id + 1, dtype=np.int) * neg_label
-        for cls_idx, cat_id in enumerate(seg_valid_cat_ids):
-            seg_label_mapping[cat_id] = cls_idx
-        self.seg_label_mapping = seg_label_mapping
+        self.seg_label_mapping = self.get_seg_label_mapping(metainfo)
 
         super().__init__(
             ann_file=ann_file,
@@ -191,6 +184,29 @@ class Seg3DDataset(BaseDataset):
             valid_class_ids = self.METAINFO['seg_valid_class_ids']
 
         return label_mapping, label2cat, valid_class_ids
+
+    def get_seg_label_mapping(self, metainfo=None):
+        """Get segmentation label mapping.
+
+        The ``seg_label_mapping`` is an array, its indices are the old label
+        ids and its values are the new label ids, and is specifically used
+        for changing point labels in PointSegClassMapping.
+
+        Args:
+            metainfo (dict, optional): Meta information to set
+            seg_label_mapping. Defaults to None.
+
+        Returns:
+            tuple: The mapping from old classes to new classes.
+        """
+        seg_max_cat_id = len(self.METAINFO['seg_all_class_ids'])
+        seg_valid_cat_ids = self.METAINFO['seg_valid_class_ids']
+        neg_label = len(seg_valid_cat_ids)
+        seg_label_mapping = np.ones(
+            seg_max_cat_id + 1, dtype=np.int) * neg_label
+        for cls_idx, cat_id in enumerate(seg_valid_cat_ids):
+            seg_label_mapping[cat_id] = cls_idx
+        return seg_label_mapping
 
     def _update_palette(self, new_classes: list, palette: Union[None,
                                                                 list]) -> list:

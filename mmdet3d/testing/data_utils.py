@@ -160,7 +160,11 @@ def create_dummy_data_info(with_ann=True):
             0
         }],
         'plane':
-        None
+        None,
+        'pts_semantic_mask_path':
+        'tests/data/semantickitti/sequences/00/labels/000000.label',
+        'pts_panoptic_mask_path':
+        'tests/data/semantickitti/sequences/00/labels/000000.label',
     }
     if with_ann:
         data_info['ann_info'] = ann_info
