@@ -99,6 +99,3 @@ def create_semantickitti_info_file(pkl_prefix, save_path):
     filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     print(f'SemanticKITTI info test file is saved to {filename}')
     mmengine.dump(semantickitti_infos_test, filename)
-
-
-create_semantickitti_info_file('semantickitti', 'data/semantickitti')
