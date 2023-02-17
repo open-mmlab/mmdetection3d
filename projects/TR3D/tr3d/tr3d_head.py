@@ -153,8 +153,8 @@ class TR3DHead(Base3DDenseHead):
                 values and a boolean mask of assigned points.
         """
         num_classes = cls_preds[0].shape[1]
-        bbox_targets, cls_targets = self._get_targets(points, gt_bboxes,
-                                                      gt_labels, num_classes)
+        bbox_targets, cls_targets = self.get_targets(points, gt_bboxes,
+                                                     gt_labels, num_classes)
         bbox_preds = torch.cat(bbox_preds)
         cls_preds = torch.cat(cls_preds)
         points = torch.cat(points)
@@ -354,9 +354,8 @@ class TR3DHead(Base3DDenseHead):
             dim=-1)
 
     @torch.no_grad()
-    def _get_targets(self, points: Tensor, gt_bboxes: BaseInstance3DBoxes,
-                     gt_labels: Tensor,
-                     num_classes: int) -> Tuple[Tensor, ...]:
+    def get_targets(self, points: Tensor, gt_bboxes: BaseInstance3DBoxes,
+                    gt_labels: Tensor, num_classes: int) -> Tuple[Tensor, ...]:
         """Compute targets for final locations for a single scene.
 
         Args:

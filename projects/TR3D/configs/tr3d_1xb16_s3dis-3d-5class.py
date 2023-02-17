@@ -38,19 +38,14 @@ train_pipeline = [
 train_dataloader = dict(
     batch_size=16,
     num_workers=8,
-    sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
-        type='RepeatDataset',
-        # times=13,
-        dataset=dict(
-            # type='ConcatDataset',
-            datasets=[
-                dict(
-                    type=dataset_type,
-                    data_root=data_root,
-                    ann_file=f's3dis_infos_Area_{i}.pkl',
-                    pipeline=train_pipeline,
-                    filter_empty_gt=False,
-                    metainfo=metainfo,
-                    box_type_3d='Depth') for i in train_area
-            ])))
+        dataset=dict(datasets=[
+            dict(
+                type=dataset_type,
+                data_root=data_root,
+                ann_file=f's3dis_infos_Area_{i}.pkl',
+                pipeline=train_pipeline,
+                filter_empty_gt=False,
+                metainfo=metainfo,
+                box_type_3d='Depth') for i in train_area
+        ])))

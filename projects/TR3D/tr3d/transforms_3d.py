@@ -44,7 +44,8 @@ class TR3DPointSample(PointSample):
                 - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
-        if type(self.num_points) is float:
+        if isinstance(num_samples, float):
+            assert num_samples < 1
             num_samples = int(
                 np.random.uniform(self.num_points, 1.) * points.shape[0])
 

@@ -29,7 +29,6 @@ train_pipeline = [
         scale_ratio_range=[.85, 1.15],
         translation_std=[.1, .1, .1],
         shift_height=False),
-    # dict(type='NormalizePointsColor', color_mean=None),
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -49,7 +48,6 @@ test_pipeline = [
         flip=False,
         transforms=[
             dict(type='PointSample', num_points=100000),
-            # dict(type='NormalizePointsColor', color_mean=None),
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
