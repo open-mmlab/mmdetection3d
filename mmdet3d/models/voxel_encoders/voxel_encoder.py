@@ -512,6 +512,8 @@ class SegVFE(nn.Module):
         mode (str): The mode when pooling features of points
             inside a voxel. Available options include 'max' and 'avg'.
             Defaults to 'max'.
+        with_pre_norm (bool): Whether to use the norm layer before
+            input vfe layer.
         feat_compression (int, optional): The voxel feature compression
             channels, Defaults to None
         return_point_feats (bool): Whether to return the features
