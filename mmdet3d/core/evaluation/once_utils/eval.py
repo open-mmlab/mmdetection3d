@@ -6,7 +6,6 @@ r"""Adapted from `once_benchmark
 import numba
 import numpy as np
 from .eval_utils import compute_split_parts
-from .iou_utils import rotate_iou_gpu_eval
 from .eval_utils import compute_split_parts, overall_filter, distance_filter, overall_distance_filter
 from ....core.bbox.iou_calculators import bbox_overlaps_3d
 
