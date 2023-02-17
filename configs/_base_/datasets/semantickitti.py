@@ -1,3 +1,4 @@
+# dataset settings
 dataset_type = 'SemanticKITTIDataset'
 data_root = 'data/semantickitti/'
 class_names = [
