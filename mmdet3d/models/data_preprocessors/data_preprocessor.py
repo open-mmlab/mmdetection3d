@@ -407,6 +407,24 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 coors.append(res_coors)
             voxels = torch.cat(voxels, dim=0)
             coors = torch.cat(coors, dim=0)
+        elif self.voxel_type == 'minkunet':
+            voxels, coors = [], []
+            for i, (res, data_sample) in enumerate(zip(points, data_samples)):
+                res_coors = torch.round(
+                    res[:, :3] /
+                    res.new_tensor(self.voxel_layer.voxel_size)).int()
+                res_coors -= res_coors.min(0)[0]
+                res_voxels, res_coors, voxel2point_map = dynamic_scatter(
+                    res, res_coors, 'max', True)
+                if self.training:
+                    self.get_voxel_seg(res_coors, data_sample)
+                res_coors = F.pad(res_coors, (0, 1), mode='constant', value=i)
+                data_sample.voxel2point_map = voxel2point_map.long()
+                voxels.append(res_voxels)
+                coors.append(res_coors)
+            voxels = torch.cat(voxels, dim=0)
+            coors = torch.cat(coors, dim=0)
+
         else:
             raise ValueError(f'Invalid voxelization type {self.voxel_type}')
 

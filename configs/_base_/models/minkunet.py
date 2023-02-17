@@ -3,13 +3,13 @@ model = dict(
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
+        voxel_type='minkunet',
         voxel_layer=dict(
-            max_num_points=64,
-            point_cloud_range=[-50, -50, -5, 50, 50, 3],
-            voxel_size=[0.25, 0.25, 8],
-            max_voxels=(30000, 40000)),
+            max_num_points=-1,
+            point_cloud_range=[-100, -100, -20, 100, 100, 20],
+            voxel_size=[0.05, 0.05, 0.05],
+            max_voxels=(-1, -1)),
     ),
-    voxel_encoder=dict(type='HardSimpleVFE'),
     backbone=dict(
         type='MinkUNetBackbone',
         in_channels=4,

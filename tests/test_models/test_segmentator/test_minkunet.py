@@ -20,7 +20,9 @@ class TestMinkUNet(unittest.TestCase):
         model = MODELS.build(model_cfg)
         num_gt_instance = 3
         packed_inputs = create_detector_inputs(
-            num_gt_instance=num_gt_instance, num_classes=19)
+            num_gt_instance=num_gt_instance,
+            num_classes=19,
+            with_pts_semantic_mask=True)
 
         if torch.cuda.is_available():
             model = model.cuda()
@@ -30,10 +32,8 @@ class TestMinkUNet(unittest.TestCase):
                 torch.cuda.empty_cache()
                 results = model.forward(**data, mode='predict')
             self.assertEqual(len(results), 1)
-            self.assertIn('bboxes_3d', results[0].pred_instances_3d)
-            self.assertIn('scores_3d', results[0].pred_instnces_3d)
-            self.assertIn('labels_3d', results[0].pred_instances_3d)
+            self.assertIn('pts_semantic_mask', results[0].pred_pts_seg)
 
             losses = model.forward(**data, mode='loss')
 
-            self.assertGreater(losses['centerness_loss'], 0)
+            self.assertGreater(losses['loss_sem_seg'], 0)

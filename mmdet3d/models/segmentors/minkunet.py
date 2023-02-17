@@ -6,11 +6,7 @@ from torch import Tensor
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import OptSampleList, SampleList
-from mmdet3d.utils import ConfigType
 from .encoder_decoder import EncoderDecoder3D
-
-if IS_TORCHSPARSE_AVAILABLE:
-    from torchsparse import SparseTensor
 
 
 @MODELS.register_module()
@@ -26,18 +22,20 @@ class MinkUNet(EncoderDecoder3D):
            initialization. Default to None.
     """
 
-    def __init__(self, voxel_encoder: ConfigType = None, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:
         if not IS_TORCHSPARSE_AVAILABLE:
             raise ImportError(
                 'Please follow `getting_started.md` to install Torchsparse.`'
             )  # noqa: E501
         super().__init__(**kwargs)
-        self.voxel_encoder = MODELS.build(voxel_encoder)
 
-    def predict(self,
-                batch_inputs_dict: dict,
-                batch_data_samples: SampleList,
-                rescale: bool = True) -> SampleList:
+    def loss(self, inputs: dict, data_samples: SampleList):
+        """"""
+        x = self.extract_feat(inputs)
+        losses = self.decode_head.loss(x, data_samples)
+        return losses
+
+    def predict(self, inputs: dict, data_samples: SampleList) -> SampleList:
         """Simple test with single scene.
 
         Args:
@@ -59,70 +57,10 @@ class MinkUNet(EncoderDecoder3D):
 
                 - semantic_mask (Tensor): Segmentation mask of shape [N].
         """
-        seg_pred_list = self.inference(batch_inputs_dict, batch_data_samples)
+        x = self.extract_feat(inputs)
+        preds = self.decode_head.predict(x, data_samples)
 
-        return self.postprocess_result(seg_pred_list, batch_data_samples)
-
-    def whole_inference(self,
-                        inputs: dict,
-                        data_samples: SampleList,
-                        rescale: bool = True) -> Tensor:
-        """Inference with full scene (one forward pass without sliding)."""
-        seg_pred_list = self.encode_decode(inputs, data_samples)
-        return seg_pred_list
-
-    def encode_decode(self, batch_inputs: Tensor,
-                      data_samples: SampleList) -> Tensor:
-        """Encode points with backbone and decode into a semantic segmentation
-        map of the same size as input.
-
-        Args:
-            batch_input (torch.Tensor): Input point cloud sample
-            batch_input_metas (list[dict]): Meta information of each sample.
-
-        Returns:
-            torch.Tensor: Segmentation logits of shape [B, num_classes, N].
-        """
-        x = self.extract_feat(batch_inputs)
-        seg_pred_list = self.decode_head.predict(x, data_samples,
-                                                 self.test_cfg)
-        return seg_pred_list
-
-    def inference(self, inputs: SparseTensor,
-                  batch_data_samples: SampleList) -> Tensor:
-        """Inference with slide/whole style.
-
-        Args:
-            inputs (Tensor): The input image of shape (N, 3, H, W).
-            batch_img_metas (List[dict]): List of image metainfo where each may
-                also contain: 'img_shape', 'scale_factor', 'flip', 'img_path',
-                'ori_shape', 'pad_shape', and 'padding_size'.
-                For details on the values of these keys see
-                `mmseg/datasets/pipelines/formatting.py:PackSegInputs`.
-
-        Returns:
-            Tensor: The segmentation results, seg_logits from model of each
-                input image.
-        """
-
-        assert self.test_cfg.mode in ['slide', 'whole']
-        if self.test_cfg.mode == 'slide':
-            seg_pred_list = self.slide_inference(inputs, batch_data_samples)
-        else:
-            seg_pred_list = self.whole_inference(inputs, batch_data_samples)
-
-        return seg_pred_list
-
-    def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
-        """Extract features from points."""
-        voxel_dict = batch_inputs_dict['voxels']
-        voxel_features = self.voxel_encoder(voxel_dict['voxels'],
-                                            voxel_dict['num_points'],
-                                            voxel_dict['coors'])
-        x = self.backbone(voxel_features, voxel_dict['coors'])
-        if self.with_neck:
-            x = self.neck(x)
-        return x
+        return self.postprocess_result(preds, data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,
@@ -145,3 +83,11 @@ class MinkUNet(EncoderDecoder3D):
         """
         x = self.extract_feat(batch_inputs_dict)
         return self.decode_head.forward(x)
+
+    def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
+        """Extract features from points."""
+        voxel_dict = batch_inputs_dict['voxels']
+        x = self.backbone(voxel_dict['voxels'], voxel_dict['coors'])
+        if self.with_neck:
+            x = self.neck(x)
+        return x
