@@ -133,7 +133,7 @@ class OnceDataset(Custom3DDataset):
                 intrinsic = info['calib'][camera]['cam_intrinsic']
                 viewpad = np.eye(4)
                 viewpad[:3, :3] = intrinsic
-                lidar2img = viewpad @ lidar2cam.T
+                lidar2img = viewpad @ lidar2cam
                 lidar2imgs.append(lidar2img)
 
         input_dict = dict(
