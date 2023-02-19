@@ -12,6 +12,8 @@ from .decode_head import Base3DDecodeHead
 
 if IS_TORCHSPARSE_AVAILABLE:
     from torchsparse import SparseTensor
+else:
+    SparseTensor = None
 
 
 @MODELS.register_module()
