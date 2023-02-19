@@ -10,6 +10,8 @@ from .torchsparse import IS_TORCHSPARSE_AVAILABLE
 if IS_TORCHSPARSE_AVAILABLE:
     import torchsparse.nn as spnn
     from torchsparse.tensor import SparseTensor
+else:
+    SparseTensor = None
 
 
 class TorchsparseConvModule(BaseModule):

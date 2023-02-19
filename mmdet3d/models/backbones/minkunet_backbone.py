@@ -13,6 +13,8 @@ from mmdet3d.utils import OptMultiConfig
 if IS_TORCHSPARSE_AVAILABLE:
     import torchsparse
     from torchsparse.tensor import SparseTensor
+else:
+    SparseTensor = None
 
 
 @MODELS.register_module()
