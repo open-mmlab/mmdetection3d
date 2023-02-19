@@ -22,7 +22,7 @@ class TestCylinder3DHead(TestCase):
                 class_weight=None,
                 loss_weight=1.0),
             loss_lovasz=dict(
-                type='mmseg.LovaszLoss', loss_weight=1.0, reduction='none'),
+                type='LovaszLoss', loss_weight=1.0, reduction='none'),
         ).cuda()
 
         # DGCNN head expects dict format features
