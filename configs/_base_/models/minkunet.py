@@ -19,9 +19,6 @@ model = dict(
         num_stages=4,
         init_cfg=None),
     decode_head=dict(
-        type='MinkUNetHead',
-        channels=48,
-        num_classes=19,
-    ),
+        type='MinkUNetHead', channels=48, num_classes=19, ignore_index=19),
     train_cfg=dict(),
     test_cfg=dict(mode='whole'))
