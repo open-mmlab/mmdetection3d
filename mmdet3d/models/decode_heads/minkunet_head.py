@@ -47,8 +47,8 @@ class MinkUNetHead(Base3DDecodeHead):
             [i.gt_pts_seg.voxel_semantic_mask for i in data_samples])
 
         losses = dict()
-        loss = self.loss_decode(seg_logits, targets)
-        losses['loss_sem_seg'] = loss
+        losses['loss_sem_seg'] = self.loss_decode(
+            seg_logits, targets, ignore_index=self.ignore_index)
         return losses
 
     def predict(self, inputs: SparseTensor,
@@ -66,7 +66,7 @@ class MinkUNetHead(Base3DDecodeHead):
             list[Tensor]: The segmentation prediction mask of each batch.
         """
         seg_logits = self.forward(inputs)
-        seg_preds = seg_logits.argmax(dim=1) + 1
+        seg_preds = seg_logits.argmax(dim=1)
 
         batch_idx = inputs.C[:, -1]
         seg_pred_list = []
