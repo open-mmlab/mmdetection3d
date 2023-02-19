@@ -88,7 +88,7 @@ def _generate_semantickitti_dataset_config():
             with_label_3d=False,
             with_mask_3d=False,
             with_seg_3d=True,
-            seg_3d_dtype=np.int32),
+            seg_3d_dtype='np.int32'),
         dict(type='PointSegClassMapping'),
         dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
     ]

@@ -61,7 +61,7 @@ class TestLoadAnnotations3D(unittest.TestCase):
             with_panoptic_3d=True,
             seg_offset=2**16,
             dataset_type='semantickitti',
-            seg_3d_dtype=np.uint32,
+            seg_3d_dtype='np.uint32',
             file_client_args=file_client_args)
         self.assertIs(load_anns_transform.with_seg, False)
         self.assertIs(load_anns_transform.with_bbox_3d, True)
