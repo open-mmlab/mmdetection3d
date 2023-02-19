@@ -825,7 +825,7 @@ class LoadAnnotations3D(LoadAnnotations):
         with_bbox_depth: bool = False,
         with_panoptic_3d: bool = False,
         poly2mask: bool = True,
-        seg_3d_dtype: np.dtype = np.int64,
+        seg_3d_dtype: np.dtype = np.int32,
         seg_offset: int = None,
         dataset_type: str = None,
         file_client_args: dict = dict(backend='disk')

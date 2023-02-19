@@ -415,7 +415,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                     res.new_tensor(self.voxel_layer.voxel_size)).int()
                 res_coors -= res_coors.min(0)[0]
                 res_voxels, res_coors, voxel2point_map = dynamic_scatter(
-                    res, res_coors, 'max', True)
+                    res.contiguous(), res_coors.contiguous(), 'mean', True)
                 if self.training:
                     self.get_voxel_seg(res_coors, data_sample)
                 res_coors = F.pad(res_coors, (0, 1), mode='constant', value=i)
