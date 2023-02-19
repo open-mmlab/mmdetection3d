@@ -6,6 +6,7 @@ from tools.dataset_converters import indoor_converter as indoor
 from tools.dataset_converters import kitti_converter as kitti
 from tools.dataset_converters import lyft_converter as lyft_converter
 from tools.dataset_converters import nuscenes_converter as nuscenes_converter
+from tools.dataset_converters import semantickitti_converter
 from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
 from tools.dataset_converters.update_infos_to_v2 import update_pkl_infos
@@ -227,6 +228,17 @@ def waymo_data_prep(root_path,
         num_worker=workers).create()
 
 
+def semantickitti_data_prep(info_prefix, out_dir):
+    """Prepare the info file for SemanticKITTI dataset.
+
+    Args:
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+    """
+    semantickitti_converter.create_semantickitti_info_file(
+        info_prefix, out_dir)
+
+
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
 parser.add_argument(
@@ -337,5 +349,8 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,
             workers=args.workers)
+    elif args.dataset == 'semantickitti':
+        semantickitti_data_prep(
+            info_prefix=args.extra_tag, out_dir=args.out_dir)
     else:
         raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')

@@ -121,6 +121,8 @@ test_pipeline = [
         file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
         with_seg_3d=True,
         seg_offset=2**16,
         dataset_type='semantickitti'),
@@ -155,7 +157,9 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='train_infos.pkl',
+            data_prefix=dict(
+                pts='', img='', pts_instance_mask='', pts_semantic_mask=''),
+            ann_file='semantickitti_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality)),
@@ -171,10 +175,13 @@ test_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='valid_infos.pkl',
+            data_prefix=dict(
+                pts='', img='', pts_instance_mask='', pts_semantic_mask=''),
+            ann_file='semantickitti_infos_val.pkl',
             pipeline=test_pipeline,
             metainfo=metainfo,
             modality=input_modality,
+            ignore_index=0,
             test_mode=True,
         )),
 )
