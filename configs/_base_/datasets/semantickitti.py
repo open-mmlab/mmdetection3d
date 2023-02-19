@@ -95,6 +95,8 @@ train_pipeline = [
         file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
         with_seg_3d=True,
         seg_offset=2**16,
         dataset_type='semantickitti'),
@@ -140,6 +142,8 @@ eval_pipeline = [
         file_client_args=file_client_args),
     dict(
         type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
         with_seg_3d=True,
         seg_offset=2**16,
         dataset_type='semantickitti'),
