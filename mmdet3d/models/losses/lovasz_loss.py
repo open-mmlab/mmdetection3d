@@ -41,7 +41,7 @@ def lovasz_grad(gt_sorted: torch.Tensor) -> torch.Tensor:
 def flatten_binary_logits(
         logits: torch.Tensor,
         labels: torch.Tensor,
-        ignore_index: int = None) -> Tuple(torch.Tensor, torch.Tensor):
+        ignore_index: int = None) -> Tuple[torch.Tensor, torch.Tensor]:
     """Flattens predictions and labels in the batch (binary case). Remove
     tensors whose labels equal to 'ignore_index'.
 
@@ -67,7 +67,7 @@ def flatten_binary_logits(
 def flatten_probs(
         probs: torch.Tensor,
         labels: torch.Tensor,
-        ignore_index: int = None) -> Tuple(torch.Tensor, torch.Tensor):
+        ignore_index: int = None) -> Tuple[torch.Tensor, torch.Tensor]:
     """Flattens predictions and labels in the batch. Remove tensors whose
     labels equal to 'ignore_index'.
 
