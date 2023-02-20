@@ -5,6 +5,7 @@ import torch
 from mmcv.utils import ext_loader
 from torch import nn
 from torch.autograd import Function
+from torch.nn import functional as F
 from torch.nn.modules.utils import _pair
 
 ext_module = ext_loader.load_ext('_ext', [
@@ -96,8 +97,9 @@ class _Voxelization(Function):
 voxelization = _Voxelization.apply
 
 
-class Voxelization(nn.Module):
-    """Convert kitti points(N, >=3) to voxels.
+class Voxelization3D(nn.Module):
+    """Convert kitti points(N, >=3) to voxels. Different from the mmcv
+    implementation, here it is allowed to specify the grid_shape.
 
     Please refer to `Point-Voxel CNN for Efficient 3D Deep Learning
     <https://arxiv.org/abs/1907.03739>`_ for more details.
@@ -118,7 +120,7 @@ class Voxelization(nn.Module):
                  point_cloud_range: List,
                  max_num_points: int,
                  voxel_size: List = [],
-                 grid_size: List[int] = [],
+                 grid_shape: List[int] = [],
                  max_voxels: Union[tuple, int] = 20000,
                  deterministic: bool = True):
         """
@@ -126,8 +128,9 @@ class Voxelization(nn.Module):
             point_cloud_range (list):
                 [x_min, y_min, z_min, x_max, y_max, z_max]
             max_num_points (int): max number of points per voxel
-            voxel_size (list): list [x, y, z] size of three dimension
-            grid_size (list): [L, W, H], size of grid
+            voxel_size (list): list [x, y, z] or [rho, phi, z]
+                size of single voxel.
+            grid_shape (list): [L, W, H], grid shape of voxelization.
             max_voxels (tuple or int): max number of voxels in
                 (training, testing) time
             deterministic: bool. whether to invoke the non-deterministic
@@ -142,8 +145,8 @@ class Voxelization(nn.Module):
                 you could share with us the failing cases.
         """
         super().__init__()
-        if voxel_size and grid_size:
-            raise ValueError('voxel_size is mutually exclusive grid_size')
+        if voxel_size and grid_shape:
+            raise ValueError('voxel_size is mutually exclusive grid_shape')
         self.point_cloud_range = point_cloud_range
         self.max_num_points = max_num_points
         if isinstance(max_voxels, tuple):
@@ -157,18 +160,18 @@ class Voxelization(nn.Module):
         if voxel_size:
             self.voxel_size = voxel_size
             voxel_size = torch.tensor(voxel_size, dtype=torch.float32)
-            grid_size = (point_cloud_range[3:] -
-                         point_cloud_range[:3]) / voxel_size
-            grid_size = torch.round(grid_size).long().tolist()
-            self.grid_size = grid_size
-        elif grid_size:
-            grid_size = torch.tensor(grid_size, dtype=torch.float32)
+            grid_shape = (point_cloud_range[3:] -
+                          point_cloud_range[:3]) / voxel_size
+            grid_shape = torch.round(grid_shape).long().tolist()
+            self.grid_shape = grid_shape
+        elif grid_shape:
+            grid_shape = torch.tensor(grid_shape, dtype=torch.float32)
             voxel_size = (point_cloud_range[3:] - point_cloud_range[:3]) / (
-                grid_size - 1)
+                grid_shape - 1)
             voxel_size = voxel_size.tolist()
             self.voxel_size = voxel_size
         else:
-            raise ValueError('must assign a value to voxel_size or grid_size')
+            raise ValueError('must assign a value to voxel_size or grid_shape')
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         if self.training:
@@ -183,7 +186,7 @@ class Voxelization(nn.Module):
     def __repr__(self):
         s = self.__class__.__name__ + '('
         s += 'voxel_size=' + str(self.voxel_size)
-        s += ', grid_size=' + str(self.grid_size)
+        s += ', grid_shape=' + str(self.grid_shape)
         s += ', point_cloud_range=' + str(self.point_cloud_range)
         s += ', max_num_points=' + str(self.max_num_points)
         s += ', max_voxels=' + str(self.max_voxels)
@@ -193,6 +196,8 @@ class Voxelization(nn.Module):
 
 
 class _DynamicScatter(Function):
+    """Different from the mmcv implementation, here it is allowed to return
+    point2voxel_map."""
 
     @staticmethod
     def forward(ctx: Any,
@@ -245,4 +250,89 @@ class _DynamicScatter(Function):
         return grad_feats, None, None
 
 
-dynamic_scatter = _DynamicScatter.apply
+dynamic_scatter_3d = _DynamicScatter.apply
+
+
+class DynamicScatter3D(nn.Module):
+    """Scatters points into voxels, used in the voxel encoder with dynamic
+    voxelization.
+
+    Note:
+        The CPU and GPU implementation get the same output, but have numerical
+        difference after summation and division (e.g., 5e-7).
+
+    Args:
+        voxel_size (list): list [x, y, z] size of three dimension.
+        point_cloud_range (list): The coordinate range of points, [x_min,
+            y_min, z_min, x_max, y_max, z_max].
+        average_points (bool): whether to use avg pooling to scatter points
+            into voxel.
+    """
+
+    def __init__(self, voxel_size: List, point_cloud_range: List,
+                 average_points: bool):
+        super().__init__()
+
+        self.voxel_size = voxel_size
+        self.point_cloud_range = point_cloud_range
+        self.average_points = average_points
+
+    def forward_single(
+            self, points: torch.Tensor,
+            coors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Scatters points into voxels.
+
+        Args:
+            points (torch.Tensor): Points to be reduced into voxels.
+            coors (torch.Tensor): Corresponding voxel coordinates (specifically
+                multi-dim voxel index) of each points.
+
+        Returns:
+            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            is the voxel features with shape [M, C] which are respectively
+            reduced from input features that share the same voxel coordinates.
+            The second is voxel coordinates with shape [M, ndim].
+        """
+        reduce = 'mean' if self.average_points else 'max'
+        return dynamic_scatter_3d(points.contiguous(), coors.contiguous(),
+                                  reduce)
+
+    def forward(self, points: torch.Tensor,
+                coors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Scatters points/features into voxels.
+
+        Args:
+            points (torch.Tensor): Points to be reduced into voxels.
+            coors (torch.Tensor): Corresponding voxel coordinates (specifically
+                multi-dim voxel index) of each points.
+
+        Returns:
+            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            is the voxel features with shape [M, C] which are respectively
+            reduced from input features that share the same voxel coordinates.
+            The second is voxel coordinates with shape [M, ndim].
+        """
+        if coors.size(-1) == 3:
+            return self.forward_single(points, coors)
+        else:
+            batch_size = coors[-1, 0] + 1
+            voxels, voxel_coors = [], []
+            for i in range(batch_size):
+                inds = torch.where(coors[:, 0] == i)
+                voxel, voxel_coor = self.forward_single(
+                    points[inds], coors[inds][:, 1:])
+                coor_pad = F.pad(voxel_coor, (1, 0), mode='constant', value=i)
+                voxel_coors.append(coor_pad)
+                voxels.append(voxel)
+            features = torch.cat(voxels, dim=0)
+            feature_coors = torch.cat(voxel_coors, dim=0)
+
+            return features, feature_coors
+
+    def __repr__(self):
+        s = self.__class__.__name__ + '('
+        s += 'voxel_size=' + str(self.voxel_size)
+        s += ', point_cloud_range=' + str(self.point_cloud_range)
+        s += ', average_points=' + str(self.average_points)
+        s += ')'
+        return s

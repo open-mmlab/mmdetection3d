@@ -504,8 +504,10 @@ class SegVFE(nn.Module):
         with_voxel_center (bool): Whether to use the distance
             to center of voxel for each points inside a voxel.
             Defaults to False.
-        voxel_size (tuple[float]): Size of a single voxel.
-            Defaults to (0.2, 0.2, 4).
+        voxel_size (tuple[float]): Size of a single voxel (rho, phi, z).
+            Defaults to None.
+        grid_shape (tuple[float]): The grid shape of voxelization.
+            Defaults to (480, 360, 32).
         point_cloud_range (tuple[float]): The range of points
             or voxels. Defaults to (0, -40, -3, 70.4, 40, 1).
         norm_cfg (dict): Config dict of normalization layers.
@@ -525,7 +527,7 @@ class SegVFE(nn.Module):
                  feat_channels: Sequence[int] = [],
                  with_voxel_center: bool = False,
                  voxel_size: Optional[Sequence[float]] = None,
-                 grid_size: Optional[Sequence[float]] = None,
+                 grid_shape: Sequence[float] = (480, 360, 32),
                  point_cloud_range: Sequence[float] = (0, -180, -4, 50, 180,
                                                        2),
                  norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
@@ -536,6 +538,8 @@ class SegVFE(nn.Module):
         super(SegVFE, self).__init__()
         assert mode in ['avg', 'max']
         assert len(feat_channels) > 0
+        assert not (voxel_size and grid_shape), \
+            'voxel_size and grid_shape cannot be setting at the same time'
         if with_voxel_center:
             in_channels += 3
         self.in_channels = in_channels
@@ -548,18 +552,18 @@ class SegVFE(nn.Module):
         if voxel_size:
             self.voxel_size = voxel_size
             voxel_size = torch.tensor(voxel_size, dtype=torch.float32)
-            grid_size = (point_cloud_range[3:] -
-                         point_cloud_range[:3]) / voxel_size
-            grid_size = torch.round(grid_size).long().tolist()
-            self.grid_size = grid_size
-        elif grid_size:
-            grid_size = torch.tensor(grid_size, dtype=torch.float32)
+            grid_shape = (point_cloud_range[3:] -
+                          point_cloud_range[:3]) / voxel_size
+            grid_shape = torch.round(grid_shape).long().tolist()
+            self.grid_shape = grid_shape
+        elif grid_shape:
+            grid_shape = torch.tensor(grid_shape, dtype=torch.float32)
             voxel_size = (point_cloud_range[3:] - point_cloud_range[:3]) / (
-                grid_size - 1)
+                grid_shape - 1)
             voxel_size = voxel_size.tolist()
             self.voxel_size = voxel_size
         else:
-            raise ValueError('must assign a value to voxel_size or grid_size')
+            raise ValueError('must assign a value to voxel_size or grid_shape')
 
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = self.voxel_size[0]

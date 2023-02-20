@@ -14,7 +14,7 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
 from .utils import multiview_img_stack_batch
-from .voxelize import Voxelization, dynamic_scatter
+from .voxelize import Voxelization, dynamic_scatter_3d
 
 
 @MODELS.register_module()
@@ -337,7 +337,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         Args:
             points (List[Tensor]): Point cloud in one data batch.
             data_samples: (list[:obj:`Det3DDataSample`]): The annotation data
-                of every samples. Add voxel-wise annotation forsegmentation.
+                of every samples. Add voxel-wise annotation for segmentation.
 
         Returns:
             Dict[str, Tensor]: Voxelization information.
@@ -424,7 +424,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 every samples. Add voxel-wise annotation forsegmentation.
         """
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
-        voxel_semantic_mask, _, point2voxel_map = dynamic_scatter(
+        voxel_semantic_mask, _, point2voxel_map = dynamic_scatter_3d(
             F.one_hot(pts_semantic_mask.long()).float(), res_coors, 'mean',
             True)
         voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
