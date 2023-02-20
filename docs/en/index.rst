@@ -6,10 +6,10 @@ Welcome to MMDetection3D's documentation!
    :caption: Get Started
 
    overview.md
-   getting_started.md
+   get_started.md
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: User Guides
 
    user_guides/index.rst
@@ -33,19 +33,16 @@ Welcome to MMDetection3D's documentation!
    api.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Model Zoo
 
    model_zoo.md
-
 
 .. toctree::
    :maxdepth: 1
    :caption: Notes
 
    notes/index.rst
-
-
 
 .. toctree::
    :caption: Switch Language

@@ -6,6 +6,7 @@ from tools.dataset_converters import indoor_converter as indoor
 from tools.dataset_converters import kitti_converter as kitti
 from tools.dataset_converters import lyft_converter as lyft_converter
 from tools.dataset_converters import nuscenes_converter as nuscenes_converter
+from tools.dataset_converters import semantickitti_converter
 from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
 from tools.dataset_converters.update_infos_to_v2 import update_pkl_infos
@@ -35,9 +36,11 @@ def kitti_data_prep(root_path,
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_train_path)
     update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_val_path)
     update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_trainval_path)
+    update_pkl_infos('kitti', out_dir=out_dir, pkl_path=info_test_path)
     create_groundtruth_database(
         'KittiDataset',
         root_path,
@@ -122,11 +125,11 @@ def scannet_data_prep(root_path, info_prefix, out_dir, workers):
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
-    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
-    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_test_path)
     update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_test_path)
 
 
 def s3dis_data_prep(root_path, info_prefix, out_dir, workers):
@@ -199,6 +202,10 @@ def waymo_data_prep(root_path,
             test_mode=(split
                        in ['testing', 'testing_3d_camera_only_detection']))
         converter.convert()
+
+    from tools.dataset_converters.waymo_converter import \
+        create_ImageSets_img_ids
+    create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
     # Generate waymo infos
     out_dir = osp.join(out_dir, 'kitti_format')
     kitti.create_waymo_info_file(
@@ -206,9 +213,11 @@ def waymo_data_prep(root_path,
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_train_path)
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_val_path)
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_trainval_path)
+    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_test_path)
     GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
@@ -217,6 +226,17 @@ def waymo_data_prep(root_path,
         relative_path=False,
         with_mask=False,
         num_worker=workers).create()
+
+
+def semantickitti_data_prep(info_prefix, out_dir):
+    """Prepare the info file for SemanticKITTI dataset.
+
+    Args:
+        info_prefix (str): The prefix of info filenames.
+        out_dir (str): Output directory of the generated info file.
+    """
+    semantickitti_converter.create_semantickitti_info_file(
+        info_prefix, out_dir)
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
@@ -256,10 +276,6 @@ args = parser.parse_args()
 if __name__ == '__main__':
     from mmdet3d.utils import register_all_modules
     register_all_modules()
-
-    # Set to spawn mode to avoid stuck when process dataset creating
-    import multiprocessing
-    multiprocessing.set_start_method('spawn')
 
     if args.dataset == 'kitti':
         kitti_data_prep(
@@ -333,5 +349,8 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,
             workers=args.workers)
+    elif args.dataset == 'semantickitti':
+        semantickitti_data_prep(
+            info_prefix=args.extra_tag, out_dir=args.out_dir)
     else:
         raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')

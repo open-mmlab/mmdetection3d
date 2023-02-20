@@ -62,7 +62,7 @@ def main(args):
         data_input,
         data_sample=result,
         draw_gt=False,
-        show=True,
+        show=args.show,
         wait_time=0,
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,

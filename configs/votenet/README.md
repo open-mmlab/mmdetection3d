@@ -36,7 +36,7 @@ We implement VoteNet and provide the result and checkpoints on ScanNet and SUNRG
 python ./tools/model_converters/convert_votenet_checkpoints.py ${ORIGINAL_CHECKPOINT_PATH} --out=${NEW_CHECKPOINT_PATH}
 ```
 
-Then you can use the converted checkpoints following [getting_started.md](../../docs/en/getting_started.md).
+Then you can use the converted checkpoints following [get_started.md](../../docs/en/get_started.md).
 
 ## Indeterminism
 
