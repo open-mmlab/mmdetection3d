@@ -337,29 +337,34 @@ def update_nuscenes_infos(pkl_path, out_dir):
             empty_img_info['lidar2cam'] = lidar2sensor.astype(
                 np.float32).tolist()
             temp_data_info['images'][cam] = empty_img_info
-        num_instances = ori_info_dict['gt_boxes'].shape[0]
         ignore_class_name = set()
-        for i in range(num_instances):
-            empty_instance = get_empty_instance()
-            empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
-                i, :].tolist()
-            if ori_info_dict['gt_names'][i] in METAINFO['classes']:
-                empty_instance['bbox_label'] = METAINFO['classes'].index(
-                    ori_info_dict['gt_names'][i])
-            else:
-                ignore_class_name.add(ori_info_dict['gt_names'][i])
-                empty_instance['bbox_label'] = -1
-            empty_instance['bbox_label_3d'] = copy.deepcopy(
-                empty_instance['bbox_label'])
-            empty_instance['velocity'] = ori_info_dict['gt_velocity'][
-                i, :].tolist()
-            empty_instance['num_lidar_pts'] = ori_info_dict['num_lidar_pts'][i]
-            empty_instance['num_radar_pts'] = ori_info_dict['num_radar_pts'][i]
-            empty_instance['bbox_3d_isvalid'] = ori_info_dict['valid_flag'][i]
-            empty_instance = clear_instance_unused_keys(empty_instance)
-            temp_data_info['instances'].append(empty_instance)
-        temp_data_info['cam_instances'] = generate_nuscenes_camera_instances(
-            ori_info_dict, nusc)
+        if 'gt_boxes' in ori_info_dict:
+            num_instances = ori_info_dict['gt_boxes'].shape[0]
+            for i in range(num_instances):
+                empty_instance = get_empty_instance()
+                empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
+                    i, :].tolist()
+                if ori_info_dict['gt_names'][i] in METAINFO['classes']:
+                    empty_instance['bbox_label'] = METAINFO['classes'].index(
+                        ori_info_dict['gt_names'][i])
+                else:
+                    ignore_class_name.add(ori_info_dict['gt_names'][i])
+                    empty_instance['bbox_label'] = -1
+                empty_instance['bbox_label_3d'] = copy.deepcopy(
+                    empty_instance['bbox_label'])
+                empty_instance['velocity'] = ori_info_dict['gt_velocity'][
+                    i, :].tolist()
+                empty_instance['num_lidar_pts'] = ori_info_dict[
+                    'num_lidar_pts'][i]
+                empty_instance['num_radar_pts'] = ori_info_dict[
+                    'num_radar_pts'][i]
+                empty_instance['bbox_3d_isvalid'] = ori_info_dict[
+                    'valid_flag'][i]
+                empty_instance = clear_instance_unused_keys(empty_instance)
+                temp_data_info['instances'].append(empty_instance)
+            temp_data_info[
+                'cam_instances'] = generate_nuscenes_camera_instances(
+                    ori_info_dict, nusc)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = Path(pkl_path).name
@@ -444,61 +449,63 @@ def update_kitti_infos(pkl_path, out_dir):
         temp_data_info['lidar_points']['Tr_imu_to_velo'] = ori_info_dict[
             'calib']['Tr_imu_to_velo'].astype(np.float32).tolist()
 
-        anns = ori_info_dict['annos']
-        num_instances = len(anns['name'])
         cam2img = ori_info_dict['calib']['P2']
 
+        anns = ori_info_dict.get('annos', None)
         ignore_class_name = set()
-        instance_list = []
-        for instance_id in range(num_instances):
-            empty_instance = get_empty_instance()
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+        if anns is not None:
+            num_instances = len(anns['name'])
+            instance_list = []
+            for instance_id in range(num_instances):
+                empty_instance = get_empty_instance()
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            if anns['name'][instance_id] in METAINFO['classes']:
-                empty_instance['bbox_label'] = METAINFO['classes'].index(
-                    anns['name'][instance_id])
-            else:
-                ignore_class_name.add(anns['name'][instance_id])
-                empty_instance['bbox_label'] = -1
+                if anns['name'][instance_id] in METAINFO['classes']:
+                    empty_instance['bbox_label'] = METAINFO['classes'].index(
+                        anns['name'][instance_id])
+                else:
+                    ignore_class_name.add(anns['name'][instance_id])
+                    empty_instance['bbox_label'] = -1
 
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
 
-            loc = anns['location'][instance_id]
-            dims = anns['dimensions'][instance_id]
-            rots = anns['rotation_y'][:, None][instance_id]
+                loc = anns['location'][instance_id]
+                dims = anns['dimensions'][instance_id]
+                rots = anns['rotation_y'][:, None][instance_id]
 
-            dst = np.array([0.5, 0.5, 0.5])
-            src = np.array([0.5, 1.0, 0.5])
+                dst = np.array([0.5, 0.5, 0.5])
+                src = np.array([0.5, 1.0, 0.5])
 
-            center_3d = loc + dims * (dst - src)
-            center_2d = points_cam2img(
-                center_3d.reshape([1, 3]), cam2img, with_depth=True)
-            center_2d = center_2d.squeeze().tolist()
-            empty_instance['center_2d'] = center_2d[:2]
-            empty_instance['depth'] = center_2d[2]
+                center_3d = loc + dims * (dst - src)
+                center_2d = points_cam2img(
+                    center_3d.reshape([1, 3]), cam2img, with_depth=True)
+                center_2d = center_2d.squeeze().tolist()
+                empty_instance['center_2d'] = center_2d[:2]
+                empty_instance['depth'] = center_2d[2]
 
-            gt_bboxes_3d = np.concatenate([loc, dims, rots]).tolist()
-            empty_instance['bbox_3d'] = gt_bboxes_3d
-            empty_instance['bbox_label_3d'] = copy.deepcopy(
-                empty_instance['bbox_label'])
-            empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
-            empty_instance['truncated'] = anns['truncated'][
-                instance_id].tolist()
-            empty_instance['occluded'] = anns['occluded'][instance_id].tolist()
-            empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
-            empty_instance['score'] = anns['score'][instance_id].tolist()
-            empty_instance['index'] = anns['index'][instance_id].tolist()
-            empty_instance['group_id'] = anns['group_ids'][instance_id].tolist(
-            )
-            empty_instance['difficulty'] = anns['difficulty'][
-                instance_id].tolist()
-            empty_instance['num_lidar_pts'] = anns['num_points_in_gt'][
-                instance_id].tolist()
-            empty_instance = clear_instance_unused_keys(empty_instance)
-            instance_list.append(empty_instance)
-        temp_data_info['instances'] = instance_list
-        cam_instances = generate_kitti_camera_instances(ori_info_dict)
-        temp_data_info['cam_instances'] = cam_instances
+                gt_bboxes_3d = np.concatenate([loc, dims, rots]).tolist()
+                empty_instance['bbox_3d'] = gt_bboxes_3d
+                empty_instance['bbox_label_3d'] = copy.deepcopy(
+                    empty_instance['bbox_label'])
+                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                empty_instance['truncated'] = anns['truncated'][
+                    instance_id].tolist()
+                empty_instance['occluded'] = anns['occluded'][
+                    instance_id].tolist()
+                empty_instance['alpha'] = anns['alpha'][instance_id].tolist()
+                empty_instance['score'] = anns['score'][instance_id].tolist()
+                empty_instance['index'] = anns['index'][instance_id].tolist()
+                empty_instance['group_id'] = anns['group_ids'][
+                    instance_id].tolist()
+                empty_instance['difficulty'] = anns['difficulty'][
+                    instance_id].tolist()
+                empty_instance['num_lidar_pts'] = anns['num_points_in_gt'][
+                    instance_id].tolist()
+                empty_instance = clear_instance_unused_keys(empty_instance)
+                instance_list.append(empty_instance)
+            temp_data_info['instances'] = instance_list
+            cam_instances = generate_kitti_camera_instances(ori_info_dict)
+            temp_data_info['cam_instances'] = cam_instances
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = Path(pkl_path).name
@@ -537,10 +544,12 @@ def update_s3dis_infos(pkl_path, out_dir):
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['lidar_path'] = Path(
             ori_info_dict['pts_path']).name
-        temp_data_info['pts_semantic_mask_path'] = Path(
-            ori_info_dict['pts_semantic_mask_path']).name
-        temp_data_info['pts_instance_mask_path'] = Path(
-            ori_info_dict['pts_instance_mask_path']).name
+        if 'pts_semantic_mask_path' in ori_info_dict:
+            temp_data_info['pts_semantic_mask_path'] = Path(
+                ori_info_dict['pts_semantic_mask_path']).name
+        if 'pts_instance_mask_path' in ori_info_dict:
+            temp_data_info['pts_instance_mask_path'] = Path(
+                ori_info_dict['pts_instance_mask_path']).name
 
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
@@ -611,37 +620,40 @@ def update_scannet_infos(pkl_path, out_dir):
             'point_cloud']['num_features']
         temp_data_info['lidar_points']['lidar_path'] = Path(
             ori_info_dict['pts_path']).name
-        temp_data_info['pts_semantic_mask_path'] = Path(
-            ori_info_dict['pts_semantic_mask_path']).name
-        temp_data_info['pts_instance_mask_path'] = Path(
-            ori_info_dict['pts_instance_mask_path']).name
+        if 'pts_semantic_mask_path' in ori_info_dict:
+            temp_data_info['pts_semantic_mask_path'] = Path(
+                ori_info_dict['pts_semantic_mask_path']).name
+        if 'pts_instance_mask_path' in ori_info_dict:
+            temp_data_info['pts_instance_mask_path'] = Path(
+                ori_info_dict['pts_instance_mask_path']).name
 
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
-        anns = ori_info_dict['annos']
-        temp_data_info['axis_align_matrix'] = anns['axis_align_matrix'].tolist(
-        )
-        if anns['gt_num'] == 0:
-            instance_list = []
-        else:
-            num_instances = len(anns['name'])
-            ignore_class_name = set()
-            instance_list = []
-            for instance_id in range(num_instances):
-                empty_instance = get_empty_instance()
-                empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
-                    instance_id].tolist()
+        anns = ori_info_dict.get('annos', None)
+        if anns is not None:
+            temp_data_info['axis_align_matrix'] = anns[
+                'axis_align_matrix'].tolist()
+            if anns['gt_num'] == 0:
+                instance_list = []
+            else:
+                num_instances = len(anns['name'])
+                ignore_class_name = set()
+                instance_list = []
+                for instance_id in range(num_instances):
+                    empty_instance = get_empty_instance()
+                    empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
+                        instance_id].tolist()
 
-                if anns['name'][instance_id] in METAINFO['classes']:
-                    empty_instance['bbox_label_3d'] = METAINFO[
-                        'classes'].index(anns['name'][instance_id])
-                else:
-                    ignore_class_name.add(anns['name'][instance_id])
-                    empty_instance['bbox_label_3d'] = -1
+                    if anns['name'][instance_id] in METAINFO['classes']:
+                        empty_instance['bbox_label_3d'] = METAINFO[
+                            'classes'].index(anns['name'][instance_id])
+                    else:
+                        ignore_class_name.add(anns['name'][instance_id])
+                        empty_instance['bbox_label_3d'] = -1
 
-                empty_instance = clear_instance_unused_keys(empty_instance)
-                instance_list.append(empty_instance)
-        temp_data_info['instances'] = instance_list
+                    empty_instance = clear_instance_unused_keys(empty_instance)
+                    instance_list.append(empty_instance)
+            temp_data_info['instances'] = instance_list
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = Path(pkl_path).name
@@ -696,30 +708,31 @@ def update_sunrgbd_infos(pkl_path, out_dir):
         temp_data_info['images']['CAM0']['height'] = h
         temp_data_info['images']['CAM0']['width'] = w
 
-        anns = ori_info_dict['annos']
-        if anns['gt_num'] == 0:
-            instance_list = []
-        else:
-            num_instances = len(anns['name'])
-            ignore_class_name = set()
-            instance_list = []
-            for instance_id in range(num_instances):
-                empty_instance = get_empty_instance()
-                empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
-                    instance_id].tolist()
-                empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
-                if anns['name'][instance_id] in METAINFO['classes']:
-                    empty_instance['bbox_label_3d'] = METAINFO[
-                        'classes'].index(anns['name'][instance_id])
-                    empty_instance['bbox_label'] = empty_instance[
-                        'bbox_label_3d']
-                else:
-                    ignore_class_name.add(anns['name'][instance_id])
-                    empty_instance['bbox_label_3d'] = -1
-                    empty_instance['bbox_label'] = -1
-                empty_instance = clear_instance_unused_keys(empty_instance)
-                instance_list.append(empty_instance)
-        temp_data_info['instances'] = instance_list
+        anns = ori_info_dict.get('annos', None)
+        if anns is not None:
+            if anns['gt_num'] == 0:
+                instance_list = []
+            else:
+                num_instances = len(anns['name'])
+                ignore_class_name = set()
+                instance_list = []
+                for instance_id in range(num_instances):
+                    empty_instance = get_empty_instance()
+                    empty_instance['bbox_3d'] = anns['gt_boxes_upright_depth'][
+                        instance_id].tolist()
+                    empty_instance['bbox'] = anns['bbox'][instance_id].tolist()
+                    if anns['name'][instance_id] in METAINFO['classes']:
+                        empty_instance['bbox_label_3d'] = METAINFO[
+                            'classes'].index(anns['name'][instance_id])
+                        empty_instance['bbox_label'] = empty_instance[
+                            'bbox_label_3d']
+                    else:
+                        ignore_class_name.add(anns['name'][instance_id])
+                        empty_instance['bbox_label_3d'] = -1
+                        empty_instance['bbox_label'] = -1
+                    empty_instance = clear_instance_unused_keys(empty_instance)
+                    instance_list.append(empty_instance)
+            temp_data_info['instances'] = instance_list
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = Path(pkl_path).name
@@ -818,22 +831,23 @@ def update_lyft_infos(pkl_path, out_dir):
             empty_img_info['lidar2cam'] = lidar2sensor.astype(
                 np.float32).tolist()
             temp_data_info['images'][cam] = empty_img_info
-        num_instances = ori_info_dict['gt_boxes'].shape[0]
         ignore_class_name = set()
-        for i in range(num_instances):
-            empty_instance = get_empty_instance()
-            empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
-                i, :].tolist()
-            if ori_info_dict['gt_names'][i] in METAINFO['classes']:
-                empty_instance['bbox_label'] = METAINFO['classes'].index(
-                    ori_info_dict['gt_names'][i])
-            else:
-                ignore_class_name.add(ori_info_dict['gt_names'][i])
-                empty_instance['bbox_label'] = -1
-            empty_instance['bbox_label_3d'] = copy.deepcopy(
-                empty_instance['bbox_label'])
-            empty_instance = clear_instance_unused_keys(empty_instance)
-            temp_data_info['instances'].append(empty_instance)
+        if 'gt_boxes' in ori_info_dict:
+            num_instances = ori_info_dict['gt_boxes'].shape[0]
+            for i in range(num_instances):
+                empty_instance = get_empty_instance()
+                empty_instance['bbox_3d'] = ori_info_dict['gt_boxes'][
+                    i, :].tolist()
+                if ori_info_dict['gt_names'][i] in METAINFO['classes']:
+                    empty_instance['bbox_label'] = METAINFO['classes'].index(
+                        ori_info_dict['gt_names'][i])
+                else:
+                    ignore_class_name.add(ori_info_dict['gt_names'][i])
+                    empty_instance['bbox_label'] = -1
+                empty_instance['bbox_label_3d'] = copy.deepcopy(
+                    empty_instance['bbox_label'])
+                empty_instance = clear_instance_unused_keys(empty_instance)
+                temp_data_info['instances'].append(empty_instance)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
     pkl_name = Path(pkl_path).name
@@ -954,7 +968,7 @@ def update_waymo_infos(pkl_path, out_dir):
             temp_data_info['lidar_sweeps'].append(lidar_sweep)
             temp_data_info['image_sweeps'].append(image_sweep)
 
-        anns = ori_info_dict.get('annos')
+        anns = ori_info_dict.get('annos', None)
         ignore_class_name = set()
         if anns is not None:
             num_instances = len(anns['name'])
@@ -1001,7 +1015,7 @@ def update_waymo_infos(pkl_path, out_dir):
             temp_data_info['instances'] = instance_list
 
         # waymo provide the labels that sync with cam
-        anns = ori_info_dict.get('cam_sync_annos')
+        anns = ori_info_dict.get('cam_sync_annos', None)
         ignore_class_name = set()
         if anns is not None:
             num_instances = len(anns['name'])
@@ -1060,7 +1074,7 @@ def update_waymo_infos(pkl_path, out_dir):
         for ignore_class in ignore_class_name:
             metainfo['categories'][ignore_class] = -1
     metainfo['dataset'] = 'waymo'
-    metainfo['version'] = '1.2'
+    metainfo['version'] = '1.4'
     metainfo['info_version'] = '1.1'
 
     converted_data_info = dict(metainfo=metainfo, data_list=converted_list)
