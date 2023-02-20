@@ -97,23 +97,32 @@ class _Voxelization(Function):
 voxelization = _Voxelization.apply
 
 
-class Voxelization3D(nn.Module):
-    """Convert kitti points(N, >=3) to voxels. Different from the mmcv
-    implementation, here it is allowed to specify the grid_shape.
+class VoxelizationByGridShape(nn.Module):
+    """Voxelization that allows inferring voxel size automatically based on
+    grid shape.
 
     Please refer to `Point-Voxel CNN for Efficient 3D Deep Learning
     <https://arxiv.org/abs/1907.03739>`_ for more details.
 
     Args:
-        voxel_size (tuple or float): The size of voxel with the shape of [3].
-        point_cloud_range (tuple or float): The coordinate range of voxel with
-            the shape of [6].
-        max_num_points (int): maximum points contained in a voxel. if
-            max_points=-1, it means using dynamic_voxelize.
-        max_voxels (int, optional): maximum voxels this function create.
-            for second, 20000 is a good choice. Users should shuffle points
-            before call this function because max_voxels may drop points.
-            Default: 20000.
+        point_cloud_range (list):
+            [x_min, y_min, z_min, x_max, y_max, z_max]
+        max_num_points (int): max number of points per voxel
+        voxel_size (list): list [x, y, z] or [rho, phi, z]
+            size of single voxel.
+        grid_shape (list): [L, W, H], grid shape of voxelization.
+        max_voxels (tuple or int): max number of voxels in
+            (training, testing) time
+        deterministic: bool. whether to invoke the non-deterministic
+            version of hard-voxelization implementations. non-deterministic
+            version is considerablly fast but is not deterministic. only
+            affects hard voxelization. default True. for more information
+            of this argument and the implementation insights, please refer
+            to the following links:
+            https://github.com/open-mmlab/mmdetection3d/issues/894
+            https://github.com/open-mmlab/mmdetection3d/pull/904
+            it is an experimental feature and we will appreciate it if
+            you could share with us the failing cases.
     """
 
     def __init__(self,
@@ -123,27 +132,6 @@ class Voxelization3D(nn.Module):
                  grid_shape: List[int] = [],
                  max_voxels: Union[tuple, int] = 20000,
                  deterministic: bool = True):
-        """
-        Args:
-            point_cloud_range (list):
-                [x_min, y_min, z_min, x_max, y_max, z_max]
-            max_num_points (int): max number of points per voxel
-            voxel_size (list): list [x, y, z] or [rho, phi, z]
-                size of single voxel.
-            grid_shape (list): [L, W, H], grid shape of voxelization.
-            max_voxels (tuple or int): max number of voxels in
-                (training, testing) time
-            deterministic: bool. whether to invoke the non-deterministic
-                version of hard-voxelization implementations. non-deterministic
-                version is considerablly fast but is not deterministic. only
-                affects hard voxelization. default True. for more information
-                of this argument and the implementation insights, please refer
-                to the following links:
-                https://github.com/open-mmlab/mmdetection3d/issues/894
-                https://github.com/open-mmlab/mmdetection3d/pull/904
-                it is an experimental feature and we will appreciate it if
-                you could share with us the failing cases.
-        """
         super().__init__()
         if voxel_size and grid_shape:
             raise ValueError('voxel_size is mutually exclusive grid_shape')

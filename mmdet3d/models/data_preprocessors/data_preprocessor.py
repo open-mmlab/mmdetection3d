@@ -14,7 +14,7 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
 from .utils import multiview_img_stack_batch
-from .voxelize import Voxelization3D, dynamic_scatter_3d
+from .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
 
 
 @MODELS.register_module()
@@ -104,7 +104,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         self.voxel = voxel
         self.voxel_type = voxel_type
         if voxel:
-            self.voxel_layer = Voxelization3D(**voxel_layer)
+            self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
 
     def forward(self,
                 data: Union[dict, List[dict]],
