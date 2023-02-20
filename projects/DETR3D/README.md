@@ -33,7 +33,7 @@ We have updated DETR3D to be compatible with latest mmdet3d-dev1.x. The codebase
 
 ## Environment Setup
 
-We require the version of mmdet \<= V3.0.0rc5. The mmdet later than V3.0.0rc5 has refactored DETR-series and it's config file, our configs are yet to be updated
+We require the version of mmdet \<= V3.0.0rc5. The mmdet later than V3.0.0rc5 has refactored DETR-series and its config file, but our configs and code are yet to be updated.
 
 ## Train
 
@@ -51,8 +51,8 @@ bash tools/dist_train.sh projects/DETR3D/configs/detr3d_res101_gridmask.py 8 --c
 
    |                                                Backbone                                                 | mAP  | NDS  |                                                                                                                 Download                                                                                                                 |
    | :-----------------------------------------------------------------------------------------------------: | :--: | :--: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-   |                      [DETR3D, ResNet101 w/ DCN](./configs/detr3d_r101_gridmask.py)                      | 35.5 | 42.8 |                 [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.log)                 |
-   |                         [above, + CBGS](./configs/detr3d_r101_gridmask_cbgs.py)                         | 35.2 | 42.7 |            [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.log)            |
+   |          [DETR3D, ResNet101 w/ DCN, evaluation on val set](./configs/detr3d_r101_gridmask.py)           | 35.5 | 42.8 |                 [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.log)                 |
+   |             [above, + CBGS, evaluation on val set](./configs/detr3d_r101_gridmask_cbgs.py)              | 35.2 | 42.7 |            [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.log)            |
    | [DETR3D, VoVNet on trainval, evaluation on test set](./configs/detr3d_vovnet_gridmask_trainval_cbgs.py) | 41.4 | 48.1 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_vovnet_gridmask_trainval_cbgs.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_vovnet_gridmask_trainval_cbgs.log) |
 
 2. Testing
@@ -60,7 +60,7 @@ bash tools/dist_train.sh projects/DETR3D/configs/detr3d_res101_gridmask.py 8 --c
    To test, use:
 
    ```bash
-   bash tools/dist_test.sh projects/DETR3D/configs/detr3d_res101_gridmask.py ${CHECKPOINT_DIR}/detr3d_r101_v1.0.0.pth 8
+    bash tools/dist_test.sh projects/DETR3D/configs/detr3d_res101_gridmask.py ${CHECKPOINT_PATH} 8
    ```
 
 ## Converting old models (Optional)
@@ -69,7 +69,7 @@ For old models please refer to [Object DGCNN & DETR3D](https://github.com/WangYu
 
 From v0.17.3 to v1.0.0, mmdet3d has changed its bbox representation. Given that Box(x,y,z,θ), we have x_new = y_old, y_new = x_old, θ_new = -θ_old - π/2.
 
-Old models are in trained on v0.17.3. Our regression branch outputs (cx,cy,w,l,cz,h,sin(θ),cos(θ),vx,vy). For a previous model which outputs y=\[y0,y1,y2,y3,y4,y5,y6,y7,y8,y9\], we get y_new = \[...,y3,y2,...,-y7,-y6\]. So we should change the final Linear layer's weight accordingly.
+Old models are trained on v0.17.3. Our regression branch outputs (cx,cy,w,l,cz,h,sin(θ),cos(θ),vx,vy). For a previous model which outputs y=\[y0,y1,y2,y3,y4,y5,y6,y7,y8,y9\], we get y_new = \[...,y3,y2,...,-y7,-y6, ...\]. So we should change the final Linear layer's weight accordingly.
 
 To convert the old weights, please use
 
