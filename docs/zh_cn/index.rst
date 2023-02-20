@@ -1,54 +1,51 @@
-Welcome to MMDetection3D's documentation!
+欢迎来到 MMDetection3D 文档！
 ==========================================
 
 .. toctree::
    :maxdepth: 1
-   :caption: Get Started
+   :caption: 开始你的第一步
 
    overview.md
-   getting_started.md
+   get_started.md
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guides
+   :caption: 使用指南
 
    user_guides/index.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Advanced Guides
+   :caption: 进阶教程
 
    advanced_guides/index.rst
 
 .. toctree::
    :maxdepth: 1
-   :caption: Migration
+   :caption: 迁移版本
 
    migration.md
 
 .. toctree::
    :maxdepth: 1
-   :caption: API Reference
+   :caption: 接口文档（英文）
 
    api.rst
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Model Zoo
+   :maxdepth: 1
+   :caption: 模型仓库
 
    model_zoo.md
 
-
 .. toctree::
-   :maxdepth: 2
-   :caption: Notes
+   :maxdepth: 1
+   :caption: 说明
 
    notes/index.rst
 
-
-
 .. toctree::
-   :caption: Switch Language
+   :caption: 语言切换
 
    switch_language.md
 

@@ -45,8 +45,7 @@ class MinkResNet(BaseModule):
         super(MinkResNet, self).__init__()
         if ME is None:
             raise ImportError(
-                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
-            )
+                'Please follow `get_started.md` to install MinkowskiEngine.`')
         if depth not in self.arch_settings:
             raise KeyError(f'invalid depth {depth} for resnet')
         assert 4 >= num_stages >= 1
