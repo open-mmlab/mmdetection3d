@@ -34,20 +34,20 @@ python tools/test.py projects/TR3D/configs/tr3d_1xb16_scannet-3d-18class.py ${CH
 
 ### ScanNet
 
-|                          Backbone                          | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |         Download         |
-| :--------------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :----------------------: |
-| [MinkResNet34](./configs/tr3d_1xb16_scannet-3d-18class.py) |    8.6   |      23.7      | 72.9 (72.0) | 59.3 (57.4) | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_scannet-3d-18class/tr3d_1xb16_scannet-3d-18class.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_scannet-3d-18class/tr3d_1xb16_scannet-3d-18class.log.json) |
+|                          Backbone                          | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |                                                                                                                                        Download                                                                                                                                         |
+| :--------------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [MinkResNet34](./configs/tr3d_1xb16_scannet-3d-18class.py) |   8.6    |      23.7      | 72.9 (72.0) | 59.3 (57.4) | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_scannet-3d-18class/tr3d_1xb16_scannet-3d-18class.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_scannet-3d-18class/tr3d_1xb16_scannet-3d-18class.log.json) |
 
 ### SUN RGB-D
 
-|                          Backbone                          | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |         Download         |
-| :--------------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :----------------------: |
-| [MinkResNet34](./configs/tr3d_1xb16_sunrgbd-3d-10class.py) |    3.8   |      27.5      | 67.1 (66.3) | 50.4 (49.6) | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_sunrgbd-3d-10class/tr3d_1xb16_sunrgbd-3d-10class.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_sunrgbd-3d-10class/tr3d_1xb16_sunrgbd-3d-10class.log.json) |
+|                          Backbone                          | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |                                                                                                                                        Download                                                                                                                                         |
+| :--------------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [MinkResNet34](./configs/tr3d_1xb16_sunrgbd-3d-10class.py) |   3.8    |      27.5      | 67.1 (66.3) | 50.4 (49.6) | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_sunrgbd-3d-10class/tr3d_1xb16_sunrgbd-3d-10class.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_sunrgbd-3d-10class/tr3d_1xb16_sunrgbd-3d-10class.log.json) |
 
 ### S3DIS
 
-|                        Backbone                         | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |         Download         |
-| :-----------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :----------------------: |
+|                        Backbone                         | Mem (GB) | Inf time (fps) |   AP@0.25   |   AP@0.5    |                                                                                                                                  Download                                                                                                                                   |
+| :-----------------------------------------------------: | :------: | :------------: | :---------: | :---------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | [MinkResNet34](./configs/tr3d_1xb16_s3dis-3d-5class.py) |   15.2   |      21.0      | 74.5 (72.1) | 51.7 (47.6) | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_s3dis-3d-5class/tr3d_1xb16_s3dis-3d-5class.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tr3d/tr3d_1xb16_s3dis-3d-5class/tr3d_1xb16_s3dis-3d-5class.log.json) |
 
 **Note**
