@@ -2442,9 +2442,9 @@ class PolarMix(BaseTransform):
             start_angle = (np.random.random() - 1) * np.pi  # -pi~0
             end_angle = start_angle + np.pi
             # calculate horizontal angle for each point
-            yaw = torch.atan2(points.coord[:, 1], points.coord[:, 0])
-            retrieve_yaw = torch.atan2(retrieve_points.coord[:, 1],
-                                       retrieve_points.coord[:, 0])
+            yaw = -torch.atan2(points.coord[:, 1], points.coord[:, 0])
+            retrieve_yaw = -torch.atan2(retrieve_points.coord[:, 1],
+                                        retrieve_points.coord[:, 0])
 
             # select points in sector
             idx = (yaw <= start_angle) | (yaw >= end_angle)
