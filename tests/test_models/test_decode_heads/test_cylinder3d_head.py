@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
 
+import pytest
 import torch
 from mmcv.ops import SparseConvTensor
 
@@ -11,8 +12,9 @@ from mmdet3d.structures import Det3DDataSample, PointData
 class TestCylinder3DHead(TestCase):
 
     def test_cylinder3d_head_loss(self):
-        """Tests DGCNN head loss."""
-
+        """Tests Cylinder3D head loss."""
+        if not torch.cuda.is_available():
+            pytest.skip('test requires GPU and torch+cuda')
         cylinder3d_head = Cylinder3DHead(
             channels=128,
             num_classes=20,
