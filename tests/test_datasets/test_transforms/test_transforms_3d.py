@@ -122,7 +122,7 @@ class TestPolarMix(unittest.TestCase):
                 with_label_3d=False,
                 with_mask_3d=False,
                 with_seg_3d=True,
-                seg_3d_dtype=np.int32),
+                seg_3d_dtype='np.int32'),
             dict(type='PointSegClassMapping'),
         ]
         classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
