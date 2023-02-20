@@ -2361,6 +2361,14 @@ class MultiViewWrapper(BaseTransform):
 class PolarMix(BaseTransform):
     """PolarMix data augmentation.
 
+    The polarmix transform steps are as follows:
+
+        1. Another random point cloud is picked by dataset.
+        2. Exchange sectors of two point clouds that are cut with certain
+           azimuth angles.
+        3. Cut point instances from picked point cloud, rotate them by multiple
+           azimuth angles, and paste the cut and rotated instances.
+
     Required Keys:
 
     - points (:obj:`BasePoints`)
