@@ -19,7 +19,7 @@ class Cylinder3DHead(Base3DDecodeHead):
     Args:
         channels (int): Channels after modules, before conv_seg.
         num_classes (int): Number of classes.
-        dropout_ratio (float): Ratio of dropout layer. Defaults to 0.5.
+        dropout_ratio (float): Ratio of dropout layer. Defaults to 0.
         conv_cfg (dict or :obj:`ConfigDict`): Config of conv layers.
             Defaults to dict(type='Conv1d').
         norm_cfg (dict or :obj:`ConfigDict`): Config of norm layers.
@@ -33,11 +33,11 @@ class Cylinder3DHead(Base3DDecodeHead):
                      class_weight=None,
                      loss_weight=1.0).
         loss_lovasz (dict or :obj:`ConfigDict`): Config of Lovasz loss.
-            Defaults to dict(type='mmseg.LovaszLoss', loss_weight=1.0).
+            Defaults to dict(type='LovaszLoss', loss_weight=1.0).
         conv_seg_kernel_size (int): The kernel size used in conv_seg.
-            Defaults to 1.
+            Defaults to 3.
         ignore_index (int): The label index to be ignored. When using masked
-            BCE loss, ignore_index should be set to None. Defaults to 255.
+            BCE loss, ignore_index should be set to None. Defaults to 0.
         init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
             optional): Initialization config dict. Defaults to None.
     """
@@ -55,7 +55,7 @@ class Cylinder3DHead(Base3DDecodeHead):
                      class_weight=None,
                      loss_weight=1.0),
                  loss_lovasz: ConfigType = dict(
-                     type='mmseg.LovaszLoss', loss_weight=1.0),
+                     type='LovaszLoss', loss_weight=1.0),
                  conv_seg_kernel_size: int = 3,
                  ignore_index: int = 0,
                  init_cfg=None) -> None:
@@ -74,7 +74,7 @@ class Cylinder3DHead(Base3DDecodeHead):
         self.ignore_index = ignore_index
 
     def build_conv_seg(self, channels: int, num_classes: int,
-                       kernel_size: int) -> SubMConv3d:
+                       kernel_size: int) -> SparseConvTensor:
         return SubMConv3d(
             channels,
             num_classes,
@@ -100,6 +100,9 @@ class Cylinder3DHead(Base3DDecodeHead):
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
                 data samples. It usually includes information such
                 as `metainfo` and `gt_pts_seg`.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary of loss components.
         """
 
         gt_semantic_segs = [

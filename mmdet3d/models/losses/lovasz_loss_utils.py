@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 """Directly borrowed from mmsegmentation."""
 import functools
+from typing import List
 
 import numpy as np
 import torch
@@ -8,12 +9,15 @@ import torch.nn.functional as F
 from mmengine.fileio import load
 
 
-def get_class_weight(class_weight):
+def get_class_weight(class_weight: List[float] or str) -> List[float]:
     """Get class weight for loss function.
 
     Args:
         class_weight (list[float] | str | None): If class_weight is a str,
             take it as a file name and read from it.
+
+    Return:
+        list[float]: Loaded class_weight.
     """
     if isinstance(class_weight, str):
         # take it as a file path
@@ -26,15 +30,15 @@ def get_class_weight(class_weight):
     return class_weight
 
 
-def reduce_loss(loss, reduction):
+def reduce_loss(loss: torch.Tensor, reduction: str) -> torch.Tensor:
     """Reduce loss as specified.
 
     Args:
-        loss (Tensor): Elementwise loss tensor.
+        loss (torch.Tensor): Elementwise loss tensor.
         reduction (str): Options are "none", "mean" and "sum".
 
     Return:
-        Tensor: Reduced loss tensor.
+        torch.Tensor: Reduced loss tensor.
     """
     reduction_enum = F._Reduction.get_enum(reduction)
     # none: 0, elementwise_mean:1, sum: 2
@@ -46,17 +50,20 @@ def reduce_loss(loss, reduction):
         return loss.sum()
 
 
-def weight_reduce_loss(loss, weight=None, reduction='mean', avg_factor=None):
+def weight_reduce_loss(loss: torch.Tensor,
+                       weight: torch.Tensor = None,
+                       reduction: str = 'mean',
+                       avg_factor: float = None) -> torch.Tensor:
     """Apply element-wise weight and reduce loss.
 
     Args:
-        loss (Tensor): Element-wise loss.
-        weight (Tensor): Element-wise weights.
+        loss (torch.Tensor): Element-wise loss.
+        weight (torch.Tensor): Element-wise weights.
         reduction (str): Same as built-in losses of PyTorch.
         avg_factor (float): Average factor when computing the mean of losses.
 
     Returns:
-        Tensor: Processed loss values.
+        torch.Tensor: Processed loss values.
     """
     # if weight is specified, apply element-wise weight
     if weight is not None:

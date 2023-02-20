@@ -27,7 +27,6 @@ class TestCylinder3DHead(TestCase):
                 type='LovaszLoss', loss_weight=1.0, reduction='none'),
         ).cuda()
 
-        # DGCNN head expects dict format features
         voxel_feats = torch.rand(50, 128).cuda()
         coorx = torch.randint(0, 480, (50, 1)).int().cuda()
         coory = torch.randint(0, 360, (50, 1)).int().cuda()
