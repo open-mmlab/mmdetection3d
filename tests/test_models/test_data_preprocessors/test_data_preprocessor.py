@@ -101,9 +101,9 @@ class TestDet3DDataPreprocessor(TestCase):
         if not torch.cuda.is_available():
             pytest.skip('test requires GPU and CUDA')
         point_cloud_range = [0, -180, -4, 50, 180, 2]
-        grid_size = [480, 360, 32]
+        grid_shape = [480, 360, 32]
         voxel_layer = dict(
-            grid_size=grid_size,
+            grid_shape=grid_shape,
             point_cloud_range=point_cloud_range,
             max_num_points=-1,
             max_voxels=-1)

@@ -24,7 +24,7 @@ def test_seg_VFE():
     seg_VFE_cfg = dict(
         type='SegVFE',
         feat_channels=[64, 128, 256, 256],
-        grid_size=[480, 360, 32],
+        grid_shape=[480, 360, 32],
         with_voxel_center=True,
         feat_compression=16,
         return_point_feats=True)
