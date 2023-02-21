@@ -12,7 +12,6 @@ from mmcv.transforms import BaseTransform, Compose, RandomResize, Resize
 from mmdet.datasets.transforms import (PhotoMetricDistortion, RandomCrop,
                                        RandomFlip)
 from mmengine import is_list_of, is_tuple_of
-from mmengine.dataset import BaseDataset
 
 from mmdet3d.models.task_modules import VoxelGenerator
 from mmdet3d.registry import TRANSFORMS
@@ -2373,7 +2372,7 @@ class PolarMix(BaseTransform):
 
     - points (:obj:`BasePoints`)
     - pts_semantic_mask (np.int64)
-    - mix_results (List[dict])
+    - dataset (:obj:`BaseDataset`)
 
     Modified Keys:
 
@@ -2404,35 +2403,18 @@ class PolarMix(BaseTransform):
         else:
             self.pre_transform = Compose(pre_transform)
 
-    def get_indexes(self, dataset: BaseDataset) -> int:
-        """Call function to collect indexes.
-
-        Args:
-            dataset (:obj:`BaseDataset`): The dataset.
-
-        Returns:
-            int: Index.
-        """
-        index = np.random.randint(0, len(dataset))
-        return index
-
-    def polar_mix_transform(self, input_dict: dict) -> dict:
+    def polar_mix_transform(self, input_dict: dict, mix_results: dict) -> dict:
         """PolarMix transform function.
 
         Args:
             input_dict (dict): Result dict from loading pipeline.
+            mix_results (dict): Mixed dict picked from dataset.
 
         Returns:
             dict: output dict after transformtaion.
         """
-
-        assert 'mix_results' in input_dict
-        assert len(input_dict['mix_results']) == 1, \
-            'MixUp only support 2 point cloud now!'
-
-        retrieve_results = input_dict['mix_results'][0]
-        retrieve_points = retrieve_results['points']
-        retrieve_pts_semantic_mask = retrieve_results['pts_semantic_mask']
+        mix_points = mix_results['points']
+        mix_pts_semantic_mask = mix_results['pts_semantic_mask']
 
         points = input_dict['points']
         pts_semantic_mask = input_dict['pts_semantic_mask']
@@ -2443,19 +2425,18 @@ class PolarMix(BaseTransform):
             end_angle = start_angle + np.pi
             # calculate horizontal angle for each point
             yaw = -torch.atan2(points.coord[:, 1], points.coord[:, 0])
-            retrieve_yaw = -torch.atan2(retrieve_points.coord[:, 1],
-                                        retrieve_points.coord[:, 0])
+            mix_yaw = -torch.atan2(mix_points.coord[:, 1], mix_points.coord[:,
+                                                                            0])
 
             # select points in sector
             idx = (yaw <= start_angle) | (yaw >= end_angle)
-            retrieve_idx = (retrieve_yaw > start_angle) & (
-                retrieve_yaw < end_angle)
+            mix_idx = (mix_yaw > start_angle) & (mix_yaw < end_angle)
 
             # swap
-            points = points.cat([points[idx], retrieve_points[retrieve_idx]])
+            points = points.cat([points[idx], mix_points[mix_idx]])
             pts_semantic_mask = np.concatenate(
                 (pts_semantic_mask[idx.numpy()],
-                 retrieve_pts_semantic_mask[retrieve_idx.numpy()]),
+                 mix_pts_semantic_mask[mix_idx.numpy()]),
                 axis=0)
 
         # 2. rotate-pasting
@@ -2463,11 +2444,11 @@ class PolarMix(BaseTransform):
             # extract instance points
             instance_points, instance_pts_semantic_mask = [], []
             for instance_class in self.instance_classes:
-                retrieve_idx = retrieve_pts_semantic_mask == instance_class
-                instance_points.append(retrieve_points[retrieve_idx])
+                mix_idx = mix_pts_semantic_mask == instance_class
+                instance_points.append(mix_points[mix_idx])
                 instance_pts_semantic_mask.append(
-                    retrieve_pts_semantic_mask[retrieve_idx])
-            instance_points = retrieve_points.cat(instance_points)
+                    mix_pts_semantic_mask[mix_idx])
+            instance_points = mix_points.cat(instance_points)
             instance_pts_semantic_mask = np.concatenate(
                 instance_pts_semantic_mask, axis=0)
 
@@ -2506,30 +2487,22 @@ class PolarMix(BaseTransform):
         """
 
         assert 'dataset' in input_dict
-        dataset = input_dict.pop('dataset', None)
+        dataset = input_dict['dataset']
 
         # get index of other images
-        index = self.get_indexes(dataset)
+        index = np.random.randint(0, len(dataset))
 
-        mix_results = [copy.deepcopy(dataset.get_data_info(index))]
+        mix_results = copy.deepcopy(dataset.get_data_info(index))
 
         if self.pre_transform is not None:
-            for i, data in enumerate(mix_results):
-                # pre_transform may also require dataset
-                data.update({'dataset': dataset})
-                # before polarmix need to go through
-                # the necessary pre_transform
-                _results = self.pre_transform(data)
-                _results.pop('dataset')
-                mix_results[i] = _results
+            # pre_transform may also require dataset
+            mix_results.update({'dataset': dataset})
+            # before polarmix need to go through
+            # the necessary pre_transform
+            mix_results = self.pre_transform(mix_results)
+            mix_results.pop('dataset')
 
-        input_dict['mix_results'] = mix_results
-
-        input_dict = self.polar_mix_transform(input_dict)
-
-        if 'mix_results' in input_dict:
-            input_dict.pop('mix_results')
-        input_dict['dataset'] = dataset
+        input_dict = self.polar_mix_transform(input_dict, mix_results)
 
         return input_dict
 
