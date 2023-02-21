@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import copy
 import random
 import warnings
 from typing import List, Optional, Sequence, Tuple, Union
@@ -2486,13 +2485,14 @@ class PolarMix(BaseTransform):
             dict: output dict after transformtaion.
         """
 
-        assert 'dataset' in input_dict
+        assert 'dataset' in input_dict, \
+            '`dataset` is needed to pass through PolarMix, while not found.'
         dataset = input_dict['dataset']
 
         # get index of other images
         index = np.random.randint(0, len(dataset))
 
-        mix_results = copy.deepcopy(dataset.get_data_info(index))
+        mix_results = dataset.get_data_info(index)
 
         if self.pre_transform is not None:
             # pre_transform may also require dataset

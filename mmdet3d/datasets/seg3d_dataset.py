@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from os import path as osp
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import Callable, List, Optional, Sequence, Union
 
 import mmengine
 import numpy as np
@@ -283,14 +283,14 @@ class Seg3DDataset(BaseDataset):
 
         return info
 
-    def prepare_data(self, idx) -> Any:
+    def prepare_data(self, idx: int) -> dict:
         """Get data processed by ``self.pipeline``.
 
         Args:
             idx (int): The index of ``data_info``.
 
         Returns:
-            Any: Depends on ``self.pipeline``.
+            dict: Results passed through ``self.pipeline``.
         """
         if not self.test_mode:
             data_info = self.get_data_info(idx)
