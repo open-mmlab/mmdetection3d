@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 """Directly borrowed from mmsegmentation."""
 import functools
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import torch
@@ -9,12 +9,12 @@ import torch.nn.functional as F
 from mmengine.fileio import load
 
 
-def get_class_weight(class_weight: List[float] or str) -> List[float]:
+def get_class_weight(class_weight: Union[List[float], str]) -> List[float]:
     """Get class weight for loss function.
 
     Args:
-        class_weight (list[float] | str | None): If class_weight is a str,
-            take it as a file name and read from it.
+        class_weight (Union[list[float], str], optional): If class_weight
+            is a str, take it as a file name and read from it.
 
     Return:
         list[float]: Loaded class_weight.

@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional
+
 import torch
 from mmcv.ops import SparseConvTensor, SubMConv3d
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils import OptConfigType
 from mmdet3d.utils.typing_utils import ConfigType
 from .decode_head import Base3DDecodeHead
 
@@ -58,7 +61,7 @@ class Cylinder3DHead(Base3DDecodeHead):
                      type='LovaszLoss', loss_weight=1.0),
                  conv_seg_kernel_size: int = 3,
                  ignore_index: int = 0,
-                 init_cfg=None) -> None:
+                 init_cfg: Optional[dict or OptConfigType] = None) -> None:
         super(Cylinder3DHead, self).__init__(
             channels=channels,
             num_classes=num_classes,

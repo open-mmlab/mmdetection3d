@@ -6,7 +6,7 @@ ch/lovasz_losses.py Lovasz-Softmax and Jaccard hinge loss in PyTorch Maxim
 Berman 2018 ESAT-PSI KU Leuven (MIT License)
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -41,14 +41,15 @@ def lovasz_grad(gt_sorted: torch.Tensor) -> torch.Tensor:
 def flatten_binary_logits(
         logits: torch.Tensor,
         labels: torch.Tensor,
-        ignore_index: int = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        ignore_index: Optional[int] = None
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """Flattens predictions and labels in the batch (binary case). Remove
     tensors whose labels equal to 'ignore_index'.
 
     Args:
         probs (torch.Tensor): Predictions to be modified.
         labels (torch.Tensor): Labels to be modified.
-        ignore_index (int | None): The label index to be ignored.
+        ignore_index (int, optional): The label index to be ignored.
             Defaults to None.
 
     Return:
@@ -67,14 +68,15 @@ def flatten_binary_logits(
 def flatten_probs(
         probs: torch.Tensor,
         labels: torch.Tensor,
-        ignore_index: int = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        ignore_index: Optional[int] = None
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """Flattens predictions and labels in the batch. Remove tensors whose
     labels equal to 'ignore_index'.
 
     Args:
         probs (torch.Tensor): Predictions to be modified.
         labels (torch.Tensor): Labels to be modified.
-        ignore_index (int | None): The label index to be ignored.
+        ignore_index (int, optional): The label index to be ignored.
             Defaults to None.
 
     Return:
@@ -122,11 +124,11 @@ def lovasz_hinge_flat(logits: torch.Tensor,
 
 def lovasz_hinge(logits: torch.Tensor,
                  labels: torch.Tensor,
-                 classes: str or List[int] = 'present',
+                 classes: Optional[Union[str, List[int]]] = None,
                  per_image: bool = False,
-                 class_weight: List[float] = None,
+                 class_weight: Optional[List[float]] = None,
                  reduction: str = 'mean',
-                 avg_factor: int = None,
+                 avg_factor: Optional[int] = None,
                  ignore_index: int = 255) -> torch.Tensor:
     """Binary Lovasz hinge loss.
 
@@ -134,19 +136,20 @@ def lovasz_hinge(logits: torch.Tensor,
         logits (torch.Tensor): [B, H, W], logits at each pixel
             (between -infty and +infty).
         labels (torch.Tensor): [B, H, W], binary ground truth masks (0 or 1).
-        classes (str | list[int], optional): Placeholder, to be consistent with
-            other loss. Default: None.
-        per_image (bool, optional): If per_image is True, compute the loss per
-            image instead of per batch. Default: False.
+        classes (Union[str, list[int]], optional): Placeholder, to be
+            consistent with other loss. Defaults to None.
+        per_image (bool): If per_image is True, compute the loss per
+            image instead of per batch. Defaults to False.
         class_weight (list[float], optional): Placeholder, to be consistent
-            with other loss. Default: None.
-        reduction (str, optional): The method used to reduce the loss. Options
+            with other loss. Defaults to None.
+        reduction (str): The method used to reduce the loss. Options
             are "none", "mean" and "sum". This parameter only works when
-            per_image is True. Default: 'mean'.
+            per_image is True. Defaults to 'mean'.
         avg_factor (int, optional): Average factor that is used to average
             the loss. This parameter only works when per_image is True.
-            Default: None.
-        ignore_index (int | None): The label index to be ignored. Default: 255.
+            Defaults to None.
+        ignore_index (int, optional): The label index to be ignored.
+            Defaults to 255.
 
     Returns:
         torch.Tensor: The calculated loss.
@@ -165,21 +168,22 @@ def lovasz_hinge(logits: torch.Tensor,
     return loss
 
 
-def lovasz_softmax_flat(probs: torch.Tensor,
-                        labels: torch.Tensor,
-                        classes: str or List[int] = 'present',
-                        class_weight: List[float] = None) -> torch.Tensor:
+def lovasz_softmax_flat(
+        probs: torch.Tensor,
+        labels: torch.Tensor,
+        classes: Union[str, List[int]] = 'present',
+        class_weight: Optional[List[float]] = None) -> torch.Tensor:
     """Multi-class Lovasz-Softmax loss.
 
     Args:
         probs (torch.Tensor): [P, C], class probabilities at each prediction
             (between 0 and 1).
         labels (torch.Tensor): [P], ground truth labels (between 0 and C - 1).
-        classes (str | list[int]): Classes chosen to calculate loss.
+        classes (Union[str, list[int]]): Classes chosen to calculate loss.
             'all' for all classes, 'present' for classes present in labels, or
-            a list of classes to average. Default: 'present'.
+            a list of classes to average. Defaults to 'present'.
         class_weight (list[float], optional): The weight for each class.
-            Default: None.
+            Defaults to None.
 
     Returns:
         torch.Tensor: The calculated loss.
@@ -213,11 +217,11 @@ def lovasz_softmax_flat(probs: torch.Tensor,
 
 def lovasz_softmax(probs: torch.Tensor,
                    labels: torch.Tensor,
-                   classes: str or List[int] = 'present',
+                   classes: Optional[Union[str, List[int]]] = 'present',
                    per_image: bool = False,
                    class_weight: List[float] = None,
                    reduction: str = 'mean',
-                   avg_factor: int = None,
+                   avg_factor: Optional[int] = None,
                    ignore_index: int = 255) -> torch.Tensor:
     """Multi-class Lovasz-Softmax loss.
 
@@ -226,20 +230,21 @@ def lovasz_softmax(probs: torch.Tensor,
             prediction (between 0 and 1).
         labels (torch.Tensor): [B, H, W], ground truth labels (between 0 and
             C - 1).
-        classes (str | list[int], optional): Classes chosen to calculate loss.
+        classes (Union[str, list[int]]): Classes chosen to calculate loss.
             'all' for all classes, 'present' for classes present in labels, or
-            a list of classes to average. Default: 'present'.
-        per_image (bool, optional): If per_image is True, compute the loss per
-            image instead of per batch. Default: False.
+            a list of classes to average. Defaults to 'present'.
+        per_image (bool): If per_image is True, compute the loss per
+            image instead of per batch. Defaults to False.
         class_weight (list[float], optional): The weight for each class.
-            Default: None.
-        reduction (str, optional): The method used to reduce the loss. Options
+            Defaults to None.
+        reduction (str): The method used to reduce the loss. Options
             are "none", "mean" and "sum". This parameter only works when
-            per_image is True. Default: 'mean'.
+            per_image is True. Defaults to 'mean'.
         avg_factor (int, optional): Average factor that is used to average
             the loss. This parameter only works when per_image is True.
-            Default: None.
-        ignore_index (int | None): The label index to be ignored. Default: 255.
+            Defaults to None.
+        ignore_index (Union[int, None]): The label index to be ignored.
+            Defaults to 255.
 
     Returns:
         torch.Tensor: The calculated loss.
@@ -273,30 +278,30 @@ class LovaszLoss(nn.Module):
     networks <https://arxiv.org/abs/1705.08790>`_.
 
     Args:
-        loss_type (str, optional): Binary or multi-class loss.
-            Default: 'multi_class'. Options are "binary" and "multi_class".
-        classes (str | list[int], optional): Classes chosen to calculate loss.
+        loss_type (str): Binary or multi-class loss.
+            Defaults to 'multi_class'. Options are "binary" and "multi_class".
+        classes (Union[str, list[int]]): Classes chosen to calculate loss.
             'all' for all classes, 'present' for classes present in labels, or
-            a list of classes to average. Default: 'present'.
-        per_image (bool, optional): If per_image is True, compute the loss per
-            image instead of per batch. Default: False.
-        reduction (str, optional): The method used to reduce the loss. Options
+            a list of classes to average. Defaults to 'present'.
+        per_image (bool): If per_image is True, compute the loss per
+            image instead of per batch. Defaults to False.
+        reduction (str): The method used to reduce the loss. Options
             are "none", "mean" and "sum". This parameter only works when
-            per_image is True. Default: 'mean'.
-        class_weight (list[float] | str, optional): Weight of each class. If in
-            str format, read them from a file. Defaults to None.
-        loss_weight (float, optional): Weight of the loss. Defaults to 1.0.
-        loss_name (str, optional): Name of the loss item. If you want this loss
+            per_image is True. Defaults to 'mean'.
+        class_weight (Union[list[float], str], optional): Weight of each class.
+            If in str format, read them from a file. Defaults to None.
+        loss_weight (float): Weight of the loss. Defaults to 1.0.
+        loss_name (str): Name of the loss item. If you want this loss
             item to be included into the backward graph, `loss_` must be the
             prefix of the name. Defaults to 'loss_lovasz'.
     """
 
     def __init__(self,
                  loss_type: str = 'multi_class',
-                 classes: str or List[int] = 'present',
+                 classes: Union[str, List[int]] = 'present',
                  per_image: bool = False,
                  reduction: str = 'mean',
-                 class_weight: List[float] or str = None,
+                 class_weight: Optional[Union[List[float], str]] = None,
                  loss_weight: float = 1.0,
                  loss_name: str = 'loss_lovasz'):
         super().__init__()
