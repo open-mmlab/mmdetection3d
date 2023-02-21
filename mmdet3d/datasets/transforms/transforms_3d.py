@@ -2490,7 +2490,7 @@ class PolarMix(BaseTransform):
             '`dataset` is needed to pass through PolarMix, while not found.'
         dataset = input_dict['dataset']
 
-        # get index of other images
+        # get index of other point cloud
         index = np.random.randint(0, len(dataset))
 
         mix_results = dataset.get_data_info(index)
