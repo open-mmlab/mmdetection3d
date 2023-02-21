@@ -2411,7 +2411,7 @@ class PolarMix(BaseTransform):
             mix_results (dict): Mixed dict picked from dataset.
 
         Returns:
-            dict: output dict after transformtaion.
+            dict: output dict after transformation.
         """
         mix_points = mix_results['points']
         mix_pts_semantic_mask = mix_results['pts_semantic_mask']
@@ -2483,7 +2483,7 @@ class PolarMix(BaseTransform):
             input_dict (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: output dict after transformtaion.
+            dict: output dict after transformation.
         """
 
         assert 'dataset' in input_dict, \
