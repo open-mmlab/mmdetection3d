@@ -217,7 +217,7 @@ def lovasz_softmax_flat(
 
 def lovasz_softmax(probs: torch.Tensor,
                    labels: torch.Tensor,
-                   classes: Optional[Union[str, List[int]]] = 'present',
+                   classes: Union[str, List[int]] = 'present',
                    per_image: bool = False,
                    class_weight: List[float] = None,
                    reduction: str = 'mean',
