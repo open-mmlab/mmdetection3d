@@ -97,20 +97,14 @@ class _Voxelization(Function):
 voxelization = _Voxelization.apply
 
 
-<<<<<<< HEAD
 class VoxelizationByGridShape(nn.Module):
     """Voxelization that allows inferring voxel size automatically based on
     grid shape.
-=======
-class Voxelization(nn.Module):
-    """Convert kitti points(N, >=3) to voxels.
->>>>>>> origin/minkunet_train
 
     Please refer to `Point-Voxel CNN for Efficient 3D Deep Learning
     <https://arxiv.org/abs/1907.03739>`_ for more details.
 
     Args:
-<<<<<<< HEAD
         point_cloud_range (list):
             [x_min, y_min, z_min, x_max, y_max, z_max]
         max_num_points (int): max number of points per voxel
@@ -129,58 +123,18 @@ class Voxelization(nn.Module):
             https://github.com/open-mmlab/mmdetection3d/pull/904
             it is an experimental feature and we will appreciate it if
             you could share with us the failing cases.
-=======
-        voxel_size (tuple or float): The size of voxel with the shape of [3].
-        point_cloud_range (tuple or float): The coordinate range of voxel with
-            the shape of [6].
-        max_num_points (int): maximum points contained in a voxel. if
-            max_points=-1, it means using dynamic_voxelize.
-        max_voxels (int, optional): maximum voxels this function create.
-            for second, 20000 is a good choice. Users should shuffle points
-            before call this function because max_voxels may drop points.
-            Default: 20000.
->>>>>>> origin/minkunet_train
     """
 
     def __init__(self,
                  point_cloud_range: List,
                  max_num_points: int,
                  voxel_size: List = [],
-<<<<<<< HEAD
                  grid_shape: List[int] = [],
                  max_voxels: Union[tuple, int] = 20000,
                  deterministic: bool = True):
         super().__init__()
         if voxel_size and grid_shape:
             raise ValueError('voxel_size is mutually exclusive grid_shape')
-=======
-                 grid_size: List[int] = [],
-                 max_voxels: Union[tuple, int] = 20000,
-                 deterministic: bool = True):
-        """
-        Args:
-            point_cloud_range (list):
-                [x_min, y_min, z_min, x_max, y_max, z_max]
-            max_num_points (int): max number of points per voxel
-            voxel_size (list): list [x, y, z] size of three dimension
-            grid_size (list): [L, W, H], size of grid
-            max_voxels (tuple or int): max number of voxels in
-                (training, testing) time
-            deterministic: bool. whether to invoke the non-deterministic
-                version of hard-voxelization implementations. non-deterministic
-                version is considerablly fast but is not deterministic. only
-                affects hard voxelization. default True. for more information
-                of this argument and the implementation insights, please refer
-                to the following links:
-                https://github.com/open-mmlab/mmdetection3d/issues/894
-                https://github.com/open-mmlab/mmdetection3d/pull/904
-                it is an experimental feature and we will appreciate it if
-                you could share with us the failing cases.
-        """
-        super().__init__()
-        if voxel_size and grid_size:
-            raise ValueError('voxel_size is mutually exclusive grid_size')
->>>>>>> origin/minkunet_train
         self.point_cloud_range = point_cloud_range
         self.max_num_points = max_num_points
         if isinstance(max_voxels, tuple):
@@ -194,7 +148,6 @@ class Voxelization(nn.Module):
         if voxel_size:
             self.voxel_size = voxel_size
             voxel_size = torch.tensor(voxel_size, dtype=torch.float32)
-<<<<<<< HEAD
             grid_shape = (point_cloud_range[3:] -
                           point_cloud_range[:3]) / voxel_size
             grid_shape = torch.round(grid_shape).long().tolist()
@@ -207,20 +160,6 @@ class Voxelization(nn.Module):
             self.voxel_size = voxel_size
         else:
             raise ValueError('must assign a value to voxel_size or grid_shape')
-=======
-            grid_size = (point_cloud_range[3:] -
-                         point_cloud_range[:3]) / voxel_size
-            grid_size = torch.round(grid_size).long().tolist()
-            self.grid_size = grid_size
-        elif grid_size:
-            grid_size = torch.tensor(grid_size, dtype=torch.float32)
-            voxel_size = (point_cloud_range[3:] - point_cloud_range[:3]) / (
-                grid_size - 1)
-            voxel_size = voxel_size.tolist()
-            self.voxel_size = voxel_size
-        else:
-            raise ValueError('must assign a value to voxel_size or grid_size')
->>>>>>> origin/minkunet_train
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         if self.training:
@@ -235,11 +174,7 @@ class Voxelization(nn.Module):
     def __repr__(self):
         s = self.__class__.__name__ + '('
         s += 'voxel_size=' + str(self.voxel_size)
-<<<<<<< HEAD
         s += ', grid_shape=' + str(self.grid_shape)
-=======
-        s += ', grid_size=' + str(self.grid_size)
->>>>>>> origin/minkunet_train
         s += ', point_cloud_range=' + str(self.point_cloud_range)
         s += ', max_num_points=' + str(self.max_num_points)
         s += ', max_voxels=' + str(self.max_voxels)
@@ -249,11 +184,8 @@ class Voxelization(nn.Module):
 
 
 class _DynamicScatter(Function):
-<<<<<<< HEAD
     """Different from the mmcv implementation, here it is allowed to return
     point2voxel_map."""
-=======
->>>>>>> origin/minkunet_train
 
     @staticmethod
     def forward(ctx: Any,
@@ -306,17 +238,10 @@ class _DynamicScatter(Function):
         return grad_feats, None, None
 
 
-<<<<<<< HEAD
 dynamic_scatter_3d = _DynamicScatter.apply
 
 
 class DynamicScatter3D(nn.Module):
-=======
-dynamic_scatter = _DynamicScatter.apply
-
-
-class DynamicScatter(nn.Module):
->>>>>>> origin/minkunet_train
     """Scatters points into voxels, used in the voxel encoder with dynamic
     voxelization.
 
@@ -332,17 +257,12 @@ class DynamicScatter(nn.Module):
             into voxel.
     """
 
-<<<<<<< HEAD
     def __init__(self, voxel_size: List, point_cloud_range: List,
                  average_points: bool):
         super().__init__()
 
         self.voxel_size = voxel_size
         self.point_cloud_range = point_cloud_range
-=======
-    def __init__(self, average_points: bool):
-        super().__init__()
->>>>>>> origin/minkunet_train
         self.average_points = average_points
 
     def forward_single(
@@ -362,12 +282,8 @@ class DynamicScatter(nn.Module):
             The second is voxel coordinates with shape [M, ndim].
         """
         reduce = 'mean' if self.average_points else 'max'
-<<<<<<< HEAD
         return dynamic_scatter_3d(points.contiguous(), coors.contiguous(),
                                   reduce)
-=======
-        return dynamic_scatter(points.contiguous(), coors.contiguous(), reduce, True)
->>>>>>> origin/minkunet_train
 
     def forward(self, points: torch.Tensor,
                 coors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -407,8 +323,4 @@ class DynamicScatter(nn.Module):
         s += ', point_cloud_range=' + str(self.point_cloud_range)
         s += ', average_points=' + str(self.average_points)
         s += ')'
-<<<<<<< HEAD
         return s
-=======
-        return s
->>>>>>> origin/minkunet_train
