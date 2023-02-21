@@ -2383,8 +2383,8 @@ class PolarMix(BaseTransform):
             instance.
         swap_ratio (float): Swap ratio of two point cloud. Defaults to 0.5.
         rotate_paste_ratio (float): Rotate paste ratio. Defaults to 1.0.
-        pre_transform (Sequence[dict]): Sequence of transform object or config
-            dict to be composed.
+        pre_transform (Sequence[dict], optional): Sequence of transform object
+            or config dict to be composed. Defaults to None.
     """
 
     def __init__(self,
@@ -2392,7 +2392,8 @@ class PolarMix(BaseTransform):
                  swap_ratio: float = 0.5,
                  rotate_paste_ratio: float = 1.0,
                  pre_transform: Optional[Sequence[dict]] = None) -> None:
-        assert is_list_of(instance_classes, int)
+        assert is_list_of(instance_classes, int), \
+            'instance_classes should be a list of int'
         self.instance_classes = instance_classes
         self.swap_ratio = swap_ratio
         self.rotate_paste_ratio = rotate_paste_ratio
