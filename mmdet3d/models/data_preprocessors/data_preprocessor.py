@@ -9,12 +9,13 @@ from mmdet.models import DetDataPreprocessor
 from mmengine.model import stack_batch
 from mmengine.utils import is_list_of
 from torch.nn import functional as F
+from torch_scatter import scatter_mean, scatter_sum
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
 from .utils import multiview_img_stack_batch
-from .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
+from .voxelize import VoxelizationByGridShape
 
 
 @MODELS.register_module()
@@ -104,12 +105,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         self.voxel = voxel
         self.voxel_type = voxel_type
         if voxel:
-<<<<<<< HEAD
             self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
-=======
-            self.voxel_layer = Voxelization(**voxel_layer)
-            self.voxel_encoder = DynamicScatter(True)
->>>>>>> origin/minkunet_train
 
     def forward(self,
                 data: Union[dict, List[dict]],
@@ -342,11 +338,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         Args:
             points (List[Tensor]): Point cloud in one data batch.
             data_samples: (list[:obj:`Det3DDataSample`]): The annotation data
-<<<<<<< HEAD
-                of every samples. Add voxel-wise annotation for segmentation.
-=======
                 of every samples. Add voxel-wise annotation forsegmentation.
->>>>>>> origin/minkunet_train
 
         Returns:
             Dict[str, Tensor]: Voxelization information.
@@ -416,8 +408,6 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 coors.append(res_coors)
             voxels = torch.cat(voxels, dim=0)
             coors = torch.cat(coors, dim=0)
-<<<<<<< HEAD
-=======
         elif self.voxel_type == 'minkunet':
             voxels, coors = [], []
             voxel_size = points[0].new_tensor(self.voxel_layer.voxel_size)
@@ -440,7 +430,6 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             voxels = torch.cat(voxels, dim=0)
             coors = torch.cat(coors, dim=0)
 
->>>>>>> origin/minkunet_train
         else:
             raise ValueError(f'Invalid voxelization type {self.voxel_type}')
 
@@ -449,28 +438,13 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         return voxel_dict
 
-<<<<<<< HEAD
-    def get_voxel_seg(self, res_coors: torch.Tensor, data_sample: SampleList):
-=======
     def get_voxel_seg(self, voxel2point_map: torch.Tensor,
                       data_sample: SampleList):
->>>>>>> origin/minkunet_train
         """Get voxel-wise segmentation label and point2voxel map.
 
         Args:
             res_coors (Tensor): The voxel coordinates of points, Nx3.
             data_sample: (:obj:`Det3DDataSample`): The annotation data of
-<<<<<<< HEAD
-                every samples. Add voxel-wise annotation forsegmentation.
-        """
-        pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
-        voxel_semantic_mask, _, point2voxel_map = dynamic_scatter_3d(
-            F.one_hot(pts_semantic_mask.long()).float(), res_coors, 'mean',
-            True)
-        voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
-        data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
-        data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
-=======
                 every samples. Add voxel-wise annotation for segmentation.
         """
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
@@ -481,4 +455,3 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
         data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
         # data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
->>>>>>> origin/minkunet_train
