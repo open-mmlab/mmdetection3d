@@ -6,6 +6,7 @@ from mmcv.utils import ext_loader
 from torch import nn
 from torch.autograd import Function
 from torch.nn.modules.utils import _pair
+from torch.nn import functional as F
 
 ext_module = ext_loader.load_ext('_ext', [
     'dynamic_voxelize_forward', 'hard_voxelize_forward',
@@ -246,3 +247,83 @@ class _DynamicScatter(Function):
 
 
 dynamic_scatter = _DynamicScatter.apply
+
+
+class DynamicScatter(nn.Module):
+    """Scatters points into voxels, used in the voxel encoder with dynamic
+    voxelization.
+
+    Note:
+        The CPU and GPU implementation get the same output, but have numerical
+        difference after summation and division (e.g., 5e-7).
+
+    Args:
+        voxel_size (list): list [x, y, z] size of three dimension.
+        point_cloud_range (list): The coordinate range of points, [x_min,
+            y_min, z_min, x_max, y_max, z_max].
+        average_points (bool): whether to use avg pooling to scatter points
+            into voxel.
+    """
+
+    def __init__(self, average_points: bool):
+        super().__init__()
+        self.average_points = average_points
+
+    def forward_single(
+            self, points: torch.Tensor,
+            coors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Scatters points into voxels.
+
+        Args:
+            points (torch.Tensor): Points to be reduced into voxels.
+            coors (torch.Tensor): Corresponding voxel coordinates (specifically
+                multi-dim voxel index) of each points.
+
+        Returns:
+            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            is the voxel features with shape [M, C] which are respectively
+            reduced from input features that share the same voxel coordinates.
+            The second is voxel coordinates with shape [M, ndim].
+        """
+        reduce = 'mean' if self.average_points else 'max'
+        return dynamic_scatter(points.contiguous(), coors.contiguous(), reduce, True)
+
+    def forward(self, points: torch.Tensor,
+                coors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Scatters points/features into voxels.
+
+        Args:
+            points (torch.Tensor): Points to be reduced into voxels.
+            coors (torch.Tensor): Corresponding voxel coordinates (specifically
+                multi-dim voxel index) of each points.
+
+        Returns:
+            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            is the voxel features with shape [M, C] which are respectively
+            reduced from input features that share the same voxel coordinates.
+            The second is voxel coordinates with shape [M, ndim].
+        """
+        if coors.size(-1) == 3:
+            return self.forward_single(points, coors)
+        else:
+            batch_size = coors[-1, 0] + 1
+            voxels, voxel_coors = [], []
+            for i in range(batch_size):
+                inds = torch.where(coors[:, 0] == i)
+                voxel, voxel_coor = self.forward_single(
+                    points[inds], coors[inds][:, 1:])
+                coor_pad = F.pad(voxel_coor, (1, 0), mode='constant', value=i)
+                voxel_coors.append(coor_pad)
+                voxels.append(voxel)
+            features = torch.cat(voxels, dim=0)
+            feature_coors = torch.cat(voxel_coors, dim=0)
+
+            return features, feature_coors
+
+    def __repr__(self):
+        s = self.__class__.__name__ + '('
+        s += 'voxel_size=' + str(self.voxel_size)
+        s += ', point_cloud_range=' + str(self.point_cloud_range)
+        s += ', average_points=' + str(self.average_points)
+        s += ')'
+        return s

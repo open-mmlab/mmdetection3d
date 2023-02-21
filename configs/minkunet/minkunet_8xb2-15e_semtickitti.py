@@ -5,22 +5,20 @@ _base_ = [
 
 # This schedule is mainly used by models with dynamic voxelization
 # optimizer
-lr = 0.003  # max learning rate
+lr = 2.4e-1  # max learning rate
 optim_wrapper = dict(
+    _delete_=True,
     type='OptimWrapper',
     optimizer=dict(
-        type='AdamW', lr=lr, weight_decay=0.001, betas=(0.95, 0.99)),
-    clip_grad=dict(max_norm=10, norm_type=2),
-)
+        type='SGD', lr=lr, weight_decay=1.0e-4, momentum=0.9, nesterov=True))
 
 param_scheduler = [
-    dict(type='LinearLR', start_factor=0.1, by_epoch=False, begin=0, end=1000),
+    dict(type='LinearLR', start_factor=0.01, by_epoch=False, begin=0, end=125),
     dict(
         type='CosineAnnealingLR',
         begin=0,
-        T_max=15,
-        end=15,
-        by_epoch=True,
+        T_max=17940,
+        by_epoch=False,
         eta_min=1e-5)
 ]
 # training schedule for 1x
@@ -34,6 +32,8 @@ test_cfg = dict(type='TestLoop')
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
-vis_backends = [dict(type='LocalVisBackend'),dict(type='WandbVisBackend', init_kwargs='')]
+vis_backends = [dict(type='LocalVisBackend'),dict(type='WandbVisBackend', init_kwargs=dict(name='minku_8xb2-15e_sgd'))]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
