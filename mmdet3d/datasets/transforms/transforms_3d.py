@@ -2381,12 +2381,14 @@ class LaserMix(BaseTransform):
         pitch_angles (Sequence[float]): Pitch angles used to divide areas.
         pre_transform (Sequence[dict], optional): Sequence of transform object
             or config dict to be composed. Defaults to None.
+        prob (float): The transformation probability. Defaults to 1.0.
     """
 
     def __init__(self,
                  num_areas: List[int],
                  pitch_angles: Sequence[float],
-                 pre_transform: Optional[Sequence[dict]] = None) -> None:
+                 pre_transform: Optional[Sequence[dict]] = None,
+                 prob: float = 1.0) -> None:
         assert is_list_of(num_areas, int), \
             'num_areas should be a list of int.'
         self.num_areas = num_areas
@@ -2398,6 +2400,7 @@ class LaserMix(BaseTransform):
             'pitch_angles[1] should be larger than pitch_angles[0].'
         self.pitch_angles = pitch_angles
 
+        self.prob = prob
         if pre_transform is None:
             self.pre_transform = None
         else:
@@ -2463,6 +2466,8 @@ class LaserMix(BaseTransform):
         Returns:
             dict: output dict after transformation.
         """
+        if np.random.rand() > self.prob:
+            return input_dict
 
         assert 'dataset' in input_dict, \
             '`dataset` is needed to pass through LaserMix, while not found.'
