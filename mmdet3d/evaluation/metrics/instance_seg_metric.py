@@ -54,14 +54,15 @@ class InstanceSegMetric(InstanceSeg):
             pred = data_sample['pred']
             cpu_pred_3d = dict()
             for idx, (mask, label_id, conf) in enumerate(
-                    zip(pred['mask_3d'], pred['label_3d'], pred['conf_3d'])):
+                    zip(pred['pred_mask_3d'], pred['pred_label_3d'],
+                        pred['pred_conf_3d'])):
                 cpu_pred_3d[f"{data_sample['scene_id']}_{idx}"] = {
                     'mask': mask,
-                    'label_id': label_id,
-                    'conf': conf
+                    'label_id': int(label_id),
+                    'conf': float(conf)
                 }
             preds.append(cpu_pred_3d)
-            gts.append(data_sample['gt'])
+            gts.append(data_sample['groundtruth'])
         self.add(preds, gts)
 
     def evaluate(self, *args, **kwargs):
