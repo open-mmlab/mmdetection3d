@@ -2495,5 +2495,6 @@ class LaserMix(BaseTransform):
         repr_str = self.__class__.__name__
         repr_str += f'(num_areas={self.num_areas}, '
         repr_str += f'pitch_angles={self.pitch_angles}, '
-        repr_str += f'pre_transform={self.pre_transform})'
+        repr_str += f'pre_transform={self.pre_transform}, '
+        repr_str += f'prob={self.prob})'
         return repr_str
