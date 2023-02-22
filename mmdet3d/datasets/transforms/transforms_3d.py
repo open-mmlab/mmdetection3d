@@ -2507,7 +2507,7 @@ class PolarMix(BaseTransform):
 
         return input_dict
 
-    def __repr__(self) -> dict:
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         repr_str += f'(instance_classes={self.instance_classes}, '
