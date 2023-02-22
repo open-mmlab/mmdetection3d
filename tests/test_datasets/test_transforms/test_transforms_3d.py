@@ -113,9 +113,8 @@ class TestPolarMix(unittest.TestCase):
             dict(
                 type='LoadPointsFromFile',
                 coord_type='LIDAR',
-                shift_height=True,
                 load_dim=4,
-                use_dim=[0, 1, 2]),
+                use_dim=4),
             dict(
                 type='LoadAnnotations3D',
                 with_bbox_3d=False,
