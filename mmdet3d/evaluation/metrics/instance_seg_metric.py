@@ -55,7 +55,7 @@ class InstanceSegMetric(InstanceSeg):
             cpu_pred_3d = dict()
             for idx, (mask, label_id, conf) in enumerate(
                     zip(pred['pred_mask_3d'], pred['pred_label_3d'],
-                        pred['pred_conf_3d'])):
+                        pred['pred_score_3d'])):
                 cpu_pred_3d[f"{data_sample['scene_id']}_{idx}"] = {
                     'mask': mask,
                     'label_id': int(label_id),
