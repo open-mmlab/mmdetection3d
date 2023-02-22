@@ -8,19 +8,43 @@ Berman 2018 ESAT-PSI KU Leuven (MIT License)
 
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mmdet.models import weight_reduce_loss
+from mmengine.fileio import load
 from mmengine.utils import is_list_of
 
 from mmdet3d.registry import MODELS
-from .lovasz_loss_utils import get_class_weight, weight_reduce_loss
+
+
+def get_class_weight(class_weight: Union[List[float], str]) -> List[float]:
+    """Get class weight for loss function.
+
+    Args:
+        class_weight (Union[list[float], str], optional): If class_weight
+            is a str, take it as a file name and read from it.
+
+    Return:
+        list[float]: Loaded class_weight.
+    """
+    if isinstance(class_weight, str):
+        # take it as a file path
+        if class_weight.endswith('.npy'):
+            class_weight = np.load(class_weight)
+        else:
+            # pkl, json or yaml
+            class_weight = load(class_weight)
+
+    return class_weight
 
 
 def lovasz_grad(gt_sorted: torch.Tensor) -> torch.Tensor:
     """Computes gradient of the Lovasz extension w.r.t sorted errors.
 
     See Alg. 1 in paper.
+    `The Lovasz-Softmax loss. <https://arxiv.org/abs/1705.08790>`_.
 
     Args:
         gt_sorted (torch.Tensor): Sorted ground truth.
@@ -43,7 +67,7 @@ def flatten_binary_logits(
         labels: torch.Tensor,
         ignore_index: Optional[int] = None
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Flattens predictions and labels in the batch (binary case). Remove
+    """Flatten predictions and labels in the batch (binary case). Remove
     tensors whose labels equal to 'ignore_index'.
 
     Args:
@@ -70,8 +94,8 @@ def flatten_probs(
         labels: torch.Tensor,
         ignore_index: Optional[int] = None
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Flattens predictions and labels in the batch. Remove tensors whose
-    labels equal to 'ignore_index'.
+    """Flatten predictions and labels in the batch. Remove tensors whose labels
+    equal to 'ignore_index'.
 
     Args:
         probs (torch.Tensor): Predictions to be modified.
@@ -82,13 +106,15 @@ def flatten_probs(
     Return:
         tuple(torch.Tensor, torch.Tensor): Modified predictions and labels.
     """
-    if probs.dim() == 3:
-        # assumes output of a sigmoid layer
-        B, H, W = probs.size()
-        probs = probs.view(B, 1, H, W)
-    B, C, H, W = probs.size()
-    probs = probs.permute(0, 2, 3, 1).contiguous().view(-1, C)  # B*H*W, C=P,C
-    labels = labels.view(-1)
+    if probs.dim() != 2:  # for input with P*C
+        if probs.dim() == 3:
+            # assumes output of a sigmoid layer
+            B, H, W = probs.size()
+            probs = probs.view(B, 1, H, W)
+        B, C, H, W = probs.size()
+        probs = probs.permute(0, 2, 3, 1).contiguous().view(-1,
+                                                            C)  # B*H*W, C=P,C
+        labels = labels.view(-1)
     if ignore_index is None:
         return probs, labels
     valid = (labels != ignore_index)
@@ -102,9 +128,10 @@ def lovasz_hinge_flat(logits: torch.Tensor,
     """Binary Lovasz hinge loss.
 
     Args:
-        logits (torch.Tensor): [P], logits at each prediction
-            (between -infty and +infty).
-        labels (torch.Tensor): [P], binary ground truth labels (0 or 1).
+        logits (torch.Tensor): Logits at each prediction
+            (between -infty and +infty) with shape [P].
+        labels (torch.Tensor): Binary ground truth labels (0 or 1)
+            with shape [P].
 
     Returns:
         torch.Tensor: The calculated loss.
@@ -125,7 +152,7 @@ def lovasz_hinge_flat(logits: torch.Tensor,
 def lovasz_hinge(logits: torch.Tensor,
                  labels: torch.Tensor,
                  classes: Optional[Union[str, List[int]]] = None,
-                 per_image: bool = False,
+                 per_sample: bool = False,
                  class_weight: Optional[List[float]] = None,
                  reduction: str = 'mean',
                  avg_factor: Optional[int] = None,
@@ -133,28 +160,29 @@ def lovasz_hinge(logits: torch.Tensor,
     """Binary Lovasz hinge loss.
 
     Args:
-        logits (torch.Tensor): [B, H, W], logits at each pixel
-            (between -infty and +infty).
-        labels (torch.Tensor): [B, H, W], binary ground truth masks (0 or 1).
+        logits (torch.Tensor): Logits at each pixel
+            (between -infty and +infty) with shape [B, H, W].
+        labels (torch.Tensor): Binary ground truth masks (0 or 1)
+            with shape [B, H, W].
         classes (Union[str, list[int]], optional): Placeholder, to be
             consistent with other loss. Defaults to None.
-        per_image (bool): If per_image is True, compute the loss per
-            image instead of per batch. Defaults to False.
+        per_sample (bool): If per_sample is True, compute the loss per
+            sample instead of per batch. Defaults to False.
         class_weight (list[float], optional): Placeholder, to be consistent
             with other loss. Defaults to None.
         reduction (str): The method used to reduce the loss. Options
             are "none", "mean" and "sum". This parameter only works when
-            per_image is True. Defaults to 'mean'.
+            per_sample is True. Defaults to 'mean'.
         avg_factor (int, optional): Average factor that is used to average
-            the loss. This parameter only works when per_image is True.
+            the loss. This parameter only works when per_sample is True.
             Defaults to None.
-        ignore_index (int, optional): The label index to be ignored.
+        ignore_index (Union[int, None]): The label index to be ignored.
             Defaults to 255.
 
     Returns:
         torch.Tensor: The calculated loss.
     """
-    if per_image:
+    if per_sample:
         loss = [
             lovasz_hinge_flat(*flatten_binary_logits(
                 logit.unsqueeze(0), label.unsqueeze(0), ignore_index))
@@ -176,9 +204,10 @@ def lovasz_softmax_flat(
     """Multi-class Lovasz-Softmax loss.
 
     Args:
-        probs (torch.Tensor): [P, C], class probabilities at each prediction
-            (between 0 and 1).
-        labels (torch.Tensor): [P], ground truth labels (between 0 and C - 1).
+        probs (torch.Tensor): Class probabilities at each prediction
+            (between 0 and 1) with shape [P, C]
+        labels (torch.Tensor): Ground truth labels (between 0 and C - 1)
+            with shape [P].
         classes (Union[str, list[int]]): Classes chosen to calculate loss.
             'all' for all classes, 'present' for classes present in labels, or
             a list of classes to average. Defaults to 'present'.
@@ -218,7 +247,7 @@ def lovasz_softmax_flat(
 def lovasz_softmax(probs: torch.Tensor,
                    labels: torch.Tensor,
                    classes: Union[str, List[int]] = 'present',
-                   per_image: bool = False,
+                   per_sample: bool = False,
                    class_weight: List[float] = None,
                    reduction: str = 'mean',
                    avg_factor: Optional[int] = None,
@@ -226,22 +255,22 @@ def lovasz_softmax(probs: torch.Tensor,
     """Multi-class Lovasz-Softmax loss.
 
     Args:
-        probs (torch.Tensor): [B, C, H, W], class probabilities at each
-            prediction (between 0 and 1).
-        labels (torch.Tensor): [B, H, W], ground truth labels (between 0 and
-            C - 1).
+        probs (torch.Tensor): Class probabilities at each
+            prediction (between 0 and 1) with shape [B, C, H, W].
+        labels (torch.Tensor): Ground truth labels (between 0 and
+            C - 1) with shape [B, H, W].
         classes (Union[str, list[int]]): Classes chosen to calculate loss.
             'all' for all classes, 'present' for classes present in labels, or
             a list of classes to average. Defaults to 'present'.
-        per_image (bool): If per_image is True, compute the loss per
-            image instead of per batch. Defaults to False.
+        per_sample (bool): If per_sample is True, compute the loss per
+            sample instead of per batch. Defaults to False.
         class_weight (list[float], optional): The weight for each class.
             Defaults to None.
         reduction (str): The method used to reduce the loss. Options
             are "none", "mean" and "sum". This parameter only works when
-            per_image is True. Defaults to 'mean'.
+            per_sample is True. Defaults to 'mean'.
         avg_factor (int, optional): Average factor that is used to average
-            the loss. This parameter only works when per_image is True.
+            the loss. This parameter only works when per_sample is True.
             Defaults to None.
         ignore_index (Union[int, None]): The label index to be ignored.
             Defaults to 255.
@@ -250,7 +279,7 @@ def lovasz_softmax(probs: torch.Tensor,
         torch.Tensor: The calculated loss.
     """
 
-    if per_image:
+    if per_sample:
         loss = [
             lovasz_softmax_flat(
                 *flatten_probs(
@@ -283,11 +312,11 @@ class LovaszLoss(nn.Module):
         classes (Union[str, list[int]]): Classes chosen to calculate loss.
             'all' for all classes, 'present' for classes present in labels, or
             a list of classes to average. Defaults to 'present'.
-        per_image (bool): If per_image is True, compute the loss per
-            image instead of per batch. Defaults to False.
+        per_sample (bool): If per_sample is True, compute the loss per
+            sample instead of per batch. Defaults to False.
         reduction (str): The method used to reduce the loss. Options
             are "none", "mean" and "sum". This parameter only works when
-            per_image is True. Defaults to 'mean'.
+            per_sample is True. Defaults to 'mean'.
         class_weight (Union[list[float], str], optional): Weight of each class.
             If in str format, read them from a file. Defaults to None.
         loss_weight (float): Weight of the loss. Defaults to 1.0.
@@ -299,7 +328,7 @@ class LovaszLoss(nn.Module):
     def __init__(self,
                  loss_type: str = 'multi_class',
                  classes: Union[str, List[int]] = 'present',
-                 per_image: bool = False,
+                 per_sample: bool = False,
                  reduction: str = 'mean',
                  class_weight: Optional[Union[List[float], str]] = None,
                  loss_weight: float = 1.0,
@@ -313,12 +342,12 @@ class LovaszLoss(nn.Module):
         else:
             self.cls_criterion = lovasz_softmax
         assert classes in ('all', 'present') or is_list_of(classes, int)
-        if not per_image:
+        if not per_sample:
             assert reduction == 'none', "reduction should be 'none' when \
-                                                        per_image is False."
+                                                        per_sample is False."
 
         self.classes = classes
-        self.per_image = per_image
+        self.per_sample = per_sample
         self.reduction = reduction
         self.loss_weight = loss_weight
         self.class_weight = get_class_weight(class_weight)
@@ -347,14 +376,13 @@ class LovaszLoss(nn.Module):
             cls_score,
             label,
             self.classes,
-            self.per_image,
+            self.per_sample,
             class_weight=class_weight,
             reduction=reduction,
             avg_factor=avg_factor,
             **kwargs)
         return loss_cls
 
-    @property
     def loss_name(self) -> str:
         """Loss Name.
 
