@@ -283,6 +283,24 @@ class Seg3DDataset(BaseDataset):
 
         return info
 
+    def prepare_data(self, idx: int) -> dict:
+        """Get data processed by ``self.pipeline``.
+
+        Args:
+            idx (int): The index of ``data_info``.
+
+        Returns:
+            dict: Results passed through ``self.pipeline``.
+        """
+        if not self.test_mode:
+            data_info = self.get_data_info(idx)
+            # Pass the dataset to the pipeline during training to support mixed
+            # data augmentation, such as polarmix.
+            data_info['dataset'] = self
+            return self.pipeline(data_info)
+        else:
+            return super().prepare_data(idx)
+
     def get_scene_idxs(self, scene_idxs: Union[None, str,
                                                np.ndarray]) -> np.ndarray:
         """Compute scene_idxs for data sampling.

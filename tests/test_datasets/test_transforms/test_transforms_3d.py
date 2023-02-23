@@ -6,9 +6,14 @@ import numpy as np
 import torch
 from mmengine.testing import assert_allclose
 
-from mmdet3d.datasets import GlobalAlignment, RandomFlip3D
-from mmdet3d.datasets.transforms import GlobalRotScaleTrans
+from mmdet3d.datasets import (GlobalAlignment, RandomFlip3D,
+                              SemanticKITTIDataset)
+from mmdet3d.datasets.transforms import GlobalRotScaleTrans, PolarMix
+from mmdet3d.structures import LiDARPoints
 from mmdet3d.testing import create_data_info_after_loading
+from mmdet3d.utils import register_all_modules
+
+register_all_modules()
 
 
 class TestGlobalRotScaleTrans(unittest.TestCase):
@@ -99,3 +104,121 @@ class TestGlobalAlignment(unittest.TestCase):
         # assert the rot metric
         with self.assertRaises(AssertionError):
             global_align_transform(data_info)
+
+
+class TestPolarMix(unittest.TestCase):
+
+    def setUp(self):
+        self.pre_transform = [
+            dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                load_dim=4,
+                use_dim=4),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=False,
+                with_label_3d=False,
+                with_mask_3d=False,
+                with_seg_3d=True,
+                seg_3d_dtype='np.int32'),
+            dict(type='PointSegClassMapping'),
+        ]
+        classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
+                   'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
+                   'sidewalk', 'other-ground', 'building', 'fence',
+                   'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign')
+        palette = [
+            [174, 199, 232],
+            [152, 223, 138],
+            [31, 119, 180],
+            [255, 187, 120],
+            [188, 189, 34],
+            [140, 86, 75],
+            [255, 152, 150],
+            [214, 39, 40],
+            [197, 176, 213],
+            [148, 103, 189],
+            [196, 156, 148],
+            [23, 190, 207],
+            [247, 182, 210],
+            [219, 219, 141],
+            [255, 127, 14],
+            [158, 218, 229],
+            [44, 160, 44],
+            [112, 128, 144],
+            [227, 119, 194],
+            [82, 84, 163],
+        ]
+        seg_label_mapping = {
+            0: 0,  # "unlabeled"
+            1: 0,  # "outlier" mapped to "unlabeled" --------------mapped
+            10: 1,  # "car"
+            11: 2,  # "bicycle"
+            13: 5,  # "bus" mapped to "other-vehicle" --------------mapped
+            15: 3,  # "motorcycle"
+            16: 5,  # "on-rails" mapped to "other-vehicle" ---------mapped
+            18: 4,  # "truck"
+            20: 5,  # "other-vehicle"
+            30: 6,  # "person"
+            31: 7,  # "bicyclist"
+            32: 8,  # "motorcyclist"
+            40: 9,  # "road"
+            44: 10,  # "parking"
+            48: 11,  # "sidewalk"
+            49: 12,  # "other-ground"
+            50: 13,  # "building"
+            51: 14,  # "fence"
+            52: 0,  # "other-structure" mapped to "unlabeled" ------mapped
+            60: 9,  # "lane-marking" to "road" ---------------------mapped
+            70: 15,  # "vegetation"
+            71: 16,  # "trunk"
+            72: 17,  # "terrain"
+            80: 18,  # "pole"
+            81: 19,  # "traffic-sign"
+            99: 0,  # "other-object" to "unlabeled" ----------------mapped
+            252: 1,  # "moving-car" to "car" ------------------------mapped
+            253: 7,  # "moving-bicyclist" to "bicyclist" ------------mapped
+            254: 6,  # "moving-person" to "person" ------------------mapped
+            255: 8,  # "moving-motorcyclist" to "motorcyclist" ------mapped
+            256: 5,  # "moving-on-rails" mapped to "other-vehic------mapped
+            257: 5,  # "moving-bus" mapped to "other-vehicle" -------mapped
+            258: 4,  # "moving-truck" to "truck" --------------------mapped
+            259: 5  # "moving-other"-vehicle to "other-vehicle"-----mapped
+        }
+        max_label = 259
+        self.dataset = SemanticKITTIDataset(
+            './tests/data/semantickitti/',
+            'semantickitti_infos.pkl',
+            metainfo=dict(
+                classes=classes,
+                palette=palette,
+                seg_label_mapping=seg_label_mapping,
+                max_label=max_label),
+            data_prefix=dict(
+                pts='sequences/00/velodyne',
+                pts_semantic_mask='sequences/00/labels'),
+            pipeline=[],
+            modality=dict(use_lidar=True, use_camera=False))
+        points = np.random.random((100, 4))
+        self.results = {
+            'points': LiDARPoints(points, points_dim=4),
+            'pts_semantic_mask': np.random.randint(0, 20, (100, )),
+            'dataset': self.dataset
+        }
+
+    def test_transform(self):
+        # test assertion for invalid instance_classes
+        with self.assertRaises(AssertionError):
+            transform = PolarMix(instance_classes=1)
+
+        with self.assertRaises(AssertionError):
+            transform = PolarMix(instance_classes=[1.0, 2.0])
+
+        transform = PolarMix(
+            instance_classes=[1, 2],
+            swap_ratio=1.0,
+            pre_transform=self.pre_transform)
+        results = transform.transform(copy.deepcopy(self.results))
+        self.assertTrue(results['points'].shape[0] ==
+                        results['pts_semantic_mask'].shape[0])
