@@ -135,8 +135,10 @@ class Cylinder3DHead(Base3DDecodeHead):
             inputs (SparseConvTensor): Feature from backbone.
             batch_inputs_dict (dict): Input sample dict which includes 'points'
                 and 'voxels' keys.
+
                 - points (List[Tensor]): Point cloud of each sample.
-                - voxels (List[Tensor]): Image tensor has shape (B, C, H, W).
+                - voxels (dict): Dict of voxelized voxels and the corresponding
+                coordinates.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
                 samples. It usually includes information such as `metainfo` and
                 `gt_pts_seg`. We use `point2voxel_map` in this function.

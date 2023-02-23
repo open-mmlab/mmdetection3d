@@ -59,4 +59,5 @@ class TestCylinder3DHead(TestCase):
         self.assertGreater(loss_ce, 0, 'ce loss should be positive')
         self.assertGreater(loss_lovasz, 0, 'lovasz loss should be positive')
 
+        # datasample.gt_pts_seg.point2voxel_map =
         cylinder3d_head.predict()
