@@ -31,6 +31,10 @@ performance on the nuScenes autonomous driving benchmark.
 This directory contains the implementations of DETR3D (https://arxiv.org/abs/2110.06922). Our implementations are built on top of MMdetection3D.
 We have updated DETR3D to be compatible with latest mmdet3d-dev1.x. The codebase and config files have all changed to adapt to the new mmdet3d version. All previous pretrained models are verified with the result listed below. However, newly trained models are yet to be uploaded.
 
+## Environment Setup
+
+We require the version of mmdet \<= V3.0.0rc5. The mmdet later than V3.0.0rc5 has refactored DETR-series and its config file, but our configs and code are yet to be updated.
+
 ## Train
 
 1. Downloads the [pretrained backbone weights](https://drive.google.com/drive/folders/1h5bDg7Oh9hKvkFL-dRhu5-ahrEp2lRNN?usp=sharing) to pretrained/
@@ -38,39 +42,40 @@ We have updated DETR3D to be compatible with latest mmdet3d-dev1.x. The codebase
 2. For example, to train DETR3D on 8 GPUs, please use
 
 ```bash
-bash tools/dist_train.sh projects/DETR3D/configs/detr3d_res101_gridmask.py 8
+bash tools/dist_train.sh projects/DETR3D/configs/detr3d_res101_gridmask.py 8 --cfg-options load_from=pretrained/fcos3d.pth
 ```
 
 ## Evaluation using pretrained models
 
-1. Download the weights accordingly.
+1. Download the newly trained weights accordingly.
 
-   |                                                   Backbone                                                   | mAP  | NDS  |                                                                                         Download                                                                                         |
-   | :----------------------------------------------------------------------------------------------------------: | :--: | :--: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-   |                      [DETR3D, ResNet101 w/ DCN(old)](./configs/detr3d_r101_gridmask.py)                      | 34.7 | 42.2 | [model](https://drive.google.com/file/d/1YWX-jIS6fxG5_JKUBNVcZtsPtShdjE4O/view?usp=sharing) \| [log](https://drive.google.com/file/d/1uvrf42seV4XbWtir-2XjrdGUZ2Qbykid/view?usp=sharing) |
-   |                         [above, + CBGS(old)](./configs/detr3d_r101_gridmask_cbgs.py)                         | 34.9 | 43.4 | [model](https://drive.google.com/file/d/1sXPFiA18K9OMh48wkk9dF1MxvBDUCj2t/view?usp=sharing) \| [log](https://drive.google.com/file/d/1NJNggvFGqA423usKanqbsZVE_CzF4ltT/view?usp=sharing) |
-   | [DETR3D, VoVNet on trainval, evaluation on test set(old)](./configs/detr3d_vovnet_gridmask_trainval_cbgs.py) | 41.2 | 47.9 | [model](https://drive.google.com/file/d/1d5FaqoBdUH6dQC3hBKEZLcqbvWK0p9Zv/view?usp=sharing) \| [log](https://drive.google.com/file/d/1ONEMm_2W9MZAutjQk1UzaqRywz5PMk3p/view?usp=sharing) |
+   |                                                Backbone                                                 | mAP  | NDS  |                                                                                                                 Download                                                                                                                 |
+   | :-----------------------------------------------------------------------------------------------------: | :--: | :--: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+   |          [DETR3D, ResNet101 w/ DCN, evaluation on val set](./configs/detr3d_r101_gridmask.py)           | 35.5 | 42.8 |                 [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.log)                 |
+   |             [above, + CBGS, evaluation on val set](./configs/detr3d_r101_gridmask_cbgs.py)              | 35.2 | 42.7 |            [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.log)            |
+   | [DETR3D, VoVNet on trainval, evaluation on test set](./configs/detr3d_vovnet_gridmask_trainval_cbgs.py) | 41.4 | 48.1 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_vovnet_gridmask_trainval_cbgs.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_vovnet_gridmask_trainval_cbgs.log) |
 
-2. Convert the old weights
-   From v0.17.3 to v1.0.0, mmdet3d has changed its bbox representation. Given that Box(x,y,z,θ), we have x_new = y_old, y_new = x_old, θ_new = -θ_old - π/2.
-
-   Current pretrained models( end with '(old)' ) are in trained on v0.17.3. Our regression branch outputs (cx,cy,w,l,cz,h,sin(θ),cos(θ),vx,vy). For a previous model which outputs y=\[y0,y1,y2,y3,y4,y5,y6,y7,y8,y9\], we get y_new = \[...,y3,y2,...,-y7,-y6\]. So we should change the final Linear layer's weight accordingly.
-
-   To convert the old weights, please use
-
-   ```bash
-   python projects/DETR3D/detr3d/old_detr3d_converter.py ${CHECKPOINT_DIR}/detr3d_resnet101.pth ${CHECKPOINT_DIR}/detr3d_r101_v1.0.0.pth --code_size 10
-   ```
-
-3. Testing
+2. Testing
 
    To test, use:
 
    ```bash
-   bash tools/dist_test.sh projects/DETR3D/configs/detr3d_res101_gridmask.py ${CHECKPOINT_DIR}/detr3d_r101_v1.0.0.pth 8
+    bash tools/dist_test.sh projects/DETR3D/configs/detr3d_res101_gridmask.py ${CHECKPOINT_PATH} 8
    ```
 
-   <!-- Current pretrained models( end with '(old)' ) are in trained on v0.17.3. and we make them compatible with new mmdet3d by rewriting `_load_from_state_dict` method in [`detr3d.py`](./detr3d/detr3d.py) -->
+## Converting old models (Optional)
+
+For old models please refer to [Object DGCNN & DETR3D](https://github.com/WangYueFt/detr3d)
+
+From v0.17.3 to v1.0.0, mmdet3d has changed its bbox representation. Given that Box(x,y,z,θ), we have x_new = y_old, y_new = x_old, θ_new = -θ_old - π/2.
+
+Old models are trained on v0.17.3. Our regression branch outputs (cx,cy,w,l,cz,h,sin(θ),cos(θ),vx,vy). For a previous model which outputs y=\[y0,y1,y2,y3,y4,y5,y6,y7,y8,y9\], we get y_new = \[...,y3,y2,...,-y7,-y6, ...\]. So we should change the final Linear layer's weight accordingly.
+
+To convert the old weights, please use
+
+```bash
+python projects/DETR3D/detr3d/old_detr3d_converter.py ${CHECKPOINT_DIR}/detr3d_resnet101.pth ${CHECKPOINT_DIR}/detr3d_r101_v1.0.0.pth --code_size 10
+```
 
 ## Citation
 
@@ -93,27 +98,27 @@ OpenMMLab's maintainer will review the code to ensure the project's quality. Rea
 Note that keeping this section up-to-date is crucial not only for this project's developers but the entire community, since there might be some other contributors joining this project and deciding their starting point from this list. It also helps maintainers accurately estimate time and effort on further code polishing, if needed.
 A project does not necessarily have to be finished in a single PR, but it's essential for the project to at least reach the first milestone in its very first PR. -->
 
-- \[√\] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
+- [x] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
 
-  - \[√\] Finish the code
+  - [x] Finish the code
 
     <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmdet3d.registry.MODELS` and configurable via a config file. -->
 
-  - \[√\] Basic docstrings & proper citation
+  - [x] Basic docstrings & proper citation
 
     <!-- Each major object should contain a docstring, describing its functionality and arguments. If you have adapted the code from other open-source projects, don't forget to cite the source project in docstring and make sure your behavior is not against its license. Typically, we do not accept any code snippet under GPL license. [A Short Guide to Open Source Licenses](https://medium.com/nationwide-technology/a-short-guide-to-open-source-licenses-cf5b1c329edd) -->
 
-  - \[√\] Test-time correctness
+  - [x] Test-time correctness
 
     <!-- If you are reproducing the result from a paper, make sure your model's inference-time performance matches that in the original paper. The weights usually could be obtained by simply renaming the keys in the official pre-trained weights. This test could be skipped though, if you are able to prove the training-time correctness and check the second milestone. -->
 
-  - \[√\] A full README
+  - [x] A full README
 
     <!-- As this template does. -->
 
-- [ ] Milestone 2: Indicates a successful model implementation.
+- [x] Milestone 2: Indicates a successful model implementation.
 
-  - [ ] Training-time correctness
+  - [x] Training-time correctness
 
     <!-- If you are reproducing the result from a paper, checking this item means that you should have trained your model from scratch based on the original paper's specification and verified that the final result matches the report within a minor error range. -->
 
