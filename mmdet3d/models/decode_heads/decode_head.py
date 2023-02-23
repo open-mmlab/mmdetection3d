@@ -104,7 +104,7 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         pass
 
     def build_conv_seg(self, channels: int, num_classes: int,
-                       kernel_size: int) -> nn.Conv1d:
+                       kernel_size: int) -> nn.Module:
         """Build Convolutional Segmentation Layers."""
         return nn.Conv1d(channels, num_classes, kernel_size=kernel_size)
 
