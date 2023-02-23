@@ -407,7 +407,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 res_coors = torch.floor(
                     (polar_res_clamp - min_bound) / polar_res_clamp.new_tensor(
                         self.voxel_layer.voxel_size)).int()
-                self.get_voxel_seg(res_coors, data_sample, not self.training)
+                self.get_voxel_seg(res_coors, data_sample)
                 res_coors = F.pad(res_coors, (1, 0), mode='constant', value=i)
                 res_voxels = torch.cat((polar_res, res[:, :2], res[:, 3:]),
                                        dim=-1)
@@ -423,18 +423,16 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         return voxel_dict
 
-    def get_voxel_seg(self, res_coors: torch.Tensor, data_sample: SampleList,
-                      test_mode: bool):
+    def get_voxel_seg(self, res_coors: torch.Tensor, data_sample: SampleList):
         """Get voxel-wise segmentation label and point2voxel map.
 
         Args:
             res_coors (Tensor): The voxel coordinates of points, Nx3.
             data_sample: (:obj:`Det3DDataSample`): The annotation data of
                 every samples. Add voxel-wise annotation forsegmentation.
-            test_mode (bool): Whether in test mode or not.
         """
 
-        if not test_mode:
+        if self.training:
             pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
             voxel_semantic_mask, _, point2voxel_map = dynamic_scatter_3d(
                 F.one_hot(pts_semantic_mask.long()).float(), res_coors, 'mean',
