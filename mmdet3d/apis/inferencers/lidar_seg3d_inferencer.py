@@ -2,7 +2,6 @@
 import os.path as osp
 from typing import Dict, List, Optional, Sequence, Union
 
-import mmcv
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
@@ -21,16 +20,16 @@ ImgType = Union[np.ndarray, Sequence[np.ndarray]]
 ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 
-@INFERENCERS.register_module(name='det3d-mono')
+@INFERENCERS.register_module(name='seg3d-lidar')
 @INFERENCERS.register_module()
-class MonoDet3DInferencer(BaseDet3DInferencer):
-    """MMDet3D Monocular 3D object detection inferencer.
+class LidarSeg3DInferencer(BaseDet3DInferencer):
+    """The inferencer of LiDAR-based segmentation.
 
     Args:
         model (str, optional): Path to the config file or the model name
             defined in metafile. For example, it could be
-            "pgd_kitti" or
-            "configs/pgd/pgd_r101-caffe_fpn_head-gn_4xb3-4x_kitti-mono3d.py".
+            "pointnet2-ssg_s3dis-seg" or
+            "configs/pointnet2/pointnet2_ssg_2xb16-cosine-50e_s3dis-seg.py".
             If model is not specified, user must provide the
             `weights` saved by MMEngine which contains the config string.
             Defaults to None.
@@ -58,12 +57,12 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: str = 'mmdet3d',
+                 scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
-        # A global counter tracking the number of images processed, for
-        # naming of the output images
-        self.num_visualized_imgs = 0
-        super(MonoDet3DInferencer, self).__init__(
+        # A global counter tracking the number of frames processed, for
+        # naming of the output results
+        self.num_visualized_frames = 0
+        super(LidarSeg3DInferencer, self).__init__(
             model=model,
             weights=weights,
             device=device,
@@ -88,18 +87,25 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='img')
+        return super()._inputs_to_list(inputs, modality_key='points')
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
         pipeline_cfg = cfg.test_dataloader.dataset.pipeline
 
         load_img_idx = self._get_transform_idx(pipeline_cfg,
-                                               'LoadImageFromFileMono3D')
+                                               'LoadPointsFromFile')
         if load_img_idx == -1:
             raise ValueError(
-                'LoadImageFromFileMono3D is not found in the test pipeline')
-        pipeline_cfg[load_img_idx]['type'] = 'MonoDet3DInferencerLoader'
+                'LoadPointsFromFile is not found in the test pipeline')
+
+        load_cfg = pipeline_cfg[load_img_idx]
+        self.coord_type, self.load_dim = load_cfg['coord_type'], load_cfg[
+            'load_dim']
+        self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
+            load_cfg['use_dim'], int) else load_cfg['use_dim']
+
+        pipeline_cfg[load_img_idx]['type'] = 'LidarDet3DInferencerLoader'
         return Compose(pipeline_cfg)
 
     def visualize(self,
@@ -114,8 +120,8 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         """Visualize predictions.
 
         Args:
-            inputs (List[Dict]): Inputs for the inferencer.
-            preds (List[Dict]): Predictions of the model.
+            inputs (InputsType): Inputs for the inferencer.
+            preds (PredType): Predictions of the model.
             return_vis (bool): Whether to return the visualization result.
                 Defaults to False.
             show (bool): Whether to display the image in a popup window.
@@ -143,25 +149,28 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
         results = []
 
         for single_input, pred in zip(inputs, preds):
-            if isinstance(single_input['img'], str):
-                img_bytes = mmengine.fileio.get(single_input['img'])
-                img = mmcv.imfrombytes(img_bytes)
-                img = img[:, :, ::-1]
-                img_name = osp.basename(single_input['img'])
-            elif isinstance(single_input['img'], np.ndarray):
-                img = single_input['img'].copy()
-                img_num = str(self.num_visualized_imgs).zfill(8)
-                img_name = f'{img_num}.jpg'
+            single_input = single_input['points']
+            if isinstance(single_input, str):
+                pts_bytes = mmengine.fileio.get(single_input)
+                points = np.frombuffer(pts_bytes, dtype=np.float32)
+                points = points.reshape(-1, self.load_dim)
+                points = points[:, self.use_dim]
+                pc_name = osp.basename(single_input).split('.bin')[0]
+                pc_name = f'{pc_name}.png'
+            elif isinstance(single_input, np.ndarray):
+                points = single_input.copy()
+                pc_num = str(self.num_visualized_frames).zfill(8)
+                pc_name = f'pc_{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
-                                 f"{type(single_input['img'])}")
+                                 f'{type(single_input)}')
 
-            out_file = osp.join(img_out_dir, img_name) if img_out_dir != '' \
-                else None
+            o3d_save_path = osp.join(img_out_dir, pc_name) \
+                if img_out_dir != '' else None
 
-            data_input = dict(img=img)
+            data_input = dict(points=points)
             self.visualizer.add_datasample(
-                img_name,
+                pc_name,
                 data_input,
                 pred,
                 show=show,
@@ -169,10 +178,22 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
                 draw_gt=False,
                 draw_pred=draw_pred,
                 pred_score_thr=pred_score_thr,
-                out_file=out_file,
-                vis_task='mono_det',
+                o3d_save_path=o3d_save_path,
+                vis_task='lidar_seg',
             )
-            results.append(img)
-            self.num_visualized_imgs += 1
+            results.append(points)
+            self.num_visualized_frames += 1
 
         return results
+
+    def pred2dict(self, data_sample: InstanceData) -> Dict:
+        """Extract elements necessary to represent a prediction into a
+        dictionary.
+
+        It's better to contain only basic data elements such as strings and
+        numbers in order to guarantee it's json-serializable.
+        """
+        pred_pts_seg = data_sample.pred_pts_seg.numpy()
+        result = {'pts_semantic_mask': pred_pts_seg.pts_semantic_mask.tolist()}
+
+        return result

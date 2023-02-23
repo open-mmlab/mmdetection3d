@@ -17,7 +17,7 @@ Collections:
 Models:
   - Name: pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only.py
+    Config: configs/pointnet2/pointnet2_ssg_2xb16-cosine-200e_scannet-seg-xyz-only.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 1.9
@@ -30,7 +30,7 @@ Models:
 
   - Name: pointnet2_ssg_2xb16-cosine-200e_scannet-seg
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-200e_scannet-seg.py
+    Config: configs/pointnet2/pointnet2_ssg_2xb16-cosine-200e_scannet-seg.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 1.9
@@ -43,7 +43,7 @@ Models:
 
   - Name: pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only.py
+    Config: configs/pointnet2/pointnet2_msg_2xb16-cosine-250e_scannet-seg-xyz-only.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 2.4
@@ -56,7 +56,7 @@ Models:
 
   - Name: pointnet2_msg_2xb16-cosine-250e_scannet-seg
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-250e_scannet-seg.py
+    Config: configs/pointnet2/pointnet2_msg_2xb16-cosine-250e_scannet-seg.py
     Metadata:
       Training Data: ScanNet
       Training Memory (GB): 2.4
@@ -68,8 +68,9 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class_20210514_144009-24477ab1.pth
 
   - Name: pointnet2_ssg_2xb16-cosine-50e_s3dis-seg
+    Alias: pointnet2-ssg_s3dis-seg
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_ssg_2xb16-cosine-50e_s3dis-seg.py
+    Config: configs/pointnet2/pointnet2_ssg_2xb16-cosine-50e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 3.6
@@ -82,7 +83,7 @@ Models:
 
   - Name: pointnet2_msg_2xb16-cosine-80e_s3dis-seg
     In Collection: PointNet++
-    Config: configs/pointnet/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
+    Config: configs/pointnet2/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
     Metadata:
       Training Data: S3DIS
       Training Memory (GB): 3.6

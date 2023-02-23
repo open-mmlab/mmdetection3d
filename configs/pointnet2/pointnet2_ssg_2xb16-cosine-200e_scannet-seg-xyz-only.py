@@ -68,12 +68,6 @@ test_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2]),
     dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_mask_3d=False,
-        with_seg_3d=True),
-    dict(
         # a wrapper in order to successfully call test function
         # actually we don't perform test-time-aug
         type='MultiScaleFlipAug3D',

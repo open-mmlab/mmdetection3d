@@ -9,7 +9,7 @@ from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
-from mmdet3d.utils import ConfigType, register_all_modules
+from mmdet3d.utils import ConfigType
 from .base_det3d_inferencer import BaseDet3DInferencer
 
 InstanceList = List[InstanceData]
@@ -38,8 +38,9 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
-        scope (str, optional): The scope of registry.
-        palette (str, optional): The palette of visualization.
+        scope (str): The scope of the model. Defaults to 'mmdet3d'.
+        palette (str): Color palette used for visualization. The order of
+            priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
 
     preprocess_kwargs: set = set()
@@ -56,15 +57,17 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: Optional[str] = 'mmdet3d',
+                 scope: str = 'mmdet3d',
                  palette: str = 'none') -> None:
         # A global counter tracking the number of frames processed, for
         # naming of the output results
         self.num_visualized_frames = 0
-        self.palette = palette
-        register_all_modules()
-        super().__init__(
-            model=model, weights=weights, device=device, scope=scope)
+        super(LidarDet3DInferencer, self).__init__(
+            model=model,
+            weights=weights,
+            device=device,
+            scope=scope,
+            palette=palette)
 
     def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
         """Preprocess the inputs to a list.
@@ -130,6 +133,7 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
                 Defaults to 0.3.
             img_out_dir (str): Output directory of visualization results.
                 If left as empty, no file will be saved. Defaults to ''.
+
         Returns:
             List[np.ndarray] or None: Returns visualization results only if
             applicable.

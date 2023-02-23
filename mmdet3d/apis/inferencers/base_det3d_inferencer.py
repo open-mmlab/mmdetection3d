@@ -38,7 +38,7 @@ class BaseDet3DInferencer(BaseInferencer):
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
-        scope (str, optional): The scope of the model. Defaults to mmdet3d.
+        scope (str): The scope of the model. Defaults to 'mmdet3d'.
         palette (str): Color palette used for visualization. The order of
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
@@ -57,7 +57,7 @@ class BaseDet3DInferencer(BaseInferencer):
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: Optional[str] = 'mmdet3d',
+                 scope: str = 'mmdet3d',
                  palette: str = 'none') -> None:
         self.palette = palette
         register_all_modules()
@@ -96,16 +96,16 @@ class BaseDet3DInferencer(BaseInferencer):
         elif 'CLASSES' in checkpoint.get('meta', {}):
             # < mmdet3d 1.x
             classes = checkpoint['meta']['CLASSES']
-            model.dataset_meta = {'CLASSES': classes}
+            model.dataset_meta = {'classes': classes}
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
-                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
+                model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
         else:
             # < mmdet3d 1.x
-            model.dataset_meta = {'CLASSES': cfg.class_names}
+            model.dataset_meta = {'classes': cfg.class_names}
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
-                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
+                model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
 
         model.cfg = cfg  # save the config in the model for convenience
         model.to(device)
@@ -129,8 +129,8 @@ class BaseDet3DInferencer(BaseInferencer):
 
         Args:
             inputs (Union[dict, list]): Inputs for the inferencer.
-            modality_key (Union[str, List[str]], optional): The key of the
-                modality. Defaults to 'points'.
+            modality_key (Union[str, List[str]]): The key of the modality.
+                Defaults to 'points'.
 
         Returns:
             list: List of input for the :meth:`preprocess`.
@@ -186,6 +186,7 @@ class BaseDet3DInferencer(BaseInferencer):
                  pred_out_file: str = '',
                  **kwargs) -> dict:
         """Call the inferencer.
+
         Args:
             inputs (InputsType): Inputs for the inferencer.
             return_datasamples (bool): Whether to return results as
@@ -204,7 +205,7 @@ class BaseDet3DInferencer(BaseInferencer):
                 If left as empty, no file will be saved. Defaults to ''.
             print_result (bool): Whether to print the inference result w/o
                 visualization to the console. Defaults to False.
-            pred_out_file: File to save the inference results w/o
+            pred_out_file (str): File to save the inference results w/o
                 visualization. If left as empty, no file will be saved.
                 Defaults to ''.
             **kwargs: Other keyword arguments passed to :meth:`preprocess`,
@@ -212,6 +213,7 @@ class BaseDet3DInferencer(BaseInferencer):
                 Each key in kwargs should be in the corresponding set of
                 ``preprocess_kwargs``, ``forward_kwargs``, ``visualize_kwargs``
                 and ``postprocess_kwargs``.
+
         Returns:
             dict: Inference and visualization results.
         """
@@ -239,29 +241,36 @@ class BaseDet3DInferencer(BaseInferencer):
     ) -> Union[ResType, Tuple[ResType, np.ndarray]]:
         """Process the predictions and visualization results from ``forward``
         and ``visualize``.
+
         This method should be responsible for the following tasks:
+
         1. Convert datasamples into a json-serializable dict if needed.
         2. Pack the predictions and visualization results and return them.
         3. Dump or log the predictions.
+
         Args:
             preds (List[Dict]): Predictions of the model.
-            visualization (Optional[np.ndarray]): Visualized predictions.
+            visualization (np.ndarray, optional): Visualized predictions.
+                Defaults to None.
             return_datasample (bool): Whether to use Datasample to store
                 inference results. If False, dict will be used.
+                Defaults to False.
             print_result (bool): Whether to print the inference result w/o
                 visualization to the console. Defaults to False.
-            pred_out_file: File to save the inference results w/o
+            pred_out_file (str): File to save the inference results w/o
                 visualization. If left as empty, no file will be saved.
                 Defaults to ''.
+
         Returns:
             dict: Inference and visualization results with key ``predictions``
             and ``visualization``.
+
             - ``visualization`` (Any): Returned by :meth:`visualize`.
             - ``predictions`` (dict or DataSample): Returned by
-                :meth:`forward` and processed in :meth:`postprocess`.
-                If ``return_datasample=False``, it usually should be a
-                json-serializable dict containing only basic data elements such
-                as strings and numbers.
+              :meth:`forward` and processed in :meth:`postprocess`.
+              If ``return_datasample=False``, it usually should be a
+              json-serializable dict containing only basic data elements such
+              as strings and numbers.
         """
         result_dict = {}
         results = preds
