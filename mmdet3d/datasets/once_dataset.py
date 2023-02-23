@@ -85,6 +85,10 @@ class OnceDataset(Custom3DDataset):
 
         self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
         self.data_infos = list(filter(self._check_annos, self.data_infos))
+
+        # reset group flag for the samplers after data_infos changed
+        if not self.test_mode:
+            self._set_group_flag()
     
     def __len__(self):
         """Return the length of data infos.
