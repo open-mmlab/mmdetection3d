@@ -6,7 +6,7 @@ try:
     import MinkowskiEngine as ME
     from MinkowskiEngine import SparseTensor
 except ImportError:
-    # Please follow getting_started.md to install MinkowskiEngine.
+    # Please follow get_started.md to install MinkowskiEngine.
     ME = SparseTensor = None
     pass
 
@@ -76,8 +76,7 @@ class FCAF3DHead(Base3DDenseHead):
         super(FCAF3DHead, self).__init__(init_cfg)
         if ME is None:
             raise ImportError(
-                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
-            )
+                'Please follow `get_started.md` to install MinkowskiEngine.`')
         self.voxel_size = voxel_size
         self.pts_prune_threshold = pts_prune_threshold
         self.pts_assign_threshold = pts_assign_threshold

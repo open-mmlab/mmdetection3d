@@ -801,7 +801,8 @@ class LoadAnnotations3D(LoadAnnotations):
             Defaults to False.
         poly2mask (bool): Whether to convert polygon annotations to bitmasks.
             Defaults to True.
-        seg_3d_dtype (dtype): Dtype of 3D semantic masks. Defaults to int64.
+        seg_3d_dtype (str): String of dtype of 3D semantic masks.
+            Defaults to 'np.int64'.
         seg_offset (int): The offset to split semantic and instance labels from
             panoptic labels. Defaults to None.
         dataset_type (str): Type of dataset used for splitting semantic and
@@ -825,7 +826,7 @@ class LoadAnnotations3D(LoadAnnotations):
         with_bbox_depth: bool = False,
         with_panoptic_3d: bool = False,
         poly2mask: bool = True,
-        seg_3d_dtype: np.dtype = np.int64,
+        seg_3d_dtype: str = 'np.int64',
         seg_offset: int = None,
         dataset_type: str = None,
         file_client_args: dict = dict(backend='disk')
@@ -844,7 +845,7 @@ class LoadAnnotations3D(LoadAnnotations):
         self.with_mask_3d = with_mask_3d
         self.with_seg_3d = with_seg_3d
         self.with_panoptic_3d = with_panoptic_3d
-        self.seg_3d_dtype = seg_3d_dtype
+        self.seg_3d_dtype = eval(seg_3d_dtype)
         self.seg_offset = seg_offset
         self.dataset_type = dataset_type
         self.file_client = None
