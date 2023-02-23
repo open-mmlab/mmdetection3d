@@ -59,8 +59,9 @@ class TestCylinder3DHead(TestCase):
         self.assertGreater(loss_ce, 0, 'ce loss should be positive')
         self.assertGreater(loss_lovasz, 0, 'lovasz loss should be positive')
 
+        batch_inputs_dict = dict(voxels=dict(voxel_coors=coors))
         datasample.gt_pts_seg.point2voxel_map = torch.randint(
-            0, 50, (100, 1)).int().cuda()
-        point_logits = cylinder3d_head.predict(sparse_voxels, coors,
-                                               datasample)
-        assert point_logits.shape == (100, 20)
+            0, 50, (100, )).int().cuda()
+        point_logits = cylinder3d_head.predict(sparse_voxels,
+                                               batch_inputs_dict, [datasample])
+        assert point_logits[0].shape == torch.Size([100, 20])

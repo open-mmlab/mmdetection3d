@@ -144,9 +144,9 @@ class Cylinder3DHead(Base3DDecodeHead):
                 `gt_pts_seg`. We use `point2voxel_map` in this function.
 
         Returns:
-            torch.Tensor: Output point-wise segmentation logits.
+            List[torch.Tensor]: List of point-wise segmentation logits.
         """
-        seg_logits = self.forward(inputs)
+        seg_logits = self.forward(inputs).features
 
         seg_pred_list = []
         coors = batch_inputs_dict['voxels']['voxel_coors']
@@ -157,4 +157,4 @@ class Cylinder3DHead(Base3DDecodeHead):
             point_seg_predicts = seg_logits_sample[point2voxel_map]
             seg_pred_list.append(point_seg_predicts)
 
-        return seg_logits
+        return seg_pred_list
