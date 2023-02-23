@@ -122,3 +122,37 @@ class Cylinder3DHead(Base3DDecodeHead):
             seg_logit_feat, seg_label, ignore_index=self.ignore_index)
 
         return loss
+
+    def predict(
+        self,
+        inputs: SparseConvTensor,
+        batch_inputs_dict: dict,
+        batch_data_samples: SampleList,
+    ) -> torch.Tensor:
+        """Forward function for testing.
+
+        Args:
+            inputs (SparseConvTensor): Feature from backbone.
+            batch_inputs_dict (dict): Input sample dict which includes 'points'
+                and 'voxels' keys.
+                - points (List[Tensor]): Point cloud of each sample.
+                - voxels (List[Tensor]): Image tensor has shape (B, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`. We use `point2voxel_map` in this function.
+
+        Returns:
+            torch.Tensor: Output point-wise segmentation logits.
+        """
+        seg_logits = self.forward(inputs)
+
+        seg_pred_list = []
+        coors = batch_inputs_dict['voxels']['voxel_coors']
+        for batch_idx in range(len(batch_data_samples)):
+            seg_logits_sample = seg_logits[coors[:, 0] == batch_idx]
+            point2voxel_map = batch_data_samples[
+                batch_idx].gt_pts_seg.point2voxel_map.long()
+            point_seg_predicts = seg_logits_sample[point2voxel_map]
+            seg_pred_list.append(point_seg_predicts)
+
+        return seg_logits
