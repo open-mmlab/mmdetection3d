@@ -1,6 +1,6 @@
 _base_ = ['./detr3d_r101_gridmask_cbgs.py']
 
-custom_imports = dict(imports=['projects.detr3d.detr3d'])
+custom_imports = dict(imports=['projects.DETR3D.detr3d'])
 
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675],
@@ -35,5 +35,18 @@ train_dataloader = dict(
     dataset=dict(
         type='CBGSDataset',
         dataset=dict(ann_file='nuscenes_infos_trainval.pkl')))
+
+test_dataloader = dict(
+    dataset=dict(
+        data_root='data/nuscenes-test', ann_file='nuscenes_infos_test.pkl'))
+
+test_evaluator = dict(
+    type='NuScenesMetric',
+    data_root='data/nuscenes-test',
+    ann_file='data/nuscenes-test/nuscenes_infos_test.pkl',
+    jsonfile_prefix='work_dirs/detr3d_vovnet_results_test',
+    format_only=True,
+    metric=[])
+
 load_from = 'ckpts/dd3d_det_final.pth'
 find_unused_parameters = True

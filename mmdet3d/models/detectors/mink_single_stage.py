@@ -8,7 +8,7 @@ from torch import Tensor
 try:
     import MinkowskiEngine as ME
 except ImportError:
-    # Please follow getting_started.md to install MinkowskiEngine.
+    # Please follow get_started.md to install MinkowskiEngine.
     ME = None
     pass
 
@@ -59,8 +59,7 @@ class MinkSingleStage3DDetector(SingleStage3DDetector):
             init_cfg=init_cfg)
         if ME is None:
             raise ImportError(
-                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
-            )
+                'Please follow `get_started.md` to install MinkowskiEngine.`')
         self.voxel_size = bbox_head['voxel_size']
 
     def extract_feat(

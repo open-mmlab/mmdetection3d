@@ -6,7 +6,7 @@ try:
     import MinkowskiEngine as ME
     from MinkowskiEngine import SparseTensor
 except ImportError:
-    # Please follow getting_started.md to install MinkowskiEngine.
+    # Please follow get_started.md to install MinkowskiEngine.
     ME = SparseTensor = None
     pass
 
@@ -34,7 +34,7 @@ class FCAF3DHead(Base3DDenseHead):
 
     Args:
         num_classes (int): Number of classes.
-        in_channels (int): Number of channels in input tensors.
+        in_channels (tuple(int)): Number of channels in input tensors.
         out_channels (int): Number of channels in the neck output tensors.
         num_reg_outs (int): Number of regression layer channels.
         voxel_size (float): Voxel size in meters.
@@ -59,7 +59,7 @@ class FCAF3DHead(Base3DDenseHead):
 
     def __init__(self,
                  num_classes: int,
-                 in_channels: int,
+                 in_channels: Tuple[int],
                  out_channels: int,
                  num_reg_outs: int,
                  voxel_size: float,
@@ -76,8 +76,7 @@ class FCAF3DHead(Base3DDenseHead):
         super(FCAF3DHead, self).__init__(init_cfg)
         if ME is None:
             raise ImportError(
-                'Please follow `getting_started.md` to install MinkowskiEngine.`'  # noqa: E501
-            )
+                'Please follow `get_started.md` to install MinkowskiEngine.`')
         self.voxel_size = voxel_size
         self.pts_prune_threshold = pts_prune_threshold
         self.pts_assign_threshold = pts_assign_threshold
@@ -340,8 +339,8 @@ class FCAF3DHead(Base3DDenseHead):
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
                 gt_instance_3d.  It usually includes ``bboxes_3d``、`
                 `labels_3d``、``depths``、``centers_2d`` and attributes.
-            batch_img_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
+            batch_input_metas (list[dict]): Meta information of each input,
+                e.g., image size, scaling factor, etc.
             batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
                 Batch of gt_instances_ignore. It includes ``bboxes`` attribute
                 data that is ignored during training and testing.

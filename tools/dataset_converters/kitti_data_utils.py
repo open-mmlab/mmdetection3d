@@ -365,14 +365,14 @@ class WaymoInfoGatherer:
                 self.training,
                 self.relative_path,
                 use_prefix_id=True)
-            with open(
-                    get_timestamp_path(
-                        idx,
-                        self.path,
-                        self.training,
-                        relative_path=False,
-                        use_prefix_id=True)) as f:
-                info['timestamp'] = np.int64(f.read())
+        with open(
+                get_timestamp_path(
+                    idx,
+                    self.path,
+                    self.training,
+                    relative_path=False,
+                    use_prefix_id=True)) as f:
+            info['timestamp'] = np.int64(f.read())
         image_info['image_path'] = get_image_path(
             idx,
             self.path,
