@@ -1,12 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional
 
 import torch
 from mmcv.ops import SparseConvTensor, SparseModule, SubMConv3d
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import OptConfigType
+from mmdet3d.utils import OptMultiConfig
 from mmdet3d.utils.typing_utils import ConfigType
 from .decode_head import Base3DDecodeHead
 
@@ -61,7 +60,7 @@ class Cylinder3DHead(Base3DDecodeHead):
                      type='LovaszLoss', loss_weight=1.0),
                  conv_seg_kernel_size: int = 3,
                  ignore_index: int = 0,
-                 init_cfg: Optional[dict or OptConfigType] = None) -> None:
+                 init_cfg: OptMultiConfig = None) -> None:
         super(Cylinder3DHead, self).__init__(
             channels=channels,
             num_classes=num_classes,
@@ -97,7 +96,7 @@ class Cylinder3DHead(Base3DDecodeHead):
         """Compute semantic segmentation loss.
 
         Args:
-            seg_logit (spconv.SparseConvTensor): Predicted per-voxel
+            seg_logit (SparseConvTensor): Predicted per-voxel
                 segmentation logits of shape [num_voxels, num_classes]
                 stored in SparseConvTensor.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
