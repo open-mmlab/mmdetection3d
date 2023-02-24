@@ -38,12 +38,14 @@ class TestLiDARSeg3DInferencer(TestCase):
             return
         # single img
         inputs = dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
+        torch.manual_seed(0)
         res_path = self.inferencer(inputs, return_vis=True)
         # ndarray
         pts_bytes = mmengine.fileio.get(inputs['points'])
         points = np.frombuffer(pts_bytes, dtype=np.float32)
         points = points.reshape(-1, 6)
         inputs = dict(points=points)
+        torch.manual_seed(0)
         res_ndarray = self.inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
@@ -55,6 +57,7 @@ class TestLiDARSeg3DInferencer(TestCase):
             dict(points='tests/data/s3dis/points/Area_1_office_2.bin'),
             dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
         ]
+        torch.manual_seed(0)
         res_path = self.inferencer(inputs, return_vis=True)
         # list of ndarray
         all_points = []
@@ -63,6 +66,7 @@ class TestLiDARSeg3DInferencer(TestCase):
             points = np.frombuffer(pts_bytes, dtype=np.float32)
             points = points.reshape(-1, 6)
             all_points.append(dict(points=points))
+        torch.manual_seed(0)
         res_ndarray = self.inferencer(all_points, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
