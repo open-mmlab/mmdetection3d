@@ -1,5 +1,6 @@
 import unittest
 
+import pytest
 import torch
 from mmengine import DefaultScope
 
@@ -11,6 +12,11 @@ from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
 class TestMinkUNet(unittest.TestCase):
 
     def test_minkunet(self):
+        try:
+            import torchsparse  # noqa
+        except ImportError:
+            pytest.skip('test requires Torchsparse installation')
+
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'MinkUNet')
