@@ -13,12 +13,17 @@ model = dict(
     backbone=dict(
         type='MinkUNetBackbone',
         in_channels=4,
-        base_channels=16,
-        enc_channels=[16, 32, 64, 128],
-        dec_channels=[128, 64, 48, 48],
+        base_channels=32,
+        enc_channels=[32, 64, 128, 256],
+        dec_channels=[256, 128, 96, 96],
         num_stages=4,
         init_cfg=None),
     decode_head=dict(
-        type='MinkUNetHead', channels=48, num_classes=19, ignore_index=19),
+        type='MinkUNetHead',
+        channels=96,
+        num_classes=19,
+        dropout_ratio=0,
+        loss_decode=dict(type='mmdet.CrossEntropyLoss', avg_non_ignore=True),
+        ignore_index=19),
     train_cfg=dict(),
-    test_cfg=dict(mode='whole'))
+    test_cfg=dict())

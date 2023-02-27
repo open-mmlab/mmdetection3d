@@ -1,4 +1,4 @@
-_base_ = ['./minkunet3_base.py']
+_base_ = ['./minkunet_8xb2-15e_semtickitti.py']
 
 model = dict(
     backbone=dict(
