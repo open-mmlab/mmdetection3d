@@ -2,6 +2,33 @@ _base_ = [
     '../_base_/datasets/semantickitti.py', '../_base_/models/minkunet.py',
     '../_base_/schedules/cosine.py', '../_base_/default_runtime.py'
 ]
+file_client_args = dict(backend='disk')
+train_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        file_client_args=file_client_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_seg_3d=True,
+        seg_3d_dtype='np.int32',
+        seg_offset=2**16,
+        dataset_type='semantickitti'),
+    dict(type='PointSegClassMapping', ),
+    dict(
+        type='GlobalRotScaleTrans',
+        rot_range=[0., 6.28318531],
+        scale_ratio_range=[0.95, 1.05],
+        translation_std=[0, 0, 0],
+    ),
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
+]
+
+train_dataloader = dict(dataset=dict(dataset=dict(pipeline=train_pipeline)))
 
 optim_wrapper = dict(clip_grad=dict(max_norm=35))
 

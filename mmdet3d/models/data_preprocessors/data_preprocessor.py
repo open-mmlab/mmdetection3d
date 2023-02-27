@@ -1,7 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
+from itertools import repeat
 from numbers import Number
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -9,13 +10,12 @@ from mmdet.models import DetDataPreprocessor
 from mmengine.model import stack_batch
 from mmengine.utils import is_list_of
 from torch.nn import functional as F
-from torch_scatter import scatter_mean, scatter_sum
 
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
 from .utils import multiview_img_stack_batch
-from .voxelize import VoxelizationByGridShape
+from .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
 
 
 @MODELS.register_module()
@@ -414,19 +414,24 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             for i, (res, data_sample) in enumerate(zip(points, data_samples)):
                 res_coors = torch.round(res[:, :3] / voxel_size).int()
                 res_coors -= res_coors.min(0)[0]
-                res_coors, voxel2point_map = torch.unique(
-                    res_coors, return_inverse=True, dim=0)
-                res_voxels = scatter_mean(res, voxel2point_map, dim=0)
+
+                res_coors_numpy = res_coors.cpu().numpy()
+                _, inds, voxel2point_map = self.sparse_quantize(
+                    res_coors_numpy, return_index=True, return_inverse=True)
+                voxel2point_map = torch.from_numpy(voxel2point_map).cuda()
                 if self.training:
-                    self.get_voxel_seg(voxel2point_map, data_sample)
-                # res_voxels, res_coors, voxel2point_map = self.voxel_encoder(
-                #     res, res_coors)
-                # if self.training:
-                #     self.get_voxel_seg(res_coors, data_sample)
-                res_coors = F.pad(res_coors, (0, 1), mode='constant', value=i)
+                    if len(inds) > 80000:
+                        inds = np.random.choice(inds, 80000, replace=False)
+                inds = torch.from_numpy(inds).cuda()
+                data_sample.gt_pts_seg.voxel_semantic_mask \
+                    = data_sample.gt_pts_seg.pts_semantic_mask[inds]
+                res_voxel_coors = res_coors[inds]
+                res_voxels = res[inds]
+                res_voxel_coors = F.pad(
+                    res_voxel_coors, (0, 1), mode='constant', value=i)
                 data_sample.voxel2point_map = voxel2point_map.long()
                 voxels.append(res_voxels)
-                coors.append(res_coors)
+                coors.append(res_voxel_coors)
             voxels = torch.cat(voxels, dim=0)
             coors = torch.cat(coors, dim=0)
 
@@ -438,8 +443,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         return voxel_dict
 
-    def get_voxel_seg(self, voxel2point_map: torch.Tensor,
-                      data_sample: SampleList):
+    def get_voxel_seg(self, res_coors: torch.Tensor, data_sample: SampleList):
         """Get voxel-wise segmentation label and point2voxel map.
 
         Args:
@@ -448,10 +452,46 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 every samples. Add voxel-wise annotation for segmentation.
         """
         pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
-        # voxel_semantic_mask, _, point2voxel_map = self.voxel_encoder(
-        #     F.one_hot(pts_semantic_mask.long()).float(), res_coors)
-        voxel_semantic_mask = scatter_sum(
-            F.one_hot(pts_semantic_mask.long()), voxel2point_map, dim=0)
+        voxel_semantic_mask, _ = dynamic_scatter_3d(
+            F.one_hot(pts_semantic_mask.long()).float(),
+            res_coors.contiguous(), 'mean')
         voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
         data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
-        # data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+
+    def ravel_hash(self, x: np.ndarray) -> np.ndarray:
+        assert x.ndim == 2, x.shape
+
+        x = x - np.min(x, axis=0)
+        x = x.astype(np.uint64, copy=False)
+        xmax = np.max(x, axis=0).astype(np.uint64) + 1
+
+        h = np.zeros(x.shape[0], dtype=np.uint64)
+        for k in range(x.shape[1] - 1):
+            h += x[:, k]
+            h *= xmax[k + 1]
+        h += x[:, -1]
+        return h
+
+    def sparse_quantize(self,
+                        coords,
+                        voxel_size: Union[float, Tuple[float, ...]] = 1,
+                        *,
+                        return_index: bool = False,
+                        return_inverse: bool = False) -> List[np.ndarray]:
+        if isinstance(voxel_size, (float, int)):
+            voxel_size = tuple(repeat(voxel_size, 3))
+        assert isinstance(voxel_size, tuple) and len(voxel_size) == 3
+
+        voxel_size = np.array(voxel_size)
+        coords = np.floor(coords / voxel_size).astype(np.int32)
+
+        _, indices, inverse_indices = np.unique(
+            self.ravel_hash(coords), return_index=True, return_inverse=True)
+        coords = coords[indices]
+
+        outputs = [coords]
+        if return_index:
+            outputs += [indices]
+        if return_inverse:
+            outputs += [inverse_indices]
+        return outputs[0] if len(outputs) == 1 else outputs

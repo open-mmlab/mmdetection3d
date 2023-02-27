@@ -4,8 +4,7 @@ data_root = 'data/semantickitti/'
 class_names = [
     'car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person', 'bicyclist',
     'motorcyclist', 'road', 'parking', 'sidewalk', 'other-ground', 'building',
-    'fence', 'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign',
-    'unlabeled'
+    'fence', 'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'
 ]
 palette = [
     [152, 223, 138],
@@ -98,6 +97,7 @@ train_pipeline = [
         with_bbox_3d=False,
         with_label_3d=False,
         with_seg_3d=True,
+        seg_3d_dtype='np.int32',
         seg_offset=2**16,
         dataset_type='semantickitti'),
     dict(type='PointSegClassMapping', ),
@@ -126,6 +126,7 @@ test_pipeline = [
         with_bbox_3d=False,
         with_label_3d=False,
         with_seg_3d=True,
+        seg_3d_dtype='np.int32',
         seg_offset=2**16,
         dataset_type='semantickitti'),
     dict(type='PointSegClassMapping', ),
@@ -145,6 +146,7 @@ eval_pipeline = [
         with_bbox_3d=False,
         with_label_3d=False,
         with_seg_3d=True,
+        seg_3d_dtype='np.int32',
         seg_offset=2**16,
         dataset_type='semantickitti'),
     dict(type='PointSegClassMapping', ),
