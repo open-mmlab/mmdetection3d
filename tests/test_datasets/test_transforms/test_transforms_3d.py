@@ -216,7 +216,7 @@ class TestPolarMix(unittest.TestCase):
             transform = PolarMix(instance_classes=[1.0, 2.0])
 
         transform = PolarMix(
-            instance_classes=[1, 2],
+            instance_classes=[15, 16, 17],
             swap_ratio=1.0,
             pre_transform=self.pre_transform)
         results = transform.transform(copy.deepcopy(self.results))
