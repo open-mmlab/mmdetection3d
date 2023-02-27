@@ -43,6 +43,7 @@ test_dataloader = dict(
 test_evaluator = dict(
     type='NuScenesMetric',
     data_root='data/nuscenes-test',
+    ann_file='data/nuscenes-test/nuscenes_infos_test.pkl',
     jsonfile_prefix='work_dirs/detr3d_vovnet_results_test',
     format_only=True,
     metric=[])
