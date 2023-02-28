@@ -388,18 +388,26 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 rho = torch.sqrt(res[:, 0]**2 + res[:, 1]**2)
                 phi = torch.atan2(res[:, 1], res[:, 0])
                 polar_res = torch.stack((rho, phi, res[:, 2]), dim=-1)
-                # Currently we only support PyTorch >= 1.9.0, and will
-                # implement it in voxel_layer soon for better compatibility
                 min_bound = polar_res.new_tensor(
                     self.voxel_layer.point_cloud_range[:3])
                 max_bound = polar_res.new_tensor(
                     self.voxel_layer.point_cloud_range[3:])
-                polar_res = torch.clamp(polar_res, min_bound, max_bound)
+                try:  # only support PyTorch >= 1.9.0
+                    polar_res_clamp = torch.clamp(polar_res, min_bound,
+                                                  max_bound)
+                except TypeError:
+                    polar_res_clamp = polar_res.clone()
+                    for coor_idx in range(3):
+                        polar_res_clamp[:, coor_idx][
+                            polar_res[:, coor_idx] >
+                            max_bound[coor_idx]] = max_bound[coor_idx]
+                        polar_res_clamp[:, coor_idx][
+                            polar_res[:, coor_idx] <
+                            min_bound[coor_idx]] = min_bound[coor_idx]
                 res_coors = torch.floor(
-                    (polar_res - min_bound) /
-                    polar_res.new_tensor(self.voxel_layer.voxel_size)).int()
-                if self.training:
-                    self.get_voxel_seg(res_coors, data_sample)
+                    (polar_res_clamp - min_bound) / polar_res_clamp.new_tensor(
+                        self.voxel_layer.voxel_size)).int()
+                self.get_voxel_seg(res_coors, data_sample)
                 res_coors = F.pad(res_coors, (1, 0), mode='constant', value=i)
                 res_voxels = torch.cat((polar_res, res[:, :2], res[:, 3:]),
                                        dim=-1)
@@ -423,10 +431,17 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             data_sample: (:obj:`Det3DDataSample`): The annotation data of
                 every samples. Add voxel-wise annotation forsegmentation.
         """
-        pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
-        voxel_semantic_mask, _, point2voxel_map = dynamic_scatter_3d(
-            F.one_hot(pts_semantic_mask.long()).float(), res_coors, 'mean',
-            True)
-        voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
-        data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
-        data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+
+        if self.training:
+            pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
+            voxel_semantic_mask, _, point2voxel_map = dynamic_scatter_3d(
+                F.one_hot(pts_semantic_mask.long()).float(), res_coors, 'mean',
+                True)
+            voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
+            data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
+            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+        else:
+            pseudo_tensor = res_coors.new_ones([res_coors.shape[0], 1]).float()
+            _, _, point2voxel_map = dynamic_scatter_3d(pseudo_tensor,
+                                                       res_coors, 'mean', True)
+            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
