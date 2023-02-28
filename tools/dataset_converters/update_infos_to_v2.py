@@ -367,7 +367,7 @@ def update_nuscenes_infos(pkl_path, out_dir):
                     ori_info_dict, nusc)
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    pkl_name = Path(pkl_path).name
+    pkl_name = Path(pkl_path.split('/')[-1]).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
     print(f'ignore classes: {ignore_class_name}')
