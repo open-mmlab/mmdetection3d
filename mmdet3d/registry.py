@@ -34,15 +34,22 @@ from mmengine.registry import Registry
 
 # manage all kinds of runners like `EpochBasedRunner` and `IterBasedRunner`
 RUNNERS = Registry(
-    'runner', parent=MMENGINE_RUNNERS, locations=['mmdet3d.engine.runner'])
+    # TODO: update the location when mmdet3d has its own runner
+    'runner',
+    parent=MMENGINE_RUNNERS,
+    locations=['mmdet3d.engine'])
 # manage runner constructors that define how to initialize runners
 RUNNER_CONSTRUCTORS = Registry(
     'runner constructor',
     parent=MMENGINE_RUNNER_CONSTRUCTORS,
-    locations=['mmdet3d.engine.runner'])
+    # TODO: update the location when mmdet3d has its own runner
+    locations=['mmdet3d.engine'])
 # manage all kinds of loops like `EpochBasedTrainLoop`
 LOOPS = Registry(
-    'loop', parent=MMENGINE_LOOPS, locations=['mmdet3d.engine.runner'])
+    # TODO: update the location when mmdet3d has its own loop
+    'loop',
+    parent=MMENGINE_LOOPS,
+    locations=['mmdet3d.engine'])
 # manage all kinds of hooks like `CheckpointHook`
 HOOKS = Registry(
     'hook', parent=MMENGINE_HOOKS, locations=['mmdet3d.engine.hooks'])
@@ -53,7 +60,8 @@ DATASETS = Registry(
 DATA_SAMPLERS = Registry(
     'data sampler',
     parent=MMENGINE_DATA_SAMPLERS,
-    locations=['mmdet3d.datasets.samplers'])
+    # TODO: update the location when mmdet3d has its own data sampler
+    locations=['mmdet3d.datasets'])
 TRANSFORMS = Registry(
     'transform',
     parent=MMENGINE_TRANSFORMS,
@@ -77,22 +85,26 @@ WEIGHT_INITIALIZERS = Registry(
 OPTIMIZERS = Registry(
     'optimizer',
     parent=MMENGINE_OPTIMIZERS,
-    locations=['mmdet3d.engine.optimizers'])
+    # TODO: update the location when mmdet3d has its own optimizer
+    locations=['mmdet3d.engine'])
 # manage optimizer wrapper
 OPTIM_WRAPPERS = Registry(
     'optim wrapper',
     parent=MMENGINE_OPTIM_WRAPPERS,
-    locations=['mmdet3d.engine.optimizers'])
+    # TODO: update the location when mmdet3d has its own optimizer
+    locations=['mmdet3d.engine'])
 # manage constructors that customize the optimization hyperparameters.
 OPTIM_WRAPPER_CONSTRUCTORS = Registry(
     'optimizer wrapper constructor',
     parent=MMENGINE_OPTIM_WRAPPER_CONSTRUCTORS,
-    locations=['mmdet3d.engine.optimizers'])
+    # TODO: update the location when mmdet3d has its own optimizer
+    locations=['mmdet3d.engine'])
 # mangage all kinds of parameter schedulers like `MultiStepLR`
 PARAM_SCHEDULERS = Registry(
     'parameter scheduler',
     parent=MMENGINE_PARAM_SCHEDULERS,
-    locations=['mmdet3d.engine.schedulers'])
+    # TODO: update the location when mmdet3d has its own scheduler
+    locations=['mmdet3d.engine'])
 # manage all kinds of metrics
 METRICS = Registry(
     'metric', parent=MMENGINE_METRICS, locations=['mmdet3d.evaluation'])
