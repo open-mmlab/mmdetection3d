@@ -2521,3 +2521,148 @@ class PolarMix(BaseTransform):
         repr_str += f'pre_transform={self.pre_transform}, '
         repr_str += f'prob={self.prob})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class LaserMix(BaseTransform):
+    """LaserMix data augmentation.
+
+    The lasermix transform steps are as follows:
+
+        1. Another random point cloud is picked by dataset.
+        2. Divide the point cloud into several regions according to pitch
+           angles and combine the areas crossly.
+
+    Required Keys:
+
+    - points (:obj:`BasePoints`)
+    - pts_semantic_mask (np.int64)
+    - dataset (:obj:`BaseDataset`)
+
+    Modified Keys:
+
+    - points (:obj:`BasePoints`)
+    - pts_semantic_mask (np.int64)
+
+    Args:
+        num_areas (List[int]): A list of area numbers will be divided into.
+        pitch_angles (Sequence[float]): Pitch angles used to divide areas.
+        pre_transform (Sequence[dict], optional): Sequence of transform object
+            or config dict to be composed. Defaults to None.
+        prob (float): The transformation probability. Defaults to 1.0.
+    """
+
+    def __init__(self,
+                 num_areas: List[int],
+                 pitch_angles: Sequence[float],
+                 pre_transform: Optional[Sequence[dict]] = None,
+                 prob: float = 1.0) -> None:
+        assert is_list_of(num_areas, int), \
+            'num_areas should be a list of int.'
+        self.num_areas = num_areas
+
+        assert len(pitch_angles) == 2, \
+            'The length of pitch_angles should be 2, ' \
+            f'but got {len(pitch_angles)}.'
+        assert pitch_angles[1] > pitch_angles[0], \
+            'pitch_angles[1] should be larger than pitch_angles[0].'
+        self.pitch_angles = pitch_angles
+
+        self.prob = prob
+        if pre_transform is None:
+            self.pre_transform = None
+        else:
+            self.pre_transform = Compose(pre_transform)
+
+    def laser_mix_transform(self, input_dict: dict, mix_results: dict) -> dict:
+        """LaserMix transform function.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+            mix_results (dict): Mixed dict picked from dataset.
+
+        Returns:
+            dict: output dict after transformation.
+        """
+        mix_points = mix_results['points']
+        mix_pts_semantic_mask = mix_results['pts_semantic_mask']
+
+        points = input_dict['points']
+        pts_semantic_mask = input_dict['pts_semantic_mask']
+
+        rho = torch.sqrt(points.coord[:, 0]**2 + points.coord[:, 1]**2)
+        pitch = torch.atan2(points.coord[:, 2], rho)
+        pitch = torch.clip(pitch, self.pitch_angles[0] + 1e-5,
+                           self.pitch_angles[1] - 1e-5)
+
+        mix_rho = torch.sqrt(mix_points.coord[:, 0]**2 +
+                             mix_points.coord[:, 1]**2)
+        mix_pitch = torch.atan2(mix_points.coord[:, 2], mix_rho)
+        mix_pitch = torch.clip(mix_pitch, self.pitch_angles[0] + 1e-5,
+                               self.pitch_angles[1] - 1e-5)
+
+        num_areas = np.random.choice(self.num_areas, size=1)[0]
+        angle_list = np.linspace(self.pitch_angles[1], self.pitch_angles[0],
+                                 num_areas + 1)
+        out_points = []
+        out_pts_semantic_mask = []
+        for i in range(num_areas):
+            # convert angle to radian
+            start_angle = angle_list[i + 1] / 180 * np.pi
+            end_angle = angle_list[i] / 180 * np.pi
+            if i % 2 == 0:  # pick from original point cloud
+                idx = (pitch > start_angle) & (pitch <= end_angle)
+                out_points.append(points[idx])
+                out_pts_semantic_mask.append(pts_semantic_mask[idx.numpy()])
+            else:  # pickle from mixed point cloud
+                idx = (mix_pitch > start_angle) & (mix_pitch <= end_angle)
+                out_points.append(mix_points[idx])
+                out_pts_semantic_mask.append(
+                    mix_pts_semantic_mask[idx.numpy()])
+        out_points = points.cat(out_points)
+        out_pts_semantic_mask = np.concatenate(out_pts_semantic_mask, axis=0)
+        input_dict['points'] = out_points
+        input_dict['pts_semantic_mask'] = out_pts_semantic_mask
+        return input_dict
+
+    def transform(self, input_dict: dict) -> dict:
+        """LaserMix transform function.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: output dict after transformation.
+        """
+        if np.random.rand() > self.prob:
+            return input_dict
+
+        assert 'dataset' in input_dict, \
+            '`dataset` is needed to pass through LaserMix, while not found.'
+        dataset = input_dict['dataset']
+
+        # get index of other point cloud
+        index = np.random.randint(0, len(dataset))
+
+        mix_results = dataset.get_data_info(index)
+
+        if self.pre_transform is not None:
+            # pre_transform may also require dataset
+            mix_results.update({'dataset': dataset})
+            # before lasermix need to go through
+            # the necessary pre_transform
+            mix_results = self.pre_transform(mix_results)
+            mix_results.pop('dataset')
+
+        input_dict = self.laser_mix_transform(input_dict, mix_results)
+
+        return input_dict
+
+    def __repr__(self) -> str:
+        """str: Return a string that describes the module."""
+        repr_str = self.__class__.__name__
+        repr_str += f'(num_areas={self.num_areas}, '
+        repr_str += f'pitch_angles={self.pitch_angles}, '
+        repr_str += f'pre_transform={self.pre_transform}, '
+        repr_str += f'prob={self.prob})'
+        return repr_str
