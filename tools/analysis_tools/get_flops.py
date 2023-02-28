@@ -3,9 +3,9 @@ import argparse
 
 import torch
 from mmengine import Config, DictAction
+from mmengine.registry import init_default_scope
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import register_all_modules
 
 try:
     from mmcv.cnn import get_model_complexity_info
@@ -43,7 +43,6 @@ def parse_args():
 
 
 def main():
-    register_all_modules()
     args = parse_args()
 
     if args.modality == 'point':
@@ -64,6 +63,7 @@ def main():
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+    init_default_scope(cfg.get('default_scope', 'mmdet3d'))
 
     model = MODELS.build(cfg.model)
     if torch.cuda.is_available():
