@@ -61,7 +61,7 @@ class BaseDet3DInferencer(BaseInferencer):
                  scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
         self.palette = palette
-        init_default_scope('mmdet3d')
+        init_default_scope(scope)
         super().__init__(
             model=model, weights=weights, device=device, scope=scope)
 
