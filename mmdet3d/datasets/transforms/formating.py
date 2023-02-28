@@ -159,7 +159,13 @@ class Pack3DDetInputs(BaseTransform):
                 # `torch.permute()` rather than `np.transpose()`.
                 # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
                 # for more details
-                results['img'] = to_tensor(img).permute(2, 0, 1).contiguous()
+            if not img.flags.c_contiguous:
+                img = np.ascontiguousarray(img.transpose(2, 0, 1))
+                img = to_tensor(img)
+            else:
+                img = to_tensor(img).permute(2, 0, 1).contiguous()
+
+                results['img'] = img
 
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
