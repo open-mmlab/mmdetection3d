@@ -508,8 +508,8 @@ class SegVFE(nn.Module):
             Defaults to None.
         grid_shape (tuple[float]): The grid shape of voxelization.
             Defaults to (480, 360, 32).
-        point_cloud_range (tuple[float]): The range of points
-            or voxels. Defaults to (0, -40, -3, 70.4, 40, 1).
+        point_cloud_range (tuple[float]): The range of points or voxels.
+            Defaults to (0, -3.14159265359, -4, 50, 3.14159265359, 2).
         norm_cfg (dict): Config dict of normalization layers.
         mode (str): The mode when pooling features of points
             inside a voxel. Available options include 'max' and 'avg'.
@@ -528,8 +528,8 @@ class SegVFE(nn.Module):
                  with_voxel_center: bool = False,
                  voxel_size: Optional[Sequence[float]] = None,
                  grid_shape: Sequence[float] = (480, 360, 32),
-                 point_cloud_range: Sequence[float] = (0, -180, -4, 50, 180,
-                                                       2),
+                 point_cloud_range: Sequence[float] = (0, -3.14159265359, -4,
+                                                       50, 3.14159265359, 2),
                  norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
                  mode: bool = 'max',
                  with_pre_norm: bool = True,
@@ -567,8 +567,8 @@ class SegVFE(nn.Module):
 
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = self.voxel_size[0]
-        self.vy = self.voxel_size[0]
-        self.vz = self.voxel_size[0]
+        self.vy = self.voxel_size[1]
+        self.vz = self.voxel_size[2]
         self.x_offset = self.vx / 2 + point_cloud_range[0]
         self.y_offset = self.vy / 2 + point_cloud_range[1]
         self.z_offset = self.vz / 2 + point_cloud_range[2]
@@ -589,14 +589,13 @@ class SegVFE(nn.Module):
                         nn.Linear(in_filters, out_filters), norm_layer,
                         nn.ReLU(inplace=True)))
         self.vfe_layers = nn.ModuleList(vfe_layers)
-        self.num_vfe = len(vfe_layers)
         self.vfe_scatter = DynamicScatter(self.voxel_size,
                                           self.point_cloud_range,
                                           (mode != 'max'))
         self.compression_layers = None
         if feat_compression is not None:
-            self.compression_layers = nn.Linear(feat_channels[-1],
-                                                feat_compression)
+            self.compression_layers = nn.Sequential(
+                nn.Linear(feat_channels[-1], feat_compression), nn.ReLU())
 
     def forward(self, features: Tensor, coors: Tensor, *args,
                 **kwargs) -> Tuple[Tensor]:
@@ -617,25 +616,23 @@ class SegVFE(nn.Module):
         if self._with_voxel_center:
             f_center = features.new_zeros(size=(features.size(0), 3))
             f_center[:, 0] = features[:, 0] - (
-                coors[:, 3].type_as(features) * self.vx + self.x_offset)
+                coors[:, 1].type_as(features) * self.vx + self.x_offset)
             f_center[:, 1] = features[:, 1] - (
                 coors[:, 2].type_as(features) * self.vy + self.y_offset)
             f_center[:, 2] = features[:, 2] - (
-                coors[:, 1].type_as(features) * self.vz + self.z_offset)
+                coors[:, 3].type_as(features) * self.vz + self.z_offset)
             features_ls.append(f_center)
 
         # Combine together feature decorations
         features = torch.cat(features_ls[::-1], dim=-1)
-
         if self.pre_norm is not None:
             features = self.pre_norm(features)
 
         point_feats = []
-        for i, vfe in enumerate(self.vfe_layers):
+        for vfe in self.vfe_layers:
             features = vfe(features)
             point_feats.append(features)
-            if i == self.num_vfe - 1:
-                voxel_feats, voxel_coors = self.vfe_scatter(features, coors)
+        voxel_feats, voxel_coors = self.vfe_scatter(features, coors)
 
         if self.compression_layers is not None:
             voxel_feats = self.compression_layers(voxel_feats)
