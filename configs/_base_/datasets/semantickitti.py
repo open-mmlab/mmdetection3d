@@ -119,7 +119,13 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         file_client_args=file_client_args),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='LoadAnnotations3D',
+        with_seg_3d=True,
+        seg_offset=2**16,
+        dataset_type='semantickitti'),
+    dict(type='PointSegClassMapping', ),
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -130,7 +136,13 @@ eval_pipeline = [
         load_dim=4,
         use_dim=4,
         file_client_args=file_client_args),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='LoadAnnotations3D',
+        with_seg_3d=True,
+        seg_offset=2**16,
+        dataset_type='semantickitti'),
+    dict(type='PointSegClassMapping', ),
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 
 train_dataloader = dict(

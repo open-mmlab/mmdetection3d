@@ -10,7 +10,7 @@ from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
 from mmdet3d.utils import ConfigType
-from .base_det3d_inferencer import BaseDet3DInferencer
+from .base_seg3d_inferencer import BaseSeg3DInferencer
 
 InstanceList = List[InstanceData]
 InputType = Union[str, np.ndarray]
@@ -22,7 +22,7 @@ ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 @INFERENCERS.register_module(name='seg3d-lidar')
 @INFERENCERS.register_module()
-class LidarSeg3DInferencer(BaseDet3DInferencer):
+class LidarSeg3DInferencer(BaseSeg3DInferencer):
     """The inferencer of LiDAR-based segmentation.
 
     Args:
@@ -46,8 +46,7 @@ class LidarSeg3DInferencer(BaseDet3DInferencer):
     preprocess_kwargs: set = set()
     forward_kwargs: set = set()
     visualize_kwargs: set = {
-        'return_vis', 'show', 'wait_time', 'draw_pred', 'pred_score_thr',
-        'img_out_dir'
+        'return_vis', 'show', 'wait_time', 'draw_pred', 'img_out_dir'
     }
     postprocess_kwargs: set = {
         'print_result', 'pred_out_file', 'return_datasample'
@@ -92,6 +91,14 @@ class LidarSeg3DInferencer(BaseDet3DInferencer):
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
         pipeline_cfg = cfg.test_dataloader.dataset.pipeline
+        # Load annotation is also not applicable
+        idx = self._get_transform_idx(pipeline_cfg, 'LoadAnnotations3D')
+        if idx != -1:
+            del pipeline_cfg[idx]
+
+        idx = self._get_transform_idx(pipeline_cfg, 'PointSegClassMapping')
+        if idx != -1:
+            del pipeline_cfg[idx]
 
         load_img_idx = self._get_transform_idx(pipeline_cfg,
                                                'LoadPointsFromFile')
@@ -185,15 +192,3 @@ class LidarSeg3DInferencer(BaseDet3DInferencer):
             self.num_visualized_frames += 1
 
         return results
-
-    def pred2dict(self, data_sample: InstanceData) -> Dict:
-        """Extract elements necessary to represent a prediction into a
-        dictionary.
-
-        It's better to contain only basic data elements such as strings and
-        numbers in order to guarantee it's json-serializable.
-        """
-        pred_pts_seg = data_sample.pred_pts_seg.numpy()
-        result = {'pts_semantic_mask': pred_pts_seg.pts_semantic_mask.tolist()}
-
-        return result
