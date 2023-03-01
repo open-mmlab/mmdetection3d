@@ -19,7 +19,7 @@ else:
 
 
 @MODELS.register_module()
-class SPVCNN(MinkUNetBackbone):
+class SPVCNNBackbone(MinkUNetBackbone):
     """MinkUNet backbone is the implementation of `4D Spatio-Temporal ConvNets.
 
     <https://arxiv.org/abs/1904.08755>` with torchsparse backend.
@@ -52,16 +52,17 @@ class SPVCNN(MinkUNetBackbone):
             num_stages=num_stages,
             init_cfg=init_cfg)
 
-        self.point_transforms = nn.ModuleList(
+        self.point_transforms = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(base_channels, enc_channels[-1]),
                 nn.BatchNorm1d(enc_channels[-1]), nn.ReLU(True)),
             nn.Sequential(
-                nn.Linear(enc_channels[-1], dec_channels[1]),
-                nn.BatchNorm1d(dec_channels[1]), nn.ReLU(True)),
+                nn.Linear(enc_channels[-1], dec_channels[2]),
+                nn.BatchNorm1d(dec_channels[2]), nn.ReLU(True)),
             nn.Sequential(
-                nn.Linear(dec_channels[1], dec_channels[3]),
-                nn.BatchNorm1d(dec_channels[3]), nn.ReLU(True)))
+                nn.Linear(dec_channels[2], dec_channels[4]),
+                nn.BatchNorm1d(dec_channels[4]), nn.ReLU(True))
+        ])
         self.dropout = nn.Dropout(drop_ratio, True)
 
     def forward(self, voxel_features: Tensor, coors: Tensor) -> SparseTensor:
