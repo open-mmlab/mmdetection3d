@@ -2592,14 +2592,14 @@ class LaserMix(BaseTransform):
 
         rho = torch.sqrt(points.coord[:, 0]**2 + points.coord[:, 1]**2)
         pitch = torch.atan2(points.coord[:, 2], rho)
-        pitch = torch.clip(pitch, self.pitch_angles[0] + 1e-5,
-                           self.pitch_angles[1] - 1e-5)
+        pitch = torch.clamp(pitch, self.pitch_angles[0] + 1e-5,
+                            self.pitch_angles[1] - 1e-5)
 
         mix_rho = torch.sqrt(mix_points.coord[:, 0]**2 +
                              mix_points.coord[:, 1]**2)
         mix_pitch = torch.atan2(mix_points.coord[:, 2], mix_rho)
-        mix_pitch = torch.clip(mix_pitch, self.pitch_angles[0] + 1e-5,
-                               self.pitch_angles[1] - 1e-5)
+        mix_pitch = torch.clamp(mix_pitch, self.pitch_angles[0] + 1e-5,
+                                self.pitch_angles[1] - 1e-5)
 
         num_areas = np.random.choice(self.num_areas, size=1)[0]
         angle_list = np.linspace(self.pitch_angles[1], self.pitch_angles[0],
