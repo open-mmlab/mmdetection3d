@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-import torch
 from mmcv.parallel import DataContainer as DC
 
 from mmdet3d.core.bbox import BaseInstance3DBoxes
@@ -43,12 +42,24 @@ class DefaultFormatBundle(object):
         if 'img' in results:
             if isinstance(results['img'], list):
                 # process multiple imgs in single frame
-                imgs = [to_tensor(img) for img in results['img']]
-                imgs = torch.stack(
-                    imgs, dim=0).permute(0, 3, 1, 2).contiguous()
+                imgs = np.stack(results['img'], axis=0)
+                if imgs.flags.c_contiguous:
+                    imgs = to_tensor(imgs).permute(0, 3, 1, 2).contiguous()
+                else:
+                    imgs = to_tensor(
+                        np.ascontiguousarray(imgs.transpose(0, 3, 1, 2)))
                 results['img'] = DC(to_tensor(imgs), stack=True)
             else:
-                img = to_tensor(results['img']).permute(2, 0, 1).contiguous()
+                img = results['img']
+                # To improve the computational speed by by 3-5 times, apply:
+                # `torch.permute()` rather than `np.transpose()`.
+                # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
+                # for more details
+                if img.flags.c_contiguous:
+                    img = to_tensor(img).permute(2, 0, 1).contiguous()
+                else:
+                    img = to_tensor(
+                        np.ascontiguousarray(img.transpose(2, 0, 1)))
                 results['img'] = DC(img, stack=True)
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
