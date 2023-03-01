@@ -97,6 +97,13 @@ Note:
    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
    ```
 
+   We also support `Torchsparse` as a sparse convolution backend. If necessary please follow original [installation guide](https://github.com/mit-han-lab/torchsparse#installation) or use `pip` to install it:
+
+   ```shell
+   sudo apt-get install libsparsehash-dev
+   pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
+   ```
+
 3. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
 ### Verify the Installation
