@@ -331,7 +331,7 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
                  test_mode: bool = False,
                  ignore_index: Optional[int] = None,
                  scene_idxs: Optional[Union[np.ndarray, str]] = None,
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  **kwargs) -> None:
         super().__init__(
             data_root=data_root,
@@ -343,5 +343,5 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
             test_mode=test_mode,
             ignore_index=ignore_index,
             scene_idxs=scene_idxs,
-            file_client_args=file_client_args,
+            backend_args=backend_args,
             **kwargs)

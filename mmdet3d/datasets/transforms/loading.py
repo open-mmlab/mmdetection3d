@@ -4,11 +4,11 @@ from typing import List, Optional, Union
 
 import mmcv
 import mmengine
-import mmengine.fileio as fileio
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
 from mmdet.datasets.transforms import LoadAnnotations
+from mmengine.fileio import get
 
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures.bbox_3d import get_box_type
@@ -25,9 +25,8 @@ class LoadMultiViewImageFromFiles(BaseTransform):
         to_float32 (bool): Whether to convert the img to float32.
             Defaults to False.
         color_type (str): Color type of the file. Defaults to 'unchanged'.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
         num_views (int): Number of view in a frame. Defaults to 5.
         num_ref_frames (int): Number of frame in loading. Defaults to -1.
         test_mode (bool): Whether is test mode in loading. Defaults to False.
@@ -38,15 +37,14 @@ class LoadMultiViewImageFromFiles(BaseTransform):
     def __init__(self,
                  to_float32: bool = False,
                  color_type: str = 'unchanged',
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  num_views: int = 5,
                  num_ref_frames: int = -1,
                  test_mode: bool = False,
                  set_default_scale: bool = True) -> None:
         self.to_float32 = to_float32
         self.color_type = color_type
-        self.file_client_args = file_client_args.copy()
-        self.file_client = None
+        self.backend_args = backend_args
         self.num_views = num_views
         # num_ref_frames is used for multi-sweep loading
         self.num_ref_frames = num_ref_frames
@@ -164,12 +162,11 @@ class LoadMultiViewImageFromFiles(BaseTransform):
 
         results['ori_cam2img'] = copy.deepcopy(results['cam2img'])
 
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
-
         # img is of shape (h, w, c, num_views)
         # h and w can be different for different views
-        img_bytes = [self.file_client.get(name) for name in filename]
+        img_bytes = [
+            get(name, backend_args=self.backend_args) for name in filename
+        ]
         imgs = [
             mmcv.imfrombytes(img_byte, flag=self.color_type)
             for img_byte in img_bytes
@@ -257,13 +254,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
                 'nuscenes datasets')
 
         try:
-            if self.file_client_args is not None:
-                file_client = fileio.FileClient.infer_client(
-                    self.file_client_args, filename)
-                img_bytes = file_client.get(filename)
-            else:
-                img_bytes = fileio.get(
-                    filename, backend_args=self.backend_args)
+            img_bytes = get(filename, backend_args=self.backend_args)
             img = mmcv.imfrombytes(
                 img_bytes, flag=self.color_type, backend=self.imdecode_backend)
         except Exception as e:
@@ -331,9 +322,8 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         sweeps_num (int): Number of sweeps. Defaults to 10.
         load_dim (int): Dimension number of the loaded points. Defaults to 5.
         use_dim (list[int]): Which dimension to use. Defaults to [0, 1, 2, 4].
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
         pad_empty_sweeps (bool): Whether to repeat keyframe when
             sweeps is empty. Defaults to False.
         remove_close (bool): Whether to remove close points. Defaults to False.
@@ -345,7 +335,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                  sweeps_num: int = 10,
                  load_dim: int = 5,
                  use_dim: List[int] = [0, 1, 2, 4],
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  pad_empty_sweeps: bool = False,
                  remove_close: bool = False,
                  test_mode: bool = False) -> None:
@@ -356,8 +346,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         assert max(use_dim) < load_dim, \
             f'Expect all used dimensions < {load_dim}, got {use_dim}'
         self.use_dim = use_dim
-        self.file_client_args = file_client_args.copy()
-        self.file_client = mmengine.FileClient(**self.file_client_args)
+        self.backend_args = backend_args
         self.pad_empty_sweeps = pad_empty_sweeps
         self.remove_close = remove_close
         self.test_mode = test_mode
@@ -371,10 +360,8 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         Returns:
             np.ndarray: An array containing point clouds data.
         """
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
-            pts_bytes = self.file_client.get(pts_filename)
+            pts_bytes = get(pts_filename, backend_args=self.backend_args)
             points = np.frombuffer(pts_bytes, dtype=np.float32)
         except ConnectionError:
             mmengine.check_file_exist(pts_filename)
@@ -592,21 +579,18 @@ class LoadPointsFromFile(BaseTransform):
         use_color (bool): Whether to use color features. Defaults to False.
         norm_intensity (bool): Whether to normlize the intensity. Defaults to
             False.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
 
-    def __init__(
-        self,
-        coord_type: str,
-        load_dim: int = 6,
-        use_dim: Union[int, List[int]] = [0, 1, 2],
-        shift_height: bool = False,
-        use_color: bool = False,
-        norm_intensity: bool = False,
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 coord_type: str,
+                 load_dim: int = 6,
+                 use_dim: Union[int, List[int]] = [0, 1, 2],
+                 shift_height: bool = False,
+                 use_color: bool = False,
+                 norm_intensity: bool = False,
+                 backend_args: Optional[dict] = None) -> None:
         self.shift_height = shift_height
         self.use_color = use_color
         if isinstance(use_dim, int):
@@ -619,8 +603,7 @@ class LoadPointsFromFile(BaseTransform):
         self.load_dim = load_dim
         self.use_dim = use_dim
         self.norm_intensity = norm_intensity
-        self.file_client_args = file_client_args.copy()
-        self.file_client = None
+        self.backend_args = backend_args
 
     def _load_points(self, pts_filename: str) -> np.ndarray:
         """Private function to load point clouds data.
@@ -631,10 +614,8 @@ class LoadPointsFromFile(BaseTransform):
         Returns:
             np.ndarray: An array containing point clouds data.
         """
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
-            pts_bytes = self.file_client.get(pts_filename)
+            pts_bytes = get(pts_filename, backend_args=self.backend_args)
             points = np.frombuffer(pts_bytes, dtype=np.float32)
         except ConnectionError:
             mmengine.check_file_exist(pts_filename)
@@ -698,7 +679,7 @@ class LoadPointsFromFile(BaseTransform):
         repr_str = self.__class__.__name__ + '('
         repr_str += f'shift_height={self.shift_height}, '
         repr_str += f'use_color={self.use_color}, '
-        repr_str += f'file_client_args={self.file_client_args}, '
+        repr_str += f'backend_args={self.backend_args}, '
         repr_str += f'load_dim={self.load_dim}, '
         repr_str += f'use_dim={self.use_dim})'
         return repr_str
@@ -807,37 +788,34 @@ class LoadAnnotations3D(LoadAnnotations):
             panoptic labels. Defaults to None.
         dataset_type (str): Type of dataset used for splitting semantic and
             instance labels. Defaults to None.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
 
-    def __init__(
-        self,
-        with_bbox_3d: bool = True,
-        with_label_3d: bool = True,
-        with_attr_label: bool = False,
-        with_mask_3d: bool = False,
-        with_seg_3d: bool = False,
-        with_bbox: bool = False,
-        with_label: bool = False,
-        with_mask: bool = False,
-        with_seg: bool = False,
-        with_bbox_depth: bool = False,
-        with_panoptic_3d: bool = False,
-        poly2mask: bool = True,
-        seg_3d_dtype: str = 'np.int64',
-        seg_offset: int = None,
-        dataset_type: str = None,
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 with_bbox_3d: bool = True,
+                 with_label_3d: bool = True,
+                 with_attr_label: bool = False,
+                 with_mask_3d: bool = False,
+                 with_seg_3d: bool = False,
+                 with_bbox: bool = False,
+                 with_label: bool = False,
+                 with_mask: bool = False,
+                 with_seg: bool = False,
+                 with_bbox_depth: bool = False,
+                 with_panoptic_3d: bool = False,
+                 poly2mask: bool = True,
+                 seg_3d_dtype: str = 'np.int64',
+                 seg_offset: int = None,
+                 dataset_type: str = None,
+                 backend_args: Optional[dict] = None) -> None:
         super().__init__(
             with_bbox=with_bbox,
             with_label=with_label,
             with_mask=with_mask,
             with_seg=with_seg,
             poly2mask=poly2mask,
-            file_client_args=file_client_args)
+            backend_args=backend_args)
         self.with_bbox_3d = with_bbox_3d
         self.with_bbox_depth = with_bbox_depth
         self.with_label_3d = with_label_3d
@@ -848,7 +826,6 @@ class LoadAnnotations3D(LoadAnnotations):
         self.seg_3d_dtype = eval(seg_3d_dtype)
         self.seg_offset = seg_offset
         self.dataset_type = dataset_type
-        self.file_client = None
 
     def _load_bboxes_3d(self, results: dict) -> dict:
         """Private function to move the 3D bounding box annotation from
@@ -914,10 +891,9 @@ class LoadAnnotations3D(LoadAnnotations):
         """
         pts_instance_mask_path = results['pts_instance_mask_path']
 
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
-            mask_bytes = self.file_client.get(pts_instance_mask_path)
+            mask_bytes = get(
+                pts_instance_mask_path, backend_args=self.backend_args)
             pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
         except ConnectionError:
             mmengine.check_file_exist(pts_instance_mask_path)
@@ -941,10 +917,9 @@ class LoadAnnotations3D(LoadAnnotations):
         """
         pts_semantic_mask_path = results['pts_semantic_mask_path']
 
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
-            mask_bytes = self.file_client.get(pts_semantic_mask_path)
+            mask_bytes = get(
+                pts_semantic_mask_path, backend_args=self.backend_args)
             # add .copy() to fix read-only bug
             pts_semantic_mask = np.frombuffer(
                 mask_bytes, dtype=self.seg_3d_dtype).copy()
@@ -976,10 +951,9 @@ class LoadAnnotations3D(LoadAnnotations):
         """
         pts_panoptic_mask_path = results['pts_panoptic_mask_path']
 
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
         try:
-            mask_bytes = self.file_client.get(pts_panoptic_mask_path)
+            mask_bytes = get(
+                pts_panoptic_mask_path, backend_args=self.backend_args)
             # add .copy() to fix read-only bug
             pts_panoptic_mask = np.frombuffer(
                 mask_bytes, dtype=self.seg_3d_dtype).copy()

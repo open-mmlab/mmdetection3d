@@ -27,7 +27,7 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=True)
-file_client_args = dict(backend='disk')
+backend_args = None
 
 model = dict(
     type='BEVFusion',
@@ -209,20 +209,24 @@ db_sampler = dict(
         coord_type='LIDAR',
         load_dim=5,
         use_dim=[0, 1, 2, 3, 4],
-        reduce_beams=32))
+        reduce_beams=32,
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
     dict(
         type='BEVLoadMultiViewImageFromFiles',
         to_float32=True,
-        color_type='color'),
+        color_type='color',
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
         reduce_beams=32,
-        load_augmented=None),
+        load_augmented=None,
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
@@ -231,7 +235,8 @@ train_pipeline = [
         reduce_beams=32,
         pad_empty_sweeps=True,
         remove_close=True,
-        load_augmented=None),
+        load_augmented=None,
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=True,
@@ -285,15 +290,22 @@ test_pipeline = [
     dict(
         type='BEVLoadMultiViewImageFromFiles',
         to_float32=True,
-        color_type='color'),
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+        color_type='color',
+        backend_args=backend_args),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         load_dim=5,
         use_dim=5,
         pad_empty_sweeps=True,
-        remove_close=True),
+        remove_close=True,
+        backend_args=backend_args),
     dict(
         type='ImageAug3D',
         final_dim=[256, 704],
@@ -331,7 +343,8 @@ train_dataloader = dict(
         data_prefix=data_prefix,
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
     num_workers=0,
@@ -347,14 +360,16 @@ val_dataloader = dict(
         modality=input_modality,
         data_prefix=data_prefix,
         test_mode=True,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
     type='NuScenesMetric',
     data_root=data_root,
     ann_file=data_root + 'nuscenes_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

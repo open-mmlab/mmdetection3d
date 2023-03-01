@@ -2,9 +2,9 @@
 from os import path as osp
 from typing import Callable, List, Optional, Sequence, Union
 
-import mmengine
 import numpy as np
 from mmengine.dataset import BaseDataset
+from mmengine.fileio import get_local_path
 
 from mmdet3d.registry import DATASETS
 
@@ -49,8 +49,8 @@ class Seg3DDataset(BaseDataset):
         load_eval_anns (bool): Whether to load annotations in test_mode,
             the annotation will be save in `eval_ann_infos`, which can be used
             in Evaluator. Defaults to True.
-        file_client_args (dict): Configuration of file client.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
     METAINFO = {
         'classes': None,  # names of all classes data used for the task
@@ -75,10 +75,9 @@ class Seg3DDataset(BaseDataset):
                  test_mode: bool = False,
                  serialize_data: bool = False,
                  load_eval_anns: bool = True,
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  **kwargs) -> None:
-        # init file client
-        self.file_client = mmengine.FileClient(**file_client_args)
+        self.backend_args = backend_args
         self.modality = modality
         self.load_eval_anns = load_eval_anns
 
@@ -317,7 +316,8 @@ class Seg3DDataset(BaseDataset):
             scene_idxs = np.arange(len(self))
         if isinstance(scene_idxs, str):
             scene_idxs = osp.join(self.data_root, scene_idxs)
-            with self.file_client.get_local_path(scene_idxs) as local_path:
+            with get_local_path(
+                    scene_idxs, backend_args=self.backend_args) as local_path:
                 scene_idxs = np.load(local_path)
         else:
             scene_idxs = np.array(scene_idxs)

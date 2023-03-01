@@ -47,24 +47,21 @@ class KittiMetric(BaseMetric):
         collect_device (str): Device name used for collecting results
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
 
-    def __init__(
-        self,
-        ann_file: str,
-        metric: Union[str, List[str]] = 'bbox',
-        pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
-        prefix: Optional[str] = None,
-        pklfile_prefix: Optional[str] = None,
-        default_cam_key: str = 'CAM2',
-        format_only: bool = False,
-        submission_prefix: Optional[str] = None,
-        collect_device: str = 'cpu',
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 ann_file: str,
+                 metric: Union[str, List[str]] = 'bbox',
+                 pcd_limit_range: List[float] = [0, -40, -3, 70.4, 40, 0.0],
+                 prefix: Optional[str] = None,
+                 pklfile_prefix: Optional[str] = None,
+                 default_cam_key: str = 'CAM2',
+                 format_only: bool = False,
+                 submission_prefix: Optional[str] = None,
+                 collect_device: str = 'cpu',
+                 backend_args: Optional[dict] = None) -> None:
         self.default_prefix = 'Kitti metric'
         super(KittiMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -80,7 +77,7 @@ class KittiMetric(BaseMetric):
 
         self.submission_prefix = submission_prefix
         self.default_cam_key = default_cam_key
-        self.file_client_args = file_client_args
+        self.backend_args = backend_args
 
         allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'LET_mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
@@ -188,7 +185,7 @@ class KittiMetric(BaseMetric):
         self.classes = self.dataset_meta['classes']
 
         # load annotations
-        pkl_infos = load(self.ann_file, file_client_args=self.file_client_args)
+        pkl_infos = load(self.ann_file, backend_args=self.backend_args)
         self.data_infos = self.convert_annos_to_kitti_annos(pkl_infos)
         result_dict, tmp_dir = self.format_results(
             results,

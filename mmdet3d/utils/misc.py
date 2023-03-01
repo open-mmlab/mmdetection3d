@@ -5,7 +5,7 @@ def replace_ceph_backend(cfg):
     cfg_pretty_text = cfg.pretty_text
 
     replace_strs = \
-        r'''file_client_args = dict(
+        r'''backend_args = dict(
             backend='petrel',
             path_mapping=dict({
                 './data/DATA/': 's3://openmmlab/datasets/detection3d/CEPH/',
