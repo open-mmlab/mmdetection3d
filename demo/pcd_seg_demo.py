@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 
 from mmdet3d.apis import inference_segmentor, init_model
 from mmdet3d.registry import VISUALIZERS
-from mmdet3d.utils import register_all_modules
 
 
 def parse_args():
@@ -28,9 +27,6 @@ def parse_args():
 
 
 def main(args):
-    # register all modules in mmdet3d into the registries
-    register_all_modules()
-
     # build the model from a config file and a checkpoint file
     model = init_model(args.config, args.checkpoint, device=args.device)
 
