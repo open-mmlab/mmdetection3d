@@ -10,7 +10,7 @@ if IS_TORCHSPARSE_AVAILABLE:
     from mmdet3d.models.layers.torchsparse_block import (
         TorchsparseConvModule, TorchsparseResidualBlock)
 else:
-    pytest.skip('test requires Torchsparse')
+    pytest.skip('test requires Torchsparse', allow_module_level=True)
 
 
 def test_TorchsparseConvModule():
