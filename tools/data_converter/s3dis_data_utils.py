@@ -2,7 +2,7 @@
 import os
 from concurrent import futures as futures
 from os import path as osp
- 
+
 import mmcv
 import numpy as np
 
