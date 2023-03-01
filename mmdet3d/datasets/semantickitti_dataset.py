@@ -59,7 +59,7 @@ class SemanticKITTIDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points',
+                     pts='',
                      img='',
                      pts_instance_mask='',
                      pts_semantic_mask=''),
@@ -83,7 +83,7 @@ class SemanticKITTIDataset(Seg3DDataset):
             **kwargs)
 
     def get_seg_label_mapping(self, metainfo):
-        seg_label_mapping = np.zeros(metainfo['max_label'] + 1)
+        seg_label_mapping = np.zeros(metainfo['max_label'] + 1, dtype=np.int64)
         for idx in metainfo['seg_label_mapping']:
             seg_label_mapping[idx] = metainfo['seg_label_mapping'][idx]
         return seg_label_mapping
