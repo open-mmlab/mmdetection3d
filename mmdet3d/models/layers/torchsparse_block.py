@@ -14,7 +14,7 @@ else:
     SparseTensor = None
 
 
-class TorchsparseConvModule(BaseModule):
+class TorchSparseConvModule(BaseModule):
     """A torchsparse conv block that bundles conv/norm/activation layers.
 
     Args:
@@ -23,7 +23,7 @@ class TorchsparseConvModule(BaseModule):
         kernel_size (int or Tuple[int]): Kernel_size of block. Defaults to 3.
         stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
         dilation (int): Dilation of block. Defaults to 1.
-        transposed (int):
+        transposed (bool): Whether use transposed convolution operator.
         init_cfg (:obj:`ConfigDict` or dict, optional): Initialization config.
             Defaults to None.
     """
@@ -52,7 +52,7 @@ class TorchsparseConvModule(BaseModule):
         return out
 
 
-class TorchsparseResidualBlock(BaseModule):
+class TorchSparseResidualBlock(BaseModule):
     """Torchsparse residual basic block for MinkUNet.
 
     Args:
