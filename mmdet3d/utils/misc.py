@@ -49,6 +49,8 @@ def replace_ceph_backend(cfg):
     # cfg_pretty_text = cfg_pretty_text.replace(
     #   'ann_file', replace_strs + ', ann_file')
 
+    cfg_pretty_text = cfg_pretty_text.replace('backend_args=None', '')
+
     # replace LoadImageFromFile
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadImageFromFile\'', 'LoadImageFromFile\',' + replace_strs)
@@ -79,6 +81,18 @@ def replace_ceph_backend(cfg):
     # replace LoadAnnotations3D
     cfg_pretty_text = cfg_pretty_text.replace(
         'LoadAnnotations3D\'', 'LoadAnnotations3D\',' + replace_strs)
+
+    # replace KittiMetric
+    cfg_pretty_text = cfg_pretty_text.replace('KittiMetric\'',
+                                              'KittiMetric\',' + replace_strs)
+
+    # replace LyftMetric
+    cfg_pretty_text = cfg_pretty_text.replace('LyftMetric\'',
+                                              'LyftMetric\',' + replace_strs)
+
+    # replace NuScenesMetric
+    cfg_pretty_text = cfg_pretty_text.replace(
+        'NuScenesMetric\'', 'NuScenesMetric\',' + replace_strs)
 
     # replace WaymoMetric
     cfg_pretty_text = cfg_pretty_text.replace('WaymoMetric\'',
