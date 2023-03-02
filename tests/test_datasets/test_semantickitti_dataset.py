@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from mmdet3d.datasets import SemanticKITTIDataset
+from mmdet3d.datasets import SemanticKittiDataset
 from mmdet3d.utils import register_all_modules
 
 
@@ -100,7 +100,7 @@ def _generate_semantickitti_dataset_config():
             modality, seg_label_mapping, max_label)
 
 
-class TestSemanticKITTIDataset(unittest.TestCase):
+class TestSemanticKittiDataset(unittest.TestCase):
 
     def test_semantickitti(self):
         (data_root, ann_file, classes, palette, data_prefix, pipeline,
@@ -109,7 +109,7 @@ class TestSemanticKITTIDataset(unittest.TestCase):
 
         register_all_modules()
         np.random.seed(0)
-        semantickitti_dataset = SemanticKITTIDataset(
+        semantickitti_dataset = SemanticKittiDataset(
             data_root,
             ann_file,
             metainfo=dict(

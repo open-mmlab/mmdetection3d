@@ -1,5 +1,5 @@
 # dataset settings
-dataset_type = 'SemanticKITTIDataset'
+dataset_type = 'SemanticKittiDataset'
 data_root = 'data/semantickitti/'
 class_names = [
     'car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person', 'bicyclist',

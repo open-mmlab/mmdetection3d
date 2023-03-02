@@ -7,7 +7,7 @@ import torch
 from mmengine.testing import assert_allclose
 
 from mmdet3d.datasets import (GlobalAlignment, RandomFlip3D,
-                              SemanticKITTIDataset)
+                              SemanticKittiDataset)
 from mmdet3d.datasets.transforms import GlobalRotScaleTrans, LaserMix, PolarMix
 from mmdet3d.structures import LiDARPoints
 from mmdet3d.testing import create_data_info_after_loading
@@ -187,7 +187,7 @@ class TestPolarMix(unittest.TestCase):
             259: 5  # "moving-other"-vehicle to "other-vehicle"-----mapped
         }
         max_label = 259
-        self.dataset = SemanticKITTIDataset(
+        self.dataset = SemanticKittiDataset(
             './tests/data/semantickitti/',
             'semantickitti_infos.pkl',
             metainfo=dict(
@@ -305,7 +305,7 @@ class TestLaserMix(unittest.TestCase):
             259: 5  # "moving-other"-vehicle to "other-vehicle"-----mapped
         }
         max_label = 259
-        self.dataset = SemanticKITTIDataset(
+        self.dataset = SemanticKittiDataset(
             './tests/data/semantickitti/',
             'semantickitti_infos.pkl',
             metainfo=dict(
