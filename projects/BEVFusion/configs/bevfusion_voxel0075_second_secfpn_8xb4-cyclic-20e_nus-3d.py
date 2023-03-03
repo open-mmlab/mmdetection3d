@@ -221,17 +221,19 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        reduce_beams=32,
-        load_augmented=None),
+        # reduce_beams=32,
+        # load_augmented=None
+        ),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         load_dim=5,
         use_dim=5,
-        reduce_beams=32,
+        # reduce_beams=32,
         pad_empty_sweeps=True,
         remove_close=True,
-        load_augmented=None),
+        # load_augmented=None
+        ),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=True,
@@ -246,12 +248,16 @@ train_pipeline = [
         rot_lim=[-5.4, 5.4],
         rand_flip=True,
         is_train=True),
+    # dict(
+    #     type='GlobalRotScaleTrans',
+    #     resize_lim=[0.9, 1.1],
+    #     rot_lim=[-0.78539816, 0.78539816],
+    #     trans_lim=0.5,
+    #     is_train=True),
     dict(
         type='GlobalRotScaleTrans',
-        resize_lim=[0.9, 1.1],
-        rot_lim=[-0.78539816, 0.78539816],
-        trans_lim=0.5,
-        is_train=True),
+        rot_range=[-0.78539816, 0.78539816],
+        scale_ratio_range=[0.9, 1.1]),
     dict(type='RandomFlip3D'),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
@@ -278,6 +284,11 @@ train_pipeline = [
         keys=[
             'points', 'img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_bboxes',
             'gt_labels'
+        ],
+        meta_keys=[
+            'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
+            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
+            'lidar_path', 'img_path'
         ])
 ]
 
@@ -316,7 +327,8 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=4,
+    # batch_size=4,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -395,7 +407,8 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=6, val_interval=6)
+# train_cfg = dict(by_epoch=True, max_epochs=6, val_interval=6)
+train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=20)
 val_cfg = dict()
 test_cfg = dict()
 
