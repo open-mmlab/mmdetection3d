@@ -5,7 +5,7 @@ pip install openmim
 # install mmcv, mmdet, mmengine
 pip install -r requirements/mminstall.txt
 # install other library
-pip install numpy==1.23.5 nuscenes-devkit scipy==1.9.1
+pip install numpy==1.23.5 nuscenes-devkit scipy==1.9.1 setuptools==59.5.0 tensorboardX
 # install mmdet3d
 python setup.py develop
 # install ops
