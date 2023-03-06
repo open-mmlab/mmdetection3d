@@ -1,6 +1,7 @@
 # modify from https://github.com/mit-han-lab/bevfusion
 import torch
 from mmdet.models.task_modules import AssignResult, BaseAssigner, BaseBBoxCoder
+from mmengine.structures import InstanceData
 
 try:
     from scipy.optimize import linear_sum_assignment
@@ -8,7 +9,6 @@ except ImportError:
     linear_sum_assignment = None
 
 from mmdet3d.registry import TASK_UTILS
-from mmengine.structures import InstanceData
 
 
 @TASK_UTILS.register_module()

@@ -10,13 +10,3 @@ pip install numpy==1.23.5 nuscenes-devkit scipy==1.9.1 setuptools==59.5.0 tensor
 python setup.py develop
 # install ops
 python projects/BEVFusion/setup.py develop
-
-
-
-
-
-
-
-
-
-
