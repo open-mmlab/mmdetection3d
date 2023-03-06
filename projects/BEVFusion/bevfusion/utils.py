@@ -279,11 +279,13 @@ class HungarianAssigner3D(BaseAssigner):
         gt_instances = InstanceData(labels=gt_labels)
         cls_cost = self.cls_cost(pred_instances, gt_instances)
         reg_cost = self.reg_cost(bboxes, gt_bboxes, train_cfg)
-        iou = self.iou_calculator(bboxes, gt_bboxes)
+        iou = self.iou_calculator(bboxes, gt_bboxes)  # (200, 4) 有nan
+        # iou = torch.where(torch.isnan(iou), torch.tensor([0.0]).cuda(), iou)  # nan 部分设置为 0
         iou_cost = self.iou_cost(iou)
 
         # weighted sum of above three costs
         cost = cls_cost + reg_cost + iou_cost
+        cost = torch.where(torch.isnan(cost), torch.tensor([0.0]).cuda(), cost)  # nan 部分设置为 0
 
         # 3. do Hungarian matching on CPU using linear_sum_assignment
         cost = cost.detach().cpu()
