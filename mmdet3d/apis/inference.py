@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 from mmengine.config import Config
 from mmengine.dataset import Compose, pseudo_collate
+from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
 
 from mmdet3d.registry import MODELS
@@ -63,6 +64,7 @@ def init_model(config: Union[str, Path, Config],
 
     convert_SyncBN(config.model)
     config.model.train_cfg = None
+    init_default_scope(config.get('default_scope', 'mmdet3d'))
     model = MODELS.build(config.model)
 
     if checkpoint is not None:
