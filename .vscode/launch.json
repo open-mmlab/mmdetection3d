@@ -6,21 +6,23 @@
       "request": "launch",
       "program": "${workspaceFolder}/tools/train.py",
       "args": [
-        "projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py"
+        "projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py",
+        "--resume",
+        "work_dirs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d/epoch_6.pth"
       ],
       "console": "integratedTerminal",
       "justMyCode": false //可以调试到环境中其他库的代码
     },
     {
-        "name": "debugpy",
-        "type": "python",
-        "request": "attach",
-        "connect": {
-            "host": "127.0.0.1",
-            "port": 8531
-        }
-        // python -m debugpy --listen 8531 --wait-for-client args1 args2 ...
+      "name": "debugpy",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 8531
+      },
+      "justMyCode": false //可以调试到环境中其他库的代码
+      // python -m debugpy --listen 8531 --wait-for-client args1 args2 ...
     }
   ]
-} 
-
+}

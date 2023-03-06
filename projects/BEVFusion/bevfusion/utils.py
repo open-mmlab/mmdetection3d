@@ -280,7 +280,7 @@ class HungarianAssigner3D(BaseAssigner):
         cls_cost = self.cls_cost(pred_instances, gt_instances)
         reg_cost = self.reg_cost(bboxes, gt_bboxes, train_cfg)
         iou = self.iou_calculator(bboxes, gt_bboxes)  # (200, 4) 有nan
-        # iou = torch.where(torch.isnan(iou), torch.tensor([0.0]).cuda(), iou)  # nan 部分设置为 0
+        # iou = torch.where(torch.isnan(iou), torch.tensor([0.0]).cuda(), iou)
         iou_cost = self.iou_cost(iou)
 
         # weighted sum of above three costs
