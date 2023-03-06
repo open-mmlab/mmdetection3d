@@ -15,7 +15,7 @@ data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
-# automatically Infer from prefix (not support LMDB and Memcache yet)
+# automatically infer from prefix (not support LMDB and Memcache yet)
 
 # data_root = 's3://openmmlab/datasets/detection3d/lyft/'
 
