@@ -250,7 +250,8 @@ class BEVFusion(Base3DDetector):
         losses = dict()
         if self.with_bbox_head:
             preds_dicts = self.bbox_head(feats, batch_input_metas)
-            loss = self.bbox_head.loss(gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs)
+            loss = self.bbox_head.loss(gt_bboxes_3d, gt_labels_3d, preds_dicts,
+                                       **kwargs)
             losses.update(loss)
-            
+
         return losses

@@ -223,7 +223,7 @@ train_pipeline = [
         use_dim=5,
         # reduce_beams=32,
         # load_augmented=None
-        ),
+    ),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
@@ -233,7 +233,7 @@ train_pipeline = [
         pad_empty_sweeps=True,
         remove_close=True,
         # load_augmented=None
-        ),
+    ),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=True,
@@ -427,7 +427,9 @@ default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=1))
 
-vis_backends = [dict(type='LocalVisBackend'),
-                dict(type='TensorboardVisBackend')]
+vis_backends = [
+    dict(type='LocalVisBackend'),
+    dict(type='TensorboardVisBackend')
+]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

@@ -309,13 +309,21 @@ class DepthLSSTransform(BaseDepthTransform):
         if downsample > 1:
             assert downsample == 2, downsample
             self.downsample = nn.Sequential(
-                nn.Conv2d(out_channels, out_channels, 3, padding=1, bias=False),
+                nn.Conv2d(
+                    out_channels, out_channels, 3, padding=1, bias=False),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(True),
-                nn.Conv2d(out_channels, out_channels, 3, stride=downsample, padding=1, bias=False),
+                nn.Conv2d(
+                    out_channels,
+                    out_channels,
+                    3,
+                    stride=downsample,
+                    padding=1,
+                    bias=False),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(True),
-                nn.Conv2d(out_channels, out_channels, 3, padding=1, bias=False),
+                nn.Conv2d(
+                    out_channels, out_channels, 3, padding=1, bias=False),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(True),
             )

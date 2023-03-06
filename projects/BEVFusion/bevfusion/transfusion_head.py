@@ -628,7 +628,7 @@ class TransFusionHead(nn.Module):
                 [res.max_overlaps for res in assign_result_list]),
             labels=torch.cat([res.labels for res in assign_result_list]),
         )
-        
+
         pred_instances = InstanceData(priors=bboxes_tensor)
         gt_instances = InstanceData(bboxes=gt_bboxes_tensor)
         sampling_result = self.bbox_sampler.sample(assign_result_ensemble,

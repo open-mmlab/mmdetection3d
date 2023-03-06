@@ -285,7 +285,9 @@ class HungarianAssigner3D(BaseAssigner):
 
         # weighted sum of above three costs
         cost = cls_cost + reg_cost + iou_cost
-        cost = torch.where(torch.isnan(cost), torch.tensor([0.0]).cuda(), cost)  # nan 部分设置为 0
+        cost = torch.where(
+            torch.isnan(cost),
+            torch.tensor([0.0]).cuda(), cost)  # nan 部分设置为 0
 
         # 3. do Hungarian matching on CPU using linear_sum_assignment
         cost = cost.detach().cpu()
