@@ -253,7 +253,7 @@ Within Jupyter, the exclamation mark `!` is used to call external executables an
 We provide a [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docker/Dockerfile) to build an image. Ensure that your [docker version](https://docs.docker.com/engine/install/) >= 19.03.
 
 ```shell
-# build an image with PyTorch 1.6, CUDA 10.1
+# build an image with PyTorch 1.9, CUDA 11.1
 # If you prefer other versions, just modified the Dockerfile
 docker build -t mmdetection3d docker/
 ```
