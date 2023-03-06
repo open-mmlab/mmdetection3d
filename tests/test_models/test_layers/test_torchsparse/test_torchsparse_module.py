@@ -8,7 +8,7 @@ if IS_TORCHSPARSE_AVAILABLE:
     from torchsparse import SparseTensor
 
     from mmdet3d.models.layers.torchsparse_block import (
-        TorchsparseConvModule, TorchsparseResidualBlock)
+        TorchSparseConvModule, TorchSparseResidualBlock)
 else:
     pytest.skip('test requires Torchsparse', allow_module_level=True)
 
@@ -30,7 +30,7 @@ def test_TorchsparseConvModule():
     # test
     input_sp_tensor = SparseTensor(voxel_features, coordinates)
 
-    self = TorchsparseConvModule(4, 4, kernel_size=2, stride=2).cuda()
+    self = TorchSparseConvModule(4, 4, kernel_size=2, stride=2).cuda()
 
     out_features = self(input_sp_tensor)
     assert out_features.F.shape == torch.Size([4, 4])
@@ -53,7 +53,7 @@ def test_TorchsparseResidualBlock():
     # test
     input_sp_tensor = SparseTensor(voxel_features, coordinates)
 
-    sparse_block0 = TorchsparseResidualBlock(4, 16, kernel_size=3).cuda()
+    sparse_block0 = TorchSparseResidualBlock(4, 16, kernel_size=3).cuda()
 
     # test forward
     out_features = sparse_block0(input_sp_tensor)
