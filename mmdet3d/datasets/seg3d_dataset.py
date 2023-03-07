@@ -257,6 +257,9 @@ class Seg3DDataset(BaseDataset):
                     self.data_prefix.get('pts', ''),
                     info['lidar_points']['lidar_path'])
 
+            info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
+            info['lidar_path'] = info['lidar_points']['lidar_path']
+
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():
                 if 'img_path' in img_info:
@@ -295,7 +298,7 @@ class Seg3DDataset(BaseDataset):
         if not self.test_mode:
             data_info = self.get_data_info(idx)
             # Pass the dataset to the pipeline during training to support mixed
-            # data augmentation, such as polarmix.
+            # data augmentation, such as polarmix and lasermix.
             data_info['dataset'] = self
             return self.pipeline(data_info)
         else:

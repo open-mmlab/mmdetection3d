@@ -9,7 +9,7 @@ from mmengine.logging import print_log
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 
-from mmdet3d.utils import register_all_modules, replace_ceph_backend
+from mmdet3d.utils import replace_ceph_backend
 
 
 def parse_args():
@@ -59,9 +59,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-    # register all modules in mmdet3d into the registries
-    # do not init the default scope here because it will be init in the runner
-    register_all_modules(init_default_scope=False)
 
     # load config
     cfg = Config.fromfile(args.config)

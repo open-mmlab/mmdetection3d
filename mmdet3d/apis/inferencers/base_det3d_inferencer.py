@@ -7,12 +7,13 @@ import torch.nn as nn
 from mmengine.fileio import (get_file_backend, isdir, join_path,
                              list_dir_or_file)
 from mmengine.infer.infer import BaseInferencer, ModelType
+from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import ConfigType, register_all_modules
+from mmdet3d.utils import ConfigType
 
 InstanceList = List[InstanceData]
 InputType = Union[str, np.ndarray]
@@ -60,7 +61,7 @@ class BaseDet3DInferencer(BaseInferencer):
                  scope: Optional[str] = 'mmdet3d',
                  palette: str = 'none') -> None:
         self.palette = palette
-        register_all_modules()
+        init_default_scope(scope)
         super().__init__(
             model=model, weights=weights, device=device, scope=scope)
 

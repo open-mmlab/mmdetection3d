@@ -6,28 +6,6 @@ class_names = [
     'motorcyclist', 'road', 'parking', 'sidewalk', 'other-ground', 'building',
     'fence', 'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'
 ]
-palette = [
-    [152, 223, 138],
-    [31, 119, 180],
-    [255, 187, 120],
-    [188, 189, 34],
-    [140, 86, 75],
-    [255, 152, 150],
-    [214, 39, 40],
-    [197, 176, 213],
-    [148, 103, 189],
-    [196, 156, 148],
-    [23, 190, 207],
-    [247, 182, 210],
-    [219, 219, 141],
-    [255, 127, 14],
-    [158, 218, 229],
-    [44, 160, 44],
-    [112, 128, 144],
-    [227, 119, 194],
-    [82, 84, 163],
-    # [174, 199, 232],
-]
 
 labels_map = {
     0: 19,  # "unlabeled"
@@ -67,10 +45,7 @@ labels_map = {
 }
 
 metainfo = dict(
-    classes=class_names,
-    palette=palette,
-    seg_label_mapping=labels_map,
-    max_label=259)
+    classes=class_names, seg_label_mapping=labels_map, max_label=259)
 
 input_modality = dict(use_lidar=True, use_camera=False)
 
