@@ -124,32 +124,10 @@ class TestPolarMix(unittest.TestCase):
                 seg_3d_dtype='np.int32'),
             dict(type='PointSegClassMapping'),
         ]
-        classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
-                   'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
-                   'sidewalk', 'other-ground', 'building', 'fence',
-                   'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign')
-        palette = [
-            [174, 199, 232],
-            [152, 223, 138],
-            [31, 119, 180],
-            [255, 187, 120],
-            [188, 189, 34],
-            [140, 86, 75],
-            [255, 152, 150],
-            [214, 39, 40],
-            [197, 176, 213],
-            [148, 103, 189],
-            [196, 156, 148],
-            [23, 190, 207],
-            [247, 182, 210],
-            [219, 219, 141],
-            [255, 127, 14],
-            [158, 218, 229],
-            [44, 160, 44],
-            [112, 128, 144],
-            [227, 119, 194],
-            [82, 84, 163],
-        ]
+        classes = ('car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person',
+                   'bicyclist', 'motorcyclist', 'road', 'parking', 'sidewalk',
+                   'other-ground', 'building', 'fence', 'vegetation', 'trunck',
+                   'terrian', 'pole', 'traffic-sign')
         seg_label_mapping = {
             0: 0,  # "unlabeled"
             1: 0,  # "outlier" mapped to "unlabeled" --------------mapped
@@ -192,7 +170,6 @@ class TestPolarMix(unittest.TestCase):
             'semantickitti_infos.pkl',
             metainfo=dict(
                 classes=classes,
-                palette=palette,
                 seg_label_mapping=seg_label_mapping,
                 max_label=max_label),
             data_prefix=dict(
@@ -242,32 +219,10 @@ class TestLaserMix(unittest.TestCase):
                 seg_3d_dtype='np.int32'),
             dict(type='PointSegClassMapping'),
         ]
-        classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
-                   'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
-                   'sidewalk', 'other-ground', 'building', 'fence',
-                   'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign')
-        palette = [
-            [174, 199, 232],
-            [152, 223, 138],
-            [31, 119, 180],
-            [255, 187, 120],
-            [188, 189, 34],
-            [140, 86, 75],
-            [255, 152, 150],
-            [214, 39, 40],
-            [197, 176, 213],
-            [148, 103, 189],
-            [196, 156, 148],
-            [23, 190, 207],
-            [247, 182, 210],
-            [219, 219, 141],
-            [255, 127, 14],
-            [158, 218, 229],
-            [44, 160, 44],
-            [112, 128, 144],
-            [227, 119, 194],
-            [82, 84, 163],
-        ]
+        classes = ('car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person',
+                   'bicyclist', 'motorcyclist', 'road', 'parking', 'sidewalk',
+                   'other-ground', 'building', 'fence', 'vegetation', 'trunck',
+                   'terrian', 'pole', 'traffic-sign')
         seg_label_mapping = {
             0: 0,  # "unlabeled"
             1: 0,  # "outlier" mapped to "unlabeled" --------------mapped
@@ -310,7 +265,6 @@ class TestLaserMix(unittest.TestCase):
             'semantickitti_infos.pkl',
             metainfo=dict(
                 classes=classes,
-                palette=palette,
                 seg_label_mapping=seg_label_mapping,
                 max_label=max_label),
             data_prefix=dict(
