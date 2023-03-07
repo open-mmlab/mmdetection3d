@@ -65,7 +65,7 @@ class SPVCNNBackbone(MinkUNetBackbone):
         ])
         self.dropout = nn.Dropout(drop_ratio, True)
 
-    def forward(self, voxel_features: Tensor, coors: Tensor) -> SparseTensor:
+    def forward(self, voxel_features: Tensor, coors: Tensor) -> PointTensor:
         """Forward function.
 
         Args:
@@ -78,17 +78,20 @@ class SPVCNNBackbone(MinkUNetBackbone):
         """
         x = SparseTensor(voxel_features, coors)
         z = PointTensor(x.F, x.C.float())
+        x = self.initial_voxelize(z)
 
         x = self.conv_input(x)
         z = self.voxel_to_point(x, z, nearest=False)
-
+        x = self.point_to_voxel(x, z)
         laterals = [x]
         for enc in self.encoder:
             x = enc(x)
             laterals.append(x)
         laterals = laterals[:-1][::-1]
 
-        z = self.voxel_to_point(x, z) + self.point_transforms[0](z)
+        z_new = self.voxel_to_point(x, z)
+        z_new.F = z_new.F + self.point_transforms[0](z.F)
+        z = z_new
         x = self.point_to_voxel(x, z)
         x.F = self.dropout(x.F)
 
@@ -99,14 +102,34 @@ class SPVCNNBackbone(MinkUNetBackbone):
             x = dec[1](x)
             dec_outs.append(x)
             if i == 1:
-                z = self.voxel_to_point(x, z) + self.point_transforms[1](z)
+                z_new = self.voxel_to_point(x, z)
+                z_new.F = z_new.F + self.point_transforms[1](z.F)
+                z = z_new
                 x = self.point_to_voxel(x, z)
                 x.F = self.dropout(x.F)
 
-        z = self.voxel_to_point(x, z) + self.point_transforms[0](z)
-        x = self.point_to_voxel(x, z)
+        z_new = self.voxel_to_point(x, z)
+        z_new.F = z_new.F + self.point_transforms[2](z.F)
+        # x = self.point_to_voxel(x, z)
 
-        return x
+        return z_new
+
+    def initial_voxelize(self, z):
+
+        pc_hash = F.sphash(torch.floor(z.C).int())
+        sparse_hash = torch.unique(pc_hash)
+        idx_query = F.sphashquery(pc_hash, sparse_hash)
+        counts = F.spcount(idx_query.int(), len(sparse_hash))
+
+        inserted_coords = F.spvoxelize(torch.floor(z.C), idx_query, counts)
+        inserted_coords = torch.round(inserted_coords).int()
+        inserted_feat = F.spvoxelize(z.F, idx_query, counts)
+
+        new_tensor = SparseTensor(inserted_feat, inserted_coords, 1)
+        new_tensor.cmaps.setdefault(new_tensor.stride, new_tensor.coords)
+        z.additional_features['idx_query'][1] = idx_query
+        z.additional_features['counts'][1] = counts
+        return new_tensor
 
     # x: SparseTensor, z: PointTensor
     # return: SparseTensor
