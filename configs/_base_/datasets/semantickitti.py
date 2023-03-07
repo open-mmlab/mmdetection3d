@@ -1,5 +1,5 @@
 # dataset settings
-dataset_type = 'SemanticKITTIDataset'
+dataset_type = 'SemanticKittiDataset'
 data_root = 'data/semantickitti/'
 class_names = [
     'car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person', 'bicyclist',
@@ -138,8 +138,6 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            data_prefix=dict(
-                pts='', img='', pts_instance_mask='', pts_semantic_mask=''),
             ann_file='semantickitti_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
@@ -157,8 +155,6 @@ test_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            data_prefix=dict(
-                pts='', img='', pts_instance_mask='', pts_semantic_mask=''),
             ann_file='semantickitti_infos_val.pkl',
             pipeline=test_pipeline,
             metainfo=metainfo,
