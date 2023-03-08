@@ -20,10 +20,11 @@ class TorchSparseConvModule(BaseModule):
     Args:
         in_channels (int): In channels of block.
         out_channels (int): Out channels of block.
-        kernel_size (int or Tuple[int]): Kernel_size of block. Defaults to 3.
+        kernel_size (int or Tuple[int]): Kernel_size of block.
         stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
         dilation (int): Dilation of block. Defaults to 1.
         transposed (bool): Whether use transposed convolution operator.
+            Defaults to False.
         init_cfg (:obj:`ConfigDict` or dict, optional): Initialization config.
             Defaults to None.
     """
@@ -58,7 +59,7 @@ class TorchSparseResidualBlock(BaseModule):
     Args:
         in_channels (int): In channels of block.
         out_channels (int): Out channels of block.
-        kernel_size (int or Tuple[int]): Kernel_size of block. Defaults to 3.
+        kernel_size (int or Tuple[int]): Kernel_size of block.
         stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
         dilation (int): Dilation of block. Defaults to 1.
         init_cfg (:obj:`ConfigDict` or dict, optional): Initialization config.
