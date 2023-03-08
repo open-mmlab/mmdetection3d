@@ -2,6 +2,7 @@
 import os.path as osp
 from typing import Dict, List, Optional, Sequence, Union
 
+import mmcv
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
@@ -94,26 +95,29 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
                                                  'LoadPointsFromFile')
         # Now, we only support ``LoadMultiViewImageFromFiles`` as the image
         # loader
-        load_imgs_idx = self._get_transform_idx(pipeline_cfg,
-                                                'LoadMultiViewImageFromFiles')
-        if load_point_idx == -1 and load_imgs_idx == -1:
+        load_img_idx = self._get_transform_idx(pipeline_cfg,
+                                               'LoadMultiViewImageFromFiles')
+        if load_point_idx == -1 or load_img_idx == -1:
             raise ValueError(
-                'Eather LoadPointsFromFile and LoadMultiViewImageFromFiles is '
-                'specified at least one in the pipeline.')
+                'Both LoadPointsFromFile and LoadMultiViewImageFromFiles must '
+                'be specified the pipeline, but LoadPointsFromFile is '
+                f'{load_point_idx == -1} and LoadMultiViewImageFromFiles is '
+                f'{load_img_idx}')
 
-        if load_point_idx != -1:
-            load_cfg = pipeline_cfg[load_point_idx]
-            self.coord_type, self.load_dim = load_cfg['coord_type'], load_cfg[
-                'load_dim']
-            self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
-                load_cfg['use_dim'], int) else load_cfg['use_dim']
+        load_cfg = pipeline_cfg[load_point_idx]
+        self.coord_type, self.load_dim = load_cfg['coord_type'], load_cfg[
+            'load_dim']
+        self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
+            load_cfg['use_dim'], int) else load_cfg['use_dim']
 
-            load_idx = load_point_idx
+        load_idx = min(load_point_idx, load_img_idx)
 
-        if load_imgs_idx != -1:
-            load_idx = min(load_idx, load_imgs_idx)
-
-        pipeline_cfg[load_idx]['type'] = 'MultiModalityDet3DInferencerLoader'
+        load_point_args = pipeline_cfg.pop(load_point_idx)
+        load_img_args = pipeline_cfg.pop(load_img_idx)
+        pipeline_cfg.insert[load_idx] = dict(
+            type='MultiModalityDet3DInferencerLoader',
+            load_point_args=load_point_args,
+            load_img_args=load_img_args)
 
         return Compose(pipeline_cfg)
 
@@ -176,7 +180,23 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
             o3d_save_path = osp.join(img_out_dir, pc_name) \
                 if img_out_dir != '' else None
 
-            data_input = dict(points=points)
+            if isinstance(single_input['img'], str):
+                img_bytes = mmengine.fileio.get(single_input['img'])
+                img = mmcv.imfrombytes(img_bytes)
+                img = img[:, :, ::-1]
+                img_name = osp.basename(single_input['img'])
+            elif isinstance(single_input['img'], np.ndarray):
+                img = single_input['img'].copy()
+                img_num = str(self.num_visualized_imgs).zfill(8)
+                img_name = f'{img_num}.jpg'
+            else:
+                raise ValueError('Unsupported input type: '
+                                 f"{type(single_input['img'])}")
+
+            out_file = osp.join(img_out_dir, img_name) if img_out_dir != '' \
+                else None
+
+            data_input = dict(points=points, img=img)
             self.visualizer.add_datasample(
                 pc_name,
                 data_input,
@@ -187,7 +207,8 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
                 draw_pred=draw_pred,
                 pred_score_thr=pred_score_thr,
                 o3d_save_path=o3d_save_path,
-                vis_task='multi_modality',
+                out_file=out_file,
+                vis_task='multi-modality_det',
             )
             results.append(points)
             self.num_visualized_frames += 1
