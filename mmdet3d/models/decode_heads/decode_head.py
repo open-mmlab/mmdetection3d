@@ -51,6 +51,8 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         loss_decode (dict or :obj:`ConfigDict`): Config of decode loss.
             Defaults to dict(type='mmdet.CrossEntropyLoss', use_sigmoid=False,
             class_weight=None, loss_weight=1.0).
+        conv_seg_kernel_size (int): The kernel size used in conv_seg.
+            Defaults to 1.
         ignore_index (int): The label index to be ignored. When using masked
             BCE loss, ignore_index should be set to None. Defaults to 255.
         init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
@@ -69,6 +71,7 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
                      use_sigmoid=False,
                      class_weight=None,
                      loss_weight=1.0),
+                 conv_seg_kernel_size: int = 1,
                  ignore_index: int = 255,
                  init_cfg: OptMultiConfig = None) -> None:
         super(Base3DDecodeHead, self).__init__(init_cfg=init_cfg)
@@ -81,7 +84,10 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         self.loss_decode = MODELS.build(loss_decode)
         self.ignore_index = ignore_index
 
-        self.conv_seg = nn.Conv1d(channels, num_classes, kernel_size=1)
+        self.conv_seg = self.build_conv_seg(
+            channels=channels,
+            num_classes=num_classes,
+            kernel_size=conv_seg_kernel_size)
         if dropout_ratio > 0:
             self.dropout = nn.Dropout(dropout_ratio)
         else:
@@ -96,6 +102,11 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
     def forward(self, feats_dict: dict) -> Tensor:
         """Placeholder of forward function."""
         pass
+
+    def build_conv_seg(self, channels: int, num_classes: int,
+                       kernel_size: int) -> nn.Module:
+        """Build Convolutional Segmentation Layers."""
+        return nn.Conv1d(channels, num_classes, kernel_size=kernel_size)
 
     def cls_seg(self, feat: Tensor) -> Tensor:
         """Classify each points."""
