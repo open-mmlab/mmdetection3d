@@ -295,11 +295,18 @@ class BaseDet3DInferencer(BaseInferencer):
         It's better to contain only basic data elements such as strings and
         numbers in order to guarantee it's json-serializable.
         """
-        pred_instances = data_sample.pred_instances_3d.numpy()
-        result = {
-            'bboxes_3d': pred_instances.bboxes_3d.tensor.cpu().tolist(),
-            'labels_3d': pred_instances.labels_3d.tolist(),
-            'scores_3d': pred_instances.scores_3d.tolist()
-        }
+        result = {}
+        if 'pred_instances_3d' in data_sample:
+            pred_instances_3d = data_sample.pred_instances_3d.numpy()
+            result = {
+                'bboxes_3d': pred_instances_3d.bboxes_3d.tensor.cpu().tolist(),
+                'labels_3d': pred_instances_3d.labels_3d.tolist(),
+                'scores_3d': pred_instances_3d.scores_3d.tolist()
+            }
+
+        if 'pred_pts_seg' in data_sample:
+            pred_pts_seg = data_sample.pred_pts_seg.numpy()
+            result['pts_semantic_mask'] = \
+                pred_pts_seg.pts_semantic_mask.tolist()
 
         return result
