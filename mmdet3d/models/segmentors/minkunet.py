@@ -11,26 +11,38 @@ from .encoder_decoder import EncoderDecoder3D
 
 @MODELS.register_module()
 class MinkUNet(EncoderDecoder3D):
-    """Base class for 3D segmentors.
+    r"""MinkUNet is the implementation of `4D Spatio-Temporal ConvNets.
+    <https://arxiv.org/abs/1904.08755>`_ with TorchSparse backend.
+
+    Refer to `implementation code <https://github.com/mit-han-lab/spvnas>`_.
 
     Args:
-        data_preprocessor (dict, optional): Model preprocessing config
-            for processing the input data. it usually includes
-            ``to_rgb``, ``pad_size_divisor``, ``pad_val``,
-            ``mean`` and ``std``. Default to None.
-       init_cfg (dict, optional): the config to control the
-           initialization. Default to None.
+        kwargs (dict): Arguments are the same as those in
+            :class:`EncoderDecoder3D`.
     """
 
     def __init__(self, **kwargs) -> None:
         if not IS_TORCHSPARSE_AVAILABLE:
             raise ImportError(
-                'Please follow `getting_started.md` to install Torchsparse.`'
-            )  # noqa: E501
+                'Please follow `getting_started.md` to install Torchsparse.`')
         super().__init__(**kwargs)
 
     def loss(self, inputs: dict, data_samples: SampleList):
-        """"""
+        """Calculate losses from a batch of inputs and data samples.
+
+        Args:
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'voxels' keys.
+
+                - points (List[Tensor]): Point cloud of each sample.
+                - voxels (dict): Voxel feature and coords after voxelization.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary of loss components.
+        """
         x = self.extract_feat(inputs)
         losses = self.decode_head.loss(x, data_samples)
         return losses
@@ -40,22 +52,20 @@ class MinkUNet(EncoderDecoder3D):
 
         Args:
             batch_inputs_dict (dict): Input sample dict which
-                includes 'points' and 'imgs' keys.
+                includes 'points' and 'voxels' keys.
 
-                - points (list[torch.Tensor]): Point cloud of each sample.
-                - imgs (torch.Tensor, optional): Image tensor has shape
-                    (B, C, H, W).
-            batch_data_samples (list[:obj:`Det3DDataSample`]): The det3d
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_sem_seg`.
-            rescale (bool): Whether transform to original number of points.
-                Will be used for voxelization based segmentors.
-                Defaults to True.
+                - points (List[Tensor]): Point cloud of each sample.
+                - voxels (dict): Voxel feature and coords after voxelization.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
-            list[dict]: The output prediction result with following keys:
+            List[:obj:`Det3DDataSample`]: Segmentation results of the input
+            points. Each Det3DDataSample usually contains:
 
-                - semantic_mask (Tensor): Segmentation mask of shape [N].
+            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+              segmentation.
         """
         x = self.extract_feat(inputs)
         preds = self.decode_head.predict(x, data_samples)
@@ -69,14 +79,13 @@ class MinkUNet(EncoderDecoder3D):
 
         Args:
             batch_inputs_dict (dict): Input sample dict which
-                includes 'points' and 'imgs' keys.
+                includes 'points' and 'voxels' keys.
 
-                - points (list[torch.Tensor]): Point cloud of each sample.
-                - imgs (torch.Tensor, optional): Image tensor has shape
-                  (B, C, H, W).
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_sem_seg`.
+                - points (List[Tensor]): Point cloud of each sample.
+                - voxels (dict): Voxel feature and coords after voxelization.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`. Defaults to None.
 
         Returns:
             Tensor: Forward output of model without any post-processes.
@@ -85,7 +94,7 @@ class MinkUNet(EncoderDecoder3D):
         return self.decode_head.forward(x)
 
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
-        """Extract features from points."""
+        """Extract features from voxels."""
         voxel_dict = batch_inputs_dict['voxels']
         x = self.backbone(voxel_dict['voxels'], voxel_dict['coors'])
         if self.with_neck:

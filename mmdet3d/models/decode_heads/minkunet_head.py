@@ -18,7 +18,10 @@ else:
 
 @MODELS.register_module()
 class MinkUNetHead(Base3DDecodeHead):
-    """
+    r"""MinkUNet decoder head with TorchSparse backend.
+
+    Refer to `implementation code <https://github.com/mit-han-lab/spvnas>`_.
+
     Args:
         channels (int): Channels after modules, before conv_seg.
         num_classes (int): Number of classes.
@@ -32,14 +35,13 @@ class MinkUNetHead(Base3DDecodeHead):
         """Forward function for training.
 
         Args:
-            inputs (list[torch.Tensor]): List of multi-level point features.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
-            train_cfg (dict): The training config.
+            inputs (SparseTensor): Features from backone.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
-            dict[str, Tensor]: a dictionary of loss components
+            dict[str, Tensor]: A dictionary of loss components
         """
         seg_logits = self.forward(inputs)
 
@@ -56,14 +58,12 @@ class MinkUNetHead(Base3DDecodeHead):
         """Forward function for testing.
 
         Args:
-            inputs (list[Tensor]): List of multi-level point features.
+            inputs (SparseTensor): Features from backone.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
-            test_cfg (dict): The testing config.
+                data samples.
 
         Returns:
-            list[Tensor]: The segmentation prediction mask of each batch.
+            List[Tensor]: The segmentation prediction mask of each batch.
         """
         seg_logits = self.forward(inputs)
         seg_preds = seg_logits.argmax(dim=1)
@@ -81,7 +81,7 @@ class MinkUNetHead(Base3DDecodeHead):
         """Forward function.
 
         Args:
-            x (SparseTensor): Features from backbone with shape [N, C].
+            x (SparseTensor): Features from backbone.
 
         Returns:
             output (Tensor): Segmentation map of shape [N, C].

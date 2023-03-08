@@ -338,7 +338,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         Args:
             points (List[Tensor]): Point cloud in one data batch.
             data_samples: (list[:obj:`Det3DDataSample`]): The annotation data
-                of every samples. Add voxel-wise annotation forsegmentation.
+                of every samples. Add voxel-wise annotation for segmentation.
 
         Returns:
             Dict[str, Tensor]: Voxelization information.
