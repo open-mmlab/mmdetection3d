@@ -8,8 +8,8 @@ from .seg3d_dataset import Seg3DDataset
 
 
 @DATASETS.register_module()
-class SemanticKITTIDataset(Seg3DDataset):
-    r"""SemanticKITTI Dataset.
+class SemanticKittiDataset(Seg3DDataset):
+    r"""SemanticKitti Dataset.
 
     This class serves as the API for experiments on the SemanticKITTI Dataset
     Please refer to <http://www.semantic-kitti.org/dataset.html>`_
@@ -65,7 +65,7 @@ class SemanticKITTIDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points',
+                     pts='',
                      img='',
                      pts_instance_mask='',
                      pts_semantic_mask=''),

@@ -3,39 +3,17 @@ import unittest
 
 import numpy as np
 
-from mmdet3d.datasets import SemanticKITTIDataset
+from mmdet3d.datasets import SemanticKittiDataset
 from mmdet3d.utils import register_all_modules
 
 
 def _generate_semantickitti_dataset_config():
     data_root = './tests/data/semantickitti/'
     ann_file = 'semantickitti_infos.pkl'
-    classes = ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus',
-               'person', 'bicyclist', 'motorcyclist', 'road', 'parking',
-               'sidewalk', 'other-ground', 'building', 'fence', 'vegetation',
-               'trunck', 'terrian', 'pole', 'traffic-sign')
-    palette = [
-        [174, 199, 232],
-        [152, 223, 138],
-        [31, 119, 180],
-        [255, 187, 120],
-        [188, 189, 34],
-        [140, 86, 75],
-        [255, 152, 150],
-        [214, 39, 40],
-        [197, 176, 213],
-        [148, 103, 189],
-        [196, 156, 148],
-        [23, 190, 207],
-        [247, 182, 210],
-        [219, 219, 141],
-        [255, 127, 14],
-        [158, 218, 229],
-        [44, 160, 44],
-        [112, 128, 144],
-        [227, 119, 194],
-        [82, 84, 163],
-    ]
+    classes = ('car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person',
+               'bicyclist', 'motorcyclist', 'road', 'parking', 'sidewalk',
+               'other-ground', 'building', 'fence', 'vegetation', 'trunck',
+               'terrian', 'pole', 'traffic-sign')
 
     seg_label_mapping = {
         0: 0,  # "unlabeled"
@@ -96,25 +74,24 @@ def _generate_semantickitti_dataset_config():
     data_prefix = dict(
         pts='sequences/00/velodyne', pts_semantic_mask='sequences/00/labels')
 
-    return (data_root, ann_file, classes, palette, data_prefix, pipeline,
-            modality, seg_label_mapping, max_label)
+    return (data_root, ann_file, classes, data_prefix, pipeline, modality,
+            seg_label_mapping, max_label)
 
 
-class TestSemanticKITTIDataset(unittest.TestCase):
+class TestSemanticKittiDataset(unittest.TestCase):
 
     def test_semantickitti(self):
-        (data_root, ann_file, classes, palette, data_prefix, pipeline,
-         modality, seg_label_mapping,
+        (data_root, ann_file, classes, data_prefix, pipeline, modality,
+         seg_label_mapping,
          max_label) = _generate_semantickitti_dataset_config()
 
         register_all_modules()
         np.random.seed(0)
-        semantickitti_dataset = SemanticKITTIDataset(
+        semantickitti_dataset = SemanticKittiDataset(
             data_root,
             ann_file,
             metainfo=dict(
                 classes=classes,
-                palette=palette,
                 seg_label_mapping=seg_label_mapping,
                 max_label=max_label),
             data_prefix=data_prefix,
