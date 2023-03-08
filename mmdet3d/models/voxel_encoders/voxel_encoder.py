@@ -151,7 +151,6 @@ class DynamicVFE(nn.Module):
         self.y_offset = self.vy / 2 + point_cloud_range[1]
         self.z_offset = self.vz / 2 + point_cloud_range[2]
         self.point_cloud_range = point_cloud_range
-        self.scatter = DynamicScatter(voxel_size, point_cloud_range, True)
 
         feat_channels = [self.in_channels] + list(feat_channels)
         vfe_layers = []
@@ -351,7 +350,6 @@ class HardVFE(nn.Module):
         self.y_offset = self.vy / 2 + point_cloud_range[1]
         self.z_offset = self.vz / 2 + point_cloud_range[2]
         self.point_cloud_range = point_cloud_range
-        self.scatter = DynamicScatter(voxel_size, point_cloud_range, True)
 
         feat_channels = [self.in_channels] + list(feat_channels)
         vfe_layers = []
