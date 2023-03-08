@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence
+from typing import List
 
 from mmengine.model import BaseModule
 from mmengine.registry import MODELS
@@ -24,22 +24,25 @@ class MinkUNetBackbone(BaseModule):
     Refer to `implementation code <https://github.com/mit-han-lab/spvnas>`_.
 
     Args:
-        in_channels (int): Number of input image channels. Default" 3.
-        base_channels (int): Number of base channels of each stage.
-            The output channels of the first stage. Defaults to 64.
-        enc_channels (tuple[int]): Convolutional channels of each encode block.
-        dec_channels (tuple[int]): Convolutional channels of each decode block.
+        in_channels (int): Number of input voxel feature channels.
+            Defaults to 4.
+        base_channels (int): The input channels for first encoder layer.
+            Defaults to 32.
+        encoder_channels (List[int]): Convolutional channels of each encode
+            layer. Defaults to [32, 64, 128, 256].
+        decoder_channels (List[int]): Convolutional channels of each decode
+            layer. Defaults to [256, 128, 96, 96].
         num_stages (int): Number of stages in encoder and decoder.
             Defaults to 4.
         init_cfg (dict or list[dict], optional): Initialization config dict.
-            Default: None
+            Defaults to None.
     """
 
     def __init__(self,
                  in_channels: int = 4,
                  base_channels: int = 32,
-                 encoder_channels: Sequence[int] = [32, 64, 128, 256],
-                 decoder_channels: Sequence[int] = [256, 128, 96, 96],
+                 encoder_channels: List[int] = [32, 64, 128, 256],
+                 decoder_channels: List[int] = [256, 128, 96, 96],
                  num_stages: int = 4,
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg)

@@ -23,7 +23,7 @@ class MinkUNetHead(Base3DDecodeHead):
     Refer to `implementation code <https://github.com/mit-han-lab/spvnas>`_.
 
     Args:
-        channels (int): Channels after modules, before conv_seg.
+        channels (int): The input channel of conv_seg.
         num_classes (int): Number of classes.
     """
 
