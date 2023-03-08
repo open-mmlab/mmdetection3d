@@ -103,16 +103,16 @@ class MinkUNetBackbone(BaseModule):
         x = torchsparse.SparseTensor(voxel_features, coors)
         x = self.conv_input(x)
         laterals = [x]
-        for encoder in self.encoder:
-            x = encoder(x)
+        for encoder_layer in self.encoder:
+            x = encoder_layer(x)
             laterals.append(x)
         laterals = laterals[:-1][::-1]
 
         decoder_outs = []
-        for i, decoder in enumerate(self.decoder):
-            x = decoder[0](x)
+        for i, decoder_layer in enumerate(self.decoder):
+            x = decoder_layer[0](x)
             x = torchsparse.cat((x, laterals[i]))
-            x = decoder[1](x)
+            x = decoder_layer[1](x)
             decoder_outs.append(x)
 
         return decoder_outs[-1]
