@@ -190,7 +190,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             vel = vel.view(batch, self.max_num, 2)
             final_box_preds = torch.cat([xs, ys, hei, dim, rot, vel], dim=2)
 
-        final_scores = scores
+        final_scores = scores.to(torch.float32)
         final_preds = clses
 
         # use score threshold
