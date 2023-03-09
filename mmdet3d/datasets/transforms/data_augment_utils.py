@@ -40,7 +40,7 @@ def box_collision_test(boxes, qboxes, clockwise=True):
     """
     N = boxes.shape[0]
     K = qboxes.shape[0]
-    ret = np.zeros((N, K), dtype=np.bool_)
+    ret = np.zeros((N, K), dtype=bool)
     slices = np.array([1, 2, 3, 0])
     lines_boxes = np.stack((boxes, boxes[:, slices, :]),
                            axis=2)  # [N, 4, 2(line), 2(xy)]
@@ -366,7 +366,7 @@ def noise_per_object_v3_(gt_boxes,
             center_noise_std, center_noise_std, center_noise_std
         ]
     if valid_mask is None:
-        valid_mask = np.ones((num_boxes, ), dtype=np.bool_)
+        valid_mask = np.ones((num_boxes, ), dtype=bool)
     center_noise_std = np.array(center_noise_std, dtype=gt_boxes.dtype)
 
     loc_noises = np.random.normal(
