@@ -147,10 +147,14 @@ class Pack3DDetInputs(BaseTransform):
         if 'img' in results:
             if isinstance(results['img'], list):
                 # process multiple imgs in single frame
-                imgs = [to_tensor(img) for img in results['img']]
-                imgs = torch.stack(
-                    imgs, dim=0).permute(0, 3, 1, 2).contiguous()
-                results['img'] = to_tensor(imgs)
+                imgs = np.stack([img for img in results['img']], axis=0)
+                if not imgs.flags.c_contiguous:
+                    imgs = np.ascontiguousarray(imgs.transpose(0, 3, 1, 2))
+                    imgs = to_tensor(imgs)
+                else:
+                    imgs = to_tensor(imgs).permute(0, 3, 1, 2).contiguous()
+
+                results['img'] = imgs
             else:
                 img = results['img']
                 if len(img.shape) < 3:
@@ -159,7 +163,12 @@ class Pack3DDetInputs(BaseTransform):
                 # `torch.permute()` rather than `np.transpose()`.
                 # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
                 # for more details
-                results['img'] = to_tensor(img).permute(2, 0, 1).contiguous()
+                if not img.flags.c_contiguous:
+                    img = np.ascontiguousarray(img.transpose(2, 0, 1))
+                    img = to_tensor(img)
+                else:
+                    img = to_tensor(img).permute(2, 0, 1).contiguous()
+                results['img'] = img
 
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',

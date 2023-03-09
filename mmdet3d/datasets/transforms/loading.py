@@ -1216,17 +1216,19 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
 
     def __init__(self, load_point_args: dict, load_img_args: dict) -> None:
         super().__init__()
-        self.from_file = TRANSFORMS.build(
+        self.points_from_file = TRANSFORMS.build(
             dict(type='LoadPointsFromFile', **load_point_args))
-        self.from_ndarray = TRANSFORMS.build(
+        self.points_from_ndarray = TRANSFORMS.build(
             dict(type='LoadPointsFromDict', **load_point_args))
         coord_type = load_point_args['coord_type']
         self.box_type_3d, self.box_mode_3d = get_box_type(coord_type)
 
-        self.from_file = TRANSFORMS.build(
-            dict(type='LoadMultiViewImageFromFiles', **load_img_args))
-        # self.from_ndarray = TRANSFORMS.build(
-        #     dict(type='LoadImageFromNDArray', **load_img_args))
+        # self.from_file = TRANSFORMS.build(
+        #     dict(type='LoadMultiViewImageFromFiles', **load_img_args))
+        self.imgs_from_file = TRANSFORMS.build(
+            dict(type='LoadImageFromFileMono3D', **load_img_args))
+        self.imgs_from_ndarray = TRANSFORMS.build(
+            dict(type='LoadImageFromNDArray', **load_img_args))
 
     def transform(self, single_input: dict) -> dict:
         """Transform function to add image meta information.
@@ -1259,9 +1261,11 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
                              f"{type(single_input['points'])}")
 
         if 'points' in inputs:
-            points = self.from_ndarray(inputs)
+            points_inputs = self.points_from_ndarray(inputs)
         else:
-            points = self.from_file(inputs)
+            points_inputs = self.points_from_file(inputs)
+
+        multi_modality_inputs = points_inputs
 
         box_type_3d, box_mode_3d = get_box_type('lidar')
         assert 'calib' in single_input and 'img' in single_input, \
@@ -1297,10 +1301,10 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
                              f"{type(single_input['img'])}")
 
         if 'img' in inputs:
-            imgs = self.from_ndarray(inputs)
+            imgs_inputs = self.imgs_from_ndarray(inputs)
         else:
-            imgs = self.from_file(inputs)
+            imgs_inputs = self.imgs_from_file(inputs)
 
-        multi_modality_inputs = dict(points=points, imgs=imgs)
+        multi_modality_inputs.update(imgs_inputs)
 
         return multi_modality_inputs

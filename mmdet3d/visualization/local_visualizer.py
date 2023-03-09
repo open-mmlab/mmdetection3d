@@ -596,6 +596,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 img = img.permute(1, 2, 0).numpy()
                 img = img[..., [2, 1, 0]]  # bgr to rgb
             self.set_image(img)
+            # bboxes_3d = bboxes_3d.convert_to(Box3DMode.CAM)
             self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
             if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
                 centers_2d = instances.centers_2d
@@ -822,6 +823,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 wait_time=wait_time)
 
         if out_file is not None:
+            # check the name of image file
+            if not out_file.endswith('.png'):
+                out_file = f'{out_file}.png'
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:

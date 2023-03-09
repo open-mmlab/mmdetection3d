@@ -214,7 +214,7 @@ def inference_multi_modality_detector(model: nn.Module,
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
     data_list = mmengine.load(ann_file)['data_list']
-    assert len(imgs) == len(data_list)
+    # assert len(imgs) == len(data_list)
 
     data = []
     for index, pcd in enumerate(pcds):
@@ -226,13 +226,18 @@ def inference_multi_modality_detector(model: nn.Module,
         if osp.basename(img_path) != osp.basename(img):
             raise ValueError(f'the info file of {img_path} is not provided.')
 
+        data_info['images'][cam_type]['img_path'] = img
+        cam2img = np.array(data_info['images'][cam_type]['cam2img'])
+
         # TODO: check the name consistency of
         # image file and point cloud file
+        # TODO: support multi-view image loading
         data_ = dict(
             lidar_points=dict(lidar_path=pcd),
             img_path=img,
             box_type_3d=box_type_3d,
-            box_mode_3d=box_mode_3d)
+            box_mode_3d=box_mode_3d,
+            cam2img=cam2img)
 
         # LiDAR to image conversion for KITTI dataset
         if box_mode_3d == Box3DMode.LIDAR:
@@ -293,7 +298,7 @@ def inference_mono_3d_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
-    data_list = mmengine.load(ann_file)
+    data_list = mmengine.load(ann_file)['data_list']
     assert len(imgs) == len(data_list)
 
     data = []
