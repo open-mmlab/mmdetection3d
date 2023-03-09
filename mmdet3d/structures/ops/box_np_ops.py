@@ -660,7 +660,7 @@ def _points_in_convex_polygon_3d_jit(points, polygon_surfaces, normal_vec, d,
     max_num_surfaces, max_num_points_of_surface = polygon_surfaces.shape[1:3]
     num_points = points.shape[0]
     num_polygons = polygon_surfaces.shape[0]
-    ret = np.ones((num_points, num_polygons), dtype=bool)
+    ret = np.ones((num_points, num_polygons), dtype=np.bool_)
     sign = 0.0
     for i in range(num_points):
         for j in range(num_polygons):
@@ -734,7 +734,7 @@ def points_in_convex_polygon_jit(points, polygon, clockwise=False):
                        np.array([num_points_of_polygon - 1] +
                                 list(range(num_points_of_polygon -
                                            1))), :] - polygon
-    ret = np.zeros((num_points, num_polygons), dtype=bool)
+    ret = np.zeros((num_points, num_polygons), dtype=np.bool_)
     success = True
     cross = 0.0
     for i in range(num_points):
