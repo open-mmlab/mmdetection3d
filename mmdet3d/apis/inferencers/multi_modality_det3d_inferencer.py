@@ -39,7 +39,7 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
-        scope (str, optional): The scope of registry.
+        scope (str): The scope of registry.
         palette (str, optional): The palette of visualization.
     """
 
@@ -57,14 +57,14 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: Optional[str] = 'mmdet3d',
+                 scope: str = 'mmdet3d',
                  palette: str = 'none') -> None:
         # A global counter tracking the number of frames processed, for
         # naming of the output results
         self.num_visualized_frames = 0
         self.palette = palette
         register_all_modules()
-        super().__init__(
+        super(MultiModalityDet3DInferencer, self).__init__(
             model=model, weights=weights, device=device, scope=scope)
 
     def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
