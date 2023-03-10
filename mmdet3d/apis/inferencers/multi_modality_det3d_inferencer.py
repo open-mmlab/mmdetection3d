@@ -93,15 +93,17 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
 
         load_point_idx = self._get_transform_idx(pipeline_cfg,
                                                  'LoadPointsFromFile')
-        # Now, we only support ``LoadMultiViewImageFromFiles`` as the image
-        # loader
+        # Now, we only support ``LoadImageFromFile`` as the image loader in the
+        # original piepline. `LoadMultiViewImageFromFiles` is not supported
+        # yet.
         load_img_idx = self._get_transform_idx(pipeline_cfg,
-                                               'LoadMultiViewImageFromFiles')
+                                               'LoadImageFromFile')
+
         if load_point_idx == -1 or load_img_idx == -1:
             raise ValueError(
-                'Both LoadPointsFromFile and LoadMultiViewImageFromFiles must '
+                'Both LoadPointsFromFile and LoadImageFromFile must '
                 'be specified the pipeline, but LoadPointsFromFile is '
-                f'{load_point_idx == -1} and LoadMultiViewImageFromFiles is '
+                f'{load_point_idx == -1} and LoadImageFromFile is '
                 f'{load_img_idx}')
 
         load_cfg = pipeline_cfg[load_point_idx]
@@ -110,11 +112,15 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
         self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
             load_cfg['use_dim'], int) else load_cfg['use_dim']
 
-        load_idx = min(load_point_idx, load_img_idx)
+        load_point_args = pipeline_cfg[load_point_idx]
+        load_point_args.pop('type')
+        load_img_args = pipeline_cfg[load_img_idx]
+        load_img_args.pop('type')
 
-        load_point_args = pipeline_cfg.pop(load_point_idx)
-        load_img_args = pipeline_cfg.pop(load_img_idx)
-        pipeline_cfg.insert[load_idx] = dict(
+        load_idx = min(load_point_idx, load_img_idx)
+        pipeline_cfg.pop(max(load_point_idx, load_img_idx))
+
+        pipeline_cfg[load_idx] = dict(
             type='MultiModalityDet3DInferencerLoader',
             load_point_args=load_point_args,
             load_img_args=load_img_args)
@@ -161,37 +167,38 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
         results = []
 
         for single_input, pred in zip(inputs, preds):
-            single_input = single_input['points']
-            if isinstance(single_input, str):
-                pts_bytes = mmengine.fileio.get(single_input)
+            points_input = single_input['points']
+            if isinstance(points_input, str):
+                pts_bytes = mmengine.fileio.get(points_input)
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
                 points = points.reshape(-1, self.load_dim)
                 points = points[:, self.use_dim]
-                pc_name = osp.basename(single_input).split('.bin')[0]
+                pc_name = osp.basename(points_input).split('.bin')[0]
                 pc_name = f'{pc_name}.png'
-            elif isinstance(single_input, np.ndarray):
-                points = single_input.copy()
+            elif isinstance(points_input, np.ndarray):
+                points = points_input.copy()
                 pc_num = str(self.num_visualized_frames).zfill(8)
                 pc_name = f'pc_{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
-                                 f'{type(single_input)}')
+                                 f'{type(points_input)}')
 
             o3d_save_path = osp.join(img_out_dir, pc_name) \
                 if img_out_dir != '' else None
 
+            img_input = single_input['img']
             if isinstance(single_input['img'], str):
-                img_bytes = mmengine.fileio.get(single_input['img'])
+                img_bytes = mmengine.fileio.get(img_input)
                 img = mmcv.imfrombytes(img_bytes)
                 img = img[:, :, ::-1]
-                img_name = osp.basename(single_input['img'])
-            elif isinstance(single_input['img'], np.ndarray):
-                img = single_input['img'].copy()
-                img_num = str(self.num_visualized_imgs).zfill(8)
+                img_name = osp.basename(img_input)
+            elif isinstance(img_input, np.ndarray):
+                img = img_input.copy()
+                img_num = str(self.num_visualized_frames).zfill(8)
                 img_name = f'{img_num}.jpg'
             else:
                 raise ValueError('Unsupported input type: '
-                                 f"{type(single_input['img'])}")
+                                 f'{type(img_input)}')
 
             out_file = osp.join(img_out_dir, img_name) if img_out_dir != '' \
                 else None

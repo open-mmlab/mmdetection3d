@@ -130,7 +130,7 @@ train_dataloader = dict(
             modality=input_modality,
             test_mode=False,
             metainfo=metainfo,
-            box_type_3d='Camera')))
+            box_type_3d='LiDAR')))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -146,7 +146,7 @@ val_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='Camera'))
+        box_type_3d='LiDAR'))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
