@@ -147,13 +147,12 @@ class Pack3DDetInputs(BaseTransform):
         if 'img' in results:
             if isinstance(results['img'], list):
                 # process multiple imgs in single frame
-                imgs = np.stack([img for img in results['img']], axis=0)
-                if not imgs.flags.c_contiguous:
-                    imgs = np.ascontiguousarray(imgs.transpose(0, 3, 1, 2))
-                    imgs = to_tensor(imgs)
-                else:
+                imgs = np.stack(results['img'], axis=0)
+                if imgs.flags.c_contiguous:
                     imgs = to_tensor(imgs).permute(0, 3, 1, 2).contiguous()
-
+                else:
+                    imgs = to_tensor(
+                        np.ascontiguousarray(imgs.transpose(0, 3, 1, 2)))
                 results['img'] = imgs
             else:
                 img = results['img']
@@ -163,11 +162,11 @@ class Pack3DDetInputs(BaseTransform):
                 # `torch.permute()` rather than `np.transpose()`.
                 # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
                 # for more details
-                if not img.flags.c_contiguous:
-                    img = np.ascontiguousarray(img.transpose(2, 0, 1))
-                    img = to_tensor(img)
-                else:
+                if img.flags.c_contiguous:
                     img = to_tensor(img).permute(2, 0, 1).contiguous()
+                else:
+                    img = to_tensor(
+                        np.ascontiguousarray(img.transpose(2, 0, 1)))
                 results['img'] = img
 
         for key in [

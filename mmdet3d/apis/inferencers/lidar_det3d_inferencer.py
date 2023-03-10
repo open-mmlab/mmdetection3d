@@ -9,7 +9,7 @@ from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
-from mmdet3d.utils import ConfigType, register_all_modules
+from mmdet3d.utils import ConfigType
 from .base_det3d_inferencer import BaseDet3DInferencer
 
 InstanceList = List[InstanceData]
@@ -62,7 +62,6 @@ class LidarDet3DInferencer(BaseDet3DInferencer):
         # naming of the output results
         self.num_visualized_frames = 0
         self.palette = palette
-        register_all_modules()
         super().__init__(
             model=model, weights=weights, device=device, scope=scope)
 

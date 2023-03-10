@@ -3,10 +3,11 @@ import argparse
 from os import path as osp
 
 from mmengine.config import Config, DictAction
+from mmengine.registry import init_default_scope
 from mmengine.utils import ProgressBar, mkdir_or_exist
 
 from mmdet3d.registry import DATASETS, VISUALIZERS
-from mmdet3d.utils import register_all_modules, replace_ceph_backend
+from mmdet3d.utils import replace_ceph_backend
 
 
 def parse_args():
@@ -99,8 +100,7 @@ def main():
     if args.ceph:
         cfg = replace_ceph_backend(cfg)
 
-    # register all modules in mmdet3d into the registries
-    register_all_modules()
+    init_default_scope(cfg.get('default_scope', 'mmdet3d'))
 
     try:
         dataset = DATASETS.build(
