@@ -10,7 +10,7 @@ from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
 from mmdet3d.utils import ConfigType
-from .base_det3d_inferencer import BaseDet3DInferencer
+from .base_3d_inferencer import Base3DInferencer
 
 InstanceList = List[InstanceData]
 InputType = Union[str, np.ndarray]
@@ -22,7 +22,7 @@ ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 @INFERENCERS.register_module(name='det3d-lidar')
 @INFERENCERS.register_module()
-class LidarDet3DInferencer(BaseDet3DInferencer):
+class LidarDet3DInferencer(Base3DInferencer):
     """The inferencer of LiDAR-based detection.
 
     Args:

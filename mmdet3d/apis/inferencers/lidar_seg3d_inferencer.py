@@ -10,7 +10,7 @@ from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
 from mmdet3d.utils import ConfigType
-from .base_det3d_inferencer import BaseDet3DInferencer
+from .base_3d_inferencer import Base3DInferencer
 
 InstanceList = List[InstanceData]
 InputType = Union[str, np.ndarray]
@@ -22,7 +22,7 @@ ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 @INFERENCERS.register_module(name='seg3d-lidar')
 @INFERENCERS.register_module()
-class LidarSeg3DInferencer(BaseDet3DInferencer):
+class LidarSeg3DInferencer(Base3DInferencer):
     """The inferencer of LiDAR-based segmentation.
 
     Args:
@@ -57,7 +57,7 @@ class LidarSeg3DInferencer(BaseDet3DInferencer):
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: Optional[str] = 'mmdet3d',
+                 scope: str = 'mmdet3d',
                  palette: str = 'none') -> None:
         # A global counter tracking the number of frames processed, for
         # naming of the output results
@@ -75,7 +75,7 @@ class LidarSeg3DInferencer(BaseDet3DInferencer):
         Preprocess inputs to a list according to its type:
 
         - list or tuple: return inputs
-        - dict: the value with key 'img' is
+        - dict: the value with key 'points' is
             - Directory path: return all files in the directory
             - other cases: return a list containing the string. The string
               could be a path to file, a url or other types of string according
@@ -101,19 +101,19 @@ class LidarSeg3DInferencer(BaseDet3DInferencer):
         if idx != -1:
             del pipeline_cfg[idx]
 
-        load_img_idx = self._get_transform_idx(pipeline_cfg,
-                                               'LoadPointsFromFile')
-        if load_img_idx == -1:
+        load_point_idx = self._get_transform_idx(pipeline_cfg,
+                                                 'LoadPointsFromFile')
+        if load_point_idx == -1:
             raise ValueError(
                 'LoadPointsFromFile is not found in the test pipeline')
 
-        load_cfg = pipeline_cfg[load_img_idx]
+        load_cfg = pipeline_cfg[load_point_idx]
         self.coord_type, self.load_dim = load_cfg['coord_type'], load_cfg[
             'load_dim']
         self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
             load_cfg['use_dim'], int) else load_cfg['use_dim']
 
-        pipeline_cfg[load_img_idx]['type'] = 'LidarDet3DInferencerLoader'
+        pipeline_cfg[load_point_idx]['type'] = 'LidarDet3DInferencerLoader'
         return Compose(pipeline_cfg)
 
     def visualize(self,

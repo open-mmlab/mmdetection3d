@@ -23,8 +23,8 @@ ImgType = Union[np.ndarray, Sequence[np.ndarray]]
 ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 
-class BaseDet3DInferencer(BaseInferencer):
-    """Base 3D object detection inferencer.
+class Base3DInferencer(BaseInferencer):
+    """Base 3D model inferencer.
 
     Args:
         model (str, optional): Path to the config file or the model name
