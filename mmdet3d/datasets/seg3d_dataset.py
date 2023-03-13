@@ -203,7 +203,7 @@ class Seg3DDataset(BaseDataset):
         seg_valid_cat_ids = self.METAINFO['seg_valid_class_ids']
         neg_label = len(seg_valid_cat_ids)
         seg_label_mapping = np.ones(
-            seg_max_cat_id + 1, dtype=np.int) * neg_label
+            seg_max_cat_id + 1, dtype=np.int64) * neg_label
         for cls_idx, cat_id in enumerate(seg_valid_cat_ids):
             seg_label_mapping[cat_id] = cls_idx
         return seg_label_mapping

@@ -16,8 +16,8 @@ class TestInstanceSegMetric(unittest.TestCase):
 
         n_points = 3300
         gt_labels = [0, 0, 0, 0, 0, 0, 14, 14, 2, 1]
-        gt_instance_mask = np.ones(n_points, dtype=np.int) * -1
-        gt_semantic_mask = np.ones(n_points, dtype=np.int) * -1
+        gt_instance_mask = np.ones(n_points, dtype=np.int64) * -1
+        gt_semantic_mask = np.ones(n_points, dtype=np.int64) * -1
         for i, gt_label in enumerate(gt_labels):
             begin = i * 300
             end = begin + 300
@@ -31,7 +31,7 @@ class TestInstanceSegMetric(unittest.TestCase):
         results_dict = dict()
         n_points = 3300
         gt_labels = [0, 0, 0, 0, 0, 0, 14, 14, 2, 1]
-        pred_instance_mask = np.ones(n_points, dtype=np.int) * -1
+        pred_instance_mask = np.ones(n_points, dtype=np.int64) * -1
         labels = []
         scores = []
         for i, gt_label in enumerate(gt_labels):
