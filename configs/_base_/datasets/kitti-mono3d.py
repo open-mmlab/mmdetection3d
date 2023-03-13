@@ -4,15 +4,23 @@ class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 metainfo = dict(classes=class_names)
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/kitti/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -31,12 +39,12 @@ train_pipeline = [
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 eval_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
@@ -57,7 +65,8 @@ train_dataloader = dict(
         metainfo=metainfo,
         # we use box_type_3d='Camera' in monocular 3d
         # detection task
-        box_type_3d='Camera'))
+        box_type_3d='Camera',
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
     num_workers=2,
@@ -74,13 +83,15 @@ val_dataloader = dict(
         load_type='fov_image_based',
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Camera'))
+        box_type_3d='Camera',
+        backend_args=backend_args))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 
 test_evaluator = val_evaluator
 

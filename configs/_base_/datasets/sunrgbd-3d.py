@@ -5,16 +5,20 @@ class_names = ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk', 'dresser',
 
 metainfo = dict(classes=class_names)
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/sunrgbd/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
-#         './data/sunrgbd/':
-#         's3://sunrgbd/',
-#     }))
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 train_pipeline = [
     dict(
@@ -22,7 +26,8 @@ train_pipeline = [
         coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2],
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D'),
     dict(
         type='RandomFlip3D',
@@ -45,7 +50,8 @@ test_pipeline = [
         coord_type='DEPTH',
         shift_height=True,
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2],
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -83,7 +89,8 @@ train_dataloader = dict(
             metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')))
+            box_type_3d='Depth',
+            backend_args=backend_args)))
 
 val_dataloader = dict(
     batch_size=1,
@@ -96,7 +103,8 @@ val_dataloader = dict(
         pipeline=test_pipeline,
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -108,7 +116,8 @@ test_dataloader = dict(
         pipeline=test_pipeline,
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        backend_args=backend_args))
 val_evaluator = dict(type='IndoorMetric')
 test_evaluator = val_evaluator
 
