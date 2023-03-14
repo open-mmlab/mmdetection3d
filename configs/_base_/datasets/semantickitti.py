@@ -1,5 +1,5 @@
-# For Semantickitti we usually do 19-class segmentation.
-# For labels_map we follow the uniform format of mmdet & mmseg
+# For SemanticKitti we usually do 19-class segmentation.
+# For labels_map we follow the uniform format of MMDetection & MMSegmentation
 # i.e. we consider the unlabeled class as the last one, which is different
 # from the original implementation of some methods e.g. Cylinder3D.
 dataset_type = 'SemanticKittiDataset'
