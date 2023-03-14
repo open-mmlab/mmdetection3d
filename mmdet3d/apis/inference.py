@@ -176,7 +176,7 @@ def inference_multi_modality_detector(model: nn.Module,
                                       pcds: Union[str, Sequence[str]],
                                       imgs: Union[str, Sequence[str]],
                                       ann_file: Union[str, Sequence[str]],
-                                      cam_type: str = 'CAM_FRONT'):
+                                      cam_type: str = 'CAM2'):
     """Inference point cloud with the multi-modality detector. Now we only
     support multi-modality detector for KITTI dataset since the multi-view
     image loading is not supported yet in this inference function.
