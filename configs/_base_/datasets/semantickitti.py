@@ -1,4 +1,8 @@
-# dataset settings
+# For Semantickitti we usually do 19-class segmentation.
+# For labels_map we follow the uniform format of mmdet & mmseg
+# i.e. we consider the unlabeled class as the last one,
+# which is different from the original implementation of some methods
+# e.g. Cylinder3D.
 dataset_type = 'SemanticKittiDataset'
 data_root = 'data/semantickitti/'
 class_names = [
@@ -6,7 +10,6 @@ class_names = [
     'motorcyclist', 'road', 'parking', 'sidewalk', 'other-ground', 'building',
     'fence', 'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'
 ]
-
 labels_map = {
     0: 19,  # "unlabeled"
     1: 19,  # "outlier" mapped to "unlabeled" --------------mapped
