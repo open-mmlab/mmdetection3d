@@ -14,7 +14,7 @@ Pull requests let you tell others about changes you have pushed to a branch in a
 
 1. Get the most recent codebase
 
-2. Checkout a new branch from `dev-1.x`, `dev` or `master` branch, depending on the version of the codebase you want to contribute to (see [Maintenance Plan](../migration/overview.md) for more details). The differences of these three branches are as the following:
+2. Checkout a new branch from `dev-1.x`, `dev` or `master` branch, depending on the version of the codebase you want to contribute to. The differences of these three branches are as the following:
 
    | Branch  | new coordinate system | depend on MMEngine | update frequence |
    | :-----: | :-------------------: | :----------------: | :--------------: |
@@ -22,7 +22,7 @@ Pull requests let you tell others about changes you have pushed to a branch in a
    |   dev   |           √           |         ✗          |      hardly      |
    | master  |           ✗           |         ✗          |      hardly      |
 
-   We strongly recommend you pull request based on more advanced dev-1.x branch.
+   We strongly recommend you pull request based on more advanced `dev-1.x` branch.
 
 3. Commit your changes ([Don't forget to use pre-commit hooks!](#3-commit-your-changes))
 
