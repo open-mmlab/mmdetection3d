@@ -29,32 +29,22 @@ class MinkUNetHead(Base3DDecodeHead):
 
     def __init__(self, channels: int, num_classes: int, **kwargs) -> None:
         super().__init__(channels, num_classes, **kwargs)
-        self.conv_seg = nn.Linear(channels, num_classes)
 
-    def loss(self, inputs: SparseTensor, data_samples: SampleList) -> dict:
-        """Forward function for training.
+    def build_conv_seg(self, channels: int, num_classes: int,
+                       kernel_size: int) -> nn.Module:
+        """Build Convolutional Segmentation Layers."""
+        return nn.Linear(channels, num_classes)
 
-        Args:
-            inputs (SparseTensor): Features from backone.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`.
-
-        Returns:
-            dict[str, Tensor]: A dictionary of loss components
-        """
-        seg_logits = self.forward(inputs)
-
-        targets = torch.cat(
-            [i.gt_pts_seg.voxel_semantic_mask for i in data_samples])
-
-        losses = dict()
-        losses['loss_sem_seg'] = self.loss_decode(
-            seg_logits, targets, ignore_index=self.ignore_index)
-        return losses
+    def _stack_batch_gt(self, batch_data_samples: SampleList) -> Tensor:
+        """Concat voxel-wise Groud Truth."""
+        gt_semantic_segs = [
+            data_sample.gt_pts_seg.voxel_semantic_mask
+            for data_sample in batch_data_samples
+        ]
+        return torch.cat(gt_semantic_segs)
 
     def predict(self, inputs: SparseTensor,
-                data_samples: SampleList) -> List[Tensor]:
+                batch_data_samples: SampleList) -> List[Tensor]:
         """Forward function for testing.
 
         Args:
@@ -70,7 +60,7 @@ class MinkUNetHead(Base3DDecodeHead):
 
         batch_idx = inputs.C[:, -1]
         seg_pred_list = []
-        for i, data_sample in enumerate(data_samples):
+        for i, data_sample in enumerate(batch_data_samples):
             seg_pred = seg_preds[batch_idx == i]
             seg_pred = seg_pred[data_sample.voxel2point_map]
             seg_pred_list.append(seg_pred)

@@ -1,8 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from itertools import repeat
 from numbers import Number
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -424,7 +423,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 res_coors -= res_coors.min(0)[0]
 
                 res_coors_numpy = res_coors.cpu().numpy()
-                _, inds, voxel2point_map = self.sparse_quantize(
+                inds, voxel2point_map = self.sparse_quantize(
                     res_coors_numpy, return_index=True, return_inverse=True)
                 voxel2point_map = torch.from_numpy(voxel2point_map).cuda()
                 if self.training:
@@ -467,6 +466,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
 
     def ravel_hash(self, x: np.ndarray) -> np.ndarray:
+        """Get voxel coordinates hash for np.unique().
+
+        Args:
+            x (np.ndarray): The voxel coordinates of points, Nx3.
+
+        Returns:
+            x (np.ndarray): Voxels coordinates hash.
+        """
         assert x.ndim == 2, x.shape
 
         x = x - np.min(x, axis=0)
@@ -481,25 +488,25 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         return h
 
     def sparse_quantize(self,
-                        coords,
-                        voxel_size: Union[float, Tuple[float, ...]] = 1,
-                        *,
+                        coords: np.ndarray,
                         return_index: bool = False,
                         return_inverse: bool = False) -> List[np.ndarray]:
-        if isinstance(voxel_size, (float, int)):
-            voxel_size = tuple(repeat(voxel_size, 3))
-        assert isinstance(voxel_size, tuple) and len(voxel_size) == 3
+        """Sparse Quantization for voxel coordinates used in Minkunet.
 
-        voxel_size = np.array(voxel_size)
-        coords = np.floor(coords / voxel_size).astype(np.int32)
+        Args:
+            coords (np.ndarray): The voxel coordinates of points, Nx3.
 
+        Returns:
+            List[np.ndarray] or None: Return index and inverse map if
+                return_index and return_inverse is True.
+        """
         _, indices, inverse_indices = np.unique(
             self.ravel_hash(coords), return_index=True, return_inverse=True)
         coords = coords[indices]
 
-        outputs = [coords]
+        outputs = []
         if return_index:
             outputs += [indices]
         if return_inverse:
             outputs += [inverse_indices]
-        return outputs[0] if len(outputs) == 1 else outputs
+        return outputs

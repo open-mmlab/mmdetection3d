@@ -44,7 +44,7 @@ class MinkUNet(EncoderDecoder3D):
             Dict[str, Tensor]: A dictionary of loss components.
         """
         x = self.extract_feat(inputs)
-        losses = self.decode_head.loss(x, data_samples)
+        losses = self.decode_head.loss(x, data_samples, self.train_cfg)
         return losses
 
     def predict(self, inputs: dict, data_samples: SampleList) -> SampleList:
