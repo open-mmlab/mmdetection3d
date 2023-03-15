@@ -79,19 +79,22 @@ class_names = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                'garbagebin')
 
 metainfo = dict(classes=class_names)
+backend_args = None
 
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='DEPTH',
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2],
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=True,
         with_label_3d=True,
         with_mask_3d=True,
-        with_seg_3d=True),
+        with_seg_3d=True,
+        backend_args=backend_args),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(type='PointSegClassMapping'),
     dict(type='PointSample', num_points=50000),
@@ -116,7 +119,8 @@ test_pipeline = [
         type='LoadPointsFromFile',
         coord_type='DEPTH',
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2],
+        backend_args=backend_args),
     dict(type='GlobalAlignment', rotation_axis=2),
     dict(
         type='MultiScaleFlipAug3D',
@@ -155,7 +159,8 @@ train_dataloader = dict(
             metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='Depth')))
+            box_type_3d='Depth',
+            backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -167,7 +172,8 @@ val_dataloader = dict(
         pipeline=test_pipeline,
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -179,7 +185,8 @@ test_dataloader = dict(
         pipeline=test_pipeline,
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        backend_args=backend_args))
 val_evaluator = dict(type='IndoorMetric')
 test_evaluator = val_evaluator
 

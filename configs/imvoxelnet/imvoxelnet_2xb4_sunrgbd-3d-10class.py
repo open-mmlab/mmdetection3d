@@ -56,28 +56,17 @@ class_names = [
 ]
 metainfo = dict(CLASSES=class_names)
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/sunrgbd/':
-#         's3://openmmlab/datasets/detection3d/sunrgbd_processed/',
-#         'data/sunrgbd/':
-#         's3://openmmlab/datasets/detection3d/sunrgbd_processed/'
-#     }))
+backend_args = None
 
 train_pipeline = [
-    dict(type='LoadAnnotations3D'),
-    dict(type='LoadImageFromFile', file_client_args=file_client_args),
+    dict(type='LoadAnnotations3D', backend_args=backend_args),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='RandomResize', scale=[(512, 384), (768, 576)], keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=file_client_args),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='Resize', scale=(640, 480), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
@@ -98,7 +87,8 @@ train_dataloader = dict(
             test_mode=False,
             filter_empty_gt=True,
             box_type_3d='Depth',
-            metainfo=metainfo)))
+            metainfo=metainfo,
+            backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -112,7 +102,8 @@ val_dataloader = dict(
         pipeline=test_pipeline,
         test_mode=True,
         box_type_3d='Depth',
-        metainfo=metainfo))
+        metainfo=metainfo,
+        backend_args=backend_args))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(

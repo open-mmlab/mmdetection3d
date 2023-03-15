@@ -9,6 +9,8 @@ data_root = 'data/kitti/'
 class_names = ['Car']
 point_cloud_range = [0, -40, -5, 70, 40, 3]
 input_modality = dict(use_lidar=True, use_camera=False)
+backend_args = None
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -17,17 +19,20 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=15),
     points_loader=dict(
-        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
-
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
@@ -52,7 +57,12 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),

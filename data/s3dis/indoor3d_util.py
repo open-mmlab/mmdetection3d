@@ -50,5 +50,5 @@ def export(anno_path, out_filename):
     data_label[:, 0:3] -= xyz_min
 
     np.save(f'{out_filename}_point.npy', data_label[:, :6].astype(np.float32))
-    np.save(f'{out_filename}_sem_label.npy', data_label[:, 6].astype(np.int))
-    np.save(f'{out_filename}_ins_label.npy', data_label[:, 7].astype(np.int))
+    np.save(f'{out_filename}_sem_label.npy', data_label[:, 6].astype(np.int64))
+    np.save(f'{out_filename}_ins_label.npy', data_label[:, 7].astype(np.int64))

@@ -46,24 +46,24 @@ class LyftMetric(BaseMetric):
         collect_device (str): Device name used for collecting results from
             different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
 
-    def __init__(
-        self,
-        data_root: str,
-        ann_file: str,
-        metric: Union[str, List[str]] = 'bbox',
-        modality: dict = dict(use_camera=False, use_lidar=True),
-        prefix: Optional[str] = None,
-        jsonfile_prefix: Optional[str] = None,
-        format_only: bool = False,
-        csv_savepath: Optional[str] = None,
-        collect_device: str = 'cpu',
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 data_root: str,
+                 ann_file: str,
+                 metric: Union[str, List[str]] = 'bbox',
+                 modality=dict(
+                     use_camera=False,
+                     use_lidar=True,
+                 ),
+                 prefix: Optional[str] = None,
+                 jsonfile_prefix: str = None,
+                 format_only: bool = False,
+                 csv_savepath: str = None,
+                 collect_device: str = 'cpu',
+                 backend_args: Optional[dict] = None) -> None:
         self.default_prefix = 'Lyft metric'
         super(LyftMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -71,13 +71,13 @@ class LyftMetric(BaseMetric):
         self.data_root = data_root
         self.modality = modality
         self.jsonfile_prefix = jsonfile_prefix
-        self.file_client_args = file_client_args
         self.format_only = format_only
         if self.format_only:
             assert csv_savepath is not None, 'csv_savepath must be not None '
             'when format_only is True, otherwise the result files will be '
             'saved to a temp directory which will be cleaned up at the end.'
 
+        self.backend_args = backend_args
         self.csv_savepath = csv_savepath
         self.metrics = metric if isinstance(metric, list) else [metric]
 
@@ -122,7 +122,7 @@ class LyftMetric(BaseMetric):
 
         # load annotations
         self.data_infos = load(
-            self.ann_file, file_client_args=self.file_client_args)['data_list']
+            self.ann_file, backend_args=self.backend_args)['data_list']
         result_dict, tmp_dir = self.format_results(results, classes,
                                                    self.jsonfile_prefix,
                                                    self.csv_savepath)
