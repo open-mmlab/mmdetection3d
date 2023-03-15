@@ -13,33 +13,30 @@ class InstanceSegMetric(BaseMetric):
     """3D instance segmentation evaluation metric.
 
     Args:
-        collect_device (str, optional): Device name used for collecting
-            results from different ranks during distributed training.
-            Must be 'cpu' or 'gpu'. Defaults to 'cpu'.
-        prefix (str): The prefix that will be added in the metric
+        collect_device (str): Device name used for collecting results from
+            different ranks during distributed training. Must be 'cpu' or
+            'gpu'. Defaults to 'cpu'.
+        prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix
-            will be used instead. Default: None
+            If prefix is not provided in the argument, self.default_prefix will
+            be used instead. Defaults to None.
     """
 
     def __init__(self,
                  collect_device: str = 'cpu',
-                 prefix: Optional[str] = None,
-                 **kwargs):
+                 prefix: Optional[str] = None):
         super(InstanceSegMetric, self).__init__(
             prefix=prefix, collect_device=collect_device)
 
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
-        The processed results should be stored in ``self.results``,
-        which will be used to compute the metrics when all batches
-        have been processed.
+        The processed results should be stored in ``self.results``, which will
+        be used to compute the metrics when all batches have been processed.
 
         Args:
             data_batch (dict): A batch of data from the dataloader.
-            data_samples (Sequence[dict]): A batch of outputs from
-                the model.
+            data_samples (Sequence[dict]): A batch of outputs from the model.
         """
         for data_sample in data_samples:
             pred_3d = data_sample['pred_pts_seg']

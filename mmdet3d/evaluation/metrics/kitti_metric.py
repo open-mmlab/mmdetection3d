@@ -22,30 +22,28 @@ class KittiMetric(BaseMetric):
 
     Args:
         ann_file (str): Annotation file path.
-        metric (str or List[str]): Metrics to be evaluated.
-            Defaults to 'bbox'.
-        pcd_limit_range (List[float]): The range of point cloud used to
-            filter invalid predicted boxes.
-            Defaults to [0, -40, -3, 70.4, 40, 0.0].
+        metric (str or List[str]): Metrics to be evaluated. Defaults to 'bbox'.
+        pcd_limit_range (List[float]): The range of point cloud used to filter
+            invalid predicted boxes. Defaults to [0, -40, -3, 70.4, 40, 0.0].
         prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix
-            will be used instead. Defaults to None.
-        pklfile_prefix (str, optional): The prefix of pkl files, including
-            the file path and the prefix of filename, e.g., "a/b/prefix".
-            If not specified, a temp file will be created. Defaults to None.
+            If prefix is not provided in the argument, self.default_prefix will
+            be used instead. Defaults to None.
+        pklfile_prefix (str, optional): The prefix of pkl files, including the
+            file path and the prefix of filename, e.g., "a/b/prefix". If not
+            specified, a temp file will be created. Defaults to None.
         default_cam_key (str): The default camera for lidar to camera
             conversion. By default, KITTI: 'CAM2', Waymo: 'CAM_FRONT'.
-            Defaults to 'CAM2'
+            Defaults to 'CAM2'.
         format_only (bool): Format the output results without perform
-            evaluation. It is useful when you want to format the result
-            to a specific format and submit it to the test server.
+            evaluation. It is useful when you want to format the result to a
+            specific format and submit it to the test server.
             Defaults to False.
-        submission_prefix (str, optional): The prefix of submission data.
-            If not specified, the submission data will not be generated.
+        submission_prefix (str, optional): The prefix of submission data. If
+            not specified, the submission data will not be generated.
             Defaults to None.
-        collect_device (str): Device name used for collecting results
-            from different ranks during distributed training. Must be 'cpu' or
+        collect_device (str): Device name used for collecting results from
+            different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
         backend_args (dict, optional): Arguments to instantiate the
             corresponding backend. Defaults to None.
@@ -147,14 +145,12 @@ class KittiMetric(BaseMetric):
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
-        The processed results should be stored in ``self.results``,
-        which will be used to compute the metrics when all batches
-        have been processed.
+        The processed results should be stored in ``self.results``, which will
+        be used to compute the metrics when all batches have been processed.
 
         Args:
             data_batch (dict): A batch of data from the dataloader.
-            data_samples (Sequence[dict]): A batch of outputs from
-                the model.
+            data_samples (Sequence[dict]): A batch of outputs from the model.
         """
 
         for data_sample in data_samples:
@@ -196,8 +192,8 @@ class KittiMetric(BaseMetric):
         metric_dict = {}
 
         if self.format_only:
-            logger.info('results are saved in '
-                        f'{osp.dirname(self.submission_prefix)}')
+            logger.info(
+                f'results are saved in {osp.dirname(self.submission_prefix)}')
             return metric_dict
 
         gt_annos = [
@@ -230,12 +226,11 @@ class KittiMetric(BaseMetric):
         Args:
             results_dict (dict): Formatted results of the dataset.
             gt_annos (List[dict]): Contain gt information of each sample.
-            metric (str, optional): Metrics to be evaluated.
-                Defaults to None.
+            metric (str, optional): Metrics to be evaluated. Defaults to None.
             classes (List[str], optional): A list of class name.
                 Defaults to None.
-            logger (MMLogger, optional): Logger used for printing
-                related information during evaluation. Defaults to None.
+            logger (MMLogger, optional): Logger used for printing related
+                information during evaluation. Defaults to None.
 
         Returns:
             Dict[str, float]: Results of each evaluation metric.
@@ -278,9 +273,9 @@ class KittiMetric(BaseMetric):
                 Defaults to None.
 
         Returns:
-            tuple: (result_dict, tmp_dir), result_dict is a dict containing
-            the formatted result, tmp_dir is the temporal directory created
-            for saving json files when jsonfile_prefix is not specified.
+            tuple: (result_dict, tmp_dir), result_dict is a dict containing the
+            formatted result, tmp_dir is the temporal directory created for
+            saving json files when jsonfile_prefix is not specified.
         """
         if pklfile_prefix is None:
             tmp_dir = tempfile.TemporaryDirectory()
@@ -326,8 +321,8 @@ class KittiMetric(BaseMetric):
         submission.
 
         Args:
-            net_outputs (List[dict]): List of dict storing the
-                inferenced bounding boxes and scores.
+            net_outputs (List[dict]): List of dict storing the inferenced
+                bounding boxes and scores.
             sample_idx_list (List[int]): List of input sample idx.
             class_names (List[str]): A list of class names.
             pklfile_prefix (str, optional): The prefix of pkl file.
@@ -453,8 +448,8 @@ class KittiMetric(BaseMetric):
         submission.
 
         Args:
-            net_outputs (List[dict]): List of dict storing the
-                inferenced bounding boxes and scores.
+            net_outputs (List[dict]): List of dict storing the inferenced
+                bounding boxes and scores.
             sample_idx_list (List[int]): List of input sample idx.
             class_names (List[str]): A list of class names.
             pklfile_prefix (str, optional): The prefix of pkl file.
@@ -571,14 +566,14 @@ class KittiMetric(BaseMetric):
         Returns:
             dict: Valid predicted boxes.
 
-                - bbox (np.ndarray): 2D bounding boxes.
-                - box3d_camera (np.ndarray): 3D bounding boxes in
-                  camera coordinate.
-                - box3d_lidar (np.ndarray): 3D bounding boxes in
-                  LiDAR coordinate.
-                - scores (np.ndarray): Scores of boxes.
-                - label_preds (np.ndarray): Class label predictions.
-                - sample_idx (int): Sample index.
+            - bbox (np.ndarray): 2D bounding boxes.
+            - box3d_camera (np.ndarray): 3D bounding boxes in
+              camera coordinate.
+            - box3d_lidar (np.ndarray): 3D bounding boxes in
+              LiDAR coordinate.
+            - scores (np.ndarray): Scores of boxes.
+            - label_preds (np.ndarray): Class label predictions.
+            - sample_idx (int): Sample index.
         """
         # TODO: refactor this function
         box_preds = box_dict['bboxes_3d']
