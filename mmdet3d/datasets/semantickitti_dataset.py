@@ -59,7 +59,7 @@ class SemanticKITTIDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points',
+                     pts='',
                      img='',
                      pts_instance_mask='',
                      pts_semantic_mask=''),
