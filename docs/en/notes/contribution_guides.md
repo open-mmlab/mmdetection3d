@@ -14,14 +14,7 @@ Pull requests let you tell others about changes you have pushed to a branch in a
 
 1. Get the most recent codebase
 
-2. Checkout a new branch from `dev-1.x` or `dev` branch, depending on the version of the codebase you want to contribute to. The differences of these three branches are as the following:
-
-   | Branch  | new coordinate system | depend on MMEngine | update frequence |
-   | :-----: | :-------------------: | :----------------: | :--------------: |
-   | dev-1.x |           √           |         √          |      always      |
-   |   dev   |           √           |         ✗          |      hardly      |
-
-   We strongly recommend you pull request based on more advanced `dev-1.x` branch.
+2. Checkout a new branch from `dev-1.x` or `dev` branch, depending on the version of the codebase you want to contribute to. The main differences between `dev-1.x` and `dev` is that `dev-1.x` depends on MMEngine additionally and it's the main branch we maintains. We strongly recommend you pull request based on more advanced `dev-1.x` branch.
 
 3. Commit your changes ([Don't forget to use pre-commit hooks!](#3-commit-your-changes))
 
