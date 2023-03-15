@@ -1,0 +1,57 @@
+Collections:
+  - Name: MinkUnet
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Architecture:
+        - MinkUnet
+    Paper:
+      URL: https://arxiv.org/abs/1904.08755
+      Title: '4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks'
+    README: configs/minkunet/README.md
+    Code:
+      URL:
+      Version: v1.1.0rc3
+
+Models:
+  - Name: minkunet_w16_8xb2-15e_semantickitti
+    In Collection: MinkUnet
+    Config: configs/minkunet/minkunet_w16_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 3.4
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 60.3
+    Weights:
+
+  - Name: minkunet_w20_8xb2-15e_semantickitti
+    In Collection: MinkUnet
+    Config: configs/minkunet/minkunet_w20_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 3.7
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 61.6
+    Weights:
+
+  - Name: minkunet_w32_8xb2-15e_semantickitti
+    In Collection: MinkUnet
+    Config: configs/minkunet/minkunet_w32_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 4.9
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 63.1
+    Weights:
