@@ -455,7 +455,7 @@ class CenterHead(BaseModule):
             (gt_bboxes_3d.gravity_center, gt_bboxes_3d.tensor[:, 3:]),
             dim=1).to(device)
         max_objs = self.train_cfg['max_objs'] * self.train_cfg['dense_reg']
-        grid_size = torch.tensor(self.train_cfg['grid_size'])
+        grid_size = torch.tensor(self.train_cfg['grid_size']).to(device)
         pc_range = torch.tensor(self.train_cfg['point_cloud_range'])
         voxel_size = torch.tensor(self.train_cfg['voxel_size'])
 
