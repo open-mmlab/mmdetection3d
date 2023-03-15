@@ -36,7 +36,7 @@ class TestLiDARSeg3DInferencer(TestCase):
     def test_call(self):
         if not torch.cuda.is_available():
             return
-        # single img
+        # single point cloud
         inputs = dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
         torch.manual_seed(0)
         res_path = self.inferencer(inputs, return_vis=True)
@@ -52,7 +52,7 @@ class TestLiDARSeg3DInferencer(TestCase):
         self.assertIn('visualization', res_path)
         self.assertIn('visualization', res_ndarray)
 
-        # multiple images
+        # multiple point clouds
         inputs = [
             dict(points='tests/data/s3dis/points/Area_1_office_2.bin'),
             dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
