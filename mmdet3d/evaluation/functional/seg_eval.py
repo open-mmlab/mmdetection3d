@@ -88,8 +88,8 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
 
     hist_list = []
     for i in range(len(gt_labels)):
-        gt_seg = gt_labels[i].astype(np.int)
-        pred_seg = seg_preds[i].astype(np.int)
+        gt_seg = gt_labels[i].astype(np.int64)
+        pred_seg = seg_preds[i].astype(np.int64)
 
         # filter out ignored points
         pred_seg[gt_seg == ignore_index] = -1

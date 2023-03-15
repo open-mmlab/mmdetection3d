@@ -75,16 +75,20 @@ metainfo = dict(
 
 input_modality = dict(use_lidar=True, use_camera=False)
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/semantickitti/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
-#         './data/semantickitti/':
-#         's3://semantickitti/',
-#     }))
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 train_pipeline = [
     dict(
@@ -92,12 +96,13 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_seg_3d=True,
         seg_offset=2**16,
-        dataset_type='semantickitti'),
+        dataset_type='semantickitti',
+        backend_args=backend_args),
     dict(type='PointSegClassMapping', ),
     dict(
         type='RandomFlip3D',
@@ -118,12 +123,13 @@ test_pipeline = [
         coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_seg_3d=True,
         seg_offset=2**16,
-        dataset_type='semantickitti'),
+        dataset_type='semantickitti',
+        backend_args=backend_args),
     dict(type='PointSegClassMapping', ),
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
@@ -135,12 +141,13 @@ eval_pipeline = [
         coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_seg_3d=True,
         seg_offset=2**16,
-        dataset_type='semantickitti'),
+        dataset_type='semantickitti',
+        backend_args=backend_args),
     dict(type='PointSegClassMapping', ),
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
@@ -158,7 +165,8 @@ train_dataloader = dict(
             ann_file='train_infos.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
-            modality=input_modality)),
+            modality=input_modality,
+            backend_args=backend_args)),
 )
 
 test_dataloader = dict(
@@ -176,7 +184,7 @@ test_dataloader = dict(
             metainfo=metainfo,
             modality=input_modality,
             test_mode=True,
-        )),
+            backend_args=backend_args)),
 )
 
 val_dataloader = test_dataloader

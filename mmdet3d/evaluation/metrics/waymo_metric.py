@@ -69,8 +69,8 @@ class WaymoMetric(KittiMetric):
         collect_device (str): Device name used for collecting results
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
-        file_client_args (dict): File client for reading gt in waymo format.
-            Defaults to ``dict(backend='disk')``.
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
         idx2metainfo (str, optional): The file path of the metainfo in waymo.
             It stores the mapping from sample_idx to metainfo. The metainfo
             must contain the keys: 'idx2contextname' and 'idx2timestamp'.
@@ -94,7 +94,7 @@ class WaymoMetric(KittiMetric):
                  default_cam_key: str = 'CAM_FRONT',
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  idx2metainfo: Optional[str] = None) -> None:
         self.waymo_bin_file = waymo_bin_file
         self.data_root = data_root
@@ -117,7 +117,7 @@ class WaymoMetric(KittiMetric):
             submission_prefix=submission_prefix,
             default_cam_key=default_cam_key,
             collect_device=collect_device,
-            file_client_args=file_client_args)
+            backend_args=backend_args)
         self.format_only = format_only
         if self.format_only:
             assert pklfile_prefix is not None, 'pklfile_prefix must be '
@@ -388,7 +388,7 @@ class WaymoMetric(KittiMetric):
             waymo_results_final_path,
             prefix,
             classes,
-            file_client_args=self.file_client_args,
+            backend_args=self.backend_args,
             from_kitti_format=self.convert_kitti_format,
             idx2metainfo=self.idx2metainfo)
         converter.convert()

@@ -29,7 +29,7 @@ def aggregate_predictions(masks, labels, scores, valid_class_ids):
             # match pred_instance['filename'] from assign_instances_for_scan
             file_name = f'{id}_{i}'
             info[file_name] = dict()
-            info[file_name]['mask'] = (mask == i).astype(np.int)
+            info[file_name]['mask'] = (mask == i).astype(np.int64)
             info[file_name]['label_id'] = valid_class_ids[label[i]]
             info[file_name]['conf'] = score[i]
         infos.append(info)

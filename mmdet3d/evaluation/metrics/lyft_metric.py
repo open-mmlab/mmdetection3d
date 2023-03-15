@@ -46,21 +46,19 @@ class LyftMetric(BaseMetric):
             'gpu'. Defaults to 'cpu'.
     """
 
-    def __init__(
-        self,
-        data_root: str,
-        ann_file: str,
-        metric: Union[str, List[str]] = 'bbox',
-        modality=dict(
-            use_camera=False,
-            use_lidar=True,
-        ),
-        prefix: Optional[str] = None,
-        jsonfile_prefix: str = None,
-        csv_savepath: str = None,
-        collect_device: str = 'cpu',
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 data_root: str,
+                 ann_file: str,
+                 metric: Union[str, List[str]] = 'bbox',
+                 modality=dict(
+                     use_camera=False,
+                     use_lidar=True,
+                 ),
+                 prefix: Optional[str] = None,
+                 jsonfile_prefix: str = None,
+                 csv_savepath: str = None,
+                 collect_device: str = 'cpu',
+                 backend_args: Optional[dict] = None) -> None:
         self.default_prefix = 'Lyft metric'
         super(LyftMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -68,7 +66,7 @@ class LyftMetric(BaseMetric):
         self.data_root = data_root
         self.modality = modality
         self.jsonfile_prefix = jsonfile_prefix
-        self.file_client_args = file_client_args
+        self.backend_args = backend_args
         self.csv_savepath = csv_savepath
         self.metrics = metric if isinstance(metric, list) else [metric]
 
@@ -115,7 +113,7 @@ class LyftMetric(BaseMetric):
         # load annotations
 
         self.data_infos = load(
-            self.ann_file, file_client_args=self.file_client_args)['data_list']
+            self.ann_file, backend_args=self.backend_args)['data_list']
         result_dict, tmp_dir = self.format_results(results, classes,
                                                    self.jsonfile_prefix)
 
