@@ -3,14 +3,8 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
-file_client_args = dict(backend='disk')
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,

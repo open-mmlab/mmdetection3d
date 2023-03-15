@@ -34,6 +34,7 @@ class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
                'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
                'bathtub', 'otherfurniture')
 num_points = 8192
+backend_args = None
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -41,13 +42,15 @@ train_pipeline = [
         shift_height=False,
         use_color=False,
         load_dim=6,
-        use_dim=[0, 1, 2]),  # only load xyz coordinates
+        use_dim=[0, 1, 2],  # only load xyz coordinates
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
+        with_seg_3d=True,
+        backend_args=backend_args),
     dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
@@ -66,13 +69,15 @@ test_pipeline = [
         shift_height=False,
         use_color=False,
         load_dim=6,
-        use_dim=[0, 1, 2]),
+        use_dim=[0, 1, 2],
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
+        with_seg_3d=True,
+        backend_args=backend_args),
     dict(
         # a wrapper in order to successfully call test function
         # actually we don't perform test-time-aug

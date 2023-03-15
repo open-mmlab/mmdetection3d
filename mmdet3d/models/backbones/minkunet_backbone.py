@@ -5,9 +5,9 @@ from mmengine.model import BaseModule
 from mmengine.registry import MODELS
 from torch import Tensor, nn
 
-from mmdet3d.models.layers import (IS_TORCHSPARSE_AVAILABLE,
-                                   TorchsparseConvModule,
-                                   TorchsparseResidualBlock)
+from mmdet3d.models.layers import (TorchSparseConvModule,
+                                   TorchSparseResidualBlock)
+from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.utils import OptMultiConfig
 
 if IS_TORCHSPARSE_AVAILABLE:
@@ -49,8 +49,8 @@ class MinkUNetBackbone(BaseModule):
         assert num_stages == len(encoder_channels) == len(decoder_channels)
         self.num_stages = num_stages
         self.conv_input = nn.Sequential(
-            TorchsparseConvModule(in_channels, base_channels, kernel_size=3),
-            TorchsparseConvModule(base_channels, base_channels, kernel_size=3))
+            TorchSparseConvModule(in_channels, base_channels, kernel_size=3),
+            TorchSparseConvModule(base_channels, base_channels, kernel_size=3))
         self.encoder = nn.ModuleList()
         self.decoder = nn.ModuleList()
 
@@ -59,34 +59,34 @@ class MinkUNetBackbone(BaseModule):
         for i in range(num_stages):
             self.encoder.append(
                 nn.Sequential(
-                    TorchsparseConvModule(
+                    TorchSparseConvModule(
                         encoder_channels[i],
                         encoder_channels[i],
                         kernel_size=2,
                         stride=2),
-                    TorchsparseResidualBlock(
+                    TorchSparseResidualBlock(
                         encoder_channels[i],
                         encoder_channels[i + 1],
                         kernel_size=3),
-                    TorchsparseResidualBlock(
+                    TorchSparseResidualBlock(
                         encoder_channels[i + 1],
                         encoder_channels[i + 1],
                         kernel_size=3)))
 
             self.decoder.append(
                 nn.ModuleList([
-                    TorchsparseConvModule(
+                    TorchSparseConvModule(
                         decoder_channels[i],
                         decoder_channels[i + 1],
                         kernel_size=2,
                         stride=2,
                         transposed=True),
                     nn.Sequential(
-                        TorchsparseResidualBlock(
+                        TorchSparseResidualBlock(
                             decoder_channels[i + 1] + encoder_channels[-2 - i],
                             decoder_channels[i + 1],
                             kernel_size=3),
-                        TorchsparseResidualBlock(
+                        TorchSparseResidualBlock(
                             decoder_channels[i + 1],
                             decoder_channels[i + 1],
                             kernel_size=3))

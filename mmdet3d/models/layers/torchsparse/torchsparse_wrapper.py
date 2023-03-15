@@ -10,9 +10,9 @@ def register_torchsparse() -> bool:
     except ImportError:
         return False
     else:
-        MODELS._register_module(Conv3d, 'TorchSparse.Conv3d')
-        MODELS._register_module(BatchNorm, 'TorchSparse.BatchNorm')
-        MODELS._register_module(GroupNorm, 'TorchSparse.GroupNorm')
-        MODELS._register_module(ReLU, 'TorchSparse.ReLU')
-        MODELS._register_module(LeakyReLU, 'TorchSparse.LeakyReLU')
+        MODELS._register_module(Conv3d, 'TorchSparseConv3d')
+        MODELS._register_module(BatchNorm, 'TorchSparseBatchNorm')
+        MODELS._register_module(GroupNorm, 'TorchSparseGroupNorm')
+        MODELS._register_module(ReLU, 'TorchSparseReLU')
+        MODELS._register_module(LeakyReLU, 'TorchSparseLeakyReLU')
         return True
