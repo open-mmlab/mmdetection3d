@@ -21,7 +21,7 @@ model = dict(
         return_point_feats=False),
     backbone=dict(
         type='Asymm3DSpconv',
-        grid_size=grid_shape,  # TODO change the note
+        grid_size=grid_shape,
         input_channels=16,
         base_channels=32,
         norm_cfg=dict(type='BN1d', eps=1e-5, momentum=0.1)),
