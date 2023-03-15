@@ -16,17 +16,19 @@ We implement Cylinder3D and provide the result and checkpoints on Semantickitti 
 
 ### SemanticKITTI
 
-|   Method   | Lr schd | Mem (GB) |   mIOU   |         Download         |
-| :--------: | :-----: | :------: | :------: | :----------------------: |
-| Cylinder3D |   3x    |   10.2   | 63.4±0.5 | [model](<>) \| [log](<>) |
+|                                                                                           Method                                                                                           | Lr schd | Mem (GB) |   mIOU   |         Download         |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-----: | :------: | :------: | :----------------------: |
+|                                                                                         Cylinder3D                                                                                         |   3x    |   10.2   | 63.4±0.5 | [model](<>) \| [log](<>) |
+| Note: We reproduce the performance comparable with its official repo (https://github.com/xinge008/Cylinder3D), it's slightly lower than the performance (65.9 mIOU) reported in the paper. |         |          |          |                          |
 
 ## Citation
 
 ```latex
-@article{zhu2020cylindrical,
-  title={Cylindrical and Asymmetrical 3D Convolution Networks for LiDAR Segmentation},
+@inproceedings{zhu2021cylindrical,
+  title={Cylindrical and asymmetrical 3d convolution networks for lidar segmentation},
   author={Zhu, Xinge and Zhou, Hui and Wang, Tai and Hong, Fangzhou and Ma, Yuexin and Li, Wei and Li, Hongsheng and Lin, Dahua},
-  journal={arXiv preprint arXiv:2011.10033},
-  year={2020}
+  booktitle={Proceedings of the IEEE/CVF conference on computer vision and pattern recognition},
+  pages={9939--9948},
+  year={2021}
 }
 ```
