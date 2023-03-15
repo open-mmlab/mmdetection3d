@@ -16,10 +16,11 @@ We implement Cylinder3D and provide the result and checkpoints on Semantickitti 
 
 ### SemanticKITTI
 
-|                                                                                           Method                                                                                           | Lr schd | Mem (GB) |   mIOU   |         Download         |
-| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-----: | :------: | :------: | :----------------------: |
-|                                                                                         Cylinder3D                                                                                         |   3x    |   10.2   | 63.4±0.5 | [model](<>) \| [log](<>) |
-| Note: We reproduce the performance comparable with its official repo (https://github.com/xinge008/Cylinder3D), it's slightly lower than the performance (65.9 mIOU) reported in the paper. |         |          |          |                          |
+|   Method   | Lr schd | Mem (GB) |   mIOU   |         Download         |
+| :--------: | :-----: | :------: | :------: | :----------------------: |
+| Cylinder3D |   3x    |   10.2   | 63.4±0.5 | [model](<>) \| [log](<>) |
+
+Note: We reproduce the performance comparable with its official repo (https://github.com/xinge008/Cylinder3D), it's slightly lower than the performance (65.9 mIOU) reported in the paper.
 
 ## Citation
 
