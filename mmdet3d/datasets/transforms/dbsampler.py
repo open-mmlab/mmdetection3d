@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import mmengine
 import numpy as np
+from mmengine.fileio import get_local_path
 
 from mmdet3d.datasets.transforms import data_augment_utils
 from mmdet3d.registry import TRANSFORMS
@@ -91,26 +92,24 @@ class DataBaseSampler(object):
         classes (list[str], optional): List of classes. Defaults to None.
         points_loader (dict): Config of points loader. Defaults to
             dict(type='LoadPointsFromFile', load_dim=4, use_dim=[0, 1, 2, 3]).
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
 
-    def __init__(
-        self,
-        info_path: str,
-        data_root: str,
-        rate: float,
-        prepare: dict,
-        sample_groups: dict,
-        classes: Optional[List[str]] = None,
-        points_loader: dict = dict(
-            type='LoadPointsFromFile',
-            coord_type='LIDAR',
-            load_dim=4,
-            use_dim=[0, 1, 2, 3]),
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 info_path: str,
+                 data_root: str,
+                 rate: float,
+                 prepare: dict,
+                 sample_groups: dict,
+                 classes: Optional[List[str]] = None,
+                 points_loader: dict = dict(
+                     type='LoadPointsFromFile',
+                     coord_type='LIDAR',
+                     load_dim=4,
+                     use_dim=[0, 1, 2, 3],
+                     backend_args=None),
+                 backend_args: Optional[dict] = None) -> None:
         super().__init__()
         self.data_root = data_root
         self.info_path = info_path
@@ -120,10 +119,11 @@ class DataBaseSampler(object):
         self.cat2label = {name: i for i, name in enumerate(classes)}
         self.label2cat = {i: name for i, name in enumerate(classes)}
         self.points_loader = TRANSFORMS.build(points_loader)
-        self.file_client = mmengine.FileClient(**file_client_args)
+        self.backend_args = backend_args
 
         # load data base infos
-        with self.file_client.get_local_path(info_path) as local_path:
+        with get_local_path(
+                info_path, backend_args=self.backend_args) as local_path:
             # loading data from a file-like object needs file format
             db_infos = mmengine.load(open(local_path, 'rb'), file_format='pkl')
 

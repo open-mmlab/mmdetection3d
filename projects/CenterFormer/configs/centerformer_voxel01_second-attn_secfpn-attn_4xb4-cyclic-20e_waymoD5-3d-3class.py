@@ -13,7 +13,7 @@ class_names = ['Car', 'Pedestrian', 'Cyclist']
 tasks = [dict(num_class=3, class_names=['car', 'pedestrian', 'cyclist'])]
 metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=True, use_camera=False)
-file_client_args = dict(backend='disk')
+backend_args = None
 
 model = dict(
     type='CenterFormer',
@@ -120,7 +120,9 @@ db_sampler = dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4]))
+        use_dim=[0, 1, 2, 3, 4],
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
     dict(
@@ -128,7 +130,8 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=6,
         use_dim=5,
-        norm_intensity=True),
+        norm_intensity=True,
+        backend_args=backend_args),
     # Add this if using `MultiFrameDeformableDecoderRPN`
     # dict(
     #     type='LoadPointsFromMultiSweeps',
@@ -160,7 +163,7 @@ test_pipeline = [
         load_dim=6,
         use_dim=5,
         norm_intensity=True,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -199,7 +202,7 @@ train_dataloader = dict(
         box_type_3d='LiDAR',
         # load one frame every five frames
         load_interval=5,
-        file_client_args=file_client_args))
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -216,7 +219,7 @@ val_dataloader = dict(
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR',
-        file_client_args=file_client_args))
+        backend_args=backend_args))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
@@ -224,7 +227,7 @@ val_evaluator = dict(
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
     data_root='./data/waymo/waymo_format',
-    file_client_args=file_client_args,
+    backend_args=backend_args,
     convert_kitti_format=False,
     idx2metainfo='./data/waymo/waymo_format/idx2metainfo.pkl')
 test_evaluator = val_evaluator

@@ -21,9 +21,9 @@ def test_instance_seg_eval():
     pred_instance_labels = []
     pred_instance_scores = []
     for n_points, gt_labels in zip(n_points_list, gt_labels_list):
-        gt_instance_mask = np.ones(n_points, dtype=np.int) * -1
-        gt_semantic_mask = np.ones(n_points, dtype=np.int) * -1
-        pred_instance_mask = np.ones(n_points, dtype=np.int) * -1
+        gt_instance_mask = np.ones(n_points, dtype=np.int64) * -1
+        gt_semantic_mask = np.ones(n_points, dtype=np.int64) * -1
+        pred_instance_mask = np.ones(n_points, dtype=np.int64) * -1
         labels = []
         scores = []
         for i, gt_label in enumerate(gt_labels):

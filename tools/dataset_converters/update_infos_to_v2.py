@@ -630,6 +630,7 @@ def update_scannet_infos(pkl_path, out_dir):
         # TODO support camera
         # np.linalg.inv(info['axis_align_matrix'] @ extrinsic): depth2cam
         anns = ori_info_dict.get('annos', None)
+        ignore_class_name = set()
         if anns is not None:
             temp_data_info['axis_align_matrix'] = anns[
                 'axis_align_matrix'].tolist()
@@ -637,7 +638,6 @@ def update_scannet_infos(pkl_path, out_dir):
                 instance_list = []
             else:
                 num_instances = len(anns['name'])
-                ignore_class_name = set()
                 instance_list = []
                 for instance_id in range(num_instances):
                     empty_instance = get_empty_instance()

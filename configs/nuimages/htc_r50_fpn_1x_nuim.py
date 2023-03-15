@@ -18,8 +18,9 @@ model = dict(
             loss_weight=0.2)))
 
 data_root = 'data/nuimages/'
+backend_args = None
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(
         type='LoadAnnotations', with_bbox=True, with_mask=True, with_seg=True),
     dict(

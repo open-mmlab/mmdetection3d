@@ -47,9 +47,8 @@ class NuScenesMetric(BaseMetric):
         collect_device (str): Device name used for collecting results
             from different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
     NameMapping = {
         'movable_object.barrier': 'barrier',
@@ -88,19 +87,17 @@ class NuScenesMetric(BaseMetric):
         'attr_err': 'mAAE'
     }
 
-    def __init__(
-        self,
-        data_root: str,
-        ann_file: str,
-        metric: Union[str, List[str]] = 'bbox',
-        modality: dict = dict(use_camera=False, use_lidar=True),
-        prefix: Optional[str] = None,
-        format_only: bool = False,
-        jsonfile_prefix: Optional[str] = None,
-        eval_version: str = 'detection_cvpr_2019',
-        collect_device: str = 'cpu',
-        file_client_args: dict = dict(backend='disk')
-    ) -> None:
+    def __init__(self,
+                 data_root: str,
+                 ann_file: str,
+                 metric: Union[str, List[str]] = 'bbox',
+                 modality: dict = dict(use_camera=False, use_lidar=True),
+                 prefix: Optional[str] = None,
+                 format_only: bool = False,
+                 jsonfile_prefix: Optional[str] = None,
+                 eval_version: str = 'detection_cvpr_2019',
+                 collect_device: str = 'cpu',
+                 backend_args: Optional[dict] = None) -> None:
         self.default_prefix = 'NuScenes metric'
         super(NuScenesMetric, self).__init__(
             collect_device=collect_device, prefix=prefix)
@@ -120,7 +117,7 @@ class NuScenesMetric(BaseMetric):
             'the end.'
 
         self.jsonfile_prefix = jsonfile_prefix
-        self.file_client_args = file_client_args
+        self.backend_args = backend_args
 
         self.metrics = metric if isinstance(metric, list) else [metric]
 
@@ -169,7 +166,7 @@ class NuScenesMetric(BaseMetric):
         self.version = self.dataset_meta['version']
         # load annotations
         self.data_infos = load(
-            self.ann_file, file_client_args=self.file_client_args)['data_list']
+            self.ann_file, backend_args=self.backend_args)['data_list']
         result_dict, tmp_dir = self.format_results(results, classes,
                                                    self.jsonfile_prefix)
 

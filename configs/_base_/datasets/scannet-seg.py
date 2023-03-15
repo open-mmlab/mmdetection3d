@@ -12,16 +12,20 @@ data_prefix = dict(
     pts_instance_mask='instance_mask',
     pts_semantic_mask='semantic_mask')
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/scannet/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
-#         './data/scannet/':
-#         's3://scannet/',
-#     }))
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 num_points = 8192
 train_pipeline = [
@@ -31,13 +35,15 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
+        with_seg_3d=True,
+        backend_args=backend_args),
     dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',
@@ -57,13 +63,15 @@ test_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
+        with_seg_3d=True,
+        backend_args=backend_args),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(
         # a wrapper in order to successfully call test function
@@ -96,7 +104,8 @@ eval_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -116,7 +125,8 @@ train_dataloader = dict(
         modality=input_modality,
         ignore_index=len(class_names),
         scene_idxs=data_root + 'seg_info/train_resampled_scene_idxs.npy',
-        test_mode=False))
+        test_mode=False,
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -132,7 +142,8 @@ test_dataloader = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         ignore_index=len(class_names),
-        test_mode=True))
+        test_mode=True,
+        backend_args=backend_args))
 val_dataloader = test_dataloader
 
 val_evaluator = dict(type='SegMetric')

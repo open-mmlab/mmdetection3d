@@ -13,20 +13,32 @@ data_root = 'data/lyft/'
 input_modality = dict(use_lidar=True, use_camera=False)
 data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/lyft/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
-#         './data/lyft/': 's3://lyft/lyft/',
-#         'data/lyft/': 's3://lyft/lyft/'
-#    }))
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
-    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',
@@ -42,8 +54,16 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
-    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -64,8 +84,16 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
-    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
@@ -82,7 +110,8 @@ train_dataloader = dict(
         modality=input_modality,
         data_prefix=data_prefix,
         test_mode=False,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -98,7 +127,8 @@ test_dataloader = dict(
         modality=input_modality,
         data_prefix=data_prefix,
         test_mode=True,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -114,16 +144,19 @@ val_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         data_prefix=data_prefix,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 
 val_evaluator = dict(
     type='LyftMetric',
     ann_file=data_root + 'lyft_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 test_evaluator = dict(
     type='LyftMetric',
     ann_file=data_root + 'lyft_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(

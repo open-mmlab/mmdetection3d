@@ -9,21 +9,23 @@ metainfo = dict(classes=class_names)
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=False, use_camera=True)
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/nuscenes/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
-#         './data/nuscenes/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         'data/nuscenes/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/'
-#     }))
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -43,7 +45,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
@@ -73,7 +75,8 @@ train_dataloader = dict(
         # we use box_type_3d='Camera' in monocular 3d
         # detection task
         box_type_3d='Camera',
-        use_valid_flag=True))
+        use_valid_flag=True,
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
     num_workers=2,
@@ -98,14 +101,16 @@ val_dataloader = dict(
         metainfo=metainfo,
         test_mode=True,
         box_type_3d='Camera',
-        use_valid_flag=True))
+        use_valid_flag=True,
+        backend_args=backend_args))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
     type='NuScenesMetric',
     data_root=data_root,
     ann_file=data_root + 'nuscenes_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 
 test_evaluator = val_evaluator
 
