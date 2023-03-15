@@ -256,6 +256,9 @@ class Seg3DDataset(BaseDataset):
                     self.data_prefix.get('pts', ''),
                     info['lidar_points']['lidar_path'])
 
+            info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
+            info['lidar_path'] = info['lidar_points']['lidar_path']
+
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():
                 if 'img_path' in img_info:

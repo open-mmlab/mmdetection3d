@@ -8,8 +8,8 @@ from .seg3d_dataset import Seg3DDataset
 
 
 @DATASETS.register_module()
-class SemanticKITTIDataset(Seg3DDataset):
-    r"""SemanticKITTI Dataset.
+class SemanticKittiDataset(Seg3DDataset):
+    r"""SemanticKitti Dataset.
 
     This class serves as the API for experiments on the SemanticKITTI Dataset
     Please refer to <http://www.semantic-kitti.org/dataset.html>`_
@@ -44,14 +44,20 @@ class SemanticKITTIDataset(Seg3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'classes': ('unlabeled', 'car', 'bicycle', 'motorcycle', 'truck',
-                    'bus', 'person', 'bicyclist', 'motorcyclist', 'road',
-                    'parking', 'sidewalk', 'other-ground', 'building', 'fence',
-                    'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'),
+        'classes': ('car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person',
+                    'bicyclist', 'motorcyclist', 'road', 'parking', 'sidewalk',
+                    'other-ground', 'building', 'fence', 'vegetation',
+                    'trunck', 'terrian', 'pole', 'traffic-sign'),
+        'palette': [[100, 150, 245], [100, 230, 245], [30, 60, 150],
+                    [80, 30, 180], [100, 80, 250], [155, 30, 30],
+                    [255, 40, 200], [150, 30, 90], [255, 0, 255],
+                    [255, 150, 255], [75, 0, 75], [175, 0, 75], [255, 200, 0],
+                    [255, 120, 50], [0, 175, 0], [135, 60, 0], [150, 240, 80],
+                    [255, 240, 150], [255, 0, 0]],
         'seg_valid_class_ids':
-        tuple(range(20)),
+        tuple(range(19)),
         'seg_all_class_ids':
-        tuple(range(20)),
+        tuple(range(19)),
     }
 
     def __init__(self,
@@ -59,7 +65,7 @@ class SemanticKITTIDataset(Seg3DDataset):
                  ann_file: str = '',
                  metainfo: Optional[dict] = None,
                  data_prefix: dict = dict(
-                     pts='points',
+                     pts='',
                      img='',
                      pts_instance_mask='',
                      pts_semantic_mask=''),
@@ -83,7 +89,7 @@ class SemanticKITTIDataset(Seg3DDataset):
             **kwargs)
 
     def get_seg_label_mapping(self, metainfo):
-        seg_label_mapping = np.zeros(metainfo['max_label'] + 1)
+        seg_label_mapping = np.zeros(metainfo['max_label'] + 1, dtype=np.int64)
         for idx in metainfo['seg_label_mapping']:
             seg_label_mapping[idx] = metainfo['seg_label_mapping'][idx]
         return seg_label_mapping
