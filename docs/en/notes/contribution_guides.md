@@ -14,13 +14,12 @@ Pull requests let you tell others about changes you have pushed to a branch in a
 
 1. Get the most recent codebase
 
-2. Checkout a new branch from `dev-1.x`, `dev` or `master` branch, depending on the version of the codebase you want to contribute to. The differences of these three branches are as the following:
+2. Checkout a new branch from `dev-1.x` or `dev` branch, depending on the version of the codebase you want to contribute to. The differences of these three branches are as the following:
 
    | Branch  | new coordinate system | depend on MMEngine | update frequence |
    | :-----: | :-------------------: | :----------------: | :--------------: |
    | dev-1.x |           √           |         √          |      always      |
    |   dev   |           √           |         ✗          |      hardly      |
-   | master  |           ✗           |         ✗          |      hardly      |
 
    We strongly recommend you pull request based on more advanced `dev-1.x` branch.
 
@@ -30,7 +29,7 @@ Pull requests let you tell others about changes you have pushed to a branch in a
 
 5. Discuss and review your code
 
-6. Merge your branch to `dev-1.x` / `dev` / `master` branch
+6. Merge your branch to `dev-1.x` / `dev` branch
 
 ## Procedures in detail
 
@@ -62,7 +61,7 @@ Pull requests let you tell others about changes you have pushed to a branch in a
   git pull upstream dev-1.x
   ```
 
-### 2. Checkout a new branch from the `dev-1.x` / `dev` / `master` branch
+### 2. Checkout a new branch from the `dev-1.x` / `dev` branch
 
 ```bash
 git checkout -b branchname
@@ -116,7 +115,7 @@ To make commit history clear, we strongly recommend you checkout the `dev-1.x` b
 
 - Modify your codes according to reviewers' suggestions and then push your changes.
 
-### 6.  Merge your branch to the `dev-1.x` / `dev` / `master`  branch and delete the branch
+### 6.  Merge your branch to the `dev-1.x` / `dev` branch and delete the branch
 
 - After the PR is merged by the maintainer, you can delete the branch you created in your forked repository.
 
