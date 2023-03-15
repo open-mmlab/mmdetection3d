@@ -104,6 +104,14 @@ Note:
    pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
    ```
 
+   or omit sudo install by following command:
+
+   ```shell
+   conda install -c bioconda sparsehash
+   export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH:${YOUR_CONDA_ENVS_DIR}/include
+   pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
+   ```
+
 3. The code can not be built for CPU only environment (where CUDA isn't available) for now.
 
 ### Verify the Installation

@@ -98,7 +98,15 @@ mim install "mmdet3d>=1.1.0rc0"
    我们还支持 `Torchsparse` 作为稀疏卷积的后端。如果需要，请参考[安装指南](https://github.com/mit-han-lab/torchsparse#installation) 或者使用 `pip` 来安装：
 
    ```shell
-   sudo apt-get install libsparsehash-dev
+   sudo apt install libsparsehash-dev
+   pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
+   ```
+
+   或者通过以下安装绕过sudo权限
+
+   ```shell
+   conda install -c bioconda sparsehash
+   export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH:${YOUR_CONDA_ENVS_DIR}/include
    pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
    ```
 
