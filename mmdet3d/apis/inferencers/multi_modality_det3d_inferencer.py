@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Sequence, Union
 import mmcv
 import mmengine
 import numpy as np
-from mmengine import init_default_scope
 from mmengine.dataset import Compose
 from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
@@ -64,7 +63,6 @@ class MultiModalityDet3DInferencer(BaseDet3DInferencer):
         # naming of the output results
         self.num_visualized_frames = 0
         self.palette = palette
-        init_default_scope(scope=scope)
         super(MultiModalityDet3DInferencer, self).__init__(
             model=model, weights=weights, device=device, scope=scope)
 
