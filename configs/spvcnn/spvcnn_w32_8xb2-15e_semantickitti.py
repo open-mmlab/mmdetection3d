@@ -3,14 +3,8 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
-file_client_args = dict(backend='disk')
 train_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
@@ -56,5 +50,5 @@ val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
 default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
-randomness = dict(seed=1588147245, deterministic=False, diff_rank_seed=True)
+randomness = dict(seed=0, deterministic=False, diff_rank_seed=True)
 env_cfg = dict(cudnn_benchmark=True)
