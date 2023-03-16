@@ -5,7 +5,7 @@ import torch
 from mmengine.registry import MODELS
 from torch import Tensor, nn
 
-from mmdet3d.models.layers import IS_TORCHSPARSE_AVAILABLE
+from mmdet3d.models.layers.torchsparse_block import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.utils import OptMultiConfig
 from .minkunet_backbone import MinkUNetBackbone
 
@@ -39,29 +39,29 @@ class SPVCNNBackbone(MinkUNetBackbone):
     def __init__(self,
                  in_channels: int = 4,
                  base_channels: int = 32,
-                 enc_channels: Sequence[int] = [32, 64, 128, 256],
-                 dec_channels: Sequence[int] = [256, 128, 96, 96],
+                 encoder_channels: Sequence[int] = [32, 64, 128, 256],
+                 decoder_channels: Sequence[int] = [256, 128, 96, 96],
                  num_stages: int = 4,
                  drop_ratio: float = 0.3,
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(
             in_channels=in_channels,
             base_channels=base_channels,
-            enc_channels=enc_channels,
-            dec_channels=dec_channels,
+            encoder_channels=encoder_channels,
+            decoder_channels=decoder_channels,
             num_stages=num_stages,
             init_cfg=init_cfg)
 
         self.point_transforms = nn.ModuleList([
             nn.Sequential(
-                nn.Linear(base_channels, enc_channels[-1]),
-                nn.BatchNorm1d(enc_channels[-1]), nn.ReLU(True)),
+                nn.Linear(base_channels, encoder_channels[-1]),
+                nn.BatchNorm1d(encoder_channels[-1]), nn.ReLU(True)),
             nn.Sequential(
-                nn.Linear(enc_channels[-1], dec_channels[2]),
-                nn.BatchNorm1d(dec_channels[2]), nn.ReLU(True)),
+                nn.Linear(encoder_channels[-1], decoder_channels[2]),
+                nn.BatchNorm1d(decoder_channels[2]), nn.ReLU(True)),
             nn.Sequential(
-                nn.Linear(dec_channels[2], dec_channels[4]),
-                nn.BatchNorm1d(dec_channels[4]), nn.ReLU(True))
+                nn.Linear(decoder_channels[2], decoder_channels[4]),
+                nn.BatchNorm1d(decoder_channels[4]), nn.ReLU(True))
         ])
         self.dropout = nn.Dropout(drop_ratio, True)
 
@@ -84,8 +84,8 @@ class SPVCNNBackbone(MinkUNetBackbone):
         z = self.voxel_to_point(x, z, nearest=False)
         x = self.point_to_voxel(x, z)
         laterals = [x]
-        for enc in self.encoder:
-            x = enc(x)
+        for encoder in self.encoder:
+            x = encoder(x)
             laterals.append(x)
         laterals = laterals[:-1][::-1]
 
@@ -95,12 +95,12 @@ class SPVCNNBackbone(MinkUNetBackbone):
         x = self.point_to_voxel(x, z)
         x.F = self.dropout(x.F)
 
-        dec_outs = []
-        for i, dec in enumerate(self.decoder):
-            x = dec[0](x)
+        decoder_outs = []
+        for i, decoder in enumerate(self.decoder):
+            x = decoder[0](x)
             x = torchsparse.cat((x, laterals[i]))
-            x = dec[1](x)
-            dec_outs.append(x)
+            x = decoder[1](x)
+            decoder_outs.append(x)
             if i == 1:
                 z_new = self.voxel_to_point(x, z)
                 z_new.F = z_new.F + self.point_transforms[1](z.F)
