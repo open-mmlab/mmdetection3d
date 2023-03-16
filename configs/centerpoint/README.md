@@ -56,7 +56,7 @@ model = dict(
             max_num=83)))
 
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
-file_client_args = dict(backend='disk')
+backend_args = None
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
@@ -67,12 +67,12 @@ test_pipeline = [
         type='LoadPointsFromFile',
         load_dim=5,
         use_dim=5,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         use_dim=[0, 1, 2, 3, 4],
-        file_client_args=file_client_args,
+        backend_args=backend_args,
         pad_empty_sweeps=True,
         remove_close=True),
     dict(

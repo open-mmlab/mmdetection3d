@@ -17,6 +17,7 @@ model = dict(
 
 # data settings
 num_points = 4096
+backend_args = None
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -24,13 +25,15 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
         with_label_3d=False,
         with_mask_3d=False,
-        with_seg_3d=True),
+        with_seg_3d=True,
+        backend_args=backend_args),
     dict(type='PointSegClassMapping'),
     dict(
         type='IndoorPatchPointSample',

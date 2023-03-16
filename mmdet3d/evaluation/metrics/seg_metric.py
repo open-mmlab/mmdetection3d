@@ -87,7 +87,7 @@ class SegMetric(BaseMetric):
         ignore_index = self.dataset_meta['ignore_index']
         # need to map network output to original label idx
         cat2label = np.zeros(len(self.dataset_meta['label2cat'])).astype(
-            np.int)
+            np.int64)
         for original_label, output_idx in self.dataset_meta['label2cat'].items(
         ):
             if output_idx != ignore_index:
@@ -95,7 +95,7 @@ class SegMetric(BaseMetric):
 
         for i, (eval_ann, result) in enumerate(results):
             sample_idx = eval_ann['point_cloud']['lidar_idx']
-            pred_sem_mask = result['semantic_mask'].numpy().astype(np.int)
+            pred_sem_mask = result['semantic_mask'].numpy().astype(np.int64)
             pred_label = cat2label[pred_sem_mask]
             curr_file = f'{submission_prefix}/{sample_idx}.txt'
             np.savetxt(curr_file, pred_label, fmt='%d')

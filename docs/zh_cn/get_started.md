@@ -250,7 +250,7 @@ print(mmdet3d.__version__)
 我们提供了 [Dockerfile](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docker/Dockerfile) 来构建一个镜像。请确保您的 [docker 版本](https://docs.docker.com/engine/install/) >= 19.03。
 
 ```shell
-# 基于 PyTorch 1.6，CUDA 10.1 构建镜像
+# 基于 PyTorch 1.9，CUDA 11.1 构建镜像
 # 如果您想要其他版本，只需要修改 Dockerfile
 docker build -t mmdetection3d docker/
 ```

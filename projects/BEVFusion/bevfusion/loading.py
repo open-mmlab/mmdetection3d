@@ -3,8 +3,8 @@ import copy
 from typing import Optional
 
 import mmcv
-import mmengine
 import numpy as np
+from mmengine.fileio import get
 
 from mmdet3d.datasets.transforms import LoadMultiViewImageFromFiles
 from mmdet3d.registry import TRANSFORMS
@@ -23,9 +23,8 @@ class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
         to_float32 (bool): Whether to convert the img to float32.
             Defaults to False.
         color_type (str): Color type of the file. Defaults to 'unchanged'.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
         num_views (int): Number of view in a frame. Defaults to 5.
         num_ref_frames (int): Number of frame in loading. Defaults to -1.
         test_mode (bool): Whether is test mode in loading. Defaults to False.
@@ -160,12 +159,11 @@ class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
 
         results['ori_cam2img'] = copy.deepcopy(results['cam2img'])
 
-        if self.file_client is None:
-            self.file_client = mmengine.FileClient(**self.file_client_args)
-
         # img is of shape (h, w, c, num_views)
         # h and w can be different for different views
-        img_bytes = [self.file_client.get(name) for name in filename]
+        img_bytes = [
+            get(name, backend_args=self.backend_args) for name in filename
+        ]
         imgs = [
             mmcv.imfrombytes(
                 img_byte,

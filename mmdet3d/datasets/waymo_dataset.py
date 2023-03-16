@@ -99,7 +99,7 @@ class WaymoDataset(KittiDataset):
         self.cat_ids = range(len(self.METAINFO['classes']))
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.max_sweeps = max_sweeps
-        # we do not provide file_client_args to custom_3d init
+        # we do not provide backend_args to custom_3d init
         # because we want disk loading for info
         # while ceph loading for Prediction2Waymo
         super().__init__(
