@@ -14,7 +14,7 @@ In many robotics and VR/AR applications, 3D-videos are readily-available sources
 
 ## Introduction
 
-We implement MinkUnet with TorchSparse backend and provide the result and checkpoints on SemanticKITTI datasets.
+We implement MinkUNet with TorchSparse backend and provide the result and checkpoints on SemanticKITTI datasets.
 
 ## Results and models
 
@@ -22,9 +22,9 @@ We implement MinkUnet with TorchSparse backend and provide the result and checkp
 
 |    Method    | Lr schd | Mem (GB) | mIOU |         Download         |
 | :----------: | :-----: | :------: | :--: | :----------------------: |
-| MinkUnet-W16 |   15e   |   3.4    | 60.3 | [model](<>) \| [log](<>) |
-| MinkUnet-W20 |   15e   |   3.7    | 61.6 | [model](<>) \| [log](<>) |
-| MinkUnet-W32 |   15e   |   4.9    | 63.1 | [model](<>) \| [log](<>) |
+| MinkUNet-W16 |   15e   |   3.4    | 60.3 | [model](<>) \| [log](<>) |
+| MinkUNet-W20 |   15e   |   3.7    | 61.6 | [model](<>) \| [log](<>) |
+| MinkUNet-W32 |   15e   |   4.9    | 63.1 | [model](<>) \| [log](<>) |
 
 **Note:** We follow the implementation in SPVNAS original [repo](https://github.com/mit-han-lab/spvnas) and W16\\W20\\W32 indicates different number of channels.
 

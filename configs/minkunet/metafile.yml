@@ -1,10 +1,10 @@
 Collections:
-  - Name: MinkUnet
+  - Name: MinkUNet
     Metadata:
       Training Techniques:
         - AdamW
       Architecture:
-        - MinkUnet
+        - MinkUNet
     Paper:
       URL: https://arxiv.org/abs/1904.08755
       Title: '4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks'
@@ -15,7 +15,7 @@ Collections:
 
 Models:
   - Name: minkunet_w16_8xb2-15e_semantickitti
-    In Collection: MinkUnet
+    In Collection: MinkUNet
     Config: configs/minkunet/minkunet_w16_8xb2-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
@@ -29,7 +29,7 @@ Models:
     Weights:
 
   - Name: minkunet_w20_8xb2-15e_semantickitti
-    In Collection: MinkUnet
+    In Collection: MinkUNet
     Config: configs/minkunet/minkunet_w20_8xb2-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
@@ -43,7 +43,7 @@ Models:
     Weights:
 
   - Name: minkunet_w32_8xb2-15e_semantickitti
-    In Collection: MinkUnet
+    In Collection: MinkUNet
     Config: configs/minkunet/minkunet_w32_8xb2-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
