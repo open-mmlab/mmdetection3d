@@ -15,7 +15,7 @@ if IS_TORCHSPARSE_AVAILABLE:
     from torchsparse.nn.utils import get_kernel_offsets
     from torchsparse.tensor import PointTensor, SparseTensor
 else:
-    SparseTensor = None
+    PointTensor = SparseTensor = None
 
 
 @MODELS.register_module()
