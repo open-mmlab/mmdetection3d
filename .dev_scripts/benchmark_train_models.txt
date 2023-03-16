@@ -1,5 +1,5 @@
 configs/3dssd/3dssd_4xb4_kitti-3d-car.py
-configs/centerpoint/centerpoint_pillar02_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py
+configs/centerpoint/centerpoint_pillar02_second_secfpn_head-dcn_8xb4-cyclic-20e_nus-3d.py
 configs/dynamic_voxelization/second_dv_secfpn_8xb2-cosine-80e_kitti-3d-3class.py
 configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py
 configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py
