@@ -5,7 +5,7 @@ import torch
 from mmengine.registry import MODELS
 from torch import Tensor, nn
 
-from mmdet3d.models.layers.torchsparse_block import IS_TORCHSPARSE_AVAILABLE
+from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.utils import OptMultiConfig
 from .minkunet_backbone import MinkUNetBackbone
 
