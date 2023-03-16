@@ -88,9 +88,6 @@ class SemanticKittiDataset(Seg3DDataset):
             test_mode=test_mode,
             **kwargs)
 
-    def filter_data(self) -> List[dict]:
-        return self.data_list
-
     def get_seg_label_mapping(self, metainfo):
         seg_label_mapping = np.zeros(metainfo['max_label'] + 1, dtype=np.int64)
         for idx in metainfo['seg_label_mapping']:

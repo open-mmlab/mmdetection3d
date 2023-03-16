@@ -2,7 +2,7 @@
 from .torchsparse_wrapper import register_torchsparse
 
 try:
-    import torchsparse  # noqa: F401
+    import torchsparse  # noqa
 except ImportError:
     IS_TORCHSPARSE_AVAILABLE = False
 else:

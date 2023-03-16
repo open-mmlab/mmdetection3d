@@ -46,7 +46,7 @@ class TestMinkUNetHead(TestCase):
             datasample = Det3DDataSample()
             datasample.gt_pts_seg = gt_pts_seg
 
-            gt_losses = minkunet_head.loss(x, [datasample, datasample])
+            gt_losses = minkunet_head.loss(x, [datasample, datasample], {})
 
             gt_sem_seg_loss = gt_losses['loss_sem_seg'].item()
 
