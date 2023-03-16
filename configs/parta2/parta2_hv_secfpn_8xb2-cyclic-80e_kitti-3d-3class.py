@@ -10,6 +10,7 @@ dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=True, use_camera=False)
+backend_args = None
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -20,9 +21,19 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
     points_loader=dict(
-        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    backend_args=backend_args)
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -45,7 +56,12 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -66,7 +82,12 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
@@ -86,7 +107,8 @@ train_dataloader = dict(
             modality=input_modality,
             metainfo=dict(classes=class_names),
             box_type_3d='LiDAR',
-            test_mode=False)))
+            test_mode=False,
+            backend_args=backend_args)))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -102,7 +124,8 @@ test_dataloader = dict(
         modality=input_modality,
         metainfo=dict(classes=class_names),
         box_type_3d='LiDAR',
-        test_mode=True))
+        test_mode=True,
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -118,11 +141,13 @@ val_dataloader = dict(
         modality=input_modality,
         metainfo=dict(classes=class_names),
         box_type_3d='LiDAR',
-        test_mode=True))
+        test_mode=True,
+        backend_args=backend_args))
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 test_evaluator = val_evaluator
 # Part-A2 uses a different learning rate from what SECOND uses.
 optim_wrapper = dict(optimizer=dict(lr=0.001))

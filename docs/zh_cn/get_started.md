@@ -95,6 +95,21 @@ mim install "mmdet3d>=1.1.0rc0"
    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
    ```
 
+   我们还支持 `Torchsparse` 作为稀疏卷积的后端。如果需要，请参考[安装指南](https://github.com/mit-han-lab/torchsparse#installation) 或者使用 `pip` 来安装：
+
+   ```shell
+   sudo apt install libsparsehash-dev
+   pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
+   ```
+
+   或者通过以下安装绕过sudo权限
+
+   ```shell
+   conda install -c bioconda sparsehash
+   export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH:${YOUR_CONDA_ENVS_DIR}/include
+   pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
+   ```
+
 3. 我们的代码目前不能在只有 CPU 的环境（CUDA 不可用）下编译。
 
 ### 验证安装

@@ -46,8 +46,10 @@ model = dict(
     ]),
     test_cfg=dict(nms_pre=1000, nms_thr=0.8, score_thr=0.01, max_per_img=200))
 
+backend_args = None
+
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -66,7 +68,7 @@ train_pipeline = [
         ]),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='mmdet.Resize', scale_factor=1.0),
     dict(type='Pack3DDetInputs', keys=['img']),
 ]
