@@ -98,7 +98,7 @@ class MinkUNetBackbone(BaseModule):
         Args:
             voxel_features (Tensor): Voxel features in shape (N, C).
             coors (Tensor): Coordinates in shape (N, 4),
-                the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
+                the columns in the order of (x_idx, y_idx, z_idx, batch_idx).
 
         Returns:
             SparseTensor: Backbone features.
