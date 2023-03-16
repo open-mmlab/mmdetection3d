@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence
+from typing import Optional, Sequence
 
 import torch
 from mmengine.registry import MODELS
@@ -20,20 +20,24 @@ else:
 
 @MODELS.register_module()
 class SPVCNNBackbone(MinkUNetBackbone):
-    """MinkUNet backbone is the implementation of `4D Spatio-Temporal ConvNets.
+    """SPVCNN backbone with torchsparse backend.
 
-    <https://arxiv.org/abs/1904.08755>` with torchsparse backend.
+    More details can be found in `paper <https://arxiv.org/abs/2007.16100>`_ .
 
     Args:
-        in_channels (int): Number of input image channels. Default" 3.
-        base_channels (int): Number of base channels of each stage.
-            The output channels of the first stage. Defaults to 64.
-        enc_channels (tuple[int]): Convolutional channels of each encode block.
-        dec_channels (tuple[int]): Convolutional channels of each decode block.
+        in_channels (int): Number of input voxel feature channels.
+            Defaults to 4.
+        base_channels (int): The input channels for first encoder layer.
+            Defaults to 32.
+        encoder_channels (List[int]): Convolutional channels of each encode
+            layer. Defaults to [32, 64, 128, 256].
+        decoder_channels (List[int]): Convolutional channels of each decode
+            layer. Defaults to [256, 128, 96, 96].
         num_stages (int): Number of stages in encoder and decoder.
             Defaults to 4.
+        drop_ratio: Dropout ratio of voxel features. Defaults to 0.3.
         init_cfg (dict or list[dict], optional): Initialization config dict.
-            Default: None
+            Defaults to None.
     """
 
     def __init__(self,
@@ -71,17 +75,17 @@ class SPVCNNBackbone(MinkUNetBackbone):
         Args:
             voxel_features (Tensor): Voxel features in shape (N, C).
             coors (Tensor): Coordinates in shape (N, 4),
-                the columns in the order of (batch_idx, z_idx, y_idx, x_idx).
+                the columns in the order of (x_idx, y_idx, z_idx, batch_idx).
 
         Returns:
-            SparseTensor: backbone features.
+            PointTensor: Backbone features.
         """
         x = SparseTensor(voxel_features, coors)
         z = PointTensor(x.F, x.C.float())
         x = self.initial_voxelize(z)
 
         x = self.conv_input(x)
-        z = self.voxel_to_point(x, z, nearest=False)
+        z = self.voxel_to_point(x, z)
         x = self.point_to_voxel(x, z)
         laterals = [x]
         for encoder in self.encoder:
@@ -89,9 +93,7 @@ class SPVCNNBackbone(MinkUNetBackbone):
             laterals.append(x)
         laterals = laterals[:-1][::-1]
 
-        z_new = self.voxel_to_point(x, z)
-        z_new.F = z_new.F + self.point_transforms[0](z.F)
-        z = z_new
+        z = self.voxel_to_point(x, z, self.point_transforms[0])
         x = self.point_to_voxel(x, z)
         x.F = self.dropout(x.F)
 
@@ -102,20 +104,22 @@ class SPVCNNBackbone(MinkUNetBackbone):
             x = decoder[1](x)
             decoder_outs.append(x)
             if i == 1:
-                z_new = self.voxel_to_point(x, z)
-                z_new.F = z_new.F + self.point_transforms[1](z.F)
-                z = z_new
+                z = self.voxel_to_point(x, z, self.point_transforms[1])
                 x = self.point_to_voxel(x, z)
                 x.F = self.dropout(x.F)
 
-        z_new = self.voxel_to_point(x, z)
-        z_new.F = z_new.F + self.point_transforms[2](z.F)
-        # x = self.point_to_voxel(x, z)
+        z = self.voxel_to_point(x, z, self.point_transforms[2])
+        return z
 
-        return z_new
+    def initial_voxelize(self, z: PointTensor) -> SparseTensor:
+        """Voxelization again based on input PointTensor.
 
-    def initial_voxelize(self, z):
+        Args:
+            z (PointTensor): Input points after voxelization.
 
+        Returns:
+            SparseTensor: New voxels.
+        """
         pc_hash = F.sphash(torch.floor(z.C).int())
         sparse_hash = torch.unique(pc_hash)
         idx_query = F.sphashquery(pc_hash, sparse_hash)
@@ -131,36 +135,24 @@ class SPVCNNBackbone(MinkUNetBackbone):
         z.additional_features['counts'][1] = counts
         return new_tensor
 
-    # x: SparseTensor, z: PointTensor
-    # return: SparseTensor
-    def point_to_voxel(self, x, z):
-        if z.additional_features is None or z.additional_features.get(
-                'idx_query') is None or z.additional_features['idx_query'].get(
-                    x.s) is None:
-            pc_hash = F.sphash(
-                torch.cat([
-                    torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
-                    z.C[:, -1].int().view(-1, 1)
-                ], 1))
-            sparse_hash = F.sphash(x.C)
-            idx_query = F.sphashquery(pc_hash, sparse_hash)
-            counts = F.spcount(idx_query.int(), x.C.shape[0])
-            z.additional_features['idx_query'][x.s] = idx_query
-            z.additional_features['counts'][x.s] = counts
-        else:
-            idx_query = z.additional_features['idx_query'][x.s]
-            counts = z.additional_features['counts'][x.s]
+    def voxel_to_point(self,
+                       x: SparseTensor,
+                       z: PointTensor,
+                       point_transform: Optional[nn.Module] = None,
+                       nearest: bool = False) -> PointTensor:
+        """Feed voxel features to points.
 
-        inserted_feat = F.spvoxelize(z.F, idx_query, counts)
-        new_tensor = SparseTensor(inserted_feat, x.C, x.s)
-        new_tensor.cmaps = x.cmaps
-        new_tensor.kmaps = x.kmaps
+        Args:
+            x (SparseTensor): Input voxels.
+            z (PointTensor): Input points.
+            point_transform: (nn.Module, optional): Point transform module
+                for input point features. Defaults to None.
+            nearest: Whether to use nearest neighbor interpolation.
+                Defaults to False.
 
-        return new_tensor
-
-    # x: SparseTensor, z: PointTensor
-    # return: PointTensor
-    def voxel_to_point(self, x, z, nearest=False):
+        Returns:
+            PointTensor: Points with new features.
+        """
         if z.idx_query is None or z.weights is None or z.idx_query.get(
                 x.s) is None or z.weights.get(x.s) is None:
             off = get_kernel_offsets(2, x.s, 1, device=z.F.device)
@@ -185,12 +177,48 @@ class SPVCNNBackbone(MinkUNetBackbone):
             new_tensor.weights[x.s] = weights
             z.idx_query[x.s] = idx_query
             z.weights[x.s] = weights
-
         else:
             new_feat = F.spdevoxelize(x.F, z.idx_query.get(x.s),
                                       z.weights.get(x.s))
             new_tensor = PointTensor(
                 new_feat, z.C, idx_query=z.idx_query, weights=z.weights)
             new_tensor.additional_features = z.additional_features
+
+        if point_transform is not None:
+            new_tensor.F = new_tensor.F + point_transform(z.F)
+
+        return new_tensor
+
+    def point_to_voxel(self, x: SparseTensor, z: PointTensor) -> SparseTensor:
+        """Feed point features to voxels.
+
+        Args:
+            x (SparseTensor): Input voxels.
+            z (PointTensor): Input points.
+
+        Returns:
+            SparseTensor: Voxels with new features.
+        """
+        if z.additional_features is None or z.additional_features.get(
+                'idx_query') is None or z.additional_features['idx_query'].get(
+                    x.s) is None:
+            pc_hash = F.sphash(
+                torch.cat([
+                    torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
+                    z.C[:, -1].int().view(-1, 1)
+                ], 1))
+            sparse_hash = F.sphash(x.C)
+            idx_query = F.sphashquery(pc_hash, sparse_hash)
+            counts = F.spcount(idx_query.int(), x.C.shape[0])
+            z.additional_features['idx_query'][x.s] = idx_query
+            z.additional_features['counts'][x.s] = counts
+        else:
+            idx_query = z.additional_features['idx_query'][x.s]
+            counts = z.additional_features['counts'][x.s]
+
+        inserted_feat = F.spvoxelize(z.F, idx_query, counts)
+        new_tensor = SparseTensor(inserted_feat, x.C, x.s)
+        new_tensor.cmaps = x.cmaps
+        new_tensor.kmaps = x.kmaps
 
         return new_tensor
