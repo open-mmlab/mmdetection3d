@@ -6,36 +6,25 @@ import numpy as np
 from mmdet.evaluation import eval_map
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
+from mmeval import Indoor3DMeanAP
 
-from mmdet3d.evaluation import indoor_eval
 from mmdet3d.registry import METRICS
-from mmdet3d.structures import get_box_type
 
 
 @METRICS.register_module()
-class IndoorMetric(BaseMetric):
+class IndoorMetric(Indoor3DMeanAP):
     """Indoor scene evaluation metric.
 
     Args:
         iou_thr (float or List[float]): List of iou threshold when calculate
             the metric. Defaults to [0.25, 0.5].
-        collect_device (str): Device name used for collecting results from
-            different ranks during distributed training. Must be 'cpu' or
-            'gpu'. Defaults to 'cpu'.
-        prefix (str, optional): The prefix that will be added in the metric
-            names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix will
-            be used instead. Defaults to None.
+        **kwargs: Keyword parameters passed to :class:`BaseMetric`.
     """
 
-    def __init__(self,
-                 iou_thr: List[float] = [0.25, 0.5],
-                 collect_device: str = 'cpu',
-                 prefix: Optional[str] = None) -> None:
-        super(IndoorMetric, self).__init__(
-            prefix=prefix, collect_device=collect_device)
-        self.iou_thr = [iou_thr] if isinstance(iou_thr, float) else iou_thr
+    def __init__(self, iou_thr: List[float] = [0.25, 0.5], **kwargs) -> None:
+        super(IndoorMetric, self).__init__(iou_thr=iou_thr, **kwargs)
 
+    # TODO: remove data_batch
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
@@ -46,48 +35,30 @@ class IndoorMetric(BaseMetric):
             data_batch (dict): A batch of data from the dataloader.
             data_samples (Sequence[dict]): A batch of outputs from the model.
         """
+        predictions, groundtruths = [], []
         for data_sample in data_samples:
-            pred_3d = data_sample['pred_instances_3d']
-            eval_ann_info = data_sample['eval_ann_info']
-            cpu_pred_3d = dict()
-            for k, v in pred_3d.items():
-                if hasattr(v, 'to'):
-                    cpu_pred_3d[k] = v.to('cpu')
-                else:
-                    cpu_pred_3d[k] = v
-            self.results.append((eval_ann_info, cpu_pred_3d))
 
-    def compute_metrics(self, results: list) -> Dict[str, float]:
-        """Compute the metrics from processed results.
+            groundtruth = data_sample['eval_ann_info']
+            groundtruths.append(groundtruth)
+            prediction = dict()
+            prediction['scores_3d'] = data_sample['pred_instances_3d'][
+                'scores_3d'].cpu().numpy()
+            prediction['labels_3d'] = data_sample['pred_instances_3d'][
+                'labels_3d'].cpu().numpy()
+            prediction['bboxes_3d'] = data_sample['pred_instances_3d'][
+                'bboxes_3d'].to('cpu')
+            predictions.append(prediction)
+        self.add(predictions, groundtruths)
 
-        Args:
-            results (list): The processed results of each batch.
+    def evaluate(self, *args, **kwargs) -> dict:
+        """Returns metric results and print pretty table of metrics per class.
 
-        Returns:
-            Dict[str, float]: The computed metrics. The keys are the names of
-            the metrics, and the values are corresponding results.
+        This method would be invoked by ``mmengine.Evaluator``. After
+        refactoring we do not return less readable information.
         """
-        logger: MMLogger = MMLogger.get_current_instance()
-        ann_infos = []
-        pred_results = []
-
-        for eval_ann, sinlge_pred_results in results:
-            ann_infos.append(eval_ann)
-            pred_results.append(sinlge_pred_results)
-
-        # some checkpoints may not record the key "box_type_3d"
-        box_type_3d, box_mode_3d = get_box_type(
-            self.dataset_meta.get('box_type_3d', 'depth'))
-
-        ret_dict = indoor_eval(
-            ann_infos,
-            pred_results,
-            self.iou_thr,
-            self.dataset_meta['classes'],
-            logger=logger,
-            box_mode_3d=box_mode_3d)
-
-        return ret_dict
+        metric_results = self.compute(*args, **kwargs)
+        self.reset()
+        return metric_results
 
 
 @METRICS.register_module()
