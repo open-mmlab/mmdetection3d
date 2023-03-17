@@ -1,11 +1,17 @@
 # modify from https://github.com/mit-han-lab/bevfusion
+from collections import abc
+
+import numpy as np
 import torch
+import torch.nn as nn
 from mmdet.models.task_modules import AssignResult, BaseAssigner, BaseBBoxCoder
 
 try:
     from scipy.optimize import linear_sum_assignment
 except ImportError:
     linear_sum_assignment = None
+
+from mmengine.structures import InstanceData
 
 from mmdet3d.registry import TASK_UTILS
 
@@ -273,8 +279,11 @@ class HungarianAssigner3D(BaseAssigner):
                 num_gts, assigned_gt_inds, None, labels=assigned_labels)
 
         # 2. compute the weighted costs
-        # see mmdetection/mmdet/core/bbox/match_costs/match_cost.py
-        cls_cost = self.cls_cost(cls_pred[0].T, gt_labels)
+        # Hard code here to be compatible with the interface of
+        # `ClassificationCost` in mmdet.
+        gt_instances, pred_instances = InstanceData(
+            labels=gt_labels), InstanceData(scores=cls_pred[0].T)
+        cls_cost = self.cls_cost(pred_instances, gt_instances)
         reg_cost = self.reg_cost(bboxes, gt_bboxes, train_cfg)
         iou = self.iou_calculator(bboxes, gt_bboxes)
         iou_cost = self.iou_cost(iou)
@@ -304,3 +313,43 @@ class HungarianAssigner3D(BaseAssigner):
         # max_overlaps = iou.max(1).values
         return AssignResult(
             num_gts, assigned_gt_inds, max_overlaps, labels=assigned_labels)
+
+
+def cast_tensor_type(inputs, src_type: torch.dtype, dst_type: torch.dtype):
+    """Recursively convert Tensor in inputs from src_type to dst_type.
+
+    Note:
+        In v1.4.4 and later, ``cast_tersor_type`` will only convert the
+        torch.Tensor which is consistent with ``src_type`` to the ``dst_type``.
+        Before v1.4.4, it ignores the ``src_type`` argument, leading to some
+        potential problems. For example,
+        ``cast_tensor_type(inputs, torch.float, torch.half)`` will convert all
+        tensors in inputs to ``torch.half`` including those originally in
+        ``torch.Int`` or other types, which is not expected.
+    Args:
+        inputs: Inputs that to be casted.
+        src_type (torch.dtype): Source type..
+        dst_type (torch.dtype): Destination type.
+    Returns:
+        The same type with inputs, but all contained Tensors have been cast.
+    """
+    if isinstance(inputs, nn.Module):
+        return inputs
+    elif isinstance(inputs, torch.Tensor):
+        # we need to ensure that the type of inputs to be casted are the same
+        # as the argument `src_type`.
+        return inputs.to(dst_type) if inputs.dtype == src_type else inputs
+    elif isinstance(inputs, str):
+        return inputs
+    elif isinstance(inputs, np.ndarray):
+        return inputs
+    elif isinstance(inputs, abc.Mapping):
+        return type(inputs)({  # type: ignore
+            k: cast_tensor_type(v, src_type, dst_type)
+            for k, v in inputs.items()
+        })
+    elif isinstance(inputs, abc.Iterable):
+        return type(inputs)(  # type: ignore
+            cast_tensor_type(item, src_type, dst_type) for item in inputs)
+    else:
+        return

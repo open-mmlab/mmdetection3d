@@ -1,4 +1,5 @@
 # modify from https://github.com/mit-han-lab/bevfusion
+import random
 from typing import Any, Dict
 
 import numpy as np
@@ -104,6 +105,39 @@ class ImageAug3D(BaseTransform):
         data['img'] = new_imgs
         # update the calibration matrices
         data['img_aug_matrix'] = transforms
+        return data
+
+
+@TRANSFORMS.register_module()
+class BEVFusionRandomFlip3D:
+
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        flip_horizontal = random.choice([0, 1])
+        flip_vertical = random.choice([0, 1])
+
+        rotation = np.eye(3)
+        if flip_horizontal:
+            rotation = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]]) @ rotation
+            if 'points' in data:
+                data['points'].flip('horizontal')
+            if 'gt_bboxes_3d' in data:
+                data['gt_bboxes_3d'].flip('horizontal')
+            if 'gt_masks_bev' in data:
+                data['gt_masks_bev'] = data['gt_masks_bev'][:, :, ::-1].copy()
+
+        if flip_vertical:
+            rotation = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]]) @ rotation
+            if 'points' in data:
+                data['points'].flip('vertical')
+            if 'gt_bboxes_3d' in data:
+                data['gt_bboxes_3d'].flip('vertical')
+            if 'gt_masks_bev' in data:
+                data['gt_masks_bev'] = data['gt_masks_bev'][:, ::-1, :].copy()
+
+        if 'lidar_aug_matrix' not in data:
+            data['lidar_aug_matrix'] = np.eye(4)
+        data['lidar_aug_matrix'][:3, :] = rotation @ data[
+            'lidar_aug_matrix'][:3, :]
         return data
 
 

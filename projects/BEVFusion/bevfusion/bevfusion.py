@@ -239,4 +239,13 @@ class BEVFusion(Base3DDetector):
     def loss(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
              batch_data_samples: List[Det3DDataSample],
              **kwargs) -> List[Det3DDataSample]:
-        pass
+        batch_input_metas = [item.metainfo for item in batch_data_samples]
+        feats = self.extract_feat(batch_inputs_dict, batch_input_metas)
+
+        losses = dict()
+        if self.with_bbox_head:
+            bbox_loss = self.bbox_head.loss(feats, batch_data_samples)
+
+        losses.update(bbox_loss)
+
+        return losses

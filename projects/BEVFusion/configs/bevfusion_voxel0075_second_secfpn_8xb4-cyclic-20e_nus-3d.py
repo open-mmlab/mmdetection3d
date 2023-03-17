@@ -14,9 +14,9 @@ class_names = [
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
 
-metainfo = dict(classes=class_names)
+metainfo = dict(classes=class_names, version='v1.0-mini')
 dataset_type = 'NuScenesDataset'
-data_root = 'data/nuscenes/'
+data_root = 'data/nuscenes_mini/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -194,24 +194,22 @@ db_sampler = dict(
         filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
     classes=class_names,
     sample_groups=dict(
-        car=5,
-        truck=5,
-        bus=5,
-        trailer=5,
-        construction_vehicle=5,
-        traffic_cone=5,
-        barrier=5,
-        motorcycle=5,
-        bicycle=5,
-        pedestrian=5),
+        car=2,
+        truck=3,
+        construction_vehicle=7,
+        bus=4,
+        trailer=6,
+        barrier=2,
+        motorcycle=6,
+        bicycle=6,
+        pedestrian=2,
+        traffic_cone=2),
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
         use_dim=[0, 1, 2, 3, 4],
-        reduce_beams=32,
-        backend_args=backend_args),
-    backend_args=backend_args)
+        backend_args=backend_args))
 
 train_pipeline = [
     dict(
@@ -224,18 +222,14 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
-        reduce_beams=32,
-        load_augmented=None,
         backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         load_dim=5,
         use_dim=5,
-        reduce_beams=32,
         pad_empty_sweeps=True,
         remove_close=True,
-        load_augmented=None,
         backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
@@ -253,11 +247,10 @@ train_pipeline = [
         is_train=True),
     dict(
         type='GlobalRotScaleTrans',
-        resize_lim=[0.9, 1.1],
-        rot_lim=[-0.78539816, 0.78539816],
-        trans_lim=0.5,
-        is_train=True),
-    dict(type='RandomFlip3D'),
+        scale_ratio_range=[0.9, 1.1],
+        rot_range=[-0.78539816, 0.78539816],
+        translation_std=0.5),
+    dict(type='BEVFusionRandomFlip3D'),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(
@@ -283,6 +276,13 @@ train_pipeline = [
         keys=[
             'points', 'img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_bboxes',
             'gt_labels'
+        ],
+        meta_keys=[
+            'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
+            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
+            'lidar_path', 'img_path', 'transformation_3d_flow', 'pcd_rotation',
+            'pcd_scale_factor', 'pcd_trans', 'img_aug_matrix',
+            'lidar_aug_matrix'
         ])
 ]
 
@@ -333,18 +333,19 @@ train_dataloader = dict(
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file='nuscenes_infos_train.pkl',
-        pipeline=train_pipeline,
-        metainfo=metainfo,
-        modality=input_modality,
-        test_mode=False,
-        data_prefix=data_prefix,
-        # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-        # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-        box_type_3d='LiDAR',
-        backend_args=backend_args))
+        type='CBGSDataset',
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file='nuscenes_infos_train.pkl',
+            pipeline=train_pipeline,
+            metainfo=metainfo,
+            modality=input_modality,
+            test_mode=False,
+            data_prefix=data_prefix,
+            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
+            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
+            box_type_3d='LiDAR')))
 val_dataloader = dict(
     batch_size=1,
     num_workers=0,
@@ -428,3 +429,5 @@ auto_scale_lr = dict(enable=False, base_batch_size=16)
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=5))
+
+load_from = 'checkpoints/bevfusion_init_converted.pth'

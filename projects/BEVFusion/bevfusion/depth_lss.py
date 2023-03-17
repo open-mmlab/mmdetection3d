@@ -241,6 +241,7 @@ class BaseDepthTransform(BaseTransform):
             for c in range(on_img.shape[0]):
                 masked_coords = cur_coords[c, on_img[c]].long()
                 masked_dist = dist[c, on_img[c]]
+                depth = depth.to(masked_dist.dtype)
                 depth[b, c, 0, masked_coords[:, 0],
                       masked_coords[:, 1]] = masked_dist
 
