@@ -1,77 +1,53 @@
-# dataset settings
-dataset_type = 'SemanticKITTIDataset'
+# For SemanticKitti we usually do 19-class segmentation.
+# For labels_map we follow the uniform format of MMDetection & MMSegmentation
+# i.e. we consider the unlabeled class as the last one, which is different
+# from the original implementation of some methods e.g. Cylinder3D.
+dataset_type = 'SemanticKittiDataset'
 data_root = 'data/semantickitti/'
 class_names = [
-    'unlabeled', 'car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person',
-    'bicyclist', 'motorcyclist', 'road', 'parking', 'sidewalk', 'other-ground',
-    'building', 'fence', 'vegetation', 'trunck', 'terrian', 'pole',
-    'traffic-sign'
+    'car', 'bicycle', 'motorcycle', 'truck', 'bus', 'person', 'bicyclist',
+    'motorcyclist', 'road', 'parking', 'sidewalk', 'other-ground', 'building',
+    'fence', 'vegetation', 'trunck', 'terrian', 'pole', 'traffic-sign'
 ]
-palette = [
-    [174, 199, 232],
-    [152, 223, 138],
-    [31, 119, 180],
-    [255, 187, 120],
-    [188, 189, 34],
-    [140, 86, 75],
-    [255, 152, 150],
-    [214, 39, 40],
-    [197, 176, 213],
-    [148, 103, 189],
-    [196, 156, 148],
-    [23, 190, 207],
-    [247, 182, 210],
-    [219, 219, 141],
-    [255, 127, 14],
-    [158, 218, 229],
-    [44, 160, 44],
-    [112, 128, 144],
-    [227, 119, 194],
-    [82, 84, 163],
-]
-
 labels_map = {
-    0: 0,  # "unlabeled"
-    1: 0,  # "outlier" mapped to "unlabeled" --------------mapped
-    10: 1,  # "car"
-    11: 2,  # "bicycle"
-    13: 5,  # "bus" mapped to "other-vehicle" --------------mapped
-    15: 3,  # "motorcycle"
-    16: 5,  # "on-rails" mapped to "other-vehicle" ---------mapped
-    18: 4,  # "truck"
-    20: 5,  # "other-vehicle"
-    30: 6,  # "person"
-    31: 7,  # "bicyclist"
-    32: 8,  # "motorcyclist"
-    40: 9,  # "road"
-    44: 10,  # "parking"
-    48: 11,  # "sidewalk"
-    49: 12,  # "other-ground"
-    50: 13,  # "building"
-    51: 14,  # "fence"
-    52: 0,  # "other-structure" mapped to "unlabeled" ------mapped
-    60: 9,  # "lane-marking" to "road" ---------------------mapped
-    70: 15,  # "vegetation"
-    71: 16,  # "trunk"
-    72: 17,  # "terrain"
-    80: 18,  # "pole"
-    81: 19,  # "traffic-sign"
-    99: 0,  # "other-object" to "unlabeled" ----------------mapped
-    252: 1,  # "moving-car" to "car" ------------------------mapped
-    253: 7,  # "moving-bicyclist" to "bicyclist" ------------mapped
-    254: 6,  # "moving-person" to "person" ------------------mapped
-    255: 8,  # "moving-motorcyclist" to "motorcyclist" ------mapped
-    256: 5,  # "moving-on-rails" mapped to "other-vehic------mapped
-    257: 5,  # "moving-bus" mapped to "other-vehicle" -------mapped
-    258: 4,  # "moving-truck" to "truck" --------------------mapped
-    259: 5  # "moving-other"-vehicle to "other-vehicle"-----mapped
+    0: 19,  # "unlabeled"
+    1: 19,  # "outlier" mapped to "unlabeled" --------------mapped
+    10: 0,  # "car"
+    11: 1,  # "bicycle"
+    13: 4,  # "bus" mapped to "other-vehicle" --------------mapped
+    15: 2,  # "motorcycle"
+    16: 4,  # "on-rails" mapped to "other-vehicle" ---------mapped
+    18: 3,  # "truck"
+    20: 4,  # "other-vehicle"
+    30: 5,  # "person"
+    31: 6,  # "bicyclist"
+    32: 7,  # "motorcyclist"
+    40: 8,  # "road"
+    44: 9,  # "parking"
+    48: 10,  # "sidewalk"
+    49: 11,  # "other-ground"
+    50: 12,  # "building"
+    51: 13,  # "fence"
+    52: 19,  # "other-structure" mapped to "unlabeled" ------mapped
+    60: 8,  # "lane-marking" to "road" ---------------------mapped
+    70: 14,  # "vegetation"
+    71: 15,  # "trunk"
+    72: 16,  # "terrain"
+    80: 17,  # "pole"
+    81: 18,  # "traffic-sign"
+    99: 19,  # "other-object" to "unlabeled" ----------------mapped
+    252: 0,  # "moving-car" to "car" ------------------------mapped
+    253: 6,  # "moving-bicyclist" to "bicyclist" ------------mapped
+    254: 5,  # "moving-person" to "person" ------------------mapped
+    255: 7,  # "moving-motorcyclist" to "motorcyclist" ------mapped
+    256: 4,  # "moving-on-rails" mapped to "other-vehic------mapped
+    257: 4,  # "moving-bus" mapped to "other-vehicle" -------mapped
+    258: 3,  # "moving-truck" to "truck" --------------------mapped
+    259: 4  # "moving-other"-vehicle to "other-vehicle"-----mapped
 }
 
 metainfo = dict(
-    classes=class_names,
-    palette=palette,
-    seg_label_mapping=labels_map,
-    max_label=259)
+    classes=class_names, seg_label_mapping=labels_map, max_label=259)
 
 input_modality = dict(use_lidar=True, use_camera=False)
 
@@ -99,7 +75,10 @@ train_pipeline = [
         backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
         with_seg_3d=True,
+        seg_3d_dtype='np.int32',
         seg_offset=2**16,
         dataset_type='semantickitti',
         backend_args=backend_args),
@@ -126,7 +105,10 @@ test_pipeline = [
         backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
         with_seg_3d=True,
+        seg_3d_dtype='np.int32',
         seg_offset=2**16,
         dataset_type='semantickitti',
         backend_args=backend_args),
@@ -144,7 +126,10 @@ eval_pipeline = [
         backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
         with_seg_3d=True,
+        seg_3d_dtype='np.int32',
         seg_offset=2**16,
         dataset_type='semantickitti',
         backend_args=backend_args),
@@ -153,7 +138,7 @@ eval_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=4,
+    batch_size=2,
     num_workers=4,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -162,10 +147,11 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='train_infos.pkl',
+            ann_file='semantickitti_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality,
+            ignore_index=19,
             backend_args=backend_args)),
 )
 
@@ -179,10 +165,11 @@ test_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='valid_infos.pkl',
+            ann_file='semantickitti_infos_val.pkl',
             pipeline=test_pipeline,
             metainfo=metainfo,
             modality=input_modality,
+            ignore_index=19,
             test_mode=True,
             backend_args=backend_args)),
 )
@@ -191,3 +178,7 @@ val_dataloader = test_dataloader
 
 val_evaluator = dict(type='SegMetric')
 test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
