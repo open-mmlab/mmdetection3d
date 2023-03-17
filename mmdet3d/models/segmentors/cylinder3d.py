@@ -17,7 +17,7 @@ class Cylinder3D(EncoderDecoder3D):
         <https://arxiv.org/abs/2011.10033>`_.
 
     Args:
-        pts_voxel_encoder (dict or :obj:`ConfigDict`): The config for the
+        voxel_encoder (dict or :obj:`ConfigDict`): The config for the
             points2voxel encoder of segmentor.
         backbone (dict or :obj:`ConfigDict`): The config for the backnone of
             segmentor.
@@ -44,7 +44,7 @@ class Cylinder3D(EncoderDecoder3D):
     """
 
     def __init__(self,
-                 pts_voxel_encoder: ConfigType,
+                 voxel_encoder: ConfigType,
                  backbone: ConfigType,
                  decode_head: ConfigType,
                  neck: OptConfigType = None,
@@ -65,12 +65,12 @@ class Cylinder3D(EncoderDecoder3D):
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
 
-        self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
+        self.voxel_encoder = MODELS.build(voxel_encoder)
 
     def extract_feat(self, batch_inputs: dict) -> Tensor:
         """Extract features from points."""
-        encoded_feats = self.pts_voxel_encoder(
-            batch_inputs['voxels']['voxels'], batch_inputs['voxels']['coors'])
+        encoded_feats = self.voxel_encoder(batch_inputs['voxels']['voxels'],
+                                           batch_inputs['voxels']['coors'])
         batch_inputs['voxels']['voxel_coors'] = encoded_feats[1]
         x = self.backbone(encoded_feats[0], encoded_feats[1],
                           len(batch_inputs['points']))

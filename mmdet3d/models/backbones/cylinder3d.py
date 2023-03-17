@@ -5,6 +5,8 @@ Please refer to `Cylinder3D github page
 <https://github.com/xinge008/Cylinder3D>`_ for details
 """
 
+from typing import List
+
 import numpy as np
 import torch
 from mmcv.ops import SparseConvTensor
@@ -25,8 +27,14 @@ class Asymm3DSpconv(BaseModule):
         input_channels (int): Input channels of the block.
         base_channels (int): Initial size of feature channels before
             feeding into Encoder-Decoder structure. Defaults to 16.
+        backbone_depth (int): The depth of backbone. The backbone contains
+            downblocks and upblocks with the number of backbone_depth.
+        height_pooing (List[bool]): List indicating which downblocks perform
+            height pooling.
         norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
             layer. Defaults to dict(type='BN1d', eps=1e-3, momentum=0.01)).
+        init_cfg (dict, optional): Initialization config.
+            Defaults to None.
     """
 
     def __init__(self,
@@ -34,9 +42,11 @@ class Asymm3DSpconv(BaseModule):
                  input_channels: int,
                  base_channels: int = 16,
                  backbone_depth: int = 4,
+                 height_pooing: List[bool] = [True, True, False, False],
                  norm_cfg: ConfigType = dict(
-                     type='BN1d', eps=1e-3, momentum=0.01)):
-        super().__init__()
+                     type='BN1d', eps=1e-3, momentum=0.01),
+                 init_cfg=None):
+        super().__init__(init_cfg=init_cfg)
 
         self.grid_size = grid_size
         self.backbone_depth = backbone_depth
@@ -50,16 +60,25 @@ class Asymm3DSpconv(BaseModule):
                 AsymmeDownBlock(
                     2**i * base_channels,
                     2**(i + 1) * base_channels,
-                    height_pooling=True,
+                    height_pooling=height_pooing[i],
                     indice_key='down' + str(i),
                     norm_cfg=norm_cfg))
-            self.up_block_list.append(
-                AsymmeUpBlock(
-                    2**(i + 1) * base_channels,
-                    2**i * base_channels,
-                    up_key='down' + str(self.backbone_depth - 1 - i),
-                    indice_key='up' + str(i),
-                    norm_cfg=norm_cfg))
+            if i == self.backbone_depth - 1:
+                self.up_block_list.append(
+                    AsymmeUpBlock(
+                        2**(i + 1) * base_channels,
+                        2**(i + 1) * base_channels,
+                        up_key='down' + str(i),
+                        indice_key='up' + str(self.backbone_depth - 1 - i),
+                        norm_cfg=norm_cfg))
+            else:
+                self.up_block_list.append(
+                    AsymmeUpBlock(
+                        2**(i + 2) * base_channels,
+                        2**(i + 1) * base_channels,
+                        up_key='down' + str(i),
+                        indice_key='up' + str(self.backbone_depth - 1 - i),
+                        norm_cfg=norm_cfg))
 
         self.ddcm = DDCMBlock(
             2 * base_channels,
@@ -82,7 +101,7 @@ class Asymm3DSpconv(BaseModule):
             down_skip_list.append(down_skip)
 
         up = down_pool
-        for i in range(self.backbone_depth - 1, 0, -1):
+        for i in range(self.backbone_depth - 1, -1, -1):
             up = self.up_block_list[i](up, down_skip_list[i])
 
         ddcm = self.ddcm(up)

@@ -12,7 +12,7 @@ model = dict(
             max_voxels=-1,
         ),
     ),
-    pts_voxel_encoder=dict(
+    voxel_encoder=dict(
         type='SegVFE',
         feat_channels=[64, 128, 256, 256],
         in_channels=6,
