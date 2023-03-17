@@ -22,7 +22,9 @@ class IndoorMetric(Indoor3DMeanAP):
     """
 
     def __init__(self, iou_thr: List[float] = [0.25, 0.5], **kwargs) -> None:
-        super(IndoorMetric, self).__init__(iou_thr=iou_thr, **kwargs)
+        logger: MMLogger = MMLogger.get_current_instance()
+        super(IndoorMetric, self).__init__(
+            iou_thr=iou_thr, logger=logger, **kwargs)
 
     # TODO: remove data_batch
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
