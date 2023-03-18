@@ -149,7 +149,7 @@ def s3dis_data_prep(root_path, info_prefix, out_dir, workers):
         update_pkl_infos('s3dis', out_dir=out_dir, pkl_path=filename)
 
 
-def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
+def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers, num_points):
     """Prepare the info file for sunrgbd dataset.
 
     Args:
@@ -159,11 +159,11 @@ def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
         workers (int): Number of threads to be used.
     """
     indoor.create_indoor_info_file(
-        root_path, info_prefix, out_dir, workers=workers)
+        root_path, info_prefix, out_dir, workers=workers, num_points=num_points)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
-    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
-    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('sunrgbd', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('sunrgbd', out_dir=out_dir, pkl_path=info_val_path)
 
 
 def waymo_data_prep(root_path,
@@ -263,6 +263,11 @@ parser.add_argument(
     action='store_true',
     help='Whether to use plane information for kitti.')
 parser.add_argument(
+    '--num-points',
+    type=int,
+    default=-1,
+    help='Number of points to sample for indoor datasets.')
+parser.add_argument(
     '--out-dir',
     type=str,
     default='./data/kitti',
@@ -347,6 +352,7 @@ if __name__ == '__main__':
         sunrgbd_data_prep(
             root_path=args.root_path,
             info_prefix=args.extra_tag,
+            num_points=args.num_points,
             out_dir=args.out_dir,
             workers=args.workers)
     elif args.dataset == 'semantickitti':
