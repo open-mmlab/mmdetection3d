@@ -217,13 +217,16 @@ class BEVFusion(Base3DDetector):
         camera2lidar = imgs.new_tensor(np.asarray(camera2lidar))
         img_aug_matrix = imgs.new_tensor(np.asarray(img_aug_matrix))
         lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
-        img_feature = self.extract_img_feat(imgs, points, lidar2image,
-                                            camera_intrinsics, camera2lidar,
-                                            img_aug_matrix, lidar_aug_matrix,
-                                            batch_input_metas)
+        features = []
+        if imgs is not None:
+            img_feature = self.extract_img_feat(imgs, points, lidar2image,
+                                                camera_intrinsics,
+                                                camera2lidar, img_aug_matrix,
+                                                lidar_aug_matrix,
+                                                batch_input_metas)
+            features.append(img_feature)
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
-
-        features = [img_feature, pts_feature]
+        features.append(pts_feature)
 
         if self.fusion_layer is not None:
             x = self.fusion_layer(features)

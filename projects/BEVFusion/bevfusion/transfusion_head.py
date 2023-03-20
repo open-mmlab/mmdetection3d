@@ -1,6 +1,6 @@
 # modify from https://github.com/mit-han-lab/bevfusion
 import copy
-from typing import List, Tuple 
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -747,6 +747,7 @@ class TransFusionHead(nn.Module):
 
     def loss(self, batch_feats, batch_data_samples):
         """Loss function for CenterHead.
+
         Args:
             batch_feats (): Features in a batch.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
