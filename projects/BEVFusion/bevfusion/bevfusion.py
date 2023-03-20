@@ -40,12 +40,16 @@ class BEVFusion(Base3DDetector):
 
         self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
 
-        self.img_backbone = MODELS.build(img_backbone)
-        self.img_neck = MODELS.build(img_neck)
-        self.vtransform = MODELS.build(vtransform)
+        self.img_backbone = MODELS.build(
+            img_backbone) if img_backbone is not None else None
+        self.img_neck = MODELS.build(
+            img_neck) if img_neck is not None else None
+        self.vtransform = MODELS.build(
+            vtransform) if vtransform is not None else None
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
 
-        self.fusion_layer = MODELS.build(fusion_layer)
+        self.fusion_layer = MODELS.build(
+            fusion_layer) if fusion_layer is not None else None
 
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
@@ -53,7 +57,7 @@ class BEVFusion(Base3DDetector):
         self.bbox_head = MODELS.build(bbox_head)
         # hard code here where using converted checkpoint of original
         # implementation of `BEVFusion`
-        self.use_converted_checkpoint = True
+        self.use_converted_checkpoint = False
 
         self.init_weights()
 
@@ -202,23 +206,23 @@ class BEVFusion(Base3DDetector):
     ):
         imgs = batch_inputs_dict.get('imgs', None)
         points = batch_inputs_dict.get('points', None)
-
-        lidar2image, camera_intrinsics, camera2lidar = [], [], []
-        img_aug_matrix, lidar_aug_matrix = [], []
-        for i, meta in enumerate(batch_input_metas):
-            lidar2image.append(meta['lidar2img'])
-            camera_intrinsics.append(meta['cam2img'])
-            camera2lidar.append(meta['cam2lidar'])
-            img_aug_matrix.append(meta.get('img_aug_matrix', np.eye(4)))
-            lidar_aug_matrix.append(meta.get('lidar_aug_matrix', np.eye(4)))
-
-        lidar2image = imgs.new_tensor(np.asarray(lidar2image))
-        camera_intrinsics = imgs.new_tensor(np.array(camera_intrinsics))
-        camera2lidar = imgs.new_tensor(np.asarray(camera2lidar))
-        img_aug_matrix = imgs.new_tensor(np.asarray(img_aug_matrix))
-        lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
         features = []
         if imgs is not None:
+            lidar2image, camera_intrinsics, camera2lidar = [], [], []
+            img_aug_matrix, lidar_aug_matrix = [], []
+            for i, meta in enumerate(batch_input_metas):
+                lidar2image.append(meta['lidar2img'])
+                camera_intrinsics.append(meta['cam2img'])
+                camera2lidar.append(meta['cam2lidar'])
+                img_aug_matrix.append(meta.get('img_aug_matrix', np.eye(4)))
+                lidar_aug_matrix.append(
+                    meta.get('lidar_aug_matrix', np.eye(4)))
+
+            lidar2image = imgs.new_tensor(np.asarray(lidar2image))
+            camera_intrinsics = imgs.new_tensor(np.array(camera_intrinsics))
+            camera2lidar = imgs.new_tensor(np.asarray(camera2lidar))
+            img_aug_matrix = imgs.new_tensor(np.asarray(img_aug_matrix))
+            lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
             img_feature = self.extract_img_feat(imgs, points, lidar2image,
                                                 camera_intrinsics,
                                                 camera2lidar, img_aug_matrix,
