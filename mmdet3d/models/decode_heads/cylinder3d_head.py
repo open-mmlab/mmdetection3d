@@ -39,7 +39,7 @@ class Cylinder3DHead(Base3DDecodeHead):
         conv_seg_kernel_size (int): The kernel size used in conv_seg.
             Defaults to 3.
         ignore_index (int): The label index to be ignored. When using masked
-            BCE loss, ignore_index should be set to None. Defaults to 0.
+            BCE loss, ignore_index should be set to None. Defaults to 19.
         init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
             optional): Initialization config dict. Defaults to None.
     """
@@ -59,7 +59,7 @@ class Cylinder3DHead(Base3DDecodeHead):
                  loss_lovasz: ConfigType = dict(
                      type='LovaszLoss', loss_weight=1.0),
                  conv_seg_kernel_size: int = 3,
-                 ignore_index: int = 0,
+                 ignore_index: int = 19,
                  init_cfg: OptMultiConfig = None) -> None:
         super(Cylinder3DHead, self).__init__(
             channels=channels,
@@ -116,8 +116,6 @@ class Cylinder3DHead(Base3DDecodeHead):
         loss = dict()
         loss['loss_ce'] = self.loss_ce(
             seg_logit_feat, seg_label, ignore_index=self.ignore_index)
-        seg_logit_feat = seg_logit_feat.permute(1, 0)[None, :, :,
-                                                      None]  # pseudo BCHW
         loss['loss_lovasz'] = self.loss_lovasz(
             seg_logit_feat, seg_label, ignore_index=self.ignore_index)
 
