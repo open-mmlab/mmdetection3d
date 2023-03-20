@@ -5,15 +5,23 @@ class_names = [
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
 
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://nuimages'))
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/nuimages/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
     dict(
         type='Resize',
@@ -24,7 +32,7 @@ train_pipeline = [
     dict(type='PackDetInputs'),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1600, 900),

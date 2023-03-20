@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 
 import mmcv
 import numpy as np
-from mmengine.fileio import FileClient
+from mmengine.fileio import get
 from mmengine.hooks import Hook
 from mmengine.runner import Runner
 from mmengine.utils import mkdir_or_exist
@@ -44,9 +44,8 @@ class Det3DVisualizationHook(Hook):
         wait_time (float): The interval of show (s). Defaults to 0.
         test_out_dir (str, optional): directory where painted images
             will be saved in testing process.
-        file_client_args (dict): Arguments to instantiate a FileClient.
-            See :class:`mmengine.fileio.FileClient` for details.
-            Defaults to ``dict(backend='disk')``.
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
     """
 
     def __init__(self,
@@ -57,7 +56,7 @@ class Det3DVisualizationHook(Hook):
                  vis_task: str = 'mono_det',
                  wait_time: float = 0.,
                  test_out_dir: Optional[str] = None,
-                 file_client_args: dict = dict(backend='disk')):
+                 backend_args: Optional[dict] = None):
         self._visualizer: Visualizer = Visualizer.get_current_instance()
         self.interval = interval
         self.score_thr = score_thr
@@ -72,8 +71,7 @@ class Det3DVisualizationHook(Hook):
         self.vis_task = vis_task
 
         self.wait_time = wait_time
-        self.file_client_args = file_client_args.copy()
-        self.file_client = None
+        self.backend_args = backend_args
         self.draw = draw
         self.test_out_dir = test_out_dir
         self._test_index = 0
@@ -92,9 +90,6 @@ class Det3DVisualizationHook(Hook):
         if self.draw is False:
             return
 
-        if self.file_client is None:
-            self.file_client = FileClient(**self.file_client_args)
-
         # There is no guarantee that the same batch of images
         # is visualized for each evaluation.
         total_curr_iter = runner.iter + batch_idx
@@ -104,14 +99,14 @@ class Det3DVisualizationHook(Hook):
         # Visualize only the first data
         if 'img_path' in outputs[0]:
             img_path = outputs[0].img_path
-            img_bytes = self.file_client.get(img_path)
+            img_bytes = get(img_path, backend_args=self.backend_args)
             img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
             data_input['img'] = img
 
         if 'lidar_path' in outputs[0]:
             lidar_path = outputs[0].lidar_path
             num_pts_feats = outputs[0].num_pts_feats
-            pts_bytes = self.file_client.get(lidar_path)
+            pts_bytes = get(lidar_path, backend_args=self.backend_args)
             points = np.frombuffer(pts_bytes, dtype=np.float32)
             points = points.reshape(-1, num_pts_feats)
             data_input['points'] = points
@@ -146,23 +141,20 @@ class Det3DVisualizationHook(Hook):
                                          self.test_out_dir)
             mkdir_or_exist(self.test_out_dir)
 
-        if self.file_client is None:
-            self.file_client = FileClient(**self.file_client_args)
-
         for data_sample in outputs:
             self._test_index += 1
 
             data_input = dict()
             if 'img_path' in data_sample:
                 img_path = data_sample.img_path
-                img_bytes = self.file_client.get(img_path)
+                img_bytes = get(img_path, backend_args=self.backend_args)
                 img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
                 data_input['img'] = img
 
             if 'lidar_path' in data_sample:
                 lidar_path = data_sample.lidar_path
                 num_pts_feats = data_sample.num_pts_feats
-                pts_bytes = self.file_client.get(lidar_path)
+                pts_bytes = get(lidar_path, backend_args=self.backend_args)
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
                 points = points.reshape(-1, num_pts_feats)
                 data_input['points'] = points

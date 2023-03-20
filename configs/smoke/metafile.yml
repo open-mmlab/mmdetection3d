@@ -17,9 +17,9 @@ Collections:
       Version: v1.0.0
 
 Models:
-  - Name: smoke_dla34_pytorch_dlaneck_gn-all_4xb8-6x_kitti-mono3d
+  - Name: smoke_dla34_dlaneck_gn-all_4xb8-6x_kitti-mono3d
     In Collection: SMOKE
-    Config: configs/smoke/smoke_dla34_pytorch_dlaneck_gn-all_4xb8-6x_kitti-mono3d.py
+    Config: configs/smoke/smoke_dla34_dlaneck_gn-all_4xb8-6x_kitti-mono3d.py
     Metadata:
       Training Memory (GB): 9.6
     Results:

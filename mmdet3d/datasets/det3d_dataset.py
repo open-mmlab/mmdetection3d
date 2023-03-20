@@ -4,7 +4,6 @@ import os
 from os import path as osp
 from typing import Callable, List, Optional, Set, Union
 
-import mmengine
 import numpy as np
 import torch
 from mmengine.dataset import BaseDataset
@@ -61,8 +60,8 @@ class Det3DDataset(BaseDataset):
         load_eval_anns (bool): Whether to load annotations in test_mode,
             the annotation will be save in `eval_ann_infos`, which can be
             used in Evaluator. Defaults to True.
-        file_client_args (dict): Configuration of file client.
-            Defaults to dict(backend='disk').
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
         show_ins_var (bool): For debug purpose. Whether to show variation
             of the number of instances before and after through pipeline.
             Defaults to False.
@@ -80,11 +79,10 @@ class Det3DDataset(BaseDataset):
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
                  load_eval_anns: bool = True,
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  show_ins_var: bool = False,
                  **kwargs) -> None:
-        # init file client
-        self.file_client = mmengine.FileClient(**file_client_args)
+        self.backend_args = backend_args
         self.filter_empty_gt = filter_empty_gt
         self.load_eval_anns = load_eval_anns
         _default_modality_keys = ('use_lidar', 'use_camera')

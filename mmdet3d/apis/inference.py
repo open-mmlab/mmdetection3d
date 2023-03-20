@@ -76,16 +76,16 @@ def init_model(config: Union[str, Path, Config],
         elif 'CLASSES' in checkpoint.get('meta', {}):
             # < mmdet3d 1.x
             classes = checkpoint['meta']['CLASSES']
-            model.dataset_meta = {'CLASSES': classes}
+            model.dataset_meta = {'classes': classes}
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
-                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
+                model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
         else:
             # < mmdet3d 1.x
-            model.dataset_meta = {'CLASSES': config.class_names}
+            model.dataset_meta = {'classes': config.class_names}
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
-                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
+                model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
 
     model.cfg = config  # save the config in the model for convenience
     if device != 'cpu':

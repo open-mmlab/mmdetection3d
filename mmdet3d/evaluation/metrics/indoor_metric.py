@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from collections import OrderedDict
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 from mmdet.evaluation import eval_map
@@ -17,37 +17,34 @@ class IndoorMetric(BaseMetric):
     """Indoor scene evaluation metric.
 
     Args:
-        iou_thr (list[float]): List of iou threshold when calculate the
-            metric. Defaults to  [0.25, 0.5].
-        collect_device (str, optional): Device name used for collecting
-            results from different ranks during distributed training.
-            Must be 'cpu' or 'gpu'. Defaults to 'cpu'.
-        prefix (str): The prefix that will be added in the metric
+        iou_thr (float or List[float]): List of iou threshold when calculate
+            the metric. Defaults to [0.25, 0.5].
+        collect_device (str): Device name used for collecting results from
+            different ranks during distributed training. Must be 'cpu' or
+            'gpu'. Defaults to 'cpu'.
+        prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix
-            will be used instead. Default: None
+            If prefix is not provided in the argument, self.default_prefix will
+            be used instead. Defaults to None.
     """
 
     def __init__(self,
                  iou_thr: List[float] = [0.25, 0.5],
                  collect_device: str = 'cpu',
-                 prefix: Optional[str] = None,
-                 **kwargs):
+                 prefix: Optional[str] = None) -> None:
         super(IndoorMetric, self).__init__(
             prefix=prefix, collect_device=collect_device)
-        self.iou_thr = iou_thr
+        self.iou_thr = [iou_thr] if isinstance(iou_thr, float) else iou_thr
 
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
-        The processed results should be stored in ``self.results``,
-        which will be used to compute the metrics when all batches
-        have been processed.
+        The processed results should be stored in ``self.results``, which will
+        be used to compute the metrics when all batches have been processed.
 
         Args:
             data_batch (dict): A batch of data from the dataloader.
-            data_samples (Sequence[dict]): A batch of outputs from
-                the model.
+            data_samples (Sequence[dict]): A batch of outputs from the model.
         """
         for data_sample in data_samples:
             pred_3d = data_sample['pred_instances_3d']
@@ -98,37 +95,34 @@ class Indoor2DMetric(BaseMetric):
     """indoor 2d predictions evaluation metric.
 
     Args:
-        iou_thr (list[float]): List of iou threshold when calculate the
-            metric. Defaults to  [0.5].
-        collect_device (str, optional): Device name used for collecting
-            results from different ranks during distributed training.
-            Must be 'cpu' or 'gpu'. Defaults to 'cpu'.
-        prefix (str): The prefix that will be added in the metric
+        iou_thr (float or List[float]): List of iou threshold when calculate
+            the metric. Defaults to [0.5].
+        collect_device (str): Device name used for collecting results from
+            different ranks during distributed training. Must be 'cpu' or
+            'gpu'. Defaults to 'cpu'.
+        prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix
-            will be used instead. Default: None
+            If prefix is not provided in the argument, self.default_prefix will
+            be used instead. Defaults to None.
     """
 
     def __init__(self,
-                 iou_thr: List[float] = [0.5],
+                 iou_thr: Union[float, List[float]] = [0.5],
                  collect_device: str = 'cpu',
-                 prefix: Optional[str] = None,
-                 **kwargs):
+                 prefix: Optional[str] = None):
         super(Indoor2DMetric, self).__init__(
             prefix=prefix, collect_device=collect_device)
-        self.iou_thr = iou_thr
+        self.iou_thr = [iou_thr] if isinstance(iou_thr, float) else iou_thr
 
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
 
-        The processed results should be stored in ``self.results``,
-        which will be used to compute the metrics when all batches
-        have been processed.
+        The processed results should be stored in ``self.results``, which will
+        be used to compute the metrics when all batches have been processed.
 
         Args:
             data_batch (dict): A batch of data from the dataloader.
-            predictions (Sequence[dict]): A batch of outputs from
-                the model.
+            data_samples (Sequence[dict]): A batch of outputs from the model.
         """
         for data_sample in data_samples:
             pred = data_sample['pred_instances']
@@ -163,9 +157,7 @@ class Indoor2DMetric(BaseMetric):
         logger: MMLogger = MMLogger.get_current_instance()
         annotations, preds = zip(*results)
         eval_results = OrderedDict()
-        iou_thr_2d = (self.iou_thr) if isinstance(self.iou_thr,
-                                                  float) else self.iou_thr
-        for iou_thr_2d_single in iou_thr_2d:
+        for iou_thr_2d_single in self.iou_thr:
             mean_ap, _ = eval_map(
                 preds,
                 annotations,
