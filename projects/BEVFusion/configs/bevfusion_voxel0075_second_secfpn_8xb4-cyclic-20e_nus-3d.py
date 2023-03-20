@@ -14,7 +14,7 @@ class_names = [
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
 
-metainfo = dict(classes=class_names, version='v1.0-mini')
+metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
 data_prefix = dict(
@@ -27,12 +27,7 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=True)
-backend_args = dict(
-    backend='petrel',
-    path_mapping={
-        'data/nuscenes_mini/': 's3://openmmlab/datasets/detection3d/nuscenes/',
-        'data/nuscenes/': 's3://openmmlab/datasets/detection3d/nuscenes/'
-    })
+backend_args = None
 
 model = dict(
     type='BEVFusion',
