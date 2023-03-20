@@ -27,7 +27,7 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=True)
-backend_args = None
+backend_args = dict(backend='petrel', path_mapping={'data/nuscenes_mini/':'s3://openmmlab/datasets/detection3d/nuscenes/'})
 
 model = dict(
     type='BEVFusion',
@@ -329,8 +329,8 @@ test_pipeline = [
 
 train_dataloader = dict(
     batch_size=4,
-    num_workers=4,
-    persistent_workers=True,
+    num_workers=0,
+    # persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type='CBGSDataset',
