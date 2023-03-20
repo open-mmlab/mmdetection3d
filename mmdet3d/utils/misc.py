@@ -40,6 +40,9 @@ def replace_ceph_backend(cfg):
     elif 'nuimages' in cfg_pretty_text:
         replace_strs = replace_strs.replace('DATA', 'nuimages')
         replace_strs = replace_strs.replace('CEPH', 'nuimages')
+    elif 'nuscenes_mini' in cfg_pretty_text:
+        replace_strs = replace_strs.replace('DATA', 'nuscenes_mini')
+        replace_strs = replace_strs.replace('CEPH', 'nuscenes_mini')
     else:
         NotImplemented('Does not support global replacement')
 
