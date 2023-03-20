@@ -34,8 +34,8 @@ class MinkUNetBackbone(BaseModule):
             layer. Defaults to [256, 128, 96, 96].
         num_stages (int): Number of stages in encoder and decoder.
             Defaults to 4.
-        init_cfg (dict or list[dict], optional): Initialization config dict.
-            Defaults to None.
+        init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`]
+            , optional): Initialization config dict.
     """
 
     def __init__(self,

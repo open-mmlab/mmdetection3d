@@ -56,16 +56,15 @@ class MinkUNetHead(Base3DDecodeHead):
             List[Tensor]: The segmentation prediction mask of each batch.
         """
         seg_logits = self.forward(inputs)
-        seg_preds = seg_logits.argmax(dim=1)
 
         batch_idx = inputs.C[:, -1]
-        seg_pred_list = []
+        seg_logit_list = []
         for i, data_sample in enumerate(batch_data_samples):
-            seg_pred = seg_preds[batch_idx == i]
-            seg_pred = seg_pred[data_sample.voxel2point_map]
-            seg_pred_list.append(seg_pred)
+            seg_logit = seg_logits[batch_idx == i]
+            seg_logit = seg_logit[data_sample.voxel2point_map]
+            seg_logit_list.append(seg_logit)
 
-        return seg_pred_list
+        return seg_logit_list
 
     def forward(self, x: SparseTensor) -> Tensor:
         """Forward function.
