@@ -701,10 +701,37 @@ class LoadPointsFromDict(LoadPointsFromFile):
             dict: The processed results.
         """
         assert 'points' in results
-        points_class = get_points_type(self.coord_type)
         points = results['points']
-        results['points'] = points_class(
-            points, points_dim=points.shape[-1], attribute_dims=None)
+
+        if self.norm_intensity:
+            assert len(self.use_dim) >= 4, \
+                f'When using intensity norm, expect used dimensions >= 4, got {len(self.use_dim)}'  # noqa: E501
+            points[:, 3] = np.tanh(points[:, 3])
+        attribute_dims = None
+
+        if self.shift_height:
+            floor_height = np.percentile(points[:, 2], 0.99)
+            height = points[:, 2] - floor_height
+            points = np.concatenate(
+                [points[:, :3],
+                 np.expand_dims(height, 1), points[:, 3:]], 1)
+            attribute_dims = dict(height=3)
+
+        if self.use_color:
+            assert len(self.use_dim) >= 6
+            if attribute_dims is None:
+                attribute_dims = dict()
+            attribute_dims.update(
+                dict(color=[
+                    points.shape[1] - 3,
+                    points.shape[1] - 2,
+                    points.shape[1] - 1,
+                ]))
+
+        points_class = get_points_type(self.coord_type)
+        points = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
+        results['points'] = points
         return results
 
 

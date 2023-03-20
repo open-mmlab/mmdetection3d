@@ -255,6 +255,9 @@ class Seg3DDataset(BaseDataset):
                 osp.join(
                     self.data_prefix.get('pts', ''),
                     info['lidar_points']['lidar_path'])
+            if 'num_pts_feats' in info['lidar_points']:
+                info['num_pts_feats'] = info['lidar_points']['num_pts_feats']
+            info['lidar_path'] = info['lidar_points']['lidar_path']
 
         if self.modality['use_camera']:
             for cam_id, img_info in info['images'].items():

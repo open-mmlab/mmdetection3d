@@ -24,30 +24,28 @@ class WaymoMetric(KittiMetric):
     Args:
         ann_file (str): The path of the annotation file in kitti format.
         waymo_bin_file (str): The path of the annotation file in waymo format.
-        data_root (str): Path of dataset root.
-            Used for storing waymo evaluation programs.
+        data_root (str): Path of dataset root. Used for storing waymo
+            evaluation programs.
         split (str): The split of the evaluation set. Defaults to 'training'.
-        metric (str or List[str]): Metrics to be evaluated.
-            Defaults to 'mAP'.
-        pcd_limit_range (List[float]): The range of point cloud used to
-            filter invalid predicted boxes.
-            Defaults to [-85, -85, -5, 85, 85, 5].
-        convert_kitti_format (bool): Whether to convert the results to
-            kitti format. Now, in order to be compatible with camera-based
-            methods, defaults to True.
+        metric (str or List[str]): Metrics to be evaluated. Defaults to 'mAP'.
+        pcd_limit_range (List[float]): The range of point cloud used to filter
+            invalid predicted boxes. Defaults to [-85, -85, -5, 85, 85, 5].
+        convert_kitti_format (bool): Whether to convert the results to kitti
+            format. Now, in order to be compatible with camera-based methods,
+            defaults to True.
         prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix
-            will be used instead. Defaults to None.
+            If prefix is not provided in the argument, self.default_prefix will
+            be used instead. Defaults to None.
         format_only (bool): Format the output results without perform
-            evaluation. It is useful when you want to format the result
-            to a specific format and submit it to the test server.
+            evaluation. It is useful when you want to format the result to a
+            specific format and submit it to the test server.
             Defaults to False.
-        pklfile_prefix (str, optional): The prefix of pkl files, including
-            the file path and the prefix of filename, e.g., "a/b/prefix".
-            If not specified, a temp file will be created. Defaults to None.
-        submission_prefix (str, optional): The prefix of submission data.
-            If not specified, the submission data will not be generated.
+        pklfile_prefix (str, optional): The prefix of pkl files, including the
+            file path and the prefix of filename, e.g., "a/b/prefix". If not
+            specified, a temp file will be created. Defaults to None.
+        submission_prefix (str, optional): The prefix of submission data. If
+            not specified, the submission data will not be generated.
             Defaults to None.
         load_type (str): Type of loading mode during training.
 
@@ -55,19 +53,19 @@ class WaymoMetric(KittiMetric):
             - 'mv_image_based': Load all of the instances in the frame and need
               to convert to the FOV-based data type to support image-based
               detector.
-            - 'fov_image_based': Only load the instances inside the default
-              cam, and need to convert to the FOV-based data type to support
-              image-based detector.
+            - 'fov_image_based': Only load the instances inside the default cam
+              and need to convert to the FOV-based data type to support image-
+              based detector.
         default_cam_key (str): The default camera for lidar to camera
             conversion. By default, KITTI: 'CAM2', Waymo: 'CAM_FRONT'.
             Defaults to 'CAM_FRONT'.
-        use_pred_sample_idx (bool): In formating results, use the
-            sample index from the prediction or from the load annotations.
-            By default, KITTI: True, Waymo: False, Waymo has a conversion
-            process, which needs to use the sample idx from load annotation.
+        use_pred_sample_idx (bool): In formating results, use the sample index
+            from the prediction or from the load annotations. By default,
+            KITTI: True, Waymo: False, Waymo has a conversion process, which
+            needs to use the sample idx from load annotation.
             Defaults to False.
-        collect_device (str): Device name used for collecting results
-            from different ranks during distributed training. Must be 'cpu' or
+        collect_device (str): Device name used for collecting results from
+            different ranks during distributed training. Must be 'cpu' or
             'gpu'. Defaults to 'cpu'.
         backend_args (dict, optional): Arguments to instantiate the
             corresponding backend. Defaults to None.
@@ -120,10 +118,9 @@ class WaymoMetric(KittiMetric):
             backend_args=backend_args)
         self.format_only = format_only
         if self.format_only:
-            assert pklfile_prefix is not None, 'pklfile_prefix must be '
-            'not None when format_only is True, otherwise the result files '
-            'will be saved to a temp directory which will be cleaned up at '
-            'the end.'
+            assert pklfile_prefix is not None, 'pklfile_prefix must be not '
+            'None when format_only is True, otherwise the result files will '
+            'be saved to a temp directory which will be cleaned up at the end.'
 
         self.default_prefix = 'Waymo metric'
 
@@ -216,8 +213,8 @@ class WaymoMetric(KittiMetric):
             pklfile_prefix (str): The location that stored the prediction
                 results.
             metric (str, optional): Metric to be evaluated. Defaults to None.
-            logger (MMLogger, optional): Logger used for printing
-                related information during evaluation. Defaults to None.
+            logger (MMLogger, optional): Logger used for printing related
+                information during evaluation. Defaults to None.
 
         Returns:
             Dict[str, float]: Results of each evaluation metric.
@@ -348,9 +345,9 @@ class WaymoMetric(KittiMetric):
                 Defaults to None.
 
         Returns:
-            tuple: (result_dict, tmp_dir), result_dict is a dict containing
-            the formatted result, tmp_dir is the temporal directory created
-            for saving json files when jsonfile_prefix is not specified.
+            tuple: (result_dict, tmp_dir), result_dict is a dict containing the
+            formatted result, tmp_dir is the temporal directory created for
+            saving json files when jsonfile_prefix is not specified.
         """
         waymo_save_tmp_dir = tempfile.TemporaryDirectory()
         waymo_results_save_dir = waymo_save_tmp_dir.name
@@ -401,8 +398,8 @@ class WaymoMetric(KittiMetric):
         """Merge bounding boxes predicted from multi-view images.
 
         Args:
-            box_dict_per_frame (List[dict]): The results of prediction
-                for each camera.
+            box_dict_per_frame (List[dict]): The results of prediction for each
+                camera.
             cam0_info (dict): Store the sample idx for the given frame.
 
         Returns:
@@ -475,8 +472,8 @@ class WaymoMetric(KittiMetric):
         submission.
 
         Args:
-            net_outputs (List[dict]): List of dict storing the
-                inferenced bounding boxes and scores.
+            net_outputs (List[dict]): List of dict storing the inferenced
+                bounding boxes and scores.
             sample_idx_list (List[int]): List of input sample idx.
             class_names (List[str]): A list of class names.
             pklfile_prefix (str, optional): The prefix of pkl file.
@@ -625,14 +622,13 @@ class WaymoMetric(KittiMetric):
         Returns:
             dict: Valid predicted boxes.
 
-                - bbox (np.ndarray): 2D bounding boxes.
-                - box3d_camera (np.ndarray): 3D bounding boxes in
-                  camera coordinate.
-                - box3d_lidar (np.ndarray): 3D bounding boxes in
-                  LiDAR coordinate.
-                - scores (np.ndarray): Scores of boxes.
-                - label_preds (np.ndarray): Class label predictions.
-                - sample_idx (int): Sample index.
+            - bbox (np.ndarray): 2D bounding boxes.
+            - box3d_camera (np.ndarray): 3D bounding boxes in camera
+              coordinate.
+            - box3d_lidar (np.ndarray): 3D bounding boxes in LiDAR coordinate.
+            - scores (np.ndarray): Scores of boxes.
+            - label_preds (np.ndarray): Class label predictions.
+            - sample_idx (int): Sample index.
         """
         # TODO: refactor this function
         box_preds = box_dict['bboxes_3d']
