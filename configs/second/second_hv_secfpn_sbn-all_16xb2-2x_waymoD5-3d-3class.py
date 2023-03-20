@@ -12,14 +12,7 @@ metainfo = dict(classes=class_names)
 
 point_cloud_range = [-76.8, -51.2, -2, 76.8, 51.2, 4]
 input_modality = dict(use_lidar=True, use_camera=False)
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/waymo/':
-        's3://openmmlab/datasets/detection3d/waymo/',
-        'data/waymo/':
-        's3://openmmlab/datasets/detection3d/waymo/'
-    }))
+backend_args = None
 
 db_sampler = dict(
     data_root=data_root,
@@ -34,7 +27,9 @@ db_sampler = dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4]))
+        use_dim=[0, 1, 2, 3, 4],
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
     dict(
@@ -42,7 +37,7 @@ train_pipeline = [
         coord_type='LIDAR',
         load_dim=6,
         use_dim=5,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     # dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -68,7 +63,7 @@ test_pipeline = [
         coord_type='LIDAR',
         load_dim=6,
         use_dim=5,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -107,7 +102,8 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
             # load one frame every five frames
-            load_interval=5)))
+            load_interval=5,
+            backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -123,7 +119,8 @@ val_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -139,7 +136,8 @@ test_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.

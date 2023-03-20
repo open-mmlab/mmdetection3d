@@ -14,6 +14,7 @@ from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                build_sa_module)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
                            make_sparse_convmodule)
+from .torchsparse_block import TorchSparseConvModule, TorchSparseResidualBlock
 from .transformer import GroupFree3DMHA
 from .vote_module import VoteModule
 
@@ -26,5 +27,6 @@ __all__ = [
     'MLP', 'box3d_multiclass_nms', 'aligned_3d_nms', 'circle_nms', 'nms_bev',
     'nms_normal_bev', 'build_sa_module', 'PointSAModuleMSG', 'PointSAModule',
     'PointFPModule', 'PAConvSAModule', 'PAConvSAModuleMSG',
-    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG'
+    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG', 'TorchSparseConvModule',
+    'TorchSparseResidualBlock'
 ]

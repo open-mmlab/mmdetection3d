@@ -4,7 +4,7 @@
 
 <!-- [ALGORITHM] -->
 
-## Introduction
+## Abstract
 
 3D object detection has been receiving increasing attention from both industry and academia thanks to its wide applications in various fields such as autonomous driving and robotics. LiDAR sensors are widely adopted in autonomous driving vehicles and robots for capturing 3D scene information as sparse and irregular point clouds, which provide vital cues for 3D scene perception and understanding. In this paper, we propose to achieve high performance 3D object detection by designing novel point-voxel integrated networks to learn better 3D features from irregular point clouds.
 

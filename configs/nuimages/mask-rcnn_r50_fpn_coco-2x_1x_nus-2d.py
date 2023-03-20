@@ -7,15 +7,10 @@ model = dict(
     roi_head=dict(
         bbox_head=dict(num_classes=10), mask_head=dict(num_classes=10)))
 
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/nuscenes/': 's3://nuscenes/nuscenes/',
-        'data/nuscenes/': 's3://nuscenes/nuscenes/'
-    }))
+backend_args = None
 
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1600, 900),

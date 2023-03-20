@@ -25,19 +25,19 @@ class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/nuscenes/': 's3://nuscenes/nuscenes/',
-#         'data/nuscenes/': 's3://nuscenes/nuscenes/'
-#     }))
+backend_args = None
+
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
-    dict(type='LoadPointsFromMultiSweeps', sweeps_num=10),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
+    dict(
+        type='LoadPointsFromMultiSweeps',
+        sweeps_num=10,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='GlobalRotScaleTrans',

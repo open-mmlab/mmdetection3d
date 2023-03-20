@@ -84,22 +84,11 @@ input_modality = dict(use_lidar=False, use_camera=True)
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 metainfo = dict(classes=class_names)
 
-# file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/',
-        'data/kitti/':
-        's3://openmmlab/datasets/detection3d/kitti/'
-    }))
+backend_args = None
 
 train_pipeline = [
-    dict(type='LoadAnnotations3D'),
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadAnnotations3D', backend_args=backend_args),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='RandomResize', scale=[(1173, 352), (1387, 416)],
@@ -108,7 +97,7 @@ train_pipeline = [
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='Resize', scale=(1280, 384), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
@@ -129,7 +118,8 @@ train_dataloader = dict(
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
-            metainfo=metainfo)))
+            metainfo=metainfo,
+            backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -144,13 +134,15 @@ val_dataloader = dict(
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
-        metainfo=metainfo))
+        metainfo=metainfo,
+        backend_args=backend_args))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 test_evaluator = val_evaluator
 
 # optimizer

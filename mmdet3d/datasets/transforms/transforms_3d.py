@@ -878,7 +878,7 @@ class ObjectRangeFilter(BaseTransform):
         # using mask to index gt_labels_3d will cause bug when
         # len(gt_labels_3d) == 1, where mask=1 will be interpreted
         # as gt_labels_3d[1] and cause out of index error
-        gt_labels_3d = gt_labels_3d[mask.numpy().astype(np.bool)]
+        gt_labels_3d = gt_labels_3d[mask.numpy().astype(bool)]
 
         # limit rad to [-pi, pi]
         gt_bboxes_3d.limit_yaw(offset=0.5, period=2 * np.pi)
@@ -981,7 +981,7 @@ class ObjectNameFilter(BaseTransform):
         """
         gt_labels_3d = input_dict['gt_labels_3d']
         gt_bboxes_mask = np.array([n in self.labels for n in gt_labels_3d],
-                                  dtype=np.bool_)
+                                  dtype=bool)
         input_dict['gt_bboxes_3d'] = input_dict['gt_bboxes_3d'][gt_bboxes_mask]
         input_dict['gt_labels_3d'] = input_dict['gt_labels_3d'][gt_bboxes_mask]
 
@@ -1954,7 +1954,7 @@ class RandomCrop3D(RandomCrop):
     - gt_bboxes (np.float32) (optional)
     - gt_bboxes_labels (np.int64) (optional)
     - gt_masks (BitmapMasks | PolygonMasks) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - gt_seg_map (np.uint8) (optional)
 
     Modified Keys:

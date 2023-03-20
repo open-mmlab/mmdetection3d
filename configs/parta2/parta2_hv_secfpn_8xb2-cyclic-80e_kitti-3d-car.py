@@ -76,6 +76,7 @@ dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Car']
 input_modality = dict(use_lidar=True, use_camera=False)
+backend_args = None
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -84,9 +85,19 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=15),
     points_loader=dict(
-        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    backend_args=backend_args)
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -109,7 +120,12 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
