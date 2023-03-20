@@ -68,6 +68,7 @@ Models:
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/pointnet2/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class/pointnet2_msg_16x2_cosine_250e_scannet_seg-3d-20class_20210514_144009-24477ab1.pth
 
   - Name: pointnet2_ssg_2xb16-cosine-50e_s3dis-seg
+    Alias: pointnet2-ssg_s3dis-seg
     In Collection: PointNet++
     Config: configs/pointnet2/pointnet2_ssg_2xb16-cosine-50e_s3dis-seg.py
     Metadata:
