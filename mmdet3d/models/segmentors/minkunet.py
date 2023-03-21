@@ -24,7 +24,7 @@ class MinkUNet(EncoderDecoder3D):
     def __init__(self, **kwargs) -> None:
         if not IS_TORCHSPARSE_AVAILABLE:
             raise ImportError(
-                'Please follow `getting_started.md` to install Torchsparse.`')
+                'Please follow `get_started.md` to install Torchsparse.`')
         super().__init__(**kwargs)
 
     def loss(self, inputs: dict, data_samples: SampleList):
@@ -68,9 +68,10 @@ class MinkUNet(EncoderDecoder3D):
               segmentation.
         """
         x = self.extract_feat(inputs)
-        preds = self.decode_head.predict(x, data_samples)
+        seg_logits = self.decode_head.predict(x, data_samples)
+        seg_preds = [seg_logit.argmax(dim=1) for seg_logit in seg_logits]
 
-        return self.postprocess_result(preds, data_samples)
+        return self.postprocess_result(seg_preds, data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,

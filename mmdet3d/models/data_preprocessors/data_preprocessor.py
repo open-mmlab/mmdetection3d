@@ -472,7 +472,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             x (np.ndarray): The voxel coordinates of points, Nx3.
 
         Returns:
-            x (np.ndarray): Voxels coordinates hash.
+            np.ndarray: Voxels coordinates hash.
         """
         assert x.ndim == 2, x.shape
 
@@ -498,7 +498,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         Returns:
             List[np.ndarray] or None: Return index and inverse map if
-                return_index and return_inverse is True.
+            return_index and return_inverse is True.
         """
         _, indices, inverse_indices = np.unique(
             self.ravel_hash(coords), return_index=True, return_inverse=True)

@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from mmdet3d.registry import MODELS
 
 
-def test_mink_resnet():
+def test_minkunet_backbone():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
 

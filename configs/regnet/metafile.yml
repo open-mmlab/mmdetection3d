@@ -1,7 +1,7 @@
 Models:
-  - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d
+  - Name: pointpillars_hv_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d
     In Collection: PointPillars
-    Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_8xb4-2x_nus-3d.py
+    Config: configs/regnet/pointpillars_hv_regnet-400mf_secfpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 16.4
@@ -16,9 +16,9 @@ Models:
           NDS: 55.2
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_4x8_2x_nus-3d_20200620_230334-53044f32.pth
 
-  - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d
+  - Name: pointpillars_hv_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d
     In Collection: PointPillars
-    Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d.py
+    Config: configs/regnet/pointpillars_hv_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 17.3
@@ -33,9 +33,9 @@ Models:
           NDS: 56.4
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d_20200620_230239-c694dce7.pth
 
-  - Name: hv_pointpillars_regnet-1.6gf_fpn_sbn-all_8xb4-2x_nus-3d
+  - Name: pointpillars_hv_regnet-1.6gf_fpn_sbn-all_8xb4-2x_nus-3d
     In Collection: PointPillars
-    Config: configs/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_8xb4-2x_nus-3d.py
+    Config: configs/regnet/pointpillars_hv_regnet-1.6gf_fpn_sbn-all_8xb4-2x_nus-3d.py
     Metadata:
       Training Data: nuScenes
       Training Memory (GB): 24.0
@@ -50,9 +50,9 @@ Models:
           NDS: 59.3
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d/hv_pointpillars_regnet-1.6gf_fpn_sbn-all_4x8_2x_nus-3d_20200629_050311-dcd4e090.pth
 
-  - Name: hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d
+  - Name: pointpillars_hv_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d.py
+    Config: configs/regnet/pointpillars_hv_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 15.9
@@ -67,9 +67,9 @@ Models:
           Public Score: 15.1
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/regnet/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d/hv_pointpillars_regnet-400mf_secfpn_sbn-all_2x8_2x_lyft-3d_20210524_092151-42513826.pth
 
-  - Name: hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d
+  - Name: pointpillars_hv_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d
     In Collection: PointPillars
-    Config: configs/regnet/hv_pointpillars_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d.py
+    Config: configs/regnet/pointpillars_hv_regnet-400mf_fpn_sbn-all_2x8_2x_lyft-3d.py
     Metadata:
       Training Data: Lyft
       Training Memory (GB): 13.0
