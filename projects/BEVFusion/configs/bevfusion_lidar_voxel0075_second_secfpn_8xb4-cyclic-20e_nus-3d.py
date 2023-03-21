@@ -27,18 +27,19 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=False)
-backend_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/nuscenes/':
-        's3://openmmlab/datasets/detection3d/nuscenes/',
-        'data/nuscenes/':
-        's3://openmmlab/datasets/detection3d/nuscenes/',
-        './data/nuscenes_mini/':
-        's3://openmmlab/datasets/detection3d/nuscenes/',
-        'data/nuscenes_mini/':
-        's3://openmmlab/datasets/detection3d/nuscenes/'
-    }))
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/nuscenes/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         'data/nuscenes/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         './data/nuscenes_mini/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         'data/nuscenes_mini/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/'
+#     }))
+backend_args = None
 
 model = dict(
     type='BEVFusion',
@@ -281,6 +282,7 @@ train_dataloader = dict(
             modality=input_modality,
             test_mode=False,
             data_prefix=data_prefix,
+            use_valid_flag=True,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')))
@@ -360,7 +362,7 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=1)
+train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=5)
 val_cfg = dict()
 test_cfg = dict()
 
@@ -376,7 +378,7 @@ optim_wrapper = dict(
 auto_scale_lr = dict(enable=False, base_batch_size=32)
 
 default_hooks = dict(
-    logger=dict(type='LoggerHook', interval=1),
+    logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=5))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
 

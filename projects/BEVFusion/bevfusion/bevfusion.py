@@ -208,6 +208,7 @@ class BEVFusion(Base3DDetector):
         points = batch_inputs_dict.get('points', None)
         features = []
         if imgs is not None:
+            imgs = imgs.contiguous()
             lidar2image, camera_intrinsics, camera2lidar = [], [], []
             img_aug_matrix, lidar_aug_matrix = [], []
             for i, meta in enumerate(batch_input_metas):

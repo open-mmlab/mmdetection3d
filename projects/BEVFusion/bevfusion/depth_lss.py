@@ -202,8 +202,6 @@ class BaseDepthTransform(BaseTransform):
         camera2lidar_rots = camera2lidar[..., :3, :3]
         camera2lidar_trans = camera2lidar[..., :3, 3]
 
-        # print(img.shape, self.image_size, self.feature_size)
-
         batch_size = len(points)
         depth = torch.zeros(batch_size, img.shape[1], 1,
                             *self.image_size).to(points[0].device)

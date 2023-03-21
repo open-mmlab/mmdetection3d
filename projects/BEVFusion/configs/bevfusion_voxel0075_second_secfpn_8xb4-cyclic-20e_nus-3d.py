@@ -352,6 +352,7 @@ train_dataloader = dict(
             modality=input_modality,
             test_mode=False,
             data_prefix=data_prefix,
+            use_valid_flag=True,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')))

@@ -75,8 +75,6 @@ class TransFusionHead(nn.Module):
     ):
         super(TransFusionHead, self).__init__()
 
-        self.fp16_enabled = False
-
         self.num_classes = num_classes
         self.num_proposals = num_proposals
         self.auxiliary = auxiliary
