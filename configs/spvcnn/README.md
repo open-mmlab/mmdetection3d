@@ -24,7 +24,7 @@ We implement SPVCNN with TorchSparse backend and provide the result and checkpoi
 | :--------: | :-----: | :------: | :--: | :----------------------: |
 | SPVCNN-W16 |   15e   |   3.9    | 61.9 | [model](<>) \| [log](<>) |
 | SPVCNN-W20 |   15e   |   4.2    | 62.7 | [model](<>) \| [log](<>) |
-| SPVCNN-W32 |   15e   |   5.4    | 63.4 | [model](<>) \| [log](<>) |
+| SPVCNN-W32 |   15e   |   5.4    | 64.3 | [model](<>) \| [log](<>) |
 
 **Note:** We follow the implementation in SPVNAS original [repo](https://github.com/mit-han-lab/spvnas) and W16\\W20\\W32 indicates different number of channels.
 
