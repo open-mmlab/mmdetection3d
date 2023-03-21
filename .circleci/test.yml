@@ -61,6 +61,7 @@ jobs:
           name: Install mmdet3d dependencies
           command: |
             python -m pip install git+ssh://git@github.com/open-mmlab/mmengine.git@main
+            python -m pip install git+ssh://git@github.com/open-mmlab/mmeval.git@main
             python -m pip install -U openmim
             python -m mim install 'mmcv >= 2.0.0rc1'
             python -m pip install git+ssh://git@github.com/open-mmlab/mmdetection.git@dev-3.x
@@ -96,16 +97,18 @@ jobs:
           name: Clone Repos
           command: |
             git clone -b main --depth 1 ssh://git@github.com/open-mmlab/mmengine.git /home/circleci/mmengine
+            git clone -b main --depth 1 ssh://git@github.com/open-mmlab/mmeval.git /home/circleci/mmeval
             git clone -b dev-3.x --depth 1 ssh://git@github.com/open-mmlab/mmdetection.git /home/circleci/mmdetection
       - run:
           name: Build Docker image
           command: |
             docker build .circleci/docker -t mmdet3d:gpu --build-arg PYTORCH=<< parameters.torch >> --build-arg CUDA=<< parameters.cuda >> --build-arg CUDNN=<< parameters.cudnn >>
-            docker run --gpus all -t -d -v /home/circleci/project:/mmdetection3d -v /home/circleci/mmengine:/mmengine -v /home/circleci/mmdetection:/mmdetection -w /mmdetection3d --name mmdet3d mmdet3d:gpu
+            docker run --gpus all -t -d -v /home/circleci/project:/mmdetection3d -v /home/circleci/mmengine:/mmengine -v /home/circleci/mmeval:/mmeval -v /home/circleci/mmdetection:/mmdetection -w /mmdetection3d --name mmdet3d mmdet3d:gpu
       - run:
           name: Install mmdet3d dependencies
           command: |
             docker exec mmdet3d pip install -e /mmengine
+            docker exec mmdet3d pip install -e /mmeval
             docker exec mmdet3d pip install -U openmim
             docker exec mmdet3d mim install 'mmcv >= 2.0.0rc1'
             docker exec mmdet3d pip install -e /mmdetection
