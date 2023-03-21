@@ -20,7 +20,7 @@ We implement MinkUNet with TorchSparse backend and provide the result and checkp
 
 ### SemanticKITTI
 
-|    Method    | Lr schd | Mem (GB) | mIOU |         Download         |
+|    Method    | Lr schd | Mem (GB) | mIoU |         Download         |
 | :----------: | :-----: | :------: | :--: | :----------------------: |
 | MinkUNet-W16 |   15e   |   3.4    | 60.3 | [model](<>) \| [log](<>) |
 | MinkUNet-W20 |   15e   |   3.7    | 61.6 | [model](<>) \| [log](<>) |
@@ -28,7 +28,7 @@ We implement MinkUNet with TorchSparse backend and provide the result and checkp
 
 **Note:** We follow the implementation in SPVNAS original [repo](https://github.com/mit-han-lab/spvnas) and W16\\W20\\W32 indicates different number of channels.
 
-**Note:** Due to TorchSparse backend, the model performance is relatively dependent on random seeds, and if random seeds are not specified the model performance will be different (± 1.5 mIOU).
+**Note:** Due to TorchSparse backend, the model performance is relatively dependent on random seeds, and if random seeds are not specified the model performance will be different (± 1.5 mIoU).
 
 ## Citation
 
