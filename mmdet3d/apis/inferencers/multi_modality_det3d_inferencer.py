@@ -39,8 +39,8 @@ class MultiModalityDet3DInferencer(Base3DInferencer):
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
-        scope (str): The scope of registry.
-        palette (str, optional): The palette of visualization.
+        scope (str): The scope of registry. Defaults to 'mmdet3d'.
+        palette (str): The palette of visualization. Defaults to 'none'.
     """
 
     preprocess_kwargs: set = set()
@@ -64,7 +64,11 @@ class MultiModalityDet3DInferencer(Base3DInferencer):
         self.num_visualized_frames = 0
         self.palette = palette
         super(MultiModalityDet3DInferencer, self).__init__(
-            model=model, weights=weights, device=device, scope=scope)
+            model=model,
+            weights=weights,
+            device=device,
+            scope=scope,
+            palette=palette)
 
     def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
         """Preprocess the inputs to a list.
