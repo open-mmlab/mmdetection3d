@@ -62,7 +62,9 @@ def get_semantickitti_info(split):
                     'lidar_path':
                     osp.join('sequences',
                              str(i_folder).zfill(2), 'velodyne',
-                             str(j).zfill(6) + '.bin')
+                             str(j).zfill(6) + '.bin'),
+                    'num_pts_feats':
+                    4
                 },
                 'pts_semantic_mask_path':
                 osp.join('sequences',

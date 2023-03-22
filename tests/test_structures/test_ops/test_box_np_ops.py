@@ -72,12 +72,12 @@ def test_points_in_convex_polygon_jit():
                          [[1.0, 0.0], [1.0, 1.0], [0.5, 1.0], [0.0, 1.0]],
                          [[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, -1.0]]])
     res = points_in_convex_polygon_jit(points, polygons)
-    expected_res = np.array([[1, 0, 1], [0, 0, 0], [0, 1, 0]]).astype(np.bool)
+    expected_res = np.array([[1, 0, 1], [0, 0, 0], [0, 1, 0]]).astype(bool)
     assert np.allclose(res, expected_res)
 
     polygons = np.array([[[0.0, 0.0], [0.0, 1.0], [0.5, 0.5], [1.0, 0.0]],
                          [[0.0, 1.0], [1.0, 1.0], [1.0, 0.5], [1.0, 0.0]],
                          [[1.0, 0.0], [0.0, -1.0], [-1.0, 0.0], [0.0, 1.1]]])
     res = points_in_convex_polygon_jit(points, polygons, clockwise=True)
-    expected_res = np.array([[1, 0, 1], [0, 0, 1], [0, 1, 0]]).astype(np.bool)
+    expected_res = np.array([[1, 0, 1], [0, 0, 1], [0, 1, 0]]).astype(bool)
     assert np.allclose(res, expected_res)

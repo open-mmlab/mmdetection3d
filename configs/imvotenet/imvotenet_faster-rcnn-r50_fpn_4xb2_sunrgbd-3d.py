@@ -3,8 +3,10 @@ _base_ = [
     '../_base_/models/imvotenet.py'
 ]
 
+backend_args = None
+
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -22,7 +24,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     # online evaluation
     dict(
         type='LoadAnnotations3D',

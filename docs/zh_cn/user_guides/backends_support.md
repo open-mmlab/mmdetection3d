@@ -8,7 +8,7 @@
 
 ```python
 # set file client backends as Ceph
-file_client_args = dict(
+backend_args = dict(
     backend='petrel',
     path_mapping=dict({
         './data/nuscenes/':
@@ -30,15 +30,15 @@ db_sampler = dict(
         coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     # set file client for data base sampler to load db info file
-    file_client_args=file_client_args)
+    backend_args=backend_args)
 
 train_pipeline = [
     # set file client for loading training data
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4, file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4, backend_args=backend_args),
     # set file client for loading training data annotations
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True, file_client_args=file_client_args),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True, backend_args=backend_args),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -59,7 +59,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     # set file client for loading validation/testing data
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4, file_client_args=file_client_args),
+    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4, backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -87,11 +87,11 @@ data = dict(
     train=dict(
         type='RepeatDataset',
         times=2,
-        dataset=dict(pipeline=train_pipeline, classes=class_names, file_client_args=file_client_args)),
+        dataset=dict(pipeline=train_pipeline, classes=class_names, backend_args=backend_args)),
     # set file client for loading validation info files (.pkl)
-    val=dict(pipeline=test_pipeline, classes=class_names,file_client_args=file_client_args),
+    val=dict(pipeline=test_pipeline, classes=class_names,backend_args=backend_args),
     # set file client for loading testing info files (.pkl)
-    test=dict(pipeline=test_pipeline, classes=class_names, file_client_args=file_client_args))
+    test=dict(pipeline=test_pipeline, classes=class_names, backend_args=backend_args))
 ```
 
 ## 从 Ceph 读取预训练模型

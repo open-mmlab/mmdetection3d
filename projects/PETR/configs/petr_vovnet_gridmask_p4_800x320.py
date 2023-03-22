@@ -115,7 +115,7 @@ model = dict(
 
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
-file_client_args = dict(backend='disk')
+backend_args = None
 
 db_sampler = dict(
     data_root=data_root,
@@ -150,7 +150,9 @@ db_sampler = dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
-        use_dim=[0, 1, 2, 3, 4]))
+        use_dim=[0, 1, 2, 3, 4],
+        backend_args=backend_args),
+    backend_args=backend_args)
 ida_aug_conf = {
     'resize_lim': (0.47, 0.625),
     'final_dim': (320, 800),
@@ -162,7 +164,10 @@ ida_aug_conf = {
 }
 
 train_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
+    dict(
+        type='LoadMultiViewImageFromFiles',
+        to_float32=True,
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=True,
@@ -187,7 +192,10 @@ train_pipeline = [
         ])
 ]
 test_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
+    dict(
+        type='LoadMultiViewImageFromFiles',
+        to_float32=True,
+        backend_args=backend_args),
     dict(
         type='ResizeCropFlipImage', data_aug_conf=ida_aug_conf,
         training=False),
@@ -212,7 +220,8 @@ train_dataloader = dict(
         metainfo=metainfo,
         test_mode=False,
         modality=input_modality,
-        use_valid_flag=True))
+        use_valid_flag=True,
+        backend_args=backend_args))
 test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
@@ -229,7 +238,8 @@ test_dataloader = dict(
         metainfo=metainfo,
         test_mode=True,
         modality=input_modality,
-        use_valid_flag=True))
+        use_valid_flag=True,
+        backend_args=backend_args))
 val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
@@ -246,7 +256,8 @@ val_dataloader = dict(
         metainfo=metainfo,
         test_mode=True,
         modality=input_modality,
-        use_valid_flag=True))
+        use_valid_flag=True,
+        backend_args=backend_args))
 
 # Different from original PETR:
 # We don't use special lr for image_backbone

@@ -4,16 +4,21 @@
 dataset_type = 'WaymoDataset'
 # data_root = 's3://openmmlab/datasets/detection3d/waymo/kitti_format/'
 data_root = 'data/waymo/kitti_format/'
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
+
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/waymo/kitti_format/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
 #     backend='petrel',
-#     path_mapping={
-#         './data/waymo': 's3://openmmlab/datasets/detection3d/waymo',
-#         'data/waymo': 's3://openmmlab/datasets/detection3d/waymo'
-#     })
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
 
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
@@ -33,10 +38,17 @@ db_sampler = dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4]))
+        use_dim=[0, 1, 2, 3, 4],
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=6, use_dim=5),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=6,
+        use_dim=5,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     # dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -61,7 +73,7 @@ test_pipeline = [
         coord_type='LIDAR',
         load_dim=6,
         use_dim=5,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -82,7 +94,12 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=6, use_dim=5),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=6,
+        use_dim=5,
+        backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points']),
 ]
 
@@ -109,7 +126,7 @@ train_dataloader = dict(
             box_type_3d='LiDAR',
             # load one frame every five frames
             load_interval=5,
-            file_client_args=file_client_args)))
+            backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -126,7 +143,7 @@ val_dataloader = dict(
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR',
-        file_client_args=file_client_args))
+        backend_args=backend_args))
 
 test_dataloader = dict(
     batch_size=1,
@@ -144,14 +161,14 @@ test_dataloader = dict(
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR',
-        file_client_args=file_client_args))
+        backend_args=backend_args))
 
 val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
     data_root='./data/waymo/waymo_format',
-    file_client_args=file_client_args,
+    backend_args=backend_args,
     convert_kitti_format=False)
 test_evaluator = val_evaluator
 

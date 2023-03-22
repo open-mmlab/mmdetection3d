@@ -8,8 +8,9 @@ model = dict(
     backbone=dict(norm_cfg=dict(requires_grad=False), style='caffe'),
     roi_head=dict(
         bbox_head=dict(num_classes=10), mask_head=dict(num_classes=10)))
+backend_args = None
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
     dict(
         type='Resize',
@@ -20,7 +21,7 @@ train_pipeline = [
     dict(type='PackDetInputs'),
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1600, 900),

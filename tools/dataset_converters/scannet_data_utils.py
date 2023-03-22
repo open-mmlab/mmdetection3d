@@ -232,8 +232,8 @@ class ScanNetSegData(object):
         ])  # used for seg task
         self.ignore_index = len(self.cat_ids)
 
-        self.cat_id2class = np.ones((self.all_ids.shape[0],), dtype=np.int) * \
-            self.ignore_index
+        self.cat_id2class = np.ones(
+            (self.all_ids.shape[0], ), dtype=np.int64) * self.ignore_index
         for i, cat_id in enumerate(self.cat_ids):
             self.cat_id2class[cat_id] = i
 
