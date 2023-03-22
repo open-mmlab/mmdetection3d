@@ -456,14 +456,22 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         Args:
             res_coors (Tensor): The voxel coordinates of points, Nx3.
             data_sample: (:obj:`Det3DDataSample`): The annotation data of
-                every samples. Add voxel-wise annotation for segmentation.
+                every samples. Add voxel-wise annotation forsegmentation.
         """
-        pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
-        voxel_semantic_mask, _ = dynamic_scatter_3d(
-            F.one_hot(pts_semantic_mask.long()).float(),
-            res_coors.contiguous(), 'mean')
-        voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
-        data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
+
+        if self.training:
+            pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
+            voxel_semantic_mask, _, point2voxel_map = dynamic_scatter_3d(
+                F.one_hot(pts_semantic_mask.long()).float(), res_coors, 'mean',
+                True)
+            voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
+            data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
+            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+        else:
+            pseudo_tensor = res_coors.new_ones([res_coors.shape[0], 1]).float()
+            _, _, point2voxel_map = dynamic_scatter_3d(pseudo_tensor,
+                                                       res_coors, 'mean', True)
+            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
 
     def ravel_hash(self, x: np.ndarray) -> np.ndarray:
         """Get voxel coordinates hash for np.unique().
@@ -495,6 +503,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         Args:
             coords (np.ndarray): The voxel coordinates of points, Nx3.
+            return_index (bool): Whether to return the indices of the
+                unique coords, shape (M,).
+            return_inverse (bool): Whether to return the indices of the
+                original coords shape (N,).
 
         Returns:
             List[np.ndarray] or None: Return index and inverse map if

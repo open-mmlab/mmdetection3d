@@ -73,7 +73,7 @@ class MinkUNetHead(Base3DDecodeHead):
             x (SparseTensor): Features from backbone.
 
         Returns:
-            output (Tensor): Segmentation map of shape [N, C].
+            Tensor: Segmentation map of shape [N, C].
                 Note that output contains all points from each batch.
         """
         output = self.cls_seg(x.F)
