@@ -1,15 +1,15 @@
 import torch
 import torch.nn as nn
+from mmengine.model import BaseModule
 from torch.nn.init import normal_
 
-from mmdet3d.models import Base3DDecodeHead
 from mmdet3d.registry import MODELS
 from .cross_view_hybrid_attention import TPVCrossViewHybridAttention
 from .image_cross_attention import TPVMSDeformableAttention3D
 
 
 @MODELS.register_module()
-class TPVFormerHead(Base3DDecodeHead):
+class TPVFormerHead(BaseModule):
 
     def __init__(self,
                  positional_encoding=None,

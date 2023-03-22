@@ -1,43 +1,22 @@
-dataset_params = dict(
-    version='v1.0-trainval',
-    ignore_label=0,
-    fill_label=0,
-    fixed_volume_space=True,
-    label_mapping='./config/label_mapping/nuscenes.yaml',
-    max_volume_space=[51.2, 51.2, 3],
-    min_volume_space=[-51.2, -51.2, -5],
-)
+_base_ = [
+    'mmdet3d::_base_/datasets/nus-seg.py', 'mmdet3d::_base_/default_runtime.py'
+]
 
-train_data_loader = dict(
-    data_path='data/nuscenes/',
-    imageset='./data/nuscenes_infos_train.pkl',
-    batch_size=1,
-    shuffle=True,
-    num_workers=1,
-)
+custom_imports = dict(
+    imports=['projects.TPVFormer.tpvformer'], allow_failed_imports=False)
 
-val_data_loader = dict(
-    data_path='data/nuscenes/',
-    imageset='./data/nuscenes_infos_val.pkl',
-    batch_size=1,
-    shuffle=False,
-    num_workers=1,
-)
+# optimizer = dict(
+#     type='AdamW',
+#     lr=2e-4,
+#     paramwise_cfg=dict(custom_keys={
+#         'img_backbone': dict(lr_mult=0.1),
+#     }),
+#     weight_decay=0.01)
 
-unique_label = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+# grad_max_norm = 35
 
-optimizer = dict(
-    type='AdamW',
-    lr=2e-4,
-    paramwise_cfg=dict(custom_keys={
-        'img_backbone': dict(lr_mult=0.1),
-    }),
-    weight_decay=0.01)
-
-grad_max_norm = 35
-
-print_freq = 50
-max_epochs = 24
+# print_freq = 50
+# max_epochs = 24
 
 load_from = './ckpts/r101_dcn_fcos3d_pretrain.pth'
 
@@ -145,7 +124,7 @@ model = dict(
         scale_w=scale_w,
         scale_z=scale_z),
     img_backbone=dict(
-        type='ResNet',
+        type='mmdet.ResNet',
         depth=101,
         num_stages=4,
         out_indices=(1, 2, 3),
@@ -158,7 +137,7 @@ model = dict(
         ),  # original DCNv2 will print log when perform load_state_dict
         stage_with_dcn=(False, False, True, True)),
     img_neck=dict(
-        type='FPN',
+        type='mmdet.FPN',
         in_channels=[512, 1024, 2048],
         out_channels=_dim_,
         start_level=0,
@@ -197,3 +176,6 @@ model = dict(
             h=tpv_h_,
             w=tpv_w_,
             z=tpv_z_)))
+
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')

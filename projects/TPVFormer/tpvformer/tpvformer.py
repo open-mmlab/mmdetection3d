@@ -1,10 +1,12 @@
+from mmengine.model import BaseModel
+
 from mmdet3d.models import Base3DSegmentor
 from mmdet3d.registry import MODELS
 from .grid_mask import GridMask
 
 
 @MODELS.register_module()
-class TPVFormer(Base3DSegmentor):
+class TPVFormer(BaseModel):
 
     def __init__(self,
                  use_grid_mask=False,
