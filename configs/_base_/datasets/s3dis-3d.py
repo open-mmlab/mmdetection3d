@@ -2,6 +2,21 @@
 dataset_type = 'S3DISDataset'
 data_root = 'data/s3dis/'
 
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/s3dis/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
+
 metainfo = dict(classes=('table', 'chair', 'sofa', 'bookcase', 'board'))
 train_area = [1, 2, 3, 4, 6]
 test_area = 5
@@ -13,7 +28,8 @@ train_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='PointSample', num_points=100000),
     dict(
@@ -39,7 +55,8 @@ test_pipeline = [
         shift_height=False,
         use_color=True,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -79,7 +96,8 @@ train_dataloader = dict(
                     pipeline=train_pipeline,
                     filter_empty_gt=True,
                     metainfo=metainfo,
-                    box_type_3d='Depth') for i in train_area
+                    box_type_3d='Depth',
+                    backend_args=backend_args) for i in train_area
             ])))
 
 val_dataloader = dict(
@@ -93,7 +111,8 @@ val_dataloader = dict(
         pipeline=test_pipeline,
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -105,7 +124,8 @@ test_dataloader = dict(
         pipeline=test_pipeline,
         metainfo=metainfo,
         test_mode=True,
-        box_type_3d='Depth'))
+        box_type_3d='Depth',
+        backend_args=backend_args))
 val_evaluator = dict(type='IndoorMetric')
 test_evaluator = val_evaluator
 

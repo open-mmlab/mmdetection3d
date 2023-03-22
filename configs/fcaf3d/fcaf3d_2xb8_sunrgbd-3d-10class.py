@@ -3,6 +3,7 @@ _base_ = [
     '../_base_/datasets/sunrgbd-3d.py'
 ]
 n_points = 100000
+backend_args = None
 
 model = dict(
     bbox_head=dict(
@@ -16,7 +17,8 @@ train_pipeline = [
         coord_type='DEPTH',
         shift_height=False,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D'),
     dict(type='PointSample', num_points=n_points),
     dict(type='RandomFlip3D', sync_2d=False, flip_ratio_bev_horizontal=0.5),
@@ -36,7 +38,8 @@ test_pipeline = [
         coord_type='DEPTH',
         shift_height=False,
         load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5]),
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),

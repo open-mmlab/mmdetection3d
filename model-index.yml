@@ -23,3 +23,5 @@ Import:
   - configs/smoke/metafile.yml
   - configs/ssn/metafile.yml
   - configs/votenet/metafile.yml
+  - configs/pv_rcnn/metafile.yml
+  - configs/fcaf3d/metafile.yml

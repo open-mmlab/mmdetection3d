@@ -7,20 +7,26 @@ point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 # Using calibration info convert the Lidar-coordinate point cloud range to the
 # ego-coordinate point cloud range could bring a little promotion in nuScenes.
 # point_cloud_range = [-54, -54.8, -5.0, 54, 53.2, 3.0]
-file_client_args = dict(backend='disk')
+backend_args = None
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
 
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         use_dim=[0, 1, 2, 3, 4],
         pad_empty_sweeps=True,
-        remove_close=True),
+        remove_close=True,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),

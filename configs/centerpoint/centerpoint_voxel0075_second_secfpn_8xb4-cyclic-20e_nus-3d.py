@@ -31,7 +31,7 @@ model = dict(
 
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
-file_client_args = dict(backend='disk')
+backend_args = None
 
 db_sampler = dict(
     data_root=data_root,
@@ -66,16 +66,24 @@ db_sampler = dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
-        use_dim=[0, 1, 2, 3, 4]))
+        use_dim=[0, 1, 2, 3, 4],
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         use_dim=[0, 1, 2, 3, 4],
         pad_empty_sweeps=True,
-        remove_close=True),
+        remove_close=True,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -97,13 +105,19 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=5, use_dim=5),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=5,
+        use_dim=5,
+        backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
         use_dim=[0, 1, 2, 3, 4],
         pad_empty_sweeps=True,
-        remove_close=True),
+        remove_close=True,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
