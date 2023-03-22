@@ -1209,6 +1209,10 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
 
     Added keys:
       - points
+      - img
+      - cam2img
+      - lidar2cam
+      - lidar2img
       - timestamp
       - axis_align_matrix
       - box_type_3d
@@ -1235,11 +1239,12 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
             single_input (dict): Single input.
 
         Returns:
-            dict: The dict contains loaded image and meta information.
+            dict: The dict contains loaded image, point cloud and meta
+            information.
         """
         assert 'points' in single_input and 'img' in single_input and \
-            'calib' in single_input, "key 'points' and 'img' must be in "
-        f'input dict, but got {single_input}'
+            'calib' in single_input, "key 'points', 'img' and 'calib' must be "
+        f'in input dict, but got {single_input}'
         if isinstance(single_input['points'], str):
             inputs = dict(
                 lidar_points=dict(lidar_path=single_input['points']),
