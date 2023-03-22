@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
+import warnings
 from typing import Dict, List, Optional, Sequence, Union
 
 import mmcv
@@ -95,6 +96,12 @@ class MultiModalityDet3DInferencer(Base3DInferencer):
 
         load_point_idx = self._get_transform_idx(pipeline_cfg,
                                                  'LoadPointsFromFile')
+        load_mv_img_idx = self._get_transform_idx(
+            pipeline_cfg, 'LoadMultiViewImageFromFiles')
+        if load_mv_img_idx != -1:
+            warnings.warn(
+                'LoadMultiViewImageFromFiles is not supported yet in the '
+                'multi-modality inferencer. Please remove it')
         # Now, we only support ``LoadImageFromFile`` as the image loader in the
         # original piepline. `LoadMultiViewImageFromFiles` is not supported
         # yet.

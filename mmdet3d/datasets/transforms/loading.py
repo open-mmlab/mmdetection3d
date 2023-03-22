@@ -1205,7 +1205,7 @@ class MonoDet3DInferencerLoader(BaseTransform):
 
 @TRANSFORMS.register_module()
 class MultiModalityDet3DInferencerLoader(BaseTransform):
-    """Load point cloud in the Inferencer's pipeline.
+    """Load point cloud and image in the Inferencer's pipeline.
 
     Added keys:
       - points
