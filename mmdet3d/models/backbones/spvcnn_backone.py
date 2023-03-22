@@ -35,9 +35,9 @@ class SPVCNNBackbone(MinkUNetBackbone):
             layer. Defaults to [256, 128, 96, 96].
         num_stages (int): Number of stages in encoder and decoder.
             Defaults to 4.
-        drop_ratio: Dropout ratio of voxel features. Defaults to 0.3.
-        init_cfg (dict or list[dict], optional): Initialization config dict.
-            Defaults to None.
+        drop_ratio (float): Dropout ratio of voxel features. Defaults to 0.3.
+        init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`]
+            , optional): Initialization config dict. Defaults to None.
     """
 
     def __init__(self,
@@ -136,89 +136,98 @@ class SPVCNNBackbone(MinkUNetBackbone):
         return new_tensor
 
     def voxel_to_point(self,
-                       x: SparseTensor,
-                       z: PointTensor,
+                       voxels: SparseTensor,
+                       points: PointTensor,
                        point_transform: Optional[nn.Module] = None,
                        nearest: bool = False) -> PointTensor:
         """Feed voxel features to points.
 
         Args:
-            x (SparseTensor): Input voxels.
-            z (PointTensor): Input points.
-            point_transform: (nn.Module, optional): Point transform module
+            voxels (SparseTensor): Input voxels.
+            points (PointTensor): Input points.
+            point_transform (nn.Module, optional): Point transform module
                 for input point features. Defaults to None.
-            nearest: Whether to use nearest neighbor interpolation.
+            nearest (bool): Whether to use nearest neighbor interpolation.
                 Defaults to False.
 
         Returns:
             PointTensor: Points with new features.
         """
-        if z.idx_query is None or z.weights is None or z.idx_query.get(
-                x.s) is None or z.weights.get(x.s) is None:
-            off = get_kernel_offsets(2, x.s, 1, device=z.F.device)
+        if points.idx_query is None or points.weights is None or \
+                points.idx_query.get(voxels.s) is None or \
+                points.weights.get(voxels.s) is None:
+            off = get_kernel_offsets(2, voxels.s, 1, device=points.F.device)
             old_hash = F.sphash(
                 torch.cat([
-                    torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
-                    z.C[:, -1].int().view(-1, 1)
+                    torch.floor(points.C[:, :3] / voxels.s[0]).int() *
+                    voxels.s[0], points.C[:, -1].int().view(-1, 1)
                 ], 1), off)
-            pc_hash = F.sphash(x.C.to(z.F.device))
+            pc_hash = F.sphash(voxels.C.to(points.F.device))
             idx_query = F.sphashquery(old_hash, pc_hash)
             weights = F.calc_ti_weights(
-                z.C, idx_query, scale=x.s[0]).transpose(0, 1).contiguous()
+                points.C, idx_query,
+                scale=voxels.s[0]).transpose(0, 1).contiguous()
             idx_query = idx_query.transpose(0, 1).contiguous()
             if nearest:
                 weights[:, 1:] = 0.
                 idx_query[:, 1:] = -1
-            new_feat = F.spdevoxelize(x.F, idx_query, weights)
+            new_feat = F.spdevoxelize(voxels.F, idx_query, weights)
             new_tensor = PointTensor(
-                new_feat, z.C, idx_query=z.idx_query, weights=z.weights)
-            new_tensor.additional_features = z.additional_features
-            new_tensor.idx_query[x.s] = idx_query
-            new_tensor.weights[x.s] = weights
-            z.idx_query[x.s] = idx_query
-            z.weights[x.s] = weights
+                new_feat,
+                points.C,
+                idx_query=points.idx_query,
+                weights=points.weights)
+            new_tensor.additional_features = points.additional_features
+            new_tensor.idx_query[voxels.s] = idx_query
+            new_tensor.weights[voxels.s] = weights
+            points.idx_query[voxels.s] = idx_query
+            points.weights[voxels.s] = weights
         else:
-            new_feat = F.spdevoxelize(x.F, z.idx_query.get(x.s),
-                                      z.weights.get(x.s))
+            new_feat = F.spdevoxelize(voxels.F, points.idx_query.get(voxels.s),
+                                      points.weights.get(voxels.s))
             new_tensor = PointTensor(
-                new_feat, z.C, idx_query=z.idx_query, weights=z.weights)
-            new_tensor.additional_features = z.additional_features
+                new_feat,
+                points.C,
+                idx_query=points.idx_query,
+                weights=points.weights)
+            new_tensor.additional_features = points.additional_features
 
         if point_transform is not None:
-            new_tensor.F = new_tensor.F + point_transform(z.F)
+            new_tensor.F = new_tensor.F + point_transform(points.F)
 
         return new_tensor
 
-    def point_to_voxel(self, x: SparseTensor, z: PointTensor) -> SparseTensor:
+    def point_to_voxel(self, voxels: SparseTensor,
+                       points: PointTensor) -> SparseTensor:
         """Feed point features to voxels.
 
         Args:
-            x (SparseTensor): Input voxels.
-            z (PointTensor): Input points.
+            voxels (SparseTensor): Input voxels.
+            points (PointTensor): Input points.
 
         Returns:
             SparseTensor: Voxels with new features.
         """
-        if z.additional_features is None or z.additional_features.get(
-                'idx_query') is None or z.additional_features['idx_query'].get(
-                    x.s) is None:
+        if points.additional_features is None or \
+                points.additional_features.get('idx_query') is None or \
+                points.additional_features['idx_query'].get(voxels.s) is None:
             pc_hash = F.sphash(
                 torch.cat([
-                    torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
-                    z.C[:, -1].int().view(-1, 1)
+                    torch.floor(points.C[:, :3] / voxels.s[0]).int() *
+                    voxels.s[0], points.C[:, -1].int().view(-1, 1)
                 ], 1))
-            sparse_hash = F.sphash(x.C)
+            sparse_hash = F.sphash(voxels.C)
             idx_query = F.sphashquery(pc_hash, sparse_hash)
-            counts = F.spcount(idx_query.int(), x.C.shape[0])
-            z.additional_features['idx_query'][x.s] = idx_query
-            z.additional_features['counts'][x.s] = counts
+            counts = F.spcount(idx_query.int(), voxels.C.shape[0])
+            points.additional_features['idx_query'][voxels.s] = idx_query
+            points.additional_features['counts'][voxels.s] = counts
         else:
-            idx_query = z.additional_features['idx_query'][x.s]
-            counts = z.additional_features['counts'][x.s]
+            idx_query = points.additional_features['idx_query'][voxels.s]
+            counts = points.additional_features['counts'][voxels.s]
 
-        inserted_feat = F.spvoxelize(z.F, idx_query, counts)
-        new_tensor = SparseTensor(inserted_feat, x.C, x.s)
-        new_tensor.cmaps = x.cmaps
-        new_tensor.kmaps = x.kmaps
+        inserted_feat = F.spvoxelize(points.F, idx_query, counts)
+        new_tensor = SparseTensor(inserted_feat, voxels.C, voxels.s)
+        new_tensor.cmaps = voxels.cmaps
+        new_tensor.kmaps = voxels.kmaps
 
         return new_tensor
