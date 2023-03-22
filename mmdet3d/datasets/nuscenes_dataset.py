@@ -235,7 +235,7 @@ class NuScenesDataset(Det3DDataset):
         else:
             data_info = super().parse_data_info(info)
             return data_info
-        
+
 
 @DATASETS.register_module()
 class NuScenesSegDataset(Seg3DDataset):

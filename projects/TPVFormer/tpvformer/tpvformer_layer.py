@@ -158,7 +158,8 @@ class TPVFormerLayer(BaseModule):
             value (Tensor): The value tensor with same shape as `key`.
             tpv_pos (Tensor): The positional encoding for self attn.
         Returns:
-            Tensor: forwarded results with shape [[bs, num_queries, embed_dims] * 3] for 3 tpv planes.
+            Tensor: forwarded results with shape
+                [[bs, num_queries, embed_dims] * 3] for 3 tpv planes.
         """
 
         norm_index = 0

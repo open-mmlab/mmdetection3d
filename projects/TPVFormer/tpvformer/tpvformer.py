@@ -1,6 +1,5 @@
 from mmengine.model import BaseModel
 
-from mmdet3d.models import Base3DSegmentor
 from mmdet3d.registry import MODELS
 from .grid_mask import GridMask
 

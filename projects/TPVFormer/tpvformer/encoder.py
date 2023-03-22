@@ -10,7 +10,8 @@ class TPVFormerEncoder(TransformerLayerSequence):
 
     Args:
         return_intermediate (bool): Whether to return intermediate outputs.
-        coder_norm_cfg (dict): Config of last normalization layer. Default: `LN`.
+        coder_norm_cfg (dict): Config of last normalization layer.
+        Default: `LN`.
     """
 
     def __init__(self,
@@ -170,7 +171,7 @@ class TPVFormerEncoder(TransformerLayerSequence):
 
         Args:
             H, W: spatial shape of tpv.
-            Z: hight of pillar.
+            Z: height of pillar.
             D: sample D points uniformly from each pillar.
             device (obj:`device`): The device where
                 reference_points should be.
@@ -196,8 +197,10 @@ class TPVFormerEncoder(TransformerLayerSequence):
             ref_3d = ref_3d[None].repeat(bs, 1, 1, 1)
             return ref_3d
 
-        # reference points on 2D tpv plane, used in self attention in tpvformer04
-        # which is an older version. Now we use get_cross_view_ref_points instead.
+        # reference points on 2D tpv plane,
+        # used in self attention in tpvformer04
+        # which is an older version.
+        # Now we use get_cross_view_ref_points instead.
         elif dim == '2d':
             ref_y, ref_x = torch.meshgrid(
                 torch.linspace(0.5, H - 0.5, H, dtype=dtype, device=device),
