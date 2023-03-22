@@ -62,7 +62,6 @@ class MultiModalityDet3DInferencer(Base3DInferencer):
         # A global counter tracking the number of frames processed, for
         # naming of the output results
         self.num_visualized_frames = 0
-        self.palette = palette
         super(MultiModalityDet3DInferencer, self).__init__(
             model=model,
             weights=weights,
