@@ -1,12 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
-
 from torch import Tensor
 
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import OptSampleList, SampleList
 from .encoder_decoder import EncoderDecoder3D
+
+if IS_TORCHSPARSE_AVAILABLE:
+    from torchsparse import SparseTensor
+else:
+    SparseTensor = None
 
 
 @MODELS.register_module()
@@ -94,8 +97,19 @@ class MinkUNet(EncoderDecoder3D):
         x = self.extract_feat(batch_inputs_dict)
         return self.decode_head.forward(x)
 
-    def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
-        """Extract features from voxels."""
+    def extract_feat(self, batch_inputs_dict: dict) -> SparseTensor:
+        """Extract features from voxels.
+
+        Args:
+            batch_inputs_dict (dict): Input sample dict which
+                includes 'points' and 'voxels' keys.
+
+                - points (List[Tensor]): Point cloud of each sample.
+                - voxels (dict): Voxel feature and coords after voxelization.
+
+        Returns:
+            SparseTensor: voxels with features.
+        """
         voxel_dict = batch_inputs_dict['voxels']
         x = self.backbone(voxel_dict['voxels'], voxel_dict['coors'])
         if self.with_neck:
