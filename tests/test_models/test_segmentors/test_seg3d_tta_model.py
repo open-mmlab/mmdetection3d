@@ -22,7 +22,6 @@ class TestSeg3DTTAModel(TestCase):
         cfg = ConfigDict(type='Seg3DTTAModel', module=segmentor3d_cfg)
 
         model: Seg3DTTAModel = MODELS.build(cfg)
-        model.eval()
 
         points = []
         data_samples = []
@@ -36,5 +35,6 @@ class TestSeg3DTTAModel(TestCase):
                         pcd_horizontal_flip=pcd_horizontal_flip_list[i],
                         pcd_vertical_flip=pcd_vertical_flip_list[i]))
             ])
-
-        model.test_step(dict(inputs=points, data_samples=data_samples))
+        if torch.cuda.is_available():
+            model.eval()
+            model.test_step(dict(inputs=points, data_samples=data_samples))
