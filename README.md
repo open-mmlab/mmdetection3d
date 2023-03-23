@@ -43,16 +43,17 @@
 
 ### 💎 Stable version
 
-**v1.0.0rc7** was released in 7/1/2023
+**v1.0.0rc8** was released in 26/3/2023
 
 ### 🌟 Preview of 1.1.x version
 
-A brand new version of **MMDetection v1.1.0rc3** was released in 7/1/2023:
+A brand new version of **MMDetection v1.1.0rc4** was released in 26/3/2023:
 
 - Unifies interfaces of all components based on [MMEngine](https://github.com/open-mmlab/mmengine) and [MMDet 3.x](https://github.com/open-mmlab/mmdetection/tree/3.x).
 - A standard data protocol defines and unifies the common keys across different datasets.
 - Faster training and testing speed with more strong baselines.
 
+We have supported more LiDAR-based segmentation methods. More new features about 3D perception are in process.
 Find more new features in [1.1.x branch](https://github.com/open-mmlab/mmdetection3d/tree/1.1). Issues and PRs are welcome!
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In this version, we update some of the model checkpoints after the refactor of coordinate systems. See more details in the [Changelog](docs/en/changelog.md).
@@ -111,7 +112,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-**v1.0.0rc7** was released in 7/1/2023.
+**v1.0.0rc8** was released in 26/3/2023.
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
