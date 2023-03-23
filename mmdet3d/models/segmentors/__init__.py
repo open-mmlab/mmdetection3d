@@ -2,5 +2,8 @@
 from .base import Base3DSegmentor
 from .cylinder3d import Cylinder3D
 from .encoder_decoder import EncoderDecoder3D
+from .seg3d_tta import Seg3DTTAModel
 
-__all__ = ['Base3DSegmentor', 'EncoderDecoder3D', 'Cylinder3D']
+__all__ = [
+    'Base3DSegmentor', 'EncoderDecoder3D', 'Cylinder3D', 'Seg3DTTAModel'
+]
