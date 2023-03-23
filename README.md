@@ -43,7 +43,9 @@
 
 **News**:
 
-**v1.1.0rc3** was released in 7/1/2023
+**v1.1.0rc4** was released in 26/3/2023
+
+We have supported more LiDAR-based segmentation methods. More new features about 3D perception are in process. Please stay tuned!
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
 
@@ -95,7 +97,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-**1.1.0rc3** was released in 7/1/2023.
+**1.1.0rc4** was released in 26/3/2023.
 
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 
