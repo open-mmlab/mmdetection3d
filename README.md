@@ -215,7 +215,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
       <td>
         <li><b>Outdoor</b></li>
         <ul>
-          <li>Cylinder3D (CVPR'2021)</li>
+          <li><a href="configs/cylinder3d">Cylinder3D (CVPR'2021)</a></li>
         </ul>
         <li><b>Indoor</b></li>
         <ul>

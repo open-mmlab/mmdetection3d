@@ -195,7 +195,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
       <td>
         <li><b>室外</b></li>
         <ul>
-          <li>Cylinder3D (CVPR'2021)</li>
+          <li><a href="configs/cylinder3d">Cylinder3D (CVPR'2021)</a></li>
         </ul>
         <li><b>室内</b></li>
         <ul>
