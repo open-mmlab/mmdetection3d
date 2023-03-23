@@ -14,7 +14,7 @@ Self-driving cars need to understand 3D scenes efficiently and accurately in ord
 
 ## Introduction
 
-We implement SPVCNN with TorchSparse backend and provide the result and checkpoints on SemanticKITTI datasets.
+We implement SPVCNN with [TorchSparse](https://github.com/mit-han-lab/torchsparse) backend and provide the result and checkpoints on SemanticKITTI datasets.
 
 ## Results and models
 
@@ -28,7 +28,7 @@ We implement SPVCNN with TorchSparse backend and provide the result and checkpoi
 
 **Note:** We follow the implementation in SPVNAS original [repo](https://github.com/mit-han-lab/spvnas) and W16\\W20\\W32 indicates different number of channels.
 
-**Note:** Due to TorchSparse backend, the model performance is relatively dependent on random seeds, and if random seeds are not specified the model performance will be different (± 1.5 mIoU).
+**Note:** Due to TorchSparse backend, the model performance is unstable with TorchSparse backend and may fluctuate by about 1.5 mIoU for different random seeds.
 
 ## Citation
 
