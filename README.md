@@ -128,7 +128,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li><a href="configs/dgcnn">DGCNN (TOG'2019)</a></li>
         <li>DLA (CVPR'2018)</li>
         <li>MinkResNet (CVPR'2019)</li>
-        <li>Cylinder3D (CVPR'2021)</li>
+        <li><a href="configs/cylinder3d">Cylinder3D (CVPR'2021)</a></li>
       </ul>
       </td>
       <td>
