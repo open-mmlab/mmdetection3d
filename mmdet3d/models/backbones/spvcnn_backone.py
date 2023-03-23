@@ -80,59 +80,61 @@ class SPVCNNBackbone(MinkUNetBackbone):
         Returns:
             PointTensor: Backbone features.
         """
-        x = SparseTensor(voxel_features, coors)
-        z = PointTensor(x.F, x.C.float())
-        x = self.initial_voxelize(z)
+        voxels = SparseTensor(voxel_features, coors)
+        points = PointTensor(voxels.F, voxels.C.float())
+        voxels = self.initial_voxelize(points)
 
-        x = self.conv_input(x)
-        z = self.voxel_to_point(x, z)
-        x = self.point_to_voxel(x, z)
-        laterals = [x]
+        voxels = self.conv_input(voxels)
+        points = self.voxel_to_point(voxels, points)
+        voxels = self.point_to_voxel(voxels, points)
+        laterals = [voxels]
         for encoder in self.encoder:
-            x = encoder(x)
-            laterals.append(x)
+            voxels = encoder(voxels)
+            laterals.append(voxels)
         laterals = laterals[:-1][::-1]
 
-        z = self.voxel_to_point(x, z, self.point_transforms[0])
-        x = self.point_to_voxel(x, z)
-        x.F = self.dropout(x.F)
+        points = self.voxel_to_point(voxels, points, self.point_transforms[0])
+        voxels = self.point_to_voxel(voxels, points)
+        voxels.F = self.dropout(voxels.F)
 
         decoder_outs = []
         for i, decoder in enumerate(self.decoder):
-            x = decoder[0](x)
-            x = torchsparse.cat((x, laterals[i]))
-            x = decoder[1](x)
-            decoder_outs.append(x)
+            voxels = decoder[0](voxels)
+            voxels = torchsparse.cat((voxels, laterals[i]))
+            voxels = decoder[1](voxels)
+            decoder_outs.append(voxels)
             if i == 1:
-                z = self.voxel_to_point(x, z, self.point_transforms[1])
-                x = self.point_to_voxel(x, z)
-                x.F = self.dropout(x.F)
+                points = self.voxel_to_point(voxels, points,
+                                             self.point_transforms[1])
+                voxels = self.point_to_voxel(voxels, points)
+                voxels.F = self.dropout(voxels.F)
 
-        z = self.voxel_to_point(x, z, self.point_transforms[2])
-        return z
+        points = self.voxel_to_point(voxels, points, self.point_transforms[2])
+        return points
 
-    def initial_voxelize(self, z: PointTensor) -> SparseTensor:
+    def initial_voxelize(self, points: PointTensor) -> SparseTensor:
         """Voxelization again based on input PointTensor.
 
         Args:
-            z (PointTensor): Input points after voxelization.
+            points (PointTensor): Input points after voxelization.
 
         Returns:
             SparseTensor: New voxels.
         """
-        pc_hash = F.sphash(torch.floor(z.C).int())
+        pc_hash = F.sphash(torch.floor(points.C).int())
         sparse_hash = torch.unique(pc_hash)
         idx_query = F.sphashquery(pc_hash, sparse_hash)
         counts = F.spcount(idx_query.int(), len(sparse_hash))
 
-        inserted_coords = F.spvoxelize(torch.floor(z.C), idx_query, counts)
+        inserted_coords = F.spvoxelize(
+            torch.floor(points.C), idx_query, counts)
         inserted_coords = torch.round(inserted_coords).int()
-        inserted_feat = F.spvoxelize(z.F, idx_query, counts)
+        inserted_feat = F.spvoxelize(points.F, idx_query, counts)
 
         new_tensor = SparseTensor(inserted_feat, inserted_coords, 1)
         new_tensor.cmaps.setdefault(new_tensor.stride, new_tensor.coords)
-        z.additional_features['idx_query'][1] = idx_query
-        z.additional_features['counts'][1] = counts
+        points.additional_features['idx_query'][1] = idx_query
+        points.additional_features['counts'][1] = counts
         return new_tensor
 
     def voxel_to_point(self,
@@ -156,12 +158,13 @@ class SPVCNNBackbone(MinkUNetBackbone):
         if points.idx_query is None or points.weights is None or \
                 points.idx_query.get(voxels.s) is None or \
                 points.weights.get(voxels.s) is None:
-            off = get_kernel_offsets(2, voxels.s, 1, device=points.F.device)
+            offsets = get_kernel_offsets(
+                2, voxels.s, 1, device=points.F.device)
             old_hash = F.sphash(
                 torch.cat([
                     torch.floor(points.C[:, :3] / voxels.s[0]).int() *
                     voxels.s[0], points.C[:, -1].int().view(-1, 1)
-                ], 1), off)
+                ], 1), offsets)
             pc_hash = F.sphash(voxels.C.to(points.F.device))
             idx_query = F.sphashquery(old_hash, pc_hash)
             weights = F.calc_ti_weights(
@@ -171,9 +174,9 @@ class SPVCNNBackbone(MinkUNetBackbone):
             if nearest:
                 weights[:, 1:] = 0.
                 idx_query[:, 1:] = -1
-            new_feat = F.spdevoxelize(voxels.F, idx_query, weights)
+            new_features = F.spdevoxelize(voxels.F, idx_query, weights)
             new_tensor = PointTensor(
-                new_feat,
+                new_features,
                 points.C,
                 idx_query=points.idx_query,
                 weights=points.weights)
@@ -183,10 +186,11 @@ class SPVCNNBackbone(MinkUNetBackbone):
             points.idx_query[voxels.s] = idx_query
             points.weights[voxels.s] = weights
         else:
-            new_feat = F.spdevoxelize(voxels.F, points.idx_query.get(voxels.s),
-                                      points.weights.get(voxels.s))
+            new_features = F.spdevoxelize(voxels.F,
+                                          points.idx_query.get(voxels.s),
+                                          points.weights.get(voxels.s))
             new_tensor = PointTensor(
-                new_feat,
+                new_features,
                 points.C,
                 idx_query=points.idx_query,
                 weights=points.weights)
@@ -225,8 +229,8 @@ class SPVCNNBackbone(MinkUNetBackbone):
             idx_query = points.additional_features['idx_query'][voxels.s]
             counts = points.additional_features['counts'][voxels.s]
 
-        inserted_feat = F.spvoxelize(points.F, idx_query, counts)
-        new_tensor = SparseTensor(inserted_feat, voxels.C, voxels.s)
+        inserted_features = F.spvoxelize(points.F, idx_query, counts)
+        new_tensor = SparseTensor(inserted_features, voxels.C, voxels.s)
         new_tensor.cmaps = voxels.cmaps
         new_tensor.kmaps = voxels.kmaps
 
