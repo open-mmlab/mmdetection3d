@@ -5,12 +5,24 @@ dataset_type = 'WaymoDataset'
 data_root = 'data/waymo/kitti_format/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 input_modality = dict(use_lidar=False, use_camera=True)
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
+
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/waymo/kitti_format/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
+
 train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox=True,
@@ -36,7 +48,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(
         type='RandomResize3D',
         scale=(1248, 832),
@@ -47,7 +59,7 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
+    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(
         type='RandomResize3D',
         scale=(1248, 832),
@@ -83,7 +95,8 @@ train_dataloader = dict(
         box_type_3d='Camera',
         load_type='mv_image_based',
         # load one frame every three frames
-        load_interval=5))
+        load_interval=5,
+        backend_args=backend_args))
 
 val_dataloader = dict(
     batch_size=1,
@@ -110,7 +123,7 @@ val_dataloader = dict(
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
         load_type='mv_image_based',
-    ))
+        backend_args=backend_args))
 
 test_dataloader = dict(
     batch_size=1,
@@ -137,7 +150,7 @@ test_dataloader = dict(
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='Camera',
         load_type='mv_image_based',
-    ))
+        backend_args=backend_args))
 
 val_evaluator = dict(
     type='WaymoMetric',
@@ -146,5 +159,5 @@ val_evaluator = dict(
     data_root='./data/waymo/waymo_format',
     metric='LET_mAP',
     load_type='mv_image_based',
-)
+    backend_args=backend_args)
 test_evaluator = val_evaluator

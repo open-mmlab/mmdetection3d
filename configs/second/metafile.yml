@@ -60,7 +60,7 @@ Models:
 
   - Name: second_hv_secfpn_8xb6-amp-80e_kitti-3d-car
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_8xb6-amp-80e_kitti-3d-car.py
+    Config: configs/second/second_hv_secfpn_8xb6-amp-80e_kitti-3d-car.py
     Metadata:
       Training Techniques:
         - AdamW
@@ -79,7 +79,7 @@ Models:
 
   - Name: second_hv_secfpn_8xb6-amp-80e_kitti-3d-3class
     In Collection: SECOND
-    Config: configs/second/hv_second_secfpn_8xb6-amp-80e_kitti-3d-3class.py
+    Config: configs/second/second_hv_secfpn_8xb6-amp-80e_kitti-3d-3class.py
     Metadata:
       Training Techniques:
         - AdamW

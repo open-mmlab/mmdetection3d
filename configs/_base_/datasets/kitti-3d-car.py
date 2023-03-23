@@ -6,6 +6,21 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(classes=class_names)
 
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/kitti/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -14,14 +29,20 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(Car=15),
     points_loader=dict(
-        type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4))
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=4,  # x, y, z, intensity
-        use_dim=4),
+        use_dim=4,
+        backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -43,7 +64,12 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -64,7 +90,12 @@ test_pipeline = [
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
@@ -86,7 +117,8 @@ train_dataloader = dict(
             metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')))
+            box_type_3d='LiDAR',
+            backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -102,7 +134,8 @@ val_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
@@ -118,11 +151,13 @@ test_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
-        box_type_3d='LiDAR'))
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox')
+    metric='bbox',
+    backend_args=backend_args)
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

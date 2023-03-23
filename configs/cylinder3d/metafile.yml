@@ -11,13 +11,13 @@ Collections:
       Title: 'Cylindrical and Asymmetrical 3D Convolution Networks for LiDAR Segmentation'
     README: configs/cylinder3d/README.md
     Code:
-      URL:
-      Version: v1.1.0rc3
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/segmentors/cylinder3d.py#L13
+      Version: v1.1.0rc4
 
 Models:
   - Name:
     In Collection: Cylinder3D
-    Config: configs/cylinder3d/cylinder3d_4xb4_semantickitti_step_36e.py
+    Config: configs/cylinder3d/cylinder3d_4xb4_3x_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 10.2
@@ -25,5 +25,5 @@ Models:
       - Task: 3D Semantic Segmentation
         Dataset: SemanticKITTI
         Metrics:
-          mIOU: 63.4
+          mIOU: 63.1
     Weights:

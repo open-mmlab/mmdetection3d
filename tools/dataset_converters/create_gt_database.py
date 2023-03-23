@@ -147,7 +147,7 @@ def create_groundtruth_database(dataset_class_name,
     dataset_cfg = dict(
         type=dataset_class_name, data_root=data_path, ann_file=info_path)
     if dataset_class_name == 'KittiDataset':
-        file_client_args = dict(backend='disk')
+        backend_args = None
         dataset_cfg.update(
             modality=dict(
                 use_lidar=True,
@@ -161,12 +161,12 @@ def create_groundtruth_database(dataset_class_name,
                     coord_type='LIDAR',
                     load_dim=4,
                     use_dim=4,
-                    file_client_args=file_client_args),
+                    backend_args=backend_args),
                 dict(
                     type='LoadAnnotations3D',
                     with_bbox_3d=True,
                     with_label_3d=True,
-                    file_client_args=file_client_args)
+                    backend_args=backend_args)
             ])
 
     elif dataset_class_name == 'NuScenesDataset':
@@ -193,7 +193,7 @@ def create_groundtruth_database(dataset_class_name,
             ])
 
     elif dataset_class_name == 'WaymoDataset':
-        file_client_args = dict(backend='disk')
+        backend_args = None
         dataset_cfg.update(
             test_mode=False,
             data_prefix=dict(
@@ -210,12 +210,12 @@ def create_groundtruth_database(dataset_class_name,
                     coord_type='LIDAR',
                     load_dim=6,
                     use_dim=6,
-                    file_client_args=file_client_args),
+                    backend_args=backend_args),
                 dict(
                     type='LoadAnnotations3D',
                     with_bbox_3d=True,
                     with_label_3d=True,
-                    file_client_args=file_client_args)
+                    backend_args=backend_args)
             ])
 
     dataset = DATASETS.build(dataset_cfg)
@@ -510,7 +510,7 @@ class GTDatabaseCreater:
             data_root=self.data_path,
             ann_file=self.info_path)
         if self.dataset_class_name == 'KittiDataset':
-            file_client_args = dict(backend='disk')
+            backend_args = None
             dataset_cfg.update(
                 test_mode=False,
                 data_prefix=dict(
@@ -527,12 +527,12 @@ class GTDatabaseCreater:
                         coord_type='LIDAR',
                         load_dim=4,
                         use_dim=4,
-                        file_client_args=file_client_args),
+                        backend_args=backend_args),
                     dict(
                         type='LoadAnnotations3D',
                         with_bbox_3d=True,
                         with_label_3d=True,
-                        file_client_args=file_client_args)
+                        backend_args=backend_args)
                 ])
 
         elif self.dataset_class_name == 'NuScenesDataset':
@@ -560,7 +560,7 @@ class GTDatabaseCreater:
                 ])
 
         elif self.dataset_class_name == 'WaymoDataset':
-            file_client_args = dict(backend='disk')
+            backend_args = None
             dataset_cfg.update(
                 test_mode=False,
                 data_prefix=dict(
@@ -579,12 +579,12 @@ class GTDatabaseCreater:
                         coord_type='LIDAR',
                         load_dim=6,
                         use_dim=6,
-                        file_client_args=file_client_args),
+                        backend_args=backend_args),
                     dict(
                         type='LoadAnnotations3D',
                         with_bbox_3d=True,
                         with_label_3d=True,
-                        file_client_args=file_client_args)
+                        backend_args=backend_args)
                 ])
 
         self.dataset = DATASETS.build(dataset_cfg)

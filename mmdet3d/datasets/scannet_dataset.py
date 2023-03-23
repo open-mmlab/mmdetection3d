@@ -80,7 +80,7 @@ class ScanNetDataset(Det3DDataset):
         seg_valid_cat_ids = self.METAINFO['seg_valid_class_ids']
         neg_label = len(seg_valid_cat_ids)
         seg_label_mapping = np.ones(
-            seg_max_cat_id + 1, dtype=np.int) * neg_label
+            seg_max_cat_id + 1, dtype=np.int64) * neg_label
         for cls_idx, cat_id in enumerate(seg_valid_cat_ids):
             seg_label_mapping[cat_id] = cls_idx
         self.seg_label_mapping = seg_label_mapping
@@ -331,7 +331,7 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
                  test_mode: bool = False,
                  ignore_index: Optional[int] = None,
                  scene_idxs: Optional[Union[np.ndarray, str]] = None,
-                 file_client_args: dict = dict(backend='disk'),
+                 backend_args: Optional[dict] = None,
                  **kwargs) -> None:
         super().__init__(
             data_root=data_root,
@@ -343,5 +343,5 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
             test_mode=test_mode,
             ignore_index=ignore_index,
             scene_idxs=scene_idxs,
-            file_client_args=file_client_args,
+            backend_args=backend_args,
             **kwargs)
