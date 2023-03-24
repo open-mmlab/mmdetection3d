@@ -98,7 +98,7 @@ class BEVFusion(Base3DDetector):
         img_metas,
     ) -> torch.Tensor:
         B, N, C, H, W = x.size()
-        x = x.view(B * N, C, H, W)
+        x = x.view(B * N, C, H, W).contiguous()
 
         x = self.img_backbone(x)
         x = self.img_neck(x)

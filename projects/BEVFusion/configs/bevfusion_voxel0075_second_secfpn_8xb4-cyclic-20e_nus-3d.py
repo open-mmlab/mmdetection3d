@@ -255,7 +255,7 @@ train_pipeline = [
         rand_flip=True,
         is_train=True),
     dict(
-        type='GlobalRotScaleTrans',
+        type='BEVFusionGlobalRotScaleTrans',
         scale_ratio_range=[0.9, 1.1],
         rot_range=[-0.78539816, 0.78539816],
         translation_std=0.5),
@@ -421,7 +421,7 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=6, val_interval=6)
+train_cfg = dict(by_epoch=True, max_epochs=6, val_interval=1)
 val_cfg = dict()
 test_cfg = dict()
 
@@ -438,6 +438,4 @@ auto_scale_lr = dict(enable=False, base_batch_size=32)
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=5))
-
-load_from = 'checkpoints/bevfusion_init_converted.pth'
+    checkpoint=dict(type='CheckpointHook', interval=1))

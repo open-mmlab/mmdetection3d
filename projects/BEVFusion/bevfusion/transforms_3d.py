@@ -1,5 +1,4 @@
 # modify from https://github.com/mit-han-lab/bevfusion
-import random
 from typing import Any, Dict
 
 import numpy as np
@@ -7,6 +6,7 @@ import torch
 from mmcv.transforms import BaseTransform
 from PIL import Image
 
+from mmdet3d.datasets import GlobalRotScaleTrans
 from mmdet3d.registry import TRANSFORMS
 
 
@@ -112,8 +112,8 @@ class ImageAug3D(BaseTransform):
 class BEVFusionRandomFlip3D:
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        flip_horizontal = random.choice([0, 1])
-        flip_vertical = random.choice([0, 1])
+        flip_horizontal = np.random.choice([0, 1])
+        flip_vertical = np.random.choice([0, 1])
 
         rotation = np.eye(3)
         if flip_horizontal:
@@ -139,6 +139,48 @@ class BEVFusionRandomFlip3D:
         data['lidar_aug_matrix'][:3, :] = rotation @ data[
             'lidar_aug_matrix'][:3, :]
         return data
+
+
+@TRANSFORMS.register_module()
+class BEVFusionGlobalRotScaleTrans(GlobalRotScaleTrans):
+
+    def transform(self, input_dict: dict) -> dict:
+        """Private function to rotate, scale and translate bounding boxes and
+        points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after scaling, 'points', 'pcd_rotation',
+            'pcd_scale_factor', 'pcd_trans' and `gt_bboxes_3d` are updated
+            in the result dict.
+        """
+        if 'transformation_3d_flow' not in input_dict:
+            input_dict['transformation_3d_flow'] = []
+
+        self._rot_bbox_points(input_dict)
+
+        if 'pcd_scale_factor' not in input_dict:
+            self._random_scale(input_dict)
+        self._scale_bbox_points(input_dict)
+
+        self._trans_bbox_points(input_dict)
+
+        input_dict['transformation_3d_flow'].extend(['R', 'S', 'T'])
+
+        lidar_augs = np.eye(4)
+        lidar_augs[:3, :3] = input_dict['pcd_rotation'].T * input_dict[
+            'pcd_scale_factor']
+        lidar_augs[:3, 3] = input_dict['pcd_trans'] * \
+            input_dict['pcd_scale_factor']
+
+        if 'lidar_aug_matrix' not in input_dict:
+            input_dict['lidar_aug_matrix'] = np.eye(4)
+        input_dict[
+            'lidar_aug_matrix'] = lidar_augs @ input_dict['lidar_aug_matrix']
+
+        return input_dict
 
 
 @TRANSFORMS.register_module()

@@ -785,8 +785,8 @@ class TransFusionHead(nn.Module):
 
         # compute heatmap loss
         loss_heatmap = self.loss_heatmap(
-            clip_sigmoid(preds_dict['dense_heatmap']),
-            heatmap,
+            clip_sigmoid(preds_dict['dense_heatmap']).float(),
+            heatmap.float(),
             avg_factor=max(heatmap.eq(1).float().sum().item(), 1),
         )
         loss_dict['loss_heatmap'] = loss_heatmap
