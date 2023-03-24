@@ -84,6 +84,7 @@ def create_detector_inputs(seed=0,
                            gt_bboxes_dim=7,
                            with_pts_semantic_mask=False,
                            with_pts_instance_mask=False,
+                           with_eval_ann_info=False,
                            bboxes_3d_type='lidar'):
     setup_seed(seed)
     assert bboxes_3d_type in ('lidar', 'depth', 'cam')
@@ -145,5 +146,9 @@ def create_detector_inputs(seed=0,
     if with_pts_semantic_mask:
         pts_semantic_mask = torch.randint(0, num_classes, [num_points])
         data_sample.gt_pts_seg['pts_semantic_mask'] = pts_semantic_mask
+    if with_eval_ann_info:
+        data_sample.eval_ann_info = dict()
+    else:
+        data_sample.eval_ann_info = None
 
     return dict(inputs=inputs_dict, data_samples=[data_sample])
