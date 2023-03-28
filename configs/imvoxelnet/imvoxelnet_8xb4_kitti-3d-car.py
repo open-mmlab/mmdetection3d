@@ -119,6 +119,7 @@ train_dataloader = dict(
             modality=input_modality,
             test_mode=False,
             metainfo=metainfo,
+            box_type_3d='LiDAR',
             backend_args=backend_args)))
 val_dataloader = dict(
     batch_size=1,
@@ -135,6 +136,7 @@ val_dataloader = dict(
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
+        box_type_3d='LiDAR',
         backend_args=backend_args))
 test_dataloader = val_dataloader
 
@@ -168,3 +170,7 @@ default_hooks = dict(checkpoint=dict(type='CheckpointHook', max_keep_ckpts=1))
 
 # runtime
 find_unused_parameters = True  # only 1 of 4 FPN outputs is used
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
