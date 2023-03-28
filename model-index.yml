@@ -24,5 +24,6 @@ Import:
   - configs/ssn/metafile.yml
   - configs/votenet/metafile.yml
   - configs/minkunet/metafile.yml
+  - configs/cylinder3d/metafile.yml
   - configs/pv_rcnn/metafile.yml
   - configs/fcaf3d/metafile.yml

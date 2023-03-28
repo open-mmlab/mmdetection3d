@@ -18,6 +18,7 @@ Collections:
 
 Models:
   - Name: dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class
+    Alias: mvxnet_kitti-3class
     In Collection: MVX-Net
     Config: configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py
     Metadata:
