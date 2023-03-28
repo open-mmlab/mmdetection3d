@@ -1,7 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
+import warnings
 from typing import Dict, List, Optional, Sequence, Union
 
+import mmcv
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
@@ -20,10 +22,10 @@ ImgType = Union[np.ndarray, Sequence[np.ndarray]]
 ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 
-@INFERENCERS.register_module(name='det3d-lidar')
+@INFERENCERS.register_module(name='det3d-multi_modality')
 @INFERENCERS.register_module()
-class LidarDet3DInferencer(Base3DInferencer):
-    """The inferencer of LiDAR-based detection.
+class MultiModalityDet3DInferencer(Base3DInferencer):
+    """The inferencer of multi-modality detection.
 
     Args:
         model (str, optional): Path to the config file or the model name
@@ -38,9 +40,8 @@ class LidarDet3DInferencer(Base3DInferencer):
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
-        scope (str): The scope of the model. Defaults to 'mmdet3d'.
-        palette (str): Color palette used for visualization. The order of
-            priority is palette -> config -> checkpoint. Defaults to 'none'.
+        scope (str): The scope of registry. Defaults to 'mmdet3d'.
+        palette (str): The palette of visualization. Defaults to 'none'.
     """
 
     preprocess_kwargs: set = set()
@@ -62,7 +63,7 @@ class LidarDet3DInferencer(Base3DInferencer):
         # A global counter tracking the number of frames processed, for
         # naming of the output results
         self.num_visualized_frames = 0
-        super(LidarDet3DInferencer, self).__init__(
+        super(MultiModalityDet3DInferencer, self).__init__(
             model=model,
             weights=weights,
             device=device,
@@ -87,7 +88,7 @@ class LidarDet3DInferencer(Base3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='points')
+        return super()._inputs_to_list(inputs, modality_key=['points', 'img'])
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
@@ -95,9 +96,24 @@ class LidarDet3DInferencer(Base3DInferencer):
 
         load_point_idx = self._get_transform_idx(pipeline_cfg,
                                                  'LoadPointsFromFile')
-        if load_point_idx == -1:
+        load_mv_img_idx = self._get_transform_idx(
+            pipeline_cfg, 'LoadMultiViewImageFromFiles')
+        if load_mv_img_idx != -1:
+            warnings.warn(
+                'LoadMultiViewImageFromFiles is not supported yet in the '
+                'multi-modality inferencer. Please remove it')
+        # Now, we only support ``LoadImageFromFile`` as the image loader in the
+        # original piepline. `LoadMultiViewImageFromFiles` is not supported
+        # yet.
+        load_img_idx = self._get_transform_idx(pipeline_cfg,
+                                               'LoadImageFromFile')
+
+        if load_point_idx == -1 or load_img_idx == -1:
             raise ValueError(
-                'LoadPointsFromFile is not found in the test pipeline')
+                'Both LoadPointsFromFile and LoadImageFromFile must '
+                'be specified the pipeline, but LoadPointsFromFile is '
+                f'{load_point_idx == -1} and LoadImageFromFile is '
+                f'{load_img_idx}')
 
         load_cfg = pipeline_cfg[load_point_idx]
         self.coord_type, self.load_dim = load_cfg['coord_type'], load_cfg[
@@ -105,7 +121,19 @@ class LidarDet3DInferencer(Base3DInferencer):
         self.use_dim = list(range(load_cfg['use_dim'])) if isinstance(
             load_cfg['use_dim'], int) else load_cfg['use_dim']
 
-        pipeline_cfg[load_point_idx]['type'] = 'LidarDet3DInferencerLoader'
+        load_point_args = pipeline_cfg[load_point_idx]
+        load_point_args.pop('type')
+        load_img_args = pipeline_cfg[load_img_idx]
+        load_img_args.pop('type')
+
+        load_idx = min(load_point_idx, load_img_idx)
+        pipeline_cfg.pop(max(load_point_idx, load_img_idx))
+
+        pipeline_cfg[load_idx] = dict(
+            type='MultiModalityDet3DInferencerLoader',
+            load_point_args=load_point_args,
+            load_img_args=load_img_args)
+
         return Compose(pipeline_cfg)
 
     def visualize(self,
@@ -149,26 +177,43 @@ class LidarDet3DInferencer(Base3DInferencer):
         results = []
 
         for single_input, pred in zip(inputs, preds):
-            single_input = single_input['points']
-            if isinstance(single_input, str):
-                pts_bytes = mmengine.fileio.get(single_input)
+            points_input = single_input['points']
+            if isinstance(points_input, str):
+                pts_bytes = mmengine.fileio.get(points_input)
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
                 points = points.reshape(-1, self.load_dim)
                 points = points[:, self.use_dim]
-                pc_name = osp.basename(single_input).split('.bin')[0]
+                pc_name = osp.basename(points_input).split('.bin')[0]
                 pc_name = f'{pc_name}.png'
-            elif isinstance(single_input, np.ndarray):
-                points = single_input.copy()
+            elif isinstance(points_input, np.ndarray):
+                points = points_input.copy()
                 pc_num = str(self.num_visualized_frames).zfill(8)
                 pc_name = f'pc_{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
-                                 f'{type(single_input)}')
+                                 f'{type(points_input)}')
 
             o3d_save_path = osp.join(img_out_dir, pc_name) \
                 if img_out_dir != '' else None
 
-            data_input = dict(points=points)
+            img_input = single_input['img']
+            if isinstance(single_input['img'], str):
+                img_bytes = mmengine.fileio.get(img_input)
+                img = mmcv.imfrombytes(img_bytes)
+                img = img[:, :, ::-1]
+                img_name = osp.basename(img_input)
+            elif isinstance(img_input, np.ndarray):
+                img = img_input.copy()
+                img_num = str(self.num_visualized_frames).zfill(8)
+                img_name = f'{img_num}.jpg'
+            else:
+                raise ValueError('Unsupported input type: '
+                                 f'{type(img_input)}')
+
+            out_file = osp.join(img_out_dir, img_name) if img_out_dir != '' \
+                else None
+
+            data_input = dict(points=points, img=img)
             self.visualizer.add_datasample(
                 pc_name,
                 data_input,
@@ -179,7 +224,8 @@ class LidarDet3DInferencer(Base3DInferencer):
                 draw_pred=draw_pred,
                 pred_score_thr=pred_score_thr,
                 o3d_save_path=o3d_save_path,
-                vis_task='lidar_det',
+                out_file=out_file,
+                vis_task='multi-modality_det',
             )
             results.append(points)
             self.num_visualized_frames += 1
