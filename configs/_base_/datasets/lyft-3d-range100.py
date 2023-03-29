@@ -8,6 +8,7 @@ class_names = [
 ]
 dataset_type = 'LyftDataset'
 data_root = 'data/lyft/'
+data_prefix = dict(pts='v1.01-train/lidar', img='', sweeps='v1.01-train/lidar')
 # Input modality for Lyft dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(
@@ -101,35 +102,49 @@ eval_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
-    train=dict(
+train_dataloader = dict(
+    batch_size=2,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'lyft_infos_train.pkl',
+        ann_file='lyft_infos_train.pkl',
         pipeline=train_pipeline,
-        classes=class_names,
+        metainfo=dict(classes=class_names),
         modality=input_modality,
-        test_mode=False),
-    val=dict(
+        data_prefix=data_prefix,
+        test_mode=False,
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'lyft_infos_val.pkl',
+        ann_file='lyft_infos_val.pkl',
         pipeline=test_pipeline,
-        classes=class_names,
+        metainfo=dict(classes=class_names),
         modality=input_modality,
-        test_mode=True),
-    test=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'lyft_infos_test.pkl',
-        pipeline=test_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=True))
-# For Lyft dataset, we usually evaluate the model at the end of training.
-# Since the models are trained by 24 epochs by default, we set evaluation
-# interval to be 24. Please change the interval accordingly if you do not
-# use a default schedule.
-evaluation = dict(interval=24, pipeline=eval_pipeline)
+        test_mode=True,
+        data_prefix=data_prefix,
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
+test_dataloader = val_dataloader
+
+val_evaluator = dict(
+    type='LyftMetric',
+    data_root=data_root,
+    ann_file='lyft_infos_val.pkl',
+    metric='bbox',
+    backend_args=backend_args)
+test_evaluator = val_evaluator
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
