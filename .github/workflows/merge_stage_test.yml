@@ -150,9 +150,7 @@ jobs:
           pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
-        run: |
-          python setup.py check -m -s
-          TORCH_CUDA_ARCH_LIST=7.0 pip install -e .
+        run: pip install -e .
       - name: Run unittests and generate coverage report
         run: |
           coverage run --branch --source mmdet3d -m pytest tests/
@@ -188,9 +186,7 @@ jobs:
           pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
-        run: |
-          python setup.py check -m -s
-          TORCH_CUDA_ARCH_LIST=7.0 pip install -e .
+        run: pip install -e .
       - name: Run unittests and generate coverage report
         run: |
           coverage run --branch --source mmcv -m pytest tests
