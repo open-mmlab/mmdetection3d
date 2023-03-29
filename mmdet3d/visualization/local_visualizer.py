@@ -822,6 +822,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 wait_time=wait_time)
 
         if out_file is not None:
+            # check the suffix of the name of image file
+            if not (out_file.endswith('.png') or out_file.endswith('.jpg')):
+                out_file = f'{out_file}.png'
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
