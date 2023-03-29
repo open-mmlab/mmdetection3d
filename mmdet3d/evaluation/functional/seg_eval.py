@@ -91,8 +91,6 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
         gt_seg = gt_labels[i].astype(np.int64)
         pred_seg = seg_preds[i].astype(np.int64)
 
-        if np.any(gt_seg == 1):
-            print(i)
         # filter out ignored points
         pred_seg[gt_seg == ignore_index] = -1
         gt_seg[gt_seg == ignore_index] = -1
