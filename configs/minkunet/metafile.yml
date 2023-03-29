@@ -26,7 +26,7 @@ Models:
         Dataset: SemanticKITTI
         Metrics:
           mIoU: 60.3
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/minkunet/minkunet_w16_8xb2-15e_semantickitti/minkunet_w16_8xb2-15e_semantickitti_20230309_160737-0d8ec25b.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w16_8xb2-15e_semantickitti/minkunet_w16_8xb2-15e_semantickitti_20230309_160737-0d8ec25b.pth
 
   - Name: minkunet_w20_8xb2-15e_semantickitti
     In Collection: MinkUNet
@@ -40,7 +40,7 @@ Models:
         Dataset: SemanticKITTI
         Metrics:
           mIoU: 61.6
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/minkunet/minkunet_w20_8xb2-15e_semantickitti/minkunet_w20_8xb2-15e_semantickitti_20230309_160718-c3b92e6e.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w20_8xb2-15e_semantickitti/minkunet_w20_8xb2-15e_semantickitti_20230309_160718-c3b92e6e.pth
 
   - Name: minkunet_w32_8xb2-15e_semantickitti
     In Collection: MinkUNet
@@ -54,4 +54,4 @@ Models:
         Dataset: SemanticKITTI
         Metrics:
           mIoU: 63.1
-    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/minkunet/minkunet_w32_8xb2-15e_semantickitti/minkunet_w32_8xb2-15e_semantickitti_20230309_160710-7fa0a6f1.pth
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w32_8xb2-15e_semantickitti/minkunet_w32_8xb2-15e_semantickitti_20230309_160710-7fa0a6f1.pth
