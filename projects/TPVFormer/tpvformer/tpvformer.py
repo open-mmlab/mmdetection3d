@@ -1,68 +1,78 @@
-from mmengine.model import BaseModel
+from typing import Optional, Union
 
+from torch import nn
+
+from mmdet3d.models import Base3DSegmentor
 from mmdet3d.registry import MODELS
+from mmdet3d.structures.det3d_data_sample import SampleList
 from .grid_mask import GridMask
 
 
 @MODELS.register_module()
-class TPVFormer(BaseModel):
+class TPVFormer(Base3DSegmentor):
 
     def __init__(self,
+                 data_preprocessor: Optional[Union[dict, nn.Module]] = None,
                  use_grid_mask=False,
-                 img_backbone=None,
-                 img_neck=None,
-                 tpv_head=None,
-                 tpv_aggregator=None):
+                 backbone=None,
+                 neck=None,
+                 encoder=None,
+                 decode_head=None):
 
-        super().__init__()
-        if tpv_head:
-            self.tpv_head = MODELS.build(tpv_head)
-        if img_backbone:
-            self.img_backbone = MODELS.build(img_backbone)
-        if img_neck:
-            self.img_neck = MODELS.build(img_neck)
-        if tpv_aggregator:
-            self.tpv_aggregator = MODELS.build(tpv_aggregator)
+        super().__init__(data_preprocessor=data_preprocessor)
+
+        self.backbone = MODELS.build(backbone)
+        if neck is not None:
+            self.neck = MODELS.build(neck)
+        self.encoder = MODELS.build(encoder)
+        self.decode_head = MODELS.build(decode_head)
 
         self.grid_mask = GridMask(
             True, True, rotate=1, offset=False, ratio=0.5, mode=1, prob=0.7)
         self.use_grid_mask = use_grid_mask
 
-    def extract_img_feat(self, img, use_grid_mask=None):
+    def extract_feat(self, img):
         """Extract features of images."""
-        B = img.size(0)
-        if img is not None:
+        B, N, C, H, W = img.size()
+        img = img.view(B * N, C, H, W)
+        if self.use_grid_mask:
+            img = self.grid_mask(img)
+        img_feats = self.backbone(img)
 
-            B, N, C, H, W = img.size()
-            img = img.reshape(B * N, C, H, W)
-            if use_grid_mask is None:
-                use_grid_mask = self.use_grid_mask
-            if use_grid_mask:
-                img = self.grid_mask(img)
-
-            img_feats = self.img_backbone(img)
-            if isinstance(img_feats, dict):
-                img_feats = list(img_feats.values())
-        else:
-            return None
-        if hasattr(self, 'img_neck'):
-            img_feats = self.img_neck(img_feats)
+        if hasattr(self, 'neck'):
+            img_feats = self.neck(img_feats)
 
         img_feats_reshaped = []
         for img_feat in img_feats:
-            BN, C, H, W = img_feat.size()
-            img_feats_reshaped.append(img_feat.view(B, int(BN / B), C, H, W))
+            _, C, H, W = img_feat.size()
+            img_feats_reshaped.append(img_feat.view(B, N, C, H, W))
         return img_feats_reshaped
 
-    def forward(
-        self,
-        points=None,
-        img_metas=None,
-        img=None,
-        use_grid_mask=None,
-    ):
+    def _forward(self, batch_inputs, batch_data_samples):
         """Forward training function."""
-        img_feats = self.extract_img_feat(img=img, use_grid_mask=use_grid_mask)
-        outs = self.tpv_head(img_feats, img_metas)
-        outs = self.tpv_aggregator(outs, points)
-        return
+        img_feats = self.extract_feat(batch_inputs['imgs'])
+        outs = self.encoder(img_feats, batch_data_samples)
+        outs = self.decode_head(outs, batch_inputs['voxels']['coors'])
+        return outs
+
+    def predict(self, batch_inputs: dict,
+                batch_data_samples: SampleList) -> SampleList:
+        """Forward predict function."""
+        img_feats = self.extract_feat(batch_inputs['imgs'])
+        tpv_queries = self.encoder(img_feats, batch_data_samples)
+        seg_logits = self.decode_head.predict(tpv_queries,
+                                              batch_inputs['voxels']['coors'])
+        seg_preds = [seg_logit.argmax(dim=1) for seg_logit in seg_logits]
+
+        return self.postprocess_result(seg_preds, batch_data_samples)
+
+    def aug_test(self, batch_inputs, batch_data_samples):
+        pass
+
+    def loss(self, batch_inputs: dict,
+             batch_data_samples: SampleList) -> SampleList:
+        pass
+
+    def encode_decode(self, batch_inputs: dict,
+                      batch_data_samples: SampleList) -> SampleList:
+        pass

@@ -6,7 +6,7 @@ from mmdet3d.registry import MODELS
 
 
 @MODELS.register_module()
-class CustomPositionalEncoding(BaseModule):
+class TPVFormerPositionalEncoding(BaseModule):
 
     def __init__(self,
                  num_feats,

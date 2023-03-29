@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import torch
 from mmcv.cnn.bricks.transformer import TransformerLayerSequence
@@ -19,48 +21,29 @@ class TPVFormerEncoder(TransformerLayerSequence):
                  tpv_h,
                  tpv_w,
                  tpv_z,
-                 pc_range=None,
+                 pc_range=[-51.2, -51.2, -5, 51.2, 51.2, 3],
                  num_points_in_pillar=[4, 32, 32],
                  num_points_in_pillar_cross_view=[32, 32, 32],
                  return_intermediate=False,
                  **kwargs):
 
         super().__init__(*args, **kwargs)
-        self.return_intermediate = return_intermediate
 
         self.tpv_h, self.tpv_w, self.tpv_z = tpv_h, tpv_w, tpv_z
-        self.num_points_in_pillar = num_points_in_pillar
-        assert num_points_in_pillar[1] == num_points_in_pillar[
-            2] and num_points_in_pillar[1] % num_points_in_pillar[0] == 0
         self.pc_range = pc_range
-        self.fp16_enabled = False
+        self.real_w = pc_range[3] - pc_range[0]
+        self.real_h = pc_range[4] - pc_range[1]
+        self.real_z = pc_range[5] - pc_range[2]
 
-        ref_3d_hw = self.get_reference_points(
-            tpv_h,
-            tpv_w,
-            pc_range[5] - pc_range[2],
-            num_points_in_pillar[0],
-            '3d',
-            device='cpu')
-
-        ref_3d_zh = self.get_reference_points(
-            tpv_z,
-            tpv_h,
-            pc_range[3] - pc_range[0],
-            num_points_in_pillar[1],
-            '3d',
-            device='cpu')
-        ref_3d_zh = ref_3d_zh.permute(3, 0, 1, 2)[[2, 0, 1]]
+        ref_3d_hw = self.get_reference_points(tpv_h, tpv_w, self.real_z,
+                                              num_points_in_pillar[0])
+        ref_3d_zh = self.get_reference_points(tpv_z, tpv_h, self.real_w,
+                                              num_points_in_pillar[1])
+        ref_3d_zh = ref_3d_zh.permute(3, 0, 1, 2)[[2, 0, 1]]  # change to x,y,z
         ref_3d_zh = ref_3d_zh.permute(1, 2, 3, 0)
-
-        ref_3d_wz = self.get_reference_points(
-            tpv_w,
-            tpv_z,
-            pc_range[4] - pc_range[1],
-            num_points_in_pillar[2],
-            '3d',
-            device='cpu')
-        ref_3d_wz = ref_3d_wz.permute(3, 0, 1, 2)[[1, 2, 0]]
+        ref_3d_wz = self.get_reference_points(tpv_w, tpv_z, self.real_h,
+                                              num_points_in_pillar[2])
+        ref_3d_wz = ref_3d_wz.permute(3, 0, 1, 2)[[1, 2, 0]]  # change to x,y,z
         ref_3d_wz = ref_3d_wz.permute(1, 2, 3, 0)
         self.register_buffer('ref_3d_hw', ref_3d_hw)
         self.register_buffer('ref_3d_zh', ref_3d_zh)
@@ -69,7 +52,8 @@ class TPVFormerEncoder(TransformerLayerSequence):
         cross_view_ref_points = self.get_cross_view_ref_points(
             tpv_h, tpv_w, tpv_z, num_points_in_pillar_cross_view)
         self.register_buffer('cross_view_ref_points', cross_view_ref_points)
-        self.num_points_cross_view = num_points_in_pillar_cross_view
+
+        self.return_intermediate = return_intermediate
 
     @staticmethod
     def get_cross_view_ref_points(tpv_h, tpv_w, tpv_z, num_points_in_pillar):
@@ -181,43 +165,40 @@ class TPVFormerEncoder(TransformerLayerSequence):
         """
 
         # reference points in 3D space, used in spatial cross-attention (SCA)
-        if dim == '3d':
-            zs = torch.linspace(
-                0.5, Z - 0.5, num_points_in_pillar,
-                dtype=dtype, device=device).view(-1, 1, 1).expand(
-                    num_points_in_pillar, H, W) / Z
-            xs = torch.linspace(
-                0.5, W - 0.5, W, dtype=dtype, device=device).view(
-                    1, 1, -1).expand(num_points_in_pillar, H, W) / W
-            ys = torch.linspace(
-                0.5, H - 0.5, H, dtype=dtype, device=device).view(
-                    1, -1, 1).expand(num_points_in_pillar, H, W) / H
-            ref_3d = torch.stack((xs, ys, zs), -1)
-            ref_3d = ref_3d.permute(0, 3, 1, 2).flatten(2).permute(0, 2, 1)
-            ref_3d = ref_3d[None].repeat(bs, 1, 1, 1)
-            return ref_3d
+        zs = torch.linspace(
+            0.5, Z - 0.5, num_points_in_pillar,
+            dtype=dtype, device=device).view(-1, 1, 1).expand(
+                num_points_in_pillar, H, W) / Z
+        xs = torch.linspace(
+            0.5, W - 0.5, W, dtype=dtype, device=device).view(1, 1, -1).expand(
+                num_points_in_pillar, H, W) / W
+        ys = torch.linspace(
+            0.5, H - 0.5, H, dtype=dtype, device=device).view(1, -1, 1).expand(
+                num_points_in_pillar, H, W) / H
+        ref_3d = torch.stack((xs, ys, zs), -1)
+        ref_3d = ref_3d.permute(0, 3, 1, 2).flatten(2).permute(0, 2, 1)
+        ref_3d = ref_3d[None].repeat(bs, 1, 1, 1)
+        return ref_3d
 
         # reference points on 2D tpv plane,
         # used in self attention in tpvformer04
         # which is an older version.
         # Now we use get_cross_view_ref_points instead.
-        elif dim == '2d':
-            ref_y, ref_x = torch.meshgrid(
-                torch.linspace(0.5, H - 0.5, H, dtype=dtype, device=device),
-                torch.linspace(0.5, W - 0.5, W, dtype=dtype, device=device))
-            ref_y = ref_y.reshape(-1)[None] / H
-            ref_x = ref_x.reshape(-1)[None] / W
-            ref_2d = torch.stack((ref_x, ref_y), -1)
-            ref_2d = ref_2d.repeat(bs, 1, 1).unsqueeze(2)
-            return ref_2d
+        # elif dim == '2d':
+        #     ref_y, ref_x = torch.meshgrid(
+        #         torch.linspace(0.5, H - 0.5, H, dtype=dtype, device=device),
+        #         torch.linspace(0.5, W - 0.5, W, dtype=dtype, device=device))
+        #     ref_y = ref_y.reshape(-1)[None] / H
+        #     ref_x = ref_x.reshape(-1)[None] / W
+        #     ref_2d = torch.stack((ref_x, ref_y), -1)
+        #     ref_2d = ref_2d.repeat(bs, 1, 1).unsqueeze(2)
+        #     return ref_2d
 
-    # This function must use fp32!!!
-
-    def point_sampling(self, reference_points, pc_range, img_metas):
+    def point_sampling(self, reference_points, pc_range, batch_data_smaples):
 
         lidar2img = []
-        for img_meta in img_metas:
-            lidar2img.append(img_meta['lidar2img'])
+        for data_sample in batch_data_smaples:
+            lidar2img.append(data_sample.lidar2img)
         lidar2img = np.asarray(lidar2img)
         lidar2img = reference_points.new_tensor(lidar2img)  # (B, N, 4, 4)
         reference_points = reference_points.clone()
@@ -252,8 +233,8 @@ class TPVFormerEncoder(TransformerLayerSequence):
             reference_points_cam[..., 2:3],
             torch.ones_like(reference_points_cam[..., 2:3]) * eps)
 
-        reference_points_cam[..., 0] /= img_metas[0]['img_shape'][0][1]
-        reference_points_cam[..., 1] /= img_metas[0]['img_shape'][0][0]
+        reference_points_cam[..., 0] /= data_sample.batch_input_shape[1]
+        reference_points_cam[..., 1] /= data_sample.batch_input_shape[0]
 
         tpv_mask = (
             tpv_mask & (reference_points_cam[..., 1:2] > 0.0)
@@ -272,19 +253,14 @@ class TPVFormerEncoder(TransformerLayerSequence):
 
         return reference_points_cam, tpv_mask
 
-    def forward(
-            self,
-            tpv_query,  # list
-            key,
-            value,
-            *args,
-            tpv_h=None,
-            tpv_w=None,
-            tpv_z=None,
-            tpv_pos=None,  # list
-            spatial_shapes=None,
-            level_start_index=None,
-            **kwargs):
+    def forward(self,
+                tpv_query: List,
+                key,
+                value,
+                tpv_pos: List = None,
+                spatial_shapes=None,
+                level_start_index=None,
+                batch_data_samples=None):
         """Forward function for `TransformerDecoder`.
 
         Args:
@@ -297,38 +273,34 @@ class TPVFormerEncoder(TransformerLayerSequence):
                 (bs, num_query, 4) when as_two_stage,
                 otherwise has shape ((bs, num_query, 2).
         """
-        output = tpv_query
-        intermediate = []
         bs = tpv_query[0].shape[0]
-
         reference_points_cams, tpv_masks = [], []
         ref_3ds = [self.ref_3d_hw, self.ref_3d_zh, self.ref_3d_wz]
         for ref_3d in ref_3ds:
             reference_points_cam, tpv_mask = self.point_sampling(
                 ref_3d, self.pc_range,
-                kwargs['img_metas'])  # num_cam, bs, hw++, #p, 2
+                batch_data_samples)  # num_cam, bs, hw++, #p, 2
             reference_points_cams.append(reference_points_cam)
             tpv_masks.append(tpv_mask)
 
         ref_cross_view = self.cross_view_ref_points.clone().unsqueeze(
             0).expand(bs, -1, -1, -1, -1)
 
-        for lid, layer in enumerate(self.layers):
+        intermediate = []
+        for layer in self.layers:
             output = layer(
                 tpv_query,
                 key,
                 value,
-                *args,
                 tpv_pos=tpv_pos,
                 ref_2d=ref_cross_view,
-                tpv_h=tpv_h,
-                tpv_w=tpv_w,
-                tpv_z=tpv_z,
+                tpv_h=self.tpv_h,
+                tpv_w=self.tpv_w,
+                tpv_z=self.tpv_z,
                 spatial_shapes=spatial_shapes,
                 level_start_index=level_start_index,
                 reference_points_cams=reference_points_cams,
-                tpv_masks=tpv_masks,
-                **kwargs)
+                tpv_masks=tpv_masks)
             tpv_query = output
             if self.return_intermediate:
                 intermediate.append(output)

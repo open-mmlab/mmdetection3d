@@ -468,4 +468,4 @@ class TPVMSDeformableAttention3D(BaseModule):
         if not self.batch_first:
             output = [o.permute(1, 0, 2) for o in output]
 
-        return
+        return output

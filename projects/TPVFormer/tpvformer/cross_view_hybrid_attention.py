@@ -171,7 +171,8 @@ class TPVCrossViewHybridAttention(BaseModule):
             it has overall `num_points * num_Z_anchors` sampling points.
             """
             offset_normalizer = torch.stack(
-                [spatial_shapes[..., 1], spatial_shapes[..., 0]], -1)
+                [spatial_shapes[..., 1], spatial_shapes[..., 0]],
+                -1)  # 为什么要反过来？
 
             bs, num_query, _, num_Z_anchors, xy = reference_points.shape
             reference_points = reference_points[:, :, None, :, :, None, :]
@@ -183,7 +184,7 @@ class TPVCrossViewHybridAttention(BaseModule):
                 num_all_points // num_Z_anchors, xy)
             sampling_locations = reference_points + sampling_offsets
             bs, num_query, num_heads, num_levels, num_points, num_Z_anchors, xy = sampling_locations.shape  # noqa
-            assert num_all_points == num_points * num_Z_anchors
+            assert num_all_points == num_points * num_Z_anchors  # 写反了
 
             sampling_locations = sampling_locations.view(
                 bs, num_query, num_heads, num_levels, num_all_points, xy)
@@ -211,4 +212,4 @@ class TPVCrossViewHybridAttention(BaseModule):
                                               self.dropout, identity):
             results.append(residual + drop(layer(out)))
 
-        return
+        return results

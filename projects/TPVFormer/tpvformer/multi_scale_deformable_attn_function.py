@@ -79,26 +79,3 @@ class MultiScaleDeformableAttnFunction_fp32(Function):
 
         return grad_value, None, None, \
             grad_sampling_loc, grad_attn_weight, None
-
-
-if __name__ == '__main__':
-    from mmcv.ops.multi_scale_deform_attn import \
-        multi_scale_deformable_attn_pytorch
-    value = torch.randint(10, (1, 16, 1, 1)).float().cuda()
-    v = value.squeeze().reshape(4, 4)
-    spatial_shapes = torch.tensor([[4, 4]]).cuda()
-    level_start_index = torch.tensor([0]).cuda()
-    sampling_locations = torch.tensor([0.375,
-                                       0.875]).reshape(1, 1, 1, 1, 1,
-                                                       -1).cuda()
-    attention_weights = torch.tensor([1.0]).reshape(1, 1, 1, 1, 1).cuda()
-    gpuFunc = MultiScaleDeformableAttnFunction_fp32.apply(
-        value, spatial_shapes, level_start_index, sampling_locations,
-        attention_weights, 64)
-
-    cpuFun = multi_scale_deformable_attn_pytorch(value, spatial_shapes,
-                                                 sampling_locations,
-                                                 attention_weights)
-    import pdb
-    pdb.set_trace()
-    pass

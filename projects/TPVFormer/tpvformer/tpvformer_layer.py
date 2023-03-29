@@ -36,7 +36,7 @@ class TPVFormerLayer(BaseModule):
         operation_order (tuple[str]): The execution order of operation
             in transformer. Such as ('self_attn', 'norm', 'ffn', 'norm').
             Support `prenorm` when you specifying first element as `norm`.
-            Default：None.
+            Default: None.
         norm_cfg (dict): Config dict for normalization layer.
             Default: dict(type='LN').
         init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
@@ -60,7 +60,6 @@ class TPVFormerLayer(BaseModule):
                  init_cfg=None,
                  batch_first=True,
                  **kwargs):
-        # import pdb; pdb.set_trace()
         deprecated_args = dict(
             feedforward_channels='feedforward_channels',
             ffn_dropout='ffn_drop',
@@ -165,25 +164,35 @@ class TPVFormerLayer(BaseModule):
         norm_index = 0
         attn_index = 0
         ffn_index = 0
+        if self.operation_order[0] == 'cross_attn':
+            query = torch.cat(query, dim=1)
         identity = query
 
         for layer in self.operation_order:
             # cross view hybrid-attention
             if layer == 'self_attn':
-                query_0 = self.attentions[attn_index](
-                    query[0],
-                    None,
-                    None,
+                ss = torch.tensor(
+                    [[tpv_h, tpv_w], [tpv_z, tpv_h], [tpv_w, tpv_z]],
+                    device=query[0].device)
+                lsi = torch.tensor(
+                    [0, tpv_h * tpv_w, tpv_h * tpv_w + tpv_z * tpv_h],
+                    device=query[0].device)
+
+                if not isinstance(query, (list, tuple)):
+                    query = torch.split(
+                        query, [tpv_h * tpv_w, tpv_z * tpv_h, tpv_w * tpv_z],
+                        dim=1)
+
+                query = self.attentions[attn_index](
+                    query,
                     identity if self.pre_norm else None,
-                    query_pos=tpv_pos[0],
+                    query_pos=tpv_pos,
                     reference_points=ref_2d,
-                    spatial_shapes=torch.tensor([[tpv_h, tpv_w]],
-                                                device=query[0].device),
-                    level_start_index=torch.tensor([0],
-                                                   device=query[0].device),
+                    spatial_shapes=ss,
+                    level_start_index=lsi,
                     **kwargs)
                 attn_index += 1
-                query = torch.cat([query_0, query[1], query[2]], dim=1)
+                query = torch.cat(query, dim=1)
                 identity = query
 
             elif layer == 'norm':

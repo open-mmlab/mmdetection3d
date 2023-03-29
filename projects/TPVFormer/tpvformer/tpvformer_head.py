@@ -1,127 +1,191 @@
+from typing import List
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmengine.model import BaseModule
-from torch.nn.init import normal_
+from torch import Tensor
 
+# from mmdet3d.models.decode_heads import BaseDecodeHead
 from mmdet3d.registry import MODELS
-from .cross_view_hybrid_attention import TPVCrossViewHybridAttention
-from .image_cross_attention import TPVMSDeformableAttention3D
 
 
 @MODELS.register_module()
-class TPVFormerHead(BaseModule):
+class TPVFormerDecoder(BaseModule):
 
     def __init__(self,
-                 positional_encoding=None,
-                 tpv_h=30,
-                 tpv_w=30,
-                 tpv_z=30,
-                 pc_range=[-51.2, -51.2, -5, 51.2, 51.2, 3],
-                 num_feature_levels=4,
-                 num_cams=6,
-                 encoder=None,
-                 embed_dims=256):
+                 tpv_h,
+                 tpv_w,
+                 tpv_z,
+                 nbr_classes=20,
+                 in_dims=64,
+                 hidden_dims=128,
+                 out_dims=None,
+                 scale_h=2,
+                 scale_w=2,
+                 scale_z=2,
+                 use_checkpoint=True):
         super().__init__()
-
         self.tpv_h = tpv_h
         self.tpv_w = tpv_w
         self.tpv_z = tpv_z
-        self.pc_range = pc_range
-        self.embed_dims = embed_dims
-        self.num_feature_levels = num_feature_levels
-        self.num_cams = num_cams
-        self.real_w = self.pc_range[3] - self.pc_range[0]
-        self.real_h = self.pc_range[4] - self.pc_range[1]
-        self.real_z = self.pc_range[5] - self.pc_range[2]
-        self.fp16_enabled = False
+        self.scale_h = scale_h
+        self.scale_w = scale_w
+        self.scale_z = scale_z
 
-        # positional encoding
-        self.positional_encoding = MODELS.build(positional_encoding)
+        out_dims = in_dims if out_dims is None else out_dims
+        self.in_dims = in_dims
+        self.decoder = nn.Sequential(
+            nn.Linear(in_dims, hidden_dims), nn.Softplus(),
+            nn.Linear(hidden_dims, out_dims))
 
-        # transformer layers
-        self.encoder = MODELS.build(encoder)
-        self.level_embeds = nn.Parameter(
-            torch.Tensor(self.num_feature_levels, self.embed_dims))
-        self.cams_embeds = nn.Parameter(
-            torch.Tensor(self.num_cams, self.embed_dims))
-        self.tpv_embedding_hw = nn.Embedding(self.tpv_h * self.tpv_w,
-                                             self.embed_dims)
-        self.tpv_embedding_zh = nn.Embedding(self.tpv_z * self.tpv_h,
-                                             self.embed_dims)
-        self.tpv_embedding_wz = nn.Embedding(self.tpv_w * self.tpv_z,
-                                             self.embed_dims)
+        self.classifier = nn.Linear(out_dims, nbr_classes)
+        self.classes = nbr_classes
+        self.use_checkpoint = use_checkpoint
 
-    def init_weights(self):
-        """Initialize the transformer weights."""
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-        for m in self.modules():
-            if isinstance(m, TPVMSDeformableAttention3D) or isinstance(
-                    m, TPVCrossViewHybridAttention):
-                try:
-                    m.init_weight()
-                except AttributeError:
-                    m.init_weights()
-        normal_(self.level_embeds)
-        normal_(self.cams_embeds)
-
-    def forward(self, mlvl_feats, img_metas):
-        """Forward function.
-
-        Args:
-            mlvl_feats (tuple[Tensor]): Features from the upstream
-                network, each is a 5D-tensor with shape
-                (B, N, C, H, W).
+    def forward(self, tpv_list, points=None):
         """
-        bs = mlvl_feats[0].shape[0]
-        dtype = mlvl_feats[0].dtype
-        device = mlvl_feats[0].device
+        tpv_list[0]: bs, h*w, c
+        tpv_list[1]: bs, z*h, c
+        tpv_list[2]: bs, w*z, c
+        """
+        tpv_hw, tpv_zh, tpv_wz = tpv_list[0], tpv_list[1], tpv_list[2]
+        bs, _, c = tpv_hw.shape
+        tpv_hw = tpv_hw.permute(0, 2, 1).reshape(bs, c, self.tpv_h, self.tpv_w)
+        tpv_zh = tpv_zh.permute(0, 2, 1).reshape(bs, c, self.tpv_z, self.tpv_h)
+        tpv_wz = tpv_wz.permute(0, 2, 1).reshape(bs, c, self.tpv_w, self.tpv_z)
 
-        # tpv queries and pos embeds
-        tpv_queries_hw = self.tpv_embedding_hw.weight.to(dtype)
-        tpv_queries_zh = self.tpv_embedding_zh.weight.to(dtype)
-        tpv_queries_wz = self.tpv_embedding_wz.weight.to(dtype)
-        tpv_queries_hw = tpv_queries_hw.unsqueeze(0).repeat(bs, 1, 1)
-        tpv_queries_zh = tpv_queries_zh.unsqueeze(0).repeat(bs, 1, 1)
-        tpv_queries_wz = tpv_queries_wz.unsqueeze(0).repeat(bs, 1, 1)
+        if self.scale_h != 1 or self.scale_w != 1:
+            tpv_hw = F.interpolate(
+                tpv_hw,
+                size=(self.tpv_h * self.scale_h, self.tpv_w * self.scale_w),
+                mode='bilinear')
+        if self.scale_z != 1 or self.scale_h != 1:
+            tpv_zh = F.interpolate(
+                tpv_zh,
+                size=(self.tpv_z * self.scale_z, self.tpv_h * self.scale_h),
+                mode='bilinear')
+        if self.scale_w != 1 or self.scale_z != 1:
+            tpv_wz = F.interpolate(
+                tpv_wz,
+                size=(self.tpv_w * self.scale_w, self.tpv_z * self.scale_z),
+                mode='bilinear')
 
-        tpv_pos_hw = self.positional_encoding(bs, device, 'z')
-        tpv_pos_zh = self.positional_encoding(bs, device, 'w')
-        tpv_pos_wz = self.positional_encoding(bs, device, 'h')
-        tpv_pos = [tpv_pos_hw, tpv_pos_zh, tpv_pos_wz]
+        if points is not None:
+            # points: bs, n, 3
+            _, n, _ = points.shape
+            points = points.reshape(bs, 1, n, 3).float()
+            points[...,
+                   0] = points[..., 0] / (self.tpv_w * self.scale_w) * 2 - 1
+            points[...,
+                   1] = points[..., 1] / (self.tpv_h * self.scale_h) * 2 - 1
+            points[...,
+                   2] = points[..., 2] / (self.tpv_z * self.scale_z) * 2 - 1
+            sample_loc = points[:, :, :, [0, 1]]
+            tpv_hw_pts = F.grid_sample(tpv_hw,
+                                       sample_loc).squeeze(2)  # bs, c, n
+            sample_loc = points[:, :, :, [1, 2]]
+            tpv_zh_pts = F.grid_sample(tpv_zh, sample_loc).squeeze(2)
+            sample_loc = points[:, :, :, [2, 0]]
+            tpv_wz_pts = F.grid_sample(tpv_wz, sample_loc).squeeze(2)
 
-        # flatten image features of different scales
-        feat_flatten = []
-        spatial_shapes = []
-        for lvl, feat in enumerate(mlvl_feats):
-            bs, num_cam, c, h, w = feat.shape
-            spatial_shape = (h, w)
-            feat = feat.flatten(3).permute(1, 0, 3, 2)  # num_cam, bs, hw, c
-            feat = feat + self.cams_embeds[:, None, None, :].to(dtype)
-            feat = feat + self.level_embeds[None, None,
-                                            lvl:lvl + 1, :].to(dtype)
-            spatial_shapes.append(spatial_shape)
-            feat_flatten.append(feat)
+            tpv_hw_vox = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(
+                -1, -1, -1, -1, self.scale_z * self.tpv_z)
+            tpv_zh_vox = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(
+                -1, -1, self.scale_w * self.tpv_w, -1, -1)
+            tpv_wz_vox = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(
+                -1, -1, -1, self.scale_h * self.tpv_h, -1)
 
-        feat_flatten = torch.cat(feat_flatten, 2)  # num_cam, bs, hw++, c
-        spatial_shapes = torch.as_tensor(
-            spatial_shapes, dtype=torch.long, device=device)
-        level_start_index = torch.cat((spatial_shapes.new_zeros(
-            (1, )), spatial_shapes.prod(1).cumsum(0)[:-1]))
-        feat_flatten = feat_flatten.permute(
-            0, 2, 1, 3)  # (num_cam, H*W, bs, embed_dims)
-        tpv_embed = self.encoder(
-            [tpv_queries_hw, tpv_queries_zh, tpv_queries_wz],
-            feat_flatten,
-            feat_flatten,
-            tpv_h=self.tpv_h,
-            tpv_w=self.tpv_w,
-            tpv_z=self.tpv_z,
-            tpv_pos=tpv_pos,
-            spatial_shapes=spatial_shapes,
-            level_start_index=level_start_index,
-            img_metas=img_metas,
-        )
+            fused_vox = (tpv_hw_vox + tpv_zh_vox + tpv_wz_vox).flatten(2)
+            fused_pts = tpv_hw_pts + tpv_zh_pts + tpv_wz_pts
+            fused = torch.cat([fused_vox, fused_pts], dim=-1)  # bs, c, whz+n
 
-        return tpv_embed
+            fused = fused.permute(0, 2, 1)
+            if self.use_checkpoint:
+                fused = torch.utils.checkpoint.checkpoint(self.decoder, fused)
+                logits = torch.utils.checkpoint.checkpoint(
+                    self.classifier, fused)
+            else:
+                fused = self.decoder(fused)
+                logits = self.classifier(fused)
+            logits = logits.permute(0, 2, 1)
+            logits_vox = logits[:, :, :(-n)].reshape(bs, self.classes,
+                                                     self.scale_w * self.tpv_w,
+                                                     self.scale_h * self.tpv_h,
+                                                     self.scale_z * self.tpv_z)
+            logits_pts = logits[:, :, (-n):].reshape(bs, self.classes, n, 1, 1)
+            return logits_vox, logits_pts
+
+        else:
+            tpv_hw = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(
+                -1, -1, -1, -1, self.scale_z * self.tpv_z)
+            tpv_zh = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(
+                -1, -1, self.scale_w * self.tpv_w, -1, -1)
+            tpv_wz = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(
+                -1, -1, -1, self.scale_h * self.tpv_h, -1)
+
+            fused = tpv_hw + tpv_zh + tpv_wz
+            fused = fused.permute(0, 2, 3, 4, 1)
+            if self.use_checkpoint:
+                fused = torch.utils.checkpoint.checkpoint(self.decoder, fused)
+                logits = torch.utils.checkpoint.checkpoint(
+                    self.classifier, fused)
+            else:
+                fused = self.decoder(fused)
+                logits = self.classifier(fused)
+            logits = logits.permute(0, 4, 1, 2, 3)
+
+            return logits
+
+    def predict(self, tpv_list, coors: List[Tensor]):
+        """
+        tpv_list[0]: bs, h*w, c
+        tpv_list[1]: bs, z*h, c
+        tpv_list[2]: bs, w*z, c
+        """
+        tpv_hw, tpv_zh, tpv_wz = tpv_list
+        bs, _, c = tpv_hw.shape
+        tpv_hw = tpv_hw.permute(0, 2, 1).reshape(bs, c, self.tpv_h, self.tpv_w)
+        tpv_zh = tpv_zh.permute(0, 2, 1).reshape(bs, c, self.tpv_z, self.tpv_h)
+        tpv_wz = tpv_wz.permute(0, 2, 1).reshape(bs, c, self.tpv_w, self.tpv_z)
+
+        if self.scale_h != 1 or self.scale_w != 1:
+            tpv_hw = F.interpolate(
+                tpv_hw,
+                size=(self.tpv_h * self.scale_h, self.tpv_w * self.scale_w),
+                mode='bilinear')
+        if self.scale_z != 1 or self.scale_h != 1:
+            tpv_zh = F.interpolate(
+                tpv_zh,
+                size=(self.tpv_z * self.scale_z, self.tpv_h * self.scale_h),
+                mode='bilinear')
+        if self.scale_w != 1 or self.scale_z != 1:
+            tpv_wz = F.interpolate(
+                tpv_wz,
+                size=(self.tpv_w * self.scale_w, self.tpv_z * self.scale_z),
+                mode='bilinear')
+
+        logits = []
+        for i, coor in enumerate(coors):
+            coor = coor.reshape(1, 1, -1, 3).float()
+            coor[..., 0] = coor[..., 0] / (self.tpv_w * self.scale_w) * 2 - 1
+            coor[..., 1] = coor[..., 1] / (self.tpv_h * self.scale_h) * 2 - 1
+            coor[..., 2] = coor[..., 2] / (self.tpv_z * self.scale_z) * 2 - 1
+            sample_loc = coor[..., [0, 1]]
+            tpv_hw_pts = F.grid_sample(
+                tpv_hw[i:i + 1], sample_loc, align_corners=False)
+            sample_loc = coor[..., [1, 2]]
+            tpv_zh_pts = F.grid_sample(
+                tpv_zh[i:i + 1], sample_loc, align_corners=False)
+            sample_loc = coor[..., [2, 0]]
+            tpv_wz_pts = F.grid_sample(
+                tpv_wz[i:i + 1], sample_loc, align_corners=False)
+
+            fused_pts = tpv_hw_pts + tpv_zh_pts + tpv_wz_pts
+
+            fused_pts = fused_pts.squeeze(0).squeeze(1).transpose(0, 1)
+            fused_pts = self.decoder(fused_pts)
+            logit = self.classifier(fused_pts)
+            logits.append(logit)
+
+        return logits
