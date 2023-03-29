@@ -1,39 +1,47 @@
-from typing import List
-
 import numpy as np
 import torch
 from mmcv.cnn.bricks.transformer import TransformerLayerSequence
 from mmengine.registry import MODELS
+from torch import nn
+from torch.nn.init import normal_
+
+from .cross_view_hybrid_attention import TPVCrossViewHybridAttention
+from .image_cross_attention import TPVMSDeformableAttention3D
 
 
 @MODELS.register_module()
 class TPVFormerEncoder(TransformerLayerSequence):
-    """Attention with both self and cross attention.
-
-    Args:
-        return_intermediate (bool): Whether to return intermediate outputs.
-        coder_norm_cfg (dict): Config of last normalization layer.
-        Default: `LN`.
-    """
 
     def __init__(self,
-                 *args,
-                 tpv_h,
-                 tpv_w,
-                 tpv_z,
+                 tpv_h=200,
+                 tpv_w=200,
+                 tpv_z=16,
                  pc_range=[-51.2, -51.2, -5, 51.2, 51.2, 3],
+                 num_feature_levels=4,
+                 num_cams=6,
+                 embed_dims=256,
                  num_points_in_pillar=[4, 32, 32],
                  num_points_in_pillar_cross_view=[32, 32, 32],
-                 return_intermediate=False,
-                 **kwargs):
+                 num_layers=5,
+                 transformerlayers=None,
+                 positional_encoding=None,
+                 return_intermediate=False):
+        super().__init__(transformerlayers, num_layers)
 
-        super().__init__(*args, **kwargs)
-
-        self.tpv_h, self.tpv_w, self.tpv_z = tpv_h, tpv_w, tpv_z
+        self.tpv_h = tpv_h
+        self.tpv_w = tpv_w
+        self.tpv_z = tpv_z
         self.pc_range = pc_range
         self.real_w = pc_range[3] - pc_range[0]
         self.real_h = pc_range[4] - pc_range[1]
         self.real_z = pc_range[5] - pc_range[2]
+
+        self.level_embeds = nn.Parameter(
+            torch.Tensor(num_feature_levels, embed_dims))
+        self.cams_embeds = nn.Parameter(torch.Tensor(num_cams, embed_dims))
+        self.tpv_embedding_hw = nn.Embedding(tpv_h * tpv_w, embed_dims)
+        self.tpv_embedding_zh = nn.Embedding(tpv_z * tpv_h, embed_dims)
+        self.tpv_embedding_wz = nn.Embedding(tpv_w * tpv_z, embed_dims)
 
         ref_3d_hw = self.get_reference_points(tpv_h, tpv_w, self.real_z,
                                               num_points_in_pillar[0])
@@ -53,7 +61,24 @@ class TPVFormerEncoder(TransformerLayerSequence):
             tpv_h, tpv_w, tpv_z, num_points_in_pillar_cross_view)
         self.register_buffer('cross_view_ref_points', cross_view_ref_points)
 
+        # positional encoding
+        self.positional_encoding = MODELS.build(positional_encoding)
         self.return_intermediate = return_intermediate
+
+    def init_weights(self):
+        """Initialize the transformer weights."""
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+        for m in self.modules():
+            if isinstance(m, TPVMSDeformableAttention3D) or isinstance(
+                    m, TPVCrossViewHybridAttention):
+                try:
+                    m.init_weight()
+                except AttributeError:
+                    m.init_weights()
+        normal_(self.level_embeds)
+        normal_(self.cams_embeds)
 
     @staticmethod
     def get_cross_view_ref_points(tpv_h, tpv_w, tpv_z, num_points_in_pillar):
@@ -253,27 +278,53 @@ class TPVFormerEncoder(TransformerLayerSequence):
 
         return reference_points_cam, tpv_mask
 
-    def forward(self,
-                tpv_query: List,
-                key,
-                value,
-                tpv_pos: List = None,
-                spatial_shapes=None,
-                level_start_index=None,
-                batch_data_samples=None):
-        """Forward function for `TransformerDecoder`.
+    def forward(self, mlvl_feats, batch_data_samples):
+        """Forward function.
 
         Args:
-            tpv_query (Tensor): Input tpv query with shape
-                `(num_query, bs, embed_dims)`.
-            key & value (Tensor): Input multi-cameta features with shape
-                (num_cam, num_value, bs, embed_dims)
-            reference_points (Tensor): The reference
-                points of offset. has shape
-                (bs, num_query, 4) when as_two_stage,
-                otherwise has shape ((bs, num_query, 2).
+            mlvl_feats (tuple[Tensor]): Features from the upstream
+                network, each is a 5D-tensor with shape
+                (B, N, C, H, W).
         """
-        bs = tpv_query[0].shape[0]
+        bs = mlvl_feats[0].shape[0]
+        dtype = mlvl_feats[0].dtype
+        device = mlvl_feats[0].device
+
+        # tpv queries and pos embeds
+        tpv_queries_hw = self.tpv_embedding_hw.weight.to(dtype)
+        tpv_queries_zh = self.tpv_embedding_zh.weight.to(dtype)
+        tpv_queries_wz = self.tpv_embedding_wz.weight.to(dtype)
+        tpv_queries_hw = tpv_queries_hw.unsqueeze(0).repeat(bs, 1, 1)
+        tpv_queries_zh = tpv_queries_zh.unsqueeze(0).repeat(bs, 1, 1)
+        tpv_queries_wz = tpv_queries_wz.unsqueeze(0).repeat(bs, 1, 1)
+        tpv_query = [tpv_queries_hw, tpv_queries_zh, tpv_queries_wz]
+
+        tpv_pos_hw = self.positional_encoding(bs, device, 'z')
+        tpv_pos_zh = self.positional_encoding(bs, device, 'w')
+        tpv_pos_wz = self.positional_encoding(bs, device, 'h')
+        tpv_pos = [tpv_pos_hw, tpv_pos_zh, tpv_pos_wz]
+
+        # flatten image features of different scales
+        feat_flatten = []
+        spatial_shapes = []
+        for lvl, feat in enumerate(mlvl_feats):
+            bs, num_cam, c, h, w = feat.shape
+            spatial_shape = (h, w)
+            feat = feat.flatten(3).permute(1, 0, 3, 2)  # num_cam, bs, hw, c
+            feat = feat + self.cams_embeds[:, None, None, :].to(dtype)
+            feat = feat + self.level_embeds[None, None,
+                                            lvl:lvl + 1, :].to(dtype)
+            spatial_shapes.append(spatial_shape)
+            feat_flatten.append(feat)
+
+        feat_flatten = torch.cat(feat_flatten, 2)  # num_cam, bs, hw++, c
+        spatial_shapes = torch.as_tensor(
+            spatial_shapes, dtype=torch.long, device=device)
+        level_start_index = torch.cat((spatial_shapes.new_zeros(
+            (1, )), spatial_shapes.prod(1).cumsum(0)[:-1]))
+        feat_flatten = feat_flatten.permute(
+            0, 2, 1, 3)  # (num_cam, H*W, bs, embed_dims)
+
         reference_points_cams, tpv_masks = [], []
         ref_3ds = [self.ref_3d_hw, self.ref_3d_zh, self.ref_3d_wz]
         for ref_3d in ref_3ds:
@@ -290,8 +341,8 @@ class TPVFormerEncoder(TransformerLayerSequence):
         for layer in self.layers:
             output = layer(
                 tpv_query,
-                key,
-                value,
+                feat_flatten,
+                feat_flatten,
                 tpv_pos=tpv_pos,
                 ref_2d=ref_cross_view,
                 tpv_h=self.tpv_h,
