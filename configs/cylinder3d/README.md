@@ -22,7 +22,7 @@ We implement Cylinder3D and provide the result and checkpoints on Semantickitti 
 | :--------: | :-----: | :------: | :------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | Cylinder3D |   3x    |   10.2   | 63.1±0.5 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/cylinder3d/cylinder3d_4xb4_3x_semantickitti/cylinder3d_4xb4_3x_semantickitti_20230318_191107.json) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/cylinder3d/cylinder3d_4xb4_3x_semantickitti/cylinder3d_4xb4_3x_semantickitti_20230318_191107-822a8c31.pth) |
 
-Note: We reproduce the performance comparable with its official repo (https://github.com/xinge008/Cylinder3D). It's slightly lower than the performance (65.9 mIOU) reported in the paper due to the lack of point-wise refinement and shorter training time.
+Note: We reproduce the performance comparable with its [official repo](https://github.com/xinge008/Cylinder3D). It's slightly lower than the performance (65.9 mIOU) reported in the paper due to the lack of point-wise refinement and shorter training time.
 
 ## Citation
 
