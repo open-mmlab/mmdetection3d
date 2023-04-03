@@ -166,7 +166,18 @@ tta_pipeline = [
                 sync_2d=False,
                 flip_ratio_bev_horizontal=1.,
                 flip_ratio_bev_vertical=1.)
-        ], [dict(type='Pack3DDetInputs', keys=['points'])]])
+        ],
+                    [
+                        dict(
+                            type='GlobalRotScaleTrans',
+                            rot_range=[pcd_rotate_range, pcd_rotate_range],
+                            scale_ratio_range=[
+                                pcd_scale_factor, pcd_scale_factor
+                            ],
+                            translation_std=[0, 0, 0])
+                        for pcd_rotate_range in [-0.78539816, 0.0, 0.78539816]
+                        for pcd_scale_factor in [0.95, 1.0, 1.05]
+                    ], [dict(type='Pack3DDetInputs', keys=['points'])]])
 ]
 
 train_dataloader = dict(
