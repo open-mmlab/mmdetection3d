@@ -53,7 +53,7 @@ A brand new version of **MMDetection v1.1.0rc4** was released in 26/3/2023:
 - A standard data protocol defines and unifies the common keys across different datasets.
 - Faster training and testing speed with more strong baselines.
 
-We have supported more LiDAR-based segmentation methods. More new features about 3D perception are in process.
+We have supported more LiDAR-based segmentation methods, including Cylinder3D, MinkUNet and SPVCNN. More new features about 3D perception are on the way.
 Find more new features in [1.1.x branch](https://github.com/open-mmlab/mmdetection3d/tree/1.1). Issues and PRs are welcome!
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In this version, we update some of the model checkpoints after the refactor of coordinate systems. See more details in the [Changelog](docs/en/changelog.md).
