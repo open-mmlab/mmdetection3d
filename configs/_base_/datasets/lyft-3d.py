@@ -11,7 +11,7 @@ data_root = 'data/lyft/'
 # Input modality for Lyft dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=True, use_camera=False)
-data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
+data_prefix = dict(pts='v1.01-train/lidar', img='', sweeps='v1.01-train/lidar')
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -149,14 +149,11 @@ val_dataloader = dict(
 
 val_evaluator = dict(
     type='LyftMetric',
-    ann_file=data_root + 'lyft_infos_val.pkl',
+    data_root=data_root,
+    ann_file='lyft_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
-test_evaluator = dict(
-    type='LyftMetric',
-    ann_file=data_root + 'lyft_infos_val.pkl',
-    metric='bbox',
-    backend_args=backend_args)
+test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
