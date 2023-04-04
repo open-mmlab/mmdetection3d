@@ -2,7 +2,7 @@ Along with the release of OpenMMLab 2.0, MMDetection3D (namely MMDet3D) 1.1 made
 
 ## Environment
 
-MMDet3D 1.1 depends on the new foundational library for training deep learning models [MMEngine](https://github.com/open-mmlab/mmengine), and therefore has an entirely different dependency chain compared with MMDet3D 1.0. Even if you have a well-rounded MMDet3D 1.0 / 0.x environment before, you still need to create a new python environment for MMDet3D 1.1. We provide a detailed [installation guide](./get_started.md) for reference.
+MMDet3D 1.1 depends on the new foundational library [MMEngine](https://github.com/open-mmlab/mmengine) for training deep learning models, and therefore has an entirely different dependency chain compared with MMDet3D 1.0. Even if you have a well-rounded MMDet3D 1.0 / 0.x environment before, you still need to create a new python environment for MMDet3D 1.1. We provide a detailed [installation guide](./get_started.md) for reference.
 
 ## Dataset
 
@@ -15,7 +15,7 @@ python tools/dataset_converters/update_infos_to_v2.py
         --out-dir ./kitti_v2/
 ```
 
-If your annotation files are generated in the 0.x version, you should firstly update them to 1.0 version using this [script](../../tools/update_data_coords.py). Alternatively, you can re-genetate annotation files from scratch use this [script](../../tools/create_data.py).
+If your annotation files are generated in the 0.x version, you should firstly update them to 1.0 version using this [script](../../tools/update_data_coords.py). Alternatively, you can re-genetate annotation files from scratch using this [script](../../tools/create_data.py).
 
 ## Model
 
