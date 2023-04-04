@@ -27,3 +27,4 @@ Import:
   - configs/cylinder3d/metafile.yml
   - configs/pv_rcnn/metafile.yml
   - configs/fcaf3d/metafile.yml
+  - configs/spvcnn/metafile.yml

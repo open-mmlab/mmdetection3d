@@ -223,6 +223,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li><b>Outdoor</b></li>
         <ul>
           <li><a href="configs/minkunet">MinkUNet (CVPR'2019)</a></li>
+          <li><a href="configs/spvcnn">SPVCNN (ECCV'2020)</a></li>
           <li><a href="configs/cylinder3d">Cylinder3D (CVPR'2021)</a></li>
         </ul>
         <li><b>Indoor</b></li>
@@ -266,6 +267,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 |    PV-RCNN    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
 |  Cylinder3D   |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✓      |    ✗     |
 |   MinkUNet    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
+|    SPVCNN     |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 
