@@ -47,7 +47,7 @@
 
 **新闻**：
 
-**默认分支已经从 `master` 切换到 `1.x`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](https://mmdetection3d.readthedocs.io/zh_CN/dev-1.x/migration.html) 以了解更多细节。**
+**默认分支已经从 `master` 切换到 `1.x`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](docs/en/migration.md) 以了解更多细节。**
 
 **v1.1.0rc3** 版本已经在 2023.1.7 发布。
 
