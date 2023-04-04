@@ -22,25 +22,25 @@
 - Support PolarMix and LaserMix augmentation (#2265, #2302)
 - Support loading annotation of panoptic segmentation (#2223)
 - Support panoptic segmentation metric (#2230)
-- Add inferencer for LiDAR-based, monocular 3d and multi-modality detection (#2208, #2190, #2342)
+- Add inferencer for LiDAR-based, monocular and multi-modality 3D detection (#2208, #2190, #2342)
 - Add inferencer for LiDAR-based segmentation (#2304)
 
 #### Improvements
 
 - Support `lazy_init` for CBGSDataset (#2271)
-- Support generating annotatin file for test set on Waymo  (#2180)
+- Support generating annotation files for test set on Waymo  (#2180)
 - Enhance the support for SemanticKitti (#2253, #2323)
 - File I/O migration and reconstruction (#2319)
-- Support `format_only` option for Lyft, NuScenes and Waymo (#2333, #2151)
-- Replace np.transpose by torch.permute to speed up (#2277)
+- Support `format_only` option for Lyft, NuScenes and Waymo datasets (#2333, #2151)
+- Replace `np.transpose` with `torch.permute` to speed up (#2277)
 
 #### Bug Fixes
 
-- Fix the reversal of length and width when drawing heatmap in CenterFormer (#2362)
-- Deprecate old type alias due to new version of numpy (#2339)
-- Lose trimesh version requirements to fix numpy random state (#2340)
+- Fix the problem of reversal of length and width when drawing heatmap in CenterFormer (#2362)
+- Deprecate old type alias due to the new version of numpy (#2339)
+- Lose `trimesh` version requirements to fix numpy random state (#2340)
 - Fix the device mismatch error in CenterPoint (#2308)
-- fix bug of visuzatioin when there are no bboxes (#2231)
+- Fix bug of visualization when there are no bboxes (#2231)
 - Fix bug of counting ignore index in IOU in segmentation evaluation (#2229)
 
 #### Contributors

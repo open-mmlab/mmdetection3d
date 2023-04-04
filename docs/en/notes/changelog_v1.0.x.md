@@ -5,12 +5,12 @@
 #### Improvements
 
 - Add BN in FPN to avoid loss Nan in MVXNet (#2282)
-- Update s3dis_data_utils.py (#2232)
+- Update `s3dis_data_utils.py` (#2232)
 
 #### Bug Fixes
 
-- Fix pecision error when using mixed precision on CenterPoint (#2341)
-- Replace np.transpose by torch.permute to speed up (@2273)
+- Fix precision error when using mixed precision on CenterPoint (#2341)
+- Replace `np.transpose` with `torch.permute` to speed up (@2273)
 - Update links of SECOND checkpoints (#2185)
 
 #### Contributors
