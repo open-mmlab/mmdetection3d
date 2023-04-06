@@ -1,6 +1,6 @@
 # Changelog of v1.1
 
-### v1.1.0rc4 (26/3/2023)
+### v1.1.0 (6/4/2023)
 
 #### Highlights
 
@@ -33,6 +33,7 @@
 - File I/O migration and reconstruction (#2319)
 - Support `format_only` option for Lyft, NuScenes and Waymo datasets (#2333, #2151)
 - Replace `np.transpose` with `torch.permute` to speed up (#2277)
+- Allow setting local-rank for pytorch 2.0 (#2387)
 
 #### Bug Fixes
 

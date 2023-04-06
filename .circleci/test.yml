@@ -26,6 +26,7 @@ jobs:
           command: |
             pip install interrogate
             interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --ignore-magic --ignore-regex "__repr__" --fail-under 90 mmdet3d
+
   build_cpu:
     parameters:
       # The python version must match available image tags in
@@ -49,32 +50,37 @@ jobs:
       - run:
           name: Configure Python & pip
           command: |
-            python -m pip install --upgrade pip
-            python -m pip install wheel
-            python -m pip install typing-extensions --upgrade
+            pip install --upgrade pip
+            pip install wheel
       - run:
           name: Install PyTorch
           command: |
             python -V
             python -m pip install torch==<< parameters.torch >>+cpu torchvision==<< parameters.torchvision >>+cpu -f https://download.pytorch.org/whl/torch_stable.html
+      - when:
+          condition:
+            equal: ["3.9.0", << parameters.python >>]
+          steps:
+            - run: pip install "protobuf <= 3.20.1" && sudo apt-get update && sudo apt-get -y install libprotobuf-dev protobuf-compiler cmake
       - run:
           name: Install mmdet3d dependencies
           command: |
             python -m pip install git+ssh://git@github.com/open-mmlab/mmengine.git@main
-            python -m pip install -U openmim
-            python -m mim install 'mmcv >= 2.0.0rc1'
-            python -m pip install git+ssh://git@github.com/open-mmlab/mmdetection.git@dev-3.x
-            python -m pip install -r requirements.txt
+            pip install -U openmim
+            mim install 'mmcv >= 2.0.0rc1'
+            pip install git+ssh://git@github.com/open-mmlab/mmdetection.git@dev-3.x
+            pip install -r requirements.txt
       - run:
           name: Build and install
           command: |
-            python -m pip install -e .
+            pip install -e .
       - run:
           name: Run unittests
           command: |
             python -m coverage run --branch --source mmdet3d -m pytest tests/
             python -m coverage xml
             python -m coverage report -m
+
   build_cuda:
     parameters:
       torch:
@@ -102,6 +108,7 @@ jobs:
           command: |
             docker build .circleci/docker -t mmdet3d:gpu --build-arg PYTORCH=<< parameters.torch >> --build-arg CUDA=<< parameters.cuda >> --build-arg CUDNN=<< parameters.cudnn >>
             docker run --gpus all -t -d -v /home/circleci/project:/mmdetection3d -v /home/circleci/mmengine:/mmengine -v /home/circleci/mmdetection:/mmdetection -w /mmdetection3d --name mmdet3d mmdet3d:gpu
+            docker exec mmdet3d apt-get install -y git
       - run:
           name: Install mmdet3d dependencies
           command: |
@@ -118,6 +125,7 @@ jobs:
           name: Run unittests
           command: |
             docker exec mmdet3d python -m pytest tests/
+
 workflows:
   pr_stage_lint:
     when: << pipeline.parameters.lint_only >>
@@ -142,7 +150,7 @@ workflows:
           name: minimum_version_cpu
           torch: 1.6.0
           torchvision: 0.7.0
-          python: 3.7.4
+          python: 3.7.4 # The lowest python 3.7.x version available on CircleCI images
           requires:
             - lint
       - build_cpu:
@@ -171,8 +179,6 @@ workflows:
       - build_cuda:
           name: minimum_version_gpu
           torch: 1.6.0
-          # Use double quotation mark to explicitly specify its type
-          # as string instead of number
           cuda: "10.1"
           filters:
             branches:

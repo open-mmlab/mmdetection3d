@@ -43,7 +43,7 @@ class TestLidarDet3DInferencer(TestCase):
     def test_call(self):
         if not torch.cuda.is_available():
             return
-        # single img
+        # single point cloud
         inputs = dict(points='tests/data/kitti/training/velodyne/000000.bin')
         res_path = self.inferencer(inputs, return_vis=True)
         # ndarray
@@ -58,7 +58,7 @@ class TestLidarDet3DInferencer(TestCase):
         self.assertIn('visualization', res_path)
         self.assertIn('visualization', res_ndarray)
 
-        # multiple images
+        # multiple point clouds
         inputs = [
             dict(points='tests/data/kitti/training/velodyne/000000.bin'),
             dict(points='tests/data/kitti/training/velodyne/000000.bin')

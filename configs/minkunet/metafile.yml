@@ -1,0 +1,57 @@
+Collections:
+  - Name: MinkUNet
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Architecture:
+        - MinkUNet
+    Paper:
+      URL: https://arxiv.org/abs/1904.08755
+      Title: '4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks'
+    README: configs/minkunet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/1.1/mmdet3d/models/segmentors/minkunet.py#L13
+      Version: v1.1.0
+
+Models:
+  - Name: minkunet_w16_8xb2-15e_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet_w16_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 3.4
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 60.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w16_8xb2-15e_semantickitti/minkunet_w16_8xb2-15e_semantickitti_20230309_160737-0d8ec25b.pth
+
+  - Name: minkunet_w20_8xb2-15e_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet_w20_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 3.7
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 61.6
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w20_8xb2-15e_semantickitti/minkunet_w20_8xb2-15e_semantickitti_20230309_160718-c3b92e6e.pth
+
+  - Name: minkunet_w32_8xb2-15e_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet_w32_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 4.9
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 63.1
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w32_8xb2-15e_semantickitti/minkunet_w32_8xb2-15e_semantickitti_20230309_160710-7fa0a6f1.pth

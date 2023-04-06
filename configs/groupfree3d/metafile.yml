@@ -25,8 +25,8 @@ Models:
       - Task: 3D Object Detection
         Dataset: ScanNet
         Metrics:
-          AP@0.25: 66.32
-          AP@0.5: 47.82
+          AP@0.25: 66.17
+          AP@0.5: 48.47
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/groupfree3d/groupfree3d_8x4_scannet-3d-18class-L6-O256/groupfree3d_8x4_scannet-3d-18class-L6-O256_20210702_145347-3499eb55.pth
 
   - Name: groupfree3d_head-L12-O256_4xb8_scannet-seg.py
