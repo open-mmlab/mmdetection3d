@@ -22,7 +22,7 @@ Welcome to MMDetection3D's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Migration
+   :caption: Migrating from MMDetection3D 1.0
 
    migration.md
 

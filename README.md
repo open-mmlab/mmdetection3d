@@ -49,6 +49,9 @@
 
 **News**:
 
+**We have renamed the branch `1.1`  to `main` and switched the default branch from `master` to `main`. We encourage
+users to migrate to the latest version, though it comes with some cost. Please refer to [Migration Guide](docs/en/migration.md) for more details.**
+
 **v1.1.0rc3** was released in 7/1/2023
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
