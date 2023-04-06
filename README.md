@@ -18,7 +18,7 @@
   </div>
   <div>&nbsp;</div>
 
-[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection3d.readthedocs.io/en/1.1/)
+[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection3d.readthedocs.io/en/latest/)
 [![badge](https://github.com/open-mmlab/mmdetection3d/workflows/build/badge.svg)](https://github.com/open-mmlab/mmdetection3d/actions)
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
@@ -52,6 +52,10 @@
 **We have renamed the branch `1.1`  to `main` and switched the default branch from `master` to `main`. We encourage
 users to migrate to the latest version, though it comes with some cost. Please refer to [Migration Guide](docs/en/migration.md) for more details.**
 
+**v1.1.0** was released in 6/4/2023
+
+We have supported more LiDAR-based segmentation methods, including Cylinder3D, MinkUNet and SPVCNN. More new features about 3D perception are on the way. Please stay tuned!
+
 **v1.1.0rc3** was released in 7/1/2023
 
 The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
@@ -78,7 +82,7 @@ a part of the OpenMMLab project developed by [MMLab](http://mmlab.ie.cuhk.edu.hk
 - **Support indoor/outdoor 3D detection out of box**
 
   It directly supports popular indoor and outdoor 3D detection datasets, including ScanNet, SUNRGB-D, Waymo, nuScenes, Lyft, and KITTI.
-  For nuScenes dataset, we also support [nuImages dataset](https://github.com/open-mmlab/mmdetection3d/tree/1.1/configs/nuimages).
+  For nuScenes dataset, we also support [nuImages dataset](https://github.com/open-mmlab/mmdetection3d/tree/latest/configs/nuimages).
 
 - **Natural integration with 2D detection**
 
@@ -104,7 +108,7 @@ This project is released under the [Apache 2.0 license](LICENSE).
 
 ## Changelog
 
-**1.1.0rc3** was released in 7/1/2023.
+**1.1.0** was released in 6/4/2023.
 
 Please refer to [changelog.md](docs/en/notes/changelog.md) for details and release history.
 
@@ -299,7 +303,7 @@ If you find this project useful in your research, please consider cite:
 
 ## Contributing
 
-We appreciate all contributions to improve MMDetection3D. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
+We appreciate all contributions to improve MMDetection3D. Please refer to [CONTRIBUTING.md](./docs/en/notes/contribution_guides.md) for the contributing guideline.
 
 ## Acknowledgement
 

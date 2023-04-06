@@ -11,7 +11,7 @@ Collections:
     README: configs/spvcnn/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/1.1/mmdet3d/models/backbones/spvcnn_backone.py#L22
-      Version: v1.1.0rc4
+      Version: v1.1.0
 
 Models:
   - Name: spvcnn_w16_8xb2-15e_semantickitti

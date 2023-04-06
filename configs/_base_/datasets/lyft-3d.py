@@ -19,7 +19,7 @@ data_prefix = dict(pts='v1.01-train/lidar', img='', sweeps='v1.01-train/lidar')
 
 # data_root = 's3://openmmlab/datasets/detection3d/lyft/'
 
-# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0
 # backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({

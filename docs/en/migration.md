@@ -6,6 +6,15 @@ MMDet3D 1.1 depends on the new foundational library [MMEngine](https://github.co
 
 The configuration files in our new version have a lot of modifications because of the differences between MMCV 1.x and MMEngine. The guides for migration from MMCV to MMEngine can be seen [here](https://github.com/open-mmlab/mmengine/tree/main/docs/en/migration).
 
+We have renamed the names of the remote branches in MMDet3D 1.1 (renaming 1.1 to main, master to 1.0, and dev to dev-1.0). If your local branches in the git system are not aligned with branches of the remote repo, you can use the following commands to resolve it:
+
+```
+git fetch origin
+git checkout main
+git branch main_backup  # backup your main branch
+git reset --hard origin/main
+```
+
 ## Dataset
 
 You should update the annotation files generated in the 1.0 version since some key words and structures of annotation in MMDet3D 1.1 have changed. Taking KITTI as an example, the update script is as follows:

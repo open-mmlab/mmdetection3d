@@ -18,7 +18,7 @@
   </div>
   <div>&nbsp;</div>
 
-[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection3d.readthedocs.io/zh_CN/1.1/)
+[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection3d.readthedocs.io/zh_CN/latest/)
 [![badge](https://github.com/open-mmlab/mmdetection3d/workflows/build/badge.svg)](https://github.com/open-mmlab/mmdetection3d/actions)
 [![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
 [![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
@@ -49,6 +49,10 @@
 
 **我们将 `1.1` 分支重命名为 `main` 并将默认分支从 `master` 切换到 `main`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](docs/en/migration.md) 以了解更多细节。**
 
+**v1.1.0** 版本已经在 2023.4.6 发布。
+
+我们已经支持了更多基于 LiDAR 的 3D 分割算法。更多关于 3D 感知的新特性正在开发中，请拭目以待！
+
 **v1.1.0rc3** 版本已经在 2023.1.7 发布。
 
 由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在[变更日志](docs/zh_cn/notes/changelog.md)和 [v1.0.x 版本变更日志](docs/zh_cn/notes/changelog_v1.0.x.md)中查看更多详细信息。
@@ -74,7 +78,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 - **支持户内/户外的数据集**
 
   支持室内/室外的 3D 检测数据集，包括 ScanNet，SUNRGB-D，Waymo，nuScenes，Lyft，KITTI。
-  对于 nuScenes 数据集，我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/1.1/configs/nuimages)。
+  对于 nuScenes 数据集，我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/latest/configs/nuimages)。
 
 - **与 2D 检测器的自然整合**
 
