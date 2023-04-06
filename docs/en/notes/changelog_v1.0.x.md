@@ -1,6 +1,6 @@
 # Changelog of v1.0.x
 
-### v1.0.0rc8 (6/4/2023)
+### v1.0.0 (6/4/2023)
 
 #### Improvements
 
