@@ -48,7 +48,7 @@
 
 A total of 14 developers contributed to this release.
 
-@ZLTJohn, @SekiroRong, @shufanwu, @vansin, @@triple-Mu, @404Vector, @filaPro, @sunjiahao1999, @Ginray, @Xiangxu-0103, @JingweiZhang12, @DezeZhao, @ZCMax, @roger-lcc
+@ZLTJohn, @SekiroRong, @shufanwu, @vansin, @triple-Mu, @404Vector, @filaPro, @sunjiahao1999, @Ginray, @Xiangxu-0103, @JingweiZhang12, @DezeZhao, @ZCMax, @roger-lcc
 
 ### v1.1.0rc3 (7/1/2023)
 
