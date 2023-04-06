@@ -49,7 +49,7 @@
 
 **News**:
 
-**The default branch has been switched to `1.x` from `master`, and we encourage
+**We have renamed the branch `1.1`  to `main` and switched the default branch from `master` to `main`. We encourage
 users to migrate to the latest version, though it comes with some cost. Please refer to [Migration Guide](docs/en/migration.md) for more details.**
 
 **v1.1.0rc3** was released in 7/1/2023
