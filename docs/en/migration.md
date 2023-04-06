@@ -4,6 +4,8 @@ Along with the release of OpenMMLab 2.0, MMDetection3D (namely MMDet3D) 1.1 made
 
 MMDet3D 1.1 depends on the new foundational library [MMEngine](https://github.com/open-mmlab/mmengine) for training deep learning models, and therefore has an entirely different dependency chain compared with MMDet3D 1.0. Even if you have a well-rounded MMDet3D 1.0 / 0.x environment before, you still need to create a new Python environment for MMDet3D 1.1. We provide a detailed [installation guide](./get_started.md) for reference.
 
+The configuration files in our new version have a lot of modifications because of the differences between MMCV 1.x and MMEngine. The guides for migration from MMCV to MMEngine can be seen [here](https://github.com/open-mmlab/mmengine/tree/main/docs/en/migration).
+
 ## Dataset
 
 You should update the annotation files generated in the 1.0 version since some key words and structures of annotation in MMDet3D 1.1 have changed. Taking KITTI as an example, the update script is as follows:
