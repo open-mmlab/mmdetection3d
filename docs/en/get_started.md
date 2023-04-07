@@ -44,8 +44,8 @@ We recommend that users follow our best practices to install MMDetection3D. Howe
 ```shell
 pip install -U openmim
 mim install mmengine
-mim install 'mmcv>=2.0.0rc1'
-mim install 'mmdet>=3.0.0rc0'
+mim install 'mmcv>=2.0.0rc4'
+mim install 'mmdet>=3.0.0'
 ```
 
 **Note**: In MMCV-v2.x, `mmcv-full` is renamed to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc1"` to install the lite version.
@@ -239,8 +239,8 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 ```shell
 !pip3 install openmim
 !mim install mmengine
-!mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0rc0,<3.1.0"
+!mim install "mmcv>=2.0.0rc4,<2.1.0"
+!mim install "mmdet>=3.0.0,<3.1.0"
 ```
 
 **Step 2.** Install MMDetection3D from source.

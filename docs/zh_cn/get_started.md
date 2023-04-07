@@ -45,10 +45,10 @@ conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
 mim install mmengine
 mim install 'mmcv>=2.0.0rc4'
-mim install 'mmdet>=3.0.0rc0'
+mim install 'mmdet>=3.0.0'
 ```
 
-**注意**：在 MMCV-v2.x 中，`mmcv-full` 改名为 `mmcv`，如果您想安装不包含 CUDA 算子的 `mmcv`，您可以使用 `mim install "mmcv-lite>=2.0.0rc1"` 安装精简版。
+**注意**：在 MMCV-v2.x 中，`mmcv-full` 改名为 `mmcv`，如果您想安装不包含 CUDA 算子的 `mmcv`，您可以使用 `mim install "mmcv-lite>=2.0.0rc4"` 安装精简版。
 
 **步骤 1.** 安装 MMDetection3D。
 
@@ -224,7 +224,7 @@ MMCV 包含 C++ 和 CUDA 拓展，因此其对 PyTorch 的依赖更复杂。MIM 
 例如，下述指令将会安装基于 PyTorch 1.12.x 和 CUDA 11.6 编译的 MMCV：
 
 ```shell
-pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
+pip install "mmcv>=2.0.0rc4" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
 ```
 
 #### 在 Google Colab 中安装
@@ -236,8 +236,8 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 ```shell
 !pip3 install openmim
 !mim install mmengine
-!mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0rc0,<3.1.0"
+!mim install "mmcv>=2.0.0rc4,<2.1.0"
+!mim install "mmdet>=3.0.0,<3.1.0"
 ```
 
 **步骤 2.** 从源码安装 MMDetection3D。
