@@ -41,7 +41,7 @@ jobs:
       - name: Install MMCV
         run: |
           pip install -U openmim
-          mim install 'mmcv >= 2.0.0rc1'
+          mim install 'mmcv >= 2.0.0rc4'
       - name: Install MMDet
         run: pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
       - name: Install other dependencies
@@ -95,7 +95,7 @@ jobs:
       - name: Install MMCV
         run: |
           pip install -U openmim
-          mim install 'mmcv >= 2.0.0rc1'
+          mim install 'mmcv >= 2.0.0rc4'
       - name: Install MMDet
         run: pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
       - name: Install other dependencies
@@ -146,7 +146,7 @@ jobs:
         run: |
           pip install git+https://github.com/open-mmlab/mmengine.git@main
           pip install -U openmim
-          mim install 'mmcv >= 2.0.0rc1'
+          mim install 'mmcv >= 2.0.0rc4'
           pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
@@ -182,7 +182,7 @@ jobs:
         run: |
           pip install git+https://github.com/open-mmlab/mmengine.git@main
           pip install -U openmim
-          mim install 'mmcv >= 2.0.0rc1'
+          mim install 'mmcv >= 2.0.0rc4'
           pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
@@ -217,7 +217,7 @@ jobs:
         run: |
           pip install git+https://github.com/open-mmlab/mmengine.git@main
           pip install -U openmim
-          mim install 'mmcv >= 2.0.0rc1'
+          mim install 'mmcv >= 2.0.0rc4'
           pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install

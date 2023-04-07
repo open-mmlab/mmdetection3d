@@ -48,7 +48,7 @@ mim install 'mmcv>=2.0.0rc4'
 mim install 'mmdet>=3.0.0'
 ```
 
-**Note**: In MMCV-v2.x, `mmcv-full` is renamed to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc1"` to install the lite version.
+**Note**: In MMCV-v2.x, `mmcv-full` is renamed to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc4"` to install the lite version.
 
 **Step 1.** Install MMDetection3D.
 
@@ -227,7 +227,7 @@ To install MMCV with pip instead of MIM, please follow [MMCV installation guides
 For example, the following command install MMCV built for PyTorch 1.12.x and CUDA 11.6:
 
 ```shell
-pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
+pip install "mmcv>=2.0.0rc4" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
 ```
 
 #### Install on Google Colab
