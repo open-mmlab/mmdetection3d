@@ -46,6 +46,8 @@
 
   `pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
 
+- 如果您使用 cuda-9.0 的环境并遇到关于 numba 的错误， 您应该检查下 numba 的版本。在 cuda-9.0 环境中，高版本的 numba 是不支持的，我们建议安装 numba==0.53.0.
+
 ## 如何标注点云？
 
 MMDetection3D 不支持点云标注。我们提供一些开源的标注工具供参考：
