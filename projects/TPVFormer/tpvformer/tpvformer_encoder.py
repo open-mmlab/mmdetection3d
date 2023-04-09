@@ -73,10 +73,7 @@ class TPVFormerEncoder(TransformerLayerSequence):
         for m in self.modules():
             if isinstance(m, TPVMSDeformableAttention3D) or isinstance(
                     m, TPVCrossViewHybridAttention):
-                try:
-                    m.init_weight()
-                except AttributeError:
-                    m.init_weights()
+                m.init_weights()
         normal_(self.level_embeds)
         normal_(self.cams_embeds)
 

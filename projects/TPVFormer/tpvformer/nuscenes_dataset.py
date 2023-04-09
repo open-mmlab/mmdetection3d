@@ -96,7 +96,6 @@ class NuScenesSegDataset(BaseDataset):
                  ann_file: str,
                  pipeline: List[Union[dict, Callable]] = [],
                  test_mode: bool = False,
-                 backend_args: dict = None,
                  **kwargs) -> None:
         metainfo = dict(label2cat={
             i: cat_name
@@ -109,8 +108,6 @@ class NuScenesSegDataset(BaseDataset):
             pipeline=pipeline,
             test_mode=test_mode,
             **kwargs)
-
-        self.backend_args = backend_args  # 这里为什么要backend_args？
 
     def parse_data_info(self, info: dict) -> Union[List[dict], dict]:
         """Process the raw data info.

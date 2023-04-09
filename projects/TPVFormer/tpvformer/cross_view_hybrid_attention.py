@@ -2,13 +2,11 @@ import math
 
 import torch
 import torch.nn as nn
-from mmcv.ops.multi_scale_deform_attn import \
-    multi_scale_deformable_attn_pytorch
+from mmcv.ops.multi_scale_deform_attn import (
+    MultiScaleDeformableAttnFunction, multi_scale_deformable_attn_pytorch)
 from mmengine.model import BaseModule, constant_init, xavier_init
 
 from mmdet3d.registry import MODELS
-from .multi_scale_deformable_attn_function import \
-    MultiScaleDeformableAttnFunction_fp32
 
 
 @MODELS.register_module()
@@ -47,15 +45,14 @@ class TPVCrossViewHybridAttention(BaseModule):
             [nn.Linear(embed_dims, embed_dims) for _ in range(3)])
 
         self.tpv_h, self.tpv_w, self.tpv_z = tpv_h, tpv_w, tpv_z
-        self.init_weight()
 
-    def init_weight(self):
+    def init_weights(self):
         """Default initialization for Parameters of Module."""
-
+        device = next(self.parameters()).device
         # self plane
         theta_self = torch.arange(
-            self.num_heads,
-            dtype=torch.float32) * (2.0 * math.pi / self.num_heads)
+            self.num_heads, dtype=torch.float32,
+            device=device) * (2.0 * math.pi / self.num_heads)
         grid_self = torch.stack(
             [theta_self.cos(), theta_self.sin()], -1)  # H, 2
         grid_self = grid_self.view(self.num_heads, 1,
@@ -66,12 +63,12 @@ class TPVCrossViewHybridAttention(BaseModule):
         if self.init_mode == 0:
             # num_phi = 4
             phi = torch.arange(
-                4, dtype=torch.float32) * (2.0 * math.pi / 4)  # 4
+                4, dtype=torch.float32, device=device) * (2.0 * math.pi / 4)
             assert self.num_heads % 4 == 0
             num_theta = int(self.num_heads / 4)
             theta = torch.arange(
-                num_theta, dtype=torch.float32) * (math.pi / num_theta) + (
-                    math.pi / num_theta / 2)  # 3
+                num_theta, dtype=torch.float32, device=device) * (
+                    math.pi / num_theta) + (math.pi / num_theta / 2)  # 3
             x = torch.matmul(theta.sin().unsqueeze(-1),
                              phi.cos().unsqueeze(0)).flatten()
             y = torch.matmul(theta.sin().unsqueeze(-1),
@@ -83,7 +80,7 @@ class TPVCrossViewHybridAttention(BaseModule):
 
             xyz = [[0, 0, 1], [0, 0, -1], [0, 1, 0], [0, -1, 0], [1, 0, 0],
                    [-1, 0, 0]]
-            xyz = torch.tensor(xyz, dtype=torch.float32)
+            xyz = torch.tensor(xyz, dtype=torch.float32, device=device)
 
         grid_hw = xyz[:, [0, 1]]  # H, 2
         grid_zh = xyz[:, [2, 0]]
@@ -104,7 +101,8 @@ class TPVCrossViewHybridAttention(BaseModule):
             self.sampling_offsets[i].bias.data = grid.view(-1)
 
             constant_init(self.attention_weights[i], val=0., bias=0.)
-            attn_bias = torch.zeros(self.num_heads, 3, self.num_points + 1)
+            attn_bias = torch.zeros(
+                self.num_heads, 3, self.num_points + 1, device=device)
             attn_bias[:, i, -1] = 10
             self.attention_weights[i].bias.data = attn_bias.flatten()
             xavier_init(self.value_proj[i], distribution='uniform', bias=0.)
@@ -171,8 +169,7 @@ class TPVCrossViewHybridAttention(BaseModule):
             it has overall `num_points * num_Z_anchors` sampling points.
             """
             offset_normalizer = torch.stack(
-                [spatial_shapes[..., 1], spatial_shapes[..., 0]],
-                -1)  # 为什么要反过来？
+                [spatial_shapes[..., 1], spatial_shapes[..., 0]], -1)
 
             bs, num_query, _, num_Z_anchors, xy = reference_points.shape
             reference_points = reference_points[:, :, None, :, :, None, :]
@@ -184,7 +181,6 @@ class TPVCrossViewHybridAttention(BaseModule):
                 num_all_points // num_Z_anchors, xy)
             sampling_locations = reference_points + sampling_offsets
             bs, num_query, num_heads, num_levels, num_points, num_Z_anchors, xy = sampling_locations.shape  # noqa
-            assert num_all_points == num_points * num_Z_anchors  # 写反了
 
             sampling_locations = sampling_locations.view(
                 bs, num_query, num_heads, num_levels, num_all_points, xy)
@@ -193,11 +189,7 @@ class TPVCrossViewHybridAttention(BaseModule):
                 f'Last dim of reference_points must be'
                 f' 2, but get {reference_points.shape[-1]} instead.')
 
-        if torch.cuda.is_available():
-            if value.dtype == torch.float16:
-                MultiScaleDeformableAttnFunction = MultiScaleDeformableAttnFunction_fp32  # noqa
-            else:
-                MultiScaleDeformableAttnFunction = MultiScaleDeformableAttnFunction_fp32  # noqa
+        if torch.cuda.is_available() and value.is_cuda:
             output = MultiScaleDeformableAttnFunction.apply(
                 value, spatial_shapes, level_start_index, sampling_locations,
                 attention_weights, 64)

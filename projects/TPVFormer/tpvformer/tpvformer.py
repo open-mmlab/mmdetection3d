@@ -5,7 +5,6 @@ from torch import nn
 from mmdet3d.models import Base3DSegmentor
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
-from .grid_mask import GridMask
 
 
 @MODELS.register_module()
@@ -13,7 +12,6 @@ class TPVFormer(Base3DSegmentor):
 
     def __init__(self,
                  data_preprocessor: Optional[Union[dict, nn.Module]] = None,
-                 use_grid_mask=False,
                  backbone=None,
                  neck=None,
                  encoder=None,
@@ -27,16 +25,10 @@ class TPVFormer(Base3DSegmentor):
         self.encoder = MODELS.build(encoder)
         self.decode_head = MODELS.build(decode_head)
 
-        self.grid_mask = GridMask(
-            True, True, rotate=1, offset=False, ratio=0.5, mode=1, prob=0.7)
-        self.use_grid_mask = use_grid_mask
-
     def extract_feat(self, img):
         """Extract features of images."""
         B, N, C, H, W = img.size()
         img = img.view(B * N, C, H, W)
-        if self.use_grid_mask:
-            img = self.grid_mask(img)
         img_feats = self.backbone(img)
 
         if hasattr(self, 'neck'):
@@ -55,22 +47,24 @@ class TPVFormer(Base3DSegmentor):
         outs = self.decode_head(outs, batch_inputs['voxels']['coors'])
         return outs
 
+    def loss(self, batch_inputs: dict,
+             batch_data_samples: SampleList) -> SampleList:
+        img_feats = self.extract_feat(batch_inputs['imgs'])
+        queries = self.encoder(img_feats, batch_data_samples)
+        losses = self.decode_head.loss(queries, batch_data_samples)
+        return losses
+
     def predict(self, batch_inputs: dict,
                 batch_data_samples: SampleList) -> SampleList:
         """Forward predict function."""
         img_feats = self.extract_feat(batch_inputs['imgs'])
         tpv_queries = self.encoder(img_feats, batch_data_samples)
-        seg_logits = self.decode_head.predict(tpv_queries,
-                                              batch_inputs['voxels']['coors'])
+        seg_logits = self.decode_head.predict(tpv_queries, batch_data_samples)
         seg_preds = [seg_logit.argmax(dim=1) for seg_logit in seg_logits]
 
         return self.postprocess_result(seg_preds, batch_data_samples)
 
     def aug_test(self, batch_inputs, batch_data_samples):
-        pass
-
-    def loss(self, batch_inputs: dict,
-             batch_data_samples: SampleList) -> SampleList:
         pass
 
     def encode_decode(self, batch_inputs: dict,

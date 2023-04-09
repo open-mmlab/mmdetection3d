@@ -3,13 +3,11 @@ import warnings
 
 import torch
 import torch.nn as nn
-from mmcv.ops.multi_scale_deform_attn import \
-    multi_scale_deformable_attn_pytorch
+from mmcv.ops.multi_scale_deform_attn import (
+    MultiScaleDeformableAttnFunction, multi_scale_deformable_attn_pytorch)
 from mmengine.model import BaseModule, constant_init, xavier_init
 
 from mmdet3d.registry import MODELS
-from .multi_scale_deformable_attn_function import \
-    MultiScaleDeformableAttnFunction_fp32
 
 
 @MODELS.register_module()
@@ -270,15 +268,14 @@ class TPVMSDeformableAttention3D(BaseModule):
         ])
         self.value_proj = nn.Linear(embed_dims, embed_dims)
 
-        self.init_weights()
-
     def init_weights(self):
         """Default initialization for Parameters of Module."""
+        device = next(self.parameters()).device
         for i in range(3):
             constant_init(self.sampling_offsets[i], 0.)
             thetas = torch.arange(
-                self.num_heads,
-                dtype=torch.float32) * (2.0 * math.pi / self.num_heads)
+                self.num_heads, dtype=torch.float32,
+                device=device) * (2.0 * math.pi / self.num_heads)
             grid_init = torch.stack([thetas.cos(), thetas.sin()], -1)
             grid_init = (grid_init /
                          grid_init.abs().max(-1, keepdim=True)[0]).view(
@@ -445,18 +442,7 @@ class TPVMSDeformableAttention3D(BaseModule):
                 f'Last dim of reference_points must be'
                 f' 2 or 4, but get {reference_points.shape[-1]} instead.')
 
-        #  sampling_locations.shape:
-        #       bs, num_query, num_heads, num_levels, num_all_points, 2
-        #  attention_weights.shape:
-        #       bs, num_query, num_heads, num_levels, num_all_points
-
         if torch.cuda.is_available() and value.is_cuda:
-            if value.dtype == torch.float16:
-                MultiScaleDeformableAttnFunction = \
-                    MultiScaleDeformableAttnFunction_fp32
-            else:
-                MultiScaleDeformableAttnFunction = \
-                    MultiScaleDeformableAttnFunction_fp32
             output = MultiScaleDeformableAttnFunction.apply(
                 value, spatial_shapes, level_start_index, sampling_locations,
                 attention_weights, self.im2col_step)
