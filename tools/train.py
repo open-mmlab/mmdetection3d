@@ -18,7 +18,7 @@ from mmdet3d import __version__ as mmdet3d_version
 from mmdet3d.apis import init_random_seed, train_model
 from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
-from mmdet3d.utils import collect_env, get_root_logger
+from mmdet3d.utils import collect_env, get_device, get_root_logger
 from mmdet.apis import set_random_seed
 from mmseg import __version__ as mmseg_version
 
@@ -93,7 +93,10 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
+    # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
+    # will pass the `--local-rank` parameter to `tools/train.py` instead
+    # of `--local_rank`.
+    parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     parser.add_argument(
         '--autoscale-lr',
         action='store_true',
@@ -206,8 +209,9 @@ def main():
     logger.info(f'Distributed training: {distributed}')
     logger.info(f'Config:\n{cfg.pretty_text}')
 
+    cfg.device = get_device()
     # set random seeds
-    seed = init_random_seed(args.seed)
+    seed = init_random_seed(args.seed, device=cfg.device)
     seed = seed + dist.get_rank() if args.diff_seed else seed
     logger.info(f'Set random seed to {seed}, '
                 f'deterministic: {args.deterministic}')

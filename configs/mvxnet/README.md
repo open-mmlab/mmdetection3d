@@ -20,9 +20,16 @@ We implement MVX-Net and provide its results and models on KITTI dataset.
 
 ### KITTI
 
-|                               Backbone                                |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) |  mAP  |                                                                                                                                                                                                                 Download                                                                                                                                                                                                                 |
-| :-------------------------------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| [SECFPN](./dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py) | 3 Class | cosine 80e |   6.7    |                | 63.22 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805-83442923.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class_20210831_060805.log.json) |
+|                               Backbone                                |  Class  |  Lr schd   | Mem (GB) | Inf time (fps) | mAP11/mAP40 |                                                                                                                                                                           Download                                                                                                                                                                           |
+| :-------------------------------------------------------------------: | :-----: | :--------: | :------: | :------------: | :---------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [SECFPN](./dv_mvx-fpn_second_secfpn_adamw_2x8_40e_kitti-3d-3class.py) | 3 Class | cosine 40e |   7.4    |                |  63.3/63.0  | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_40e_kitti-3d-3class/dv_mvx-fpn_second_secfpn_adamw_2x8_40e_kitti-3d-3class-5a3a671a.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_40e_kitti-3d-3class/20230215_133955.log) |
+
+Detailed performance on KITTI 3D detection is as follows, evaluated by AP11 and AP40 metric:
+
+|           |  Easy   | Moderate |  Hard   |
+| --------- | :-----: | :------: | :-----: |
+| 3d (AP11) | 72.6428 | 63.3217  | 59.6384 |
+| 3d (AP40) | 73.8799 | 63.0147  | 59.1020 |
 
 ## Citation
 

@@ -7,7 +7,6 @@ import mmcv
 import torch
 from mmcv import Config, DictAction
 from mmcv.cnn import fuse_conv_bn
-from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
                          wrap_fp16_model)
 
@@ -15,6 +14,7 @@ import mmdet
 from mmdet3d.apis import single_gpu_test
 from mmdet3d.datasets import build_dataloader, build_dataset
 from mmdet3d.models import build_model
+from mmdet3d.utils import build_ddp, build_dp, get_device
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
@@ -112,7 +112,10 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
+    # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
+    # will pass the `--local-rank` parameter to `tools/test.py` instead
+    # of `--local_rank`.
+    parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -165,7 +168,7 @@ def main():
                       'in `gpu_ids` now.')
     else:
         cfg.gpu_ids = [args.gpu_id]
-
+    cfg.device = get_device()
     # init distributed env first, since logger depends on the dist info.
     if args.launcher == 'none':
         distributed = False
@@ -207,6 +210,8 @@ def main():
     cfg.model.train_cfg = None
     model = build_model(cfg.model, test_cfg=cfg.get('test_cfg'))
     fp16_cfg = cfg.get('fp16', None)
+    if fp16_cfg is None and cfg.get('device', None) == 'npu':
+        fp16_cfg = dict(loss_scale='dynamic')
     if fp16_cfg is not None:
         wrap_fp16_model(model)
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
@@ -226,12 +231,13 @@ def main():
         model.PALETTE = dataset.PALETTE
 
     if not distributed:
-        model = MMDataParallel(model, device_ids=cfg.gpu_ids)
+        model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
         outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
     else:
-        model = MMDistributedDataParallel(
-            model.cuda(),
-            device_ids=[torch.cuda.current_device()],
+        model = build_ddp(
+            model,
+            cfg.device,
+            device_ids=[int(os.environ['LOCAL_RANK'])],
             broadcast_buffers=False)
         outputs = multi_gpu_test(model, data_loader, args.tmpdir,
                                  args.gpu_collect)

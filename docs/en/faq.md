@@ -10,7 +10,8 @@ We list some potential troubles encountered by users and developers, along with 
 
   | MMDetection3D version |   MMDetection version    | MMSegmentation version  |        MMCV version         |
   | :-------------------: | :----------------------: | :---------------------: | :-------------------------: |
-  |        master         | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
+  |        master         | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.8.0  |
+  |       v1.0.0rc7       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.8.0  |
   |       v1.0.0rc6       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
   |       v1.0.0rc5       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
   |       v1.0.0rc4       | mmdet>=2.24.0, \<=3.0.0  | mmseg>=0.20.0, \<=1.0.0 | mmcv-full>=1.5.2, \<=1.7.0  |
