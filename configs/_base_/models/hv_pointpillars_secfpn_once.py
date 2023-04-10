@@ -17,7 +17,9 @@ model = dict(
         point_cloud_range=[-75.2, -75.2, -5.0, 75.2, 75.2, 3.0]),
     middle_encoder=dict(
         # output_shape (y, x) = point_cloud_range // voxel_size (y, x)
-        type='PointPillarsScatter', in_channels=64, output_shape=[752, 752]),
+        type='PointPillarsScatter',
+        in_channels=64,
+        output_shape=[752, 752]),
     backbone=dict(
         type='SECOND',
         in_channels=64,
@@ -47,7 +49,8 @@ model = dict(
                 [-75.2, -75.2, -1.62, 75.2, 75.2, -1.62],
                 [-75.2, -75.2, -1.65, 75.2, 75.2, -1.65],
             ],
-            sizes=[[4.38, 1.87, 1.59], [11.11, 2.88, 3.41], [7.52, 2.50, 2.62], [0.75, 0.76, 1.69], [2.18, 0.79, 1.43]],
+            sizes=[[4.38, 1.87, 1.59], [11.11, 2.88, 3.41], [7.52, 2.50, 2.62],
+                   [0.75, 0.76, 1.69], [2.18, 0.79, 1.43]],
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,

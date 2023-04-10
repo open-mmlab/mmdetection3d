@@ -199,7 +199,7 @@ def waymo_data_prep(root_path,
         num_worker=workers).create()
 
 
-def once_data_prep(root_path, info_prefix = 'once', split = 'trainval'):
+def once_data_prep(root_path, info_prefix='once', split='trainval'):
     """Prepare data related to ONCE dataset.
 
     Related data consists of '.pkl' files recording basic infos.
@@ -209,10 +209,10 @@ def once_data_prep(root_path, info_prefix = 'once', split = 'trainval'):
         info_prefix (str): The prefix of info filenames.
         split (str): Dataset split.
     """
-    once_converter.create_once_infos(
-        root_path, info_prefix, split=split)
+    once_converter.create_once_infos(root_path, info_prefix, split=split)
     create_groundtruth_database('OnceDataset', root_path, info_prefix,
                                 f'{root_path}/{info_prefix}_infos_train.pkl')
+
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')

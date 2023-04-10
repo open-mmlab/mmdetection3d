@@ -44,6 +44,5 @@ __all__ = [
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
     'RandomShiftScale', 'LoadPointsFromDict', 'PIPELINES',
-    'RangeLimitedRandomCrop', 'RandomRotate', 'MultiViewWrapper',
-    'OnceDataset'
+    'RangeLimitedRandomCrop', 'RandomRotate', 'MultiViewWrapper', 'OnceDataset'
 ]

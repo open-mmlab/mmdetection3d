@@ -10,7 +10,6 @@ from typing import List
 import mmcv
 import numpy as np
 
-
 camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
 
 
@@ -20,11 +19,9 @@ def _read_imageset_file(path):
     return [str(line).strip('\n') for line in lines]
 
 
-def create_once_infos(root_path,
-                      info_prefix,
-                      split):
+def create_once_infos(root_path, info_prefix, split):
     """Create info file of once dataset.
-    
+
     Given the raw data, generate its related info file in pkl format.
 
     Args:
@@ -39,7 +36,6 @@ def create_once_infos(root_path,
     imageset_path = osp.join(root_path, 'ImageSets')
     train_seqs = _read_imageset_file(osp.join(imageset_path, 'train.txt'))
     val_seqs = _read_imageset_file(osp.join(imageset_path, 'val.txt'))
-    test_seqs = _read_imageset_file(osp.join(imageset_path, 'test.txt'))
 
     test = split == 'test'
     if test:
@@ -48,8 +44,7 @@ def create_once_infos(root_path,
         print('train sequences: {}, val sequences {}'.format(
             len(train_seqs), len(val_seqs)))
     train_once_infos, val_once_infos = _fill_trainval_infos(
-        root_path, train_seqs, val_seqs, test
-    )
+        root_path, train_seqs, val_seqs, test)
 
     if test:
         print(f'test frames: {len(train_once_infos)}')
@@ -65,10 +60,10 @@ def create_once_infos(root_path,
 
 
 def _fill_trainval_infos(
-        root_path: str,
-        train_seqs: List[str],
-        val_seqs: List[str],
-        test = False,
+    root_path: str,
+    train_seqs: List[str],
+    val_seqs: List[str],
+    test=False,
 ):
     """Generate the train/val infos from the raw data.
 
@@ -102,12 +97,13 @@ def _fill_trainval_infos(
             if f_idx == 0:
                 prev_id = None
             else:
-                prev_id = json_seq['frames'][f_idx-1]['frame_id']
-            if f_idx == len(json_seq['frames'])-1:
+                prev_id = json_seq['frames'][f_idx - 1]['frame_id']
+            if f_idx == len(json_seq['frames']) - 1:
                 next_id = None
             else:
-                next_id = json_seq['frames'][f_idx+1]['frame_id']
-            lidar_path = osp.join(seq_path, 'lidar_roof', '{}.bin'.format(frame_id))
+                next_id = json_seq['frames'][f_idx + 1]['frame_id']
+            lidar_path = osp.join(seq_path, 'lidar_roof',
+                                  '{}.bin'.format(frame_id))
             mmcv.check_file_exist(lidar_path)
             pose = np.array(frame['pose'])
             frame_dict = {
@@ -122,12 +118,16 @@ def _fill_trainval_infos(
             }
             calib_dict = {}
             for camera in camera_list:
-                img_path = osp.join(seq_path, camera, '{}.jpg'.format(frame_id))
+                img_path = osp.join(seq_path, camera,
+                                    '{}.jpg'.format(frame_id))
                 frame_dict.update({camera: img_path})
                 calib_dict[camera] = {}
-                calib_dict[camera]['cam_to_velo'] = np.array(calib[camera]['cam_to_velo'])
-                calib_dict[camera]['cam_intrinsic'] = np.array(calib[camera]['cam_intrinsic'])
-                calib_dict[camera]['distortion'] = np.array(calib[camera]['distortion'])
+                calib_dict[camera]['cam_to_velo'] = np.array(
+                    calib[camera]['cam_to_velo'])
+                calib_dict[camera]['cam_intrinsic'] = np.array(
+                    calib[camera]['cam_intrinsic'])
+                calib_dict[camera]['distortion'] = np.array(
+                    calib[camera]['distortion'])
             frame_dict.update({'calib': calib_dict})
 
             if 'annos' in frame:

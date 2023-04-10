@@ -1,17 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import os
-import tempfile
 from os import path as osp
 
 import mmcv
 import numpy as np
-import torch
 from mmcv.utils import print_log
 
-from ..core import show_multi_modality_result, show_result
-from ..core.bbox import (Box3DMode, CameraInstance3DBoxes, Coord3DMode,
-                         LiDARInstance3DBoxes, points_cam2img)
+from ..core.bbox import LiDARInstance3DBoxes
 from .builder import DATASETS
 from .custom_3d import Custom3DDataset
 
@@ -83,13 +79,15 @@ class OnceDataset(Custom3DDataset):
         self.pcd_limit_range = pcd_limit_range
         self.pts_prefix = pts_prefix
 
-        self.camera_list = ['cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09']
+        self.camera_list = [
+            'cam01', 'cam03', 'cam05', 'cam06', 'cam07', 'cam08', 'cam09'
+        ]
         self.data_infos = list(filter(self._check_annos, self.data_infos))
 
         # reset group flag for the samplers after data_infos changed
         if not self.test_mode:
             self._set_group_flag()
-    
+
     def __len__(self):
         """Return the length of data infos.
 
@@ -97,7 +95,7 @@ class OnceDataset(Custom3DDataset):
             int: Length of filtered data infos.
         """
         return len(self.data_infos)
-    
+
     def _check_annos(self, info):
         return 'annos' in info
 
@@ -122,14 +120,14 @@ class OnceDataset(Custom3DDataset):
         info = self.data_infos[index]
         sample_idx = info['frame_id']
         pts_filename = info['lidar_path']
-        
+
         img_filenames = []
         lidar2imgs = []
         if self.modality['use_camera']:
             seq_id = info['sequence_id']
             for camera in self.camera_list:
-                img_filename = os.path.join(self.data_root, 'data', \
-                                            seq_id, camera, f'{sample_idx}.jpg')
+                img_filename = os.path.join(self.data_root, 'data', seq_id,
+                                            camera, f'{sample_idx}.jpg')
                 img_filenames.append(img_filename)
                 # obtain lidar to image transformation matrix
                 cam2lidar = info['calib'][camera]['cam_to_velo']
@@ -175,7 +173,7 @@ class OnceDataset(Custom3DDataset):
         annos = info['annos']
 
         # TODO: convert the box format in the original ONCE
-        # coordinate to that in the LiDAR coordiante in mmdet3d.
+        # coordinate to that in the LiDAR coordinate in mmdet3d.
         gt_bboxes_3d = annos['boxes_3d']
         gt_bboxes_3d = LiDARInstance3DBoxes(
             gt_bboxes_3d,
@@ -223,8 +221,7 @@ class OnceDataset(Custom3DDataset):
 
         annos = []
         print('\nConverting prediction to ONCE format')
-        for idx, result in enumerate(
-                mmcv.track_iter_progress(results)):
+        for idx, result in enumerate(mmcv.track_iter_progress(results)):
             info = self.data_infos[idx]
             sample_idx = info['frame_id']
             pred_scores = result['scores_3d'].numpy()
@@ -271,8 +268,9 @@ class OnceDataset(Custom3DDataset):
                 Default: 'Overall&Distance'.
             logger (logging.Logger | str, optional): Logger used for printing
                 related information during evaluation. Default: None.
-            jsonfile_prefix (str, optional): The prefix of json files, including
-                the file path and the prefix of filename, e.g., "a/b/prefix".
+            jsonfile_prefix (str, optional): The prefix of json files,
+                including the file path and the prefix of filename,
+                e.g., "a/b/prefix".
                 If not specified, a temp file will be created. Default: None.
             out_dir (str, optional): Path to save the visualization results.
                 Default: None.
@@ -287,9 +285,10 @@ class OnceDataset(Custom3DDataset):
         from mmdet3d.core.evaluation import once_eval
         gt_annos = [info['annos'] for info in self.data_infos]
 
-        ap_result_str, ap_dict = once_eval(gt_annos, results_list, self.CLASSES)
+        ap_result_str, ap_dict = once_eval(gt_annos, results_list,
+                                           self.CLASSES)
         print_log('\n' + ap_result_str, logger=logger)
-        
+
         if tmp_dir is not None:
             tmp_dir.cleanup()
 

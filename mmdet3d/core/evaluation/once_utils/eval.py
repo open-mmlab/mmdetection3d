@@ -5,10 +5,10 @@ r"""Adapted from `once_benchmark
 
 import numba
 import numpy as np
-from .eval_utils import compute_split_parts
-from .eval_utils import compute_split_parts, overall_filter, distance_filter, overall_distance_filter
-from ....core.bbox.iou_calculators import bbox_overlaps_3d
 
+from ....core.bbox.iou_calculators import bbox_overlaps_3d
+from .eval_utils import (compute_split_parts, distance_filter,
+                         overall_distance_filter, overall_filter)
 
 iou_threshold_dict = {
     'Car': 0.7,
@@ -17,6 +17,7 @@ iou_threshold_dict = {
     'Pedestrian': 0.3,
     'Cyclist': 0.5
 }
+
 
 def once_eval(gt_annos,
               dt_annos,
@@ -33,17 +34,21 @@ def once_eval(gt_annos,
         gt_annos (list[dict]): Contain gt information of each sample.
         dt_annos (list[dict]): Contain detected information of each sample.
         classes (list[str]): Classes to evaluation.
-        eval_mode (str, optional): Mode to eval. Defaults to 'Overall&Distance'.
+        eval_mode (str, optional): Mode to eval.
+                Defaults to 'Overall&Distance'.
 
     Returns:
         tuple: String and dict of evaluation results.
     """
-    assert len(gt_annos) == len(dt_annos), "the number of GT must match predictions"
-    assert eval_mode in ['Overall&Distance', 'Overall', 'Distance'], "eval mode only support 'Overall&Distance'," \
-                                                                    f"'Overall', 'Distance', but got {eval_mode}."
+    assert len(gt_annos) == len(dt_annos), ('the numberof GT must'
+                                            'match predictions')
+    assert eval_mode in ['Overall&Distance', 'Overall', 'Distance'], \
+           ("eval mode only support 'Overall&Distance',"
+           f"'Overall', 'Distance', but got {eval_mode}.")
     num_samples = len(gt_annos)
     split_parts = compute_split_parts(num_samples, num_parts)
-    ious = compute_iou3d(gt_annos, dt_annos, split_parts, with_heading=ap_with_heading)
+    ious = compute_iou3d(
+        gt_annos, dt_annos, split_parts, with_heading=ap_with_heading)
     if iou_thresholds is None:
         iou_thresholds = iou_threshold_dict
 
@@ -60,13 +65,13 @@ def once_eval(gt_annos,
     else:
         raise NotImplementedError
 
-    precision = np.zeros([num_classes, num_evals, num_pr_points+1])
-    recall = np.zeros([num_classes, num_evals, num_pr_points+1])
+    precision = np.zeros([num_classes, num_evals, num_pr_points + 1])
+    recall = np.zeros([num_classes, num_evals, num_pr_points + 1])
 
     for cls_idx, cur_class in enumerate(classes):
         iou_threshold = iou_thresholds[cur_class]
         for eval_idx in range(num_evals):
-            ### filter data & determine score thresholds on p-r curve ###
+            # filter data & determine score thresholds on p-r curve
             accum_all_scores, gt_flags, dt_flags = [], [], []
             num_valid_gt = 0
             for sample_idx in range(num_samples):
@@ -74,35 +79,49 @@ def once_eval(gt_annos,
                 dt_anno = dt_annos[sample_idx]
                 pred_score = dt_anno['score']
                 iou = ious[sample_idx]
-                gt_flag, dt_flag = filter_data(gt_anno, dt_anno, eval_mode, eval_idx, cur_class)
+                gt_flag, dt_flag = filter_data(gt_anno, dt_anno, eval_mode,
+                                               eval_idx, cur_class)
                 gt_flags.append(gt_flag)
                 dt_flags.append(dt_flag)
                 num_valid_gt += sum(gt_flag == 0)
-                accum_scores = accumulate_scores(iou, pred_score, gt_flag, dt_flag,
-                                                 iou_threshold=iou_threshold)
+                accum_scores = accumulate_scores(
+                    iou,
+                    pred_score,
+                    gt_flag,
+                    dt_flag,
+                    iou_threshold=iou_threshold)
                 accum_all_scores.append(accum_scores)
             all_scores = np.concatenate(accum_all_scores, axis=0)
-            thresholds = get_thresholds(all_scores, num_valid_gt, num_pr_points=num_pr_points)
+            thresholds = get_thresholds(
+                all_scores, num_valid_gt, num_pr_points=num_pr_points)
 
-            ### compute tp/fp/fn ###
-            confusion_matrix = np.zeros([len(thresholds), 3]) # only record tp/fp/fn
+            # compute tp/fp/fn
+            confusion_matrix = np.zeros([len(thresholds),
+                                         3])  # only record tp/fp/fn
             for sample_idx in range(num_samples):
                 pred_score = dt_annos[sample_idx]['score']
                 iou = ious[sample_idx]
                 gt_flag, pred_flag = gt_flags[sample_idx], dt_flags[sample_idx]
                 for th_idx, score_th in enumerate(thresholds):
-                    tp, fp, fn = compute_statistics(iou, pred_score, gt_flag, pred_flag,
-                                                    score_threshold=score_th, iou_threshold=iou_threshold)
+                    tp, fp, fn = compute_statistics(
+                        iou,
+                        pred_score,
+                        gt_flag,
+                        pred_flag,
+                        score_threshold=score_th,
+                        iou_threshold=iou_threshold)
                     confusion_matrix[th_idx, 0] += tp
                     confusion_matrix[th_idx, 1] += fp
                     confusion_matrix[th_idx, 2] += fn
 
-            ### draw p-r curve ###
+            # draw p-r curve
             for th_idx in range(len(thresholds)):
-                recall[cls_idx, eval_idx, th_idx] = confusion_matrix[th_idx, 0] / \
-                                                    (confusion_matrix[th_idx, 0] + confusion_matrix[th_idx, 2])
-                precision[cls_idx, eval_idx, th_idx] = confusion_matrix[th_idx, 0] / \
-                                                       (confusion_matrix[th_idx, 0] + confusion_matrix[th_idx, 1])
+                recall[cls_idx, eval_idx, th_idx] = \
+                    confusion_matrix[th_idx, 0] / \
+                    (confusion_matrix[th_idx, 0] + confusion_matrix[th_idx, 2])
+                precision[cls_idx, eval_idx, th_idx] = \
+                    confusion_matrix[th_idx, 0] / \
+                    (confusion_matrix[th_idx, 0] + confusion_matrix[th_idx, 1])
 
             for th_idx in range(len(thresholds)):
                 precision[cls_idx, eval_idx, th_idx] = np.max(
@@ -117,28 +136,28 @@ def once_eval(gt_annos,
 
     ret_dict = {}
 
-    ret_str = "\n|AP@%-9s|" % (str(num_pr_points))
+    ret_str = '\n|AP@%-9s|' % (str(num_pr_points))
     for eval_type in eval_types:
         ret_str += '%-12s|' % eval_type
     ret_str += '\n'
     for cls_idx, cur_class in enumerate(classes):
-        ret_str += "|%-12s|" % cur_class
+        ret_str += '|%-12s|' % cur_class
         for eval_idx in range(num_evals):
             eval_type = eval_types[eval_idx]
             key = 'AP_' + cur_class + '/' + eval_type
-            ap_score = AP[cls_idx,eval_idx]
+            ap_score = AP[cls_idx, eval_idx]
             ret_dict[key] = ap_score
-            ret_str += "%-12.2f|" % ap_score
-        ret_str += "\n"
+            ret_str += '%-12.2f|' % ap_score
+        ret_str += '\n'
     mAP = np.mean(AP, axis=0)
-    ret_str += "|%-12s|" % 'mAP'
+    ret_str += '|%-12s|' % 'mAP'
     for eval_idx in range(num_evals):
         eval_type = eval_types[eval_idx]
         key = 'AP_mean' + '/' + eval_type
         ap_score = mAP[eval_idx]
         ret_dict[key] = ap_score
-        ret_str += "%-12.2f|" % ap_score
-    ret_str += "\n"
+        ret_str += '%-12.2f|' % ap_score
+    ret_str += '\n'
 
     if print_ok:
         print(ret_str)
@@ -178,12 +197,12 @@ def accumulate_scores(iou, pred_scores, gt_flag, pred_flag, iou_threshold):
     accum_scores = np.zeros(num_gt)
     accum_idx = 0
     for i in range(num_gt):
-        if gt_flag[i] == -1: # not the same class
+        if gt_flag[i] == -1:  # not the same class
             continue
         det_idx = -1
         detected_score = -1
         for j in range(num_pred):
-            if pred_flag[j] == -1: # not the same class
+            if pred_flag[j] == -1:  # not the same class
                 continue
             if assigned[j]:
                 continue
@@ -193,11 +212,12 @@ def accumulate_scores(iou, pred_scores, gt_flag, pred_flag, iou_threshold):
                 det_idx = j
                 detected_score = pred_score
 
-        if (detected_score == -1) and (gt_flag[i] == 0): # false negative
+        if (detected_score == -1) and (gt_flag[i] == 0):  # false negative
             pass
-        elif (detected_score != -1) and (gt_flag[i] == 1 or pred_flag[det_idx] == 1): # ignore
+        elif (detected_score != -1) and (gt_flag[i] == 1
+                                         or pred_flag[det_idx] == 1):  # ignore
             assigned[det_idx] = True
-        elif detected_score != -1: # true positive
+        elif detected_score != -1:  # true positive
             accum_scores[accum_idx] = pred_scores[det_idx]
             accum_idx += 1
             assigned[det_idx] = True
@@ -206,7 +226,8 @@ def accumulate_scores(iou, pred_scores, gt_flag, pred_flag, iou_threshold):
 
 
 @numba.jit(nopython=True)
-def compute_statistics(iou, pred_scores, gt_flag, pred_flag, score_threshold, iou_threshold):
+def compute_statistics(iou, pred_scores, gt_flag, pred_flag, score_threshold,
+                       iou_threshold):
     num_gt = iou.shape[0]
     num_pred = iou.shape[1]
     assigned = np.full(num_pred, False)
@@ -214,7 +235,7 @@ def compute_statistics(iou, pred_scores, gt_flag, pred_flag, score_threshold, io
 
     tp, fp, fn = 0, 0, 0
     for i in range(num_gt):
-        if gt_flag[i] == -1: # different classes
+        if gt_flag[i] == -1:  # different classes
             continue
         det_idx = -1
         detected = False
@@ -222,41 +243,46 @@ def compute_statistics(iou, pred_scores, gt_flag, pred_flag, score_threshold, io
         gt_assigned_to_ignore = False
 
         for j in range(num_pred):
-            if pred_flag[j] == -1: # different classes
+            if pred_flag[j] == -1:  # different classes
                 continue
-            if assigned[j]: # already assigned to other GT
+            if assigned[j]:  # already assigned to other GT
                 continue
-            if under_threshold[j]: # compute only boxes above threshold
+            if under_threshold[j]:  # compute only boxes above threshold
                 continue
             iou_ij = iou[i, j]
-            if (iou_ij > iou_threshold) and (iou_ij > best_matched_iou or gt_assigned_to_ignore) and pred_flag[j] == 0:
+            if (iou_ij > iou_threshold) and (
+                    iou_ij > best_matched_iou
+                    or gt_assigned_to_ignore) and pred_flag[j] == 0:
                 best_matched_iou = iou_ij
                 det_idx = j
                 detected = True
                 gt_assigned_to_ignore = False
-            elif (iou_ij > iou_threshold) and (not detected) and pred_flag[j] == 1:
+            elif (iou_ij >
+                  iou_threshold) and (not detected) and pred_flag[j] == 1:
                 det_idx = j
                 detected = True
                 gt_assigned_to_ignore = True
 
-        if (not detected) and gt_flag[i] == 0: # false negative
+        if (not detected) and gt_flag[i] == 0:  # false negative
             fn += 1
-        elif detected and (gt_flag[i] == 1 or pred_flag[det_idx] == 1): # ignore
+        elif detected and (gt_flag[i] == 1
+                           or pred_flag[det_idx] == 1):  # ignore
             assigned[det_idx] = True
-        elif detected: # true positive
+        elif detected:  # true positive
             tp += 1
             assigned[det_idx] = True
 
     for j in range(num_pred):
-        if not (assigned[j] or pred_flag[j] == -1 or pred_flag[j] == 1 or under_threshold[j]):
+        if not (assigned[j] or pred_flag[j] == -1 or pred_flag[j] == 1
+                or under_threshold[j]):
             fp += 1
 
     return tp, fp, fn
 
 
-def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_name):
-    """
-    Filter data by class name and difficulty
+def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level,
+                class_name):
+    """Filter data by class name and difficulty.
 
     Args:
         gt_anno:
@@ -294,7 +320,8 @@ def filter_data(gt_anno, pred_anno, difficulty_mode, difficulty_level, class_nam
     elif difficulty_mode == 'Overall&Distance':
         ignore = overall_distance_filter(gt_anno['boxes_3d'], difficulty_level)
         gt_flag[ignore] = 1
-        ignore = overall_distance_filter(pred_anno['boxes_3d'], difficulty_level)
+        ignore = overall_distance_filter(pred_anno['boxes_3d'],
+                                         difficulty_level)
         pred_flag[ignore] = 1
     else:
         raise NotImplementedError
@@ -308,14 +335,14 @@ def bbox_overlaps_3d_with_heading(gt_boxes, pred_boxes, coordinate='lidar'):
     diff_rot = gt_boxes[:, [6]] - pred_boxes[:, [6]].T
     diff_rot = np.abs(diff_rot)
     reverse_diff_rot = 2 * np.pi - diff_rot
-    diff_rot[diff_rot >= np.pi] = reverse_diff_rot[diff_rot >= np.pi] # constrain to [0-pi]
-    iou3d[diff_rot > np.pi/2] = 0 # unmatched if diff_rot > 90
+    diff_rot[diff_rot >= np.pi] = reverse_diff_rot[
+        diff_rot >= np.pi]  # constrain to [0-pi]
+    iou3d[diff_rot > np.pi / 2] = 0  # unmatched if diff_rot > 90
     return iou3d
 
 
 def compute_iou3d(gt_annos, pred_annos, split_parts, with_heading):
-    """
-    Compute iou3d of all samples by parts
+    """Compute iou3d of all samples by parts.
 
     Args:
         with_heading: filter with heading
@@ -326,27 +353,33 @@ def compute_iou3d(gt_annos, pred_annos, split_parts, with_heading):
     Returns:
         ious: list of iou arrays for each sample
     """
-    gt_num_per_sample = np.stack([len(anno["name"]) for anno in gt_annos], 0)
-    pred_num_per_sample = np.stack([len(anno["name"]) for anno in pred_annos], 0)
+    gt_num_per_sample = np.stack([len(anno['name']) for anno in gt_annos], 0)
+    pred_num_per_sample = np.stack([len(anno['name']) for anno in pred_annos],
+                                   0)
     ious = []
     sample_idx = 0
     for num_part_samples in split_parts:
         gt_annos_part = gt_annos[sample_idx:sample_idx + num_part_samples]
         pred_annos_part = pred_annos[sample_idx:sample_idx + num_part_samples]
 
-        gt_boxes = np.concatenate([anno["boxes_3d"] for anno in gt_annos_part], 0)
-        pred_boxes = np.concatenate([anno["boxes_3d"] for anno in pred_annos_part], 0)
+        gt_boxes = np.concatenate([anno['boxes_3d'] for anno in gt_annos_part],
+                                  0)
+        pred_boxes = np.concatenate(
+            [anno['boxes_3d'] for anno in pred_annos_part], 0)
 
         if with_heading:
-            iou3d_part = bbox_overlaps_3d_with_heading(gt_boxes, pred_boxes, coordinate='lidar')
+            iou3d_part = bbox_overlaps_3d_with_heading(
+                gt_boxes, pred_boxes, coordinate='lidar')
         else:
-            iou3d_part = bbox_overlaps_3d(gt_boxes, pred_boxes, coordinate='lidar')
+            iou3d_part = bbox_overlaps_3d(
+                gt_boxes, pred_boxes, coordinate='lidar')
 
         gt_num_idx, pred_num_idx = 0, 0
         for idx in range(num_part_samples):
             gt_box_num = gt_num_per_sample[sample_idx + idx]
             pred_box_num = pred_num_per_sample[sample_idx + idx]
-            ious.append(iou3d_part[gt_num_idx: gt_num_idx + gt_box_num, pred_num_idx: pred_num_idx+pred_box_num])
+            ious.append(iou3d_part[gt_num_idx:gt_num_idx + gt_box_num,
+                                   pred_num_idx:pred_num_idx + pred_box_num])
             gt_num_idx += gt_box_num
             pred_num_idx += pred_box_num
         sample_idx += num_part_samples

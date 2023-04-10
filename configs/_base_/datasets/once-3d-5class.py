@@ -11,7 +11,8 @@ db_sampler = dict(
     info_path=data_root + 'once_dbinfos_train.pkl',
     rate=1.0,
     prepare=dict(
-        filter_by_min_points=dict(Car=5, Bus=5, Truck=5, Pedestrian=5, Cyclist=5)),
+        filter_by_min_points=dict(
+            Car=5, Bus=5, Truck=5, Pedestrian=5, Cyclist=5)),
     classes=class_names,
     sample_groups=dict(Car=1, Bus=4, Truck=3, Pedestrian=2, Cyclist=2),
     points_loader=dict(
