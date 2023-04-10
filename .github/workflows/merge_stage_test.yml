@@ -1,26 +1,16 @@
 name: merge_stage_test
 
-# on:
-#   push:
-#     paths-ignore:
-#       - 'README.md'
-#       - 'README_zh-CN.md'
-#       - 'docs/**'
-#       - 'demo/**'
-#       - '.dev_scripts/**'
-#       - '.circleci/**'
-#     branches:
-#       - dev-1.x
-
 on:
-  pull_request:
-      paths-ignore:
-        - 'README.md'
-        - 'README_zh-CN.md'
-        - 'docs/**'
-        - 'demo/**'
-        - '.dev_scripts/**'
-        - '.circleci/**'
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'README_zh-CN.md'
+      - 'docs/**'
+      - 'demo/**'
+      - '.dev_scripts/**'
+      - '.circleci/**'
+    branches:
+      - dev-1.x
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
