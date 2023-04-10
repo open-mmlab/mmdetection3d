@@ -6,7 +6,7 @@ r"""Adapted from `Waymo to KITTI converter
 try:
     from waymo_open_dataset import dataset_pb2
 except ImportError:
-    raise ImportError('Please run "pip install waymo-open-dataset-tf-2-5-0" '
+    raise ImportError('Please run "pip install waymo-open-dataset-tf-2-6-0" '
                       '>1.4.5 to install the official devkit first.')
 
 import os

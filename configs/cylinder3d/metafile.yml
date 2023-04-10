@@ -12,7 +12,7 @@ Collections:
     README: configs/cylinder3d/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/segmentors/cylinder3d.py#L13
-      Version: v1.1.0rc4
+      Version: v1.1.0
 
 Models:
   - Name:

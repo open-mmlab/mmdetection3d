@@ -39,5 +39,5 @@ Models:
       - Task: 3D Object Detection
         Dataset: SUNRGBD-3D
         Metrics:
-          AP@0.25: 64.55
+          AP@0.25: 64.48
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvotenet/imvotenet_stage2_16x8_sunrgbd-3d-10class/imvotenet_stage2_16x8_sunrgbd-3d-10class_20210819_192851-1bcd1b97.pth

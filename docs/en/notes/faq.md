@@ -10,7 +10,8 @@ We list some potential troubles encountered by users and developers, along with 
 
   | MMDetection3D version |     MMEngine version     |      MMCV version       |   MMDetection version    |
   | --------------------- | :----------------------: | :---------------------: | :----------------------: |
-  | dev-1.x               | mmengine>=0.6.0, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | dev-1.x               | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
+  | main                  | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
   | v1.1.0rc3             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc3, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc2             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc3, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc1             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
@@ -44,6 +45,8 @@ We list some potential troubles encountered by users and developers, along with 
   or
 
   `pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
+
+- If you face some errors about numba in cuda-9.0 environment, you should check the version of numba. In cuda-9.0 environment, the high version of numba is not supported and we suggest you could install numba==0.53.0.
 
 ## How to annotate point cloud?
 
