@@ -11,6 +11,7 @@ from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import BaseInstance3DBoxes
+from mmengine.runner import amp
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
@@ -68,7 +69,6 @@ class SparseEncoder(nn.Module):
         self.encoder_channels = encoder_channels
         self.encoder_paddings = encoder_paddings
         self.stage_num = len(self.encoder_channels)
-        self.fp16_enabled = False
         self.return_middle_feats = return_middle_feats
         # Spconv init all weight on its own
 
@@ -111,6 +111,7 @@ class SparseEncoder(nn.Module):
             indice_key='spconv_down2',
             conv_type='SparseConv3d')
 
+    @amp.autocast(enabled=False)
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseEncoder.
 
