@@ -39,8 +39,7 @@ class TPVImageCrossAttention(BaseModule):
                      num_levels=4),
                  tpv_h=None,
                  tpv_w=None,
-                 tpv_z=None,
-                 **kwargs):
+                 tpv_z=None):
         super().__init__(init_cfg)
 
         self.init_cfg = init_cfg

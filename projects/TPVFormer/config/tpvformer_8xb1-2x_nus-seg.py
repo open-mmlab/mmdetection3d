@@ -121,18 +121,27 @@ optim_wrapper = dict(
     clip_grad=dict(max_norm=35, norm_type=2),
 )
 
-occupancy = False
-lovasz_input = 'points'
-ce_input = 'voxel'
+param_scheduler = [
+    dict(type='LinearLR', start_factor=1e-5, by_epoch=False, begin=0, end=500),
+    dict(
+        type='CosineAnnealingLR',
+        begin=0,
+        T_max=24,
+        by_epoch=True,
+        eta_min=1e-6,
+        convert_to_iter_based=True)
+]
+
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
 
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
-
 _dim_ = 128
 num_heads = 8
-_pos_dim_ = [48, 48, 32]
 _ffn_dim_ = _dim_ * 2
-_num_levels_ = 4
-_num_cams_ = 6
 
 tpv_h_ = 200
 tpv_w_ = 200
@@ -140,7 +149,6 @@ tpv_z_ = 16
 scale_h = 1
 scale_w = 1
 scale_z = 1
-tpv_encoder_layers = 5
 num_points_in_pillar = [4, 32, 32]
 num_points = [8, 64, 64]
 hybrid_attn_anchors = 16
@@ -166,7 +174,7 @@ self_cross_layer = dict(
         dict(
             type='TPVImageCrossAttention',
             pc_range=point_cloud_range,
-            num_cams=_num_cams_,
+            num_cams=6,
             dropout=0.1,
             deformable_attention=dict(
                 type='TPVMSDeformableAttention3D',
@@ -174,7 +182,7 @@ self_cross_layer = dict(
                 num_heads=num_heads,
                 num_points=num_points,
                 num_z_anchors=num_points_in_pillar,
-                num_levels=_num_levels_,
+                num_levels=4,
                 floor_sampling_offset=False,
                 tpv_h=tpv_h_,
                 tpv_w=tpv_w_,
@@ -267,7 +275,7 @@ model = dict(
         tpv_h=tpv_h_,
         tpv_w=tpv_w_,
         tpv_z=tpv_z_,
-        num_layers=tpv_encoder_layers,
+        num_layers=5,
         pc_range=point_cloud_range,
         num_points_in_pillar=num_points_in_pillar,
         num_points_in_pillar_cross_view=[16, 16, 16],
@@ -279,7 +287,7 @@ model = dict(
         embed_dims=_dim_,
         positional_encoding=dict(
             type='TPVFormerPositionalEncoding',
-            num_feats=_pos_dim_,
+            num_feats=[48, 48, 32],
             h=tpv_h_,
             w=tpv_w_,
             z=tpv_z_)),
@@ -302,9 +310,6 @@ model = dict(
             avg_non_ignore=True,
             loss_weight=1.0),
         loss_lovasz=dict(type='LovaszLoss', loss_weight=1.0, reduction='none'),
-        ignore_index=0),
-)
-
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=2)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
+        lovasz_input='points',
+        ce_input='voxel',
+        ignore_index=0))

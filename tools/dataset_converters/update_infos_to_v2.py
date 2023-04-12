@@ -334,7 +334,8 @@ def update_nuscenes_infos(pkl_path, out_dir):
             trans = ori_info_dict['cams'][cam]['sensor2lidar_translation']
             lidar2sensor[:3, :3] = rot.T
             lidar2sensor[:3, 3:4] = -1 * np.matmul(rot.T, trans.reshape(3, 1))
-            empty_img_info['lidar2cam'] = lidar2sensor.tolist()
+            empty_img_info['lidar2cam'] = lidar2sensor.astype(
+                np.float32).tolist()
             temp_data_info['images'][cam] = empty_img_info
         ignore_class_name = set()
         if 'gt_boxes' in ori_info_dict:
