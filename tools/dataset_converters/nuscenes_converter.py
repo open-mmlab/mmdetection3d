@@ -267,6 +267,11 @@ def _fill_trainval_infos(nusc,
                 [a['num_radar_pts'] for a in annotations])
             info['valid_flag'] = valid_flag
 
+            if 'lidarseg' in nusc.table_names:
+                info['pts_semantic_mask_path'] = osp.join(
+                    nusc.dataroot,
+                    nusc.get('lidarseg', lidar_token)['filename'])
+
         if sample['scene_token'] in train_scenes:
             train_nusc_infos.append(info)
         else:
