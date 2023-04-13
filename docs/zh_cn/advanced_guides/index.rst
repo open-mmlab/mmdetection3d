@@ -1,4 +1,4 @@
-Datasets
+数据集
 **************
 
 .. toctree::
@@ -7,7 +7,7 @@ Datasets
    datasets/index.rst
 
 
-Supported Tasks
+支持的任务
 **************
 
 .. toctree::
@@ -16,7 +16,7 @@ Supported Tasks
    supported_tasks/index.rst
 
 
-Customization
+自定义项目
 **************
 
 .. toctree::

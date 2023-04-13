@@ -1,4 +1,4 @@
-# Waymo 数据集
+# Waymo 数据集上 3D 目标检测
 
 本文档页包含了关于 MMDetection3D 中 Waymo 数据集用法的教程。
 

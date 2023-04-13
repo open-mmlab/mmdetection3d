@@ -1,4 +1,4 @@
-Train & Test
+训练和测试
 **************
 .. toctree::
    :maxdepth: 1
@@ -11,7 +11,7 @@ Train & Test
    inference.md
    new_data_model.md
 
-Useful Tools
+实用工具
 ************
 .. toctree::
    :maxdepth: 1
