@@ -12,7 +12,7 @@ input_modality = dict(use_lidar=False, use_camera=True)
 
 # data_root = 's3://openmmlab/datasets/detection3d/waymo/kitti_format/'
 
-# Method 2: Use backend_args, file_client_args in versions before 1.1.0rc4
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0
 # backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({

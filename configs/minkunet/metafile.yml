@@ -11,7 +11,7 @@ Collections:
     README: configs/minkunet/README.md
     Code:
       URL: https://github.com/open-mmlab/mmdetection3d/blob/1.1/mmdet3d/models/segmentors/minkunet.py#L13
-      Version: v1.1.0rc4
+      Version: v1.1.0
 
 Models:
   - Name: minkunet_w16_8xb2-15e_semantickitti

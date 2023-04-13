@@ -1,4 +1,3 @@
-
 name: deploy
 
 on: push
@@ -9,7 +8,7 @@ concurrency:
 
 jobs:
   build-n-publish:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - uses: actions/checkout@v2
@@ -19,8 +18,10 @@ jobs:
           python-version: 3.7
       - name: Install torch
         run: pip install torch
+      - name: Install wheel
+        run: pip install wheel
       - name: Build MMDet3D
-        run: python setup.py sdist
+        run: python setup.py sdist bdist_wheel
       - name: Publish distribution to PyPI
         run: |
           pip install twine

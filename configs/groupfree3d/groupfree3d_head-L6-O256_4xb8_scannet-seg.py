@@ -224,3 +224,4 @@ test_cfg = dict(type='TestLoop')
 
 default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=10))
+randomness = dict(seed=4)

@@ -6,8 +6,7 @@ configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py
 configs/point_rcnn/point-rcnn_8xb2_kitti-3d-3class.py
 configs/pointnet2/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
 configs/pointnet2/pointnet2_msg_2xb16-cosine-250e_scannet-seg.py
-configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-2x_lyft-3d.py
-configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py
+configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py
 configs/pv_rcnn/pv_rcnn_8xb2-80e_kitti-3d-3class.py
 configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-3class.py
 configs/second/second_hv_secfpn_8xb6-amp-80e_kitti-3d-3class.py

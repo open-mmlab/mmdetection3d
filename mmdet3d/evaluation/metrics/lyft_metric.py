@@ -122,7 +122,8 @@ class LyftMetric(BaseMetric):
 
         # load annotations
         self.data_infos = load(
-            self.ann_file, backend_args=self.backend_args)['data_list']
+            osp.join(self.data_root, self.ann_file),
+            backend_args=self.backend_args)['data_list']
         result_dict, tmp_dir = self.format_results(results, classes,
                                                    self.jsonfile_prefix,
                                                    self.csv_savepath)
@@ -360,7 +361,7 @@ def output_to_lyft_box(detection: dict) -> List[LyftBox]:
     Returns:
         List[:obj:`LyftBox`]: List of standard LyftBoxes.
     """
-    bbox3d = detection['bbox_3d']
+    bbox3d = detection['bboxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
 
