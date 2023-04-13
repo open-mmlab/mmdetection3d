@@ -4,7 +4,11 @@
 
 ## 准备之前
 
-您可以在[这里](https://www.nuscenes.org/download)下载 nuScenes 3D 检测数据并解压缩所有 zip 文件。
+您可以在[这里](https://www.nuscenes.org/download)下载 nuScenes 3D 检测数据 Full dataset (v1.0) 并解压缩所有 zip 文件。
+
+如果您想进行 3D 语义分割任务，需要额外下载 nuScenes-lidarseg 数据标注，并将解压的文件放入 nuScenes 对应的文件夹下。
+
+**注意**：nuScenes-lidarseg 中的 v1.0trainval(test)/categroy.json 会替换原先 Full dataset (v1.0) 原先的 v1.0trainval(test)/categroy.json，但是不会对 3D 目标检测任务造成影响。
 
 像准备数据集的一般方法一样，建议将数据集根目录链接到 `$MMDETECTION3D/data`。
 
@@ -20,6 +24,7 @@ mmdetection3d
 │   │   ├── maps
 │   │   ├── samples
 │   │   ├── sweeps
+│   │   ├── lidarseg (optional)
 │   │   ├── v1.0-test
 |   |   ├── v1.0-trainval
 ```
@@ -44,11 +49,11 @@ mmdetection3d
 │   │   ├── maps
 │   │   ├── samples
 │   │   ├── sweeps
+│   │   ├── lidarseg (optional)
 │   │   ├── v1.0-test
 |   |   ├── v1.0-trainval
 │   │   ├── nuscenes_database
 │   │   ├── nuscenes_infos_train.pkl
-│   │   ├── nuscenes_infos_trainval.pkl
 │   │   ├── nuscenes_infos_val.pkl
 │   │   ├── nuscenes_infos_test.pkl
 │   │   ├── nuscenes_dbinfos_train.pkl
@@ -59,11 +64,11 @@ mmdetection3d
   - info\['sample_idx'\]：样本在整个数据集的索引。
   - info\['token'\]：样本数据标记。
   - info\['timestamp'\]：样本数据时间戳。
+  - info\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
   - info\['lidar_points'\]：是一个字典，包含了所有与激光雷达点相关的信息。
     - info\['lidar_points'\]\['lidar_path'\]：激光雷达点云数据的文件名。
     - info\['lidar_points'\]\['num_pts_feats'\]：点的特征维度。
     - info\['lidar_points'\]\['lidar2ego'\]：该激光雷达传感器到自车的变换矩阵。（4x4 列表）
-    - info\['lidar_points'\]\['ego2global'\]：自车到全局坐标的变换矩阵。（4x4 列表）
   - info\['lidar_sweeps'\]：是一个列表，包含了扫描信息（没有标注的中间帧）。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]：第 i 次扫描的激光雷达数据的文件路径。
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\[lidar2ego''\]：当前激光雷达传感器到自车的变换矩阵。（4x4 列表）
@@ -94,6 +99,7 @@ mmdetection3d
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['velocity'\]：3D 边界框的速度（由于不正确，没有垂直测量），大小为 (2, ) 的列表。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]：实例的属性标签。我们为属性分类维护了一个属性集合和映射。
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]：长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
+  - info\['pts_semantic_mask_path'\]：激光雷达语义分割标注的文件名。
 
 注意：
 
