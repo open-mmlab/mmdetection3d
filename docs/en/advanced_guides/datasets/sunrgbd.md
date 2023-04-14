@@ -1,4 +1,4 @@
-# SUN RGB-D for 3D Object Detection
+# SUN RGB-D Dataset
 
 ## Dataset preparation
 
