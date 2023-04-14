@@ -32,7 +32,7 @@ python demo/pcd_demo.py demo/data/sunrgbd/sunrgbd_000017.bin configs/votenet/vot
 
 Remember to convert the VoteNet checkpoint if you are using mmdetection3d version >= 0.6.0. See its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet/README.md/) for detailed instructions on how to convert the checkpoint.
 
-### Monocular 3D demo
+#### Monocular 3D demo
 
 To test a monocular 3D detector on image data, simply run:
 

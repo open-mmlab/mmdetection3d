@@ -1,4 +1,4 @@
-# Test and Train on standard datasets
+# Test and Train on Standard Datasets
 
 ### Test existing models on standard datasets
 
