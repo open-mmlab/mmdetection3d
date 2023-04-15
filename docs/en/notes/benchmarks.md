@@ -1,34 +1,34 @@
 # Benchmarks
 
-Here we benchmark the training and testing speed of models in MMDetection3D,
+Here we benchmark the training speed of models in MMDetection3D,
 with some other open source 3D detection codebases.
 
 ## Settings
 
-- Hardwares: 8 NVIDIA Tesla V100 (32G) GPUs, Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz
-- Software: Python 3.7, CUDA 10.1, cuDNN 7.6.5, PyTorch 1.3, numba 0.48.0.
+- Hardwares: 8 NVIDIA Tesla A100 (80G) GPUs, Intel(R) Xeon(R) Gold 128 CPU @ 2.40GHz
+- Software: Python 3.7, CUDA 11.1, cuDNN 8.0.5, PyTorch 1.9, numba 0.53.0.
 - Model: Since all the other codebases implements different models, we compare the corresponding models including SECOND, PointPillars, Part-A2, and VoteNet with them separately.
 - Metrics: We use the average throughput in iterations of the entire training run and skip the first 50 iterations of each epoch to skip GPU warmup time.
 
 ## Main Results
 
-We compare the training speed (samples/s) with other codebases if they implement the similar models. The results are as below, the greater the numbers in the table, the faster of the training process. The models that are not supported by other codebases are marked by `×`.
+We compare the training speed (samples/s) of MMDet3D 1.1 with MMDet3D 0.x (1.0.0rcx) and OpenPCDet. The results are as below, the greater the numbers in the table, the faster of the training process. The models that are not supported by other codebases are marked by `×`.
 
-|       Methods       | MMDetection3D | OpenPCDet | votenet | Det3D |
-| :-----------------: | :-----------: | :-------: | :-----: | :---: |
-|       VoteNet       |      358      |     ×     |   77    |   ×   |
-|  PointPillars-car   |      141      |     ×     |    ×    |  140  |
-| PointPillars-3class |      107      |    44     |    ×    |   ×   |
-|       SECOND        |      40       |    30     |    ×    |   ×   |
-|       Part-A2       |      17       |    14     |    ×    |   ×   |
+|       Methods       | MMDetection3D 1.1 | MMDetection3D O.x (1.0.0rcx) | OpenPCDet ｜ |
+| :-----------------: | :---------------: | :--------------------------: | :---------: |
+|       VoteNet       |        578        |             500              |      x      |
+|  PointPillars-car   |        231        |             193              |      ×      |
+| PointPillars-3class |        186        |             152              |     44      |
+|       SECOND        |        185        |             171              |     144     |
+|       Part-A2       |        70         |              64              |     68      |
 
 ## Details of Comparison
 
 ### Modification for Calculating Speed
 
-- __MMDetection3D__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark).
+- __MMDetection3D 1.1__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/dev-1.x/configs/benchmark) which use `BenchmarkHook` to record training speed.
 
-- __Det3D__: For comparison with Det3D, we use the commit [519251e](https://github.com/poodarchu/Det3D/tree/519251e72a5c1fdd58972eabeac67808676b9bb7).
+- __MMDetection3D 0.x (1.0.0rcx)__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark).
 
 - __OpenPCDet__: For comparison with OpenPCDet, we use the commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2).
 
@@ -117,10 +117,16 @@ We compare the training speed (samples/s) with other codebases if they implement
 
 ### VoteNet
 
-- __MMDetection3D__: With release v0.1.0, run
+- __MMDetection3D 1.1__: With release v1.1, run
 
   ```bash
-  ./tools/dist_train.sh configs/votenet/votenet_8xb16_sunrgbd-3d.py 8 --no-validate
+  ./tools/dist_train.sh configs/votenet/votenet_8xb16_sunrgbd-3d.py 8
+  ```
+
+- __MMDetection3D 0.x (1.0.0rcx)__: With release v1.0.0rc4, run
+
+  ```bash
+  ./tools/dist_train.sh configs/votenet/votenet_8xb16_sunrgbd-3d.py 8
   ```
 
 - __votenet__: At commit [2f6d6d3](https://github.com/facebookresearch/votenet/tree/2f6d6d36ff98d96901182e935afe48ccee82d566), run
@@ -198,10 +204,16 @@ We compare the training speed (samples/s) with other codebases if they implement
 
 ### PointPillars-car
 
-- __MMDetection3D__: With release v0.1.0, run
+- __MMDetection3D 1.1__: With release v1.1, run
 
   ```bash
-  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8 --no-validate
+  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8
+  ```
+
+- __MMDetection3D 0.x (1.0.0rcx)__: With release v1.0.0rc4, run
+
+  ```bash
+  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_3x8_100e_det3d_kitti-3d-car.py 8
   ```
 
 - __Det3D__: At commit [519251e](https://github.com/poodarchu/Det3D/tree/519251e72a5c1fdd58972eabeac67808676b9bb7), use `kitti_point_pillars_mghead_syncbn.py` and run
@@ -240,10 +252,16 @@ We compare the training speed (samples/s) with other codebases if they implement
 
 ### PointPillars-3class
 
-- __MMDetection3D__: With release v0.1.0, run
+- __MMDetection3D 1.1__: With release v1.1, run
 
   ```bash
-  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8 --no-validate
+  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8
+  ```
+
+- __MMDetection3D 0.x (1.0.0rcx)__: With release v1.0.0rc4, run
+
+  ```bash
+  ./tools/dist_train.sh configs/benchmark/hv_pointpillars_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8
   ```
 
 - __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), run
@@ -257,10 +275,16 @@ We compare the training speed (samples/s) with other codebases if they implement
 
 For SECOND, we mean the [SECONDv1.5](https://github.com/traveller59/second.pytorch/blob/master/second/configs/all.fhd.config) that was first implemented in [second.Pytorch](https://github.com/traveller59/second.pytorch). Det3D's implementation of SECOND uses its self-implemented Multi-Group Head, so its speed is not compatible with other codebases.
 
-- __MMDetection3D__: With release v0.1.0, run
+- __MMDetection3D 1.1__: With release v1.1, run
 
   ```bash
-  ./tools/dist_train.sh configs/benchmark/hv_second_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8 --no-validate
+  ./tools/dist_train.sh configs/benchmark/hv_second_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8
+  ```
+
+- __MMDetection3D 0.x (1.0.0rcx)__: With release v1.0.0rc4, run
+
+  ```bash
+  ./tools/dist_train.sh configs/benchmark/hv_second_secfpn_4x8_80e_pcdet_kitti-3d-3class.py 8
   ```
 
 - __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), run
@@ -272,10 +296,16 @@ For SECOND, we mean the [SECONDv1.5](https://github.com/traveller59/second.pytor
 
 ### Part-A2
 
-- __MMDetection3D__: With release v0.1.0, run
+- __MMDetection3D 1.1__: With release v1.1, run
 
   ```bash
-  ./tools/dist_train.sh configs/benchmark/hv_PartA2_secfpn_4x8_cyclic_80e_pcdet_kitti-3d-3class.py 8 --no-validate
+  ./tools/dist_train.sh configs/benchmark/hv_PartA2_secfpn_4x8_cyclic_80e_pcdet_kitti-3d-3class.py 8
+  ```
+
+- __MMDetection3D 0.x (1.0.0rcx)__: With release v1.0.0rc4, run
+
+  ```bash
+  ./tools/dist_train.sh configs/benchmark/hv_PartA2_secfpn_4x8_cyclic_80e_pcdet_kitti-3d-3class.py 8
   ```
 
 - __OpenPCDet__: At commit [b32fbddb](https://github.com/open-mmlab/OpenPCDet/tree/b32fbddbe06183507bad433ed99b407cbc2175c2), train the model by running
