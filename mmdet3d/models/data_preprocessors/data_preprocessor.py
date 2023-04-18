@@ -426,9 +426,9 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 inds, voxel2point_map = self.sparse_quantize(
                     res_coors_numpy, return_index=True, return_inverse=True)
                 voxel2point_map = torch.from_numpy(voxel2point_map).cuda()
-                if self.training:
-                    if len(inds) > 80000:
-                        inds = np.random.choice(inds, 80000, replace=False)
+                # if self.training:
+                #     if len(inds) > 80000:
+                #         inds = np.random.choice(inds, 80000, replace=False)
                 inds = torch.from_numpy(inds).cuda()
                 data_sample.gt_pts_seg.voxel_semantic_mask \
                     = data_sample.gt_pts_seg.pts_semantic_mask[inds]

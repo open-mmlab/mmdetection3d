@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from mmdet3d.models.layers import (TorchSparseConvModule,
                                    TorchSparseResidualBlock)
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
-from mmdet3d.utils import OptMultiConfig
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 if IS_TORCHSPARSE_AVAILABLE:
     import torchsparse
@@ -42,15 +42,21 @@ class MinkUNetBackbone(BaseModule):
                  in_channels: int = 4,
                  base_channels: int = 32,
                  encoder_channels: List[int] = [32, 64, 128, 256],
+                 encoder_blocks: List[int] = [2, 2, 2, 2],
                  decoder_channels: List[int] = [256, 128, 96, 96],
+                 decoder_blocks: List[int] = [2, 2, 2, 2],
                  num_stages: int = 4,
+                 norm_cfg: ConfigType = dict(type='TorchSparseBN'),
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg)
         assert num_stages == len(encoder_channels) == len(decoder_channels)
         self.num_stages = num_stages
         self.conv_input = nn.Sequential(
-            TorchSparseConvModule(in_channels, base_channels, kernel_size=3),
-            TorchSparseConvModule(base_channels, base_channels, kernel_size=3))
+            TorchSparseConvModule(
+                in_channels, base_channels, kernel_size=3, norm_cfg=norm_cfg),
+            TorchSparseConvModule(
+                base_channels, base_channels, kernel_size=3,
+                norm_cfg=norm_cfg))
         self.encoder = nn.ModuleList()
         self.decoder = nn.ModuleList()
 
@@ -63,15 +69,19 @@ class MinkUNetBackbone(BaseModule):
                         encoder_channels[i],
                         encoder_channels[i],
                         kernel_size=2,
-                        stride=2),
+                        stride=2,
+                        norm_cfg=norm_cfg),
                     TorchSparseResidualBlock(
                         encoder_channels[i],
                         encoder_channels[i + 1],
-                        kernel_size=3),
-                    TorchSparseResidualBlock(
-                        encoder_channels[i + 1],
-                        encoder_channels[i + 1],
-                        kernel_size=3)))
+                        kernel_size=3,
+                        norm_cfg=norm_cfg), *[
+                            TorchSparseResidualBlock(
+                                encoder_channels[i + 1],
+                                encoder_channels[i + 1],
+                                kernel_size=3,
+                                norm_cfg=norm_cfg)
+                        ] * (encoder_blocks[i] - 1)))
 
             self.decoder.append(
                 nn.ModuleList([
@@ -80,16 +90,20 @@ class MinkUNetBackbone(BaseModule):
                         decoder_channels[i + 1],
                         kernel_size=2,
                         stride=2,
-                        transposed=True),
+                        transposed=True,
+                        norm_cfg=norm_cfg),
                     nn.Sequential(
                         TorchSparseResidualBlock(
                             decoder_channels[i + 1] + encoder_channels[-2 - i],
                             decoder_channels[i + 1],
-                            kernel_size=3),
-                        TorchSparseResidualBlock(
-                            decoder_channels[i + 1],
-                            decoder_channels[i + 1],
-                            kernel_size=3))
+                            kernel_size=3,
+                            norm_cfg=norm_cfg), *[
+                                TorchSparseResidualBlock(
+                                    decoder_channels[i + 1],
+                                    decoder_channels[i + 1],
+                                    kernel_size=3,
+                                    norm_cfg=norm_cfg)
+                            ] * (decoder_blocks[i] - 1))
                 ]))
 
     def forward(self, voxel_features: Tensor, coors: Tensor) -> SparseTensor:

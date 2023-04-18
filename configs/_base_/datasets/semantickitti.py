@@ -140,6 +140,7 @@ eval_pipeline = [
 train_dataloader = dict(
     batch_size=2,
     num_workers=4,
+    persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',
@@ -158,6 +159,7 @@ train_dataloader = dict(
 test_dataloader = dict(
     batch_size=1,
     num_workers=1,
+    persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
         type='RepeatDataset',
