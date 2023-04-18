@@ -163,11 +163,10 @@ class BEVFusionGlobalRotScaleTrans(GlobalRotScaleTrans):
 
         if 'pcd_scale_factor' not in input_dict:
             self._random_scale(input_dict)
+        self._trans_bbox_points(input_dict)
         self._scale_bbox_points(input_dict)
 
-        self._trans_bbox_points(input_dict)
-
-        input_dict['transformation_3d_flow'].extend(['R', 'S', 'T'])
+        input_dict['transformation_3d_flow'].extend(['R', 'T', 'S'])
 
         lidar_augs = np.eye(4)
         lidar_augs[:3, :3] = input_dict['pcd_rotation'].T * input_dict[
