@@ -143,38 +143,30 @@ train_dataloader = dict(
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
-        type='RepeatDataset',
-        times=1,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file='semantickitti_infos_train.pkl',
-            pipeline=train_pipeline,
-            metainfo=metainfo,
-            modality=input_modality,
-            ignore_index=19,
-            backend_args=backend_args)),
-)
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='semantickitti_infos_train.pkl',
+        pipeline=train_pipeline,
+        metainfo=metainfo,
+        modality=input_modality,
+        ignore_index=19,
+        backend_args=backend_args))
 
 test_dataloader = dict(
     batch_size=1,
-    num_workers=1,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type='RepeatDataset',
-        times=1,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file='semantickitti_infos_val.pkl',
-            pipeline=test_pipeline,
-            metainfo=metainfo,
-            modality=input_modality,
-            ignore_index=19,
-            test_mode=True,
-            backend_args=backend_args)),
-)
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='semantickitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        metainfo=metainfo,
+        modality=input_modality,
+        ignore_index=19,
+        test_mode=True,
+        backend_args=backend_args))
 
 val_dataloader = test_dataloader
 

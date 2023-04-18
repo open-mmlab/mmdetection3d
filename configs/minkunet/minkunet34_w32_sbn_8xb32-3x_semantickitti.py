@@ -86,13 +86,13 @@ train_pipeline = [
 train_dataloader = dict(
     batch_size=12,
     sampler=dict(seed=0),
-    dataset=dict(dataset=dict(pipeline=train_pipeline)))
+    dataset=dict(pipeline=train_pipeline))
 
 vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
-lr = 0.24 * 8
+lr = 0.24 * 2
 optim_wrapper = dict(
     type='AmpOptimWrapper',
     loss_scale='dynamic',
@@ -119,8 +119,8 @@ param_scheduler = [
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (12 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=96)
+#   - `base_batch_size` = (2 GPUs) x (12 samples per GPU).
+auto_scale_lr = dict(enable=True, base_batch_size=24)
 
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=36, val_interval=2)
 val_cfg = dict(type='ValLoop')
