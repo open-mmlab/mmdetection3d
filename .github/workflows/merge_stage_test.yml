@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
-        run: pip install pip --upgrade
+        run: pip install pip --upgrade && pip install wheel
       - name: Install PyTorch
         run: pip install torch==${{matrix.torch}}+cpu torchvision==${{matrix.torchvision}}+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
       - name: Install MMEngine
@@ -87,7 +87,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
-        run: pip install pip --upgrade
+        run: pip install pip --upgrade && pip install wheel
       - name: Install PyTorch
         run: pip install torch==${{matrix.torch}}+cpu torchvision==${{matrix.torchvision}}+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
       - name: Install MMEngine
@@ -135,7 +135,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
-        run: pip install pip --upgrade
+        run: pip install pip --upgrade && pip install wheel
       - name: Fetch GPG keys
         run: |
           apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
@@ -171,7 +171,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
-        run: pip install pip --upgrade
+        run: pip install pip --upgrade && pip install wheel
       - name: Fetch GPG keys
         run: |
           apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
@@ -208,7 +208,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Upgrade pip
-        run: pip install pip --upgrade
+        run: pip install pip --upgrade && pip install wheel
       - name: Install lmdb
         run: pip install lmdb
       - name: Install PyTorch
