@@ -38,7 +38,7 @@ We implement SECOND and provide the results and checkpoints on KITTI dataset.
 
 Note:
 
-- See more details about metrics and data split on Waymo [HERE](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars). For implementation details, we basically follow the original settings. All of these results are achieved without bells-and-whistles, e.g. ensemble, multi-scale training and test augmentation.
+- See more details about metrics and data split on Waymo [HERE](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/pointpillars). For implementation details, we basically follow the original settings. All of these results are achieved without bells-and-whistles, e.g. ensemble, multi-scale training and test augmentation.
 - `FP16` means Mixed Precision (FP16) is adopted in training.
 
 ## Citation
