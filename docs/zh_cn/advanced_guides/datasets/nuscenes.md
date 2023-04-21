@@ -1,4 +1,4 @@
-# 3D 目标检测 NuScenes 数据集
+# NuScenes 数据集
 
 本页提供了有关在 MMDetection3D 中使用 nuScenes 数据集的具体教程。
 
