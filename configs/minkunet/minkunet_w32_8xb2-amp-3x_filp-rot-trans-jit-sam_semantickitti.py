@@ -29,6 +29,8 @@ train_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
+
 # optimizer
 # This schedule is mainly used by models on nuScenes dataset
 lr = 0.008
