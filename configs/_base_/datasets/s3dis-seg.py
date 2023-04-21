@@ -114,22 +114,7 @@ tta_pipeline = [
                 type='RandomFlip3D',
                 sync_2d=False,
                 flip_ratio_bev_horizontal=0.,
-                flip_ratio_bev_vertical=0.),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.,
-                flip_ratio_bev_vertical=1.),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=1.,
-                flip_ratio_bev_vertical=0.),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=1.,
-                flip_ratio_bev_vertical=1.)
+                flip_ratio_bev_vertical=0.)
         ], [dict(type='Pack3DDetInputs', keys=['points'])]])
 ]
 

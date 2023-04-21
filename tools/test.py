@@ -112,6 +112,8 @@ def main():
         cfg = trigger_visualization_hook(cfg, args)
 
     if args.tta:
+        # Currently, we only support tta for 3D segmentation
+        # TODO: Support tta for 3D detection
         assert 'tta_model' in cfg, 'Cannot find ``tta_model`` in config.'
         assert 'tta_pipeline' in cfg, 'Cannot find ``tta_pipeline`` in config.'
         cfg.test_dataloader.dataset.pipeline = cfg.tta_pipeline
