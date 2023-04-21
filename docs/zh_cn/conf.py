@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -9,7 +10,7 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+
 import os
 import subprocess
 import sys
@@ -23,17 +24,13 @@ sys.path.insert(0, os.path.abspath('../../'))
 project = 'MMDetection3D'
 copyright = '2020-2023, OpenMMLab'
 author = 'MMDetection3D Authors'
-version_file = '../../mmdet3d/version.py'
-
-
-def get_version():
-    with open(version_file, 'r') as f:
-        exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
-
 
 # The full version, including alpha/beta/rc tags
-release = get_version()
+version_file = '../../mmdet3d/version.py'
+with open(version_file) as f:
+    exec(compile(f.read(), version_file, 'exec'))
+__version__ = locals()['__version__']
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -44,18 +41,24 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
-    'myst_parser',
     'sphinx_markdown_tables',
     'sphinx_copybutton',
+    'myst_parser',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.autodoc.typehints',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
+    'sphinx_tabs.tabs',
 ]
+autodoc_typehints = 'description'
+autodoc_mock_imports = ['mmcv._ext']
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+
+# Ignore >>> when copying code
+copybutton_prompt_text = r'>>> |\.\.\. '
+copybutton_prompt_is_regexp = True
 
 myst_enable_extensions = ['colon_fence']
-myst_heading_anchors = 3
-
-autodoc_mock_imports = [
-    'matplotlib', 'nuscenes', 'PIL', 'pycocotools', 'pyquaternion',
-    'terminaltables', 'mmdet3d.version', 'mmcv.ops'
-]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -68,7 +71,7 @@ source_suffix = {
     '.md': 'markdown',
 }
 
-# The main toctree document.
+# The master toctree document.
 master_doc = 'index'
 
 # List of patterns, relative to source directory, that match files and
@@ -84,38 +87,40 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'pytorch_sphinx_theme'
 html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
-
 html_theme_options = {
-    'menu': [{
-        'name': 'GitHub',
-        'url': 'https://github.com/open-mmlab/mmdetection3d'
-    }, {
-        'name':
-        '上游库',
-        'children': [
-            {
-                'name': 'MMEngine',
-                'url': 'https://github.com/open-mmlab/mmengine',
-                'description': '深度学习模型训练基础库'
-            },
-            {
-                'name': 'MMCV',
-                'url': 'https://github.com/open-mmlab/mmcv',
-                'description': '基础视觉库'
-            },
-            {
-                'name': 'MMDetection',
-                'url': 'https://github.com/open-mmlab/mmdetection',
-                'description': '目标检测工具箱'
-            },
-        ]
-    }],
+    'menu': [
+        {
+            'name': 'GitHub',
+            'url': 'https://github.com/open-mmlab/mmdetection3d'
+        },
+        {
+            'name':
+            '上游库',
+            'children': [
+                {
+                    'name': 'MMEngine',
+                    'url': 'https://github.com/open-mmlab/mmengine',
+                    'description': '深度学习模型训练基础库'
+                },
+                {
+                    'name': 'MMCV',
+                    'url': 'https://github.com/open-mmlab/mmcv',
+                    'description': '基础视觉库'
+                },
+                {
+                    'name': 'MMDetection',
+                    'url': 'https://github.com/open-mmlab/mmdetection',
+                    'description': '目标检测工具箱'
+                },
+            ]
+        },
+    ],
     # Specify the language of shared menu
     'menu_lang':
-    'cn',
+    'en'
 }
 
-language = 'zh_CN'
+language = 'en'
 
 master_doc = 'index'
 
@@ -123,17 +128,28 @@ master_doc = 'index'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-html_css_files = ['css/readthedocs.css']
 
-latex_documents = [
-    (master_doc, 'mmcv.tex', 'mmcv Documentation', 'MMCV Contributors',
-     'manual'),
+html_css_files = [
+    'https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css',
+    'css/readthedocs.css'
+]
+html_js_files = [
+    'https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js',
+    'https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js',
+    'js/collapsed.js',
+    'js/table.js',
 ]
 
-# -- Extension configuration -------------------------------------------------
-# Ignore >>> when copying code
-copybutton_prompt_text = r'>>> |\.\.\. '
-copybutton_prompt_is_regexp = True
+myst_heading_anchors = 4
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'torch': ('https://pytorch.org/docs/stable/', None),
+    'mmcv': ('https://mmcv.readthedocs.io/zh_CN/latest/', None),
+    'mmengine': ('https://mmengine.readthedocs.io/zh_CN/latest/', None),
+    'mmdetection': ('https://mmdetection.readthedocs.io/zh_CN/latest/', None),
+}
 
 
 def builder_inited_handler(app):
