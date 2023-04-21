@@ -5,6 +5,8 @@ from typing import List, Tuple
 import numpy as np
 import torch
 from mmdet.models.utils import multi_apply
+from mmdet.utils.memory import cast_tensor_type
+from mmengine.runner import amp
 from torch import Tensor
 from torch import nn as nn
 
@@ -15,8 +17,6 @@ from mmdet3d.utils.typing_utils import (ConfigType, InstanceList,
                                         OptConfigType, OptInstanceList)
 from .base_3d_dense_head import Base3DDenseHead
 from .train_mixins import AnchorTrainMixin
-from mmengine.runner import amp
-from mmdet.utils.memory import cast_tensor_type
 
 
 @MODELS.register_module()

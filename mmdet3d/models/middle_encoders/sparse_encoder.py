@@ -4,6 +4,7 @@ from typing import List, Tuple
 import torch
 from mmcv.ops import points_in_boxes_all, three_interpolate, three_nn
 from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
+from mmengine.runner import amp
 from torch import Tensor
 from torch import nn as nn
 
@@ -11,7 +12,6 @@ from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import BaseInstance3DBoxes
-from mmengine.runner import amp
 
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor, SparseSequential
