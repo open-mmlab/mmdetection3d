@@ -1,4 +1,4 @@
-Datasets
+数据集
 **************
 
 .. toctree::
@@ -7,20 +7,20 @@ Datasets
    datasets/index.rst
 
 
-Supported Tasks
+支持的任务
 **************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    supported_tasks/index.rst
 
 
-Customization
+自定义项目
 **************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    customize_dataset.md
    customize_models.md

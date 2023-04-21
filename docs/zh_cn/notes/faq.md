@@ -10,9 +10,10 @@
 
   | MMDetection3D 版本 |      MMEngine 版本       |        MMCV 版本        |     MMDetection 版本     |
   | ------------------ | :----------------------: | :---------------------: | :----------------------: |
-  | dev-1.x            | mmengine>=0.6.0, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-  | v1.1.0rc3          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-  | v1.1.0rc2          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | dev-1.x            | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
+  | main               | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
+  | v1.1.0rc3          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc3, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
+  | v1.1.0rc2          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc3, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc1          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc0          | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 
@@ -44,6 +45,8 @@
   或者
 
   `pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
+
+- 如果您使用 cuda-9.0 的环境并遇到关于 numba 的错误， 您应该检查下 numba 的版本。在 cuda-9.0 环境中，高版本的 numba 是不支持的，我们建议安装 numba==0.53.0.
 
 ## 如何标注点云？
 
