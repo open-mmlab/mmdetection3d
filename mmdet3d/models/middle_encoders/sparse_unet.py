@@ -61,7 +61,6 @@ class SparseUNet(BaseModule):
         self.decoder_channels = decoder_channels
         self.decoder_paddings = decoder_paddings
         self.stage_num = len(self.encoder_channels)
-        self.fp16_enabled = False
         # Spconv init all weight on its own
 
         assert isinstance(order, tuple) and len(order) == 3

@@ -59,7 +59,6 @@ class PillarFeatureNet(nn.Module):
         self._with_distance = with_distance
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
-        self.fp16_enabled = False
         # Create PillarFeatureNet layers
         self.in_channels = in_channels
         feat_channels = [in_channels] + list(feat_channels)
@@ -209,7 +208,6 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
             norm_cfg=norm_cfg,
             mode=mode,
             legacy=legacy)
-        self.fp16_enabled = False
         feat_channels = [self.in_channels] + list(feat_channels)
         pfn_layers = []
         # TODO: currently only support one PFNLayer

@@ -10,7 +10,6 @@ class BasePointNet(BaseModule, metaclass=ABCMeta):
 
     def __init__(self, init_cfg=None, pretrained=None):
         super(BasePointNet, self).__init__(init_cfg)
-        self.fp16_enabled = False
         assert not (init_cfg and pretrained), \
             'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):

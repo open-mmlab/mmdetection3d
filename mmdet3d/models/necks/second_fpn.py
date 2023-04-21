@@ -38,7 +38,6 @@ class SECONDFPN(BaseModule):
         assert len(out_channels) == len(upsample_strides) == len(in_channels)
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.fp16_enabled = False
 
         deblocks = []
         for i, out_channel in enumerate(out_channels):
