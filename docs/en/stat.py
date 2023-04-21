@@ -6,7 +6,7 @@ from os import path as osp
 
 import numpy as np
 
-url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/main/configs'
+url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/main'
 
 files = sorted(glob.glob('../../configs/*/README.md'))
 
@@ -15,7 +15,7 @@ titles = []
 num_ckpts = 0
 
 for f in files:
-    url = osp.dirname(f.replace('../../configs', url_prefix))
+    url = osp.dirname(f.replace('../../', url_prefix))
 
     with open(f, 'r') as content_file:
         content = content_file.read()

@@ -86,16 +86,38 @@ html_theme = 'pytorch_sphinx_theme'
 html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
-    'menu': [
-        {
-            'name': 'GitHub',
-            'url': 'https://github.com/open-mmlab/mmdetection3d'
-        },
-    ],
+    'menu': [{
+        'name': 'GitHub',
+        'url': 'https://github.com/open-mmlab/mmdetection3d'
+    }, {
+        'name':
+        '上游库',
+        'children': [
+            {
+                'name': 'MMEngine',
+                'url': 'https://github.com/open-mmlab/mmengine',
+                'description': '深度学习模型训练基础库'
+            },
+            {
+                'name': 'MMCV',
+                'url': 'https://github.com/open-mmlab/mmcv',
+                'description': '基础视觉库'
+            },
+            {
+                'name': 'MMDetection',
+                'url': 'https://github.com/open-mmlab/mmdetection',
+                'description': '目标检测工具箱'
+            },
+        ]
+    }],
     # Specify the language of shared menu
     'menu_lang':
     'cn',
 }
+
+language = 'zh_CN'
+
+master_doc = 'index'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -103,7 +125,10 @@ html_theme_options = {
 html_static_path = ['_static']
 html_css_files = ['css/readthedocs.css']
 
-language = 'zh_CN'
+latex_documents = [
+    (master_doc, 'mmcv.tex', 'mmcv Documentation', 'MMCV Contributors',
+     'manual'),
+]
 
 # -- Extension configuration -------------------------------------------------
 # Ignore >>> when copying code

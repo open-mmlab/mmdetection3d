@@ -16,7 +16,7 @@ import sys
 
 import pytorch_sphinx_theme
 
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
@@ -86,22 +86,52 @@ html_theme = 'pytorch_sphinx_theme'
 html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
-    'menu': [
-        {
-            'name': 'GitHub',
-            'url': 'https://github.com/open-mmlab/mmdetection3d'
-        },
-    ],
+    'menu': [{
+        'name': 'GitHub',
+        'url': 'https://github.com/open-mmlab/mmdetection3d'
+    }, {
+        'name':
+        'Upstream',
+        'children': [
+            {
+                'name':
+                'MMEngine',
+                'url':
+                'https://github.com/open-mmlab/mmengine',
+                'description':
+                'Foundational library for training deep learning models'
+            },
+            {
+                'name': 'MMCV',
+                'url': 'https://github.com/open-mmlab/mmcv',
+                'description': 'Foundational library for computer vision'
+            },
+            {
+                'name': 'MMDetection',
+                'url': 'https://github.com/open-mmlab/mmdetection',
+                'description': 'Object detection toolbox and benchmark'
+            },
+        ]
+    }],
     # Specify the language of shared menu
     'menu_lang':
     'en'
 }
+
+language = 'en'
+
+master_doc = 'index'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_css_files = ['css/readthedocs.css']
+
+latex_documents = [
+    (master_doc, 'mmcv.tex', 'mmcv Documentation', 'MMCV Contributors',
+     'manual'),
+]
 
 # -- Extension configuration -------------------------------------------------
 # Ignore >>> when copying code
