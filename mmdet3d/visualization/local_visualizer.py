@@ -204,7 +204,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
-        self.o3d_vis.get_render_option().point_size = points_size
+        if self.o3d_vis.get_render_option() is not None:
+            self.o3d_vis.get_render_option().point_size = points_size
 
         points = points.copy()
         pcd = geometry.PointCloud()
