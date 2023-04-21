@@ -1,4 +1,4 @@
-# 2: Train with customized datasets
+# Train with Customized Datasets
 
 In this note, you will know how to train and test predefined models with customized datasets. We use the Waymo dataset as an example to describe the whole process.
 

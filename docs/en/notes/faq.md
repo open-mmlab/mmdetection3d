@@ -46,6 +46,8 @@ We list some potential troubles encountered by users and developers, along with 
 
   `pip install -e "git+https://github.com/ppwwyyxx/cocoapi#egg=pycocotools&subdirectory=PythonAPI"`
 
+- If you face some errors about numba in cuda-9.0 environment, you should check the version of numba. In cuda-9.0 environment, the high version of numba is not supported and we suggest you could install numba==0.53.0.
+
 ## How to annotate point cloud?
 
 MMDetection3D does not support point cloud annotation. Some open-source annotation tool are offered for reference:
