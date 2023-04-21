@@ -51,7 +51,7 @@ python demo/mono_det_demo.py demo/data/kitti/000008.png demo/data/kitti/000008.p
 在 nuScenes 数据上测试 [FCOS3D 模型](https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune_20210717_095645-8d806dc2.pth)：
 
 ```shell
-python demo/mono_det_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.jpg demo/data/nuscenes/n015-2018-07-24-11-22-45+0800.pkl  configs/pgd/pgd_r101-caffe_fpn_head-gn_16xb2-2x_nus-mono3d_finetune.py ${CHECKPOINT_FILE}  --show --cam-type CAM_BACK --score 0.1
+python demo/mono_det_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.jpg demo/data/nuscenes/n015-2018-07-24-11-22-45+0800.pkl  configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune.py ${CHECKPOINT_FILE}  --show --cam-type CAM_BACK
 ```
 
 **注意**： 当对翻转图像可视化单目 3D 检测结果是，相机内参矩阵也应该相应修改。在 PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744) 中可以了解更多细节和示例。
