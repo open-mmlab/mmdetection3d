@@ -1,10 +1,4 @@
-# 使用已有模型在标准数据集上进行推理和训练
-
-## 使用已有模型进行推理
-
-这里我们提供了评测 SUNRGBD、ScanNet、KITTI 等多个数据集的测试脚本。
-
-请参考[开始](https://mmdetection3d.readthedocs.io/zh_CN/dev-1.x/inference.html)下的验证/样例来获取更容易集成到其它项目和基本样例的高级接口。
+# 在标注数据集上测试和训练
 
 ### 在标准数据集上测试已有模型
 

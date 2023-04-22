@@ -1,5 +1,23 @@
 # Changelog of v1.0.x
 
+### v1.0.0 (6/4/2023)
+
+#### Improvements
+
+- Add BN in FPN to avoid loss Nan in MVXNet (#2282)
+- Update `s3dis_data_utils.py` (#2232)
+
+#### Bug Fixes
+
+- Fix precision error when using mixed precision on CenterPoint (#2341)
+- Replace `np.transpose` with `torch.permute` to speed up (@2273)
+- Update links of SECOND checkpoints (#2185)
+
+#### Contributors
+
+A total of 7 developers contributed to this release.
+@JingweiZhang12, @ZCMax, @Xiangxu-0103, @vansinhu, @cs1488, @sunjiahao1999, @Ginray
+
 ### v1.0.0rc7 (7/1/2023)
 
 #### Improvements

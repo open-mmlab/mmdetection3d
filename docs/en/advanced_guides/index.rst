@@ -11,7 +11,7 @@ Supported Tasks
 **************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    supported_tasks/index.rst
 
@@ -20,7 +20,7 @@ Customization
 **************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    customize_dataset.md
    customize_models.md
