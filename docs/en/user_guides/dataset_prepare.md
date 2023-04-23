@@ -76,6 +76,18 @@ mmdetection3d
 
 ## Download and Data Preparation
 
+### Summary of annotation files
+
+|                                                        Dataset                                                         |                                                                                                           Train annotation file                                                                                                           |                                                                                                        Val annotation file                                                                                                         |                                                    Test information file                                                     |
+| :--------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|                                                         KITTI                                                          |                                                                  [kitti_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/kitti/kitti_infos_train.pkl)                                                                   |                                                                 [kitti_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/kitti/kitti_infos_val.pkl)                                                                 |               [kitti_infos_test](https://download.openmmlab.com/mmdetection3d/data/kitti/kitti_infos_test.pkl)               |
+|                                                        NuScenes                                                        | [nuscenes_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_infos_train.pkl) [nuscenes_mini_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_mini_infos_train.pkl) | [nuscenes_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_infos_val.pkl)  [nuscenes_mini_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_mini_infos_val.pkl) |                                                                                                                              |
+|                                                         Waymo                                                          |         [waymo_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_infos_train.pkl)  [waymo_mini_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_infos_train.pkl)          |          [waymo_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_infos_val.pkl)  [waymo_mini_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_infos_val.pkl)          |             [waymo_infos_test.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_infos_test.pkl)             |
+| [Waymo-mini kitti-format data](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) |                                                                                                                                                                                                                                           |                                                                                                                                                                                                                                    |                                                                                                                              |
+|                                                       SUN RGB-D                                                        |                                                               [sunrgbd_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/sunrgbd/sunrgbd_infos_train.pkl)                                                                |                                                              [sunrgbd_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/sunrgbd/sunrgbd_infos_val.pkl)                                                              |                                                                                                                              |
+|                                                        ScanNet                                                         |                                                               [scannet_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/scannet/scannet_infos_train.pkl)                                                                |                                                              [scannet_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/scannet/scannet_infos_val.pkl)                                                              |          [scannet_infos_test.pkl](https://download.openmmlab.com/mmdetection3d/data/scannet/scannet_infos_test.pkl)          |
+|                                                     SemanticKitti                                                      |                                                      [semantickitti_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/semantickitti/semantickitti_infos_train.pkl)                                                       |                                                     [semantickitti_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/semantickitti/semantickitti_infos_val.pkl)                                                     | [semantickitti_infos_test.pkl](https://download.openmmlab.com/mmdetection3d/data/semantickitti/semantickitti_infos_test.pkl) |
+
 ### KITTI
 
 Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare KITTI data splits by running:
@@ -102,15 +114,23 @@ In an environment using slurm, users may run the following command instead:
 sh tools/create_data.sh <partition> kitti
 ```
 
+**Tips**: We also have provided kitti data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/kitti/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+
+```bash
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
+```
+
 ### Waymo
 
-Download Waymo open dataset V1.2 [HERE](https://waymo.com/open/download/) and its data split [HERE](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing). Then put `.tfrecord` files into corresponding folders in `data/waymo/waymo_format/` and put the data split `.txt` files into `data/waymo/kitti_format/ImageSets`. Download ground truth `.bin` file for validation set [HERE](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects) and put it into `data/waymo/waymo_format/`. A tip is that you can use `gsutil` to download the large-scale dataset with commands. You can take this [tool](https://github.com/RalphMao/Waymo-Dataset-Tool) as an example for more details. Subsequently, prepare waymo data by running:
+Download Waymo open dataset V1.4.1 [HERE](https://waymo.com/open/download/) and its data split [HERE](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing). Then put `.tfrecord` files into corresponding folders in `data/waymo/waymo_format/` and put the data split `.txt` files into `data/waymo/kitti_format/ImageSets`. Download ground truth `.bin` file for validation set [HERE](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_4_1/validation/ground_truth_objects) and put it into `data/waymo/waymo_format/`. A tip is that you can use `gsutil` to download the large-scale dataset with commands. You can take this [tool](https://github.com/RalphMao/Waymo-Dataset-Tool) as an example for more details. Subsequently, prepare waymo data by running:
 
 ```bash
 python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
 ```
 
 Note that:
+
+- If the preprocess of Waymo dataset is very slow or blocked, you could modify the `--workers` to a smaller number. If it still can't be solved, you could set the `--workers` as 0 to avoid using multiprocess.
 
 - If your local disk does not have enough space for saving converted data, you can change the `--out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
 
@@ -130,12 +150,28 @@ Note that:
 
   Now, this trick is only used for LiDAR-based detection methods.
 
+**Tips**:
+
+- We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted kitti-format by yourself.
+
+- If you just want to use a part of Waymo Dataset to verify some methods or debug quickly, you could use [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) we provided. It only contains two segments in train split and one segment in val split from the original dataset. We have processed all the images, point clouds and annotations offline. What you should do is only downloading, and then unzipping the file to `data/waymo/`:
+
+  ```bash
+  tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
+  ```
+
 ### NuScenes
 
 Download nuScenes V1.0 full dataset data [HERE](https://www.nuscenes.org/download). Prepare nuscenes data by running:
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
+```
+
+**Tips**: We also have provided NuScenes data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/nuscenes/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+
+```bash
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
 ```
 
 ### Lyft

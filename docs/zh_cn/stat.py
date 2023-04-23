@@ -6,7 +6,7 @@ from os import path as osp
 
 import numpy as np
 
-url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/master/'
+url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/main/'
 
 files = sorted(glob.glob('../configs/*/README.md'))
 
