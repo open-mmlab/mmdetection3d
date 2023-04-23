@@ -193,6 +193,8 @@ To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/m
 
 To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md).
 
+**Tips**: We also have provided data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/${DATASET}/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations by adding `--only-gt-database` in the command of running `create_data.py` like [Kitti](#kitti).
+
 ### Customized Datasets
 
 For using custom datasets, please refer to [Customize Datasets](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/docs/en/advanced_guides/customize_dataset.md).
