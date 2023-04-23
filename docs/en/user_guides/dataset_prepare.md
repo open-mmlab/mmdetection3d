@@ -114,11 +114,13 @@ In an environment using slurm, users may run the following command instead:
 sh tools/create_data.sh <partition> kitti
 ```
 
-**Tips**: We also have provided kitti data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/kitti/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+**Tips**:
 
-```bash
-python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
-```
+- **Ready-made Annotations**. We have also provided kitti data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/kitti/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+
+  ```bash
+  python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
+  ```
 
 ### Waymo
 
@@ -134,7 +136,17 @@ Note that:
 
 - If your local disk does not have enough space for saving converted data, you can change the `--out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
 
-- If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/`. Then, the dataset config is modified like the following:
+**Tips**:
+
+- **Ready-made Annotations**. We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted kitti-format by yourself.
+
+- **Waymo-mini**. If you just want to use a part of Waymo Dataset to verify some methods or debug quickly, you could use [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) we provided. It only contains two segments in train split and one segment in val split from the original dataset. We have processed all the images, point clouds and annotations offline. What you should do is only downloading, and then unzipping the file to `data/waymo/`:
+
+  ```bash
+  tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
+  ```
+
+- **Faster evaluation**. If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/`. Then, the dataset config is modified like the following:
 
   ```python
   val_evaluator = dict(
@@ -150,16 +162,6 @@ Note that:
 
   Now, this trick is only used for LiDAR-based detection methods.
 
-**Tips**:
-
-- We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted kitti-format by yourself.
-
-- If you just want to use a part of Waymo Dataset to verify some methods or debug quickly, you could use [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) we provided. It only contains two segments in train split and one segment in val split from the original dataset. We have processed all the images, point clouds and annotations offline. What you should do is only downloading, and then unzipping the file to `data/waymo/`:
-
-  ```bash
-  tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
-  ```
-
 ### NuScenes
 
 Download nuScenes V1.0 full dataset data [HERE](https://www.nuscenes.org/download). Prepare nuscenes data by running:
@@ -168,7 +170,9 @@ Download nuScenes V1.0 full dataset data [HERE](https://www.nuscenes.org/downloa
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
-**Tips**: We also have provided NuScenes data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/nuscenes/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+**Tips**:
+
+- **Ready-made Annotations**. We have also provided NuScenes data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/nuscenes/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
@@ -193,7 +197,7 @@ To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/m
 
 To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md).
 
-**Tips**: We also have provided data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/${DATASET}/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations by adding `--only-gt-database` in the command of running `create_data.py` like [Kitti](#kitti).
+**Tips**: We have also provided data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/${DATASET}/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations by adding `--only-gt-database` in the command of running `create_data.py` like [Kitti](#kitti).
 
 ### Customized Datasets
 

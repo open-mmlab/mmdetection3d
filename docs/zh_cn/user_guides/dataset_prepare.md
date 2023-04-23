@@ -113,7 +113,9 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 sh tools/create_data.sh <partition> kitti
 ```
 
-**小贴士**：我们已经提供了离线处理好的 [KITTI 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/kitti/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
+**小贴士**：
+
+- **现成的标注文件**：我们已经提供了离线处理好的 [KITTI 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/kitti/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
 
 ```bash
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
@@ -131,7 +133,17 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 
 - 如果你的硬盘空间大小不足以存储转换后的数据，你可以将 `--out-dir` 参数设定为别的路径。你只需要记得在那个路径下创建文件夹并下载数据，然后在数据预处理完成后将其链接回 `data/waymo/kitti_format` 即可。
 
-- 如果你想在 Waymo 上进行更快的评估，你可以下载已经预处理好的[元信息文件](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl)并将其放置在 `data/waymo/waymo_format/` 目录下。接着，你可以按照以下来修改数据集的配置：
+**小贴士**：
+
+- **现成的标注文件**: 我们已经提供了离线处理好的 [Waymo 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/waymo/kitti_format/` 目录下。然而，您还是需要自己使用上面的脚本将 Waymo 的原始数据还需要转成 kitti 格式。
+
+- **Waymo-mini**： 如果你只是为了验证某些方法或者 debug, 你可以使用我们提供的 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz)。它只包含原始数据集中训练集中的 2 个 segments 和 验证集中的 1 个 segment。您只需要下载并且解压到 `data/waymo/`，即可使用它：
+
+  ```bash
+  tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
+  ```
+
+- **更快的评估**： 如果你想在 Waymo 上进行更快的评估，你可以下载已经预处理好的[元信息文件](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl)并将其放置在 `data/waymo/waymo_format/` 目录下。接着，你可以按照以下来修改数据集的配置：
 
   ```python
   val_evaluator = dict(
@@ -147,16 +159,6 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 
   目前这种方式仅限于纯点云检测任务。
 
-**小贴士**：
-
-- 我们已经提供了离线处理好的 [Waymo 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/waymo/kitti_format/` 目录下。然而，您还是需要自己使用上面的脚本将 Waymo 的原始数据还需要转成 kitti 格式。
-
-- 如果你只是为了验证某些方法或者 debug, 你可以使用我们提供的 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz)。它只包含原始数据集中训练集中的 2 个 segments 和 验证集中的 1 个 segment。您只需要下载并且解压到 `data/waymo/`，即可使用它：
-
-  ```bash
-  tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
-  ```
-
 ### NuScenes
 
 在[这里](https://www.nuscenes.org/download)下载 nuScenes 数据集 1.0 版本的完整数据文件。通过运行以下指令对 nuScenes 数据进行预处理：
@@ -165,7 +167,9 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
-**小贴士**：我们已经提供了离线处理好的 [NuScenes 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/nuscenes/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
+**小贴士**：
+
+- **现成的标注文件**：我们已经提供了离线处理好的 [NuScenes 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/nuscenes/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
