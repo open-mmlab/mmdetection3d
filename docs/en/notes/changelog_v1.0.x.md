@@ -519,7 +519,7 @@ A total of 11 developers contributed to this release.
 #### Highlights
 
 - Support to use [MIM](https://github.com/open-mmlab/mim) with pip installation
-- Support PAConv [models and benchmarks](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/paconv) on S3DIS
+- Support PAConv [models and benchmarks](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/paconv) on S3DIS
 - Enhance the documentation especially on dataset tutorials
 
 #### New Features
@@ -533,7 +533,7 @@ A total of 11 developers contributed to this release.
 
 - Refactor Group-Free-3D to make it inherit BaseModule from MMCV (#704)
 - Modify the initialization methods of FCOS3D to be consistent with the refactored approach (#705)
-- Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/groupfree3d) on ScanNet (#710)
+- Benchmark the Group-Free-3D [models](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/groupfree3d) on ScanNet (#710)
 - Add Chinese documentation for Getting Started (#725), FAQ (#730), Model Zoo (#735), Demo (#745), Quick Run (#746), Data Preparation (#787) and Configs (#788)
 - Add documentation for semantic segmentation on ScanNet and S3DIS (#743, #747, #806, #807)
 - Add a parameter `max_keep_ckpts` to limit the maximum number of saved Group-Free-3D checkpoints (#765)
@@ -713,7 +713,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Rename H3DNet configs (#349)
 - Fix CI by using ubuntu 18.04 in github workflow (#350)
 - Add assertions to avoid 4-dim points being input to [points_in_boxes](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/roiaware_pool3d/points_in_boxes.py) (#357)
-- Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/second) (#363)
+- Fix the SECOND results on Waymo in the corresponding [README](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) (#363)
 - Fix the incorrect adopted pipeline when adding val to workflow (#370)
 - Fix a potential bug when indices used in the backwarding in ThreeNN (#377)
 - Fix a compilation error triggered by [scatter_points_cuda.cu](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/ops/voxel/src/scatter_points_cuda.cu) in PyTorch 1.7 (#393)
@@ -801,7 +801,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 - Refactor points structure with more constructive and clearer implementation.
 - Support axis-aligned IoU loss for VoteNet with better performance.
-- Update and enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/second) benchmark on Waymo.
+- Update and enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo.
 
 #### New Features
 
@@ -810,7 +810,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 #### Improvements
 
-- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/second) benchmark on Waymo with stronger baselines. (#205)
+- Enhance [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark on Waymo with stronger baselines. (#205)
 - Add model zoo statistics and polish the documentation. (#201)
 
 ### v0.7.0 (1/11/2020)
@@ -824,15 +824,15 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 #### New Features
 
 - Modified primitive head which can support the setting on SUN-RGBD dataset (#136)
-- Support semantic segmentation and [HTC](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/nuimages) with models for reference on nuImages dataset (#155)
-- Support [SSN](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/ssn) on nuScenes and Lyft datasets (#147, #174, #166, #182)
+- Support semantic segmentation and [HTC](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/nuimages) with models for reference on nuImages dataset (#155)
+- Support [SSN](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/ssn) on nuScenes and Lyft datasets (#147, #174, #166, #182)
 - Support double flip for test time augmentation of CenterPoint with updated benchmark (#143)
 
 #### Improvements
 
-- Update [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/second) benchmark with configurations for reference on Waymo (#166)
+- Update [SECOND](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/second) benchmark with configurations for reference on Waymo (#166)
 - Delete checkpoints on Waymo to comply its specific license agreement (#180)
-- Update models and instructions with [mixed precision training](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/fp16) on KITTI and nuScenes (#178)
+- Update models and instructions with [mixed precision training](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fp16) on KITTI and nuScenes (#178)
 
 #### Bug Fixes
 
@@ -845,7 +845,7 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 
 - Support mixed precision training of voxel-based methods
 - Support docker with PyTorch 1.6.0
-- Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/pointpillars) on Waymo with full dataset)
+- Update baseline configs and results ([CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) on nuScenes and [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) on Waymo with full dataset)
 - Switch model zoo to download.openmmlab.com
 
 #### New Features
@@ -862,8 +862,8 @@ In order to fix the problem that the priority of EvalHook is too low, all hook p
 - Add version assertion in the [init file](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/__init__.py) (#129)
 - Add evaluation interval setting for CenterPoint (#131)
 - Add unit test for CenterPoint (#133)
-- Update [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/pointpillars) baselines on Waymo with full dataset (#142)
-- Update [CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/centerpoint) results with models and logs (#154)
+- Update [PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/pointpillars) baselines on Waymo with full dataset (#142)
+- Update [CenterPoint](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/centerpoint) results with models and logs (#154)
 
 #### Bug Fixes
 
