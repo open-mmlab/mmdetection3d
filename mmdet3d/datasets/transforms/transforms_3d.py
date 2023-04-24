@@ -190,6 +190,8 @@ class RandomFlip3D(RandomFlip):
         """
         if 'flip' not in results:
             cur_dir = self._choose_direction()
+        elif not results['flip']:
+            cur_dir = None
         else:
             cur_dir = results['flip_direction']
         if cur_dir is None:
