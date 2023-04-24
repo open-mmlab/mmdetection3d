@@ -5,8 +5,9 @@ from mmengine.model import BaseModule
 from mmengine.registry import MODELS
 from torch import Tensor, nn
 
-from mmdet3d.models.layers import (TorchSparseConvModule,
-                                   TorchSparseResidualBlock)
+from mmdet3d.models.layers import (TorchSparseBasicBlock,
+                                   TorchSparseBottleneck,
+                                   TorchSparseConvModule)
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.utils import ConfigType, OptMultiConfig
 
@@ -28,12 +29,16 @@ class MinkUNetBackbone(BaseModule):
             Defaults to 4.
         base_channels (int): The input channels for first encoder layer.
             Defaults to 32.
-        encoder_channels (List[int]): Convolutional channels of each encode
-            layer. Defaults to [32, 64, 128, 256].
-        decoder_channels (List[int]): Convolutional channels of each decode
-            layer. Defaults to [256, 128, 96, 96].
         num_stages (int): Number of stages in encoder and decoder.
             Defaults to 4.
+        block_type (str): Type of block in encoder and decoder.
+        encoder_channels (List[int]): Convolutional channels of each encode
+            layer. Defaults to [32, 64, 128, 256].
+        encoder_blocks (List[int]): Number of blocks in each encode layer.
+        decoder_channels (List[int]): Convolutional channels of each decode
+            layer. Defaults to [256, 128, 96, 96].
+        decoder_blocks (List[int]): Number of blocks in each decode layer.
+        norm_cfg (dict or :obj:`ConfigDict`): Config of normalization.
         init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`]
             , optional): Initialization config dict.
     """
@@ -41,11 +46,12 @@ class MinkUNetBackbone(BaseModule):
     def __init__(self,
                  in_channels: int = 4,
                  base_channels: int = 32,
+                 num_stages: int = 4,
+                 block_type: str = 'basicblock',
                  encoder_channels: List[int] = [32, 64, 128, 256],
                  encoder_blocks: List[int] = [2, 2, 2, 2],
                  decoder_channels: List[int] = [256, 128, 96, 96],
                  decoder_blocks: List[int] = [2, 2, 2, 2],
-                 num_stages: int = 4,
                  norm_cfg: ConfigType = dict(type='TorchSparseBN'),
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg)
@@ -57,11 +63,19 @@ class MinkUNetBackbone(BaseModule):
             TorchSparseConvModule(
                 base_channels, base_channels, kernel_size=3,
                 norm_cfg=norm_cfg))
+
+        if block_type == 'basicblock':
+            block = TorchSparseBasicBlock
+        elif block_type == 'bottleneck':
+            block = TorchSparseBottleneck
+        else:
+            raise NotImplementedError(f'Unsppported block type: {block_type}')
+
         self.encoder = nn.ModuleList()
         self.decoder = nn.ModuleList()
-
         encoder_channels.insert(0, base_channels)
         decoder_channels.insert(0, encoder_channels[-1])
+
         for i in range(num_stages):
             self.encoder.append(
                 nn.Sequential(
@@ -71,12 +85,12 @@ class MinkUNetBackbone(BaseModule):
                         kernel_size=2,
                         stride=2,
                         norm_cfg=norm_cfg),
-                    TorchSparseResidualBlock(
+                    block(
                         encoder_channels[i],
                         encoder_channels[i + 1],
                         kernel_size=3,
                         norm_cfg=norm_cfg), *[
-                            TorchSparseResidualBlock(
+                            block(
                                 encoder_channels[i + 1],
                                 encoder_channels[i + 1],
                                 kernel_size=3,
@@ -93,12 +107,12 @@ class MinkUNetBackbone(BaseModule):
                         transposed=True,
                         norm_cfg=norm_cfg),
                     nn.Sequential(
-                        TorchSparseResidualBlock(
+                        block(
                             decoder_channels[i + 1] + encoder_channels[-2 - i],
                             decoder_channels[i + 1],
                             kernel_size=3,
                             norm_cfg=norm_cfg), *[
-                                TorchSparseResidualBlock(
+                                block(
                                     decoder_channels[i + 1],
                                     decoder_channels[i + 1],
                                     kernel_size=3,

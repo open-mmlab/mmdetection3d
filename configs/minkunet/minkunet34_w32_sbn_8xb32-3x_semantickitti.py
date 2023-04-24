@@ -84,9 +84,7 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=12,
-    sampler=dict(seed=0),
-    dataset=dict(pipeline=train_pipeline))
+    batch_size=12, sampler=dict(seed=0), dataset=dict(pipeline=train_pipeline))
 
 vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 visualizer = dict(
