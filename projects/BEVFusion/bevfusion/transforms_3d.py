@@ -68,8 +68,8 @@ class ImageAug3D(BaseTransform):
             translation = A.matmul(translation) + b
         theta = rotate / 180 * np.pi
         A = torch.Tensor([
-            [np.cos(theta), np.sin(theta)],
-            [-np.sin(theta), np.cos(theta)],
+            [np.cos(theta), -np.sin(theta)],
+            [np.sin(theta), np.cos(theta)],
         ])
         b = torch.Tensor([crop[2] - crop[0], crop[3] - crop[1]]) / 2
         b = A.matmul(-b) + b
