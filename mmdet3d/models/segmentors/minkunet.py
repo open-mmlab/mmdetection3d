@@ -50,7 +50,8 @@ class MinkUNet(EncoderDecoder3D):
         losses = self.decode_head.loss(x, data_samples, self.train_cfg)
         return losses
 
-    def predict(self, inputs: dict, data_samples: SampleList) -> SampleList:
+    def predict(self, inputs: dict,
+                batch_data_samples: SampleList) -> SampleList:
         """Simple test with single scene.
 
         Args:
@@ -67,14 +68,17 @@ class MinkUNet(EncoderDecoder3D):
             List[:obj:`Det3DDataSample`]: Segmentation results of the input
             points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+            - ``pred_pts_seg`` (PointData): Prediction of 3D semantic
               segmentation.
+            - ``pts_seg_logits`` (PointData): Predicted logits of 3D semantic
+              segmentation before normalization.
         """
         x = self.extract_feat(inputs)
-        seg_logits = self.decode_head.predict(x, data_samples)
-        seg_preds = [seg_logit.argmax(dim=1) for seg_logit in seg_logits]
+        seg_logits_list = self.decode_head.predict(x, batch_data_samples)
+        for i in range(len(seg_logits_list)):
+            seg_logits_list[i] = seg_logits_list[i].transpose(0, 1)
 
-        return self.postprocess_result(seg_preds, data_samples)
+        return self.postprocess_result(seg_logits_list, batch_data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,
