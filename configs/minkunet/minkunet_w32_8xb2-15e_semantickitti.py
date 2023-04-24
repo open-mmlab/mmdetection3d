@@ -49,6 +49,6 @@ train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=15, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=-1))
 randomness = dict(seed=0, deterministic=False, diff_rank_seed=True)
 env_cfg = dict(cudnn_benchmark=True)
