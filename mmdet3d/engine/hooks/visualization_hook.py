@@ -106,7 +106,7 @@ class Det3DVisualizationHook(Hook):
             img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
             data_input['img'] = img
 
-        if self.vis_task in ['lidar_det', 'multi-modality_det']:
+        if self.vis_task in ['lidar_det', 'multi-modality_det', 'lidar_seg']:
             assert 'lidar_path' in outputs[
                 0], 'lidar_path is not in outputs[0]'
             lidar_path = outputs[0].lidar_path
@@ -168,7 +168,9 @@ class Det3DVisualizationHook(Hook):
                     out_file = osp.basename(img_path)
                     out_file = osp.join(self.test_out_dir, out_file)
 
-            if self.vis_task in ['lidar_det', 'multi-modality_det']:
+            if self.vis_task in [
+                    'lidar_det', 'multi-modality_det', 'lidar_seg'
+            ]:
                 assert 'lidar_path' in data_sample, \
                     'lidar_path is not in data_sample'
                 lidar_path = data_sample.lidar_path
