@@ -3,7 +3,7 @@ import argparse
 import os
 import os.path as osp
 
-from mmengine.config import Config, DictAction
+from mmengine.config import Config, ConfigDict, DictAction
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 
@@ -53,6 +53,8 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
+    parser.add_argument(
+        '--tta', action='store_true', help='Test time augmentation')
     parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
@@ -108,6 +110,14 @@ def main():
 
     if args.show or args.show_dir:
         cfg = trigger_visualization_hook(cfg, args)
+
+    if args.tta:
+        # Currently, we only support tta for 3D segmentation
+        # TODO: Support tta for 3D detection
+        assert 'tta_model' in cfg, 'Cannot find ``tta_model`` in config.'
+        assert 'tta_pipeline' in cfg, 'Cannot find ``tta_pipeline`` in config.'
+        cfg.test_dataloader.dataset.pipeline = cfg.tta_pipeline
+        cfg.model = ConfigDict(**cfg.tta_model, module=cfg.model)
 
     # build the runner from config
     if 'runner_type' not in cfg:

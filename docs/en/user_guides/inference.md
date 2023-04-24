@@ -8,7 +8,7 @@ We provide scripts for multi-modality/single-modality (LiDAR-based/vision-based)
 
 ### 3D Detection
 
-#### Single-modality demo
+#### Point cloud demo
 
 To test a 3D detector on point cloud data, simply run:
 
@@ -32,6 +32,24 @@ python demo/pcd_demo.py demo/data/sunrgbd/sunrgbd_000017.bin configs/votenet/vot
 
 Remember to convert the VoteNet checkpoint if you are using mmdetection3d version >= 0.6.0. See its [README](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet/README.md/) for detailed instructions on how to convert the checkpoint.
 
+#### Monocular 3D demo
+
+To test a monocular 3D detector on image data, simply run:
+
+```shell
+python demo/mono_det_demo.py ${IMAGE_FILE} ${ANNOTATION_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--cam-type ${CAM_TYPE}] [--score-thr ${SCORE-THR}] [--out-dir ${OUT_DIR}] [--show]
+```
+
+where the `ANNOTATION_FILE` should provide the 3D to 2D projection matrix (camera intrinsic matrix), and `CAM_TYPE` should be specified according to dataset. For example, if you want to inference on the front camera image, the `CAM_TYPE` should be set as `CAM_2` for KITTI, and `CAM_FRONT` for nuScenes. By specifying `CAM_TYPE`, you can even infer on any camera images for datasets with multi-view cameras, such as nuScenes and Waymo. `SCORE-THR` is the 3D bbox threshold while visualization. The visualization results including an image and its predicted 3D bounding boxes projected on the image will be saved in `${OUT_DIR}/IMG_NAME`.
+
+Example on nuScenes data using [FCOS3D](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fcos3d) model:
+
+```shell
+python demo/mono_det_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.jpg demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.pkl configs/fcos3d/fcos3d_r101-caffe-dcn-fpn-head-gn_8xb2-1x_nus-mono3d_finetune.py checkpoints/fcos3d_r101-caffe-dcn-fpn-head-gn_8xb2-1x_nus-mono3d_finetune_20210717_095645-8d806dc2.pth
+```
+
+Note that when visualizing results of monocular 3D detection for flipped images, the camera intrinsic matrix should also be modified accordingly. See more details and examples in PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744).
+
 #### Multi-modality demo
 
 To test a 3D detector on multi-modality data (typically point cloud and image), simply run:
@@ -53,24 +71,6 @@ Example on SUN RGB-D data using [ImVoteNet](https://github.com/open-mmlab/mmdete
 ```shell
 python demo/multi_modality_demo.py demo/data/sunrgbd/sunrgbd_000017.bin demo/data/sunrgbd/sunrgbd_000017.jpg demo/data/sunrgbd/sunrgbd_000017_infos.pkl configs/imvotenet/imvotenet_stage2_8xb16_sunrgbd.py checkpoints/imvotenet_stage2_8xb16_sunrgbd_20210323_184021-d44dcb66.pth
 ```
-
-### Monocular 3D Detection
-
-To test a monocular 3D detector on image data, simply run:
-
-```shell
-python demo/mono_det_demo.py ${IMAGE_FILE} ${ANNOTATION_FILE} ${CONFIG_FILE} ${CHECKPOINT_FILE} [--device ${GPU_ID}] [--cam-type ${CAM_TYPE}] [--score-thr ${SCORE-THR}] [--out-dir ${OUT_DIR}] [--show]
-```
-
-where the `ANNOTATION_FILE` should provide the 3D to 2D projection matrix (camera intrinsic matrix), and `CAM_TYPE` should be specified according to dataset. For example, if you want to inference on the front camera image, the `CAM_TYPE` should be set as `CAM_2` for KITTI, and `CAM_FRONT` for nuScenes. By specifying `CAM_TYPE`, you can even infer on any camera images for datasets with multi-view cameras, such as nuScenes and Waymo. `SCORE-THR` is the 3D bbox threshold while visualization. The visualization results including an image and its predicted 3D bounding boxes projected on the image will be saved in `${OUT_DIR}/IMG_NAME`.
-
-Example on nuScenes data using [FCOS3D](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/fcos3d) model:
-
-```shell
-python demo/mono_det_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.jpg demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__CAM_BACK__1532402927637525.pkl configs/fcos3d/fcos3d_r101-caffe-dcn-fpn-head-gn_8xb2-1x_nus-mono3d_finetune.py checkpoints/fcos3d_r101-caffe-dcn-fpn-head-gn_8xb2-1x_nus-mono3d_finetune_20210717_095645-8d806dc2.pth
-```
-
-Note that when visualizing results of monocular 3D detection for flipped images, the camera intrinsic matrix should also be modified accordingly. See more details and examples in PR [#744](https://github.com/open-mmlab/mmdetection3d/pull/744).
 
 ### 3D Segmentation
 
