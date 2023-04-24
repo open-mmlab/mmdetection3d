@@ -120,21 +120,21 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 
 Note that:
 
-- If the preprocess of Waymo dataset is very slow or blocked, you could modify the `--workers` to a smaller number. If it still can't be solved, you could set the `--workers` as 0 to avoid using multiprocess.
+- In case the preprocessing of Waymo dataset is slow or blocked, consider reducing the value of `--workers`. If this doesn't resolve the issue, you could set `--workers` as 0 to avoid using multiprocess.
 
 - If your local disk does not have enough space for saving converted data, you can change the `--out-dir` to anywhere else. Just remember to create folders and prepare data there in advance and link them back to `data/waymo/kitti_format` after the data conversion.
 
 **Tips**:
 
-- **Ready-made Annotations**. We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted to kitti-format data by yourself.
+- **Ready-made Annotations**. We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted to `kitti-format` data by yourself.
 
-- **Waymo-mini**. If you just want to use a part of Waymo Dataset to verify some methods or debug quickly, you could use [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) we provided. It only contains two segments in train split and one segment in val split from the original dataset. We have processed all the images, point clouds and annotations offline. What you should do is only downloading, and then unzipping the file to `data/waymo/`:
+- **Waymo-mini**. If you just want to use a part of Waymo Dataset to verify some methods or debug quickly, you could use our provided [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) which only contains two segments in train split and one segment in val split from the original dataset. All the images, point clouds and annotations in this compressed file have been processed offline so that you can directly download and unzip it to `data/waymo/`:
 
   ```bash
   tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
   ```
 
-- **Faster evaluation**. If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/`. Then, the dataset config is modified like the following:
+- **Faster evaluation**. If you want faster evaluation on Waymo, you can download the preprocessed [metainfo](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl) containing `contextname` and `timestamp` to the directory `data/waymo/waymo_format/` and then modify the dataset config as the following:
 
   ```python
   val_evaluator = dict(
