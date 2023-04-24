@@ -104,7 +104,7 @@ sh tools/create_data.sh <partition> kitti
 
 **Tips**:
 
-- **Ready-made Annotations**. We have also provided kitti data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/kitti/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+- **Ready-made Annotations**. We have also provided kitti data annotation files generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/kitti/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate groundtruth database files and annotations.
 
   ```bash
   python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
@@ -126,7 +126,7 @@ Note that:
 
 **Tips**:
 
-- **Ready-made Annotations**. We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted kitti-format by yourself.
+- **Ready-made Annotations**. We have provided the annotation files generated offline [here](#summary-of-annotation-files). However, the original Waymo data still needs to be converted to kitti-format data by yourself.
 
 - **Waymo-mini**. If you just want to use a part of Waymo Dataset to verify some methods or debug quickly, you could use [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) we provided. It only contains two segments in train split and one segment in val split from the original dataset. We have processed all the images, point clouds and annotations offline. What you should do is only downloading, and then unzipping the file to `data/waymo/`:
 
@@ -160,7 +160,7 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 
 **Tips**:
 
-- **Ready-made Annotations**. We have also provided NuScenes data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/nuscenes/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations.
+- **Ready-made Annotations**. We have also provided NuScenes data annotation files generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/nuscenes/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate groundtruth database files and annotations.
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
@@ -185,7 +185,7 @@ To prepare ScanNet data, please see its [README](https://github.com/open-mmlab/m
 
 To prepare SUN RGB-D data, please see its [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md).
 
-**Tips**: We have also provided data annotations generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/${DATASET}/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate the groundtruth database file and annotations by adding `--only-gt-database` in the command of running `create_data.py` like [Kitti](#kitti).
+**Tips**: For S3DIS, ScanNet and SUN RGB-D datasets, we have also provided data annotation files generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/${DATASET}/`. However, you also need to generate point cloud files and semantic/instance masks files (if it has) by yourself.
 
 ### Customized Datasets
 

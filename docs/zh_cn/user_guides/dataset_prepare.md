@@ -182,7 +182,7 @@ python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./d
 
 请参考 SUN RGB-D [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md) 文件以对其进行数据预处理。
 
-**小贴士**：我们已经提供了离线处理好的 [标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/${DATASET}/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以仿照 [Kitti](#kitti)， 在 `create_data.py` 的执行脚本中加入 `--only-gt-databse` 来生成物体标注框数据库。
+**小贴士**：对于 S3DIS, ScanNet 和 SUN RGB-D 数据集，我们已经提供了离线处理好的 [标注文件](#数据集标注文件列表)。您可以直接下载他们并放到 `data/${DATASET}/` 目录下。然而，您还是需要自己利用我们的脚本来生成点云文件以及语义掩膜文件(如果该数据集有的话)。
 
 ### 自定义数据集
 
