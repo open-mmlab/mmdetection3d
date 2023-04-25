@@ -29,7 +29,7 @@ Welcome to MMDetection3D's documentation!
    :maxdepth: 1
    :caption: API Reference
 
-   api.rst
+   mmdet3d.apis <api/apis>
 
 .. toctree::
    :maxdepth: 1
