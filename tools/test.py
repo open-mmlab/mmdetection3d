@@ -29,6 +29,8 @@ def parse_args():
         'If specified, it will be automatically saved '
         'to the work_dir/timestamp/show_dir')
     parser.add_argument(
+        '--score-thr', type=float, default=0.1, help='bbox score threshold')
+    parser.add_argument(
         '--task',
         type=str,
         choices=[
@@ -73,7 +75,15 @@ def trigger_visualization_hook(cfg, args):
             visualization_hook['wait_time'] = args.wait_time
         if args.show_dir:
             visualization_hook['test_out_dir'] = args.show_dir
+        all_task_choices = [
+            'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
+            'multi-modality_det'
+        ]
+        assert args.task in all_task_choices, 'You must set '\
+            f"'--task' in {all_task_choices} in the command " \
+            'if you want to use visualization hook'
         visualization_hook['vis_task'] = args.task
+        visualization_hook['score_thr'] = args.score_thr
     else:
         raise RuntimeError(
             'VisualizationHook must be included in default_hooks.'
