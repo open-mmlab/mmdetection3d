@@ -59,13 +59,13 @@ class TPVFormerDataPreprocessor(Det3DDataPreprocessor):
                 dynamic_scatter_3d(pts_semantic_mask, res_coors, 'mean', True)
             voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
             data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
-            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+            data_sample.point2voxel_map = point2voxel_map
             data_sample.voxel_coors = voxel_coors
         else:
             pseudo_tensor = res_coors.new_ones([res_coors.shape[0], 1]).float()
             _, _, point2voxel_map = dynamic_scatter_3d(pseudo_tensor,
                                                        res_coors, 'mean', True)
-            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+            data_sample.point2voxel_map = point2voxel_map
 
 
 @MODELS.register_module()
