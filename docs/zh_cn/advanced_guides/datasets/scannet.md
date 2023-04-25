@@ -1,4 +1,6 @@
-# 3D 目标检测 ScanNet 数据集
+# ScanNet 数据集
+
+MMDetection3D 支持在 ScanNet 数据集上进行 3D 目标检测\\语义分割 任务。本页提供了有关在 MMDetection3D 中使用 ScanNet 数据集的具体教程。
 
 ## 数据集准备
 
@@ -38,7 +40,7 @@ mmdetection3d
 - `scene0001_01.txt`：包括对齐矩阵等的元文件。
 - `scene0001_01_vh_clean_2.labels.ply`：包含每个顶点类别的标注文件。
 
-通过运行 `python batch_load_scannet_data.py` 来提取 ScanNet 数据。主要步骤包括：
+通过运行 `python batch_load_scannet_data.py` 来提取 ScanNet 数据的处理过程主要包含以下几步：
 
 - 从原始文件中提取出点云、实例标签、语义标签和包围框标签文件。
 - 下采样原始点云并过滤掉不合法的类别。
@@ -225,6 +227,9 @@ scannet
 - `points/xxxxx.bin`：下采样后，未与坐标轴平行（即没有对齐）的点云。因为 ScanNet 3D 检测任务将与坐标轴平行的点云作为输入，而 ScanNet 3D 语义分割任务将对齐前的点云作为输入，我们选择存储对齐前的点云和它们的对齐矩阵。请注意：在 3D 检测的预处理流程 [`GlobalAlignment`](https://github.com/open-mmlab/mmdetection3d/blob/9f0b01caf6aefed861ef4c3eb197c09362d26b32/mmdet3d/datasets/pipelines/transforms_3d.py#L423) 后，点云就都是与坐标轴平行的了。
 - `instance_mask/xxxxx.bin`：每个点的实例标签，值的范围为：\[0, NUM_INSTANCES\]，其中 0 表示没有标注。
 - `semantic_mask/xxxxx.bin`：每个点的语义标签，值的范围为：\[1, 40\], 也就是 `nyu40id` 的标准。请注意：在训练流程 `PointSegClassMapping` 中，`nyu40id` 的 ID 会被映射到训练 ID。
+- `seg_info`：为支持语义分割任务所生成的信息文件。
+  - `train_label_weight.npy`：每一语义类别的权重系数。因为 ScanNet 中属于不同类的点的数量相差很大，一个常见的操作是在计算损失时对不同类别进行加权 (label re-weighting) 以得到更好的分割性能。
+  - `train_resampled_scene_idxs.npy`：每一个场景 (房间) 的重采样标签。在训练过程中，我们依据每个场景的点的数量，会对其进行不同次数的重采样，以保证训练数据均衡。
 - `posed_images/scenexxxx_xx`：`.jpg` 图像的集合，还包含 `.txt` 格式的 4x4 相机姿态和单个 `.txt` 格式的相机内参矩阵文件。
 - `scannet_infos_train.pkl`：训练集的数据信息，每个场景的具体信息如下：
   - info\['lidar_points'\]：字典包含与激光雷达点相关的信息。
@@ -241,7 +246,7 @@ scannet
 
 ## 训练流程
 
-ScanNet 上 3D 物体检测的典型流程如下：
+ScanNet 进行 **3D 目标检测**的一种典型数据载入流程如下所示：
 
 ```python
 train_pipeline = [
@@ -286,8 +291,64 @@ train_pipeline = [
   - `RandomFlip3D`：随机左右或前后翻转点云。
   - `GlobalRotScaleTrans`：旋转输入点云，对于 ScanNet 角度通常落入 \[-5, 5\]（度）的范围；并放缩输入点云，对于 ScanNet 比例通常为 1.0（即不做缩放）；最后平移输入点云，对于 ScanNet 通常位移量为 0（即不做位移）。
 
+ScanNet 进行 **3D 语义分割**的一种典型数据载入流程如下所示：
+
+```python
+train_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=True,
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True),
+    dict(
+        type='PointSegClassMapping'),
+    dict(
+        type='IndoorPatchPointSample',
+        num_points=num_points,
+        block_size=1.5,
+        ignore_index=len(class_names),
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
+]
+```
+
+- `PointSegClassMapping`：在训练过程中，只有被使用的类别的序号会被映射到类似 \[0, 20) 范围内的类别标签。其余的类别序号会被转换为 `ignore_index` 所制定的忽略标签，在本例中是 `20`。
+- `IndoorPatchPointSample`：从输入点云中裁剪一个含有固定数量点的小块 (patch)。`block_size` 指定了裁剪块的边长，在 ScanNet 上这个数值一般设置为 `1.5`。
+- `NormalizePointsColor`：将输入点的颜色信息归一化，通过将 RGB 值除以 `255` 来实现。
+
 ## 评估指标
 
-通常使用 mAP（全类平均精度）来评估 ScanNet 的检测任务的性能，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时调用一个通用的计算 3D 物体检测多个类别的精度和召回率的函数。更多细节请参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py)。
+- **目标检测**：通常使用全类平均精度（mAP）来评估 ScanNet 的 3D 检测任务的性能，比如 `mAP@0.25` 和 `mAP@0.5`。具体来说，评估时调用一个通用的计算 3D 物体检测多个类别的精度和召回率的函数。更多细节请参考 [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py)。
 
-与在章节`提取 ScanNet 数据`中介绍的那样，所有真实物体的三维包围框是与坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于与坐标轴平行的包围框的非极大值抑制（NMS），该过程不会考虑包围框的旋转。
+  **注意**：与在章节`提取 ScanNet 数据`中介绍的那样，所有真实物体的三维包围框是与坐标轴平行的，也就是说旋转角为 0。因此，预测包围框的网络接受的包围框旋转角监督也是 0，且在后处理阶段我们使用适用于与坐标轴平行的包围框的非极大值抑制（NMS），该过程不会考虑包围框的旋转。
+
+- **语义分割**：通常使用平均交并比 (mean Intersection over Union, mIoU) 来评估 ScanNet 的 3D 语义分割任务的性能。具体而言，我们先计算所有类别的 IoU，然后取平均值作为 mIoU。更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py)。
+
+## 在测试集上测试并提交结果
+
+默认情况下，MMDet3D 的代码是在训练集上进行模型训练，然后在验证集上进行模型测试。
+
+如果你也想在在线基准上测试模型的性能（仅支持语义分割），请在测试命令中加上 `--format-only` 的标记，同时也要将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/scannet-seg.py#L126)中的 `ann_file=data_root + 'scannet_infos_val.pkl'` 改成 `ann_file=data_root + 'scannet_infos_test.pkl'`。
+
+请记得通过 `txt_prefix` 来指定想要保存测试结果的文件夹名称。
+
+以 PointNet++ (SSG) 在 ScanNet 上的测试为例，你可以运行以下命令来完成测试结果的保存：
+
+```
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet-seg.py \
+    work_dirs/pointnet2_ssg/latest.pth --format-only \
+    --eval-options txt_prefix=work_dirs/pointnet2_ssg/test_submission
+```
+
+在保存测试结果后，你可以将该文件夹压缩，然后提交到 [ScanNet 在线测试服务器](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d)上进行验证。

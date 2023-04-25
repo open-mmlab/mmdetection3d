@@ -1,4 +1,4 @@
-# 3D 目标检测 Lyft 数据集
+# Lyft 数据集
 
 本页提供了有关在 MMDetection3D 中使用 Lyft 数据集的具体教程。
 

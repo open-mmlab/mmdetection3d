@@ -162,8 +162,8 @@ def sunrgbd_data_prep(root_path, info_prefix, out_dir, workers):
         root_path, info_prefix, out_dir, workers=workers)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
-    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
-    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('sunrgbd', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('sunrgbd', out_dir=out_dir, pkl_path=info_val_path)
 
 
 def waymo_data_prep(root_path,
@@ -271,6 +271,10 @@ parser.add_argument(
 parser.add_argument('--extra-tag', type=str, default='kitti')
 parser.add_argument(
     '--workers', type=int, default=4, help='number of threads to be used')
+parser.add_argument(
+    '--only-gt-databse',
+    action='store_true',
+    help='Whether to only generate ground truth database.')
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -278,38 +282,58 @@ if __name__ == '__main__':
     register_all_modules()
 
     if args.dataset == 'kitti':
-        kitti_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=args.version,
-            out_dir=args.out_dir,
-            with_plane=args.with_plane)
+        if args.only_gt_databse:
+            create_groundtruth_database(
+                'KittiDataset',
+                args.root_path,
+                args.extra_tag,
+                f'{args.extra_tag}_infos_train.pkl',
+                relative_path=False,
+                mask_anno_path='instances_train.json',
+                with_mask=(args.version == 'mask'))
+        else:
+            kitti_data_prep(
+                root_path=args.root_path,
+                info_prefix=args.extra_tag,
+                version=args.version,
+                out_dir=args.out_dir,
+                with_plane=args.with_plane)
     elif args.dataset == 'nuscenes' and args.version != 'v1.0-mini':
-        train_version = f'{args.version}-trainval'
-        nuscenes_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=train_version,
-            dataset_name='NuScenesDataset',
-            out_dir=args.out_dir,
-            max_sweeps=args.max_sweeps)
-        test_version = f'{args.version}-test'
-        nuscenes_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=test_version,
-            dataset_name='NuScenesDataset',
-            out_dir=args.out_dir,
-            max_sweeps=args.max_sweeps)
+        if args.only_gt_databse:
+            create_groundtruth_database('NuScenesDataset', args.root_path,
+                                        args.extra_tag,
+                                        f'{args.extra_tag}_infos_train.pkl')
+        else:
+            train_version = f'{args.version}-trainval'
+            nuscenes_data_prep(
+                root_path=args.root_path,
+                info_prefix=args.extra_tag,
+                version=train_version,
+                dataset_name='NuScenesDataset',
+                out_dir=args.out_dir,
+                max_sweeps=args.max_sweeps)
+            test_version = f'{args.version}-test'
+            nuscenes_data_prep(
+                root_path=args.root_path,
+                info_prefix=args.extra_tag,
+                version=test_version,
+                dataset_name='NuScenesDataset',
+                out_dir=args.out_dir,
+                max_sweeps=args.max_sweeps)
     elif args.dataset == 'nuscenes' and args.version == 'v1.0-mini':
-        train_version = f'{args.version}'
-        nuscenes_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=train_version,
-            dataset_name='NuScenesDataset',
-            out_dir=args.out_dir,
-            max_sweeps=args.max_sweeps)
+        if args.only_gt_databse:
+            create_groundtruth_database('NuScenesDataset', args.root_path,
+                                        args.extra_tag,
+                                        f'{args.extra_tag}_infos_train.pkl')
+        else:
+            train_version = f'{args.version}'
+            nuscenes_data_prep(
+                root_path=args.root_path,
+                info_prefix=args.extra_tag,
+                version=train_version,
+                dataset_name='NuScenesDataset',
+                out_dir=args.out_dir,
+                max_sweeps=args.max_sweeps)
     elif args.dataset == 'lyft':
         train_version = f'{args.version}-train'
         lyft_data_prep(
