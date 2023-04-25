@@ -77,6 +77,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  voxel: bool = False,
                  voxel_type: str = 'hard',
                  voxel_layer: OptConfigType = None,
+                 max_voxels: int = 80000,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
                  pad_size_divisor: int = 1,
@@ -103,6 +104,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             batch_augments=batch_augments)
         self.voxel = voxel
         self.voxel_type = voxel_type
+        self.max_voxels = max_voxels
         if voxel:
             self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
 
@@ -427,11 +429,13 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                     res_coors_numpy, return_index=True, return_inverse=True)
                 point2voxel_map = torch.from_numpy(point2voxel_map).cuda()
                 if self.training:
-                    if len(inds) > 80000:
-                        inds = np.random.choice(inds, 80000, replace=False)
+                    if len(inds) > self.max_voxels:
+                        inds = np.random.choice(
+                            inds, self.max_voxels, replace=False)
                 inds = torch.from_numpy(inds).cuda()
-                data_sample.gt_pts_seg.voxel_semantic_mask \
-                    = data_sample.gt_pts_seg.pts_semantic_mask[inds]
+                if hasattr(data_sample.gt_pts_seg, 'pts_semantic_mask'):
+                    data_sample.gt_pts_seg.voxel_semantic_mask \
+                        = data_sample.gt_pts_seg.pts_semantic_mask[inds]
                 res_voxel_coors = res_coors[inds]
                 res_voxels = res[inds]
                 res_voxel_coors = F.pad(
