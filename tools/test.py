@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument(
         '--tta', action='store_true', help='Test time augmentation')
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
-    # will pass the `--local-rank` parameter to `tools/train.py` instead
+    # will pass the `--local-rank` parameter to `tools/test.py` instead
     # of `--local_rank`.
     parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     args = parser.parse_args()
