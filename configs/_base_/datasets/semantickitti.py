@@ -114,6 +114,59 @@ test_pipeline = [
     dict(type='PointSegClassMapping'),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+tta_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_seg_3d=True,
+        seg_3d_dtype='np.int32',
+        seg_offset=2**16,
+        dataset_type='semantickitti',
+        backend_args=backend_args),
+    dict(type='PointSegClassMapping'),
+    dict(
+        type='TestTimeAug',
+        transforms=[[
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=0.,
+                flip_ratio_bev_vertical=0.),
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=0.,
+                flip_ratio_bev_vertical=1.),
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=1.,
+                flip_ratio_bev_vertical=0.),
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=1.,
+                flip_ratio_bev_vertical=1.)
+        ],
+                    [
+                        dict(
+                            type='GlobalRotScaleTrans',
+                            rot_range=[pcd_rotate_range, pcd_rotate_range],
+                            scale_ratio_range=[
+                                pcd_scale_factor, pcd_scale_factor
+                            ],
+                            translation_std=[0, 0, 0])
+                        for pcd_rotate_range in [-0.78539816, 0.0, 0.78539816]
+                        for pcd_scale_factor in [0.95, 1.0, 1.05]
+                    ], [dict(type='Pack3DDetInputs', keys=['points'])]])
+]
 
 train_dataloader = dict(
     batch_size=2,
@@ -154,3 +207,5 @@ test_evaluator = val_evaluator
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+tta_model = dict(type='Seg3DTTAModel')

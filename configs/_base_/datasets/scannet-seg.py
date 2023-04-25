@@ -79,6 +79,33 @@ test_pipeline = [
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+tta_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=True,
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True,
+        backend_args=backend_args),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(
+        type='TestTimeAug',
+        transforms=[[
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=0.,
+                flip_ratio_bev_vertical=0.)
+        ], [dict(type='Pack3DDetInputs', keys=['points'])]])
+]
 
 train_dataloader = dict(
     batch_size=8,
@@ -122,3 +149,5 @@ test_evaluator = val_evaluator
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+tta_model = dict(type='Seg3DTTAModel')

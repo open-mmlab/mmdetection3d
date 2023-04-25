@@ -339,14 +339,14 @@ train_pipeline = [
 
 默认情况下，MMDet3D 的代码是在训练集上进行模型训练，然后在验证集上进行模型测试。
 
-如果你也想在在线基准上测试模型的性能（仅支持语义分割），请在测试命令中加上 `--format-only` 的标记，同时也要将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126)中的 `ann_file=data_root + 'scannet_infos_val.pkl'` 改成 `ann_file=data_root + 'scannet_infos_test.pkl'`。
+如果你也想在在线基准上测试模型的性能（仅支持语义分割），请在测试命令中加上 `--format-only` 的标记，同时也要将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/scannet-seg.py#L126)中的 `ann_file=data_root + 'scannet_infos_val.pkl'` 改成 `ann_file=data_root + 'scannet_infos_test.pkl'`。
 
 请记得通过 `txt_prefix` 来指定想要保存测试结果的文件夹名称。
 
 以 PointNet++ (SSG) 在 ScanNet 上的测试为例，你可以运行以下命令来完成测试结果的保存：
 
 ```
-./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py \
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet-seg.py \
     work_dirs/pointnet2_ssg/latest.pth --format-only \
     --eval-options txt_prefix=work_dirs/pointnet2_ssg/test_submission
 ```
