@@ -1,13 +1,22 @@
+# dataset settings
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
 class_names = [
     'car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
     'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'
 ]
-metainfo = dict(classes=class_names)
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=False, use_camera=True)
+metainfo = dict(classes=class_names)
+data_prefix = dict(
+    pts='',
+    CAM_FRONT='samples/CAM_FRONT',
+    CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+    CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+    CAM_BACK='samples/CAM_BACK',
+    CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+    CAM_BACK_LEFT='samples/CAM_BACK_LEFT')
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -34,7 +43,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', scale=(1600, 900), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
@@ -43,7 +52,6 @@ train_pipeline = [
             'gt_bboxes_3d', 'gt_labels_3d', 'centers_2d', 'depths'
         ]),
 ]
-
 test_pipeline = [
     dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
     dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
@@ -58,14 +66,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(
-            pts='',
-            CAM_FRONT='samples/CAM_FRONT',
-            CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
-            CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
-            CAM_BACK='samples/CAM_BACK',
-            CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
-            CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
+        data_prefix=data_prefix,
         ann_file='nuscenes_infos_train.pkl',
         load_type='mv_image_based',
         pipeline=train_pipeline,
@@ -86,19 +87,12 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(
-            pts='',
-            CAM_FRONT='samples/CAM_FRONT',
-            CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
-            CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
-            CAM_BACK='samples/CAM_BACK',
-            CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
-            CAM_BACK_LEFT='samples/CAM_BACK_LEFT'),
+        data_prefix=data_prefix,
         ann_file='nuscenes_infos_val.pkl',
         load_type='mv_image_based',
         pipeline=test_pipeline,
-        modality=input_modality,
         metainfo=metainfo,
+        modality=input_modality,
         test_mode=True,
         box_type_3d='Camera',
         use_valid_flag=True,
@@ -111,7 +105,6 @@ val_evaluator = dict(
     ann_file=data_root + 'nuscenes_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
-
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

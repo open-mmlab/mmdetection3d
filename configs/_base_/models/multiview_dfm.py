@@ -89,7 +89,7 @@ model = dict(
                 pos_iou_thr=0.5,
                 neg_iou_thr=0.35,
                 min_pos_iou=0.35,
-                ignore_iof_thr=-1),
+                ignore_iof_thr=-1)
         ],
         allowed_border=0,
         pos_weight=-1,

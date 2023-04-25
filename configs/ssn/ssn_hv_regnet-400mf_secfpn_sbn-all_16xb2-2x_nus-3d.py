@@ -1,8 +1,7 @@
 _base_ = './ssn_hv_secfpn_sbn-all_16xb2-2x_nus-3d.py'
+
 # model settings
 model = dict(
-    type='MVXFasterRCNN',
-    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',

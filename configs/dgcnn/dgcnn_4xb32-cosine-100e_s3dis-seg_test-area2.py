@@ -10,8 +10,8 @@ train_dataloader = dict(
         scene_idxs=[
             f'seg_info/Area_{i}_resampled_scene_idxs.npy' for i in train_area
         ]))
-test_dataloader = dict(
+val_dataloader = dict(
     dataset=dict(
         ann_files=f's3dis_infos_Area_{test_area}.pkl',
         scene_idxs=f'seg_info/Area_{test_area}_resampled_scene_idxs.npy'))
-val_dataloader = test_dataloader
+test_dataloader = val_dataloader

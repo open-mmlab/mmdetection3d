@@ -1,48 +1,44 @@
-voxel_size = [0.16, 0.16, 4]
+voxel_size = [0.05, 0.05, 0.1]
 
 model = dict(
-    type='VoxelNet',
+    type='SASSD',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
         voxel_layer=dict(
-            max_num_points=32,  # max_points_per_voxel
-            point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1],
+            max_num_points=5,
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
-    voxel_encoder=dict(
-        type='PillarFeatureNet',
-        in_channels=4,
-        feat_channels=[64],
-        with_distance=False,
-        voxel_size=voxel_size,
-        point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1]),
+    voxel_encoder=dict(type='HardSimpleVFE'),
     middle_encoder=dict(
-        type='PointPillarsScatter', in_channels=64, output_shape=[496, 432]),
+        type='SparseEncoderSASSD',
+        in_channels=4,
+        sparse_shape=[41, 1600, 1408],
+        order=('conv', 'norm', 'act')),
     backbone=dict(
         type='SECOND',
-        in_channels=64,
-        layer_nums=[3, 5, 5],
-        layer_strides=[2, 2, 2],
-        out_channels=[64, 128, 256]),
+        in_channels=256,
+        layer_nums=[5, 5],
+        layer_strides=[1, 2],
+        out_channels=[128, 256]),
     neck=dict(
         type='SECONDFPN',
-        in_channels=[64, 128, 256],
-        upsample_strides=[1, 2, 4],
-        out_channels=[128, 128, 128]),
+        in_channels=[128, 256],
+        upsample_strides=[1, 2],
+        out_channels=[256, 256]),
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
-        in_channels=384,
-        feat_channels=384,
+        in_channels=512,
+        feat_channels=512,
         use_direction_classifier=True,
-        assign_per_class=True,
         anchor_generator=dict(
-            type='AlignedAnchor3DRangeGenerator',
+            type='Anchor3DRangeGenerator',
             ranges=[
-                [0, -39.68, -0.6, 69.12, 39.68, -0.6],
-                [0, -39.68, -0.6, 69.12, 39.68, -0.6],
-                [0, -39.68, -1.78, 69.12, 39.68, -1.78],
+                [0, -40.0, -0.6, 70.4, 40.0, -0.6],
+                [0, -40.0, -0.6, 70.4, 40.0, -0.6],
+                [0, -40.0, -1.78, 70.4, 40.0, -1.78],
             ],
             sizes=[[0.8, 0.6, 1.73], [1.76, 0.6, 1.73], [3.9, 1.6, 1.56]],
             rotations=[0, 1.57],
@@ -66,16 +62,16 @@ model = dict(
             dict(  # for Pedestrian
                 type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
+                pos_iou_thr=0.35,
+                neg_iou_thr=0.2,
+                min_pos_iou=0.2,
                 ignore_iof_thr=-1),
             dict(  # for Cyclist
                 type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.5,
-                neg_iou_thr=0.35,
-                min_pos_iou=0.35,
+                pos_iou_thr=0.35,
+                neg_iou_thr=0.2,
+                min_pos_iou=0.2,
                 ignore_iof_thr=-1),
             dict(  # for Car
                 type='Max3DIoUAssigner',

@@ -13,7 +13,7 @@ model = dict(
         in_channels=5,
         feat_channels=[64],
         with_distance=False,
-        voxel_size=(0.2, 0.2, 8),
+        voxel_size=voxel_size,
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
         legacy=False),
     pts_middle_encoder=dict(

@@ -7,7 +7,6 @@ _base_ = [
 
 # model settings
 model = dict(
-    type='MVXFasterRCNN',
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=1,

@@ -4,6 +4,7 @@ _base_ = [
     '../_base_/schedules/schedule-2x.py',
     '../_base_/default_runtime.py',
 ]
+
 point_cloud_range = [-100, -100, -5, 100, 100, 3]
 # Note that the order of class names should be consistent with
 # the following anchors' order
@@ -11,6 +12,7 @@ class_names = [
     'bicycle', 'motorcycle', 'pedestrian', 'animal', 'car',
     'emergency_vehicle', 'bus', 'other_vehicle', 'truck'
 ]
+metainfo = dict(classes=class_names)
 backend_args = None
 
 train_pipeline = [
@@ -53,27 +55,14 @@ test_pipeline = [
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
 train_dataloader = dict(
-    batch_size=2, num_workers=4, dataset=dict(pipeline=train_pipeline))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+    num_workers=4, dataset=dict(pipeline=train_pipeline, metainfo=metainfo))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 
 # model settings
 model = dict(

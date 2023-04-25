@@ -9,9 +9,7 @@ model = dict(
             grid_shape=grid_shape,
             point_cloud_range=[0, -3.14159265359, -4, 50, 3.14159265359, 2],
             max_num_points=-1,
-            max_voxels=-1,
-        ),
-    ),
+            max_voxels=-1)),
     voxel_encoder=dict(
         type='SegVFE',
         feat_channels=[64, 128, 256, 256],
@@ -34,8 +32,7 @@ model = dict(
             use_sigmoid=False,
             class_weight=None,
             loss_weight=1.0),
-        loss_lovasz=dict(type='LovaszLoss', loss_weight=1.0, reduction='none'),
-    ),
+        loss_lovasz=dict(type='LovaszLoss', loss_weight=1.0,
+                         reduction='none')),
     train_cfg=None,
-    test_cfg=dict(mode='whole'),
-)
+    test_cfg=dict(mode='whole'))

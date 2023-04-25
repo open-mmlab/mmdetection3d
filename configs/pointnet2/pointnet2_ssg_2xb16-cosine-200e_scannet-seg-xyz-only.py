@@ -78,31 +78,13 @@ test_pipeline = [
         with_mask_3d=False,
         with_seg_3d=True,
         backend_args=backend_args),
-    dict(
-        # a wrapper in order to successfully call test function
-        # actually we don't perform test-time-aug
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.0,
-                flip_ratio_bev_vertical=0.0),
-        ]),
+    dict(type='PointSegClassMapping'),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(batch_size=16, dataset=dict(pipeline=train_pipeline))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-val_dataloader = test_dataloader
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = val_dataloader
 
 # runtime settings
 default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=5))

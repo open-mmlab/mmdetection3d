@@ -1,18 +1,21 @@
 _base_ = ['./centerpoint_voxel01_second_secfpn_8xb4-cyclic-20e_nus-3d.py']
 
-# If point cloud range is changed, the models should also change their point
-# cloud range accordingly
-voxel_size = [0.075, 0.075, 0.2]
-point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
-# Using calibration info convert the Lidar-coordinate point cloud range to the
-# ego-coordinate point cloud range could bring a little promotion in nuScenes.
-# point_cloud_range = [-54, -54.8, -5.0, 54, 53.2, 3.0]
+data_root = 'data/nuscenes/'
 # For nuScenes we usually do 10-class detection
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
+# # If point cloud range is changed, the models should also change their point
+# # cloud range accordingly
+voxel_size = [0.075, 0.075, 0.2]
+point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
+# Using calibration info convert the Lidar-coordinate point cloud range to the
+# ego-coordinate point cloud range could bring a little promotion in nuScenes.
+# point_cloud_range = [-54, -54.8, -5.0, 54, 53.2, 3.0]
+backend_args = None
+
+# model settings
 model = dict(
     data_preprocessor=dict(
         voxel_layer=dict(
@@ -28,10 +31,6 @@ model = dict(
             point_cloud_range=point_cloud_range)),
     test_cfg=dict(
         pts=dict(voxel_size=voxel_size[:2], pc_range=point_cloud_range[:2])))
-
-dataset_type = 'NuScenesDataset'
-data_root = 'data/nuscenes/'
-backend_args = None
 
 db_sampler = dict(
     data_root=data_root,
@@ -118,28 +117,10 @@ test_pipeline = [
         pad_empty_sweeps=True,
         remove_close=True,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-train_dataloader = dict(
-    dataset=dict(
-        dataset=dict(
-            pipeline=train_pipeline, metainfo=dict(classes=class_names))))
-test_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
-val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
+
+train_dataloader = dict(dataset=dict(dataset=dict(pipeline=train_pipeline)))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))

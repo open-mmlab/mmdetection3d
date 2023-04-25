@@ -4,9 +4,9 @@ _base_ = [
     '../_base_/schedules/schedule-2x.py',
     '../_base_/default_runtime.py',
 ]
+
 # model settings
 model = dict(
-    type='MVXFasterRCNN',
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',

@@ -1,12 +1,12 @@
 # dataset settings
 dataset_type = 'ScanNetDataset'
 data_root = 'data/scannet/'
-
-metainfo = dict(
-    classes=('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
-             'bookshelf', 'picture', 'counter', 'desk', 'curtain',
-             'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
-             'garbagebin'))
+class_names = [
+    'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window', 'bookshelf',
+    'picture', 'counter', 'desk', 'curtain', 'refrigerator', 'showercurtrain',
+    'toilet', 'sink', 'bathtub', 'garbagebin'
+]
+metainfo = dict(classes=class_names)
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -67,30 +67,14 @@ test_pipeline = [
         use_dim=[0, 1, 2],
         backend_args=backend_args),
     dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.5,
-                flip_ratio_bev_vertical=0.5),
-            dict(type='PointSample', num_points=40000),
-        ]),
+    dict(type='PointSample', num_points=40000),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
     batch_size=8,
     num_workers=4,
+    persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',
@@ -102,14 +86,16 @@ train_dataloader = dict(
             pipeline=train_pipeline,
             filter_empty_gt=False,
             metainfo=metainfo,
+            test_mode=False,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='Depth',
             backend_args=backend_args)))
-
 val_dataloader = dict(
     batch_size=1,
     num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
         type=dataset_type,
@@ -120,19 +106,8 @@ val_dataloader = dict(
         test_mode=True,
         box_type_3d='Depth',
         backend_args=backend_args))
-test_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file='scannet_infos_val.pkl',
-        pipeline=test_pipeline,
-        metainfo=metainfo,
-        test_mode=True,
-        box_type_3d='Depth',
-        backend_args=backend_args))
+test_dataloader = val_dataloader
+
 val_evaluator = dict(type='IndoorMetric')
 test_evaluator = val_evaluator
 

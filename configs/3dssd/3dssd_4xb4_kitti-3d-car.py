@@ -4,11 +4,9 @@ _base_ = [
 ]
 
 # dataset settings
-dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Car']
 point_cloud_range = [0, -40, -5, 70, 40, 3]
-input_modality = dict(use_lidar=True, use_camera=False)
 backend_args = None
 
 db_sampler = dict(
@@ -63,29 +61,15 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='PointSample', num_points=16384),
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointSample', num_points=16384),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
-    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline)))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # model settings
 model = dict(
@@ -99,8 +83,7 @@ lr = 0.002  # max learning rate
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
+    clip_grad=dict(max_norm=35, norm_type=2))
 
 # training schedule for 1x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=2)
@@ -117,3 +100,9 @@ param_scheduler = [
         milestones=[45, 60],
         gamma=0.1)
 ]
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)

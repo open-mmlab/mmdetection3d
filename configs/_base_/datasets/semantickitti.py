@@ -1,3 +1,4 @@
+# dataset settings
 # For SemanticKitti we usually do 19-class segmentation.
 # For labels_map we follow the uniform format of MMDetection & MMSegmentation
 # i.e. we consider the unlabeled class as the last one, which is different
@@ -45,11 +46,9 @@ labels_map = {
     258: 3,  # "moving-truck" to "truck" --------------------mapped
     259: 4  # "moving-other"-vehicle to "other-vehicle"-----mapped
 }
-
+input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(
     classes=class_names, seg_label_mapping=labels_map, max_label=259)
-
-input_modality = dict(use_lidar=True, use_camera=False)
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -82,7 +81,7 @@ train_pipeline = [
         seg_offset=2**16,
         dataset_type='semantickitti',
         backend_args=backend_args),
-    dict(type='PointSegClassMapping', ),
+    dict(type='PointSegClassMapping'),
     dict(
         type='RandomFlip3D',
         sync_2d=False,
@@ -112,69 +111,42 @@ test_pipeline = [
         seg_offset=2**16,
         dataset_type='semantickitti',
         backend_args=backend_args),
-    dict(type='PointSegClassMapping', ),
-    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
-]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        backend_args=backend_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=False,
-        with_label_3d=False,
-        with_seg_3d=True,
-        seg_3d_dtype='np.int32',
-        seg_offset=2**16,
-        dataset_type='semantickitti',
-        backend_args=backend_args),
-    dict(type='PointSegClassMapping', ),
-    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
+    dict(type='PointSegClassMapping'),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
     batch_size=2,
     num_workers=4,
+    persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
-        type='RepeatDataset',
-        times=1,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file='semantickitti_infos_train.pkl',
-            pipeline=train_pipeline,
-            metainfo=metainfo,
-            modality=input_modality,
-            ignore_index=19,
-            backend_args=backend_args)),
-)
-
-test_dataloader = dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='semantickitti_infos_train.pkl',
+        pipeline=train_pipeline,
+        metainfo=metainfo,
+        modality=input_modality,
+        ignore_index=19,
+        test_mode=False,
+        backend_args=backend_args))
+val_dataloader = dict(
     batch_size=1,
     num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type='RepeatDataset',
-        times=1,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file='semantickitti_infos_val.pkl',
-            pipeline=test_pipeline,
-            metainfo=metainfo,
-            modality=input_modality,
-            ignore_index=19,
-            test_mode=True,
-            backend_args=backend_args)),
-)
-
-val_dataloader = test_dataloader
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='semantickitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        metainfo=metainfo,
+        modality=input_modality,
+        ignore_index=19,
+        test_mode=True,
+        backend_args=backend_args))
+test_dataloader = val_dataloader
 
 val_evaluator = dict(type='SegMetric')
 test_evaluator = val_evaluator

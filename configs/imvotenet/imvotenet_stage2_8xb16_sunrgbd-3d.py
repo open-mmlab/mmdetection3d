@@ -152,7 +152,6 @@ model = dict(
         max_imvote_per_pixel=3),
     num_sampled_seed=1024,
     freeze_img_branch=True,
-
     # model training and testing settings
     train_cfg=dict(
         pts=dict(
@@ -180,12 +179,8 @@ train_pipeline = [
         with_label=True,
         with_bbox_3d=True,
         with_label_3d=True),
-    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
-    dict(
-        type='RandomFlip3D',
-        sync_2d=False,
-        flip_ratio_bev_horizontal=0.5,
-    ),
+    dict(type='mmdet.Resize', scale=(1333, 600), keep_ratio=True),
+    dict(type='RandomFlip3D', sync_2d=False, flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.523599, 0.523599],
@@ -208,13 +203,12 @@ test_pipeline = [
         load_dim=6,
         use_dim=[0, 1, 2],
         backend_args=backend_args),
-    dict(type='Resize', scale=(1333, 600), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1333, 600), keep_ratio=True),
     dict(type='PointSample', num_points=20000),
     dict(type='Pack3DDetInputs', keys=['img', 'points'])
 ]
 
 train_dataloader = dict(dataset=dict(dataset=dict(pipeline=train_pipeline)))
-
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 

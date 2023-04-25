@@ -2,6 +2,9 @@ _base_ = [
     '../_base_/datasets/nus-mono3d.py', '../_base_/models/fcos3d.py',
     '../_base_/schedules/mmdet-schedule-1x.py', '../_base_/default_runtime.py'
 ]
+
+backend_args = None
+
 # model settings
 model = dict(
     data_preprocessor=dict(
@@ -13,8 +16,6 @@ model = dict(
     backbone=dict(
         dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
         stage_with_dcn=(False, False, True, True)))
-
-backend_args = None
 
 train_pipeline = [
     dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
@@ -43,8 +44,8 @@ test_pipeline = [
 
 train_dataloader = dict(
     batch_size=2, num_workers=2, dataset=dict(pipeline=train_pipeline))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # optimizer
 optim_wrapper = dict(

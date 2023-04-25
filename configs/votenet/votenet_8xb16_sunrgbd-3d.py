@@ -3,6 +3,7 @@ _base_ = [
     '../_base_/datasets/sunrgbd-3d.py', '../_base_/models/votenet.py',
     '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
+
 # model settings
 model = dict(
     bbox_head=dict(

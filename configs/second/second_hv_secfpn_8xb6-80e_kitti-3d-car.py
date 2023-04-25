@@ -3,6 +3,7 @@ _base_ = [
     '../_base_/datasets/kitti-3d-car.py', '../_base_/schedules/cyclic-40e.py',
     '../_base_/default_runtime.py'
 ]
+
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 model = dict(
     bbox_head=dict(

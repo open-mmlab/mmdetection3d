@@ -5,8 +5,7 @@ optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='AdamW', lr=lr, weight_decay=0.001, betas=(0.95, 0.99)),
-    clip_grad=dict(max_norm=10, norm_type=2),
-)
+    clip_grad=dict(max_norm=10, norm_type=2))
 
 param_scheduler = [
     dict(type='LinearLR', start_factor=0.1, by_epoch=False, begin=0, end=1000),

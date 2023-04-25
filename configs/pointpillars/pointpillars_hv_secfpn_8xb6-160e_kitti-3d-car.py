@@ -1,5 +1,6 @@
 # model settings
 _base_ = './pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py'
+
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
@@ -77,25 +78,11 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
     dataset=dict(dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))

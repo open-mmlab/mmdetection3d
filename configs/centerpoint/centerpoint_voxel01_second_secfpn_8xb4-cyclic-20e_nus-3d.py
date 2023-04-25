@@ -4,18 +4,25 @@ _base_ = [
     '../_base_/schedules/cyclic-20e.py', '../_base_/default_runtime.py'
 ]
 
+dataset_type = 'NuScenesDataset'
+data_root = 'data/nuscenes/'
+# For nuScenes we usually do 10-class detection
+class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 # Using calibration info convert the Lidar-coordinate point cloud range to the
 # ego-coordinate point cloud range could bring a little promotion in nuScenes.
 # point_cloud_range = [-51.2, -52, -5.0, 51.2, 50.4, 3.0]
-# For nuScenes we usually do 10-class detection
-class_names = [
-    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
-    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
-]
+input_modality = dict(use_lidar=True, use_camera=False)
+metainfo = dict(classes=class_names)
 data_prefix = dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP')
+backend_args = None
+
+# model settings
 model = dict(
     data_preprocessor=dict(
         voxel_layer=dict(point_cloud_range=point_cloud_range)),
@@ -23,10 +30,6 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(pts=dict(point_cloud_range=point_cloud_range)),
     test_cfg=dict(pts=dict(pc_range=point_cloud_range[:2])))
-
-dataset_type = 'NuScenesDataset'
-data_root = 'data/nuscenes/'
-backend_args = None
 
 db_sampler = dict(
     data_root=data_root,
@@ -113,21 +116,7 @@ test_pipeline = [
         pad_empty_sweeps=True,
         remove_close=True,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
@@ -144,7 +133,8 @@ train_dataloader = dict(
             data_root=data_root,
             ann_file='nuscenes_infos_train.pkl',
             pipeline=train_pipeline,
-            metainfo=dict(classes=class_names),
+            metainfo=metainfo,
+            modality=input_modality,
             test_mode=False,
             data_prefix=data_prefix,
             use_valid_flag=True,
@@ -152,9 +142,7 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
             backend_args=backend_args)))
-test_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
-val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 
 train_cfg = dict(val_interval=20)

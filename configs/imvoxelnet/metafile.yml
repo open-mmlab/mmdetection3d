@@ -27,3 +27,16 @@ Models:
         Metrics:
           mAP: 17.26
     Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x8_kitti-3d-car/imvoxelnet_4x8_kitti-3d-car_20210830_003014-3d0ffdf4.pth
+
+  - Name: imvoxelnet_sunrgbd-3d
+    In Collection: ImVoxelNet
+    Config: configs/imvoxelnet/imvoxelnet_2xb4_sunrgbd-3d.py
+    Metadata:
+      Training Memory (GB): 7.2
+    Results:
+      - Task: 3D Object Detection
+        Dataset: SUNRGBD
+        Metrics:
+          mAP@0.25: 40.96
+          mAP@0.5: 13.50
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.0.0_models/imvoxelnet/imvoxelnet_4x2_sunrgbd-3d-10class/imvoxelnet_4x2_sunrgbd-3d-10class_20220809_184416-29ca7d2e.pth

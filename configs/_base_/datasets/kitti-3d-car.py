@@ -5,6 +5,7 @@ class_names = ['Car']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(classes=class_names)
+data_prefix = dict(pts='training/velodyne_reduced')
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -70,34 +71,10 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
-        backend_args=backend_args),
-    dict(type='Pack3DDetInputs', keys=['points'])
-]
+
 train_dataloader = dict(
     batch_size=6,
     num_workers=4,
@@ -110,7 +87,7 @@ train_dataloader = dict(
             type=dataset_type,
             data_root=data_root,
             ann_file='kitti_infos_train.pkl',
-            data_prefix=dict(pts='training/velodyne_reduced'),
+            data_prefix=data_prefix,
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
@@ -128,31 +105,16 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(pts='training/velodyne_reduced'),
         ann_file='kitti_infos_val.pkl',
+        data_prefix=data_prefix,
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
         box_type_3d='LiDAR',
         backend_args=backend_args))
-test_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
-    persistent_workers=True,
-    drop_last=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        data_prefix=dict(pts='training/velodyne_reduced'),
-        ann_file='kitti_infos_val.pkl',
-        pipeline=test_pipeline,
-        modality=input_modality,
-        test_mode=True,
-        metainfo=metainfo,
-        box_type_3d='LiDAR',
-        backend_args=backend_args))
+test_dataloader = val_dataloader
+
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',

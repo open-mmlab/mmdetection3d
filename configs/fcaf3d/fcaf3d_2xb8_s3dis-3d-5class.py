@@ -25,3 +25,9 @@ custom_hooks = [dict(type='EmptyCacheHook', after_iter=True)]
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=12)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (2 GPUs) x (8 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)

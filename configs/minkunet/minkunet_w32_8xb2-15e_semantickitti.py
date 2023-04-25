@@ -3,8 +3,15 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
+backend_args = None
+
 train_pipeline = [
-    dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
     dict(
         type='LoadAnnotations3D',
         with_bbox_3d=False,
@@ -12,19 +19,19 @@ train_pipeline = [
         with_seg_3d=True,
         seg_3d_dtype='np.int32',
         seg_offset=2**16,
-        dataset_type='semantickitti'),
+        dataset_type='semantickitti',
+        backend_args=backend_args),
     dict(type='PointSegClassMapping'),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[0., 6.28318531],
         scale_ratio_range=[0.95, 1.05],
-        translation_std=[0, 0, 0],
-    ),
+        translation_std=[0, 0, 0]),
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 
 train_dataloader = dict(
-    sampler=dict(seed=0), dataset=dict(dataset=dict(pipeline=train_pipeline)))
+    sampler=dict(seed=0), dataset=dict(pipeline=train_pipeline))
 
 lr = 0.24
 optim_wrapper = dict(
@@ -52,3 +59,9 @@ test_cfg = dict(type='TestLoop')
 default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
 randomness = dict(seed=0, deterministic=False, diff_rank_seed=True)
 env_cfg = dict(cudnn_benchmark=True)
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)

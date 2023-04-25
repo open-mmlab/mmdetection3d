@@ -1,7 +1,7 @@
 _base_ = './ssn_hv_secfpn_sbn-all_16xb2-2x_lyft-3d.py'
+
 # model settings
 model = dict(
-    type='MVXFasterRCNN',
     pts_backbone=dict(
         _delete_=True,
         type='NoStemRegNet',

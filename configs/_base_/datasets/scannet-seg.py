@@ -1,16 +1,20 @@
-# For ScanNet seg we usually do 20-class segmentation
-class_names = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table',
-               'door', 'window', 'bookshelf', 'picture', 'counter', 'desk',
-               'curtain', 'refrigerator', 'showercurtrain', 'toilet', 'sink',
-               'bathtub', 'otherfurniture')
-metainfo = dict(classes=class_names)
+# dataset settings
 dataset_type = 'ScanNetSegDataset'
 data_root = 'data/scannet/'
+# For ScanNet seg we usually do 20-class segmentation
+class_names = [
+    'wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door',
+    'window', 'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+    'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+    'otherfurniture'
+]
 input_modality = dict(use_lidar=True, use_camera=False)
+metainfo = dict(classes=class_names)
 data_prefix = dict(
     pts='points',
     pts_instance_mask='instance_mask',
     pts_semantic_mask='semantic_mask')
+num_points = 8192
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -27,7 +31,6 @@ data_prefix = dict(
 #      }))
 backend_args = None
 
-num_points = 8192
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -72,40 +75,7 @@ test_pipeline = [
         with_mask_3d=False,
         with_seg_3d=True,
         backend_args=backend_args),
-    dict(type='NormalizePointsColor', color_mean=None),
-    dict(
-        # a wrapper in order to successfully call test function
-        # actually we don't perform test-time-aug
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.0,
-                flip_ratio_bev_vertical=0.0),
-        ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
-]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-# we need to load gt seg_mask!
-eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='DEPTH',
-        shift_height=False,
-        use_color=True,
-        load_dim=6,
-        use_dim=[0, 1, 2, 3, 4, 5],
-        backend_args=backend_args),
+    dict(type='PointSegClassMapping'),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -127,7 +97,7 @@ train_dataloader = dict(
         scene_idxs=data_root + 'seg_info/train_resampled_scene_idxs.npy',
         test_mode=False,
         backend_args=backend_args))
-test_dataloader = dict(
+val_dataloader = dict(
     batch_size=1,
     num_workers=1,
     persistent_workers=True,
@@ -144,7 +114,7 @@ test_dataloader = dict(
         ignore_index=len(class_names),
         test_mode=True,
         backend_args=backend_args))
-val_dataloader = test_dataloader
+test_dataloader = val_dataloader
 
 val_evaluator = dict(type='SegMetric')
 test_evaluator = val_evaluator

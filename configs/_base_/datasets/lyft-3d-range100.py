@@ -1,14 +1,14 @@
-# If point cloud range is changed, the models should also change their point
-# cloud range accordingly
-point_cloud_range = [-100, -100, -5, 100, 100, 3]
+# dataset settings
+dataset_type = 'LyftDataset'
+data_root = 'data/lyft/'
 # For Lyft we usually do 9-class detection
 class_names = [
     'car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle', 'motorcycle',
     'bicycle', 'pedestrian', 'animal'
 ]
-dataset_type = 'LyftDataset'
-data_root = 'data/lyft/'
-data_prefix = dict(pts='v1.01-train/lidar', img='', sweeps='v1.01-train/lidar')
+# If point cloud range is changed, the models should also change their point
+# cloud range accordingly
+point_cloud_range = [-100, -100, -5, 100, 100, 3]
 # Input modality for Lyft dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(
@@ -17,6 +17,8 @@ input_modality = dict(
     use_radar=False,
     use_map=False,
     use_external=False)
+metainfo = dict(classes=class_names)
+data_prefix = dict(pts='v1.01-train/lidar', img='', sweeps='v1.01-train/lidar')
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -69,36 +71,7 @@ test_pipeline = [
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-        ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
-]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
-eval_pipeline = [
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        backend_args=backend_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=10,
-        backend_args=backend_args),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
@@ -112,7 +85,7 @@ train_dataloader = dict(
         data_root=data_root,
         ann_file='lyft_infos_train.pkl',
         pipeline=train_pipeline,
-        metainfo=dict(classes=class_names),
+        metainfo=metainfo,
         modality=input_modality,
         data_prefix=data_prefix,
         test_mode=False,
@@ -129,10 +102,10 @@ val_dataloader = dict(
         data_root=data_root,
         ann_file='lyft_infos_val.pkl',
         pipeline=test_pipeline,
-        metainfo=dict(classes=class_names),
+        metainfo=metainfo,
         modality=input_modality,
-        test_mode=True,
         data_prefix=data_prefix,
+        test_mode=True,
         box_type_3d='LiDAR',
         backend_args=backend_args))
 test_dataloader = val_dataloader

@@ -28,12 +28,12 @@ param_scheduler = [
         gamma=0.1)
 ]
 
-train_dataloader = dict(batch_size=4, )
+train_dataloader = dict(batch_size=4)
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=32)
+#   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=5))

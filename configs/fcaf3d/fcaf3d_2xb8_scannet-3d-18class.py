@@ -2,6 +2,7 @@ _base_ = [
     '../_base_/models/fcaf3d.py', '../_base_/default_runtime.py',
     '../_base_/datasets/scannet-3d.py'
 ]
+
 n_points = 100000
 backend_args = None
 
@@ -43,32 +44,14 @@ test_pipeline = [
         use_dim=[0, 1, 2, 3, 4, 5],
         backend_args=backend_args),
     dict(type='GlobalAlignment', rotation_axis=2),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.5,
-                flip_ratio_bev_vertical=0.5),
-            dict(type='PointSample', num_points=n_points),
-            dict(type='NormalizePointsColor', color_mean=None),
-        ]),
+    dict(type='PointSample', num_points=n_points),
+    dict(type='NormalizePointsColor', color_mean=None),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
 train_dataloader = dict(
     dataset=dict(
-        type='RepeatDataset',
-        times=10,
-        dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)))
+        times=10, dataset=dict(pipeline=train_pipeline, filter_empty_gt=True)))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
@@ -92,3 +75,9 @@ custom_hooks = [dict(type='EmptyCacheHook', after_iter=True)]
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=12)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (2 GPUs) x (8 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)

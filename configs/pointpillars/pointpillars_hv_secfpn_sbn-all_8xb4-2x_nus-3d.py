@@ -4,6 +4,7 @@ _base_ = [
     '../_base_/schedules/schedule-2x.py',
     '../_base_/default_runtime.py',
 ]
+
 # model settings
 model = dict(
     pts_neck=dict(

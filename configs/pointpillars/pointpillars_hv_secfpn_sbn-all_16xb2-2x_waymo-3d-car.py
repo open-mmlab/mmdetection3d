@@ -5,12 +5,11 @@ _base_ = [
     '../_base_/default_runtime.py',
 ]
 
-# data settings
+# dataset settings
 train_dataloader = dict(dataset=dict(dataset=dict(load_interval=1)))
 
 # model settings
 model = dict(
-    type='MVXFasterRCNN',
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=1,

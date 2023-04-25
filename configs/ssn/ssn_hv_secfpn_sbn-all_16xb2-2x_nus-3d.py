@@ -11,6 +11,7 @@ class_names = [
     'bicycle', 'motorcycle', 'pedestrian', 'traffic_cone', 'barrier', 'car',
     'truck', 'trailer', 'bus', 'construction_vehicle'
 ]
+metainfo = dict(classes=class_names)
 backend_args = None
 
 train_pipeline = [
@@ -53,31 +54,15 @@ test_pipeline = [
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
     batch_size=2,
     num_workers=4,
-    dataset=dict(pipeline=train_pipeline, metainfo=dict(classes=class_names)))
-test_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
-val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, metainfo=dict(classes=class_names)))
+    dataset=dict(pipeline=train_pipeline, metainfo=metainfo))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
 
 # model settings
 model = dict(

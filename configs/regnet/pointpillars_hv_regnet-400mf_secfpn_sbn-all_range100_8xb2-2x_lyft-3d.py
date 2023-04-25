@@ -1,10 +1,11 @@
 _base_ = \
-    './hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d.py'
+    './pointpillars_hv_regnet-400mf_fpn_sbn-all_range100_8xb2-2x_lyft-3d.py'
+
 # model settings
 model = dict(
     pts_neck=dict(
-        type='SECONDFPN',
         _delete_=True,
+        type='SECONDFPN',
         norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
         in_channels=[64, 160, 384],
         upsample_strides=[1, 2, 4],

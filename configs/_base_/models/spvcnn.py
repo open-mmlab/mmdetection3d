@@ -8,8 +8,7 @@ model = dict(
             max_num_points=-1,
             point_cloud_range=[-100, -100, -20, 100, 100, 20],
             voxel_size=[0.05, 0.05, 0.05],
-            max_voxels=(-1, -1)),
-    ),
+            max_voxels=(-1, -1))),
     backbone=dict(
         type='SPVCNNBackbone',
         in_channels=4,

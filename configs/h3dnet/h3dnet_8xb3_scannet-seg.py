@@ -57,10 +57,7 @@ model = dict(
                             [1.1511526, 1.0546296, 0.49706793],
                             [0.47535285, 0.49249494, 0.5802117]]))))
 
-train_dataloader = dict(
-    batch_size=3,
-    num_workers=2,
-)
+train_dataloader = dict(batch_size=3, num_workers=2)
 
 # yapf:disable
 default_hooks = dict(

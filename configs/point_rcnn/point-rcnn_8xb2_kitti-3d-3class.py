@@ -1,15 +1,12 @@
 _base_ = [
-    '../_base_/datasets/kitti-3d-car.py', '../_base_/models/point_rcnn.py',
+    '../_base_/datasets/kitti-3d-3class.py', '../_base_/models/point_rcnn.py',
     '../_base_/default_runtime.py', '../_base_/schedules/cyclic-40e.py'
 ]
 
 # dataset settings
-dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-metainfo = dict(classes=class_names)
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-input_modality = dict(use_lidar=True, use_camera=False)
 backend_args = None
 
 db_sampler = dict(
@@ -65,33 +62,17 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='PointSample', num_points=16384, sample_range=40.0)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointSample', num_points=16384, sample_range=40.0),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
 train_dataloader = dict(
     batch_size=2,
     num_workers=2,
-    dataset=dict(
-        type='RepeatDataset',
-        times=2,
-        dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+    dataset=dict(times=2, dataset=dict(pipeline=train_pipeline)))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 lr = 0.001  # max learning rate
 optim_wrapper = dict(optimizer=dict(lr=lr, betas=(0.95, 0.85)))

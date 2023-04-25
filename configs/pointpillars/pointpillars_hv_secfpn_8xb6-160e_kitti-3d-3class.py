@@ -8,7 +8,6 @@ point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 # dataset settings
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-metainfo = dict(classes=class_names)
 backend_args = None
 
 # PointPillars adopted a different sampling strategies among classes
@@ -58,28 +57,13 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-train_dataloader = dict(
-    dataset=dict(dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+train_dataloader = dict(dataset=dict(dataset=dict(pipeline=train_pipeline)))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # In practice PointPillars also uses a different schedule
 # optimizer
 lr = 0.001
@@ -117,6 +101,7 @@ param_scheduler = [
         eta_min=1,
         begin=epoch_num * 0.4,
         end=epoch_num * 1,
+        by_epoch=True,
         convert_to_iter_based=True)
 ]
 # max_norm=35 is slightly better than 10 for PointPillars in the earlier

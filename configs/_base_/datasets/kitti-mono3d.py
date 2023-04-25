@@ -1,8 +1,10 @@
+# dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 metainfo = dict(classes=class_names)
+data_prefix = dict(img='training/image_2')
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -29,7 +31,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='Resize', scale=(1242, 375), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
@@ -40,11 +42,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
-    dict(type='Resize', scale=(1242, 375), keep_ratio=True),
-    dict(type='Pack3DDetInputs', keys=['img'])
-]
-eval_pipeline = [
-    dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
+    dict(type='mmdet.Resize', scale=(1242, 375), keep_ratio=True),
     dict(type='Pack3DDetInputs', keys=['img'])
 ]
 
@@ -57,7 +55,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file='kitti_infos_train.pkl',
-        data_prefix=dict(img='training/image_2'),
+        data_prefix=data_prefix,
         pipeline=train_pipeline,
         modality=input_modality,
         load_type='fov_image_based',
@@ -76,13 +74,13 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(img='training/image_2'),
         ann_file='kitti_infos_val.pkl',
+        data_prefix=data_prefix,
         pipeline=test_pipeline,
         modality=input_modality,
         load_type='fov_image_based',
-        metainfo=metainfo,
         test_mode=True,
+        metainfo=metainfo,
         box_type_3d='Camera',
         backend_args=backend_args))
 test_dataloader = val_dataloader
@@ -92,7 +90,6 @@ val_evaluator = dict(
     ann_file=data_root + 'kitti_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
-
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
