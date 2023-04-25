@@ -42,7 +42,7 @@ python demo/multi_modality_demo.py ${PCD_FILE} ${IMAGE_FILE} ${ANNOTATION_FILE} 
 
 `ANNOTATION_FILE` 需要提供 3D 到 2D 的仿射矩阵，可视化结果会被保存在 `${OUT_DIR}/PCD_NAME`，其中包括点云、图像、预测的 3D 框以及它们在图像上的投影。
 
-在 KITTI 数据上测试 [MVX-Net](https://github.com/open-mmlab/mmdetection3d/tree/master/configs/mvxnet) 模型：
+在 KITTI 数据上测试 [MVX-Net 模型](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class-8963258a.pth)：
 
 ```shell
 python demo/multi_modality_demo.py demo/data/kitti/000008.bin demo/data/kitti/000008.png demo/data/kitti/000008.pkl configs/mvxnet/mvx_fpn-dv-second-secfpn_8xb2-80e_kitti-3d-3class.py checkpoints/mvx_fpn-dv-second-secfpn_8xb2-80e_kitti-3d-3class_20200621_003904-10140f2d.pth
