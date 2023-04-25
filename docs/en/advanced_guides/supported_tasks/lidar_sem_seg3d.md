@@ -74,14 +74,14 @@ The evaluation results will be printed in the command like:
 In addition, you can also evaluate a specific model checkpoint after training is finished. Simply run scripts like the following:
 
 ```
-./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py work_dirs/pointnet2_ssg/latest.pth 8
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet-seg.py work_dirs/pointnet2_ssg/latest.pth 8
 ```
 
 ## Testing and Making a Submission
 
 If you would like to only conduct inference or test the model performance on the online benchmark,
 you should change `ann_file='scannet_infos_val.pkl'` to `ann_file='scannet_infos_test.pkl'` in the
-ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/scannet_seg-3d-20class.py#L129). Remember to
+ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/_base_/datasets/scannet-seg.py#L129). Remember to
 specify the `submission_prefix` in the `test_evaluator`,
 e.g., adding `test_evaluator = dict(type='SegMetric', submission_prefix=work_dirs/pointnet2_ssg/test_submission`) or just add `--cfg-options test_evaluator.submission_prefix=work_dirs/pointnet2_ssg/test_submission` in the end of command.
 After generating the results, you can basically compress the folder and upload to the [ScanNet evaluation server](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d).

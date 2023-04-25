@@ -664,6 +664,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if hasattr(self, 'o3d_vis'):
             self.o3d_vis.run()
             if save_path is not None:
+                if not (save_path.endswith('.png')
+                        or save_path.endswith('.jpg')):
+                    save_path += '.png'
                 self.o3d_vis.capture_screen_image(save_path)
             self.o3d_vis.destroy_window()
             self._clear_o3d_vis()
