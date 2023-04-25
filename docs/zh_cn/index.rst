@@ -5,7 +5,6 @@
    :maxdepth: 1
    :caption: 开始你的第一步
 
-   overview.md
    get_started.md
 
 .. toctree::

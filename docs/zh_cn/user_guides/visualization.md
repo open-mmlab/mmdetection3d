@@ -190,7 +190,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 你可以使用不同的配置浏览不同的数据集，例如在 3D 语义分割任务中可视化 ScanNet 数据集：
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task lidar_seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --task lidar_seg --output-dir ${OUTPUT_DIR} --online
 ```
 
 ![](../../../resources/browse_dataset_seg.png)

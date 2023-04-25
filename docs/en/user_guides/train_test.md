@@ -1,10 +1,4 @@
-# Inference and train with existing models and standard datasets
-
-## Inference with existing models
-
-Here we provide testing scripts to evaluate a whole dataset (SUNRGBD, ScanNet, KITTI, etc.).
-
-For high-level apis easier to integrated into other projects and basic demos, please refer to Verification/Demo under [Get Started](https://mmdetection3d.readthedocs.io/en/dev-1.x/inference.html).
+# Test and Train on Standard Datasets
 
 ### Test existing models on standard datasets
 

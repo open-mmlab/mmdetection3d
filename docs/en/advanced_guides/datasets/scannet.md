@@ -1,4 +1,6 @@
-# ScanNet for 3D Object Detection
+# ScanNet Dataset
+
+MMDetection3D supports LiDAR-based detection and segmentation on ScanNet dataset. This page provides specific tutorials about the usage.
 
 ## Dataset preparation
 
@@ -38,7 +40,7 @@ Under folder `scans` there are overall 1201 train and 312 validation folders in 
 - `scene0001_01.txt`: Meta file including axis-aligned matrix, etc.
 - `scene0001_01_vh_clean_2.labels.ply`: Annotation file containing the category of each vertex.
 
-Export ScanNet data by running `python batch_load_scannet_data.py`. The main steps include:
+The procedure of exporting ScanNet data by running `python batch_load_scannet_data.py` mainly includes the following 3 steps:
 
 - Export original files to point cloud, instance label, semantic label and bounding box file.
 - Downsample raw point cloud and filter invalid classes.
@@ -224,6 +226,9 @@ scannet
 - `points/xxxxx.bin`: The `axis-unaligned` point cloud data after downsample. Since ScanNet 3D detection task takes axis-aligned point clouds as input, while ScanNet 3D semantic segmentation task takes unaligned points, we choose to store unaligned points and their axis-align transform matrix. Note: the points would be axis-aligned in pre-processing pipeline [`GlobalAlignment`](https://github.com/open-mmlab/mmdetection3d/blob/9f0b01caf6aefed861ef4c3eb197c09362d26b32/mmdet3d/datasets/pipelines/transforms_3d.py#L423) of 3D detection task.
 - `instance_mask/xxxxx.bin`: The instance label for each point, value range: \[0, NUM_INSTANCES\], 0: unannotated.
 - `semantic_mask/xxxxx.bin`: The semantic label for each point, value range: \[1, 40\], i.e. `nyu40id` standard. Note: the `nyu40id` ID will be mapped to train ID in train pipeline `PointSegClassMapping`.
+- `seg_info`: The generated infos to support semantic segmentation model training.
+  - `train_label_weight.npy`: Weighting factor for each semantic class. Since the number of points in different classes varies greatly, it's a common practice to use label re-weighting to get a better performance.
+  - `train_resampled_scene_idxs.npy`: Re-sampling index for each scene. Different rooms will be sampled multiple times according to their number of points to balance training data.
 - `posed_images/scenexxxx_xx`: The set of `.jpg` images with `.txt` 4x4 poses and the single `.txt` file with camera intrinsic matrix.
 - `scannet_infos_train.pkl`: The train data infos, the detailed info of each scan is as follows:
   - info\['lidar_points'\]: A dict containing all information related to the lidar points.
@@ -285,8 +290,61 @@ train_pipeline = [
   - `RandomFlip3D`: randomly flip the input point cloud horizontally or vertically.
   - `GlobalRotScaleTrans`: rotate the input point cloud, usually in the range of \[-5, 5\] (degrees) for ScanNet; then scale the input point cloud, usually by 1.0 for ScanNet (which means no scaling); finally translate the input point cloud, usually by 0 for ScanNet  (which means no translation).
 
+A typical training pipeline of ScanNet for 3D semantic segmentation is as below:
+
+```python
+train_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=True,
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5]),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True),
+    dict(
+        type='PointSegClassMapping'),
+    dict(
+        type='IndoorPatchPointSample',
+        num_points=num_points,
+        block_size=1.5,
+        ignore_index=len(class_names),
+        use_normalized_coord=False,
+        enlarge_size=0.2,
+        min_unique_num=None),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
+]
+```
+
+- `PointSegClassMapping`: Only the valid category ids will be mapped to class label ids like \[0, 20) during training. Other class ids will be converted to `ignore_index` which equals to `20`.
+- `IndoorPatchPointSample`: Crop a patch containing a fixed number of points from input point cloud. `block_size` indicates the size of the cropped block, typically `1.5` for ScanNet.
+- `NormalizePointsColor`: Normalize the RGB color values of input point cloud by dividing `255`.
+
 ## Metrics
 
-Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called. Please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py) for more details.
+- **Object Detection**: Typically mean Average Precision (mAP) is used for evaluation on ScanNet, e.g. `mAP@0.25` and `mAP@0.5`. In detail, a generic function to compute precision and recall for 3D object detection for multiple classes is called. Please refer to [indoor_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/indoor_eval.py) for more details.
 
-As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D Non-Maximum Suppression (NMS), which is regardless of rotation, is adopted during post-processing .
+  **Note**: As introduced in section `Export ScanNet data`, all ground truth 3D bounding box are axis-aligned, i.e. the yaw is zero. So the yaw target of network predicted 3D bounding box is also zero and axis-aligned 3D Non-Maximum Suppression (NMS), which is regardless of rotation, is adopted during post-processing .
+
+- **Semantic Segmentation**: Typically mean Intersection over Union (mIoU) is used for evaluation on ScanNet. In detail, we first compute IoU for multiple classes and then average them to get mIoU, please refer to [seg_eval](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py).
+
+## Testing and Making a Submission
+
+By default, our codebase evaluates semantic segmentation results on the validation set.
+If you would like to test the model performance on the online benchmark, add `--format-only` flag in the evaluation script and change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/scannet-seg.py#L126). Remember to specify the `txt_prefix` as the directory to save the testing results.
+
+Taking PointNet++ (SSG) on ScanNet for example, the following command can be used to do inference on test set:
+
+```
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet-seg.py \
+    work_dirs/pointnet2_ssg/latest.pth --format-only \
+    --eval-options txt_prefix=work_dirs/pointnet2_ssg/test_submission
+```
+
+After generating the results, you can basically compress the folder and upload to the [ScanNet evaluation server](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d).

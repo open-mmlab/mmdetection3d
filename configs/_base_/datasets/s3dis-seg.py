@@ -73,25 +73,6 @@ test_pipeline = [
         with_seg_3d=True,
         backend_args=backend_args),
     dict(type='NormalizePointsColor', color_mean=None),
-    dict(
-        # a wrapper in order to successfully call test function
-        # actually we don't perform test-time-aug
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(
-                type='RandomFlip3D',
-                sync_2d=False,
-                flip_ratio_bev_horizontal=0.0,
-                flip_ratio_bev_vertical=0.0),
-        ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
@@ -108,6 +89,33 @@ eval_pipeline = [
         backend_args=backend_args),
     dict(type='NormalizePointsColor', color_mean=None),
     dict(type='Pack3DDetInputs', keys=['points'])
+]
+tta_pipeline = [
+    dict(
+        type='LoadPointsFromFile',
+        coord_type='DEPTH',
+        shift_height=False,
+        use_color=True,
+        load_dim=6,
+        use_dim=[0, 1, 2, 3, 4, 5],
+        backend_args=backend_args),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox_3d=False,
+        with_label_3d=False,
+        with_mask_3d=False,
+        with_seg_3d=True,
+        backend_args=backend_args),
+    dict(type='NormalizePointsColor', color_mean=None),
+    dict(
+        type='TestTimeAug',
+        transforms=[[
+            dict(
+                type='RandomFlip3D',
+                sync_2d=False,
+                flip_ratio_bev_horizontal=0.,
+                flip_ratio_bev_vertical=0.)
+        ], [dict(type='Pack3DDetInputs', keys=['points'])]])
 ]
 
 # train on area 1, 2, 3, 4, 6
@@ -157,3 +165,5 @@ test_evaluator = val_evaluator
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+tta_model = dict(type='Seg3DTTAModel')

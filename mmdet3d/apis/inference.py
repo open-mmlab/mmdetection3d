@@ -178,8 +178,8 @@ def inference_multi_modality_detector(model: nn.Module,
                                       ann_file: Union[str, Sequence[str]],
                                       cam_type: str = 'CAM2'):
     """Inference point cloud with the multi-modality detector. Now we only
-    support multi-modality detector for KITTI dataset since the multi-view
-    image loading is not supported yet in this inference function.
+    support multi-modality detector for KITTI and SUNRGBD datasets since the
+    multi-view image loading is not supported yet in this inference function.
 
     Args:
         model (nn.Module): The loaded detector.
@@ -198,8 +198,6 @@ def inference_multi_modality_detector(model: nn.Module,
         If pcds is a list or tuple, the same length list type results
         will be returned, otherwise return the detection results directly.
     """
-
-    # TODO: We will support
     if isinstance(pcds, (list, tuple)):
         is_batch = True
         assert isinstance(imgs, (list, tuple))
@@ -229,9 +227,6 @@ def inference_multi_modality_detector(model: nn.Module,
         if osp.basename(img_path) != osp.basename(img):
             raise ValueError(f'the info file of {img_path} is not provided.')
 
-        data_info['images'][cam_type]['img_path'] = img
-        cam2img = np.array(data_info['images'][cam_type]['cam2img'])
-
         # TODO: check the name consistency of
         # image file and point cloud file
         # TODO: support multi-view image loading
@@ -239,8 +234,14 @@ def inference_multi_modality_detector(model: nn.Module,
             lidar_points=dict(lidar_path=pcd),
             img_path=img,
             box_type_3d=box_type_3d,
-            box_mode_3d=box_mode_3d,
-            cam2img=cam2img)
+            box_mode_3d=box_mode_3d)
+
+        data_info['images'][cam_type]['img_path'] = img
+        if 'cam2img' in data_info['images'][cam_type]:
+            # The data annotation in SRUNRGBD dataset does not contain
+            # `cam2img`
+            data_['cam2img'] = np.array(
+                data_info['images'][cam_type]['cam2img'])
 
         # LiDAR to image conversion for KITTI dataset
         if box_mode_3d == Box3DMode.LIDAR:
@@ -314,8 +315,10 @@ def inference_mono_3d_detector(model: nn.Module,
 
         # replace the img_path in data_info with img
         data_info['images'][cam_type]['img_path'] = img
+        # avoid data_info['images'] has multiple keys anout camera views.
+        mono_img_info = {f'{cam_type}': data_info['images'][cam_type]}
         data_ = dict(
-            images=data_info['images'],
+            images=mono_img_info,
             box_type_3d=box_type_3d,
             box_mode_3d=box_mode_3d)
 

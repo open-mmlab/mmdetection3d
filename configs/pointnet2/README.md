@@ -35,7 +35,7 @@ We implement PointNet++ and provide the result and checkpoints on ScanNet and S3
 
 - Since ScanNet dataset doesn't provide ground-truth labels for the test set, users can only evaluate test set performance by submitting to its online benchmark [website](http://kaldir.vc.in.tum.de/scannet_benchmark/). However, users are only allowed to submit once every two weeks. Therefore, we currently report val set mIoU. Test set performance may be added in the future.
 
-- To generate submission file for ScanNet online benchmark, you need to modify the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126). Change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'`, and then simply run:
+- To generate submission file for ScanNet online benchmark, you need to modify the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/scannet-seg.py#L126). Change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'`, and then simply run:
 
   ```shell
   python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} --format-only --options 'txt_prefix=exps/pointnet2_scannet_results'
