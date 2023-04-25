@@ -24,7 +24,7 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(
-    sampler=dict(seed=0), dataset=dict(dataset=dict(pipeline=train_pipeline)))
+    sampler=dict(seed=0), dataset=dict(pipeline=train_pipeline))
 
 lr = 0.24
 optim_wrapper = dict(
