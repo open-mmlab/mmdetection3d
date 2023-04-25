@@ -11,9 +11,6 @@ mmdet3d.apis
 
 .. currentmodule:: mmdet3d.apis.inferencers
 
-Inferencers
----------------------------------------------
-
 .. autosummary::
    :toctree: generated
    :nosignatures:
