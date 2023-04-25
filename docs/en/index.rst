@@ -5,7 +5,6 @@ Welcome to MMDetection3D's documentation!
    :maxdepth: 1
    :caption: Get Started
 
-   overview.md
    get_started.md
 
 .. toctree::

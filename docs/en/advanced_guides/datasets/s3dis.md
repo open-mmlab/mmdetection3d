@@ -1,4 +1,4 @@
-# S3DIS for 3D Semantic Segmentation
+# S3DIS Dataset
 
 ## Dataset preparation
 

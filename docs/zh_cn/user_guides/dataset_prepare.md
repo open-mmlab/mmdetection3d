@@ -101,6 +101,14 @@ python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitt
 sh tools/create_data.sh <partition> kitti
 ```
 
+**小贴士**：
+
+- **现成的标注文件**：我们已经提供了离线处理好的 [KITTI 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/kitti/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
+
+```bash
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
+```
+
 ### Waymo
 
 在[这里](https://waymo.com/open/download/)下载 Waymo 公开数据集 1.2 版本，在[这里](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing)下载其数据划分文件。然后，将 `.tfrecord` 文件置于 `data/waymo/waymo_format/` 目录下的相应位置，并将数据划分的 `.txt` 文件置于 `data/waymo/kitti_format/ImageSets` 目录下。在[这里](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects)下载验证集的真实标签（`.bin` 文件）并将其置于 `data/waymo/waymo_format/`。提示：你可以使用 `gsutil` 来用命令下载大规模的数据集。更多细节请参考此[工具](https://github.com/RalphMao/Waymo-Dataset-Tool)。完成以上各步后，可以通过运行以下指令对 Waymo 数据进行预处理：
@@ -113,7 +121,17 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 
 - 如果你的硬盘空间大小不足以存储转换后的数据，你可以将 `--out-dir` 参数设定为别的路径。你只需要记得在那个路径下创建文件夹并下载数据，然后在数据预处理完成后将其链接回 `data/waymo/kitti_format` 即可。
 
-- 如果你想在 Waymo 上进行更快的评估，你可以下载已经预处理好的[元信息文件](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl)并将其放置在 `data/waymo/waymo_format/` 目录下。接着，你可以按照以下来修改数据集的配置：
+**小贴士**：
+
+- **现成的标注文件**: 我们已经提供了离线处理好的 [Waymo 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/waymo/kitti_format/` 目录下。然而，您还是需要自己使用上面的脚本将 Waymo 的原始数据还需要转成 kitti 格式。
+
+- **Waymo-mini**： 如果你只是为了验证某些方法或者 debug, 你可以使用我们提供的 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz)。它只包含原始数据集中训练集中的 2 个 segments 和 验证集中的 1 个 segment。您只需要下载并且解压到 `data/waymo/`，即可使用它：
+
+  ```bash
+  tar -xzvf waymo_mini_kitti_format.tar.gz -C ./data/waymo
+  ```
+
+- **更快的评估**： 如果你想在 Waymo 上进行更快的评估，你可以下载已经预处理好的[元信息文件](https://download.openmmlab.com/mmdetection3d/data/waymo/idx2metainfo.pkl)并将其放置在 `data/waymo/waymo_format/` 目录下。接着，你可以按照以下来修改数据集的配置：
 
   ```python
   val_evaluator = dict(
@@ -137,6 +155,14 @@ python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/way
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
 ```
 
+**小贴士**：
+
+- **现成的标注文件**：我们已经提供了离线处理好的 [NuScenes 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/nuscenes/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
+
+```bash
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
+```
+
 ### Lyft
 
 在[这里](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/data)下载 Lyft 3D 检测数据。通过运行以下指令对 Lyft 数据进行预处理：
@@ -155,6 +181,8 @@ python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./d
 请参考 ScanNet [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/scannet/README.md) 文件以对其进行数据预处理。
 
 请参考 SUN RGB-D [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/sunrgbd/README.md) 文件以对其进行数据预处理。
+
+**小贴士**：对于 S3DIS, ScanNet 和 SUN RGB-D 数据集，我们已经提供了离线处理好的 [标注文件](#数据集标注文件列表)。您可以直接下载他们并放到 `data/${DATASET}/` 目录下。然而，您还是需要自己利用我们的脚本来生成点云文件以及语义掩膜文件(如果该数据集有的话)。
 
 ### 自定义数据集
 
@@ -177,3 +205,17 @@ python tools/dataset_converters/update_infos_to_v2.py --dataset ${DATA_SET} --pk
 ```bash
 python tools/dataset_converters/update_infos_to_v2.py --dataset kitti --pkl-path ./data/kitti/kitti_infos_trainval.pkl --out-dir ./data/kitti
 ```
+
+### 数据集标注文件列表
+
+我们提供了离线生成好的数据集标注文件以供参考。为了方便，您也可以直接使用他们。
+
+|                                                         数据集                                                         |                                                                                                              训练集标注文件                                                                                                               |                                                                                                           验证集标注文件                                                                                                           |                                                        测试集标注文件                                                        |
+| :--------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|                                                         KITTI                                                          |                                                                  [kitti_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/kitti/kitti_infos_train.pkl)                                                                   |                                                                 [kitti_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/kitti/kitti_infos_val.pkl)                                                                 |               [kitti_infos_test](https://download.openmmlab.com/mmdetection3d/data/kitti/kitti_infos_test.pkl)               |
+|                                                        NuScenes                                                        | [nuscenes_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_infos_train.pkl) [nuscenes_mini_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_mini_infos_train.pkl) | [nuscenes_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_infos_val.pkl)  [nuscenes_mini_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/nuscenes/nuscenes_mini_infos_val.pkl) |                                                                                                                              |
+|                                                         Waymo                                                          |         [waymo_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_infos_train.pkl)  [waymo_mini_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_infos_train.pkl)          |          [waymo_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_infos_val.pkl)  [waymo_mini_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_infos_val.pkl)          |             [waymo_infos_test.pkl](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_infos_test.pkl)             |
+| [Waymo-mini kitti-format data](https://download.openmmlab.com/mmdetection3d/data/waymo/waymo_mini_kitti_format.tar.gz) |                                                                                                                                                                                                                                           |                                                                                                                                                                                                                                    |                                                                                                                              |
+|                                                       SUN RGB-D                                                        |                                                               [sunrgbd_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/sunrgbd/sunrgbd_infos_train.pkl)                                                                |                                                              [sunrgbd_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/sunrgbd/sunrgbd_infos_val.pkl)                                                              |                                                                                                                              |
+|                                                        ScanNet                                                         |                                                               [scannet_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/scannet/scannet_infos_train.pkl)                                                                |                                                              [scannet_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/scannet/scannet_infos_val.pkl)                                                              |          [scannet_infos_test.pkl](https://download.openmmlab.com/mmdetection3d/data/scannet/scannet_infos_test.pkl)          |
+|                                                     SemanticKitti                                                      |                                                      [semantickitti_infos_train.pkl](https://download.openmmlab.com/mmdetection3d/data/semantickitti/semantickitti_infos_train.pkl)                                                       |                                                     [semantickitti_infos_val.pkl](https://download.openmmlab.com/mmdetection3d/data/semantickitti/semantickitti_infos_val.pkl)                                                     | [semantickitti_infos_test.pkl](https://download.openmmlab.com/mmdetection3d/data/semantickitti/semantickitti_infos_test.pkl) |

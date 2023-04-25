@@ -1,4 +1,4 @@
-# NuScenes Dataset for 3D Object Detection
+# NuScenes Dataset
 
 This page provides specific tutorials about the usage of MMDetection3D for nuScenes dataset.
 
