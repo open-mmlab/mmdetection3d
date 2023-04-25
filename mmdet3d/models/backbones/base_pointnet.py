@@ -1,25 +1,32 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 from abc import ABCMeta
+from typing import Optional, Tuple
 
+import torch
 from mmengine.model import BaseModule
 
 
 class BasePointNet(BaseModule, metaclass=ABCMeta):
     """Base class for PointNet."""
 
-    def __init__(self, init_cfg=None, pretrained=None):
+    def __init__(self,
+                 init_cfg: Optional[dict] = None,
+                 pretrained: Optional[str] = None):
         super(BasePointNet, self).__init__(init_cfg)
-        self.fp16_enabled = False
+        self.fp16_enabled: bool = False
         assert not (init_cfg and pretrained), \
             'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):
             warnings.warn('DeprecationWarning: pretrained is a deprecated, '
                           'please use "init_cfg" instead')
-            self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
+            self.init_cfg: dict = dict(
+                type='Pretrained', checkpoint=pretrained)
 
     @staticmethod
-    def _split_point_feats(points):
+    def _split_point_feats(
+            points: torch.Tensor
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """Split coordinates and features of input points.
 
         Args:
@@ -30,10 +37,11 @@ class BasePointNet(BaseModule, metaclass=ABCMeta):
             torch.Tensor: Coordinates of input points.
             torch.Tensor: Features of input points.
         """
-        xyz = points[..., 0:3].contiguous()
+        xyz: torch.Tensor = points[..., 0:3].contiguous()
         if points.size(-1) > 3:
-            features = points[..., 3:].transpose(1, 2).contiguous()
+            features: torch.Tensor = points[..., 3:].transpose(1,
+                                                               2).contiguous()
         else:
-            features = None
+            features: Optional[torch.Tensor] = None
 
         return xyz, features

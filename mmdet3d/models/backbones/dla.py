@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer
@@ -9,7 +10,8 @@ from torch import nn
 from mmdet3d.registry import MODELS
 
 
-def dla_build_norm_layer(cfg, num_features):
+def dla_build_norm_layer(cfg: Dict[str, Any],
+                         num_features: int) -> Callable[[Any, int], Any]:
     """Build normalization layer specially designed for DLANet.
 
     Args:
@@ -53,13 +55,13 @@ class BasicBlock(BaseModule):
     """
 
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 norm_cfg,
-                 conv_cfg,
-                 stride=1,
-                 dilation=1,
-                 init_cfg=None):
+                 in_channels: int,
+                 out_channels: int,
+                 norm_cfg: Dict[str, Any],
+                 conv_cfg: Dict[str, Any],
+                 stride: int = 1,
+                 dilation: int = 1,
+                 init_cfg: Optional[Dict[str, Any]] = None):
         super(BasicBlock, self).__init__(init_cfg)
         self.conv1 = build_conv_layer(
             conv_cfg,
@@ -84,7 +86,9 @@ class BasicBlock(BaseModule):
         self.norm2 = dla_build_norm_layer(norm_cfg, out_channels)[1]
         self.stride = stride
 
-    def forward(self, x, identity=None):
+    def forward(self,
+                x: torch.Tensor,
+                identity: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Forward function."""
 
         if identity is None:
@@ -117,13 +121,13 @@ class Root(BaseModule):
     """
 
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 norm_cfg,
-                 conv_cfg,
-                 kernel_size,
-                 add_identity,
-                 init_cfg=None):
+                 in_channels: int,
+                 out_channels: int,
+                 norm_cfg: Dict[str, Any],
+                 conv_cfg: Dict[str, Any],
+                 kernel_size: int,
+                 add_identity: bool,
+                 init_cfg: Optional[Dict[str, Any]] = None):
         super(Root, self).__init__(init_cfg)
         self.conv = build_conv_layer(
             conv_cfg,
@@ -137,7 +141,7 @@ class Root(BaseModule):
         self.relu = nn.ReLU(inplace=True)
         self.add_identity = add_identity
 
-    def forward(self, feat_list):
+    def forward(self, feat_list: List[torch.Tensor]) -> torch.Tensor:
         """Forward function.
 
         Args:
@@ -181,19 +185,19 @@ class Tree(BaseModule):
     """
 
     def __init__(self,
-                 levels,
-                 block,
-                 in_channels,
-                 out_channels,
-                 norm_cfg,
-                 conv_cfg,
-                 stride=1,
-                 level_root=False,
-                 root_dim=None,
-                 root_kernel_size=1,
-                 dilation=1,
-                 add_identity=False,
-                 init_cfg=None):
+                 levels: int,
+                 block: nn.Module,
+                 in_channels: int,
+                 out_channels: int,
+                 norm_cfg: dict,
+                 conv_cfg: dict,
+                 stride: int = 1,
+                 level_root: bool = False,
+                 root_dim: Optional[int] = None,
+                 root_kernel_size: int = 1,
+                 dilation: int = 1,
+                 add_identity: bool = False,
+                 init_cfg: Optional[dict] = None):
         super(Tree, self).__init__(init_cfg)
         if root_dim is None:
             root_dim = 2 * out_channels
@@ -258,7 +262,10 @@ class Tree(BaseModule):
                     bias=False),
                 dla_build_norm_layer(norm_cfg, out_channels)[1])
 
-    def forward(self, x, identity=None, children=None):
+    def forward(self,
+                x: torch.Tensor,
+                identity: Optional[torch.Tensor] = None,
+                children: Optional[List[torch.Tensor]] = None) -> torch.Tensor:
         children = [] if children is None else children
         bottom = self.downsample(x) if self.downsample else x
         identity = self.project(bottom) if self.project else bottom
@@ -302,16 +309,16 @@ class DLANet(BaseModule):
     }
 
     def __init__(self,
-                 depth,
-                 in_channels=3,
-                 out_indices=(0, 1, 2, 3, 4, 5),
-                 frozen_stages=-1,
-                 norm_cfg=None,
-                 conv_cfg=None,
-                 layer_with_level_root=(False, True, True, True),
-                 with_identity_root=False,
-                 pretrained=None,
-                 init_cfg=None):
+                 depth: int,
+                 in_channels: int = 3,
+                 out_indices: Tuple[int] = (0, 1, 2, 3, 4, 5),
+                 frozen_stages: int = -1,
+                 norm_cfg: Optional[Dict] = None,
+                 conv_cfg: Optional[Dict] = None,
+                 layer_with_level_root: List[bool] = (False, True, True, True),
+                 with_identity_root: bool = False,
+                 pretrained: Optional[str] = None,
+                 init_cfg: Optional[Dict] = None):
         super(DLANet, self).__init__(init_cfg)
         if depth not in self.arch_settings:
             raise KeyError(f'invalida depth {depth} for DLA')
@@ -380,13 +387,13 @@ class DLANet(BaseModule):
         self._freeze_stages()
 
     def _make_conv_level(self,
-                         in_channels,
-                         out_channels,
-                         num_convs,
-                         norm_cfg,
-                         conv_cfg,
-                         stride=1,
-                         dilation=1):
+                         in_channels: int,
+                         out_channels: int,
+                         num_convs: int,
+                         norm_cfg: dict,
+                         conv_cfg: dict,
+                         stride: int = 1,
+                         dilation: int = 1) -> nn.Sequential:
         """Conv modules.
 
         Args:
@@ -418,7 +425,7 @@ class DLANet(BaseModule):
             in_channels = out_channels
         return nn.Sequential(*modules)
 
-    def _freeze_stages(self):
+    def _freeze_stages(self) -> None:
         if self.frozen_stages >= 0:
             self.base_layer.eval()
             for param in self.base_layer.parameters():
@@ -436,7 +443,7 @@ class DLANet(BaseModule):
             for param in m.parameters():
                 param.requires_grad = False
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, ...]:
         outs = []
         x = self.base_layer(x)
         for i in range(self.num_levels):

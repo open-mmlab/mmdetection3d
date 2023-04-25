@@ -1,4 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple, Union
+
+import torch
 from mmengine.model import BaseModule
 from torch import nn as nn
 
@@ -30,14 +33,16 @@ class DGCNNBackbone(BaseModule):
     """
 
     def __init__(self,
-                 in_channels,
-                 num_samples=(20, 20, 20),
-                 knn_modes=('D-KNN', 'F-KNN', 'F-KNN'),
-                 radius=(None, None, None),
-                 gf_channels=((64, 64), (64, 64), (64, )),
-                 fa_channels=(1024, ),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
+                 in_channels: int,
+                 num_samples: Tuple[int, int, int] = (20, 20, 20),
+                 knn_modes: Tuple[str, str, str] = ('D-KNN', 'F-KNN', 'F-KNN'),
+                 radius: Tuple[Optional[float], Optional[float],
+                               Optional[float]] = (None, None, None),
+                 gf_channels: Tuple[Tuple[int, int], Tuple[int, int],
+                                    Tuple[int]] = ((64, 64), (64, 64), (64, )),
+                 fa_channels: Tuple[int] = (1024, ),
+                 act_cfg: Dict = dict(type='ReLU'),
+                 init_cfg: Optional[Dict] = None):
         super().__init__(init_cfg=init_cfg)
         self.num_gf = len(gf_channels)
 
@@ -47,10 +52,10 @@ class DGCNNBackbone(BaseModule):
 
         self.GF_modules = nn.ModuleList()
         gf_in_channel = in_channels * 2
-        skip_channel_list = [gf_in_channel]  # input channel list
+        skip_channel_list: List[int] = [gf_in_channel]  # input channel list
 
         for gf_index in range(self.num_gf):
-            cur_gf_mlps = list(gf_channels[gf_index])
+            cur_gf_mlps: List[int] = list(gf_channels[gf_index])
             cur_gf_mlps = [gf_in_channel] + cur_gf_mlps
             gf_out_channel = cur_gf_mlps[-1]
 
@@ -65,13 +70,15 @@ class DGCNNBackbone(BaseModule):
             gf_in_channel = gf_out_channel * 2
 
         fa_in_channel = sum(skip_channel_list[1:])
-        cur_fa_mlps = list(fa_channels)
+        cur_fa_mlps: List[int] = list(fa_channels)
         cur_fa_mlps = [fa_in_channel] + cur_fa_mlps
 
         self.FA_module = DGCNNFAModule(
             mlp_channels=cur_fa_mlps, act_cfg=act_cfg)
 
-    def forward(self, points):
+    def forward(
+        self, points: torch.Tensor
+    ) -> Dict[str, Union[List[torch.Tensor], torch.Tensor]]:
         """Forward pass.
 
         Args:
