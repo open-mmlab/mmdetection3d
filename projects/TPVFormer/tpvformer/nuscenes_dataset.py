@@ -21,36 +21,7 @@ class NuScenesSegDataset(BaseDataset):
         ann_file (str): Path of annotation file.
         pipeline (list[dict]): Pipeline used for data processing.
             Defaults to [].
-        box_type_3d (str): Type of 3D box of this dataset.
-            Based on the `box_type_3d`, the dataset will encapsulate the box
-            to its original format then converted them to `box_type_3d`.
-            Defaults to 'LiDAR' in this dataset. Available options includes:
-
-            - 'LiDAR': Box in LiDAR coordinates.
-            - 'Depth': Box in depth coordinates, usually for indoor dataset.
-            - 'Camera': Box in camera coordinates.
-        load_type (str): Type of loading mode. Defaults to 'frame_based'.
-
-            - 'frame_based': Load all of the instances in the frame.
-            - 'mv_image_based': Load all of the instances in the frame and need
-                to convert to the FOV-based data type to support image-based
-                detector.
-            - 'fov_image_based': Only load the instances inside the default
-                cam, and need to convert to the FOV-based data type to support
-                image-based detector.
-        modality (dict): Modality to specify the sensor data used as input.
-            Defaults to dict(use_camera=False, use_lidar=True).
-        filter_empty_gt (bool): Whether to filter the data with empty GT.
-            If it's set to be True, the example with empty annotations after
-            data pipeline will be dropped and a random example will be chosen
-            in `__getitem__`. Defaults to True.
-        test_mode (bool): Whether the dataset is in test mode.
-            Defaults to False.
-        with_velocity (bool): Whether to include velocity prediction
-            into the experiments. Defaults to True.
-        use_valid_flag (bool): Whether to use `use_valid_flag` key
-            in the info file as mask to filter gt_boxes and gt_names.
-            Defaults to False.
+        test_mode (bool): Store `True` when building test or val dataset.
     """
     METAINFO = {
         'classes':
@@ -79,15 +50,11 @@ class NuScenesSegDataset(BaseDataset):
             [135, 60, 0],  # trailer              brown
             [160, 32, 240],  # truck                purple
             [255, 0, 255],  # driveable_surface    dark pink
-            # [175,   0,  75, 255],       # other_flat           dark red
-            [139, 137, 137],
+            [139, 137, 137],  # other_flat           dark red
             [75, 0, 75],  # sidewalk             dard purple
             [150, 240, 80],  # terrain              light green
             [230, 230, 250],  # manmade              white
             [0, 175, 0],  # vegetation           green
-            # [  0, 255, 127, 255],       # ego car              dark cyan
-            # [255,  99,  71, 255],       # ego car
-            # [  0, 191, 255, 255]        # ego car
         ]
     }
 
