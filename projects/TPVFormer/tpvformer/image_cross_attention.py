@@ -19,11 +19,15 @@ class TPVImageCrossAttention(BaseModule):
             Default: 256.
         num_cams (int): The number of cameras
         dropout (float): A Dropout layer on `inp_residual`.
-            Default: 0..
+            Default: 0.1.
         init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
             Default: None.
+        batch_first (bool): Whether the first dimension of the input is batch.
         deformable_attention: (dict): The config for the deformable
             attention used in SCA.
+        tpv_h (int): The height of the TPV.
+        tpv_w (int): The width of the TPV.
+        tpv_z (int): The depth of the TPV.
     """
 
     def __init__(self,
@@ -66,8 +70,7 @@ class TPVImageCrossAttention(BaseModule):
                 spatial_shapes=None,
                 reference_points_cams=None,
                 tpv_masks=None,
-                level_start_index=None,
-                **kwargs):
+                level_start_index=None):
         """Forward Function of Detr3DCrossAtten.
 
         Args:
@@ -82,9 +85,15 @@ class TPVImageCrossAttention(BaseModule):
             spatial_shapes (Tensor): Spatial shape of features in
                 different level. With shape  (num_levels, 2),
                 last dimension represent (h, w).
+            tpv_masks (List[Tensor]): The mask of each views.
             level_start_index (Tensor): The start index of each level.
                 A tensor has shape (num_levels) and can be represented
                 as [0, h_0*w_0, h_0*w_0+h_1*w_1, ...].
+            reference_points_cams (List[Tensor]): The reference points in
+                each camera.
+            tpv_masks (List[Tensor]): The mask of each views.
+            level_start_index (List[int]): The start index of each level.
+
         Returns:
              Tensor: forwarded results with shape [num_query, bs, embed_dims].
         """
@@ -95,7 +104,7 @@ class TPVImageCrossAttention(BaseModule):
 
         if residual is None:
             inp_residual = query
-        bs, num_query, _ = query.size()
+        bs, _, _ = query.size()
 
         queries = torch.split(
             query, [

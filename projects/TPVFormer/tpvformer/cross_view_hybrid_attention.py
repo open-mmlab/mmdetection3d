@@ -1,28 +1,30 @@
 import math
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
 from mmcv.ops.multi_scale_deform_attn import (
     MultiScaleDeformableAttnFunction, multi_scale_deformable_attn_pytorch)
 from mmengine.model import BaseModule, constant_init, xavier_init
+from torch import Tensor
 
 from mmdet3d.registry import MODELS
 
 
 @MODELS.register_module()
 class TPVCrossViewHybridAttention(BaseModule):
+    """TPVFormer Cross-view Hybrid Attention Module."""
 
     def __init__(self,
-                 tpv_h,
-                 tpv_w,
-                 tpv_z,
-                 embed_dims=256,
-                 num_heads=8,
-                 num_points=4,
-                 num_anchors=2,
-                 init_mode=0,
-                 dropout=0.1,
-                 **kwargs):
+                 tpv_h: int,
+                 tpv_w: int,
+                 tpv_z: int,
+                 embed_dims: int = 256,
+                 num_heads: int = 8,
+                 num_points: int = 4,
+                 num_anchors: int = 2,
+                 init_mode: int = 0,
+                 dropout: float = 0.1):
         super().__init__()
         self.embed_dims = embed_dims
         self.num_heads = num_heads
@@ -108,7 +110,8 @@ class TPVCrossViewHybridAttention(BaseModule):
             xavier_init(self.value_proj[i], distribution='uniform', bias=0.)
             xavier_init(self.output_proj[i], distribution='uniform', bias=0.)
 
-    def get_sampling_offsets_and_attention(self, queries):
+    def get_sampling_offsets_and_attention(
+            self, queries: List[Tensor]) -> Tuple[List[Tensor], List[Tensor]]:
         offsets = []
         attns = []
         for i, (query, fc, attn) in enumerate(
@@ -131,19 +134,17 @@ class TPVCrossViewHybridAttention(BaseModule):
         attns = torch.cat(attns, dim=1)
         return offsets, attns
 
-    def reshape_output(self, output, lens):
-        bs, _, d = output.shape
+    def reshape_output(self, output: Tensor, lens: List[int]) -> List[Tensor]:
         outputs = torch.split(output, [lens[0], lens[1], lens[2]], dim=1)
         return outputs
 
     def forward(self,
-                query,
-                identity=None,
-                query_pos=None,
+                query: List[Tensor],
+                identity: Optional[List[Tensor]] = None,
+                query_pos: Optional[List[Tensor]] = None,
                 reference_points=None,
                 spatial_shapes=None,
-                level_start_index=None,
-                **kwargs):
+                level_start_index=None):
         identity = query if identity is None else identity
         if query_pos is not None:
             query = [q + p for q, p in zip(query, query_pos)]

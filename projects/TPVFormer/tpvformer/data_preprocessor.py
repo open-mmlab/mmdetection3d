@@ -20,7 +20,8 @@ class TPVFormerDataPreprocessor(Det3DDataPreprocessor):
     @torch.no_grad()
     def voxelize(self, points: List[Tensor],
                  data_samples: SampleList) -> List[Tensor]:
-        """Apply voxelization to point cloud.
+        """Apply voxelization to point cloud. In TPVFormer, it will get voxel-
+        wise segmentation label and voxel/point coordinates.
 
         Args:
             points (List[Tensor]): Point cloud in one data batch.
@@ -69,6 +70,21 @@ class TPVFormerDataPreprocessor(Det3DDataPreprocessor):
 
 @MODELS.register_module()
 class GridMask(nn.Module):
+    """GridMask data augmentation.
+
+        Modified from https://github.com/dvlab-research/GridMask.
+
+    Args:
+        use_h (bool): Whether to mask on height dimension. Defaults to True.
+        use_w (bool): Whether to mask on width dimension. Defaults to True.
+        rotate (int): Rotation degree. Defaults to 1.
+        offset (bool): Whether to mask offset. Defaults to False.
+        ratio (float): Mask ratio. Defaults to 0.5.
+        mode (int): Mask mode. if mode == 0, mask with square grid.
+            if mode == 1, mask the rest. Defaults to 0
+        prob (float): Probability of applying the augmentation.
+            Defaults to 1.0.
+    """
 
     def __init__(self,
                  use_h: bool = True,
@@ -85,11 +101,7 @@ class GridMask(nn.Module):
         self.offset = offset
         self.ratio = ratio
         self.mode = mode
-        self.st_prob = prob
         self.prob = prob
-
-    def set_prob(self, epoch, max_epoch):
-        self.prob = self.st_prob * epoch / max_epoch  # why not use it?
 
     def forward(self, inputs: Tensor,
                 data_samples: SampleList) -> Tuple[Tensor, SampleList]:

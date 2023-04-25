@@ -202,20 +202,6 @@ class TPVFormerEncoder(TransformerLayerSequence):
         ref_3d = ref_3d[None].repeat(bs, 1, 1, 1)
         return ref_3d
 
-        # reference points on 2D tpv plane,
-        # used in self attention in tpvformer04
-        # which is an older version.
-        # Now we use get_cross_view_ref_points instead.
-        # elif dim == '2d':
-        #     ref_y, ref_x = torch.meshgrid(
-        #         torch.linspace(0.5, H - 0.5, H, dtype=dtype, device=device),
-        #         torch.linspace(0.5, W - 0.5, W, dtype=dtype, device=device))
-        #     ref_y = ref_y.reshape(-1)[None] / H
-        #     ref_x = ref_x.reshape(-1)[None] / W
-        #     ref_2d = torch.stack((ref_x, ref_y), -1)
-        #     ref_2d = ref_2d.repeat(bs, 1, 1).unsqueeze(2)
-        #     return ref_2d
-
     def point_sampling(self, reference_points, pc_range, batch_data_smaples):
 
         lidar2img = []
@@ -263,11 +249,7 @@ class TPVFormerEncoder(TransformerLayerSequence):
             & (reference_points_cam[..., 1:2] < 1.0)
             & (reference_points_cam[..., 0:1] < 1.0)
             & (reference_points_cam[..., 0:1] > 0.0))
-        # if digit_version(TORCH_VERSION) >= digit_version('1.8'):
-        #     tpv_mask = torch.nan_to_num(tpv_mask)
-        # else:
-        #     tpv_mask = tpv_mask.new_tensor(
-        #         np.nan_to_num(tpv_mask.cpu().numpy()))
+
         tpv_mask = torch.nan_to_num(tpv_mask)
 
         reference_points_cam = reference_points_cam.permute(2, 1, 3, 0, 4)
