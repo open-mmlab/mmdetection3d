@@ -2,9 +2,9 @@
 import warnings
 from typing import Any, Dict, List, Optional, Tuple
 
-import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
@@ -78,9 +78,7 @@ class SECOND(BaseModule):
         else:
             self.init_cfg = dict(type='Kaiming', layer='Conv2d')
 
-    def forward(
-            self, x: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
         """Forward function.
 
         Args:
