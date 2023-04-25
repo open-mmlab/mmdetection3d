@@ -37,7 +37,9 @@ train_pipeline = [
         with_seg_3d=True,
         with_attr_label=False,
         seg_3d_dtype='np.uint8'),
-    dict(type='PhotoMetricDistortionMultiViewImage'),
+    dict(
+        type='MultiViewWrapper',
+        transforms=dict(type='PhotoMetricDistortion3D')),
     dict(type='SegLabelMapping'),
     dict(
         type='Pack3DDetInputs',
@@ -108,7 +110,7 @@ val_evaluator = dict(type='SegMetric')
 
 test_evaluator = val_evaluator
 
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 

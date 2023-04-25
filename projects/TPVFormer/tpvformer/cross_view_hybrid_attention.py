@@ -24,7 +24,8 @@ class TPVCrossViewHybridAttention(BaseModule):
                  num_points: int = 4,
                  num_anchors: int = 2,
                  init_mode: int = 0,
-                 dropout: float = 0.1):
+                 dropout: float = 0.1,
+                 **kwargs):
         super().__init__()
         self.embed_dims = embed_dims
         self.num_heads = num_heads
