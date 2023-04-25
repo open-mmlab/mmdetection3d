@@ -1,5 +1,4 @@
 voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='DynamicMVXFasterRCNN',
@@ -9,7 +8,7 @@ model = dict(
         voxel_type='dynamic',
         voxel_layer=dict(
             max_num_points=-1,
-            point_cloud_range=point_cloud_range,
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(-1, -1)),
         mean=[102.9801, 115.9465, 122.7717],
@@ -29,6 +28,8 @@ model = dict(
         type='mmdet.FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
+        # make the image features more stable numerically to avoid loss nan
+        norm_cfg=dict(type='BN', requires_grad=False),
         num_outs=5),
     pts_voxel_encoder=dict(
         type='DynamicVFE',
@@ -38,7 +39,7 @@ model = dict(
         voxel_size=voxel_size,
         with_cluster_center=True,
         with_voxel_center=True,
-        point_cloud_range=point_cloud_range,
+        point_cloud_range=[0, -40, -3, 70.4, 40, 1],
         fusion_layer=dict(
             type='PointFusion',
             img_channels=256,

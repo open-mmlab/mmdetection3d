@@ -1,6 +1,5 @@
 # model settings
 voxel_size = [0.05, 0.05, 0.1]
-point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='PartA2',
@@ -9,7 +8,7 @@ model = dict(
         voxel=True,
         voxel_layer=dict(
             max_num_points=5,  # max_points_per_voxel
-            point_cloud_range=point_cloud_range,
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
     voxel_encoder=dict(type='HardSimpleVFE'),
