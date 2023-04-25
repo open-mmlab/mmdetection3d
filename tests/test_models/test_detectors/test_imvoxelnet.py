@@ -57,7 +57,7 @@ class TestImVoxelNet(unittest.TestCase):
             'test_imvoxelnet_sunrgbd', scope_name='mmdet3d')
         setup_seed(0)
         imvoxel_net_cfg = get_detector_cfg(
-            'imvoxelnet/imvoxelnet_2xb4_sunrgbd-3d-10class.py')
+            'imvoxelnet/imvoxelnet_2xb4_sunrgbd-3d.py')
         model = MODELS.build(imvoxel_net_cfg)
         num_gt_instance = 1
         packed_inputs = create_detector_inputs(
