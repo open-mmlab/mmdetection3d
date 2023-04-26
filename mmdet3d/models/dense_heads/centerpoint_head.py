@@ -337,6 +337,7 @@ class CenterHead(BaseModule):
             separate_head.update(
                 in_channels=share_conv_channel, heads=heads, num_cls=num_cls)
             self.task_heads.append(MODELS.build(separate_head))
+        breakpoint()
 
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.

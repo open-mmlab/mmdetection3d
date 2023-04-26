@@ -1,4 +1,4 @@
-_base_ = './hv_pointpillars_regnet-400mf_fpn_sbn-all_4x8_2x_nus-3d.py'
+_base_ = './pointpillars_hv_regnet-400mf_fpn_sbn-all_8xb4-2x_nus-3d.py'
 # model settings
 model = dict(
     pts_neck=dict(
