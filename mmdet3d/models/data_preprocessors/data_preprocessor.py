@@ -49,6 +49,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             voxelization and dynamic voxelization. Defaults to 'hard'.
         voxel_layer (dict or :obj:`ConfigDict`, optional): Voxelization layer
             config. Defaults to None.
+        max_voxels (int): Maximum number of voxels in each voxel grid. Defaults
+            to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
             Defaults to None.
         std (Sequence[Number], optional): The pixel standard deviation of
@@ -77,7 +79,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  voxel: bool = False,
                  voxel_type: str = 'hard',
                  voxel_layer: OptConfigType = None,
-                 max_voxels: int = 80000,
+                 max_voxels: Optional[int] = None,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
                  pad_size_divisor: int = 1,
@@ -428,7 +430,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 inds, point2voxel_map = self.sparse_quantize(
                     res_coors_numpy, return_index=True, return_inverse=True)
                 point2voxel_map = torch.from_numpy(point2voxel_map).cuda()
-                if self.training:
+                if self.training and self.max_voxels is not None:
                     if len(inds) > self.max_voxels:
                         inds = np.random.choice(
                             inds, self.max_voxels, replace=False)
