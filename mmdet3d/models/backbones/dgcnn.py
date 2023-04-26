@@ -37,7 +37,7 @@ class DGCNNBackbone(BaseModule):
                  num_samples: Sequence[int] = (20, 20, 20),
                  knn_modes: Sequence[str] = ('D-KNN', 'F-KNN', 'F-KNN'),
                  radius: Tuple[Optional[float], Optional[float],
-                               Optional[float]] = (None, None, None),
+                 radius: Sequence[Union[float, None]] = (None, None, None),
                  gf_channels: Tuple[Tuple[int, int], Tuple[int, int],
                                     Tuple[int]] = ((64, 64), (64, 64), (64, )),
                  fa_channels: Tuple[int] = (1024, ),
