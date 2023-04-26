@@ -39,7 +39,7 @@ class DGCNNBackbone(BaseModule):
                  radius: Tuple[Optional[float], Optional[float],
                  radius: Sequence[Union[float, None]] = (None, None, None),
                  gf_channels: Tuple[Tuple[int, int], Tuple[int, int],
-                                    Tuple[int]] = ((64, 64), (64, 64), (64, )),
+                 gf_channels: Sequence[Sequence[int]] = ((64, 64), (64, 64), (64, )),
                  fa_channels: Tuple[int] = (1024, ),
                  act_cfg: Dict = dict(type='ReLU'),
                  init_cfg: Optional[Dict] = None):
