@@ -78,7 +78,7 @@ class DGCNNBackbone(BaseModule):
 
     def forward(
         self, points: torch.Tensor
-    ) -> Dict[str, Union[List[torch.Tensor], torch.Tensor]]:
+    ) -> dict:
         """Forward pass.
 
         Args:
