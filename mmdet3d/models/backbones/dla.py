@@ -12,7 +12,7 @@ from mmdet3d.utils import OptMultiConfig
 
 
 def dla_build_norm_layer(cfg: OptMultiConfig,
-                         num_features: int) -> Callable[[Any, int], Any]:
+                         num_features: int) -> Tuple[str, nn.Module]:
     """Build normalization layer specially designed for DLANet.
 
     Args:
