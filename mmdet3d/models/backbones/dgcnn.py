@@ -34,7 +34,7 @@ class DGCNNBackbone(BaseModule):
 
     def __init__(self,
                  in_channels: int,
-                 num_samples: Tuple[int, int, int] = (20, 20, 20),
+                 num_samples: Sequence[int] = (20, 20, 20),
                  knn_modes: Tuple[str, str, str] = ('D-KNN', 'F-KNN', 'F-KNN'),
                  radius: Tuple[Optional[float], Optional[float],
                                Optional[float]] = (None, None, None),
