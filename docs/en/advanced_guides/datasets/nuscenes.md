@@ -4,7 +4,11 @@ This page provides specific tutorials about the usage of MMDetection3D for nuSce
 
 ## Before Preparation
 
-You can download nuScenes 3D detection data [HERE](https://www.nuscenes.org/download) and unzip all zip files.
+You can download nuScenes 3D detection `Full dataset (v1.0)` [HERE](https://www.nuscenes.org/download) and unzip all zip files.
+
+If you want to implement 3D semantic segmentation task, you need to additionally download the `nuScenes-lidarseg` data annotation and place the extracted files in the nuScenes corresponding folder.
+
+**Note**: `v1.0trainval(test)/categroy.json` in nuScenes-lidarseg will replace the original `v1.0trainval(test)/categroy.json` of the Full dataset (v1.0), but will not affect the 3D object detection task.
 
 Like the general way to prepare dataset, it is recommended to symlink the dataset root to `$MMDETECTION3D/data`.
 
@@ -20,6 +24,7 @@ mmdetection3d
 │   │   ├── maps
 │   │   ├── samples
 │   │   ├── sweeps
+│   │   ├── lidarseg (optional)
 │   │   ├── v1.0-test
 |   |   ├── v1.0-trainval
 ```
@@ -45,6 +50,7 @@ mmdetection3d
 │   │   ├── maps
 │   │   ├── samples
 │   │   ├── sweeps
+│   │   ├── lidarseg (optional)
 │   │   ├── v1.0-test
 |   |   ├── v1.0-trainval
 │   │   ├── nuscenes_database
@@ -60,11 +66,11 @@ mmdetection3d
   - info\['sample_idx'\]: The index of this sample in the whole dataset.
   - info\['token'\]: Sample data token.
   - info\['timestamp'\]: Timestamp of the sample data.
+  - info\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['lidar_points'\]: A dict containing all the information related to the lidar points.
     - info\['lidar_points'\]\['lidar_path'\]: The filename of the lidar point cloud data.
     - info\['lidar_points'\]\['num_pts_feats'\]: The feature dimension of point.
     - info\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
-    - info\['lidar_points'\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
   - info\['lidar_sweeps'\]: A list contains sweeps information (The intermediate lidar frames without annotations)
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['data_path'\]: The lidar data path of i-th sweep.
     - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar2ego'\]: The transformation matrix from this lidar sensor to ego vehicle. (4x4 list)
@@ -95,6 +101,7 @@ mmdetection3d
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['velocity'\]: Velocities of 3D bounding boxes (no vertical measurements due to inaccuracy), a list has shape (2,).
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['attr_label'\]: The attr label of instance. We maintain a default attribute collection and mapping for attribute classification.
     - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, h, w, yaw) order.
+  - info\['pts_semantic_mask_path'\]：The filename of the lidar point cloud semantic segmentation annotation.
 
 Note:
 
