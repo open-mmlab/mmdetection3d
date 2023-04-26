@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer
@@ -8,10 +8,10 @@ from mmengine.model import BaseModule
 from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import OptMultiConfig
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
-def dla_build_norm_layer(cfg: OptMultiConfig,
+def dla_build_norm_layer(cfg: ConfigType,
                          num_features: int) -> Tuple[str, nn.Module]:
     """Build normalization layer specially designed for DLANet.
 

@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Sequence, Union
 
 import torch
 from mmengine.model import BaseModule
@@ -7,6 +7,7 @@ from torch import nn as nn
 
 from mmdet3d.models.layers import DGCNNFAModule, DGCNNGFModule
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 @MODELS.register_module()
@@ -36,10 +37,9 @@ class DGCNNBackbone(BaseModule):
                  in_channels: int,
                  num_samples: Sequence[int] = (20, 20, 20),
                  knn_modes: Sequence[str] = ('D-KNN', 'F-KNN', 'F-KNN'),
-                 radius: Tuple[Optional[float], Optional[float],
                  radius: Sequence[Union[float, None]] = (None, None, None),
-                 gf_channels: Tuple[Tuple[int, int], Tuple[int, int],
-                 gf_channels: Sequence[Sequence[int]] = ((64, 64), (64, 64), (64, )),
+                 gf_channels: Sequence[Sequence[int]] = ((64, 64), (64, 64),
+                                                         (64, )),
                  fa_channels: Sequence[int] = (1024, ),
                  act_cfg: ConfigType = dict(type='ReLU'),
                  init_cfg: OptMultiConfig = None):
@@ -52,10 +52,10 @@ class DGCNNBackbone(BaseModule):
 
         self.GF_modules = nn.ModuleList()
         gf_in_channel = in_channels * 2
-        skip_channel_list: List[int] = [gf_in_channel]  # input channel list
+        skip_channel_list = [gf_in_channel]  # input channel list
 
         for gf_index in range(self.num_gf):
-            cur_gf_mlps: List[int] = list(gf_channels[gf_index])
+            cur_gf_mlps = list(gf_channels[gf_index])
             cur_gf_mlps = [gf_in_channel] + cur_gf_mlps
             gf_out_channel = cur_gf_mlps[-1]
 
@@ -70,15 +70,13 @@ class DGCNNBackbone(BaseModule):
             gf_in_channel = gf_out_channel * 2
 
         fa_in_channel = sum(skip_channel_list[1:])
-        cur_fa_mlps: List[int] = list(fa_channels)
+        cur_fa_mlps = list(fa_channels)
         cur_fa_mlps = [fa_in_channel] + cur_fa_mlps
 
         self.FA_module = DGCNNFAModule(
             mlp_channels=cur_fa_mlps, act_cfg=act_cfg)
 
-    def forward(
-        self, points: torch.Tensor
-    ) -> dict:
+    def forward(self, points: torch.Tensor) -> dict:
         """Forward pass.
 
         Args:
