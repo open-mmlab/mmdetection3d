@@ -58,7 +58,7 @@ class BasicBlock(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 norm_cfg: Dict[str, Any],
+                 norm_cfg: ConfigType,
                  conv_cfg: Dict[str, Any],
                  stride: int = 1,
                  dilation: int = 1,
