@@ -41,7 +41,7 @@ class DGCNNBackbone(BaseModule):
                  gf_channels: Tuple[Tuple[int, int], Tuple[int, int],
                  gf_channels: Sequence[Sequence[int]] = ((64, 64), (64, 64), (64, )),
                  fa_channels: Sequence[int] = (1024, ),
-                 act_cfg: Dict = dict(type='ReLU'),
+                 act_cfg: ConfigType = dict(type='ReLU'),
                  init_cfg: Optional[Dict] = None):
         super().__init__(init_cfg=init_cfg)
         self.num_gf = len(gf_channels)
