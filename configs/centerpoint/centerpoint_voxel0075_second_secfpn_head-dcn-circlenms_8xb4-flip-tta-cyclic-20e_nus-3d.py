@@ -1,5 +1,4 @@
-_base_ = './centerpoint_voxel0075_second_secfpn_' \
-         'head-dcn-circlenms_8xb4_cyclic-20e_nus-3d.py'
+_base_ = './centerpoint_voxel0075_second_secfpn_head-dcn-circlenms_8xb4-cyclic-20e_nus-3d.py'  # noqa: E501
 
 point_cloud_range = [-54, -54, -5.0, 54, 54, 3.0]
 # Using calibration info convert the Lidar-coordinate point cloud range to the
