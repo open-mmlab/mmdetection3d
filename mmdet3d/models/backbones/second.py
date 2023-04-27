@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
 from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmengine.model import BaseModule
@@ -8,6 +8,7 @@ from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 @MODELS.register_module()
@@ -25,13 +26,13 @@ class SECOND(BaseModule):
 
     def __init__(self,
                  in_channels: int = 128,
-                 out_channels: List[int] = [128, 128, 256],
-                 layer_nums: List[int] = [3, 5, 5],
-                 layer_strides: List[int] = [2, 2, 2],
-                 norm_cfg: Dict[str, Any] = dict(
+                 out_channels: Sequence[int] = [128, 128, 256],
+                 layer_nums: Sequence[int] = [3, 5, 5],
+                 layer_strides: Sequence[int] = [2, 2, 2],
+                 norm_cfg: ConfigType = dict(
                      type='BN', eps=1e-3, momentum=0.01),
-                 conv_cfg: Dict[str, Any] = dict(type='Conv2d', bias=False),
-                 init_cfg: Optional[Dict[str, Any]] = None,
+                 conv_cfg: ConfigType = dict(type='Conv2d', bias=False),
+                 init_cfg: OptMultiConfig = None,
                  pretrained: Optional[str] = None) -> None:
         super(SECOND, self).__init__(init_cfg=init_cfg)
         assert len(layer_strides) == len(layer_nums)
@@ -78,7 +79,7 @@ class SECOND(BaseModule):
         else:
             self.init_cfg = dict(type='Kaiming', layer='Conv2d')
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, ...]:
         """Forward function.
 
         Args:

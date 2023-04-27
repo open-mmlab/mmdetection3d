@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Union
 
-import torch
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.models.layers import DGCNNFAModule, DGCNNGFModule
@@ -76,7 +76,7 @@ class DGCNNBackbone(BaseModule):
         self.FA_module = DGCNNFAModule(
             mlp_channels=cur_fa_mlps, act_cfg=act_cfg)
 
-    def forward(self, points: torch.Tensor) -> dict:
+    def forward(self, points: Tensor) -> dict:
         """Forward pass.
 
         Args:

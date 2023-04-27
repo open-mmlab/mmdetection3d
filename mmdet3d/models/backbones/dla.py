@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import torch
 from mmcv.cnn import build_conv_layer, build_norm_layer
@@ -8,7 +8,7 @@ from mmengine.model import BaseModule
 from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import ConfigType, OptMultiConfig
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
 
 
 def dla_build_norm_layer(cfg: ConfigType,
@@ -59,7 +59,7 @@ class BasicBlock(BaseModule):
                  in_channels: int,
                  out_channels: int,
                  norm_cfg: ConfigType,
-                 conv_cfg: Dict[str, Any],
+                 conv_cfg: ConfigType,
                  stride: int = 1,
                  dilation: int = 1,
                  init_cfg: OptMultiConfig = None):
@@ -122,8 +122,8 @@ class Root(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 norm_cfg: Dict[str, Any],
-                 conv_cfg: Dict[str, Any],
+                 norm_cfg: ConfigType,
+                 conv_cfg: ConfigType,
                  kernel_size: int,
                  add_identity: bool,
                  init_cfg: OptMultiConfig = None):
@@ -188,8 +188,8 @@ class Tree(BaseModule):
                  block: nn.Module,
                  in_channels: int,
                  out_channels: int,
-                 norm_cfg: dict,
-                 conv_cfg: dict,
+                 norm_cfg: ConfigType,
+                 conv_cfg: ConfigType,
                  stride: int = 1,
                  level_root: bool = False,
                  root_dim: Optional[int] = None,
@@ -310,11 +310,12 @@ class DLANet(BaseModule):
     def __init__(self,
                  depth: int,
                  in_channels: int = 3,
-                 out_indices: Tuple[int] = (0, 1, 2, 3, 4, 5),
+                 out_indices: Sequence[int] = (0, 1, 2, 3, 4, 5),
                  frozen_stages: int = -1,
-                 norm_cfg: OptMultiConfig = None,
-                 conv_cfg: OptMultiConfig = None,
-                 layer_with_level_root: List[bool] = (False, True, True, True),
+                 norm_cfg: OptConfigType = None,
+                 conv_cfg: OptConfigType = None,
+                 layer_with_level_root: Sequence[bool] = (False, True, True,
+                                                          True),
                  with_identity_root: bool = False,
                  pretrained: Optional[str] = None,
                  init_cfg: OptMultiConfig = None):
@@ -389,8 +390,8 @@ class DLANet(BaseModule):
                          in_channels: int,
                          out_channels: int,
                          num_convs: int,
-                         norm_cfg: dict,
-                         conv_cfg: dict,
+                         norm_cfg: ConfigType,
+                         conv_cfg: ConfigType,
                          stride: int = 1,
                          dilation: int = 1) -> nn.Sequential:
         """Conv modules.

@@ -1,14 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
-from torch import nn as nn
+from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType
 
 
 @MODELS.register_module()
@@ -30,10 +31,11 @@ class MultiBackbone(BaseModule):
     def __init__(self,
                  num_streams: int,
                  backbones: Union[List, Dict],
-                 aggregation_mlp_channels: Optional[List[int]] = None,
-                 conv_cfg: Dict = dict(type='Conv1d'),
-                 norm_cfg: Dict = dict(type='BN1d', eps=1e-5, momentum=0.01),
-                 act_cfg: Dict = dict(type='ReLU'),
+                 aggregation_mlp_channels: Optional[Sequence[int]] = None,
+                 conv_cfg: ConfigType = dict(type='Conv1d'),
+                 norm_cfg: ConfigType = dict(
+                     type='BN1d', eps=1e-5, momentum=0.01),
+                 act_cfg: ConfigType = dict(type='ReLU'),
                  suffixes: Tuple = ('net0', 'net1'),
                  init_cfg: Optional[Dict] = None,
                  pretrained: Optional[str] = None,
@@ -90,7 +92,7 @@ class MultiBackbone(BaseModule):
                           'please use "init_cfg" instead')
             self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
 
-    def forward(self, points: torch.Tensor) -> Dict[str, List[torch.Tensor]]:
+    def forward(self, points: Tensor) -> dict:
         """Forward pass.
 
         Args:

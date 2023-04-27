@@ -3,8 +3,8 @@ import warnings
 from abc import ABCMeta
 from typing import Optional, Tuple
 
-import torch
 from mmengine.model import BaseModule
+from torch import Tensor
 
 from mmdet3d.utils import OptMultiConfig
 
@@ -25,9 +25,7 @@ class BasePointNet(BaseModule, metaclass=ABCMeta):
             self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
 
     @staticmethod
-    def _split_point_feats(
-            points: torch.Tensor
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    def _split_point_feats(points: Tensor) -> Tuple[Tensor, Optional[Tensor]]:
         """Split coordinates and features of input points.
 
         Args:

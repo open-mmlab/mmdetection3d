@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
-import torch
 import torch.nn as nn
 from mmdet.models.backbones import RegNet
+from torch import Tensor
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import OptMultiConfig
 
 
 @MODELS.register_module()
@@ -65,7 +66,7 @@ class NoStemRegNet(RegNet):
 
     def __init__(self,
                  arch: Dict[str, Union[int, float]],
-                 init_cfg: Optional[Dict] = None,
+                 init_cfg: OptMultiConfig = None,
                  **kwargs: Any) -> None:
         super(NoStemRegNet, self).__init__(arch, init_cfg=init_cfg, **kwargs)
 
@@ -75,7 +76,7 @@ class NoStemRegNet(RegNet):
         since 3D detector's voxel encoder works like a stem layer."""
         return
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, ...]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, ...]:
         """Forward function of backbone.
 
         Args:

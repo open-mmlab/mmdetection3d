@@ -7,7 +7,6 @@ import torch
 from torch import Tensor
 
 from mmdet3d.utils import array_converter
-from .cam_box3d import CameraInstance3DBoxes
 
 
 @array_converter(apply_to=('val', ))
@@ -262,7 +261,7 @@ def points_img2cam(
     return points3D
 
 
-def mono_cam_box2vis(cam_box: 'CameraInstance3DBoxes'):
+def mono_cam_box2vis(cam_box):
     """This is a post-processing function on the bboxes from Mono-3D task. If
     we want to perform projection visualization, we need to:
 
@@ -283,7 +282,9 @@ def mono_cam_box2vis(cam_box: 'CameraInstance3DBoxes'):
     warning.warn('DeprecationWarning: The hack of yaw and dimension in the '
                  'monocular 3D detection on nuScenes has been removed. The '
                  'function mono_cam_box2vis will be deprecated.')
-
+    from .cam_box3d import CameraInstance3DBoxes
+    assert isinstance(cam_box, CameraInstance3DBoxes), \
+        'input bbox should be CameraInstance3DBoxes!'
     loc = cam_box.gravity_center
     dim = cam_box.dims
     yaw = cam_box.yaw
