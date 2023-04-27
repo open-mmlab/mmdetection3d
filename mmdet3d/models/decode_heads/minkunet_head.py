@@ -43,12 +43,12 @@ class MinkUNetHead(Base3DDecodeHead):
         ]
         return torch.cat(gt_semantic_segs)
 
-    def predict(self, inputs: SparseTensor,
+    def predict(self, inputs: Tensor,
                 batch_data_samples: SampleList) -> List[Tensor]:
         """Forward function for testing.
 
         Args:
-            inputs (SparseTensor): Features from backone.
+            inputs (Tensor): Features from backone.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
                 data samples.
 
@@ -66,15 +66,15 @@ class MinkUNetHead(Base3DDecodeHead):
 
         return seg_logit_list
 
-    def forward(self, x: SparseTensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward function.
 
         Args:
-            x (SparseTensor): Features from backbone.
+            x (Tensor): Features from backbone.
 
         Returns:
             Tensor: Segmentation map of shape [N, C].
                 Note that output contains all points from each batch.
         """
-        output = self.cls_seg(x.F)
+        output = self.cls_seg(x)
         return output
