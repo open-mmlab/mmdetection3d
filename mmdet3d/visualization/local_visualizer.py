@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-from typing import List, Optional, Tuple, Union
+import math
+from typing import List, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mmcv
@@ -67,6 +68,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             Defaults to dict(size=1, origin=[0, 0, 0]).
         alpha (int or float): The transparency of bboxes or mask.
             Defaults to 0.8.
+        multi_imgs_col (int): The number of columns in arrangement when showing
+            multi-view images.
 
     Examples:
         >>> import numpy as np
@@ -114,7 +117,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                  mask_color: Optional[Union[str, Tuple[int]]] = None,
                  line_width: Union[int, float] = 3,
                  frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                 alpha: Union[int, float] = 0.8) -> None:
+                 alpha: Union[int, float] = 0.8,
+                 multi_imgs_col: int = 3) -> None:
         super().__init__(
             name=name,
             image=image,
@@ -128,6 +132,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if points is not None:
             self.set_points(points, pcd_mode=pcd_mode, frame_cfg=frame_cfg)
         self.pts_seg_num = 0
+        self.multi_imgs_col = multi_imgs_col
 
     def _clear_o3d_vis(self) -> None:
         """Clear open3d vis."""
@@ -450,7 +455,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             line_widths: Union[int, float, List[Union[int, float]]] = 2,
             face_colors: Union[str, Tuple[int],
                                List[Union[str, Tuple[int]]]] = 'royalblue',
-            alpha: Union[int, float] = 0.4):
+            alpha: Union[int, float] = 0.4,
+            img_size: Optional[Tuple] = None):
         """Draw projected 3D boxes on the image.
 
         Args:
@@ -490,6 +496,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             raise NotImplementedError('unsupported box type!')
 
         corners_2d = proj_bbox3d_to_img(bboxes_3d, input_meta)
+        if img_size is not None:
+            # filter out the bbox outside the image
+            valid_point_idx = (corners_2d[..., 0] >= 0) & \
+                        (corners_2d[..., 0] <= img_size[0]) & \
+                        (corners_2d[..., 1] >= 0) & (corners_2d[..., 1] <= img_size[1])  # noqa: E501
+            valid_bbox_idx = valid_point_idx.all(-1)
+            corners_2d = corners_2d[valid_bbox_idx]
 
         lines_verts_idx = [0, 1, 2, 3, 7, 6, 5, 4, 0, 3, 7, 4, 5, 1, 2, 6]
         lines_verts = corners_2d[:, lines_verts_idx, :]
@@ -593,16 +606,55 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if vis_task in ['mono_det', 'multi-modality_det']:
             assert 'img' in data_input
             img = data_input['img']
-            if isinstance(data_input['img'], Tensor):
-                img = img.permute(1, 2, 0).numpy()
-                img = img[..., [2, 1, 0]]  # bgr to rgb
-            self.set_image(img)
-            self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
-            if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
-                centers_2d = instances.centers_2d
-                self.draw_points(centers_2d)
-            drawn_img = self.get_image()
-            data_3d['img'] = drawn_img
+            if isinstance(img, list):
+                # show multi-view images
+                img_size = img[0].shape[:2]
+                img_col = self.multi_imgs_col
+                img_row = math.ceil(len(img) / img_col)
+                composed_img = np.zeros(
+                    (img_size[0] * img_row, img_size[1] * img_col, 3),
+                    dtype=np.uint8)
+                for i, single_img in enumerate(img):
+                    # Note that we should keep the same order of elements both
+                    # in `img` and `input_meta`
+                    if isinstance(single_img, Tensor):
+                        single_img = single_img.permute(1, 2, 0).numpy()
+                        single_img = single_img[..., [2, 1, 0]]  # bgr to rgb
+                    self.set_image(single_img)
+                    single_img_meta = dict()
+                    for key, meta in input_meta.items():
+                        if isinstance(meta,
+                                      (Sequence, np.ndarray,
+                                       Tensor)) and len(meta) == len(img):
+                            single_img_meta[key] = meta[i]
+                        else:
+                            single_img_meta[key] = meta
+                    self.draw_proj_bboxes_3d(
+                        bboxes_3d,
+                        single_img_meta,
+                        img_size=single_img.shape[:2][::-1])
+                    if vis_task == 'mono_det' and hasattr(
+                            instances, 'centers_2d'):
+                        centers_2d = instances.centers_2d
+                        self.draw_points(centers_2d)
+                    composed_img[(i // img_col) *
+                                 img_size[0]:(i // img_col + 1) * img_size[0],
+                                 (i % img_col) *
+                                 img_size[1]:(i % img_col + 1) *
+                                 img_size[1]] = self.get_image()
+                data_3d['img'] = composed_img
+            else:
+                # show single-view image
+                if isinstance(data_input['img'], Tensor):
+                    img = img.permute(1, 2, 0).numpy()
+                    img = img[..., [2, 1, 0]]  # bgr to rgb
+                self.set_image(img)
+                self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
+                if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
+                    centers_2d = instances.centers_2d
+                    self.draw_points(centers_2d)
+                drawn_img = self.get_image()
+                data_3d['img'] = drawn_img
 
         return data_3d
 
