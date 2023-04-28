@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import math
+import time
 from typing import List, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -168,7 +169,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                    pcd_mode: int = 0,
                    vis_mode: str = 'replace',
                    frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                   points_color: Tuple[float] = (0.5, 0.5, 0.5),
+                   points_color: Tuple[float] = (1, 1, 1),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
         """Set the point cloud to draw.
@@ -188,7 +189,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 visualization initialization.
                 Defaults to dict(size=1, origin=[0, 0, 0]).
             points_color (Tuple[float]): The color of points.
-                Defaults to (0.5, 0.5, 0.5).
+                Defaults to (1, 1, 1).
             points_size (int): The size of points to show on visualizer.
                 Defaults to 2.
             mode (str): Indicate type of the input points, available mode
@@ -209,8 +210,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
-        if self.o3d_vis.get_render_option() is not None:
-            self.o3d_vis.get_render_option().point_size = points_size
+        render_option = self.o3d_vis.get_render_option()
+        if render_option is not None:
+            render_option.point_size = points_size
+            render_option.background_color = np.asarray([0, 0, 0])
 
         points = points.copy()
         pcd = geometry.PointCloud()
@@ -482,6 +485,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             face_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The face colors. Defaults to 'royalblue'.
             alpha (int or float): The transparency of bboxes. Defaults to 0.4.
+            img_size (tuple, optional): The size (w, h) of the image.
         """
 
         check_type('bboxes', bboxes_3d, BaseInstance3DBoxes)
@@ -714,14 +718,21 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             continue_key (str): The key for users to continue. Defaults to ' '.
         """
         if hasattr(self, 'o3d_vis'):
-            self.o3d_vis.run()
+            self.o3d_vis.poll_events()
+            self.o3d_vis.update_renderer()
+            if wait_time > 0:
+                time.sleep(wait_time)
+            else:
+                self.o3d_vis.run()
             if save_path is not None:
                 if not (save_path.endswith('.png')
                         or save_path.endswith('.jpg')):
                     save_path += '.png'
                 self.o3d_vis.capture_screen_image(save_path)
-            self.o3d_vis.destroy_window()
-            self._clear_o3d_vis()
+            # TODO: support more flexible window control
+            if wait_time == 0:
+                self.o3d_vis.destroy_window()
+                self._clear_o3d_vis()
 
         if hasattr(self, '_image'):
             if drawn_img_3d is not None:

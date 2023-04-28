@@ -323,7 +323,7 @@ test_pipeline = [
         meta_keys=[
             'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
             'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
-            'lidar_path', 'img_path'
+            'lidar_path', 'img_path', 'num_pts_feats', 'num_views'
         ])
 ]
 
