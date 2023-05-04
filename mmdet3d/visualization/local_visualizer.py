@@ -106,20 +106,23 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ...                                       vis_task='lidar_seg')
     """
 
-    def __init__(self,
-                 name: str = 'visualizer',
-                 points: Optional[np.ndarray] = None,
-                 image: Optional[np.ndarray] = None,
-                 pcd_mode: int = 0,
-                 vis_backends: Optional[List[dict]] = None,
-                 save_dir: Optional[str] = None,
-                 bbox_color: Optional[Union[str, Tuple[int]]] = None,
-                 text_color: Union[str, Tuple[int]] = (200, 200, 200),
-                 mask_color: Optional[Union[str, Tuple[int]]] = None,
-                 line_width: Union[int, float] = 3,
-                 frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                 alpha: Union[int, float] = 0.8,
-                 multi_imgs_col: int = 3) -> None:
+    def __init__(
+        self,
+        name: str = 'visualizer',
+        points: Optional[np.ndarray] = None,
+        image: Optional[np.ndarray] = None,
+        pcd_mode: int = 0,
+        vis_backends: Optional[List[dict]] = None,
+        save_dir: Optional[str] = None,
+        bbox_color: Optional[Union[str, Tuple[int]]] = None,
+        text_color: Union[str, Tuple[int]] = (200, 200, 200),
+        mask_color: Optional[Union[str, Tuple[int]]] = None,
+        line_width: Union[int, float] = 3,
+        frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
+        alpha: Union[int, float] = 0.8,
+        multi_imgs_col: int = 3,
+        fig_show_cfg: dict = dict(figsize=(18, 12))
+    ) -> None:
         super().__init__(
             name=name,
             image=image,
@@ -134,6 +137,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(points, pcd_mode=pcd_mode, frame_cfg=frame_cfg)
         self.pts_seg_num = 0
         self.multi_imgs_col = multi_imgs_col
+        self.fig_show_cfg.update(fig_show_cfg)
 
     def _clear_o3d_vis(self) -> None:
         """Clear open3d vis."""
@@ -501,11 +505,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         corners_2d = proj_bbox3d_to_img(bboxes_3d, input_meta)
         if img_size is not None:
-            # filter out the bbox outside the image
+            # filter out the bbox where half of stuff is outside the image
             valid_point_idx = (corners_2d[..., 0] >= 0) & \
                         (corners_2d[..., 0] <= img_size[0]) & \
                         (corners_2d[..., 1] >= 0) & (corners_2d[..., 1] <= img_size[1])  # noqa: E501
-            valid_bbox_idx = valid_point_idx.all(-1)
+            valid_bbox_idx = valid_point_idx.sum(axis=-1) >= 4
             corners_2d = corners_2d[valid_bbox_idx]
 
         lines_verts_idx = [0, 1, 2, 3, 7, 6, 5, 4, 0, 3, 7, 4, 5, 1, 2, 6]
@@ -610,9 +614,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if vis_task in ['mono_det', 'multi-modality_det']:
             assert 'img' in data_input
             img = data_input['img']
-            if isinstance(img, list):
+            if isinstance(img, list) or (isinstance(img, (np.ndarray, Tensor))
+                                         and len(img.shape) == 4):
                 # show multi-view images
-                img_size = img[0].shape[:2]
+                img_size = img[0].shape[:2] if isinstance(
+                    img, list) else img.shape[-2:]  # noqa: E501
                 img_col = self.multi_imgs_col
                 img_row = math.ceil(len(img) / img_col)
                 composed_img = np.zeros(
@@ -700,7 +706,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
              drawn_img: Optional[np.ndarray] = None,
              win_name: str = 'image',
              wait_time: int = 0,
-             continue_key: str = ' ') -> None:
+             continue_key: str = ' ',
+             vis_task: str = 'lidar_det') -> None:
         """Show the drawn point cloud/image.
 
         Args:
@@ -717,6 +724,21 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 means "forever". Defaults to 0.
             continue_key (str): The key for users to continue. Defaults to ' '.
         """
+        if vis_task == 'multi-modality_det':
+            img_wait_time = 0.5
+        else:
+            img_wait_time = wait_time
+
+        # In order to show multi-modal results at the same time, we show image
+        # firstly and then show point cloud since the running of
+        # Open3D will block the process
+        if hasattr(self, '_image'):
+            if drawn_img_3d is not None:
+                super().show(drawn_img_3d, win_name, img_wait_time,
+                             continue_key)
+            if drawn_img is not None:
+                super().show(drawn_img, win_name, img_wait_time, continue_key)
+
         if hasattr(self, 'o3d_vis'):
             self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
@@ -729,16 +751,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         or save_path.endswith('.jpg')):
                     save_path += '.png'
                 self.o3d_vis.capture_screen_image(save_path)
-            # TODO: support more flexible window control
-            if wait_time == 0:
-                self.o3d_vis.destroy_window()
-                self._clear_o3d_vis()
 
-        if hasattr(self, '_image'):
-            if drawn_img_3d is not None:
-                super().show(drawn_img_3d, win_name, wait_time, continue_key)
-            if drawn_img is not None:
-                super().show(drawn_img, win_name, wait_time, continue_key)
+            # TODO: support more flexible window control
+            self.o3d_vis.clear_geometries()
+            self.o3d_vis.destroy_window()
+            self.o3d_vis.close()
+            self._clear_o3d_vis()
 
     # TODO: Support Visualize the 3D results from image and point cloud
     # respectively
@@ -886,7 +904,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 drawn_img_3d,
                 drawn_img,
                 win_name=name,
-                wait_time=wait_time)
+                wait_time=wait_time,
+                vis_task=vis_task)
 
         if out_file is not None:
             # check the suffix of the name of image file
