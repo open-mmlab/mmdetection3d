@@ -424,7 +424,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def draw_points_on_image(self,
                              points: Union[np.ndarray, Tensor],
                              pts2img: np.ndarray,
-                             sizes: Union[np.ndarray, int] = 10) -> None:
+                             sizes: Union[np.ndarray, int] = 3) -> None:
         """Draw projected points on the image.
 
         Args:
@@ -447,7 +447,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             c=colors,
             cmap=color_map,
             s=sizes,
-            alpha=0.5,
+            alpha=0.7,
             edgecolors='none')
 
     # TODO: set bbox color according to palette
@@ -505,7 +505,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
         corners_2d = proj_bbox3d_to_img(bboxes_3d, input_meta)
         if img_size is not None:
-            # filter out the bbox where half of stuff is outside the image
+            # Filter out the bbox where half of stuff is outside the image.
+            # This is for the visualization of multi-view image.
             valid_point_idx = (corners_2d[..., 0] >= 0) & \
                         (corners_2d[..., 0] <= img_size[0]) & \
                         (corners_2d[..., 1] >= 0) & (corners_2d[..., 1] <= img_size[1])  # noqa: E501
@@ -655,6 +656,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 data_3d['img'] = composed_img
             else:
                 # show single-view image
+                # TODO: Solve the problem: some line segments of 3d bboxes are
+                # out of image by a large margin
                 if isinstance(data_input['img'], Tensor):
                     img = img.permute(1, 2, 0).numpy()
                     img = img[..., [2, 1, 0]]  # bgr to rgb
@@ -733,11 +736,17 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # firstly and then show point cloud since the running of
         # Open3D will block the process
         if hasattr(self, '_image'):
-            if drawn_img_3d is not None:
+            if drawn_img is None and drawn_img_3d is None:
+                # use the image got by Visualizer.get_image()
                 super().show(drawn_img_3d, win_name, img_wait_time,
                              continue_key)
-            if drawn_img is not None:
-                super().show(drawn_img, win_name, img_wait_time, continue_key)
+            else:
+                if drawn_img_3d is not None:
+                    super().show(drawn_img_3d, win_name, img_wait_time,
+                                 continue_key)
+                if drawn_img is not None:
+                    super().show(drawn_img, win_name, img_wait_time,
+                                 continue_key)
 
         if hasattr(self, 'o3d_vis'):
             self.o3d_vis.poll_events()
