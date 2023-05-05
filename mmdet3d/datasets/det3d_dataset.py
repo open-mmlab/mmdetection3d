@@ -139,20 +139,21 @@ class Det3DDataset(BaseDataset):
         self.metainfo['box_type_3d'] = box_type_3d
         self.metainfo['label_mapping'] = self.label_mapping
 
-        # used for showing variation of the number of instances before and
-        # after through the pipeline
-        self.show_ins_var = show_ins_var
+        if not kwargs.get('lazy_init', False):
+            # used for showing variation of the number of instances before and
+            # after through the pipeline
+            self.show_ins_var = show_ins_var
 
-        # show statistics of this dataset
-        print_log('-' * 30, 'current')
-        print_log(f'The length of the dataset: {len(self)}', 'current')
-        content_show = [['category', 'number']]
-        for cat_name, num in self.num_ins_per_cat.items():
-            content_show.append([cat_name, num])
-        table = AsciiTable(content_show)
-        print_log(
-            f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
-            'current')
+            # show statistics of this dataset
+            print_log('-' * 30, 'current')
+            print_log(f'The length of the dataset: {len(self)}', 'current')
+            content_show = [['category', 'number']]
+            for cat_name, num in self.num_ins_per_cat.items():
+                content_show.append([cat_name, num])
+            table = AsciiTable(content_show)
+            print_log(
+                f'The number of instances per category in the dataset:\n{table.table}',  # noqa: E501
+                'current')
 
     def _remove_dontcare(self, ann_info: dict) -> dict:
         """Remove annotations that do not need to be cared.

@@ -47,7 +47,11 @@ class SUNRGBDDataset(Det3DDataset):
     """
     METAINFO = {
         'classes': ('bed', 'table', 'sofa', 'chair', 'toilet', 'desk',
-                    'dresser', 'night_stand', 'bookshelf', 'bathtub')
+                    'dresser', 'night_stand', 'bookshelf', 'bathtub'),
+        'palette': [(255, 187, 120), (255, 152, 150), (140, 86, 75),
+                    (188, 189, 34), (44, 160, 44), (247, 182, 210),
+                    (196, 156, 148), (23, 190, 207), (148, 103, 189),
+                    (227, 119, 194)]
     }
 
     def __init__(self,
