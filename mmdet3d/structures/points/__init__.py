@@ -7,24 +7,25 @@ from .lidar_points import LiDARPoints
 __all__ = ['BasePoints', 'CameraPoints', 'DepthPoints', 'LiDARPoints']
 
 
-def get_points_type(points_type):
+def get_points_type(points_type: str) -> type:
     """Get the class of points according to coordinate type.
 
     Args:
-        points_type (str): The type of points coordinate.
-            The valid value are "CAMERA", "LIDAR", or "DEPTH".
+        points_type (str): The type of points coordinate. The valid value are
+            "CAMERA", "LIDAR" and "DEPTH".
 
     Returns:
-        class: Points type.
+        type: Points type.
     """
-    if points_type == 'CAMERA':
+    points_type_upper = points_type.upper()
+    if points_type_upper == 'CAMERA':
         points_cls = CameraPoints
-    elif points_type == 'LIDAR':
+    elif points_type_upper == 'LIDAR':
         points_cls = LiDARPoints
-    elif points_type == 'DEPTH':
+    elif points_type_upper == 'DEPTH':
         points_cls = DepthPoints
     else:
-        raise ValueError('Only "points_type" of "CAMERA", "LIDAR", or "DEPTH"'
-                         f' are supported, got {points_type}')
+        raise ValueError('Only "points_type" of "CAMERA", "LIDAR" and "DEPTH" '
+                         f'are supported, got {points_type}')
 
     return points_cls

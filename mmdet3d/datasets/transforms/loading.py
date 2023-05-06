@@ -250,7 +250,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             results['cam2img'] = results['images'][camera_type]['cam2img']
         else:
             raise NotImplementedError(
-                'Currently we only support load image from kitti and'
+                'Currently we only support load image from kitti and '
                 'nuscenes datasets')
 
         try:

@@ -4,15 +4,15 @@ __version__ = '1.1.0'
 short_version = __version__
 
 
-def parse_version_info(version_str):
+def parse_version_info(version_str: str) -> tuple:
     """Parse a version string into a tuple.
 
     Args:
         version_str (str): The version string.
 
     Returns:
-        tuple[int | str]: The version info, e.g., "1.3.0" is parsed into
-            (1, 3, 0), and "2.0.0rc4" is parsed into (2, 0, 0, 'rc4').
+        tuple: The version info, e.g., "1.3.0" is parsed into (1, 3, 0), and
+        "2.0.0rc4" is parsed into (2, 0, 0, 'rc4').
     """
     version_info = []
     for x in version_str.split('.'):

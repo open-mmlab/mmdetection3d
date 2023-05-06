@@ -10,75 +10,75 @@
 
 ### SECOND
 
-Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/second) for details. We provide SECOND baselines on KITTI and Waymo datasets.
+Please refer to [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/second) for details. We provide SECOND baselines on KITTI and Waymo datasets.
 
 ### PointPillars
 
-Please refer to [PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) for details. We provide pointpillars baselines on KITTI, nuScenes, Lyft, and Waymo datasets.
+Please refer to [PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pointpillars) for details. We provide pointpillars baselines on KITTI, nuScenes, Lyft, and Waymo datasets.
 
 ### Part-A2
 
-Please refer to [Part-A2](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/parta2) for details.
+Please refer to [Part-A2](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/parta2) for details.
 
 ### VoteNet
 
-Please refer to [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet) for details. We provide VoteNet baselines on ScanNet and SUNRGBD datasets.
+Please refer to [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/votenet) for details. We provide VoteNet baselines on ScanNet and SUNRGBD datasets.
 
 ### Dynamic Voxelization
 
-Please refer to [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dynamic_voxelization) for details.
+Please refer to [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/dynamic_voxelization) for details.
 
 ### MVXNet
 
-Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/mvxnet) for details.
+Please refer to [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/mvxnet) for details.
 
 ### RegNetX
 
-Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
+Please refer to [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/regnet) for details. We provide pointpillars baselines with RegNetX backbones on nuScenes and Lyft datasets currently.
 
 ### nuImages
 
-We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) for details. We report Mask R-CNN, Cascade Mask R-CNN and HTC results currently.
+We also support baseline models on [nuImages dataset](https://www.nuscenes.org/nuimages). Please refer to [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/nuimages) for details. We report Mask R-CNN, Cascade Mask R-CNN and HTC results currently.
 
 ### H3DNet
 
-Please refer to [H3DNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/h3dnet) for details.
+Please refer to [H3DNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/h3dnet) for details.
 
 ### 3DSSD
 
-Please refer to [3DSSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/3dssd) for details.
+Please refer to [3DSSD](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/3dssd) for details.
 
 ### CenterPoint
 
-Please refer to [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint) for details.
+Please refer to [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/centerpoint) for details.
 
 ### SSN
 
-Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft datasets currently.
+Please refer to [SSN](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/ssn) for details. We provide pointpillars with shape-aware grouping heads used in SSN on the nuScenes and Lyft datasets currently.
 
 ### ImVoteNet
 
-Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvotenet) for details. We provide ImVoteNet baselines on SUNRGBD dataset.
+Please refer to [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/imvotenet) for details. We provide ImVoteNet baselines on SUNRGBD dataset.
 
 ### FCOS3D
 
-Please refer to [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d) for details. We provide FCOS3D baselines on the nuScenes dataset.
+Please refer to [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d) for details. We provide FCOS3D baselines on the nuScenes dataset.
 
 ### PointNet++
 
-Please refer to [PointNet++](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointnet2) for details. We provide PointNet++ baselines on ScanNet and S3DIS datasets.
+Please refer to [PointNet++](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pointnet2) for details. We provide PointNet++ baselines on ScanNet and S3DIS datasets.
 
 ### Group-Free-3D
 
-Please refer to [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/groupfree3d) for details. We provide Group-Free-3D baselines on ScanNet dataset.
+Please refer to [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/groupfree3d) for details. We provide Group-Free-3D baselines on ScanNet dataset.
 
 ### ImVoxelNet
 
-Please refer to [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvoxelnet) for details. We provide ImVoxelNet baselines on KITTI dataset.
+Please refer to [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/imvoxelnet) for details. We provide ImVoxelNet baselines on KITTI dataset.
 
 ### PAConv
 
-Please refer to [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) for details. We provide PAConv baselines on S3DIS dataset.
+Please refer to [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/paconv) for details. We provide PAConv baselines on S3DIS dataset.
 
 ### DGCNN
 
@@ -102,11 +102,11 @@ Please refer to [MonoFlex](https://github.com/open-mmlab/mmdetection3d/tree/v1.0
 
 ### SA-SSD
 
-Please refer to [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/sassd) for details. We provide SA-SSD baselines on the KITTI dataset.
+Please refer to [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/sassd) for details. We provide SA-SSD baselines on the KITTI dataset.
 
 ### FCAF3D
 
-Please refer to [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcaf3d) for details. We provide FCAF3D baselines on the ScanNet, S3DIS, and SUN RGB-D datasets.
+Please refer to [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcaf3d) for details. We provide FCAF3D baselines on the ScanNet, S3DIS, and SUN RGB-D datasets.
 
 ### PV-RCNN
 

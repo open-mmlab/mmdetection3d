@@ -10,104 +10,104 @@
 
 ### SECOND
 
-请参考 [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/second) 获取更多的细节，我们在 KITTI 和 Waymo 数据集上都给出了相应的基准结果。
+请参考 [SECOND](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/second) 获取更多的细节，我们在 KITTI 和 Waymo 数据集上都给出了相应的基准结果。
 
 ### PointPillars
 
-请参考 [PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars) 获取更多细节，我们在 KITTI 、nuScenes 、Lyft 、Waymo 数据集上给出了相应的基准结果。
+请参考 [PointPillars](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pointpillars) 获取更多细节，我们在 KITTI 、nuScenes 、Lyft 、Waymo 数据集上给出了相应的基准结果。
 
 ### Part-A2
 
-请参考 [Part-A2](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/parta2) 获取更多细节。
+请参考 [Part-A2](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/parta2) 获取更多细节。
 
 ### VoteNet
 
-请参考 [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/votenet) 获取更多细节，我们在 ScanNet 和 SUNRGBD 数据集上给出了相应的基准结果。
+请参考 [VoteNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/votenet) 获取更多细节，我们在 ScanNet 和 SUNRGBD 数据集上给出了相应的基准结果。
 
 ### Dynamic Voxelization
 
-请参考 [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dynamic_voxelization) 获取更多细节。
+请参考 [Dynamic Voxelization](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/dynamic_voxelization) 获取更多细节。
 
 ### MVXNet
 
-请参考 [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/mvxnet) 获取更多细节。
+请参考 [MVXNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/mvxnet) 获取更多细节。
 
 ### RegNetX
 
-请参考 [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/regnet) 获取更多细节，我们将 pointpillars 的主干网络替换成 RegNetX，并在 nuScenes 和 Lyft 数据集上给出了相应的基准结果。
+请参考 [RegNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/regnet) 获取更多细节，我们将 pointpillars 的主干网络替换成 RegNetX，并在 nuScenes 和 Lyft 数据集上给出了相应的基准结果。
 
 ### nuImages
 
-我们在 [nuImages 数据集](https://www.nuscenes.org/nuimages) 上也提供基准模型，请参考 [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/nuimages) 获取更多细节，我们在该数据集上提供 Mask R-CNN ， Cascade Mask R-CNN 和 HTC 的结果。
+我们在 [nuImages 数据集](https://www.nuscenes.org/nuimages) 上也提供基准模型，请参考 [nuImages](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/nuimages) 获取更多细节，我们在该数据集上提供 Mask R-CNN ， Cascade Mask R-CNN 和 HTC 的结果。
 
 ### H3DNet
 
-请参考 [H3DNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/h3dnet) 获取更多细节。
+请参考 [H3DNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/h3dnet) 获取更多细节。
 
 ### 3DSSD
 
-请参考 [3DSSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/3dssd) 获取更多细节。
+请参考 [3DSSD](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/3dssd) 获取更多细节。
 
 ### CenterPoint
 
-请参考 [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/centerpoint) 获取更多细节。
+请参考 [CenterPoint](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/centerpoint) 获取更多细节。
 
 ### SSN
 
-请参考 [SSN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/ssn) 获取更多细节，我们将 pointpillars 中的检测头替换成 SSN 模型中所使用的 ‘shape-aware grouping heads’，并在 nuScenes 和 Lyft 数据集上给出了相应的基准结果。
+请参考 [SSN](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/ssn) 获取更多细节，我们将 pointpillars 中的检测头替换成 SSN 模型中所使用的 ‘shape-aware grouping heads’，并在 nuScenes 和 Lyft 数据集上给出了相应的基准结果。
 
 ### ImVoteNet
 
-请参考 [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvotenet) 获取更多细节，我们在 SUNRGBD 数据集上给出了相应的结果。
+请参考 [ImVoteNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/imvotenet) 获取更多细节，我们在 SUNRGBD 数据集上给出了相应的结果。
 
 ### FCOS3D
 
-请参考 [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d) 获取更多细节，我们在 nuScenes 数据集上给出了相应的结果。
+请参考 [FCOS3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d) 获取更多细节，我们在 nuScenes 数据集上给出了相应的结果。
 
 ### PointNet++
 
-请参考 [PointNet++](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointnet2) 获取更多细节，我们在 ScanNet 和 S3DIS 数据集上给出了相应的结果。
+请参考 [PointNet++](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pointnet2) 获取更多细节，我们在 ScanNet 和 S3DIS 数据集上给出了相应的结果。
 
 ### Group-Free-3D
 
-请参考 [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/groupfree3d) 获取更多细节，我们在 ScanNet 数据集上给出了相应的结果。
+请参考 [Group-Free-3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/groupfree3d) 获取更多细节，我们在 ScanNet 数据集上给出了相应的结果。
 
 ### ImVoxelNet
 
-请参考 [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/imvoxelnet) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
+请参考 [ImVoxelNet](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/imvoxelnet) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### PAConv
 
-请参考 [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/paconv) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果。
+请参考 [PAConv](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/paconv) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果。
 
 ### DGCNN
 
-请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果。
+请参考 [DGCNN](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/dgcnn) 获取更多细节，我们在 S3DIS 数据集上给出了相应的结果。
 
 ### SMOKE
 
-请参考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
+请参考 [SMOKE](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/smoke) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### PGD
 
-请参考 [PGD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pgd) 获取更多细节，我们在 KITTI 和 nuScenes 数据集上给出了相应的结果。
+请参考 [PGD](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pgd) 获取更多细节，我们在 KITTI 和 nuScenes 数据集上给出了相应的结果。
 
 ### PointRCNN
 
-请参考 [PointRCNN](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/point_rcnn) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
+请参考 [PointRCNN](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/point_rcnn) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### MonoFlex
 
-请参考 [MonoFlex](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/monoflex) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
+请参考 [MonoFlex](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/monoflex) 获取更多细节，我们在 KITTI 数据集上给出了相应的结果。
 
 ### SA-SSD
 
-请参考 [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/sassd) 获取更多的细节，我们在 KITTI 数据集上给出了相应的基准结果。
+请参考 [SA-SSD](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/sassd) 获取更多的细节，我们在 KITTI 数据集上给出了相应的基准结果。
 
 ### FCAF3D
 
-请参考 [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcaf3d) 获取更多的细节，我们在 ScanNet, S3DIS 和 SUN RGB-D 数据集上给出了相应的基准结果。
+请参考 [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcaf3d) 获取更多的细节，我们在 ScanNet, S3DIS 和 SUN RGB-D 数据集上给出了相应的基准结果。
 
 ### Mixed Precision (FP16) Training
 
-细节请参考 [Mixed Precision (FP16) Training 在 PointPillars 训练的样例](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py)。
+细节请参考 [Mixed Precision (FP16) Training 在 PointPillars 训练的样例](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-amp-2x_nus-3d.py)。

@@ -49,6 +49,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             voxelization and dynamic voxelization. Defaults to 'hard'.
         voxel_layer (dict or :obj:`ConfigDict`, optional): Voxelization layer
             config. Defaults to None.
+        max_voxels (int): Maximum number of voxels in each voxel grid. Defaults
+            to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
             Defaults to None.
         std (Sequence[Number], optional): The pixel standard deviation of
@@ -77,6 +79,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  voxel: bool = False,
                  voxel_type: str = 'hard',
                  voxel_layer: OptConfigType = None,
+                 max_voxels: Optional[int] = None,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
                  pad_size_divisor: int = 1,
@@ -103,6 +106,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             batch_augments=batch_augments)
         self.voxel = voxel
         self.voxel_type = voxel_type
+        self.max_voxels = max_voxels
         if voxel:
             self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
 
@@ -423,20 +427,22 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 res_coors -= res_coors.min(0)[0]
 
                 res_coors_numpy = res_coors.cpu().numpy()
-                inds, voxel2point_map = self.sparse_quantize(
+                inds, point2voxel_map = self.sparse_quantize(
                     res_coors_numpy, return_index=True, return_inverse=True)
-                voxel2point_map = torch.from_numpy(voxel2point_map).cuda()
-                if self.training:
-                    if len(inds) > 80000:
-                        inds = np.random.choice(inds, 80000, replace=False)
+                point2voxel_map = torch.from_numpy(point2voxel_map).cuda()
+                if self.training and self.max_voxels is not None:
+                    if len(inds) > self.max_voxels:
+                        inds = np.random.choice(
+                            inds, self.max_voxels, replace=False)
                 inds = torch.from_numpy(inds).cuda()
-                data_sample.gt_pts_seg.voxel_semantic_mask \
-                    = data_sample.gt_pts_seg.pts_semantic_mask[inds]
+                if hasattr(data_sample.gt_pts_seg, 'pts_semantic_mask'):
+                    data_sample.gt_pts_seg.voxel_semantic_mask \
+                        = data_sample.gt_pts_seg.pts_semantic_mask[inds]
                 res_voxel_coors = res_coors[inds]
                 res_voxels = res[inds]
                 res_voxel_coors = F.pad(
                     res_voxel_coors, (0, 1), mode='constant', value=i)
-                data_sample.voxel2point_map = voxel2point_map.long()
+                data_sample.point2voxel_map = point2voxel_map.long()
                 voxels.append(res_voxels)
                 coors.append(res_voxel_coors)
             voxels = torch.cat(voxels, dim=0)
@@ -466,12 +472,12 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 True)
             voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
             data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
-            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+            data_sample.point2voxel_map = point2voxel_map
         else:
             pseudo_tensor = res_coors.new_ones([res_coors.shape[0], 1]).float()
             _, _, point2voxel_map = dynamic_scatter_3d(pseudo_tensor,
                                                        res_coors, 'mean', True)
-            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+            data_sample.point2voxel_map = point2voxel_map
 
     def ravel_hash(self, x: np.ndarray) -> np.ndarray:
         """Get voxel coordinates hash for np.unique().

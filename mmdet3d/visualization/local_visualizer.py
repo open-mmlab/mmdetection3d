@@ -204,7 +204,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
-        self.o3d_vis.get_render_option().point_size = points_size
+        if self.o3d_vis.get_render_option() is not None:
+            self.o3d_vis.get_render_option().point_size = points_size
 
         points = points.copy()
         pcd = geometry.PointCloud()
@@ -663,6 +664,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if hasattr(self, 'o3d_vis'):
             self.o3d_vis.run()
             if save_path is not None:
+                if not (save_path.endswith('.png')
+                        or save_path.endswith('.jpg')):
+                    save_path += '.png'
                 self.o3d_vis.capture_screen_image(save_path)
             self.o3d_vis.destroy_window()
             self._clear_o3d_vis()
