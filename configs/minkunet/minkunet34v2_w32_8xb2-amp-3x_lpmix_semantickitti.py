@@ -1,10 +1,8 @@
 _base_ = ['./minkunet_w32_8xb2-15e_semantickitti.py']
 
 model = dict(
-    backbone=dict(
-        encoder_blocks=[2, 3, 4, 6],
-        decoder_blocks=[2, 2, 2, 2],
-    ))
+    backbone=dict(type='MinkUNetBackboneV2', encoder_blocks=[2, 3, 4, 6]),
+    decode_head=dict(channels=256 + 128 + 96))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),

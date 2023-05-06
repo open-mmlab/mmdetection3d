@@ -12,12 +12,13 @@ model = dict(
     backbone=dict(
         type='MinkUNetBackbone',
         in_channels=4,
+        num_stages=4,
         base_channels=32,
+        block_type='basicblock',
         encoder_channels=[32, 64, 128, 256],
         encoder_blocks=[2, 2, 2, 2],
         decoder_channels=[256, 128, 96, 96],
         decoder_blocks=[2, 2, 2, 2],
-        num_stages=4,
         norm_cfg=dict(type='TorchSparseBN'),
         init_cfg=None),
     decode_head=dict(

@@ -1,10 +1,6 @@
 _base_ = ['./minkunet_w32_8xb2-15e_semantickitti.py']
 
-model = dict(
-    backbone=dict(
-        encoder_blocks=[2, 3, 4, 6],
-        decoder_blocks=[2, 2, 2, 2],
-    ))
+model = dict(backbone=dict(encoder_blocks=[2, 3, 4, 6]))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -82,12 +78,11 @@ train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 
 # optimizer
 # This schedule is mainly used by models on nuScenes dataset
-lr = 0.008
 optim_wrapper = dict(
     _delete_=True,
     type='AmpOptimWrapper',
     loss_scale='dynamic',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
+    optimizer=dict(type='AdamW', lr=0.001, weight_decay=0.01),
     # max_norm=10 is better for SECOND
     clip_grad=dict(max_norm=10, norm_type=2))
 
@@ -103,7 +98,7 @@ param_scheduler = [
         begin=0,
         end=36,
         by_epoch=True,
-        milestones=[24, 32],
+        milestones=[30],
         gamma=0.1)
 ]
 

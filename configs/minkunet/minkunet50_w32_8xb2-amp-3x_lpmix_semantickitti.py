@@ -2,9 +2,9 @@ _base_ = ['./minkunet_w32_8xb2-15e_semantickitti.py']
 
 model = dict(
     backbone=dict(
+        block_type='bottleneck',
         encoder_blocks=[2, 3, 4, 6],
-        decoder_blocks=[2, 2, 2, 2],
-        block_type='bottleneck'))
+    ))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -46,7 +46,7 @@ train_pipeline = [
             [
                 dict(
                     type='PolarMix',
-                    instance_classes=[1, 2, 3, 4, 5, 6, 7, 8],
+                    instance_classes=[0, 1, 2, 3, 4, 5, 6, 7],
                     swap_ratio=0.5,
                     rotate_paste_ratio=1.0,
                     pre_transform=[

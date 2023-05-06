@@ -68,7 +68,7 @@ train_pipeline = [
                     prob=1)
             ],
         ],
-        prob=[0.5, 0.5]),
+        prob=[0.4, 0.6]),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[0., 6.28318531],
