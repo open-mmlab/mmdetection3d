@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Any, Dict, Tuple, Union
+from typing import Tuple
 
 import torch.nn as nn
 from mmdet.models.backbones import RegNet
@@ -65,9 +65,9 @@ class NoStemRegNet(RegNet):
     """
 
     def __init__(self,
-                 arch: Dict[str, Union[int, float]],
+                 arch: dict,
                  init_cfg: OptMultiConfig = None,
-                 **kwargs: Any) -> None:
+                 **kwargs) -> None:
         super(NoStemRegNet, self).__init__(arch, init_cfg=init_cfg, **kwargs)
 
     def _make_stem_layer(self, in_channels: int,

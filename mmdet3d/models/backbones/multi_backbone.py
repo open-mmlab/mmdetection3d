@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import warnings
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule
@@ -9,7 +9,7 @@ from mmengine.model import BaseModule
 from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import ConfigType
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 @MODELS.register_module()
@@ -30,16 +30,16 @@ class MultiBackbone(BaseModule):
 
     def __init__(self,
                  num_streams: int,
-                 backbones: Union[List, Dict],
+                 backbones: Union[List[dict], Dict],
                  aggregation_mlp_channels: Optional[Sequence[int]] = None,
                  conv_cfg: ConfigType = dict(type='Conv1d'),
                  norm_cfg: ConfigType = dict(
                      type='BN1d', eps=1e-5, momentum=0.01),
                  act_cfg: ConfigType = dict(type='ReLU'),
-                 suffixes: Tuple = ('net0', 'net1'),
-                 init_cfg: Optional[Dict] = None,
+                 suffixes: Tuple[str] = ('net0', 'net1'),
+                 init_cfg: OptMultiConfig = None,
                  pretrained: Optional[str] = None,
-                 **kwargs: Any) -> None:
+                 **kwargs) -> None:
         super().__init__(init_cfg=init_cfg)
         assert isinstance(backbones, dict) or isinstance(backbones, list)
         if isinstance(backbones, dict):

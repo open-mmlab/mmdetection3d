@@ -6,7 +6,7 @@ from torch import Tensor, nn
 
 from mmdet3d.models.layers import PointFPModule, build_sa_module
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import OptMultiConfig
+from mmdet3d.utils import ConfigType, OptMultiConfig
 from .base_pointnet import BasePointNet
 
 
@@ -44,8 +44,8 @@ class PointNet2SASSG(BasePointNet):
                                                          (128, 128, 256)),
                  fp_channels: Sequence[Sequence[int]] = ((256, 256), (256,
                                                                       256)),
-                 norm_cfg: dict = dict(type='BN2d'),
-                 sa_cfg: dict = dict(
+                 norm_cfg: ConfigType = dict(type='BN2d'),
+                 sa_cfg: ConfigType = dict(
                      type='PointSAModule',
                      pool_mod='max',
                      use_xyz=True,
