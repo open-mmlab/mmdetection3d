@@ -149,7 +149,7 @@ class MinkUNetBackbone(BaseModule):
             x = decoder_layer[1](x)
             decoder_outs.append(x)
 
-        return decoder_outs[-1].F
+        return decoder_outs[-1]
 
 
 @MODELS.register_module()
@@ -184,7 +184,7 @@ class MinkUNetBackboneV2(MinkUNetBackbone):
             laterals.append(voxels)
         laterals = laterals[:-1][::-1]
         points = voxel_to_point(voxels, points)
-        outputs = [points.F]
+        output_features = [points.F]
 
         for i, decoder_layer in enumerate(self.decoder):
             voxels = decoder_layer[0](voxels)
@@ -192,10 +192,10 @@ class MinkUNetBackboneV2(MinkUNetBackbone):
             voxels = decoder_layer[1](voxels)
             if i % 2 == 1:
                 points = voxel_to_point(voxels, points)
-                outputs.append(points.F)
+                output_features.append(points.F)
 
-        outputs = torch.cat(outputs, dim=1)
-        return outputs
+        points.F = torch.cat(output_features, dim=1)
+        return points
 
 
 def initial_voxelize(points: PointTensor) -> SparseTensor:

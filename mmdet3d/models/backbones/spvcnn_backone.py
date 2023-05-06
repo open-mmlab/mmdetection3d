@@ -108,4 +108,4 @@ class SPVCNNBackbone(MinkUNetBackbone):
                 voxels.F = self.dropout(voxels.F)
 
         points = voxel_to_point(voxels, points, self.point_transforms[2])
-        return points.F
+        return points

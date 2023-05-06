@@ -76,7 +76,8 @@ train_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 
-train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
+train_dataloader = dict(
+    sampler=dict(seed=None), dataset=dict(pipeline=train_pipeline))
 
 # optimizer
 # This schedule is mainly used by models on nuScenes dataset
@@ -110,3 +111,5 @@ param_scheduler = [
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
+
+randomness = dict(seed=None, deterministic=False, diff_rank_seed=True)
