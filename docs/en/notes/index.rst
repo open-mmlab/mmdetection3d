@@ -6,3 +6,4 @@
    changelog.md
    compatibility.md
    faq.md
+   contribution_guides.md
