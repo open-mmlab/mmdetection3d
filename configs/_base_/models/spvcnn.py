@@ -9,7 +9,7 @@ model = dict(
             point_cloud_range=[-100, -100, -20, 100, 100, 20],
             voxel_size=[0.05, 0.05, 0.05],
             max_voxels=(-1, -1)),
-    ),
+        max_voxels=80000),
     backbone=dict(
         type='SPVCNNBackbone',
         in_channels=4,
@@ -17,7 +17,10 @@ model = dict(
         base_channels=32,
         block_type='basicblock',
         encoder_channels=[32, 64, 128, 256],
+        encoder_blocks=[2, 2, 2, 2],
         decoder_channels=[256, 128, 96, 96],
+        decoder_blocks=[2, 2, 2, 2],
+        norm_cfg=dict(type='TorchSparseBN'),
         drop_ratio=0.3),
     decode_head=dict(
         type='MinkUNetHead',

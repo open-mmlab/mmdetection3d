@@ -191,7 +191,15 @@ class RandomFlip3D(RandomFlip):
         if 'flip' not in results:
             cur_dir = self._choose_direction()
         else:
-            cur_dir = results['flip_direction']
+            # `flip_direction` works only when `flip` is True.
+            # For example, in `MultiScaleFlipAug3D`, `flip_direction` is
+            # 'horizontal' but `flip` is False.
+            if results['flip']:
+                assert 'flip_direction' in results, 'flip and flip_direction '
+                'must exist simultaneously'
+                cur_dir = results['flip_direction']
+            else:
+                cur_dir = None
         if cur_dir is None:
             results['flip'] = False
             results['flip_direction'] = None

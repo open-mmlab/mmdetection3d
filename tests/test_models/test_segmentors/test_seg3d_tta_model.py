@@ -36,5 +36,5 @@ class TestSeg3DTTAModel(TestCase):
                         pcd_vertical_flip=pcd_vertical_flip_list[i]))
             ])
         if torch.cuda.is_available():
-            model.eval()
+            model.eval().cuda()
             model.test_step(dict(inputs=points, data_samples=data_samples))
