@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Union
 
-from mmcv.cnn import build_norm_layer
+from mmcv.cnn import build_activation_layer, build_norm_layer
 from mmengine.model import BaseModule
 from torch import nn
 
@@ -41,14 +41,22 @@ class TorchSparseConvModule(BaseModule):
                  bias: bool = False,
                  transposed: bool = False,
                  norm_cfg: ConfigType = dict(type='TorchSparseBN'),
-                 init_cfg: OptConfigType = None) -> None:
+                 act_cfg: ConfigType = dict(
+                     type='TorchSparseReLU', inplace=True),
+                 init_cfg: OptConfigType = None,
+                 **kwargs) -> None:
         super().__init__(init_cfg)
-        _, norm = build_norm_layer(norm_cfg, out_channels)
-
-        self.net = nn.Sequential(
+        layers = [
             spnn.Conv3d(in_channels, out_channels, kernel_size, stride,
-                        dilation, bias, transposed), norm,
-            spnn.ReLU(inplace=True))
+                        dilation, bias, transposed)
+        ]
+        if norm_cfg is not None:
+            _, norm = build_norm_layer(norm_cfg, out_channels)
+            layers.append(norm)
+        if act_cfg is not None:
+            activation = build_activation_layer(act_cfg)
+            layers.append(activation)
+        self.net = nn.Sequential(*layers)
 
     def forward(self, x: SparseTensor) -> SparseTensor:
         out = self.net(x)
@@ -73,12 +81,13 @@ class TorchSparseBasicBlock(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_size: Union[int, Sequence[int]],
+                 kernel_size: Union[int, Sequence[int]] = 3,
                  stride: Union[int, Sequence[int]] = 1,
                  dilation: int = 1,
                  bias: bool = False,
                  norm_cfg: ConfigType = dict(type='TorchSparseBN'),
-                 init_cfg: OptConfigType = None) -> None:
+                 init_cfg: OptConfigType = None,
+                 **kwargs) -> None:
         super().__init__(init_cfg)
         _, norm1 = build_norm_layer(norm_cfg, out_channels)
         _, norm2 = build_norm_layer(norm_cfg, out_channels)
@@ -137,7 +146,8 @@ class TorchSparseBottleneck(BaseModule):
                  dilation: int = 1,
                  bias: bool = False,
                  norm_cfg: ConfigType = dict(type='TorchSparseBN'),
-                 init_cfg: OptConfigType = None) -> None:
+                 init_cfg: OptConfigType = None,
+                 **kwargs) -> None:
         super().__init__(init_cfg)
         _, norm1 = build_norm_layer(norm_cfg, out_channels)
         _, norm2 = build_norm_layer(norm_cfg, out_channels)

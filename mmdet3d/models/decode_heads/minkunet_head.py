@@ -57,7 +57,10 @@ class MinkUNetHead(Base3DDecodeHead):
         """
         seg_logits = self.forward(inputs)
 
-        batch_idx = inputs.C[:, -1]
+        if hasattr(inputs, 'C'):
+            batch_idx = inputs.C[:, -1]
+        elif hasattr(inputs, 'indices'):
+            batch_idx = inputs.indices[:, 0]
         seg_logit_list = []
         for i, data_sample in enumerate(batch_data_samples):
             seg_logit = seg_logits[batch_idx == i]
@@ -76,5 +79,9 @@ class MinkUNetHead(Base3DDecodeHead):
             Tensor: Segmentation map of shape [N, C].
                 Note that output contains all points from each batch.
         """
-        output = self.cls_seg(x.F)
+        if hasattr(x, 'F'):
+            x = x.F
+        elif hasattr(x, 'features'):
+            x = x.features
+        output = self.cls_seg(x)
         return output

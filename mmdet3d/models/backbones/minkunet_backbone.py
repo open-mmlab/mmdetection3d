@@ -1,16 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from functools import partial
 from typing import List, Optional
 
 import torch
 from mmengine.model import BaseModule
 from mmengine.registry import MODELS
+from spconv.pytorch import SparseConvTensor
 from torch import Tensor, nn
 
-from mmdet3d.models.layers import (TorchSparseBasicBlock,
-                                   TorchSparseBottleneck,
-                                   TorchSparseConvModule)
+from mmdet3d.models.layers.sparse_block import (SparseBasicBlock,
+                                                SparseBottleneck,
+                                                make_sparse_convmodule,
+                                                replace_feature)
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
-from mmdet3d.utils import ConfigType, OptMultiConfig
+from mmdet3d.models.layers.torchsparse_block import (TorchSparseBasicBlock,
+                                                     TorchSparseBottleneck,
+                                                     TorchSparseConvModule)
+from mmdet3d.utils import OptMultiConfig
 
 if IS_TORCHSPARSE_AVAILABLE:
     import torchsparse
@@ -18,7 +24,43 @@ if IS_TORCHSPARSE_AVAILABLE:
     from torchsparse.nn.utils import get_kernel_offsets
     from torchsparse.tensor import PointTensor, SparseTensor
 else:
-    SparseTensor = None
+    PointTensor = SparseTensor = None
+
+# def build_sparse_module(cfg: Dict, *args, **kwargs) -> nn.Module:
+#     """Build sparse module.
+
+#     Args:
+#         cfg (None or dict): The conv layer config, which should contain:
+#             - type (str): Layer type.
+#             - layer args: Args needed to instantiate an conv layer.
+#         args (argument list): Arguments passed to the `__init__`
+#             method of the corresponding conv layer.
+#         kwargs (keyword arguments): Keyword arguments passed to the
+#            `__init__`
+#             method of the corresponding conv layer.
+
+#     Returns:
+#         nn.Module: Created conv layer.
+#     """
+#     if not isinstance(cfg, dict):
+#         raise TypeError('cfg must be a dict')
+#     if 'type' not in cfg:
+#         raise KeyError('the cfg dict must contain the key "type"')
+#     cfg_ = cfg.copy()
+
+#     module_type = cfg_.pop('type')
+#     if module_type == "SparseConvModule":
+#         module = make_sparse_convmodule(*args, **kwargs, **cfg_)
+#         return module
+
+#     with MODELS.switch_scope_and_registry(None) as registry:
+#         sparse_module = registry.get(module_type)
+#     if sparse_module is None:
+#         raise KeyError(f'Cannot find {sparse_module} in
+#           registry under scope '
+#                        f'name {registry.scope}')
+#     module = sparse_module(*args, **kwargs, **cfg_)
+#     return module
 
 
 @MODELS.register_module()
@@ -50,29 +92,52 @@ class MinkUNetBackbone(BaseModule):
                  in_channels: int = 4,
                  base_channels: int = 32,
                  num_stages: int = 4,
-                 block_type: str = 'basicblock',
                  encoder_channels: List[int] = [32, 64, 128, 256],
                  encoder_blocks: List[int] = [2, 2, 2, 2],
                  decoder_channels: List[int] = [256, 128, 96, 96],
                  decoder_blocks: List[int] = [2, 2, 2, 2],
-                 norm_cfg: ConfigType = dict(type='TorchSparseBN'),
+                 block_type: str = 'basic',
+                 sparseconv_backends: str = 'torchsparse',
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg)
         assert num_stages == len(encoder_channels) == len(decoder_channels)
+        assert sparseconv_backends in [
+            'torchsparse', 'spconv', 'minkowski'
+        ], f'sparseconv backend: {sparseconv_backends} not supported.'
         self.num_stages = num_stages
-        self.conv_input = nn.Sequential(
-            TorchSparseConvModule(
-                in_channels, base_channels, kernel_size=3, norm_cfg=norm_cfg),
-            TorchSparseConvModule(
-                base_channels, base_channels, kernel_size=3,
-                norm_cfg=norm_cfg))
+        self.sparseconv_backends = sparseconv_backends
+        if sparseconv_backends == 'torchsparse':
+            input_conv = TorchSparseConvModule
+            encoder_conv = TorchSparseConvModule
+            decoder_conv = TorchSparseConvModule
+            residual_block = TorchSparseBasicBlock if block_type == 'basic' \
+                else TorchSparseBottleneck
+            residual_branch = None  # for torchsparse
+        elif sparseconv_backends == 'spconv':
+            input_conv = partial(
+                make_sparse_convmodule, conv_type='SubMConv3d')
+            encoder_conv = partial(
+                make_sparse_convmodule, conv_type='SparseConv3d')
+            decoder_conv = partial(
+                make_sparse_convmodule, conv_type='SparseInverseConv3d')
+            residual_block = SparseBasicBlock if block_type == 'basic' \
+                else SparseBottleneck
+            residual_branch = partial(
+                make_sparse_convmodule, conv_type='SubMConv3d')
 
-        if block_type == 'basicblock':
-            block = TorchSparseBasicBlock
-        elif block_type == 'bottleneck':
-            block = TorchSparseBottleneck
-        else:
-            raise NotImplementedError(f'Unsppported block type: {block_type}')
+        self.conv_input = nn.Sequential(
+            input_conv(
+                in_channels,
+                base_channels,
+                kernel_size=3,
+                padding=1,
+                indice_key='subm0'),
+            input_conv(
+                base_channels,
+                base_channels,
+                kernel_size=3,
+                padding=1,
+                indice_key='subm0'))
 
         self.encoder = nn.ModuleList()
         self.decoder = nn.ModuleList()
@@ -80,48 +145,66 @@ class MinkUNetBackbone(BaseModule):
         decoder_channels.insert(0, encoder_channels[-1])
 
         for i in range(num_stages):
-            self.encoder.append(
-                nn.Sequential(
-                    TorchSparseConvModule(
-                        encoder_channels[i],
-                        encoder_channels[i],
-                        kernel_size=2,
-                        stride=2,
-                        norm_cfg=norm_cfg),
-                    block(
-                        encoder_channels[i],
-                        encoder_channels[i + 1],
-                        kernel_size=3,
-                        norm_cfg=norm_cfg), *[
-                            block(
+            encoder_layer = [
+                encoder_conv(
+                    encoder_channels[i],
+                    encoder_channels[i],
+                    kernel_size=2,
+                    stride=2,
+                    indice_key=f'spconv{i+1}')
+            ]
+            for j in range(encoder_blocks[i]):
+                if j == 0:
+                    encoder_layer.append(
+                        residual_block(
+                            encoder_channels[i],
+                            encoder_channels[i + 1],
+                            downsample=residual_branch(
+                                encoder_channels[i],
                                 encoder_channels[i + 1],
-                                encoder_channels[i + 1],
-                                kernel_size=3,
-                                norm_cfg=norm_cfg)
-                        ] * (encoder_blocks[i] - 1)))
+                                kernel_size=1)
+                            if residual_branch is not None else None,
+                            indice_key=f'subm{i+1}'))
+                else:
+                    encoder_layer.append(
+                        residual_block(
+                            encoder_channels[i + 1],
+                            encoder_channels[i + 1],
+                            indice_key=f'subm{i+1}'))
+            self.encoder.append(nn.Sequential(*encoder_layer))
 
-            self.decoder.append(
-                nn.ModuleList([
-                    TorchSparseConvModule(
-                        decoder_channels[i],
-                        decoder_channels[i + 1],
-                        kernel_size=2,
-                        stride=2,
-                        transposed=True,
-                        norm_cfg=norm_cfg),
-                    nn.Sequential(
-                        block(
+            decoder_layer = [
+                decoder_conv(
+                    decoder_channels[i],
+                    decoder_channels[i + 1],
+                    kernel_size=2,
+                    stride=2,
+                    transposed=True,
+                    indice_key=f'spconv{num_stages-i}')
+            ]
+            for j in range(decoder_blocks[i]):
+                if j == 0:
+                    decoder_layer.append(
+                        residual_block(
                             decoder_channels[i + 1] + encoder_channels[-2 - i],
                             decoder_channels[i + 1],
-                            kernel_size=3,
-                            norm_cfg=norm_cfg), *[
-                                block(
-                                    decoder_channels[i + 1],
-                                    decoder_channels[i + 1],
-                                    kernel_size=3,
-                                    norm_cfg=norm_cfg)
-                            ] * (decoder_blocks[i] - 1))
-                ]))
+                            downsample=residual_branch(
+                                decoder_channels[i + 1] +
+                                encoder_channels[-2 - i],
+                                decoder_channels[i + 1],
+                                kernel_size=1)
+                            if residual_branch is not None else None,
+                            indice_key=f'subm{num_stages-i}'))
+                else:
+                    decoder_layer.append(
+                        residual_block(
+                            decoder_channels[i + 1],
+                            decoder_channels[i + 1],
+                            indice_key=f'subm{num_stages-i}'))
+            self.decoder.append(
+                nn.ModuleList(
+                    [decoder_layer[0],
+                     nn.Sequential(*decoder_layer[1:])]))
 
     def forward(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
         """Forward function.
@@ -134,7 +217,16 @@ class MinkUNetBackbone(BaseModule):
         Returns:
             SparseTensor: Backbone features.
         """
-        x = torchsparse.SparseTensor(voxel_features, coors)
+        if self.sparseconv_backends == 'torchsparse':
+            x = SparseTensor(voxel_features, coors)
+        elif self.sparseconv_backends == 'spconv':
+            spatial_shape = coors.max(0)[0][1:] + 1
+            batch_size = coors[-1, 0] + 1
+            x = SparseConvTensor(voxel_features, coors, spatial_shape,
+                                 batch_size)
+        elif self.sparseconv_backends == 'minkowski':
+            pass
+
         x = self.conv_input(x)
         laterals = [x]
         for encoder_layer in self.encoder:
@@ -145,7 +237,12 @@ class MinkUNetBackbone(BaseModule):
         decoder_outs = []
         for i, decoder_layer in enumerate(self.decoder):
             x = decoder_layer[0](x)
-            x = torchsparse.cat((x, laterals[i]))
+            if self.sparseconv_backends == 'torchsparse':
+                x = torchsparse.cat((x, laterals[i]))
+            elif self.sparseconv_backends == 'spconv':
+                x = replace_feature(x, torch.cat((x, laterals[i])))
+            elif self.sparseconv_backends == 'minkowski':
+                pass
             x = decoder_layer[1](x)
             decoder_outs.append(x)
 

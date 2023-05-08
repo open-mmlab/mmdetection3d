@@ -25,7 +25,25 @@ def test_minkunet_backbone():
     features = torch.cat(features, dim=0).cuda()
     coordinates = torch.cat(coordinates, dim=0).cuda()
 
-    cfg = dict(type='MinkUNetBackbone')
+    cfg = dict(
+        type='MinkUNetBackbone',
+        input_conv_module=dict(
+            type='SparseConvModule',
+            conv_type='SubMConv3d',
+            norm_cfg=dict(type='BN1d')),
+        downsample_module=dict(
+            type='SparseConvModule',
+            conv_type='SparseConv3d',
+            norm_cfg=dict(type='BN1d')),
+        upsample_module=dict(
+            type='SparseConvModule',
+            conv_type='SparseInverseConv3d',
+            norm_cfg=dict(type='BN1d')),
+        residual_block=dict(
+            type='SparseBasicBlock',
+            conv_cfg=dict(type='SubMConv3d'),
+            norm_cfg=dict(type='BN1d')),
+        sparseconv_backends='spconv')
     self = MODELS.build(cfg).cuda()
     self.init_weights()
 
