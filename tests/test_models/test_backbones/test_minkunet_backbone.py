@@ -17,32 +17,37 @@ def test_minkunet_backbone():
 
     coordinates, features = [], []
     for i in range(2):
-        c = torch.randint(0, 10, (100, 3)).int()
-        c = F.pad(c, (0, 1), mode='constant', value=i)
+        c = torch.randint(0, 16, (100, 3)).int()
+        c = F.pad(c, (1, 0), mode='constant', value=i)
         coordinates.append(c)
         f = torch.rand(100, 4)
         features.append(f)
     features = torch.cat(features, dim=0).cuda()
     coordinates = torch.cat(coordinates, dim=0).cuda()
 
+    # cfg = dict(
+    #     type='MinkUNetBackbone',
+    #     input_conv_module=dict(
+    #         type='SparseConvModule',
+    #         conv_type='SubMConv3d',
+    #         norm_cfg=dict(type='BN1d')),
+    #     downsample_module=dict(
+    #         type='SparseConvModule',
+    #         conv_type='SparseConv3d',
+    #         norm_cfg=dict(type='BN1d')),
+    #     upsample_module=dict(
+    #         type='SparseConvModule',
+    #         conv_type='SparseInverseConv3d',
+    #         norm_cfg=dict(type='BN1d')),
+    #     residual_block=dict(
+    #         type='SparseBasicBlock',
+    #         conv_cfg=dict(type='SubMConv3d'),
+    #         norm_cfg=dict(type='BN1d')),
+    #     sparseconv_backends='spconv')
     cfg = dict(
         type='MinkUNetBackbone',
-        input_conv_module=dict(
-            type='SparseConvModule',
-            conv_type='SubMConv3d',
-            norm_cfg=dict(type='BN1d')),
-        downsample_module=dict(
-            type='SparseConvModule',
-            conv_type='SparseConv3d',
-            norm_cfg=dict(type='BN1d')),
-        upsample_module=dict(
-            type='SparseConvModule',
-            conv_type='SparseInverseConv3d',
-            norm_cfg=dict(type='BN1d')),
-        residual_block=dict(
-            type='SparseBasicBlock',
-            conv_cfg=dict(type='SubMConv3d'),
-            norm_cfg=dict(type='BN1d')),
+        encoder_blocks=[2, 3, 4, 6],
+        decoder_blocks=[2, 2, 2, 2],
         sparseconv_backends='spconv')
     self = MODELS.build(cfg).cuda()
     self.init_weights()

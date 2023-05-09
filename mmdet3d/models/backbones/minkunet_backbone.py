@@ -102,7 +102,7 @@ class MinkUNetBackbone(BaseModule):
         super().__init__(init_cfg)
         assert num_stages == len(encoder_channels) == len(decoder_channels)
         assert sparseconv_backends in [
-            'torchsparse', 'spconv', 'minkowski'
+            'torchsparse', 'spconv', 'minkowski engine'
         ], f'sparseconv backend: {sparseconv_backends} not supported.'
         self.num_stages = num_stages
         self.sparseconv_backends = sparseconv_backends
@@ -154,7 +154,7 @@ class MinkUNetBackbone(BaseModule):
                     indice_key=f'spconv{i+1}')
             ]
             for j in range(encoder_blocks[i]):
-                if j == 0:
+                if j == 0 and encoder_channels[i] != encoder_channels[i + 1]:
                     encoder_layer.append(
                         residual_block(
                             encoder_channels[i],
@@ -194,13 +194,13 @@ class MinkUNetBackbone(BaseModule):
                                 decoder_channels[i + 1],
                                 kernel_size=1)
                             if residual_branch is not None else None,
-                            indice_key=f'subm{num_stages-i}'))
+                            indice_key=f'subm{num_stages-i-1}'))
                 else:
                     decoder_layer.append(
                         residual_block(
                             decoder_channels[i + 1],
                             decoder_channels[i + 1],
-                            indice_key=f'subm{num_stages-i}'))
+                            indice_key=f'subm{num_stages-i-1}'))
             self.decoder.append(
                 nn.ModuleList(
                     [decoder_layer[0],
@@ -240,7 +240,8 @@ class MinkUNetBackbone(BaseModule):
             if self.sparseconv_backends == 'torchsparse':
                 x = torchsparse.cat((x, laterals[i]))
             elif self.sparseconv_backends == 'spconv':
-                x = replace_feature(x, torch.cat((x, laterals[i])))
+                x = replace_feature(
+                    x, torch.cat((x.features, laterals[i].features), dim=1))
             elif self.sparseconv_backends == 'minkowski':
                 pass
             x = decoder_layer[1](x)

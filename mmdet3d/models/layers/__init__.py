@@ -13,7 +13,7 @@ from .pointnet_modules import (PAConvCUDASAModule, PAConvCUDASAModuleMSG,
                                PointFPModule, PointSAModule, PointSAModuleMSG,
                                build_sa_module)
 from .sparse_block import (SparseBasicBlock, SparseBottleneck,
-                           SparseConvModule, make_sparse_convmodule)
+                           make_sparse_convmodule)
 from .torchsparse_block import (TorchSparseBasicBlock, TorchSparseBottleneck,
                                 TorchSparseConvModule)
 from .transformer import GroupFree3DMHA
@@ -22,13 +22,12 @@ from .vote_module import VoteModule
 __all__ = [
     'VoteModule', 'GroupFree3DMHA', 'EdgeFusionModule', 'DGCNNFAModule',
     'DGCNNFPModule', 'DGCNNGFModule', 'NaiveSyncBatchNorm1d',
-    'NaiveSyncBatchNorm2d', 'PAConv', 'PAConvCUDA', 'SparseConvModule',
-    'SparseBasicBlock', 'SparseBottleneck', 'make_sparse_convmodule',
-    'PointFusion', 'VoteFusion', 'apply_3d_transformation',
-    'bbox_2d_transform', 'coord_2d_transform', 'MLP', 'box3d_multiclass_nms',
-    'aligned_3d_nms', 'circle_nms', 'nms_bev', 'nms_normal_bev',
-    'build_sa_module', 'PointSAModuleMSG', 'PointSAModule', 'PointFPModule',
-    'PAConvSAModule', 'PAConvSAModuleMSG', 'PAConvCUDASAModule',
-    'PAConvCUDASAModuleMSG', 'TorchSparseConvModule', 'TorchSparseBasicBlock',
-    'TorchSparseBottleneck'
+    'NaiveSyncBatchNorm2d', 'PAConv', 'PAConvCUDA', 'SparseBasicBlock',
+    'SparseBottleneck', 'make_sparse_convmodule', 'PointFusion', 'VoteFusion',
+    'apply_3d_transformation', 'bbox_2d_transform', 'coord_2d_transform',
+    'MLP', 'box3d_multiclass_nms', 'aligned_3d_nms', 'circle_nms', 'nms_bev',
+    'nms_normal_bev', 'build_sa_module', 'PointSAModuleMSG', 'PointSAModule',
+    'PointFPModule', 'PAConvSAModule', 'PAConvSAModuleMSG',
+    'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG', 'TorchSparseConvModule',
+    'TorchSparseBasicBlock', 'TorchSparseBottleneck'
 ]

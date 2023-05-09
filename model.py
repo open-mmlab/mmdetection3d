@@ -1,4 +1,4 @@
-# import MinkowskiEngine as ME
+# # import MinkowskiEngine as ME
 # import torch
 # from spconv.pytorch import (SparseConv3d, SparseConvTensor, SparseSequential,
 #                             SubMConv3d)
@@ -16,6 +16,6 @@
 # x_coordinates = torch.cat([torch.zeros(100, 1), x_coordinates], dim=1).int()
 # x = SparseConvTensor(
 #     x_features.cuda(), x_coordinates.cuda(), [2, 2, 2], batch_size=1)
-# x = ME.SparseTensor(x_features.cuda(), x_coordinates.cuda())
+# # x = ME.SparseTensor(x_features.cuda(), x_coordinates.cuda())
 # y = model(x)
 # pass
