@@ -139,7 +139,7 @@ class AnchorTrainMixin(object):
                 if self.assign_per_class:
                     gt_per_cls = (gt_labels == i)
                     anchor_targets = self.anchor_target_single_assigner(
-                        assigner, current_anchors, gt_bboxes[gt_per_cls, :],
+                        assigner, current_anchors, gt_bboxes[gt_per_cls],
                         gt_bboxes_ignore, gt_labels[gt_per_cls], input_meta,
                         num_classes, sampling)
                 else:

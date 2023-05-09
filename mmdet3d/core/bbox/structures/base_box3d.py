@@ -324,6 +324,8 @@ class BaseInstance3DBoxes(object):
                 self.tensor[item].view(1, -1),
                 box_dim=self.box_dim,
                 with_yaw=self.with_yaw)
+        elif isinstance(item, torch.Tensor):
+            item = item.to(self.device)
         b = self.tensor[item]
         assert b.dim() == 2, \
             f'Indexing on Boxes with {item} failed to return a matrix!'
