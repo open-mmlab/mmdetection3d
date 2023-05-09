@@ -424,7 +424,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def draw_points_on_image(self,
                              points: Union[np.ndarray, Tensor],
                              pts2img: np.ndarray,
-                             sizes: Union[np.ndarray, int] = 3) -> None:
+                             sizes: Union[np.ndarray, int] = 3,
+                             max_depth: Optional[float] = None) -> None:
         """Draw projected points on the image.
 
         Args:
@@ -432,13 +433,18 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             pts2img (np.ndarray): The transformation matrix from the coordinate
                 of point cloud to image plane.
             sizes (np.ndarray or int): The marker size. Defaults to 10.
+            max_depth (float): The max depth in the color map. Defaults to
+                None.
         """
         check_type('points', points, (np.ndarray, Tensor))
         points = tensor2ndarray(points)
         assert self._image is not None, 'Please set image using `set_image`'
         projected_points = points_cam2img(points, pts2img, with_depth=True)
         depths = projected_points[:, 2]
-        colors = (depths % 20) / 20
+        # Show depth adaptively consideing different scenes
+        if max_depth is None:
+            max_depth = depths.max()
+        colors = (depths % max_depth) / max_depth
         # use colormap to obtain the render color
         color_map = plt.get_cmap('jet')
         self.ax_save.scatter(
