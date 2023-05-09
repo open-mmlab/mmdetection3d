@@ -1,7 +1,10 @@
-from typing import Dict, List, Optional
+from collections import OrderedDict
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+import torch.distributed as dist
+from mmengine.utils import is_list_of
 from torch import Tensor
 from torch.nn import functional as F
 
@@ -70,6 +73,46 @@ class BEVFusion(Base3DDetector):
         processing.
         """
         pass
+
+    def parse_losses(
+        self, losses: Dict[str, torch.Tensor]
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        """Parses the raw outputs (losses) of the network.
+
+        Args:
+            losses (dict): Raw output of the network, which usually contain
+                losses and other necessary information.
+
+        Returns:
+            tuple[Tensor, dict]: There are two elements. The first is the
+            loss tensor passed to optim_wrapper which may be a weighted sum
+            of all losses, and the second is log_vars which will be sent to
+            the logger.
+        """
+        log_vars = []
+        for loss_name, loss_value in losses.items():
+            if isinstance(loss_value, torch.Tensor):
+                log_vars.append([loss_name, loss_value.mean()])
+            elif is_list_of(loss_value, torch.Tensor):
+                log_vars.append(
+                    [loss_name,
+                     sum(_loss.mean() for _loss in loss_value)])
+            else:
+                raise TypeError(
+                    f'{loss_name} is not a tensor or list of tensors')
+
+        loss = sum(value for key, value in log_vars if 'loss' in key)
+        log_vars.insert(0, ['loss', loss])
+        log_vars = OrderedDict(log_vars)  # type: ignore
+
+        for loss_name, loss_value in log_vars.items():
+            # reduce loss when distributed training
+            if dist.is_available() and dist.is_initialized():
+                loss_value = loss_value.data.clone()
+                dist.all_reduce(loss_value.div_(dist.get_world_size()))
+            log_vars[loss_name] = loss_value.item()
+
+        return loss, log_vars  # type: ignore
 
     def init_weights(self) -> None:
         if self.img_backbone is not None:
