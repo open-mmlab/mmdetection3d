@@ -205,6 +205,7 @@ class MinkUNetBackbone(BaseModule):
                 nn.ModuleList(
                     [decoder_layer[0],
                      nn.Sequential(*decoder_layer[1:])]))
+        # self.iterinfo = MessageHub.get_current_instance()
 
     def forward(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
         """Forward function.
@@ -221,9 +222,18 @@ class MinkUNetBackbone(BaseModule):
             x = SparseTensor(voxel_features, coors)
         elif self.sparseconv_backends == 'spconv':
             spatial_shape = coors.max(0)[0][1:] + 1
-            batch_size = coors[-1, 0] + 1
+            batch_size = int(coors[-1, 0].numel()) + 1
+            # voxel_features = torch.load('voxel_features.pt')
+            # coors = torch.load('coors.pt')
             x = SparseConvTensor(voxel_features, coors, spatial_shape,
                                  batch_size)
+            # if self.iterinfo.get_info('iter') == 4017:
+            #     voxel_features = voxel_features.cpu()
+            # if self.iterinfo.get_info('iter') == 4018:
+            #     voxel_features = voxel_features.cpu()
+            #     coors = coors.cpu()
+            # torch.save(voxel_features, f'voxel_features_{dist.get_rank()}.pt'
+            # torch.save(coors, f'coors_{dist.get_rank()}.pt')
         elif self.sparseconv_backends == 'minkowski':
             pass
 
