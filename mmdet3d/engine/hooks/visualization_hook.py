@@ -102,8 +102,17 @@ class Det3DVisualizationHook(Hook):
         ]:
             assert 'img_path' in outputs[0], 'img_path is not in outputs[0]'
             img_path = outputs[0].img_path
-            img_bytes = get(img_path, backend_args=self.backend_args)
-            img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+            if isinstance(img_path, list):
+                img = []
+                for single_img_path in img_path:
+                    img_bytes = get(
+                        single_img_path, backend_args=self.backend_args)
+                    single_img = mmcv.imfrombytes(
+                        img_bytes, channel_order='rgb')
+                    img.append(single_img)
+            else:
+                img_bytes = get(img_path, backend_args=self.backend_args)
+                img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
             data_input['img'] = img
 
         if self.vis_task in ['lidar_det', 'multi-modality_det', 'lidar_seg']:
@@ -161,10 +170,21 @@ class Det3DVisualizationHook(Hook):
                 assert 'img_path' in data_sample, \
                     'img_path is not in data_sample'
                 img_path = data_sample.img_path
-                img_bytes = get(img_path, backend_args=self.backend_args)
-                img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+                if isinstance(img_path, list):
+                    img = []
+                    for single_img_path in img_path:
+                        img_bytes = get(
+                            single_img_path, backend_args=self.backend_args)
+                        single_img = mmcv.imfrombytes(
+                            img_bytes, channel_order='rgb')
+                        img.append(single_img)
+                else:
+                    img_bytes = get(img_path, backend_args=self.backend_args)
+                    img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
                 data_input['img'] = img
                 if self.test_out_dir is not None:
+                    if isinstance(img_path, list):
+                        img_path = img_path[0]
                     out_file = osp.basename(img_path)
                     out_file = osp.join(self.test_out_dir, out_file)
 
