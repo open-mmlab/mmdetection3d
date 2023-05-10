@@ -387,7 +387,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         if isinstance(points, np.ndarray):
             points_numpy = points
         elif isinstance(points, BasePoints):
-            points_numpy = points.tensor.numpy()
+            points_numpy = points.numpy()
         else:
             raise NotImplementedError
         x_filt = np.abs(points_numpy[:, 0]) < radius

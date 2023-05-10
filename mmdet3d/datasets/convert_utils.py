@@ -330,7 +330,7 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
         Box3DMode.LIDAR, np.linalg.inv(rect @ lidar2cam0), correct_yaw=True)
     # convert gt_bboxes_3d to cam coordinates
     gt_bboxes_3d = gt_bboxes_3d.convert_to(
-        Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).tensor.numpy()
+        Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).numpy()
     converted_annos['location'] = gt_bboxes_3d[:, :3]
     converted_annos['dimensions'] = gt_bboxes_3d[:, 3:6]
     converted_annos['rotation_y'] = gt_bboxes_3d[:, 6]
