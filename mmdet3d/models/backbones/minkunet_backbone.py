@@ -222,7 +222,7 @@ class MinkUNetBackbone(BaseModule):
             x = SparseTensor(voxel_features, coors)
         elif self.sparseconv_backends == 'spconv':
             spatial_shape = coors.max(0)[0][1:] + 1
-            batch_size = int(coors[-1, 0].numel()) + 1
+            batch_size = int(coors[-1, 0]) + 1
             # voxel_features = torch.load('voxel_features.pt')
             # coors = torch.load('coors.pt')
             x = SparseConvTensor(voxel_features, coors, spatial_shape,
