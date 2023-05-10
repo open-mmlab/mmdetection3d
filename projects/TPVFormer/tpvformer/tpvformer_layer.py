@@ -12,7 +12,7 @@ from mmengine.registry import MODELS
 
 @MODELS.register_module()
 class TPVFormerLayer(BaseModule):
-    """Base `TransformerLayer` for vision transformer.
+    """Base `TPVFormerLayer` for vision transformer.
 
     It can be built from `mmcv.ConfigDict` and support more flexible
     customization, for example, using any number of `FFN or LN ` and

@@ -178,7 +178,6 @@ class TPVFormerEncoder(TransformerLayerSequence):
         Args:
             H, W: spatial shape of tpv.
             Z: height of pillar.
-            D: sample D points uniformly from each pillar.
             device (obj:`device`): The device where
                 reference_points should be.
         Returns:
