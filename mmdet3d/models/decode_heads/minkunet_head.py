@@ -61,7 +61,7 @@ class MinkUNetHead(Base3DDecodeHead):
         seg_logit_list = []
         for i, data_sample in enumerate(batch_data_samples):
             seg_logit = seg_logits[batch_idx == i]
-            seg_logit = seg_logit[data_sample.voxel2point_map]
+            seg_logit = seg_logit[data_sample.point2voxel_map]
             seg_logit_list.append(seg_logit)
 
         return seg_logit_list

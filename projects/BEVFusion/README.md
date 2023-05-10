@@ -29,6 +29,14 @@ We implement BEVFusion and provide the results and pretrained checkpoints on NuS
 python projects/BEVFusion/setup.py develop
 ```
 
+### Demo
+
+Run a demo on NuScenes data using [BEVFusion model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link):
+
+```shell
+python demo/multi_modality_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__LIDAR_TOP__1532402927647951.pcd.bin demo/data/nuscenes/ demo/data/nuscenes/n015-2018-07-24-11-22-45+0800.pkl projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_FILE} --cam-type all --score-thr 0.2 --show
+```
+
 ### Training commands
 
 In MMDetection3D's root directory, run the following command to train the model:

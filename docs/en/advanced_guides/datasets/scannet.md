@@ -337,12 +337,12 @@ train_pipeline = [
 ## Testing and Making a Submission
 
 By default, our codebase evaluates semantic segmentation results on the validation set.
-If you would like to test the model performance on the online benchmark, add `--format-only` flag in the evaluation script and change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L126). Remember to specify the `txt_prefix` as the directory to save the testing results.
+If you would like to test the model performance on the online benchmark, add `--format-only` flag in the evaluation script and change `ann_file=data_root + 'scannet_infos_val.pkl'` to `ann_file=data_root + 'scannet_infos_test.pkl'` in the ScanNet dataset's [config](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/scannet-seg.py#L126). Remember to specify the `txt_prefix` as the directory to save the testing results.
 
 Taking PointNet++ (SSG) on ScanNet for example, the following command can be used to do inference on test set:
 
 ```
-./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py \
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet-seg.py \
     work_dirs/pointnet2_ssg/latest.pth --format-only \
     --eval-options txt_prefix=work_dirs/pointnet2_ssg/test_submission
 ```

@@ -42,18 +42,19 @@ We support drawing 3D boxes on point cloud by using `draw_bboxes_3d`.
 
 ```python
 import torch
+import numpy as np
 
 from mmdet3d.visualization import Det3DLocalVisualizer
 from mmdet3d.structures import LiDARInstance3DBoxes
 
-points = np.fromfile('tests/data/kitti/training/velodyne/000000.bin', dtype=np.float32)
+points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
 points = points.reshape(-1, 4)
 visualizer = Det3DLocalVisualizer()
 # set point cloud in visualizer
 visualizer.set_points(points)
-bboxes_3d = LiDARInstance3DBoxes(torch.tensor(
-                [[8.7314, -1.8559, -1.5997, 1.2000, 0.4800, 1.8900,
-                  -1.5808]])),
+bboxes_3d = LiDARInstance3DBoxes(
+    torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
+                   -1.5808]]))
 # Draw 3D bboxes
 visualizer.draw_bboxes_3d(bboxes_3d)
 visualizer.show()
@@ -92,8 +93,6 @@ visualizer.draw_proj_bboxes_3d(gt_bboxes_3d, input_meta)
 visualizer.show()
 ```
 
-![mono3d](../../../resources/mono3d.png)
-
 ### Drawing BEV Boxes
 
 We support drawing BEV boxes by using `draw_bev_bboxes`.
@@ -120,23 +119,22 @@ visualizer.draw_bev_bboxes(gt_bboxes_3d, edge_colors='orange')
 visualizer.show()
 ```
 
-<img src="../../../resources/bev.png" width = "50%" />
-
 ### Drawing 3D Semantic Mask
 
 We support draw segmentation mask via per-point colorization by using `draw_seg_mask`.
 
 ```python
-import torch
+import numpy as np
 
 from mmdet3d.visualization import Det3DLocalVisualizer
 
-points = np.fromfile('tests/data/s3dis/points/Area_1_office_2.bin', dtype=np.float32)
+points = np.fromfile('demo/data/sunrgbd/000017.bin', dtype=np.float32)
 points = points.reshape(-1, 3)
 visualizer = Det3DLocalVisualizer()
 mask = np.random.rand(points.shape[0], 3)
 points_with_mask = np.concatenate((points, mask), axis=-1)
 # Draw 3D points with mask
+visualizer.set_points(points, pcd_mode=2, vis_mode='add')
 visualizer.draw_seg_mask(points_with_mask)
 visualizer.show()
 ```
@@ -168,10 +166,10 @@ This allows the inference and results generation to be done in remote server and
 We also provide scripts to visualize the dataset without inference. You can use `tools/misc/browse_dataset.py` to show loaded data and ground-truth online and save them on the disk. Currently we support single-modality 3D detection and 3D segmentation on all the datasets, multi-modality 3D detection on KITTI and SUN RGB-D, as well as monocular 3D detection on nuScenes. To browse the KITTI dataset, you can run the following command:
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task det --output-dir ${OUTPUT_DIR}
+python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task lidar_det --output-dir ${OUTPUT_DIR}
 ```
 
-**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window.
+**Notice**: Once specifying `--output-dir`, the images of views specified by users will be saved when pressing `_ESC_` in open3d window. If you want to zoom out/in the point clouds to inspect more details, you could specify `--show-interval=0` in the command.
 
 To verify the data consistency and the effect of data augmentation, you can also add `--aug` flag to visualize the data after data augmentation using the command as below:
 
@@ -182,7 +180,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 If you also want to show 2D images with 3D bounding boxes projected onto them, you need to find a config that supports multi-modality data loading, and then change the `--task` args to `multi-modality_det`. An example is showed below:
 
 ```shell
-python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR}
+python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR}
 ```
 
 ![](../../../resources/browse_dataset_multi_modality.png)
@@ -190,7 +188,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 You can simply browse different datasets using different configs, e.g. visualizing the ScanNet dataset in 3D semantic segmentation task:
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task lidar_seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --task lidar_seg --output-dir ${OUTPUT_DIR}
 ```
 
 ![](../../../resources/browse_dataset_seg.png)
@@ -198,7 +196,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20cla
 And browsing the nuScenes dataset in monocular 3D detection task:
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR}
 ```
 
 ![](../../../resources/browse_dataset_mono.png)

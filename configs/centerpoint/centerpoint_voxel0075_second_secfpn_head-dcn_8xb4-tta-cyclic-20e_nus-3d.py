@@ -1,5 +1,5 @@
-_base_ = './centerpoint_voxel0075_second_secfpn' \
-         '_head-dcn_8xb4-cyclic-20e_nus-3d.py'
+_base_ = \
+    './centerpoint_voxel0075_second_secfpn_head-dcn_8xb4-cyclic-20e_nus-3d.py'
 
 model = dict(test_cfg=dict(pts=dict(use_rotate_nms=True, max_num=500)))
 
