@@ -214,8 +214,6 @@ class GroupFree3DHead(BaseModule):
         self.fps_module = Points_Sampler([self.num_proposal])
         self.points_obj_cls = PointsObjClsModule(self.in_channels)
 
-        self.fp16_enabled = False
-
         # initial candidate prediction
         self.conv_pred = BaseConvBboxHead(
             **pred_layer_cfg,
