@@ -174,6 +174,18 @@ python tools/data_converter/lyft_data_fixer.py --version v1.01 --root-folder ./d
 
 注意，为了文件结构的清晰性，我们遵从了 Lyft 数据原先的文件夹名称。请按照上面展示出的文件结构对原始文件夹进行重命名。同样值得注意的是，第二行命令的目的是为了修复一个损坏的激光雷达数据文件。更多细节请参考[该讨论](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000)。
 
+### SemanticKITTI
+
+在[这里](http://semantic-kitti.org/dataset.html#download)下载 SemanticKITTI 数据集并解压所有文件。通过运行以下指令对 SemanticKITTI 数据进行预处理：
+
+```bash
+python ./tools/create_data.py semantickitti --root-path ./data/semantickitti --out-dir ./data/semantickitti --extra-tag semantickitti
+```
+
+**小贴士**：
+
+- **现成的标注文件**. 我们已经提供了离线处理好的 [SemanticKITTI 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/semantickitti` 目录下。
+
 ### S3DIS、ScanNet 和 SUN RGB-D
 
 请参考 S3DIS [README](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/data/s3dis/README.md) 文件以对其进行数据预处理。

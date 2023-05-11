@@ -71,6 +71,14 @@ mmdetection3d
 │   │   ├── sunrgbd_data.py
 │   │   ├── sunrgbd_utils.py
 │   │   ├── README.md
+│   ├── semantickitti
+│   │   ├── sequences
+│   │   │   ├── 00
+│   │   │   │   ├── labels
+│   │   │   │   ├── velodyne
+│   │   │   ├── 01
+│   │   │   ├── ..
+│   │   │   ├── 22
 
 ```
 
@@ -176,6 +184,20 @@ python tools/dataset_converters/lyft_data_fixer.py --version v1.01 --root-folder
 ```
 
 Note that we follow the original folder names for clear organization. Please rename the raw folders as shown above. Also note that the second command serves the purpose of fixing a corrupted lidar data file. Please refer to the [discussion](https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/110000) for more details.
+
+### SemanticKITTI
+
+Download SemanticKITTI dataset [HERE](http://semantic-kitti.org/dataset.html#download) and unzip all zip files.
+
+Then generate info files by running:
+
+```bash
+python ./tools/create_data.py semantickitti --root-path ./data/semantickitti --out-dir ./data/semantickitti --extra-tag semantickitti
+```
+
+**Tips**:
+
+- **Ready-made Annotations**. We have also provided SemanticKITTI data annotation files generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/semantickitti/`.
 
 ### S3DIS, ScanNet and SUN RGB-D
 
