@@ -44,9 +44,9 @@ bash tools/dist_test.sh projects/TPVFormer/config/tpvformer_8xb1-2x_nus-seg.py  
 
 ### nuScenes
 
-| Backbone                                                                                                                                         | Neck | Mem (GB) | Inf time (fps) | mIoU | Downloads                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ---- | -------- | -------------- | ---- | ------------------------ |
-| [ResNet101 w/ DCN](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py) | FPN  | 32.0     | -              | 68.9 | [model](<>) \| [log](<>) |
+| Backbone                                                                                                                                         | Neck | Mem (GB) | Inf time (fps) | mIoU | Downloads                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ---- | -------- | -------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [ResNet101 w/ DCN](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py) | FPN  | 32.0     | -              | 68.9 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tpvformer/tpvformer_8xb1-2x_nus-seg/tpvformer_8xb1-2x_nus-seg_20230411_150639-bd3844e2.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tpvformer/tpvformer_8xb1-2x_nus-seg_20230411_150639.log) |
 
 ## Citation
 
