@@ -416,13 +416,13 @@ class ObjectSample(BaseTransform):
             gt_bboxes_2d = input_dict['gt_bboxes']
             # Assume for now 3D & 2D bboxes are the same
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d.tensor.numpy(),
+                gt_bboxes_3d.numpy(),
                 gt_labels_3d,
                 gt_bboxes_2d=gt_bboxes_2d,
                 img=img)
         else:
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d.tensor.numpy(),
+                gt_bboxes_3d.numpy(),
                 gt_labels_3d,
                 img=None,
                 ground_plane=ground_plane)
@@ -435,8 +435,7 @@ class ObjectSample(BaseTransform):
             gt_labels_3d = np.concatenate([gt_labels_3d, sampled_gt_labels],
                                           axis=0)
             gt_bboxes_3d = gt_bboxes_3d.new_box(
-                np.concatenate(
-                    [gt_bboxes_3d.tensor.numpy(), sampled_gt_bboxes_3d]))
+                np.concatenate([gt_bboxes_3d.numpy(), sampled_gt_bboxes_3d]))
 
             points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
             # check the points dimension
@@ -515,8 +514,8 @@ class ObjectNoise(BaseTransform):
         points = input_dict['points']
 
         # TODO: this is inplace operation
-        numpy_box = gt_bboxes_3d.tensor.numpy()
-        numpy_points = points.tensor.numpy()
+        numpy_box = gt_bboxes_3d.numpy()
+        numpy_points = points.numpy()
 
         noise_per_object_v3_(
             numpy_box,
@@ -1547,7 +1546,7 @@ class VoxelBasedPointSampler(BaseTransform):
         # Extend points with seg and mask fields
         map_fields2dim = []
         start_dim = original_dim
-        points_numpy = points.tensor.numpy()
+        points_numpy = points.numpy()
         extra_channel = [points_numpy]
         for idx, key in enumerate(results['pts_mask_fields']):
             map_fields2dim.append((key, idx + start_dim))

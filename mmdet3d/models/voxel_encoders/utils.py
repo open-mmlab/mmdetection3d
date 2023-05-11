@@ -52,7 +52,6 @@ class VFELayer(nn.Module):
                  max_out=True,
                  cat_max=True):
         super(VFELayer, self).__init__()
-        self.fp16_enabled = False
         self.cat_max = cat_max
         self.max_out = max_out
         # self.units = int(out_channels / 2)
@@ -127,7 +126,6 @@ class PFNLayer(nn.Module):
                  mode='max'):
 
         super().__init__()
-        self.fp16_enabled = False
         self.name = 'PFNLayer'
         self.last_vfe = last_layer
         if not self.last_vfe:

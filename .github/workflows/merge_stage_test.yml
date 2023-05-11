@@ -208,7 +208,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Upgrade pip
-        run: pip install pip --upgrade && pip install wheel
+        run: python -m pip install pip --upgrade && pip install wheel
       - name: Install lmdb
         run: pip install lmdb
       - name: Install PyTorch

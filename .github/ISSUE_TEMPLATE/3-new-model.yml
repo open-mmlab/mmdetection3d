@@ -1,0 +1,49 @@
+name: "\U0001F31F New model/dataset/scheduler addition"
+description: Submit a proposal/request to implement a new model / dataset / scheduler
+labels: [ "feature-request" ]
+title: "[New Models] "
+
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Note
+        For general usage questions or idea discussions, please post it to our [**Forum**](https://github.com/open-mmlab/mmdetection3d/discussions).
+
+        Please fill in as **much** of the following form as you're able to. **The clearer the description, the shorter it will take to solve it.**
+
+  - type: textarea
+    id: description-request
+    validations:
+      required: true
+    attributes:
+      label: Model/Dataset/Scheduler description
+      description: |
+        Put any and all important information relative to the model/dataset/scheduler
+
+  - type: checkboxes
+    attributes:
+      label: Open source status
+      description: |
+          Please provide the open-source status, which would be very helpful
+      options:
+        - label: "The model implementation is available"
+        - label: "The model weights are available."
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Provide useful links for the implementation
+      description: |
+        Please provide information regarding the implementation, the weights, and the authors.
+        Please mention the authors by @gh-username if you're aware of their usernames.
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Acknowledgement
+        Thanks for taking the time to fill out this report.
+
+        We strongly appreciate you creating a new PR to implement it [**Here**](https://github.com/open-mmlab/mmdetection3d/pulls)!
+        Please refer to [**Contribution Guide**](https://mmdetection3d.readthedocs.io/en/latest/notes/contribution_guides.html) for contributing.
