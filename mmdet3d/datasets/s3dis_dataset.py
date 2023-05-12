@@ -54,8 +54,8 @@ class S3DISDataset(Det3DDataset):
         'seg_valid_class_ids': (7, 8, 9, 10, 11),
         'seg_all_class_ids':
         tuple(range(1, 14)),  # possibly with 'stair' class
-        'palette': [[170, 120, 200], [255, 0, 0], [200, 100, 100],
-                    [10, 200, 100], [200, 200, 200]]
+        'palette': [(170, 120, 200), (255, 0, 0), (200, 100, 100),
+                    (10, 200, 100), (200, 200, 200)]
     }
 
     def __init__(self,
