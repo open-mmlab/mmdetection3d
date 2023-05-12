@@ -10,11 +10,12 @@ import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from mmdet.visualization import DetLocalVisualizer
+from mmdet.visualization import DetLocalVisualizer, get_palette
 from mmengine.dist import master_only
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer as MMENGINE_Visualizer
-from mmengine.visualization.utils import check_type, tensor2ndarray
+from mmengine.visualization.utils import (check_type, color_val_matplotlib,
+                                          tensor2ndarray)
 from torch import Tensor
 
 from mmdet3d.registry import VISUALIZERS
@@ -173,7 +174,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                    pcd_mode: int = 0,
                    vis_mode: str = 'replace',
                    frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                   points_color: Tuple[float] = (1, 1, 1),
+                   points_color: Tuple[float] = (0.8, 0.8, 0.8),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
         """Set the point cloud to draw.
@@ -295,7 +296,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
             line_set = geometry.LineSet.create_from_oriented_bounding_box(
                 box3d)
-            line_set.paint_uniform_color(bbox_color)
+            line_set.paint_uniform_color(np.array(bbox_color[i]) / 255.)
             # draw bboxes on visualizer
             self.o3d_vis.add_geometry(line_set)
 
@@ -509,6 +510,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         else:
             raise NotImplementedError('unsupported box type!')
 
+        edge_colors_norm = color_val_matplotlib(edge_colors)
+
         corners_2d = proj_bbox3d_to_img(bboxes_3d, input_meta)
         if img_size is not None:
             # Filter out the bbox where half of stuff is outside the image.
@@ -518,6 +521,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         (corners_2d[..., 1] >= 0) & (corners_2d[..., 1] <= img_size[1])  # noqa: E501
             valid_bbox_idx = valid_point_idx.sum(axis=-1) >= 4
             corners_2d = corners_2d[valid_bbox_idx]
+            filter_edge_colors = []
+            filter_edge_colors_norm = []
+            for i, color in enumerate(edge_colors):
+                if valid_bbox_idx[i]:
+                    filter_edge_colors.append(color)
+                    filter_edge_colors_norm.append(edge_colors_norm[i])
+            edge_colors = filter_edge_colors
+            edge_colors_norm = filter_edge_colors_norm
 
         lines_verts_idx = [0, 1, 2, 3, 7, 6, 5, 4, 0, 3, 7, 4, 5, 1, 2, 6]
         lines_verts = corners_2d[:, lines_verts_idx, :]
@@ -533,7 +544,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         p = PatchCollection(
             pathpatches,
             facecolors='none',
-            edgecolors=edge_colors,
+            edgecolors=edge_colors_norm,
             linewidths=line_widths,
             linestyles=line_styles)
 
@@ -547,7 +558,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             edge_colors=edge_colors,
             line_styles=line_styles,
             line_widths=line_widths,
-            face_colors=face_colors)
+            face_colors=edge_colors)
 
     @master_only
     def draw_seg_mask(self, seg_mask_colors: np.ndarray) -> None:
@@ -598,6 +609,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             return None
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
+        labels_3d = instances.labels_3d
 
         data_3d = dict()
 
@@ -612,8 +624,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             else:
                 bboxes_3d_depth = bboxes_3d.clone()
 
+            max_label = int(max(labels_3d) if len(labels_3d) > 0 else 0)
+            bbox_color = palette if self.bbox_color is None \
+                else self.bbox_color
+            bbox_palette = get_palette(bbox_color, max_label + 1)
+            colors = [bbox_palette[label] for label in labels_3d]
+
             self.set_points(points, pcd_mode=2)
-            self.draw_bboxes_3d(bboxes_3d_depth)
+            self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
             data_3d['points'] = points
@@ -646,10 +664,19 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                             single_img_meta[key] = meta[i]
                         else:
                             single_img_meta[key] = meta
+
+                    max_label = int(
+                        max(labels_3d) if len(labels_3d) > 0 else 0)
+                    bbox_color = palette if self.bbox_color is None \
+                        else self.bbox_color
+                    bbox_palette = get_palette(bbox_color, max_label + 1)
+                    colors = [bbox_palette[label] for label in labels_3d]
+
                     self.draw_proj_bboxes_3d(
                         bboxes_3d,
                         single_img_meta,
-                        img_size=single_img.shape[:2][::-1])
+                        img_size=single_img.shape[:2][::-1],
+                        edge_colors=colors)
                     if vis_task == 'mono_det' and hasattr(
                             instances, 'centers_2d'):
                         centers_2d = instances.centers_2d
@@ -668,7 +695,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     img = img.permute(1, 2, 0).numpy()
                     img = img[..., [2, 1, 0]]  # bgr to rgb
                 self.set_image(img)
-                self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
+
+                max_label = int(max(labels_3d) if len(labels_3d) > 0 else 0)
+                bbox_color = palette if self.bbox_color is None \
+                    else self.bbox_color
+                bbox_palette = get_palette(bbox_color, max_label + 1)
+                colors = [bbox_palette[label] for label in labels_3d]
+
+                self.draw_proj_bboxes_3d(
+                    bboxes_3d, input_meta, edge_colors=colors)
                 if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
                     centers_2d = instances.centers_2d
                     self.draw_points(centers_2d)

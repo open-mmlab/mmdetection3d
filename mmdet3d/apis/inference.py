@@ -14,7 +14,7 @@ from mmengine.dataset import Compose, pseudo_collate
 from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
 
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import DATASETS, MODELS
 from mmdet3d.structures import Box3DMode, Det3DDataSample, get_box_type
 from mmdet3d.structures.det3d_data_sample import SampleList
 
@@ -38,6 +38,7 @@ def convert_SyncBN(config):
 def init_model(config: Union[str, Path, Config],
                checkpoint: Optional[str] = None,
                device: str = 'cuda:0',
+               palette: str = 'none',
                cfg_options: Optional[dict] = None):
     """Initialize a model from config file, which could be a 3D detector or a
     3D segmentor.
@@ -86,6 +87,20 @@ def init_model(config: Union[str, Path, Config],
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
                 model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
+
+        test_dataset_cfg = deepcopy(config.test_dataloader.dataset)
+        # lazy init. We only need the metainfo.
+        test_dataset_cfg['lazy_init'] = True
+        metainfo = DATASETS.build(test_dataset_cfg).metainfo
+        cfg_palette = metainfo.get('palette', None)
+        if cfg_palette is not None:
+            model.dataset_meta['palette'] = cfg_palette
+        else:
+            if 'palette' not in model.dataset_meta:
+                warnings.warn(
+                    'palette does not exist, random is used by default. '
+                    'You can also set the palette to customize.')
+                model.dataset_meta['palette'] = 'random'
 
     model.cfg = config  # save the config in the model for convenience
     if device != 'cpu':
