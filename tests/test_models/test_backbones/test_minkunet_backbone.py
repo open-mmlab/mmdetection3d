@@ -25,33 +25,9 @@ def test_minkunet_backbone():
     features = torch.cat(features, dim=0).cuda()
     coordinates = torch.cat(coordinates, dim=0).cuda()
 
-    # cfg = dict(
-    #     type='MinkUNetBackbone',
-    #     input_conv_module=dict(
-    #         type='SparseConvModule',
-    #         conv_type='SubMConv3d',
-    #         norm_cfg=dict(type='BN1d')),
-    #     downsample_module=dict(
-    #         type='SparseConvModule',
-    #         conv_type='SparseConv3d',
-    #         norm_cfg=dict(type='BN1d')),
-    #     upsample_module=dict(
-    #         type='SparseConvModule',
-    #         conv_type='SparseInverseConv3d',
-    #         norm_cfg=dict(type='BN1d')),
-    #     residual_block=dict(
-    #         type='SparseBasicBlock',
-    #         conv_cfg=dict(type='SubMConv3d'),
-    #         norm_cfg=dict(type='BN1d')),
-    #     sparseconv_backends='spconv')
-    cfg = dict(
-        type='MinkUNetBackbone',
-        encoder_blocks=[2, 3, 4, 6],
-        decoder_blocks=[2, 2, 2, 2],
-        sparseconv_backends='spconv')
+    cfg = dict(type='MinkUNetBackbone')
     self = MODELS.build(cfg).cuda()
     self.init_weights()
 
     y = self(features, coordinates)
-    assert y.F.shape == torch.Size([200, 96])
-    assert y.C.shape == torch.Size([200, 4])
+    assert y.shape == torch.Size([200, 96])

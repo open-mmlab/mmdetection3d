@@ -1,66 +1,37 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import warnings
 from functools import partial
-from typing import List, Optional
+from typing import List
 
 import torch
 from mmengine.model import BaseModule
 from mmengine.registry import MODELS
-from spconv.pytorch import SparseConvTensor
 from torch import Tensor, nn
 
+from mmdet3d.models.layers.minkowski_engine_block import (
+    IS_MINKOWSKI_ENGINE_AVAILABLE, MinkowskiBasicBlock, MinkowskiBottleneck,
+    MinkowskiConvModule)
 from mmdet3d.models.layers.sparse_block import (SparseBasicBlock,
                                                 SparseBottleneck,
                                                 make_sparse_convmodule,
                                                 replace_feature)
+from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.models.layers.torchsparse_block import (TorchSparseBasicBlock,
                                                      TorchSparseBottleneck,
                                                      TorchSparseConvModule)
 from mmdet3d.utils import OptMultiConfig
 
+if IS_SPCONV2_AVAILABLE:
+    from spconv.pytorch import SparseConvTensor
+else:
+    from mmcv.ops import SparseConvTensor
+
 if IS_TORCHSPARSE_AVAILABLE:
     import torchsparse
-    import torchsparse.nn.functional as F
-    from torchsparse.nn.utils import get_kernel_offsets
-    from torchsparse.tensor import PointTensor, SparseTensor
-else:
-    PointTensor = SparseTensor = None
 
-# def build_sparse_module(cfg: Dict, *args, **kwargs) -> nn.Module:
-#     """Build sparse module.
-
-#     Args:
-#         cfg (None or dict): The conv layer config, which should contain:
-#             - type (str): Layer type.
-#             - layer args: Args needed to instantiate an conv layer.
-#         args (argument list): Arguments passed to the `__init__`
-#             method of the corresponding conv layer.
-#         kwargs (keyword arguments): Keyword arguments passed to the
-#            `__init__`
-#             method of the corresponding conv layer.
-
-#     Returns:
-#         nn.Module: Created conv layer.
-#     """
-#     if not isinstance(cfg, dict):
-#         raise TypeError('cfg must be a dict')
-#     if 'type' not in cfg:
-#         raise KeyError('the cfg dict must contain the key "type"')
-#     cfg_ = cfg.copy()
-
-#     module_type = cfg_.pop('type')
-#     if module_type == "SparseConvModule":
-#         module = make_sparse_convmodule(*args, **kwargs, **cfg_)
-#         return module
-
-#     with MODELS.switch_scope_and_registry(None) as registry:
-#         sparse_module = registry.get(module_type)
-#     if sparse_module is None:
-#         raise KeyError(f'Cannot find {sparse_module} in
-#           registry under scope '
-#                        f'name {registry.scope}')
-#     module = sparse_module(*args, **kwargs, **cfg_)
-#     return module
+if IS_MINKOWSKI_ENGINE_AVAILABLE:
+    import MinkowskiEngine as ME
 
 
 @MODELS.register_module()
@@ -102,18 +73,24 @@ class MinkUNetBackbone(BaseModule):
         super().__init__(init_cfg)
         assert num_stages == len(encoder_channels) == len(decoder_channels)
         assert sparseconv_backends in [
-            'torchsparse', 'spconv', 'minkowski engine'
+            'torchsparse', 'spconv', 'minkowski'
         ], f'sparseconv backend: {sparseconv_backends} not supported.'
         self.num_stages = num_stages
         self.sparseconv_backends = sparseconv_backends
         if sparseconv_backends == 'torchsparse':
+            assert IS_TORCHSPARSE_AVAILABLE, \
+                'Please follow `get_started.md` to install Torchsparse.`'
             input_conv = TorchSparseConvModule
             encoder_conv = TorchSparseConvModule
             decoder_conv = TorchSparseConvModule
             residual_block = TorchSparseBasicBlock if block_type == 'basic' \
                 else TorchSparseBottleneck
-            residual_branch = None  # for torchsparse
+            # for torchsparse, residual branch will be implemented internally
+            residual_branch = None
         elif sparseconv_backends == 'spconv':
+            if not IS_SPCONV2_AVAILABLE:
+                warnings.warn('Spconv 2.x is not available,'
+                              'turn to use spconv 1.x in mmcv.')
             input_conv = partial(
                 make_sparse_convmodule, conv_type='SubMConv3d')
             encoder_conv = partial(
@@ -123,7 +100,20 @@ class MinkUNetBackbone(BaseModule):
             residual_block = SparseBasicBlock if block_type == 'basic' \
                 else SparseBottleneck
             residual_branch = partial(
-                make_sparse_convmodule, conv_type='SubMConv3d')
+                make_sparse_convmodule,
+                conv_type='SubMConv3d',
+                order=('conv', 'norm'))
+        elif sparseconv_backends == 'minkowski':
+            assert IS_MINKOWSKI_ENGINE_AVAILABLE, \
+                'Please follow `get_started.md` to install Minkowski Engine.`'
+            input_conv = MinkowskiConvModule
+            encoder_conv = MinkowskiConvModule
+            decoder_conv = partial(
+                MinkowskiConvModule,
+                conv_cfg=dict(type='MinkowskiConvNdTranspose'))
+            residual_block = MinkowskiBasicBlock if block_type == 'basic' \
+                else MinkowskiBottleneck
+            residual_branch = partial(MinkowskiConvModule, act_cfg=None)
 
         self.conv_input = nn.Sequential(
             input_conv(
@@ -205,7 +195,6 @@ class MinkUNetBackbone(BaseModule):
                 nn.ModuleList(
                     [decoder_layer[0],
                      nn.Sequential(*decoder_layer[1:])]))
-        # self.iterinfo = MessageHub.get_current_instance()
 
     def forward(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
         """Forward function.
@@ -216,26 +205,17 @@ class MinkUNetBackbone(BaseModule):
                 the columns in the order of (x_idx, y_idx, z_idx, batch_idx).
 
         Returns:
-            SparseTensor: Backbone features.
+            Tensor: Backbone features.
         """
         if self.sparseconv_backends == 'torchsparse':
-            x = SparseTensor(voxel_features, coors)
+            x = torchsparse.SparseTensor(voxel_features, coors)
         elif self.sparseconv_backends == 'spconv':
             spatial_shape = coors.max(0)[0][1:] + 1
             batch_size = int(coors[-1, 0]) + 1
-            # voxel_features = torch.load('voxel_features.pt')
-            # coors = torch.load('coors.pt')
             x = SparseConvTensor(voxel_features, coors, spatial_shape,
                                  batch_size)
-            # if self.iterinfo.get_info('iter') == 4017:
-            #     voxel_features = voxel_features.cpu()
-            # if self.iterinfo.get_info('iter') == 4018:
-            #     voxel_features = voxel_features.cpu()
-            #     coors = coors.cpu()
-            # torch.save(voxel_features, f'voxel_features_{dist.get_rank()}.pt'
-            # torch.save(coors, f'coors_{dist.get_rank()}.pt')
         elif self.sparseconv_backends == 'minkowski':
-            pass
+            x = ME.SparseTensor(voxel_features, coors)
 
         x = self.conv_input(x)
         laterals = [x]
@@ -247,182 +227,19 @@ class MinkUNetBackbone(BaseModule):
         decoder_outs = []
         for i, decoder_layer in enumerate(self.decoder):
             x = decoder_layer[0](x)
+
             if self.sparseconv_backends == 'torchsparse':
                 x = torchsparse.cat((x, laterals[i]))
             elif self.sparseconv_backends == 'spconv':
                 x = replace_feature(
                     x, torch.cat((x.features, laterals[i].features), dim=1))
             elif self.sparseconv_backends == 'minkowski':
-                pass
+                x = ME.cat(x, laterals[i])
+
             x = decoder_layer[1](x)
             decoder_outs.append(x)
 
-        return decoder_outs[-1]
-
-
-@MODELS.register_module()
-class MinkUNetBackboneV2(MinkUNetBackbone):
-    r"""MinkUNet backbone V2.
-
-    refer to https://github.com/PJLab-ADG/PCSeg/blob/master/pcseg/model/segmentor/voxel/minkunet/minkunet.py
-
-    """  # noqa: E501
-
-    def forward(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
-        """Forward function.
-
-        Args:
-            voxel_features (Tensor): Voxel features in shape (N, C).
-            coors (Tensor): Coordinates in shape (N, 4),
-                the columns in the order of (x_idx, y_idx, z_idx, batch_idx).
-
-        Returns:
-            SparseTensor: Backbone features.
-        """
-        voxels = SparseTensor(voxel_features, coors)
-        points = PointTensor(voxels.F, voxels.C.float())
-
-        voxels = initial_voxelize(points)
-        voxels = self.conv_input(voxels)
-        points = voxel_to_point(voxels, points)
-
-        laterals = [voxels]
-        for encoder_layer in self.encoder:
-            voxels = encoder_layer(voxels)
-            laterals.append(voxels)
-        laterals = laterals[:-1][::-1]
-        points = voxel_to_point(voxels, points)
-        output_features = [points.F]
-
-        for i, decoder_layer in enumerate(self.decoder):
-            voxels = decoder_layer[0](voxels)
-            voxels = torchsparse.cat((voxels, laterals[i]))
-            voxels = decoder_layer[1](voxels)
-            if i % 2 == 1:
-                points = voxel_to_point(voxels, points)
-                output_features.append(points.F)
-
-        points.F = torch.cat(output_features, dim=1)
-        return points
-
-
-def initial_voxelize(points: PointTensor) -> SparseTensor:
-    """Voxelization again based on input PointTensor.
-
-    Args:
-        points (PointTensor): Input points after voxelization.
-
-    Returns:
-        SparseTensor: New voxels.
-    """
-    pc_hash = F.sphash(torch.floor(points.C).int())
-    sparse_hash = torch.unique(pc_hash)
-    idx_query = F.sphashquery(pc_hash, sparse_hash)
-    counts = F.spcount(idx_query.int(), len(sparse_hash))
-
-    inserted_coords = F.spvoxelize(torch.floor(points.C), idx_query, counts)
-    inserted_coords = torch.round(inserted_coords).int()
-    inserted_feat = F.spvoxelize(points.F, idx_query, counts)
-
-    new_tensor = SparseTensor(inserted_feat, inserted_coords, 1)
-    new_tensor.cmaps.setdefault(new_tensor.stride, new_tensor.coords)
-    points.additional_features['idx_query'][1] = idx_query
-    points.additional_features['counts'][1] = counts
-    return new_tensor
-
-
-def voxel_to_point(voxels: SparseTensor,
-                   points: PointTensor,
-                   point_transform: Optional[nn.Module] = None,
-                   nearest: bool = False) -> PointTensor:
-    """Feed voxel features to points.
-
-    Args:
-        voxels (SparseTensor): Input voxels.
-        points (PointTensor): Input points.
-        point_transform (nn.Module, optional): Point transform module
-            for input point features. Defaults to None.
-        nearest (bool): Whether to use nearest neighbor interpolation.
-            Defaults to False.
-
-    Returns:
-        PointTensor: Points with new features.
-    """
-    if points.idx_query is None or points.weights is None or \
-            points.idx_query.get(voxels.s) is None or \
-            points.weights.get(voxels.s) is None:
-        offsets = get_kernel_offsets(2, voxels.s, 1, device=points.F.device)
-        old_hash = F.sphash(
-            torch.cat([
-                torch.floor(points.C[:, :3] / voxels.s[0]).int() * voxels.s[0],
-                points.C[:, -1].int().view(-1, 1)
-            ], 1), offsets)
-        pc_hash = F.sphash(voxels.C.to(points.F.device))
-        idx_query = F.sphashquery(old_hash, pc_hash)
-        weights = F.calc_ti_weights(
-            points.C, idx_query, scale=voxels.s[0]).transpose(0,
-                                                              1).contiguous()
-        idx_query = idx_query.transpose(0, 1).contiguous()
-        if nearest:
-            weights[:, 1:] = 0.
-            idx_query[:, 1:] = -1
-        new_features = F.spdevoxelize(voxels.F, idx_query, weights)
-        new_tensor = PointTensor(
-            new_features,
-            points.C,
-            idx_query=points.idx_query,
-            weights=points.weights)
-        new_tensor.additional_features = points.additional_features
-        new_tensor.idx_query[voxels.s] = idx_query
-        new_tensor.weights[voxels.s] = weights
-        points.idx_query[voxels.s] = idx_query
-        points.weights[voxels.s] = weights
-    else:
-        new_features = F.spdevoxelize(voxels.F, points.idx_query.get(voxels.s),
-                                      points.weights.get(voxels.s))
-        new_tensor = PointTensor(
-            new_features,
-            points.C,
-            idx_query=points.idx_query,
-            weights=points.weights)
-        new_tensor.additional_features = points.additional_features
-
-    if point_transform is not None:
-        new_tensor.F = new_tensor.F + point_transform(points.F)
-
-    return new_tensor
-
-
-def point_to_voxel(voxels: SparseTensor, points: PointTensor) -> SparseTensor:
-    """Feed point features to voxels.
-
-    Args:
-        voxels (SparseTensor): Input voxels.
-        points (PointTensor): Input points.
-
-    Returns:
-        SparseTensor: Voxels with new features.
-    """
-    if points.additional_features is None or \
-            points.additional_features.get('idx_query') is None or \
-            points.additional_features['idx_query'].get(voxels.s) is None:
-        pc_hash = F.sphash(
-            torch.cat([
-                torch.floor(points.C[:, :3] / voxels.s[0]).int() * voxels.s[0],
-                points.C[:, -1].int().view(-1, 1)
-            ], 1))
-        sparse_hash = F.sphash(voxels.C)
-        idx_query = F.sphashquery(pc_hash, sparse_hash)
-        counts = F.spcount(idx_query.int(), voxels.C.shape[0])
-        points.additional_features['idx_query'][voxels.s] = idx_query
-        points.additional_features['counts'][voxels.s] = counts
-    else:
-        idx_query = points.additional_features['idx_query'][voxels.s]
-        counts = points.additional_features['counts'][voxels.s]
-
-    inserted_features = F.spvoxelize(points.F, idx_query, counts)
-    new_tensor = SparseTensor(inserted_features, voxels.C, voxels.s)
-    new_tensor.cmaps = voxels.cmaps
-    new_tensor.kmaps = voxels.kmaps
-
-    return new_tensor
+        if self.sparseconv_backends == 'spconv':
+            return decoder_outs[-1].features
+        else:
+            return decoder_outs[-1].F

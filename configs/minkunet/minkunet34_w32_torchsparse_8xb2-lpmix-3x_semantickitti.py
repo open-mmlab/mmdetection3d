@@ -1,8 +1,9 @@
-_base_ = ['./minkunet_w32_8xb2-15e_semantickitti.py']
+_base_ = [
+    '../_base_/datasets/semantickitti.py', '../_base_/models/minkunet.py',
+    '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
+]
 
-model = dict(
-    backbone=dict(type='MinkUNetBackboneV2', encoder_blocks=[2, 3, 4, 6]),
-    decode_head=dict(channels=256 + 128 + 96))
+model = dict(backbone=dict(encoder_blocks=[2, 3, 4, 6]))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -76,40 +77,4 @@ train_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 
-train_dataloader = dict(
-    sampler=dict(seed=None), dataset=dict(pipeline=train_pipeline))
-
-# optimizer
-# This schedule is mainly used by models on nuScenes dataset
-lr = 0.008
-optim_wrapper = dict(
-    _delete_=True,
-    type='AmpOptimWrapper',
-    loss_scale='dynamic',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
-    # max_norm=10 is better for SECOND
-    clip_grad=dict(max_norm=10, norm_type=2))
-
-# training schedule for 2x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=36, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-
-# learning rate
-param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=36,
-        by_epoch=True,
-        milestones=[24, 32],
-        gamma=0.1)
-]
-
-# Default setting for scaling LR automatically
-#   - `enable` means enable scaling LR automatically
-#       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
-
-randomness = dict(seed=None, deterministic=False, diff_rank_seed=True)
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline))

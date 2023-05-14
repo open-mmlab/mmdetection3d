@@ -447,9 +447,11 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 if self.batch_first:
                     res_voxel_coors = F.pad(
                         res_voxel_coors, (1, 0), mode='constant', value=i)
+                    data_sample.batch_idx = res_voxel_coors[:, 0]
                 else:
                     res_voxel_coors = F.pad(
                         res_voxel_coors, (0, 1), mode='constant', value=i)
+                    data_sample.batch_idx = res_voxel_coors[:, -1]
                 data_sample.point2voxel_map = point2voxel_map.long()
                 voxels.append(res_voxels)
                 coors.append(res_voxel_coors)

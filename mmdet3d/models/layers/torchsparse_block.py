@@ -141,7 +141,7 @@ class TorchSparseBottleneck(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_size: Union[int, Sequence[int]],
+                 kernel_size: Union[int, Sequence[int]] = 3,
                  stride: Union[int, Sequence[int]] = 1,
                  dilation: int = 1,
                  bias: bool = False,

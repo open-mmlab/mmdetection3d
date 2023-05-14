@@ -1,8 +1,4 @@
-_base_ = ['./minkunet_w32_8xb2-15e_semantickitti.py']
-
-model = dict(
-    backbone=dict(type='MinkUNetBackboneV2', encoder_blocks=[2, 3, 4, 6]),
-    decode_head=dict(channels=256 + 128 + 96))
+_base_ = ['./spvcnn_w32_8xb2-amp-15e_semantickitti.py']
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -104,9 +100,3 @@ param_scheduler = [
         milestones=[24, 32],
         gamma=0.1)
 ]
-
-# Default setting for scaling LR automatically
-#   - `enable` means enable scaling LR automatically
-#       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
