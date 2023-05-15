@@ -3,6 +3,8 @@ _base_ = [
     '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
 
+model = dict(data_preprocessor=dict(max_voxels=None))
+
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(

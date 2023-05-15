@@ -3,7 +3,9 @@ _base_ = [
     '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
 
-model = dict(backbone=dict(encoder_blocks=[2, 3, 4, 6]))
+model = dict(
+    data_preprocessor=dict(max_voxels=None),
+    backbone=dict(encoder_blocks=[2, 3, 4, 6]))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
