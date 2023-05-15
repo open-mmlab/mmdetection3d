@@ -24,9 +24,9 @@ def test_MinkowskiConvModule():
          [23.482342, 6.5036807, 0.5806964, 0.35]],
         dtype=torch.float32).cuda()  # n, point_features
     coordinates = torch.tensor(
-        [[12, 819, 131, 0], [16, 750, 136, 0], [16, 705, 232, 1],
-         [35, 930, 469, 1]],
-        dtype=torch.int32).cuda()  # n, 4(ind_x, ind_y, ind_z, batch)
+        [[0, 12, 819, 131], [0, 16, 750, 136], [1, 16, 705, 232],
+         [1, 35, 930, 469]],
+        dtype=torch.int32).cuda()  # n, 4(batch, ind_x, ind_y, ind_z)
 
     # test
     input_sp_tensor = SparseTensor(voxel_features, coordinates)
