@@ -14,8 +14,8 @@ try:
                                  MinkowskiSyncBatchNorm, SparseTensor)
     from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
-    ME = SparseTensor = None
-    BasicBlock = Bottleneck = object
+    SparseTensor = None
+    from mmcv.cnn.resnet import BasicBlock, Bottleneck
     IS_MINKOWSKI_ENGINE_AVAILABLE = False
 else:
     MODELS._register_module(MinkowskiConvolution, 'MinkowskiConvNd')
