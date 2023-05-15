@@ -28,13 +28,14 @@ class SPVCNNBackbone(MinkUNetBackbone):
             Defaults to 4.
         base_channels (int): The input channels for first encoder layer.
             Defaults to 32.
+        num_stages (int): Number of stages in encoder and decoder.
+            Defaults to 4.
         encoder_channels (List[int]): Convolutional channels of each encode
             layer. Defaults to [32, 64, 128, 256].
         decoder_channels (List[int]): Convolutional channels of each decode
             layer. Defaults to [256, 128, 96, 96].
-        num_stages (int): Number of stages in encoder and decoder.
-            Defaults to 4.
         drop_ratio (float): Dropout ratio of voxel features. Defaults to 0.3.
+        sparseconv_backend (str): Sparse convolution backend.
         init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`]
             , optional): Initialization config dict. Defaults to None.
     """
@@ -42,9 +43,9 @@ class SPVCNNBackbone(MinkUNetBackbone):
     def __init__(self,
                  in_channels: int = 4,
                  base_channels: int = 32,
+                 num_stages: int = 4,
                  encoder_channels: Sequence[int] = [32, 64, 128, 256],
                  decoder_channels: Sequence[int] = [256, 128, 96, 96],
-                 num_stages: int = 4,
                  drop_ratio: float = 0.3,
                  sparseconv_backend: str = 'torchsparse',
                  **kwargs) -> None:
@@ -124,6 +125,8 @@ class MinkUNetBackboneV2(MinkUNetBackbone):
 
     refer to https://github.com/PJLab-ADG/PCSeg/blob/master/pcseg/model/segmentor/voxel/minkunet/minkunet.py
 
+    Args:
+        sparseconv_backend (str): Sparse convolution backend.
     """  # noqa: E501
 
     def __init__(self,

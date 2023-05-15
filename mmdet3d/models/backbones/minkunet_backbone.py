@@ -47,14 +47,14 @@ class MinkUNetBackbone(BaseModule):
             Defaults to 32.
         num_stages (int): Number of stages in encoder and decoder.
             Defaults to 4.
-        block_type (str): Type of block in encoder and decoder.
         encoder_channels (List[int]): Convolutional channels of each encode
             layer. Defaults to [32, 64, 128, 256].
         encoder_blocks (List[int]): Number of blocks in each encode layer.
         decoder_channels (List[int]): Convolutional channels of each decode
             layer. Defaults to [256, 128, 96, 96].
         decoder_blocks (List[int]): Number of blocks in each decode layer.
-        norm_cfg (dict or :obj:`ConfigDict`): Config of normalization.
+        block_type (str): Type of block in encoder and decoder.
+        sparseconv_backends (str): Sparse convolutional backend.
         init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`]
             , optional): Initialization config dict.
     """
