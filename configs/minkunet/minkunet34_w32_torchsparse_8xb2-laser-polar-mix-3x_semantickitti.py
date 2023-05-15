@@ -1,7 +1,9 @@
 _base_ = [
-    '../_base_/datasets/semantickitti.py', '../_base_/models/cylinder3d.py',
-    '../_base_/default_runtime.py'
+    '../_base_/datasets/semantickitti.py', '../_base_/models/minkunet.py',
+    '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
+
+model = dict(backbone=dict(encoder_blocks=[2, 3, 4, 6]))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -77,33 +79,4 @@ train_pipeline = [
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 
-# optimizer
-# This schedule is mainly used by models on nuScenes dataset
-lr = 0.008
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
-    # max_norm=10 is better for SECOND
-    clip_grad=dict(max_norm=10, norm_type=2))
-
-# training schedule for 2x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=36, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-
-# learning rate
-param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=36,
-        by_epoch=True,
-        milestones=[24, 32],
-        gamma=0.1)
-]
-
-# Default setting for scaling LR automatically
-#   - `enable` means enable scaling LR automatically
-#       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))

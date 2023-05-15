@@ -1,9 +1,7 @@
 _base_ = [
-    '../_base_/datasets/semantickitti.py', '../_base_/models/minkunet.py',
+    '../_base_/datasets/semantickitti.py', '../_base_/models/cylinder3d.py',
     '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
-
-model = dict(backbone=dict(encoder_blocks=[2, 3, 4, 6]))
 
 train_pipeline = [
     dict(type='LoadPointsFromFile', coord_type='LIDAR', load_dim=4, use_dim=4),
@@ -78,3 +76,5 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
+
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
