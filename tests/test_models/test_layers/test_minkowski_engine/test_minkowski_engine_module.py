@@ -9,12 +9,12 @@ if IS_MINKOWSKI_ENGINE_AVAILABLE:
     from MinkowskiEngine import SparseTensor
 
     from mmdet3d.models.layers.minkowski_engine_block import (
-        MinkowskiBasicBlock, MinkowskiConvModule)
+        MinkowskiBasicBlock, MinkowskiBottleneck, MinkowskiConvModule)
 else:
     pytest.skip('test requires Minkowski Engine.', allow_module_level=True)
 
 
-def test_TorchsparseConvModule():
+def test_MinkowskiConvModule():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     voxel_features = torch.tensor(
@@ -37,7 +37,7 @@ def test_TorchsparseConvModule():
     assert out_features.F.shape == torch.Size([4, 4])
 
 
-def test_TorchsparseResidualBlock():
+def test_MinkowskiResidualBlock():
     if not torch.cuda.is_available():
         pytest.skip('test requires GPU and torch+cuda')
     voxel_features = torch.tensor(
@@ -55,7 +55,14 @@ def test_TorchsparseResidualBlock():
     input_sp_tensor = SparseTensor(voxel_features, coordinates)
 
     sparse_block0 = MinkowskiBasicBlock(4, 4, kernel_size=3).cuda()
+    sparse_block1 = MinkowskiBottleneck(
+        4,
+        4,
+        downsample=MinkowskiConvModule(4, 16, kernel_size=1, act_cfg=None),
+        kernel_size=3).cuda()
 
     # test forward
     out_features0 = sparse_block0(input_sp_tensor)
+    out_features1 = sparse_block1(input_sp_tensor)
     assert out_features0.F.shape == torch.Size([4, 4])
+    assert out_features1.F.shape == torch.Size([4, 16])
