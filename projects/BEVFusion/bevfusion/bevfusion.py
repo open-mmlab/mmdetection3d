@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from copy import deepcopy
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -267,8 +268,8 @@ class BEVFusion(Base3DDetector):
             camera2lidar = imgs.new_tensor(np.asarray(camera2lidar))
             img_aug_matrix = imgs.new_tensor(np.asarray(img_aug_matrix))
             lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
-            img_feature = self.extract_img_feat(imgs, points, lidar2image,
-                                                camera_intrinsics,
+            img_feature = self.extract_img_feat(imgs, deepcopy(points),
+                                                lidar2image, camera_intrinsics,
                                                 camera2lidar, img_aug_matrix,
                                                 lidar_aug_matrix,
                                                 batch_input_metas)
