@@ -442,7 +442,9 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                 lidar2sensor = np.array(sweep['lidar_points']['lidar2sensor'])
                 points_sweep[:, :
                              3] = points_sweep[:, :3] @ lidar2sensor[:3, :3]
-                points_sweep[:, :3] -= lidar2sensor[:3, 3]
+                points_sweep[:, :3] += -1 * np.matmul(
+                    lidar2sensor[:3, :3].T, lidar2sensor[:3, 3].reshape(
+                        3, 1)).squeeze()
                 points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
