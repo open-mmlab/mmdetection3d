@@ -6,5 +6,5 @@ model = dict(
     backbone=dict(type='MinkUNetBackboneV2'),
     decode_head=dict(channels=256 + 128 + 96))
 
-randomness = dict(deterministic=False, diff_rank_seed=True)
+randomness = dict(seed=None, deterministic=False, diff_rank_seed=True)
 env_cfg = dict(cudnn_benchmark=True)

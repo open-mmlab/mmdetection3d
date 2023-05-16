@@ -54,7 +54,7 @@ class MinkUNetBackbone(BaseModule):
             layer. Defaults to [256, 128, 96, 96].
         decoder_blocks (List[int]): Number of blocks in each decode layer.
         block_type (str): Type of block in encoder and decoder.
-        sparseconv_backends (str): Sparse convolutional backend.
+        sparseconv_backend (str): Sparse convolutional backend.
         init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`]
             , optional): Initialization config dict.
     """
@@ -68,16 +68,16 @@ class MinkUNetBackbone(BaseModule):
                  decoder_channels: List[int] = [256, 128, 96, 96],
                  decoder_blocks: List[int] = [2, 2, 2, 2],
                  block_type: str = 'basic',
-                 sparseconv_backends: str = 'torchsparse',
+                 sparseconv_backend: str = 'torchsparse',
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg)
         assert num_stages == len(encoder_channels) == len(decoder_channels)
-        assert sparseconv_backends in [
+        assert sparseconv_backend in [
             'torchsparse', 'spconv', 'minkowski'
-        ], f'sparseconv backend: {sparseconv_backends} not supported.'
+        ], f'sparseconv backend: {sparseconv_backend} not supported.'
         self.num_stages = num_stages
-        self.sparseconv_backends = sparseconv_backends
-        if sparseconv_backends == 'torchsparse':
+        self.sparseconv_backend = sparseconv_backend
+        if sparseconv_backend == 'torchsparse':
             assert IS_TORCHSPARSE_AVAILABLE, \
                 'Please follow `get_started.md` to install Torchsparse.`'
             input_conv = TorchSparseConvModule
@@ -87,7 +87,7 @@ class MinkUNetBackbone(BaseModule):
                 else TorchSparseBottleneck
             # for torchsparse, residual branch will be implemented internally
             residual_branch = None
-        elif sparseconv_backends == 'spconv':
+        elif sparseconv_backend == 'spconv':
             if not IS_SPCONV2_AVAILABLE:
                 warnings.warn('Spconv 2.x is not available,'
                               'turn to use spconv 1.x in mmcv.')
@@ -103,7 +103,7 @@ class MinkUNetBackbone(BaseModule):
                 make_sparse_convmodule,
                 conv_type='SubMConv3d',
                 order=('conv', 'norm'))
-        elif sparseconv_backends == 'minkowski':
+        elif sparseconv_backend == 'minkowski':
             assert IS_MINKOWSKI_ENGINE_AVAILABLE, \
                 'Please follow `get_started.md` to install Minkowski Engine.`'
             input_conv = MinkowskiConvModule
@@ -207,14 +207,14 @@ class MinkUNetBackbone(BaseModule):
         Returns:
             Tensor: Backbone features.
         """
-        if self.sparseconv_backends == 'torchsparse':
+        if self.sparseconv_backend == 'torchsparse':
             x = torchsparse.SparseTensor(voxel_features, coors)
-        elif self.sparseconv_backends == 'spconv':
+        elif self.sparseconv_backend == 'spconv':
             spatial_shape = coors.max(0)[0][1:] + 1
             batch_size = int(coors[-1, 0]) + 1
             x = SparseConvTensor(voxel_features, coors, spatial_shape,
                                  batch_size)
-        elif self.sparseconv_backends == 'minkowski':
+        elif self.sparseconv_backend == 'minkowski':
             x = ME.SparseTensor(voxel_features, coors)
 
         x = self.conv_input(x)
@@ -228,18 +228,18 @@ class MinkUNetBackbone(BaseModule):
         for i, decoder_layer in enumerate(self.decoder):
             x = decoder_layer[0](x)
 
-            if self.sparseconv_backends == 'torchsparse':
+            if self.sparseconv_backend == 'torchsparse':
                 x = torchsparse.cat((x, laterals[i]))
-            elif self.sparseconv_backends == 'spconv':
+            elif self.sparseconv_backend == 'spconv':
                 x = replace_feature(
                     x, torch.cat((x.features, laterals[i].features), dim=1))
-            elif self.sparseconv_backends == 'minkowski':
+            elif self.sparseconv_backend == 'minkowski':
                 x = ME.cat(x, laterals[i])
 
             x = decoder_layer[1](x)
             decoder_outs.append(x)
 
-        if self.sparseconv_backends == 'spconv':
+        if self.sparseconv_backend == 'spconv':
             return decoder_outs[-1].features
         else:
             return decoder_outs[-1].F

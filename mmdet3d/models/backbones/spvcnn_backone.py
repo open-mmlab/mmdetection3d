@@ -116,7 +116,7 @@ class SPVCNNBackbone(MinkUNetBackbone):
                 voxels.F = self.dropout(voxels.F)
 
         points = voxel_to_point(voxels, points, self.point_transforms[2])
-        return points
+        return points.F
 
 
 @MODELS.register_module()
@@ -135,7 +135,7 @@ class MinkUNetBackboneV2(MinkUNetBackbone):
         assert sparseconv_backend == 'torchsparse', \
             f'SPVCNN backbone only supports torchsparse backend, but got ' \
             f'sparseconv backend: {sparseconv_backend}.'
-        super().__init__(sparseconv_backends=sparseconv_backend, **kwargs)
+        super().__init__(sparseconv_backend=sparseconv_backend, **kwargs)
 
     def forward(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
         """Forward function.
@@ -172,7 +172,7 @@ class MinkUNetBackboneV2(MinkUNetBackbone):
                 output_features.append(points.F)
 
         points.F = torch.cat(output_features, dim=1)
-        return points
+        return points.F
 
 
 def initial_voxelize(points: PointTensor) -> SparseTensor:

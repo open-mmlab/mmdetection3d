@@ -4,6 +4,6 @@ _base_ = [
 
 model = dict(
     data_preprocessor=dict(batch_first=True),
-    backbone=dict(sparseconv_backends='spconv'))
+    backbone=dict(sparseconv_backend='spconv'))
 
 optim_wrapper = dict(type='AmpOptimWrapper', loss_scale='dynamic')

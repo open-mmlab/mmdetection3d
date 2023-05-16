@@ -4,4 +4,4 @@ _base_ = [
 
 model = dict(
     data_preprocessor=dict(batch_first=True),
-    backbone=dict(sparseconv_backends='minkowski'))
+    backbone=dict(sparseconv_backend='minkowski'))
