@@ -24,7 +24,7 @@ We implement TPVFormer and provide the results and checkpoints on nuScenes datas
 
 In MMDetection3D's root directory, run the following command to train the model:
 
-1. Downloads the [pretrained backbone weights](<>) to checkpoints/
+1. Downloads the [pretrained backbone weights](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/tpvformer/tpvformer_8xb1-2x_nus-seg/tpvformer_pretrained_fcos3d_r101_dcn.pth) to checkpoints/
 
 2. For example, to train TPVFormer on 8 GPUs, please use
 
