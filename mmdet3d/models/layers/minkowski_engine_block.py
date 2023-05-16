@@ -14,7 +14,7 @@ try:
                                  MinkowskiSyncBatchNorm, SparseTensor)
     from MinkowskiEngine.modules.resnet_block import BasicBlock, Bottleneck
 except ImportError:
-    ME = SparseTensor = None
+    SparseTensor = None
     from mmcv.cnn.resnet import BasicBlock, Bottleneck
     IS_MINKOWSKI_ENGINE_AVAILABLE = False
 else:
@@ -96,7 +96,7 @@ class MinkowskiBasicBlock(BasicBlock, BaseModule):
                  bn_momentum: float = 0.1,
                  dimension: int = 3,
                  init_cfg: OptConfigType = None,
-                 **kwargs):
+                 **kwargs) -> None:
         BaseModule.__init__(self, init_cfg)
         BasicBlock.__init__(
             self,
@@ -120,7 +120,7 @@ class MinkowskiBottleneck(Bottleneck, BaseModule):
                  bn_momentum: float = 0.1,
                  dimension: int = 3,
                  init_cfg: OptConfigType = None,
-                 **kwargs):
+                 **kwargs) -> None:
         BaseModule.__init__(self, init_cfg)
         Bottleneck.__init__(
             self,
