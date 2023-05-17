@@ -1,4 +1,4 @@
-_base_ = ['mmdet3d::_base_/default_runtime.py']
+_base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
     imports=['projects.BEVFusion.bevfusion'], allow_failed_imports=False)
 
@@ -58,7 +58,7 @@ model = dict(
         in_channels=5,
         sparse_shape=[1440, 1440, 41],
         order=('conv', 'norm', 'act'),
-        norm_cfg=dict(type='SyncBN', eps=0.001, momentum=0.01),
+        norm_cfg=dict(type='BN1d', eps=0.001, momentum=0.01),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
                                                                       128)),
         encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (1, 1, 0)), (0, 0)),
@@ -69,14 +69,14 @@ model = dict(
         out_channels=[128, 256],
         layer_nums=[5, 5],
         layer_strides=[1, 2],
-        norm_cfg=dict(type='SyncBN', eps=0.001, momentum=0.01),
+        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
         conv_cfg=dict(type='Conv2d', bias=False)),
     pts_neck=dict(
         type='SECONDFPN',
         in_channels=[128, 256],
         out_channels=[256, 256],
         upsample_strides=[1, 2],
-        norm_cfg=dict(type='SyncBN', eps=0.001, momentum=0.01),
+        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
         upsample_cfg=dict(type='deconv', bias=False),
         use_conv_for_no_stride=True),
     bbox_head=dict(

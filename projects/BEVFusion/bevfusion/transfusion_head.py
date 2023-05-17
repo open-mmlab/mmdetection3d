@@ -224,7 +224,8 @@ class TransFusionHead(nn.Module):
         #################################
         # query initialization
         #################################
-        dense_heatmap = self.heatmap_head(fusion_feat)
+        with torch.autocast('cuda', enabled=False):
+            dense_heatmap = self.heatmap_head(fusion_feat.float())
         heatmap = dense_heatmap.detach().sigmoid()
         padding = self.nms_kernel_size // 2
         local_max = torch.zeros_like(heatmap)
