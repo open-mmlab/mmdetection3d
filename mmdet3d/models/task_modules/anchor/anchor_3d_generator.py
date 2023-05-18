@@ -263,7 +263,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
 
     def anchors_single_range(self,
                              feature_size: List[int],
-                             anchor_range: Union[Tensor, List[float]],
+                             anchor_range: List[float],
                              scale: Union[float, int],
                              sizes: Union[List[list], np.ndarray,
                                           Tensor] = [[3.9, 1.6, 1.56]],
