@@ -125,7 +125,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
                    cls_preds: Tensor,
                    reg_preds: Tensor,
                    base_xyz: Tensor,
-                   prefix: str = ''):
+                   prefix: str = '') -> Dict[str, Tensor]:
         """Split predicted features to specific parts.
 
         Args:
