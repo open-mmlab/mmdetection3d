@@ -121,7 +121,7 @@ class Anchor3DRangeGenerator(object):
     def single_level_grid_anchors(self,
                                   featmap_size: Tuple[int],
                                   scale: int,
-                                  device: str = 'cuda') -> Tensor:
+                                  device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate grid anchors of a single level feature map.
 
         This function is usually called by method ``self.grid_anchors``.
