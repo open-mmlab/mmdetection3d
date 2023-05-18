@@ -162,7 +162,7 @@ class Anchor3DRangeGenerator(object):
         return mr_anchors
 
     def anchors_single_range(self,
-                             feature_size: Union[List[float], Tuple[float]],
+                             feature_size: Tuple[int],
                              anchor_range: Union[Tensor, List[float]],
                              scale: Union[float, int] = 1,
                              sizes: Union[Tensor, int] = [[3.9, 1.6, 1.56]],
