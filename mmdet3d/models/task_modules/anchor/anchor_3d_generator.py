@@ -120,7 +120,7 @@ class Anchor3DRangeGenerator(object):
 
     def single_level_grid_anchors(self,
                                   featmap_size: Tuple[int],
-                                  scale: float,
+                                  scale: int,
                                   device: str = 'cuda') -> Tensor:
         """Generate grid anchors of a single level feature map.
 
