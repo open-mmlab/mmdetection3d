@@ -91,7 +91,7 @@ class Anchor3DRangeGenerator(object):
         return len(self.scales)
 
     def grid_anchors(self,
-                     featmap_sizes: List[tuple],
+                     featmap_sizes: List[Tuple[int]],
                      device: str = 'cuda') -> List[Tensor]:
         """Generate grid anchors in multiple feature levels.
 
