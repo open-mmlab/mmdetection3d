@@ -165,7 +165,7 @@ class Anchor3DRangeGenerator(object):
                              feature_size: Tuple[int],
                              anchor_range: Union[Tensor, List[float]],
                              scale: int = 1,
-                             sizes: Union[Tensor, int] = [[3.9, 1.6, 1.56]],
+                             sizes: Union[List[List[float]], List[float]] = [[3.9, 1.6, 1.56]],
                              rotations=[0, 1.5707963],
                              device='cuda') -> Tensor:
         """Generate anchors in a single range.
