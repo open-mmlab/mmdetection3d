@@ -262,7 +262,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         self.align_corner = align_corner
 
     def anchors_single_range(self,
-                             feature_size: Union[List[float], Tuple[float]],
+                             feature_size: List[int],
                              anchor_range: Union[Tensor, List[float]],
                              scale: Union[float, int],
                              sizes: Union[List[list], np.ndarray,
