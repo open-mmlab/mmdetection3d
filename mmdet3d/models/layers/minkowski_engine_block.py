@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Sequence, Union
+from typing import Optional, Tuple, Union
 
 from mmcv.cnn import build_activation_layer, build_conv_layer, build_norm_layer
 from mmengine.model import BaseModule
 from mmengine.registry import MODELS
 from torch import nn
 
-from mmdet3d.utils import ConfigType, OptConfigType
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
 
 try:
     from MinkowskiEngine import (MinkowskiBatchNorm, MinkowskiConvolution,
@@ -36,7 +36,7 @@ class MinkowskiConvModule(BaseModule):
         kernel_size (int or Tuple[int]): Kernel_size of block.
         stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
         dilation (int): Dilation of block. Defaults to 1.
-        bias (bool): Whether use bias in conv. Defaults to False.
+        bias (bool): Whether to use bias in conv. Defaults to False.
         conv_cfg (:obj:`ConfigDict` or dict, optional): Config of conv layer.
             Defaults to None.
         norm_cfg (:obj:`ConfigDict` or dict): The config of normalization.
@@ -50,15 +50,15 @@ class MinkowskiConvModule(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_size: Union[int, Sequence[int]],
-                 stride: Union[int, Sequence[int]] = 1,
+                 kernel_size: Union[int, Tuple[int, int, int]],
+                 stride: Union[int, Tuple[int, int, int]] = 1,
                  dilation: int = 1,
                  bias: bool = False,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(type='MinkowskiBN'),
                  act_cfg: ConfigType = dict(
                      type='MinkowskiReLU', inplace=True),
-                 init_cfg: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None,
                  **kwargs) -> None:
         super().__init__(init_cfg)
         layers = []
