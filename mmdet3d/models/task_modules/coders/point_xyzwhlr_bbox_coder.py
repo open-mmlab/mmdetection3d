@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -38,7 +38,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
     def encode(self,
                gt_bboxes_3d: BaseInstance3DBoxes,
                points: Tensor,
-               gt_labels_3d: Tensor = None) -> Tensor:
+               gt_labels_3d: Optional[Tensor] = None) -> Tensor:
         """Encode ground truth to prediction targets.
 
         Args:
@@ -88,7 +88,7 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
     def decode(self,
                box_encodings: Tensor,
                points: Tensor,
-               pred_labels_3d: Tensor = None) -> Tensor:
+               pred_labels_3d: Optional[Tensor] = None) -> Tensor:
         """Decode predicted parts and points to bbox3d.
 
         Args:

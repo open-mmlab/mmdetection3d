@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
@@ -28,9 +28,9 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                  pc_range: List[float],
                  out_size_factor: int,
                  voxel_size: List[float],
-                 post_center_range: List[float] = None,
+                 post_center_range: Optional[List[float]] = None,
                  max_num: int = 100,
-                 score_threshold: float = None,
+                 score_threshold: Optional[float] = None,
                  code_size: int = 9) -> None:
 
         self.pc_range = pc_range
@@ -44,7 +44,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
     def _gather_feat(self,
                      feats: Tensor,
                      inds: Tensor,
-                     feat_masks: Tensor = None) -> Tensor:
+                     feat_masks: Optional[Tensor] = None) -> Tensor:
         """Given feats and indexes, returns the gathered feats.
 
         Args:
@@ -128,7 +128,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                dim: Tensor,
                vel: Tensor,
                reg: Tensor = None,
-               task_id: int = -1) -> List[Dict]:
+               task_id: int = -1) -> List[Dict[str, Tensor]]:
         """Decode bboxes.
 
         Args:

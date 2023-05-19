@@ -60,7 +60,7 @@ class VoxelGenerator(object):
         return self._point_cloud_range
 
     @property
-    def grid_size(self) -> np.int64:
+    def grid_size(self) -> np.ndarray:
         """np.ndarray: The size of grids."""
         return self._grid_size
 

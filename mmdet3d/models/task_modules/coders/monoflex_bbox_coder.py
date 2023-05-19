@@ -292,7 +292,7 @@ class MonoFlexCoder(BaseBBoxCoder):
             self,
             keypoints2d: Tensor,
             dimensions: Tensor,
-            cam2imgs: int,
+            cam2imgs: Tensor,
             downsample_ratio: int = 4,
             group0_index: List[Tuple[int]] = [(7, 3), (0, 4)],
             group1_index: List[Tuple[int]] = [(2, 6),

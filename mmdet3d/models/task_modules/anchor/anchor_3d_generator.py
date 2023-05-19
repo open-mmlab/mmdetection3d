@@ -2,7 +2,6 @@
 from typing import List, Tuple, Union
 
 import mmengine
-import numpy as np
 import torch
 from torch import Tensor
 
@@ -90,9 +89,10 @@ class Anchor3DRangeGenerator(object):
         """int: Number of feature levels that the generator is applied to."""
         return len(self.scales)
 
-    def grid_anchors(self,
-                     featmap_sizes: List[Tuple[int]],
-                     device: Union[str, torch.device] = 'cuda') -> List[Tensor]:
+    def grid_anchors(
+            self,
+            featmap_sizes: List[Tuple[int]],
+            device: Union[str, torch.device] = 'cuda') -> List[Tensor]:
         """Generate grid anchors in multiple feature levels.
 
         Args:
@@ -118,10 +118,11 @@ class Anchor3DRangeGenerator(object):
             multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def single_level_grid_anchors(self,
-                                  featmap_size: Tuple[int],
-                                  scale: int,
-                                  device: Union[str, torch.device] = 'cuda') -> Tensor:
+    def single_level_grid_anchors(
+            self,
+            featmap_size: Tuple[int],
+            scale: int,
+            device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate grid anchors of a single level feature map.
 
         This function is usually called by method ``self.grid_anchors``.
@@ -161,13 +162,14 @@ class Anchor3DRangeGenerator(object):
         mr_anchors = torch.cat(mr_anchors, dim=-3)
         return mr_anchors
 
-    def anchors_single_range(self,
-                             feature_size: Tuple[int],
-                             anchor_range: Union[Tensor, List[float]],
-                             scale: int = 1,
-                             sizes: Union[List[List[float]], List[float]] = [[3.9, 1.6, 1.56]],
-                             rotations: List[float] = [0, 1.5707963],
-                             device: Union[str, torch.device] = 'cuda') -> Tensor:
+    def anchors_single_range(
+            self,
+            feature_size: Tuple[int],
+            anchor_range: Union[Tensor, List[float]],
+            scale: int = 1,
+            sizes: Union[List[List[float]], List[float]] = [[3.9, 1.6, 1.56]],
+            rotations: List[float] = [0, 1.5707963],
+            device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate anchors in a single range.
 
         Args:
@@ -261,15 +263,14 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
         super(AlignedAnchor3DRangeGenerator, self).__init__(**kwargs)
         self.align_corner = align_corner
 
-    def anchors_single_range(self,
-                             feature_size: List[int],
-                             anchor_range: List[float],
-                             scale: int,
-                             sizes: Union[List[list], np.ndarray,
-                                          Tensor] = [[3.9, 1.6, 1.56]],
-                             rotations: Union[List[float], np.ndarray,
-                                              Tensor] = [0, 1.5707963],
-                             device: str = 'cuda') -> Tensor:
+    def anchors_single_range(
+            self,
+            feature_size: List[int],
+            anchor_range: List[float],
+            scale: int,
+            sizes: Union[List[List[float]], List[float]] = [[3.9, 1.6, 1.56]],
+            rotations: List[float] = [0, 1.5707963],
+            device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate anchors in a single range.
 
         Args:
@@ -368,9 +369,10 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         assert len(self.scales) == 1, 'Multi-scale feature map levels are' + \
             ' not supported currently in this kind of anchor generator.'
 
-    def grid_anchors(self,
-                     featmap_sizes: List[tuple],
-                     device: str = 'cuda') -> List[List[Tensor]]:
+    def grid_anchors(
+            self,
+            featmap_sizes: List[Tuple[int]],
+            device: Union[str, torch.device] = 'cuda') -> List[List[Tensor]]:
         """Generate grid anchors in multiple feature levels.
 
         Args:
@@ -392,10 +394,11 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def multi_cls_grid_anchors(self,
-                               featmap_sizes: List[tuple],
-                               scale: float,
-                               device: str = 'cuda') -> Tensor:
+    def multi_cls_grid_anchors(
+            self,
+            featmap_sizes: List[Tuple[int]],
+            scale: int,
+            device: Union[str, torch.device] = 'cuda') -> List[Tensor]:
         """Generate grid anchors of a single level feature map for multi-class
         with different feature map sizes.
 

@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -25,8 +25,8 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
     """
 
     def __init__(self,
-                 base_depths: Tuple[Tuple[float]] = None,
-                 base_dims: Tuple[Tuple[float]] = None,
+                 base_depths: Optional[Tuple[Tuple[float]]] = None,
+                 base_dims: Optional[Tuple[Tuple[float]]] = None,
                  code_size: int = 7,
                  norm_on_bbox: bool = True) -> None:
         super(FCOS3DBBoxCoder, self).__init__()
@@ -44,7 +44,7 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
                scale: tuple,
                stride: int,
                training: bool,
-               cls_score: Tensor = None) -> Tensor:
+               cls_score: Optional[Tensor] = None) -> Tensor:
         """Decode regressed results into 3D predictions.
 
         Note that offsets are not transformed to the projected 3D centers.

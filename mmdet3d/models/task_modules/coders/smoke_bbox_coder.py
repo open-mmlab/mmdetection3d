@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -28,7 +28,7 @@ class SMOKECoder(BaseBBoxCoder):
         self.base_dims = base_dims
         self.bbox_code_size = code_size
 
-    def encode(self, locations: Tensor, dimensions: Tensor,
+    def encode(self, locations: Optional[Tensor], dimensions: Tensor,
                orientations: Tensor,
                input_metas: List[dict]) -> CameraInstance3DBoxes:
         """Encode CameraInstance3DBoxes by locations, dimensions, orientations.
@@ -62,7 +62,7 @@ class SMOKECoder(BaseBBoxCoder):
                labels: Tensor,
                cam2imgs: Tensor,
                trans_mats: Tensor,
-               locations: Tensor = None) -> Tuple[Tensor]:
+               locations: Optional[Tensor] = None) -> Tuple[Tensor]:
         """Decode regression into locations, dimensions, orientations.
 
         Args:
@@ -177,7 +177,7 @@ class SMOKECoder(BaseBBoxCoder):
         return dimensions
 
     def _decode_orientation(self, ori_vector: Tensor,
-                            locations: Tensor) -> Tensor:
+                            locations: Optional[Tensor]) -> Tensor:
         """Retrieve object orientation.
 
         Args:

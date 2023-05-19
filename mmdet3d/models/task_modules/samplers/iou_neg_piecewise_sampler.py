@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Union
+from typing import Optional, Union
 
 import torch
 from mmdet.models.task_modules import AssignResult
@@ -35,8 +35,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
     def __init__(self,
                  num: int,
                  pos_fraction: float = None,
-                 neg_piece_fractions: list = None,
-                 neg_iou_piece_thrs: list = None,
+                 neg_piece_fractions: Optional[list] = None,
+                 neg_iou_piece_thrs: Optional[list] = None,
                  neg_pos_ub: float = -1,
                  add_gt_as_proposals: bool = False,
                  return_iou: bool = False) -> None:
@@ -136,7 +136,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
                assign_result: AssignResult,
                bboxes: Tensor,
                gt_bboxes: Tensor,
-               gt_labels: Tensor = None,
+               gt_labels: Optional[Tensor] = None,
                **kwargs) -> SamplingResult:
         """Sample positive and negative bboxes.
 
