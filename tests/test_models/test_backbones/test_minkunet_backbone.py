@@ -18,7 +18,7 @@ def test_minkunet_backbone():
     coordinates, features = [], []
     for i in range(2):
         c = torch.randint(0, 16, (100, 3)).int()
-        c = F.pad(c, (1, 0), mode='constant', value=i)
+        c = F.pad(c, (0, 1), mode='constant', value=i)
         coordinates.append(c)
         f = torch.rand(100, 4)
         features.append(f)
