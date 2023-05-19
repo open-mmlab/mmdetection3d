@@ -83,7 +83,7 @@ class SparseBottleneck(Bottleneck, SparseModule):
         out = replace_feature(out, self.bn3(out.features))
 
         if self.downsample is not None:
-            identity = self.downsample(x)
+            identity = self.downsample(x).features
 
         out = replace_feature(out, out.features + identity)
         out = replace_feature(out, self.relu(out.features))

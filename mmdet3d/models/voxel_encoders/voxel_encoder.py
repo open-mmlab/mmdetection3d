@@ -23,7 +23,6 @@ class HardSimpleVFE(nn.Module):
     def __init__(self, num_features: int = 4) -> None:
         super(HardSimpleVFE, self).__init__()
         self.num_features = num_features
-        self.fp16_enabled = False
 
     def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
                 *args, **kwargs) -> Tensor:
@@ -62,7 +61,6 @@ class DynamicSimpleVFE(nn.Module):
                  point_cloud_range=(0, -40, -3, 70.4, 40, 1)):
         super(DynamicSimpleVFE, self).__init__()
         self.scatter = DynamicScatter(voxel_size, point_cloud_range, True)
-        self.fp16_enabled = False
 
     @torch.no_grad()
     def forward(self, features, coors, *args, **kwargs):
@@ -141,7 +139,6 @@ class DynamicVFE(nn.Module):
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
         self.return_point_feats = return_point_feats
-        self.fp16_enabled = False
 
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = voxel_size[0]
@@ -340,7 +337,6 @@ class HardVFE(nn.Module):
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
         self.return_point_feats = return_point_feats
-        self.fp16_enabled = False
 
         # Need pillar (voxel) size and x/y offset to calculate pillar offset
         self.vx = voxel_size[0]

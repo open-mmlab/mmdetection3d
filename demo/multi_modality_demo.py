@@ -49,8 +49,15 @@ def main(args):
     result, data = inference_multi_modality_detector(model, args.pcd, args.img,
                                                      args.ann, args.cam_type)
     points = data['inputs']['points']
-    img = mmcv.imread(args.img)
-    img = mmcv.imconvert(img, 'bgr', 'rgb')
+    if isinstance(result.img_path, list):
+        img = []
+        for img_path in result.img_path:
+            single_img = mmcv.imread(img_path)
+            single_img = mmcv.imconvert(single_img, 'bgr', 'rgb')
+            img.append(single_img)
+    else:
+        img = mmcv.imread(result.img_path)
+        img = mmcv.imconvert(img, 'bgr', 'rgb')
     data_input = dict(points=points, img=img)
 
     # show the results

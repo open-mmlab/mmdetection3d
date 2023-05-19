@@ -8,3 +8,4 @@
    sunrgbd.md
    scannet.md
    s3dis.md
+   semantickitti.md

@@ -417,6 +417,10 @@ class BasePoints:
             attribute_dims=points_list[0].attribute_dims)
         return cat_points
 
+    def numpy(self) -> np.ndarray:
+        """Reload ``numpy`` from self.tensor."""
+        return self.tensor.numpy()
+
     def to(self, device: Union[str, torch.device], *args,
            **kwargs) -> 'BasePoints':
         """Convert current points to a specific device.
@@ -433,6 +437,30 @@ class BasePoints:
             points_dim=self.points_dim,
             attribute_dims=self.attribute_dims)
 
+    def cpu(self) -> 'BasePoints':
+        """Convert current points to cpu device.
+
+        Returns:
+            :obj:`BasePoints`: A new points object on the cpu device.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.cpu(),
+            points_dim=self.points_dim,
+            attribute_dims=self.attribute_dims)
+
+    def cuda(self, *args, **kwargs) -> 'BasePoints':
+        """Convert current points to cuda device.
+
+        Returns:
+            :obj:`BasePoints`: A new points object on the cuda device.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.cuda(*args, **kwargs),
+            points_dim=self.points_dim,
+            attribute_dims=self.attribute_dims)
+
     def clone(self) -> 'BasePoints':
         """Clone the points.
 
@@ -442,6 +470,18 @@ class BasePoints:
         original_type = type(self)
         return original_type(
             self.tensor.clone(),
+            points_dim=self.points_dim,
+            attribute_dims=self.attribute_dims)
+
+    def detach(self) -> 'BasePoints':
+        """Detach the points.
+
+        Returns:
+            :obj:`BasePoints`: Point object with the same properties as self.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.detach(),
             points_dim=self.points_dim,
             attribute_dims=self.attribute_dims)
 

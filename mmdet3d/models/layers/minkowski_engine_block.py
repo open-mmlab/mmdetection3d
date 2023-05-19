@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Sequence, Union
+from typing import Optional, Tuple, Union
 
 from mmcv.cnn import build_activation_layer, build_conv_layer, build_norm_layer
 from mmengine.model import BaseModule
 from mmengine.registry import MODELS
 from torch import nn
 
-from mmdet3d.utils import ConfigType, OptConfigType
+from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
 
 try:
     from MinkowskiEngine import (MinkowskiBatchNorm, MinkowskiConvolution,
@@ -36,10 +36,13 @@ class MinkowskiConvModule(BaseModule):
         kernel_size (int or Tuple[int]): Kernel_size of block.
         stride (int or Tuple[int]): Stride of the first block. Defaults to 1.
         dilation (int): Dilation of block. Defaults to 1.
-        bias (bool): Whether use bias in conv. Defaults to False.
-        transposed (bool): Whether use transposed convolution operator.
-            Defaults to False.
+        bias (bool): Whether to use bias in conv. Defaults to False.
+        conv_cfg (:obj:`ConfigDict` or dict, optional): Config of conv layer.
+            Defaults to None.
         norm_cfg (:obj:`ConfigDict` or dict): The config of normalization.
+            Defaults to dict(type='MinkowskiBN').
+        act_cfg (:obj:`ConfigDict` or dict): The config of activation.
+            Defaults to dict(type='MinkowskiReLU', inplace=True).
         init_cfg (:obj:`ConfigDict` or dict, optional): Initialization config.
             Defaults to None.
     """
@@ -47,15 +50,15 @@ class MinkowskiConvModule(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_size: Union[int, Sequence[int]],
-                 stride: Union[int, Sequence[int]] = 1,
+                 kernel_size: Union[int, Tuple[int, int, int]],
+                 stride: Union[int, Tuple[int, int, int]] = 1,
                  dilation: int = 1,
                  bias: bool = False,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(type='MinkowskiBN'),
                  act_cfg: ConfigType = dict(
                      type='MinkowskiReLU', inplace=True),
-                 init_cfg: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None,
                  **kwargs) -> None:
         super().__init__(init_cfg)
         layers = []
@@ -86,6 +89,21 @@ class MinkowskiConvModule(BaseModule):
 
 
 class MinkowskiBasicBlock(BasicBlock, BaseModule):
+    """A wrapper of minkowski engine basic block. It inherits from mmengine's
+    `BaseModule` and allows additional keyword arguments.
+
+    Args:
+        inplanes (int): In channels of block.
+        planes (int): Out channels of block.
+        stride (int or Tuple[int]): Stride of the first conv. Defaults to 1.
+        dilation (int): Dilation of block. Defaults to 1.
+        downsample (nn.Module, optional): Residual branch conv module if
+            necessary. Defaults to None.
+        bn_momentum (float): Momentum of batch norm layer. Defaults to 0.1.
+        dimension (int): Dimension of minkowski convolution. Defaults to 3.
+        init_cfg (:obj:`ConfigDict` or dict, optional): Initialization config.
+            Defaults to None.
+    """
 
     def __init__(self,
                  inplanes: int,
@@ -96,7 +114,7 @@ class MinkowskiBasicBlock(BasicBlock, BaseModule):
                  bn_momentum: float = 0.1,
                  dimension: int = 3,
                  init_cfg: OptConfigType = None,
-                 **kwargs) -> None:
+                 **kwargs):
         BaseModule.__init__(self, init_cfg)
         BasicBlock.__init__(
             self,
@@ -110,6 +128,21 @@ class MinkowskiBasicBlock(BasicBlock, BaseModule):
 
 
 class MinkowskiBottleneck(Bottleneck, BaseModule):
+    """A wrapper of minkowski engine bottleneck block. It inherits from
+    mmengine's `BaseModule` and allows additional keyword arguments.
+
+    Args:
+        inplanes (int): In channels of block.
+        planes (int): Out channels of block.
+        stride (int or Tuple[int]): Stride of the second conv. Defaults to 1.
+        dilation (int): Dilation of block. Defaults to 1.
+        downsample (nn.Module, optional): Residual branch conv module if
+            necessary. Defaults to None.
+        bn_momentum (float): Momentum of batch norm layer. Defaults to 0.1.
+        dimension (int): Dimension of minkowski convolution. Defaults to 3.
+        init_cfg (:obj:`ConfigDict` or dict, optional): Initialization config.
+            Defaults to None.
+    """
 
     def __init__(self,
                  inplanes: int,
@@ -120,7 +153,7 @@ class MinkowskiBottleneck(Bottleneck, BaseModule):
                  bn_momentum: float = 0.1,
                  dimension: int = 3,
                  init_cfg: OptConfigType = None,
-                 **kwargs) -> None:
+                 **kwargs):
         BaseModule.__init__(self, init_cfg)
         Bottleneck.__init__(
             self,

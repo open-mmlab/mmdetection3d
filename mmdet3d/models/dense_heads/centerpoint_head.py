@@ -317,7 +317,6 @@ class CenterHead(BaseModule):
         self.loss_bbox = MODELS.build(loss_bbox)
         self.bbox_coder = TASK_UTILS.build(bbox_coder)
         self.num_anchor_per_locs = [n for n in num_classes]
-        self.fp16_enabled = False
 
         # a shared convolution
         self.shared_conv = ConvModule(

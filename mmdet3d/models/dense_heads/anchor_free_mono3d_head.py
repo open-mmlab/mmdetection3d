@@ -176,7 +176,6 @@ class AnchorFreeMono3DHead(BaseMono3DDenseHead):
         self.test_cfg = test_cfg
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
-        self.fp16_enabled = False
         self.background_label = (
             num_classes if background_label is None else background_label)
         # background_label should be either 0 or num_classes

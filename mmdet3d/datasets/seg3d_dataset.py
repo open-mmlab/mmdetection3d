@@ -119,12 +119,13 @@ class Seg3DDataset(BaseDataset):
             **kwargs)
 
         self.metainfo['seg_label_mapping'] = self.seg_label_mapping
-        self.scene_idxs = self.get_scene_idxs(scene_idxs)
-        self.data_list = [self.data_list[i] for i in self.scene_idxs]
+        if not kwargs.get('lazy_init', False):
+            self.scene_idxs = self.get_scene_idxs(scene_idxs)
+            self.data_list = [self.data_list[i] for i in self.scene_idxs]
 
-        # set group flag for the sampler
-        if not self.test_mode:
-            self._set_group_flag()
+            # set group flag for the sampler
+            if not self.test_mode:
+                self._set_group_flag()
 
     def get_label_mapping(self,
                           new_classes: Optional[Sequence] = None) -> tuple:

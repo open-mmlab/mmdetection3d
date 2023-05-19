@@ -634,8 +634,8 @@ class KittiMetric(BaseMetric):
             return dict(
                 bbox=box_2d_preds[valid_inds, :].numpy(),
                 pred_box_type_3d=type(box_preds),
-                box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
-                box3d_lidar=box_preds_lidar[valid_inds].tensor.numpy(),
+                box3d_camera=box_preds_camera[valid_inds].numpy(),
+                box3d_lidar=box_preds_lidar[valid_inds].numpy(),
                 scores=scores[valid_inds].numpy(),
                 label_preds=labels[valid_inds].numpy(),
                 sample_idx=sample_idx)
