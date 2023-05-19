@@ -38,6 +38,8 @@ class BaseInstance3DBoxes:
             boxes.
     """
 
+    YAW_AXIS: int = 0
+
     def __init__(
         self,
         tensor: Union[Tensor, np.ndarray, Sequence[Sequence[float]]],
@@ -76,6 +78,11 @@ class BaseInstance3DBoxes:
             dst = self.tensor.new_tensor((0.5, 0.5, 0))
             src = self.tensor.new_tensor(origin)
             self.tensor[:, :3] += self.tensor[:, 3:6] * (dst - src)
+
+    @property
+    def shape(self) -> torch.Size:
+        """torch.Size: Shape of boxes."""
+        return self.tensor.shape
 
     @property
     def volume(self) -> Tensor:
@@ -406,6 +413,10 @@ class BaseInstance3DBoxes:
             with_yaw=boxes_list[0].with_yaw)
         return cat_boxes
 
+    def numpy(self) -> np.ndarray:
+        """Reload ``numpy`` from self.tensor."""
+        return self.tensor.numpy()
+
     def to(self, device: Union[str, torch.device], *args,
            **kwargs) -> 'BaseInstance3DBoxes':
         """Convert current boxes to a specific device.
@@ -415,11 +426,33 @@ class BaseInstance3DBoxes:
 
         Returns:
             :obj:`BaseInstance3DBoxes`: A new boxes object on the specific
-                device.
+            device.
         """
         original_type = type(self)
         return original_type(
             self.tensor.to(device, *args, **kwargs),
+            box_dim=self.box_dim,
+            with_yaw=self.with_yaw)
+
+    def cpu(self) -> 'BaseInstance3DBoxes':
+        """Convert current boxes to cpu device.
+
+        Returns:
+            :obj:`BaseInstance3DBoxes`: A new boxes object on the cpu device.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.cpu(), box_dim=self.box_dim, with_yaw=self.with_yaw)
+
+    def cuda(self, *args, **kwargs) -> 'BaseInstance3DBoxes':
+        """Convert current boxes to cuda device.
+
+        Returns:
+            :obj:`BaseInstance3DBoxes`: A new boxes object on the cuda device.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.cuda(*args, **kwargs),
             box_dim=self.box_dim,
             with_yaw=self.with_yaw)
 
@@ -433,6 +466,17 @@ class BaseInstance3DBoxes:
         original_type = type(self)
         return original_type(
             self.tensor.clone(), box_dim=self.box_dim, with_yaw=self.with_yaw)
+
+    def detach(self) -> 'BaseInstance3DBoxes':
+        """Detach the boxes.
+
+        Returns:
+            :obj:`BaseInstance3DBoxes`: Box object with the same properties as
+            self.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.detach(), box_dim=self.box_dim, with_yaw=self.with_yaw)
 
     @property
     def device(self) -> torch.device:

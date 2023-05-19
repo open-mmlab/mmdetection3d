@@ -1,7 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple
+
+import torch.nn as nn
 from mmdet.models.backbones import RegNet
+from torch import Tensor
 
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import OptMultiConfig
 
 
 @MODELS.register_module()
@@ -59,15 +64,19 @@ class NoStemRegNet(RegNet):
         (1, 1008, 1, 1)
     """
 
-    def __init__(self, arch, init_cfg=None, **kwargs):
+    def __init__(self,
+                 arch: dict,
+                 init_cfg: OptMultiConfig = None,
+                 **kwargs) -> None:
         super(NoStemRegNet, self).__init__(arch, init_cfg=init_cfg, **kwargs)
 
-    def _make_stem_layer(self, in_channels, base_channels):
+    def _make_stem_layer(self, in_channels: int,
+                         base_channels: int) -> nn.Module:
         """Override the original function that do not initialize a stem layer
         since 3D detector's voxel encoder works like a stem layer."""
         return
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tuple[Tensor, ...]:
         """Forward function of backbone.
 
         Args:

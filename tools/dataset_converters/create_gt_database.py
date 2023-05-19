@@ -241,8 +241,8 @@ def create_groundtruth_database(dataset_class_name,
         example = dataset.pipeline(data_info)
         annos = example['ann_info']
         image_idx = example['sample_idx']
-        points = example['points'].tensor.numpy()
-        gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
+        points = example['points'].numpy()
+        gt_boxes_3d = annos['gt_bboxes_3d'].numpy()
         names = [dataset.metainfo['classes'][i] for i in annos['gt_labels_3d']]
         group_dict = dict()
         if 'group_ids' in annos:
@@ -406,8 +406,8 @@ class GTDatabaseCreater:
         example = self.pipeline(input_dict)
         annos = example['ann_info']
         image_idx = example['sample_idx']
-        points = example['points'].tensor.numpy()
-        gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
+        points = example['points'].numpy()
+        gt_boxes_3d = annos['gt_bboxes_3d'].numpy()
         names = [
             self.dataset.metainfo['classes'][i] for i in annos['gt_labels_3d']
         ]

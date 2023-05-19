@@ -68,7 +68,14 @@ class WaymoDataset(KittiDataset):
         load_interval (int): load frame interval. Defaults to 1.
         max_sweeps (int): max sweep for each frame. Defaults to 0.
     """
-    METAINFO = {'classes': ('Car', 'Pedestrian', 'Cyclist')}
+    METAINFO = {
+        'classes': ('Car', 'Pedestrian', 'Cyclist'),
+        'palette': [
+            (0, 120, 255),  # Waymo Blue
+            (0, 232, 157),  # Waymo Green
+            (255, 205, 85)  # Amber
+        ]
+    }
 
     def __init__(self,
                  data_root: str,

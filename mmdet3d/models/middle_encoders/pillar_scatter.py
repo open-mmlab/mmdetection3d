@@ -22,7 +22,6 @@ class PointPillarsScatter(nn.Module):
         self.ny = output_shape[0]
         self.nx = output_shape[1]
         self.in_channels = in_channels
-        self.fp16_enabled = False
 
     def forward(self, voxel_features, coors, batch_size=None):
         """Foraward function to scatter features."""

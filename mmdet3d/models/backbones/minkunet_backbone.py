@@ -5,8 +5,7 @@ from mmengine.model import BaseModule
 from mmengine.registry import MODELS
 from torch import Tensor, nn
 
-from mmdet3d.models.layers import (TorchSparseConvModule,
-                                   TorchSparseResidualBlock)
+from mmdet3d.models.layers import TorchSparseBasicBlock, TorchSparseConvModule
 from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.utils import OptMultiConfig
 
@@ -64,11 +63,11 @@ class MinkUNetBackbone(BaseModule):
                         encoder_channels[i],
                         kernel_size=2,
                         stride=2),
-                    TorchSparseResidualBlock(
+                    TorchSparseBasicBlock(
                         encoder_channels[i],
                         encoder_channels[i + 1],
                         kernel_size=3),
-                    TorchSparseResidualBlock(
+                    TorchSparseBasicBlock(
                         encoder_channels[i + 1],
                         encoder_channels[i + 1],
                         kernel_size=3)))
@@ -82,11 +81,11 @@ class MinkUNetBackbone(BaseModule):
                         stride=2,
                         transposed=True),
                     nn.Sequential(
-                        TorchSparseResidualBlock(
+                        TorchSparseBasicBlock(
                             decoder_channels[i + 1] + encoder_channels[-2 - i],
                             decoder_channels[i + 1],
                             kernel_size=3),
-                        TorchSparseResidualBlock(
+                        TorchSparseBasicBlock(
                             decoder_channels[i + 1],
                             decoder_channels[i + 1],
                             kernel_size=3))

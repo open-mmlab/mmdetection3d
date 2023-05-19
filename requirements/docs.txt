@@ -7,3 +7,4 @@ sphinx-tabs
 sphinx_copybutton
 sphinx_markdown_tables>=0.0.16
 tabulate
+urllib3<2.0.0

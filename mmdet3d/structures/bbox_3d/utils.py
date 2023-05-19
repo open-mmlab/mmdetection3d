@@ -285,7 +285,6 @@ def mono_cam_box2vis(cam_box):
     from .cam_box3d import CameraInstance3DBoxes
     assert isinstance(cam_box, CameraInstance3DBoxes), \
         'input bbox should be CameraInstance3DBoxes!'
-
     loc = cam_box.gravity_center
     dim = cam_box.dims
     yaw = cam_box.yaw

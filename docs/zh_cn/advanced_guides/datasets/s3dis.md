@@ -214,7 +214,7 @@ train_pipeline = [
 
 ## 度量指标
 
-通常我们使用平均交并比 (mean Intersection over Union, mIoU) 作为 ScanNet 语义分割任务的度量指标。
+通常我们使用平均交并比 (mean Intersection over Union, mIoU) 作为 S3DIS 语义分割任务的度量指标。
 具体而言，我们先计算所有类别的 IoU，然后取平均值作为 mIoU。
 更多实现细节请参考 [seg_eval.py](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/evaluation/functional/seg_eval.py)。
 
