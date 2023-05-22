@@ -34,7 +34,7 @@ class IoUNegPiecewiseSampler(RandomSampler):
 
     def __init__(self,
                  num: int,
-                 pos_fraction: float = None,
+                 pos_fraction: Optional[float] = None,
                  neg_piece_fractions: Optional[list] = None,
                  neg_iou_piece_thrs: Optional[list] = None,
                  neg_pos_ub: float = -1,
