@@ -127,7 +127,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                hei: Tensor,
                dim: Tensor,
                vel: Tensor,
-               reg: Tensor = None,
+               reg: Optional[Tensor] = None,
                task_id: int = -1) -> List[Dict[str, Tensor]]:
         """Decode bboxes.
 
