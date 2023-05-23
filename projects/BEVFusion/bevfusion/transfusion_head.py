@@ -814,7 +814,7 @@ class TransFusionHead(nn.Module):
             layer_cls_score = layer_score.permute(0, 2, 1).reshape(
                 -1, self.num_classes)
             layer_loss_cls = self.loss_cls(
-                layer_cls_score,
+                layer_cls_score.float(),
                 layer_labels,
                 layer_label_weights,
                 avg_factor=max(num_pos, 1),
