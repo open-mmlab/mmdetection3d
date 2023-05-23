@@ -372,7 +372,7 @@ def post_process_coords(
         else:
             return None
     else:
-	return None
+        return None
 
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
