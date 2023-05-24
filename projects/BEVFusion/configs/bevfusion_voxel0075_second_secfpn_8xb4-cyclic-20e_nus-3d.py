@@ -400,7 +400,8 @@ param_scheduler = [
         T_max=6,
         end=6,
         by_epoch=True,
-        eta_min_ratio=1e-3),
+        eta_min_ratio=1e-3,
+        convert_to_iter_based=True),
     # momentum scheduler
     # During the first 8 epochs, momentum increases from 1 to 0.85 / 0.95
     # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
