@@ -1,8 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List
+
 import numpy as np
 import torch
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 from .partial_bin_based_bbox_coder import PartialBinBasedBBoxCoder
 
 
@@ -21,11 +25,11 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
     """
 
     def __init__(self,
-                 num_dir_bins,
-                 num_sizes,
-                 mean_sizes,
-                 with_rot=True,
-                 size_cls_agnostic=True):
+                 num_dir_bins: int,
+                 num_sizes: int,
+                 mean_sizes: List[List[int]],
+                 with_rot: bool = True,
+                 size_cls_agnostic: bool = True) -> None:
         super(GroupFree3DBBoxCoder, self).__init__(
             num_dir_bins=num_dir_bins,
             num_sizes=num_sizes,
@@ -33,7 +37,8 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
             with_rot=with_rot)
         self.size_cls_agnostic = size_cls_agnostic
 
-    def encode(self, gt_bboxes_3d, gt_labels_3d):
+    def encode(self, gt_bboxes_3d: BaseInstance3DBoxes,
+               gt_labels_3d: Tensor) -> tuple:
         """Encode ground truth to prediction targets.
 
         Args:
@@ -65,7 +70,7 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         return (center_target, size_target, size_class_target, size_res_target,
                 dir_class_target, dir_res_target)
 
-    def decode(self, bbox_out, prefix=''):
+    def decode(self, bbox_out: dict, prefix: str = '') -> Tensor:
         """Decode predicted parts to bbox3d.
 
         Args:
@@ -116,7 +121,11 @@ class GroupFree3DBBoxCoder(PartialBinBasedBBoxCoder):
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
 
-    def split_pred(self, cls_preds, reg_preds, base_xyz, prefix=''):
+    def split_pred(self,
+                   cls_preds: Tensor,
+                   reg_preds: Tensor,
+                   base_xyz: Tensor,
+                   prefix: str = '') -> Dict[str, Tensor]:
         """Split predicted features to specific parts.
 
         Args:

@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional, Tuple
+
 import numpy as np
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures import CameraInstance3DBoxes
 
 
 @TASK_UTILS.register_module()
@@ -17,13 +21,16 @@ class SMOKECoder(BaseBBoxCoder):
         code_size (int): The dimension of boxes to be encoded.
     """
 
-    def __init__(self, base_depth, base_dims, code_size):
+    def __init__(self, base_depth: Tuple[float], base_dims: Tuple[float],
+                 code_size: int):
         super(SMOKECoder, self).__init__()
         self.base_depth = base_depth
         self.base_dims = base_dims
         self.bbox_code_size = code_size
 
-    def encode(self, locations, dimensions, orientations, input_metas):
+    def encode(self, locations: Optional[Tensor], dimensions: Tensor,
+               orientations: Tensor,
+               input_metas: List[dict]) -> CameraInstance3DBoxes:
         """Encode CameraInstance3DBoxes by locations, dimensions, orientations.
 
         Args:
@@ -50,12 +57,12 @@ class SMOKECoder(BaseBBoxCoder):
         return batch_bboxes
 
     def decode(self,
-               reg,
-               points,
-               labels,
-               cam2imgs,
-               trans_mats,
-               locations=None):
+               reg: Tensor,
+               points: Tensor,
+               labels: Tensor,
+               cam2imgs: Tensor,
+               trans_mats: Tensor,
+               locations: Optional[Tensor] = None) -> Tuple[Tensor]:
         """Decode regression into locations, dimensions, orientations.
 
         Args:
@@ -104,15 +111,16 @@ class SMOKECoder(BaseBBoxCoder):
 
         return pred_locations, pred_dimensions, pred_orientations
 
-    def _decode_depth(self, depth_offsets):
+    def _decode_depth(self, depth_offsets: Tensor) -> Tensor:
         """Transform depth offset to depth."""
         base_depth = depth_offsets.new_tensor(self.base_depth)
         depths = depth_offsets * base_depth[1] + base_depth[0]
 
         return depths
 
-    def _decode_location(self, points, centers2d_offsets, depths, cam2imgs,
-                         trans_mats):
+    def _decode_location(self, points: Tensor, centers2d_offsets: Tensor,
+                         depths: Tensor, cam2imgs: Tensor,
+                         trans_mats: Tensor) -> Tensor:
         """Retrieve objects location in camera coordinate based on projected
         points.
 
@@ -152,7 +160,7 @@ class SMOKECoder(BaseBBoxCoder):
 
         return locations[:, :3]
 
-    def _decode_dimension(self, labels, dims_offset):
+    def _decode_dimension(self, labels: Tensor, dims_offset: Tensor) -> Tensor:
         """Transform dimension offsets to dimension according to its category.
 
         Args:
@@ -168,7 +176,8 @@ class SMOKECoder(BaseBBoxCoder):
 
         return dimensions
 
-    def _decode_orientation(self, ori_vector, locations):
+    def _decode_orientation(self, ori_vector: Tensor,
+                            locations: Optional[Tensor]) -> Tensor:
         """Retrieve object orientation.
 
         Args:

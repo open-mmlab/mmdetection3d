@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List
+
 import numpy as np
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 
 
 @TASK_UTILS.register_module()
@@ -17,7 +21,11 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         with_rot (bool): Whether the bbox is with rotation.
     """
 
-    def __init__(self, num_dir_bins, num_sizes, mean_sizes, with_rot=True):
+    def __init__(self,
+                 num_dir_bins: int,
+                 num_sizes: int,
+                 mean_sizes: List[List[int]],
+                 with_rot: bool = True):
         super(PartialBinBasedBBoxCoder, self).__init__()
         assert len(mean_sizes) == num_sizes
         self.num_dir_bins = num_dir_bins
@@ -25,7 +33,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         self.mean_sizes = mean_sizes
         self.with_rot = with_rot
 
-    def encode(self, gt_bboxes_3d, gt_labels_3d):
+    def encode(self, gt_bboxes_3d: BaseInstance3DBoxes,
+               gt_labels_3d: Tensor) -> tuple:
         """Encode ground truth to prediction targets.
 
         Args:
@@ -56,7 +65,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         return (center_target, size_class_target, size_res_target,
                 dir_class_target, dir_res_target)
 
-    def decode(self, bbox_out, suffix=''):
+    def decode(self, bbox_out: dict, suffix: str = '') -> Tensor:
         """Decode predicted parts to bbox3d.
 
         Args:
@@ -99,7 +108,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
 
-    def decode_corners(self, center, size_res, size_class):
+    def decode_corners(self, center: Tensor, size_res: Tensor,
+                       size_class: Tensor) -> Tensor:
         """Decode center, size residuals and class to corners. Only useful for
         axis-aligned bounding boxes, so angle isn't considered.
 
@@ -137,7 +147,8 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
         corners = torch.cat([corner1, corner2], dim=-1)
         return corners
 
-    def split_pred(self, cls_preds, reg_preds, base_xyz):
+    def split_pred(self, cls_preds: Tensor, reg_preds: Tensor,
+                   base_xyz: Tensor) -> Dict[str, Tensor]:
         """Split predicted features to specific parts.
 
         Args:
@@ -201,7 +212,7 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
 
         return results
 
-    def angle2class(self, angle):
+    def angle2class(self, angle: Tensor) -> tuple:
         """Convert continuous angle to a discrete class and a residual.
 
         Convert continuous angle to a discrete class and a small
@@ -222,7 +233,10 @@ class PartialBinBasedBBoxCoder(BaseBBoxCoder):
             angle_cls * angle_per_class + angle_per_class / 2)
         return angle_cls.long(), angle_res
 
-    def class2angle(self, angle_cls, angle_res, limit_period=True):
+    def class2angle(self,
+                    angle_cls: Tensor,
+                    angle_res: Tensor,
+                    limit_period: bool = True) -> Tensor:
         """Inverse function to angle2class.
 
         Args:

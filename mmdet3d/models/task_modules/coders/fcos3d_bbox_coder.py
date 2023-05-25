@@ -1,7 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Tuple
+
 import numpy as np
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
 from mmdet3d.structures.bbox_3d import limit_period
@@ -22,10 +25,10 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
     """
 
     def __init__(self,
-                 base_depths=None,
-                 base_dims=None,
-                 code_size=7,
-                 norm_on_bbox=True):
+                 base_depths: Optional[Tuple[Tuple[float]]] = None,
+                 base_dims: Optional[Tuple[Tuple[float]]] = None,
+                 code_size: int = 7,
+                 norm_on_bbox: bool = True) -> None:
         super(FCOS3DBBoxCoder, self).__init__()
         self.base_depths = base_depths
         self.base_dims = base_dims
@@ -36,7 +39,12 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
         # TODO: refactor the encoder in the FCOS3D and PGD head
         pass
 
-    def decode(self, bbox, scale, stride, training, cls_score=None):
+    def decode(self,
+               bbox: Tensor,
+               scale: tuple,
+               stride: int,
+               training: bool,
+               cls_score: Optional[Tensor] = None) -> Tensor:
         """Decode regressed results into 3D predictions.
 
         Note that offsets are not transformed to the projected 3D centers.
@@ -100,7 +108,8 @@ class FCOS3DBBoxCoder(BaseBBoxCoder):
         return bbox
 
     @staticmethod
-    def decode_yaw(bbox, centers2d, dir_cls, dir_offset, cam2img):
+    def decode_yaw(bbox: Tensor, centers2d: Tensor, dir_cls: Tensor,
+                   dir_offset: float, cam2img: Tensor) -> Tensor:
         """Decode yaw angle and change it from local to global.i.
 
         Args:
