@@ -56,7 +56,7 @@ python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${N
 In MMDetection3D's root directory, run the following command to test the model:
 
 ```bash
-python tools/train.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH}
+python tools/test.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH}
 ```
 
 ## Results and models
