@@ -4,7 +4,6 @@ _base_ = [
 ]
 
 # optimizer
-# This schedule is mainly used by models on nuScenes dataset
 lr = 0.001
 optim_wrapper = dict(
     type='OptimWrapper',

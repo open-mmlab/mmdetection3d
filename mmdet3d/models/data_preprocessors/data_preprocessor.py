@@ -49,6 +49,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             voxelization and dynamic voxelization. Defaults to 'hard'.
         voxel_layer (dict or :obj:`ConfigDict`, optional): Voxelization layer
             config. Defaults to None.
+        batch_first (bool): Whether to put the batch dimension to the first
+            dimension when getting voxel coordinates. Defaults to True.
         max_voxels (int): Maximum number of voxels in each voxel grid. Defaults
             to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
@@ -79,6 +81,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  voxel: bool = False,
                  voxel_type: str = 'hard',
                  voxel_layer: OptConfigType = None,
+                 batch_first: bool = True,
                  max_voxels: Optional[int] = None,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
@@ -106,6 +109,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             batch_augments=batch_augments)
         self.voxel = voxel
         self.voxel_type = voxel_type
+        self.batch_first = batch_first
         self.max_voxels = max_voxels
         if voxel:
             self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
@@ -440,8 +444,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                         = data_sample.gt_pts_seg.pts_semantic_mask[inds]
                 res_voxel_coors = res_coors[inds]
                 res_voxels = res[inds]
-                res_voxel_coors = F.pad(
-                    res_voxel_coors, (0, 1), mode='constant', value=i)
+                if self.batch_first:
+                    res_voxel_coors = F.pad(
+                        res_voxel_coors, (1, 0), mode='constant', value=i)
+                    data_sample.batch_idx = res_voxel_coors[:, 0]
+                else:
+                    res_voxel_coors = F.pad(
+                        res_voxel_coors, (0, 1), mode='constant', value=i)
+                    data_sample.batch_idx = res_voxel_coors[:, -1]
                 data_sample.point2voxel_map = point2voxel_map.long()
                 voxels.append(res_voxels)
                 coors.append(res_voxel_coors)

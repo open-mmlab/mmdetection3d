@@ -1039,7 +1039,7 @@ class PointSample(BaseTransform):
     def _points_random_sampling(
         self,
         points: BasePoints,
-        num_samples: int,
+        num_samples: Union[int, float],
         sample_range: Optional[float] = None,
         replace: bool = False,
         return_choices: bool = False
@@ -1050,7 +1050,9 @@ class PointSample(BaseTransform):
 
         Args:
             points (:obj:`BasePoints`): 3D Points.
-            num_samples (int): Number of samples to be sampled.
+            num_samples (int, float): Number of samples to be sampled. If
+                float, we sample random fraction of points from num_points
+                to 100%.
             sample_range (float, optional): Indicating the range where the
                 points will be sampled. Defaults to None.
             replace (bool): Sampling with or without replacement.
@@ -1063,6 +1065,11 @@ class PointSample(BaseTransform):
                 - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
+        if isinstance(num_samples, float):
+            assert num_samples < 1
+            num_samples = int(
+                np.random.uniform(self.num_points, 1.) * points.shape[0])
+
         if not replace:
             replace = (points.shape[0] < num_samples)
         point_range = range(len(points))

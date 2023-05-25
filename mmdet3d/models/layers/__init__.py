@@ -31,6 +31,6 @@ __all__ = [
     'nms_normal_bev', 'build_sa_module', 'PointSAModuleMSG', 'PointSAModule',
     'PointFPModule', 'PAConvSAModule', 'PAConvSAModuleMSG',
     'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG', 'TorchSparseConvModule',
-    'TorchSparseBasicBlock', 'TorchSparseBottleneck', 'MinkowskiBasicBlock',
-    'MinkowskiBottleneck', 'MinkowskiConvModule'
+    'TorchSparseBasicBlock', 'TorchSparseBottleneck', 'MinkowskiConvModule',
+    'MinkowskiBasicBlock', 'MinkowskiBottleneck'
 ]
