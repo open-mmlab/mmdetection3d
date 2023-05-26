@@ -370,9 +370,9 @@ def post_process_coords(
         else:
           warnings.warn('img_intersection is not an object of Polygon.')
           return None
-     else:
-        return None
-      
+    else:
+      return None
+
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
                     dataset: str) -> Union[dict, None]:
