@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from typing import List, Optional, Tuple, Union
+import warnings
 
 import numpy as np
 from nuscenes import NuScenes
@@ -360,18 +361,18 @@ def post_process_coords(
     if polygon_from_2d_box.intersects(img_canvas):
         img_intersection = polygon_from_2d_box.intersection(img_canvas)
         if isinstance(img_intersection, Polygon):
-          intersection_coords = np.array(
-            [coord for coord in img_intersection.exterior.coords])
-          min_x = min(intersection_coords[:, 0])
-          min_y = min(intersection_coords[:, 1])
-          max_x = max(intersection_coords[:, 0])
-          max_y = max(intersection_coords[:, 1])
-          return min_x, min_y, max_x, max_y
+            intersection_coords = np.array(
+                [coord for coord in img_intersection.exterior.coords])
+            min_x = min(intersection_coords[:, 0])
+            min_y = min(intersection_coords[:, 1])
+            max_x = max(intersection_coords[:, 0])
+            max_y = max(intersection_coords[:, 1])
+            return min_x, min_y, max_x, max_y
         else:
-          warnings.warn('img_intersection is not an object of Polygon.')
-          return None
+            warnings.warn('img_intersection is not an object of Polygon.')
+            return None
     else:
-      return None
+        return None
 
 
 def generate_record(ann_rec: dict, x1: float, y1: float, x2: float, y2: float,
