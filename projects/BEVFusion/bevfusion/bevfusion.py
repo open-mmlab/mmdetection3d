@@ -59,9 +59,6 @@ class BEVFusion(Base3DDetector):
         self.pts_neck = MODELS.build(pts_neck)
 
         self.bbox_head = MODELS.build(bbox_head)
-        # hard code here where using converted checkpoint of original
-        # implementation of `BEVFusion`
-        self.use_converted_checkpoint = False
 
         self.init_weights()
 
@@ -235,11 +232,6 @@ class BEVFusion(Base3DDetector):
 
         if self.with_bbox_head:
             outputs = self.bbox_head.predict(feats, batch_input_metas)
-            if self.use_converted_checkpoint:
-                outputs[0]['bboxes_3d'].tensor[:, 6] = -outputs[0][
-                    'bboxes_3d'].tensor[:, 6] - np.pi / 2
-                outputs[0]['bboxes_3d'].tensor[:, 3:5] = outputs[0][
-                    'bboxes_3d'].tensor[:, [4, 3]]
 
         res = self.add_pred_to_datasample(batch_data_samples, outputs)
 
