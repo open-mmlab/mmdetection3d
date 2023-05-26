@@ -1,5 +1,55 @@
 # Changelog of v1.1
 
+### v1.1.1 (26/5/2023)
+
+#### Highlights
+
+- Support [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf) in `projects` (#2399, #2517, #2535)
+- Support the training of \[BEVFusion\] in `projects` (#2546)
+- Support Lidar-based 3D Semantic Segmentation Benchmark (#2530, #2559)
+
+#### New Features
+
+- Support [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf) in `projects` (#2399, #2517, #2535)
+- Support the training of \[BEVFusion\] in `projects` ()
+- Support LiDAR-based 3D Semantic Segmentation Benchmark (#2530, #2559)
+- Support test-time augmentation for Segmentor (#2382)
+- Support Minkowski ConvModule and Residual Block (#2528)
+
+#### Improvements
+
+- Upload PETR checkpoints and training log (#2555)
+- Replace `np.float` by default `float` in segmentation evaluation (#2527)
+- Add SemanticKITTI Datasets description (#2515)
+- Support different colors for different classes in visualization (#2500)
+- Support tensor-like operations for BaseInstance3DBoxes and BasePoint
+- Add information of LiDAR Segmentation in NuScenes annotation files
+- Provide offline annotations (#2457)
+- Refactor documents structure (#2429)
+- Complete typehints and docstring (#2396, #2457, #2468, #2464, #2485)
+
+#### Bug Fixes
+
+- Fix bug when training SECOND in Automatic mixed precision(AMP) mode (#2452)
+- Add a warning in function `post_process_coords` in mmdet3d/dataset/convert_utils.py (#2557)
+- Fix invalid configs (#2477, #2536)
+- Fix Unit testing bug (#2466)
+- Fix `local-rank` in test.py for pytorch 2.0 (#2469)
+- Fix docker file (#2451)
+- Fix demo and visualization (#2453)
+- Fix SUN RGB-D data converter (#2440)
+- Fix readthedocs building (#2459, #2419, #2505)
+- Fix CI #(2445)
+- Update pre-commit-config-zh-cn.yaml (#2396)
+- Fix the version error of `torch` in github merge stage test (#2424)
+- Loose the version restriction of `numba` (#2416)
+
+#### Contributors
+
+A total of 10 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @JingweiZhang12, @chriscarving, @jaan1729, @pd-michaelstanley, @filaPro, @kabouzeid, @A-new-b, @lbin
+
 ### v1.1.0 (6/4/2023)
 
 #### Highlights
