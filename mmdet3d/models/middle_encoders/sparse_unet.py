@@ -17,6 +17,8 @@ from mmdet3d.models.layers import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.models.layers.sparse_block import replace_feature
 from mmdet3d.registry import MODELS
 
+TwoTupleIntType = Tuple[Tuple[int]]
+
 
 @MODELS.register_module()
 class SparseUNet(BaseModule):
@@ -46,20 +48,19 @@ class SparseUNet(BaseModule):
             norm_cfg: dict = dict(type='BN1d', eps=1e-3, momentum=0.01),
             base_channels: int = 16,
             output_channels: int = 128,
-            encoder_channels: Optional[Tuple[Tuple[int]]] = ((16, ), (32, 32,
-                                                                      32),
-                                                             (64, 64, 64),
-                                                             (64, 64, 64)),
-            encoder_paddings: Optional[Tuple[Tuple[int]]] = ((1, ), (1, 1, 1),
-                                                             (1, 1,
-                                                              1), ((0, 1, 1),
-                                                                   1, 1)),
-            decoder_channels: Optional[Tuple[Tuple[int]]] = ((64, 64, 64),
-                                                             (64, 64, 32),
-                                                             (32, 32, 16),
-                                                             (16, 16, 16)),
-            decoder_paddings: Optional[Tuple[Tuple[int]]] = ((1, 0), (1, 0),
-                                                             (0, 0), (0, 1)),
+            encoder_channels: Optional[TwoTupleIntType] = ((16, ), (32, 32,
+                                                                    32),
+                                                           (64, 64,
+                                                            64), (64, 64, 64)),
+            encoder_paddings: Optional[TwoTupleIntType] = ((1, ), (1, 1, 1),
+                                                           (1, 1, 1),
+                                                           ((0, 1, 1), 1, 1)),
+            decoder_channels: Optional[TwoTupleIntType] = ((64, 64,
+                                                            64), (64, 64, 32),
+                                                           (32, 32,
+                                                            16), (16, 16, 16)),
+            decoder_paddings: Optional[TwoTupleIntType] = ((1, 0), (1, 0),
+                                                           (0, 0), (0, 1)),
             init_cfg: bool = None):
         super().__init__(init_cfg=init_cfg)
         self.sparse_shape = sparse_shape

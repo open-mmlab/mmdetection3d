@@ -18,6 +18,8 @@ if IS_SPCONV2_AVAILABLE:
 else:
     from mmcv.ops import SparseConvTensor, SparseSequential
 
+TwoTupleIntType = Tuple[Tuple[int]]
+
 
 @MODELS.register_module()
 class SparseEncoder(nn.Module):
@@ -55,14 +57,13 @@ class SparseEncoder(nn.Module):
                 type='BN1d', eps=1e-3, momentum=0.01),
             base_channels: Optional[int] = 16,
             output_channels: Optional[int] = 128,
-            encoder_channels: Optional[Tuple[Tuple[int]]] = ((16, ), (32, 32,
-                                                                      32),
-                                                             (64, 64, 64),
-                                                             (64, 64, 64)),
-            encoder_paddings: Optional[Tuple[Tuple[int]]] = ((1, ), (1, 1, 1),
-                                                             (1, 1,
-                                                              1), ((0, 1, 1),
-                                                                   1, 1)),
+            encoder_channels: Optional[TwoTupleIntType] = ((16, ), (32, 32,
+                                                                    32),
+                                                           (64, 64,
+                                                            64), (64, 64, 64)),
+            encoder_paddings: Optional[TwoTupleIntType] = ((1, ), (1, 1, 1),
+                                                           (1, 1, 1),
+                                                           ((0, 1, 1), 1, 1)),
             block_type: Optional[str] = 'conv_module',
             return_middle_feats: Optional[bool] = False):
         super().__init__()
@@ -273,14 +274,13 @@ class SparseEncoderSASSD(SparseEncoder):
             norm_cfg: dict = dict(type='BN1d', eps=1e-3, momentum=0.01),
             base_channels: int = 16,
             output_channels: int = 128,
-            encoder_channels: Optional[Tuple[Tuple[int]]] = ((16, ), (32, 32,
-                                                                      32),
-                                                             (64, 64, 64),
-                                                             (64, 64, 64)),
-            encoder_paddings: Optional[Tuple[Tuple[int]]] = ((1, ), (1, 1, 1),
-                                                             (1, 1,
-                                                              1), ((0, 1, 1),
-                                                                   1, 1)),
+            encoder_channels: Optional[TwoTupleIntType] = ((16, ), (32, 32,
+                                                                    32),
+                                                           (64, 64,
+                                                            64), (64, 64, 64)),
+            encoder_paddings: Optional[TwoTupleIntType] = ((1, ), (1, 1, 1),
+                                                           (1, 1, 1),
+                                                           ((0, 1, 1), 1, 1)),
             block_type: str = 'conv_module'):
         super(SparseEncoderSASSD, self).__init__(
             in_channels=in_channels,
