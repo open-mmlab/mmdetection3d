@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-from typing import List, Optional, Tuple, Union
 import warnings
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from nuscenes import NuScenes
