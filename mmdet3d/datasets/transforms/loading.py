@@ -250,7 +250,7 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             results['cam2img'] = results['images'][camera_type]['cam2img']
         else:
             raise NotImplementedError(
-                'Currently we only support load image from kitti and'
+                'Currently we only support load image from kitti and '
                 'nuscenes datasets')
 
         try:
@@ -387,7 +387,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
         if isinstance(points, np.ndarray):
             points_numpy = points
         elif isinstance(points, BasePoints):
-            points_numpy = points.tensor.numpy()
+            points_numpy = points.numpy()
         else:
             raise NotImplementedError
         x_filt = np.abs(points_numpy[:, 0]) < radius
@@ -701,10 +701,37 @@ class LoadPointsFromDict(LoadPointsFromFile):
             dict: The processed results.
         """
         assert 'points' in results
-        points_class = get_points_type(self.coord_type)
         points = results['points']
-        results['points'] = points_class(
-            points, points_dim=points.shape[-1], attribute_dims=None)
+
+        if self.norm_intensity:
+            assert len(self.use_dim) >= 4, \
+                f'When using intensity norm, expect used dimensions >= 4, got {len(self.use_dim)}'  # noqa: E501
+            points[:, 3] = np.tanh(points[:, 3])
+        attribute_dims = None
+
+        if self.shift_height:
+            floor_height = np.percentile(points[:, 2], 0.99)
+            height = points[:, 2] - floor_height
+            points = np.concatenate(
+                [points[:, :3],
+                 np.expand_dims(height, 1), points[:, 3:]], 1)
+            attribute_dims = dict(height=3)
+
+        if self.use_color:
+            assert len(self.use_dim) >= 6
+            if attribute_dims is None:
+                attribute_dims = dict()
+            attribute_dims.update(
+                dict(color=[
+                    points.shape[1] - 3,
+                    points.shape[1] - 2,
+                    points.shape[1] - 1,
+                ]))
+
+        points_class = get_points_type(self.coord_type)
+        points = points_class(
+            points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
+        results['points'] = points
         return results
 
 
@@ -1174,3 +1201,119 @@ class MonoDet3DInferencerLoader(BaseTransform):
         if 'img' in inputs:
             return self.from_ndarray(inputs)
         return self.from_file(inputs)
+
+
+@TRANSFORMS.register_module()
+class MultiModalityDet3DInferencerLoader(BaseTransform):
+    """Load point cloud and image in the Inferencer's pipeline.
+
+    Added keys:
+      - points
+      - img
+      - cam2img
+      - lidar2cam
+      - lidar2img
+      - timestamp
+      - axis_align_matrix
+      - box_type_3d
+      - box_mode_3d
+    """
+
+    def __init__(self, load_point_args: dict, load_img_args: dict) -> None:
+        super().__init__()
+        self.points_from_file = TRANSFORMS.build(
+            dict(type='LoadPointsFromFile', **load_point_args))
+        self.points_from_ndarray = TRANSFORMS.build(
+            dict(type='LoadPointsFromDict', **load_point_args))
+        coord_type = load_point_args['coord_type']
+        self.box_type_3d, self.box_mode_3d = get_box_type(coord_type)
+
+        self.imgs_from_file = TRANSFORMS.build(
+            dict(type='LoadImageFromFile', **load_img_args))
+        self.imgs_from_ndarray = TRANSFORMS.build(
+            dict(type='LoadImageFromNDArray', **load_img_args))
+
+    def transform(self, single_input: dict) -> dict:
+        """Transform function to add image meta information.
+        Args:
+            single_input (dict): Single input.
+
+        Returns:
+            dict: The dict contains loaded image, point cloud and meta
+            information.
+        """
+        assert 'points' in single_input and 'img' in single_input and \
+            'calib' in single_input, "key 'points', 'img' and 'calib' must be "
+        f'in input dict, but got {single_input}'
+        if isinstance(single_input['points'], str):
+            inputs = dict(
+                lidar_points=dict(lidar_path=single_input['points']),
+                timestamp=1,
+                # for ScanNet demo we need axis_align_matrix
+                axis_align_matrix=np.eye(4),
+                box_type_3d=self.box_type_3d,
+                box_mode_3d=self.box_mode_3d)
+        elif isinstance(single_input['points'], np.ndarray):
+            inputs = dict(
+                points=single_input['points'],
+                timestamp=1,
+                # for ScanNet demo we need axis_align_matrix
+                axis_align_matrix=np.eye(4),
+                box_type_3d=self.box_type_3d,
+                box_mode_3d=self.box_mode_3d)
+        else:
+            raise ValueError('Unsupported input points type: '
+                             f"{type(single_input['points'])}")
+
+        if 'points' in inputs:
+            points_inputs = self.points_from_ndarray(inputs)
+        else:
+            points_inputs = self.points_from_file(inputs)
+
+        multi_modality_inputs = points_inputs
+
+        box_type_3d, box_mode_3d = get_box_type('lidar')
+        if isinstance(single_input['calib'], str):
+            calib = mmengine.load(single_input['calib'])
+
+        elif isinstance(single_input['calib'], dict):
+            calib = single_input['calib']
+        else:
+            raise ValueError('Unsupported input calib type: '
+                             f"{type(single_input['calib'])}")
+
+        cam2img = np.asarray(calib['cam2img'], dtype=np.float32)
+        lidar2cam = np.asarray(calib['lidar2cam'], dtype=np.float32)
+        if 'lidar2cam' in calib:
+            lidar2img = np.asarray(calib['lidar2img'], dtype=np.float32)
+        else:
+            lidar2img = cam2img @ lidar2cam
+
+        if isinstance(single_input['img'], str):
+            inputs = dict(
+                img_path=single_input['img'],
+                cam2img=cam2img,
+                lidar2img=lidar2img,
+                lidar2cam=lidar2cam,
+                box_mode_3d=box_mode_3d,
+                box_type_3d=box_type_3d)
+        elif isinstance(single_input['img'], np.ndarray):
+            inputs = dict(
+                img=single_input['img'],
+                cam2img=cam2img,
+                lidar2img=lidar2img,
+                lidar2cam=lidar2cam,
+                box_type_3d=box_type_3d,
+                box_mode_3d=box_mode_3d)
+        else:
+            raise ValueError('Unsupported input image type: '
+                             f"{type(single_input['img'])}")
+
+        if isinstance(single_input['img'], np.ndarray):
+            imgs_inputs = self.imgs_from_ndarray(inputs)
+        else:
+            imgs_inputs = self.imgs_from_file(inputs)
+
+        multi_modality_inputs.update(imgs_inputs)
+
+        return multi_modality_inputs

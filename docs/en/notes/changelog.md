@@ -1,5 +1,55 @@
 # Changelog of v1.1
 
+### v1.1.0 (6/4/2023)
+
+#### Highlights
+
+- Support [Cylinder3D](https://arxiv.org/pdf/2011.10033.pdf) (#2291, #2344, #2350)
+- Support [MinkUnet](https://arxiv.org/abs/1904.08755) (#2294, #2358)
+- Support [SPVCNN](https://arxiv.org/abs/2007.16100) (#2320，#2372)
+- Support [TR3D](https://arxiv.org/abs/2302.02858) detector in `projects` (#2274)
+- Support the inference of [BEVFusion](https://arxiv.org/abs/2205.13542) in `projects` (#2175)
+- Support [DETR3D](https://arxiv.org/abs/2110.06922) in `projects` (#2173)
+
+#### New Features
+
+- Support [Cylinder3D](https://arxiv.org/pdf/2011.10033.pdf) (#2291, #2344, #2350)
+- Support [MinkUnet](https://arxiv.org/abs/1904.08755) (#2294, #2358)
+- Support [SPVCNN](https://arxiv.org/abs/2007.16100) (#2320，#2372)
+- Support [TR3D](https://arxiv.org/abs/2302.02858) detector in `projects` (#2274)
+- Support the inference of [BEVFusion](https://arxiv.org/abs/2205.13542) in `projects` (#2175)
+- Support [DETR3D](https://arxiv.org/abs/2110.06922) in `projects` (#2173)
+- Support PolarMix and LaserMix augmentation (#2265, #2302)
+- Support loading annotation of panoptic segmentation (#2223)
+- Support panoptic segmentation metric (#2230)
+- Add inferencer for LiDAR-based, monocular and multi-modality 3D detection (#2208, #2190, #2342)
+- Add inferencer for LiDAR-based segmentation (#2304)
+
+#### Improvements
+
+- Support `lazy_init` for CBGSDataset (#2271)
+- Support generating annotation files for test set on Waymo  (#2180)
+- Enhance the support for SemanticKitti (#2253, #2323)
+- File I/O migration and reconstruction (#2319)
+- Support `format_only` option for Lyft, NuScenes and Waymo datasets (#2333, #2151)
+- Replace `np.transpose` with `torch.permute` to speed up (#2277)
+- Allow setting local-rank for pytorch 2.0 (#2387)
+
+#### Bug Fixes
+
+- Fix the problem of reversal of length and width when drawing heatmap in CenterFormer (#2362)
+- Deprecate old type alias due to the new version of numpy (#2339)
+- Lose `trimesh` version requirements to fix numpy random state (#2340)
+- Fix the device mismatch error in CenterPoint (#2308)
+- Fix bug of visualization when there are no bboxes (#2231)
+- Fix bug of counting ignore index in IOU in segmentation evaluation (#2229)
+
+#### Contributors
+
+A total of 14 developers contributed to this release.
+
+@ZLTJohn, @SekiroRong, @shufanwu, @vansin, @triple-Mu, @404Vector, @filaPro, @sunjiahao1999, @Ginray, @Xiangxu-0103, @JingweiZhang12, @DezeZhao, @ZCMax, @roger-lcc
+
 ### v1.1.0rc3 (7/1/2023)
 
 #### Highlights

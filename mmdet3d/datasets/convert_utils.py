@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import warnings
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -7,6 +8,7 @@ from nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points
 from pyquaternion import Quaternion
 from shapely.geometry import MultiPoint, box
+from shapely.geometry.polygon import Polygon
 
 from mmdet3d.structures import Box3DMode, CameraInstance3DBoxes, points_cam2img
 from mmdet3d.structures.ops import box_np_ops
@@ -330,7 +332,7 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
         Box3DMode.LIDAR, np.linalg.inv(rect @ lidar2cam0), correct_yaw=True)
     # convert gt_bboxes_3d to cam coordinates
     gt_bboxes_3d = gt_bboxes_3d.convert_to(
-        Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).tensor.numpy()
+        Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).numpy()
     converted_annos['location'] = gt_bboxes_3d[:, :3]
     converted_annos['dimensions'] = gt_bboxes_3d[:, 3:6]
     converted_annos['rotation_y'] = gt_bboxes_3d[:, 6]
@@ -358,15 +360,17 @@ def post_process_coords(
 
     if polygon_from_2d_box.intersects(img_canvas):
         img_intersection = polygon_from_2d_box.intersection(img_canvas)
-        intersection_coords = np.array(
-            [coord for coord in img_intersection.exterior.coords])
-
-        min_x = min(intersection_coords[:, 0])
-        min_y = min(intersection_coords[:, 1])
-        max_x = max(intersection_coords[:, 0])
-        max_y = max(intersection_coords[:, 1])
-
-        return min_x, min_y, max_x, max_y
+        if isinstance(img_intersection, Polygon):
+            intersection_coords = np.array(
+                [coord for coord in img_intersection.exterior.coords])
+            min_x = min(intersection_coords[:, 0])
+            min_y = min(intersection_coords[:, 1])
+            max_x = max(intersection_coords[:, 0])
+            max_y = max(intersection_coords[:, 1])
+            return min_x, min_y, max_x, max_y
+        else:
+            warnings.warn('img_intersection is not an object of Polygon.')
+            return None
     else:
         return None
 

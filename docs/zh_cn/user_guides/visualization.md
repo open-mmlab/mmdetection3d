@@ -42,18 +42,19 @@ visualizer.show()
 
 ```python
 import torch
+import numpy as np
 
 from mmdet3d.visualization import Det3DLocalVisualizer
 from mmdet3d.structures import LiDARInstance3DBoxes
 
-points = np.fromfile('tests/data/kitti/training/velodyne/000000.bin', dtype=np.float32)
+points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
 points = points.reshape(-1, 4)
 visualizer = Det3DLocalVisualizer()
 # set point cloud in visualizer
 visualizer.set_points(points)
-bboxes_3d = LiDARInstance3DBoxes(torch.tensor(
-                [[8.7314, -1.8559, -1.5997, 1.2000, 0.4800, 1.8900,
-                  -1.5808]])),
+bboxes_3d = LiDARInstance3DBoxes(
+    torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
+                   -1.5808]]))
 # Draw 3D bboxes
 visualizer.draw_bboxes_3d(bboxes_3d)
 visualizer.show()
@@ -92,8 +93,6 @@ visualizer.draw_proj_bboxes_3d(gt_bboxes_3d, input_meta)
 visualizer.show()
 ```
 
-![mono3d](../../../resources/mono3d.png)
-
 ### 绘制 BEV 视角的框
 
 通过使用 `draw_bev_bboxes`，我们支持绘制 BEV 视角下的框。
@@ -120,23 +119,22 @@ visualizer.draw_bev_bboxes(gt_bboxes_3d, edge_colors='orange')
 visualizer.show()
 ```
 
-<img src="../../../resources/bev.png" width = "50%" />
-
 ### 绘制 3D 分割掩码
 
 通过使用 `draw_seg_mask`，我们支持通过逐点着色来绘制分割掩码。
 
 ```python
-import torch
+import numpy as np
 
 from mmdet3d.visualization import Det3DLocalVisualizer
 
-points = np.fromfile('tests/data/s3dis/points/Area_1_office_2.bin', dtype=np.float32)
+points = np.fromfile('demo/data/sunrgbd/000017.bin', dtype=np.float32)
 points = points.reshape(-1, 3)
 visualizer = Det3DLocalVisualizer()
 mask = np.random.rand(points.shape[0], 3)
 points_with_mask = np.concatenate((points, mask), axis=-1)
 # Draw 3D points with mask
+visualizer.set_points(points, pcd_mode=2, vis_mode='add')
 visualizer.draw_seg_mask(points_with_mask)
 visualizer.show()
 ```
@@ -171,7 +169,7 @@ python tools/misc/visualize_results.py ${CONFIG_FILE} --result ${RESULTS_PATH} -
 python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py --task lidar_det --output-dir ${OUTPUT_DIR}
 ```
 
-**注意**：一旦指定了 `--output-dir`，当在 open3d 窗口中按下 `_ESC_` 时，用户指定的视图图像将会被保存下来。
+**注意**：一旦指定了 `--output-dir`，当在 open3d 窗口中按下 `_ESC_` 时，用户指定的视图图像将会被保存下来。如果你想要对点云进行缩放操作以观察更多细节， 你可以在命令中指定 `--show-interval=0`。
 
 为了验证数据的一致性和数据增强的效果，你可以加上 `--aug` 来可视化数据增强后的数据，指令如下所示：
 
@@ -182,7 +180,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/kitti-3d-3class.py -
 如果你想显示带有投影的 3D 边界框的 2D 图像，你需要一个支持多模态数据加载的配置文件，并将 `--task` 参数改为 `multi-modality_det`。示例如下：
 
 ```shell
-python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR}
+python tools/misc/browse_dataset.py configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py --task multi-modality_det --output-dir ${OUTPUT_DIR}
 ```
 
 ![](../../../resources/browse_dataset_multi_modality.png)
@@ -190,7 +188,7 @@ python tools/misc/browse_dataset.py configs/mvxnet/dv_mvx-fpn_second_secfpn_adam
 你可以使用不同的配置浏览不同的数据集，例如在 3D 语义分割任务中可视化 ScanNet 数据集：
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20class.py --task lidar_seg --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/scannet-seg.py --task lidar_seg --output-dir ${OUTPUT_DIR}
 ```
 
 ![](../../../resources/browse_dataset_seg.png)
@@ -198,7 +196,7 @@ python tools/misc/browse_dataset.py configs/_base_/datasets/scannet_seg-3d-20cla
 在单目 3D 检测任务中浏览 nuScenes 数据集：
 
 ```shell
-python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR} --online
+python tools/misc/browse_dataset.py configs/_base_/datasets/nus-mono3d.py --task mono_det --output-dir ${OUTPUT_DIR}
 ```
 
 ![](../../../resources/browse_dataset_mono.png)

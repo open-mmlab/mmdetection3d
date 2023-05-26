@@ -8,7 +8,7 @@ optim_wrapper = dict(
     clip_grad=dict(max_norm=10, norm_type=2),
 )
 
-# training schedule for 1x
+# training schedule for 3x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=36, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')

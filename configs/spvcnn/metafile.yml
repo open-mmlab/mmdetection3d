@@ -1,0 +1,57 @@
+Collections:
+  - Name: SPVCNN
+    Metadata:
+      Training Techniques:
+        - AdamW
+      Architecture:
+        - SPVCNN
+    Paper:
+      URL: https://arxiv.org/abs/2007.16100
+      Title: 'Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution'
+    README: configs/spvcnn/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmdetection3d/blob/1.1/mmdet3d/models/backbones/spvcnn_backone.py#L22
+      Version: v1.1.0
+
+Models:
+  - Name: spvcnn_w16_8xb2-15e_semantickitti
+    In Collection: SPVCNN
+    Config: configs/spvcnn/spvcnn_w16_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 3.9
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 61.7
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w16_8xb2-15e_semantickitti/spvcnn_w16_8xb2-15e_semantickitti_20230321_011645-a2734d85.pth
+
+  - Name: spvcnn_w20_8xb2-15e_semantickitti
+    In Collection: SPVCNN
+    Config: configs/spvcnn/spvcnn_w20_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 4.2
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 62.9
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w20_8xb2-15e_semantickitti/spvcnn_w20_8xb2-15e_semantickitti_20230321_011649-519e7eff.pth
+
+  - Name: spvcnn_w32_8xb2-15e_semantickitti
+    In Collection: SPVCNN
+    Config: configs/spvcnn/spvcnn_w32_8xb2-15e_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 5.4
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 64.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w32_8xb2-15e_semantickitti/spvcnn_w32_8xb2-15e_semantickitti_20230308_113324-f7c0c5b4.pth

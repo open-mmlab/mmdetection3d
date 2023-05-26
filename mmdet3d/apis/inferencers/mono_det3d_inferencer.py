@@ -11,7 +11,7 @@ from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
 from mmdet3d.utils import ConfigType
-from .base_det3d_inferencer import BaseDet3DInferencer
+from .base_3d_inferencer import Base3DInferencer
 
 InstanceList = List[InstanceData]
 InputType = Union[str, np.ndarray]
@@ -23,7 +23,7 @@ ResType = Union[Dict, List[Dict], InstanceData, List[InstanceData]]
 
 @INFERENCERS.register_module(name='det3d-mono')
 @INFERENCERS.register_module()
-class MonoDet3DInferencer(BaseDet3DInferencer):
+class MonoDet3DInferencer(Base3DInferencer):
     """MMDet3D Monocular 3D object detection inferencer.
 
     Args:
@@ -39,7 +39,7 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
             from metafile. Defaults to None.
         device (str, optional): Device to run inference. If None, the available
             device will be automatically used. Defaults to None.
-        scope (str, optional): The scope of the model. Defaults to mmdet3d.
+        scope (str): The scope of the model. Defaults to 'mmdet3d'.
         palette (str): Color palette used for visualization. The order of
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
@@ -58,7 +58,7 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
                  device: Optional[str] = None,
-                 scope: Optional[str] = 'mmdet3d',
+                 scope: str = 'mmdet3d',
                  palette: str = 'none') -> None:
         # A global counter tracking the number of images processed, for
         # naming of the output images
@@ -127,6 +127,7 @@ class MonoDet3DInferencer(BaseDet3DInferencer):
                 Defaults to 0.3.
             img_out_dir (str): Output directory of visualization results.
                 If left as empty, no file will be saved. Defaults to ''.
+
         Returns:
             List[np.ndarray] or None: Returns visualization results only if
             applicable.

@@ -453,8 +453,8 @@ class WaymoMetric(KittiMetric):
         # Note: bbox is meaningless in final evaluation, set to 0
         merged_box_dict = dict(
             bbox=np.zeros([box_preds_lidar.tensor.shape[0], 4]),
-            box3d_camera=box_preds_camera.tensor.numpy(),
-            box3d_lidar=box_preds_lidar.tensor.numpy(),
+            box3d_camera=box_preds_camera.numpy(),
+            box3d_lidar=box_preds_lidar.numpy(),
             scores=scores.numpy(),
             label_preds=labels.numpy(),
             sample_idx=box_dict['sample_idx'],
@@ -694,8 +694,8 @@ class WaymoMetric(KittiMetric):
             return dict(
                 bbox=box_2d_preds[valid_inds, :].numpy(),
                 pred_box_type_3d=type(box_preds),
-                box3d_camera=box_preds_camera[valid_inds].tensor.numpy(),
-                box3d_lidar=box_preds_lidar[valid_inds].tensor.numpy(),
+                box3d_camera=box_preds_camera[valid_inds].numpy(),
+                box3d_lidar=box_preds_lidar[valid_inds].numpy(),
                 scores=scores[valid_inds].numpy(),
                 label_preds=labels[valid_inds].numpy(),
                 sample_idx=sample_idx)

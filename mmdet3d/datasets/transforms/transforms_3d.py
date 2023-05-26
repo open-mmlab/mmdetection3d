@@ -191,7 +191,15 @@ class RandomFlip3D(RandomFlip):
         if 'flip' not in results:
             cur_dir = self._choose_direction()
         else:
-            cur_dir = results['flip_direction']
+            # `flip_direction` works only when `flip` is True.
+            # For example, in `MultiScaleFlipAug3D`, `flip_direction` is
+            # 'horizontal' but `flip` is False.
+            if results['flip']:
+                assert 'flip_direction' in results, 'flip and flip_direction '
+                'must exist simultaneously'
+                cur_dir = results['flip_direction']
+            else:
+                cur_dir = None
         if cur_dir is None:
             results['flip'] = False
             results['flip_direction'] = None
@@ -408,13 +416,13 @@ class ObjectSample(BaseTransform):
             gt_bboxes_2d = input_dict['gt_bboxes']
             # Assume for now 3D & 2D bboxes are the same
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d.tensor.numpy(),
+                gt_bboxes_3d.numpy(),
                 gt_labels_3d,
                 gt_bboxes_2d=gt_bboxes_2d,
                 img=img)
         else:
             sampled_dict = self.db_sampler.sample_all(
-                gt_bboxes_3d.tensor.numpy(),
+                gt_bboxes_3d.numpy(),
                 gt_labels_3d,
                 img=None,
                 ground_plane=ground_plane)
@@ -427,8 +435,7 @@ class ObjectSample(BaseTransform):
             gt_labels_3d = np.concatenate([gt_labels_3d, sampled_gt_labels],
                                           axis=0)
             gt_bboxes_3d = gt_bboxes_3d.new_box(
-                np.concatenate(
-                    [gt_bboxes_3d.tensor.numpy(), sampled_gt_bboxes_3d]))
+                np.concatenate([gt_bboxes_3d.numpy(), sampled_gt_bboxes_3d]))
 
             points = self.remove_points_in_boxes(points, sampled_gt_bboxes_3d)
             # check the points dimension
@@ -507,8 +514,8 @@ class ObjectNoise(BaseTransform):
         points = input_dict['points']
 
         # TODO: this is inplace operation
-        numpy_box = gt_bboxes_3d.tensor.numpy()
-        numpy_points = points.tensor.numpy()
+        numpy_box = gt_bboxes_3d.numpy()
+        numpy_points = points.numpy()
 
         noise_per_object_v3_(
             numpy_box,
@@ -1032,7 +1039,7 @@ class PointSample(BaseTransform):
     def _points_random_sampling(
         self,
         points: BasePoints,
-        num_samples: int,
+        num_samples: Union[int, float],
         sample_range: Optional[float] = None,
         replace: bool = False,
         return_choices: bool = False
@@ -1043,7 +1050,9 @@ class PointSample(BaseTransform):
 
         Args:
             points (:obj:`BasePoints`): 3D Points.
-            num_samples (int): Number of samples to be sampled.
+            num_samples (int, float): Number of samples to be sampled. If
+                float, we sample random fraction of points from num_points
+                to 100%.
             sample_range (float, optional): Indicating the range where the
                 points will be sampled. Defaults to None.
             replace (bool): Sampling with or without replacement.
@@ -1056,6 +1065,11 @@ class PointSample(BaseTransform):
                 - points (:obj:`BasePoints`): 3D Points.
                 - choices (np.ndarray, optional): The generated random samples.
         """
+        if isinstance(num_samples, float):
+            assert num_samples < 1
+            num_samples = int(
+                np.random.uniform(self.num_points, 1.) * points.shape[0])
+
         if not replace:
             replace = (points.shape[0] < num_samples)
         point_range = range(len(points))
@@ -1539,7 +1553,7 @@ class VoxelBasedPointSampler(BaseTransform):
         # Extend points with seg and mask fields
         map_fields2dim = []
         start_dim = original_dim
-        points_numpy = points.tensor.numpy()
+        points_numpy = points.numpy()
         extra_channel = [points_numpy]
         for idx, key in enumerate(results['pts_mask_fields']):
             map_fields2dim.append((key, idx + start_dim))

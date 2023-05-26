@@ -1,10 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Tuple
+
 import numpy as np
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 
 
 @TASK_UTILS.register_module()
@@ -35,19 +39,19 @@ class MonoFlexCoder(BaseBBoxCoder):
     """
 
     def __init__(self,
-                 depth_mode,
-                 base_depth,
-                 depth_range,
-                 combine_depth,
-                 uncertainty_range,
-                 base_dims,
-                 dims_mode,
-                 multibin,
-                 num_dir_bins,
-                 bin_centers,
-                 bin_margin,
-                 code_size,
-                 eps=1e-3):
+                 depth_mode: str,
+                 base_depth: Tuple[float],
+                 depth_range: list,
+                 combine_depth: bool,
+                 uncertainty_range: list,
+                 base_dims: Tuple[Tuple[float]],
+                 dims_mode: str,
+                 multibin: bool,
+                 num_dir_bins: int,
+                 bin_centers: List[float],
+                 bin_margin: float,
+                 code_size: int,
+                 eps: float = 1e-3) -> None:
         super(MonoFlexCoder, self).__init__()
 
         # depth related
@@ -71,7 +75,7 @@ class MonoFlexCoder(BaseBBoxCoder):
         self.bbox_code_size = code_size
         self.eps = eps
 
-    def encode(self, gt_bboxes_3d):
+    def encode(self, gt_bboxes_3d: BaseInstance3DBoxes) -> Tensor:
         """Encode ground truth to prediction targets.
 
         Args:
@@ -105,7 +109,8 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return orientation_target
 
-    def decode(self, bbox, base_centers2d, labels, downsample_ratio, cam2imgs):
+    def decode(self, bbox: Tensor, base_centers2d: Tensor, labels: Tensor,
+               downsample_ratio: int, cam2imgs: Tensor) -> Dict[str, Tensor]:
         """Decode bounding box regression into 3D predictions.
 
         Args:
@@ -211,7 +216,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return preds
 
-    def decode_direct_depth(self, depth_offsets):
+    def decode_direct_depth(self, depth_offsets: Tensor) -> Tensor:
         """Transform depth offset to directly regressed depth.
 
         Args:
@@ -239,12 +244,12 @@ class MonoFlexCoder(BaseBBoxCoder):
         return direct_depth
 
     def decode_location(self,
-                        base_centers2d,
-                        offsets2d,
-                        depths,
-                        cam2imgs,
-                        downsample_ratio,
-                        pad_mode='default'):
+                        base_centers2d: Tensor,
+                        offsets2d: Tensor,
+                        depths: Tensor,
+                        cam2imgs: Tensor,
+                        downsample_ratio: Tensor,
+                        pad_mode: str = 'default') -> Tuple[Tensor]:
         """Retrieve object location.
 
         Args:
@@ -283,13 +288,15 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return locations[:, :3]
 
-    def keypoints2depth(self,
-                        keypoints2d,
-                        dimensions,
-                        cam2imgs,
-                        downsample_ratio=4,
-                        group0_index=[(7, 3), (0, 4)],
-                        group1_index=[(2, 6), (1, 5)]):
+    def keypoints2depth(
+            self,
+            keypoints2d: Tensor,
+            dimensions: Tensor,
+            cam2imgs: Tensor,
+            downsample_ratio: int = 4,
+            group0_index: List[Tuple[int]] = [(7, 3), (0, 4)],
+            group1_index: List[Tuple[int]] = [(2, 6),
+                                              (1, 5)]) -> Tuple[Tensor]:
         """Decode depth form three groups of keypoints and geometry projection
         model. 2D keypoints inlucding 8 coreners and top/bottom centers will be
         divided into three groups which will be used to calculate three depths
@@ -383,7 +390,7 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return keypoints_depth
 
-    def decode_dims(self, labels, dims_offset):
+    def decode_dims(self, labels: Tensor, dims_offset: Tensor) -> Tensor:
         """Retrieve object dimensions.
 
         Args:
@@ -411,7 +418,8 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return dimensions
 
-    def decode_orientation(self, ori_vector, locations):
+    def decode_orientation(self, ori_vector: Tensor,
+                           locations: Tensor) -> Tuple[Tensor]:
         """Retrieve object orientation.
 
         Args:
@@ -467,7 +475,8 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return yaws, local_yaws
 
-    def decode_bboxes2d(self, reg_bboxes2d, base_centers2d):
+    def decode_bboxes2d(self, reg_bboxes2d: Tensor,
+                        base_centers2d: Tensor) -> Tensor:
         """Retrieve [x1, y1, x2, y2] format 2D bboxes.
 
         Args:
@@ -492,7 +501,8 @@ class MonoFlexCoder(BaseBBoxCoder):
 
         return bboxes2d
 
-    def combine_depths(self, depth, depth_uncertainty):
+    def combine_depths(self, depth: Tensor,
+                       depth_uncertainty: Tensor) -> Tensor:
         """Combine all the prediced depths with depth uncertainty.
 
         Args:

@@ -1,4 +1,4 @@
-_base_ = ['./multiview-dfm_r101_dcn_2x16_waymoD5-3d-3class.py']
+_base_ = ['./multiview-dfm_r101-dcn_16xb2_waymoD5-3d-3class.py']
 
 model = dict(
     bbox_head=dict(

@@ -1,7 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
+from typing import Optional, Union
 
 import torch
+from mmdet.models.task_modules import AssignResult
+from numpy import ndarray
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
 from . import RandomSampler, SamplingResult
@@ -29,13 +33,13 @@ class IoUNegPiecewiseSampler(RandomSampler):
     """
 
     def __init__(self,
-                 num,
-                 pos_fraction=None,
-                 neg_piece_fractions=None,
-                 neg_iou_piece_thrs=None,
-                 neg_pos_ub=-1,
-                 add_gt_as_proposals=False,
-                 return_iou=False):
+                 num: int,
+                 pos_fraction: Optional[float] = None,
+                 neg_piece_fractions: Optional[list] = None,
+                 neg_iou_piece_thrs: Optional[list] = None,
+                 neg_pos_ub: float = -1,
+                 add_gt_as_proposals: bool = False,
+                 return_iou: bool = False) -> None:
         super(IoUNegPiecewiseSampler,
               self).__init__(num, pos_fraction, neg_pos_ub,
                              add_gt_as_proposals)
@@ -46,7 +50,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
         self.return_iou = return_iou
         self.neg_piece_num = len(self.neg_piece_fractions)
 
-    def _sample_pos(self, assign_result, num_expected, **kwargs):
+    def _sample_pos(self, assign_result: AssignResult, num_expected: int,
+                    **kwargs) -> Union[Tensor, ndarray]:
         """Randomly sample some positive samples."""
         pos_inds = torch.nonzero(assign_result.gt_inds > 0, as_tuple=False)
         if pos_inds.numel() != 0:
@@ -56,7 +61,8 @@ class IoUNegPiecewiseSampler(RandomSampler):
         else:
             return self.random_choice(pos_inds, num_expected)
 
-    def _sample_neg(self, assign_result, num_expected, **kwargs):
+    def _sample_neg(self, assign_result: AssignResult, num_expected: int,
+                    **kwargs) -> Tensor:
         """Randomly sample some negative samples."""
         neg_inds = torch.nonzero(assign_result.gt_inds == 0, as_tuple=False)
         if neg_inds.numel() != 0:
@@ -127,11 +133,11 @@ class IoUNegPiecewiseSampler(RandomSampler):
             return neg_inds_choice
 
     def sample(self,
-               assign_result,
-               bboxes,
-               gt_bboxes,
-               gt_labels=None,
-               **kwargs):
+               assign_result: AssignResult,
+               bboxes: Tensor,
+               gt_bboxes: Tensor,
+               gt_labels: Optional[Tensor] = None,
+               **kwargs) -> SamplingResult:
         """Sample positive and negative bboxes.
 
         This is a simple implementation of bbox sampling given candidates,

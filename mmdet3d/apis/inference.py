@@ -14,7 +14,7 @@ from mmengine.dataset import Compose, pseudo_collate
 from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
 
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import DATASETS, MODELS
 from mmdet3d.structures import Box3DMode, Det3DDataSample, get_box_type
 from mmdet3d.structures.det3d_data_sample import SampleList
 
@@ -38,6 +38,7 @@ def convert_SyncBN(config):
 def init_model(config: Union[str, Path, Config],
                checkpoint: Optional[str] = None,
                device: str = 'cuda:0',
+               palette: str = 'none',
                cfg_options: Optional[dict] = None):
     """Initialize a model from config file, which could be a 3D detector or a
     3D segmentor.
@@ -76,16 +77,30 @@ def init_model(config: Union[str, Path, Config],
         elif 'CLASSES' in checkpoint.get('meta', {}):
             # < mmdet3d 1.x
             classes = checkpoint['meta']['CLASSES']
-            model.dataset_meta = {'CLASSES': classes}
+            model.dataset_meta = {'classes': classes}
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
-                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
+                model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
         else:
             # < mmdet3d 1.x
-            model.dataset_meta = {'CLASSES': config.class_names}
+            model.dataset_meta = {'classes': config.class_names}
 
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
-                model.dataset_meta['PALETTE'] = checkpoint['meta']['PALETTE']
+                model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
+
+        test_dataset_cfg = deepcopy(config.test_dataloader.dataset)
+        # lazy init. We only need the metainfo.
+        test_dataset_cfg['lazy_init'] = True
+        metainfo = DATASETS.build(test_dataset_cfg).metainfo
+        cfg_palette = metainfo.get('palette', None)
+        if cfg_palette is not None:
+            model.dataset_meta['palette'] = cfg_palette
+        else:
+            if 'palette' not in model.dataset_meta:
+                warnings.warn(
+                    'palette does not exist, random is used by default. '
+                    'You can also set the palette to customize.')
+                model.dataset_meta['palette'] = 'random'
 
     model.cfg = config  # save the config in the model for convenience
     if device != 'cpu':
@@ -176,8 +191,10 @@ def inference_multi_modality_detector(model: nn.Module,
                                       pcds: Union[str, Sequence[str]],
                                       imgs: Union[str, Sequence[str]],
                                       ann_file: Union[str, Sequence[str]],
-                                      cam_type: str = 'CAM_FRONT'):
-    """Inference point cloud with the multi-modality detector.
+                                      cam_type: str = 'CAM2'):
+    """Inference point cloud with the multi-modality detector. Now we only
+    support multi-modality detector for KITTI and SUNRGBD datasets since the
+    multi-view image loading is not supported yet in this inference function.
 
     Args:
         model (nn.Module): The loaded detector.
@@ -186,18 +203,16 @@ def inference_multi_modality_detector(model: nn.Module,
         imgs (str, Sequence[str]):
            Either image files or loaded images.
         ann_file (str, Sequence[str]): Annotation files.
-        cam_type (str): Image of Camera chose to infer.
-            For kitti dataset, it should be 'CAM_2',
-            and for nuscenes dataset, it should be
-            'CAM_FRONT'. Defaults to 'CAM_FRONT'.
+        cam_type (str): Image of Camera chose to infer. When detector only uses
+            single-view image, we need to specify a camera view. For kitti
+            dataset, it should be 'CAM2'. For sunrgbd, it should be 'CAM0'.
+            When detector uses multi-view images, we should set it to 'all'.
 
     Returns:
         :obj:`Det3DDataSample` or list[:obj:`Det3DDataSample`]:
         If pcds is a list or tuple, the same length list type results
         will be returned, otherwise return the detection results directly.
     """
-
-    # TODO: We will support
     if isinstance(pcds, (list, tuple)):
         is_batch = True
         assert isinstance(imgs, (list, tuple))
@@ -216,34 +231,55 @@ def inference_multi_modality_detector(model: nn.Module,
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
     data_list = mmengine.load(ann_file)['data_list']
-    assert len(imgs) == len(data_list)
 
     data = []
     for index, pcd in enumerate(pcds):
         # get data info containing calib
-        img = imgs[index]
         data_info = data_list[index]
-        img_path = data_info['images'][cam_type]['img_path']
+        img = imgs[index]
 
-        if osp.basename(img_path) != osp.basename(img):
-            raise ValueError(f'the info file of {img_path} is not provided.')
+        if cam_type != 'all':
+            assert osp.isfile(img), f'{img} must be a file.'
+            img_path = data_info['images'][cam_type]['img_path']
+            if osp.basename(img_path) != osp.basename(img):
+                raise ValueError(
+                    f'the info file of {img_path} is not provided.')
+            data_ = dict(
+                lidar_points=dict(lidar_path=pcd),
+                img_path=img,
+                box_type_3d=box_type_3d,
+                box_mode_3d=box_mode_3d)
+            data_info['images'][cam_type]['img_path'] = img
+            if 'cam2img' in data_info['images'][cam_type]:
+                # The data annotation in SRUNRGBD dataset does not contain
+                # `cam2img`
+                data_['cam2img'] = np.array(
+                    data_info['images'][cam_type]['cam2img'])
 
-        # TODO: check the name consistency of
-        # image file and point cloud file
-        data_ = dict(
-            lidar_points=dict(lidar_path=pcd),
-            img_path=img,
-            box_type_3d=box_type_3d,
-            box_mode_3d=box_mode_3d)
+            # LiDAR to image conversion for KITTI dataset
+            if box_mode_3d == Box3DMode.LIDAR:
+                if 'lidar2img' in data_info['images'][cam_type]:
+                    data_['lidar2img'] = np.array(
+                        data_info['images'][cam_type]['lidar2img'])
+            # Depth to image conversion for SUNRGBD dataset
+            elif box_mode_3d == Box3DMode.DEPTH:
+                data_['depth2img'] = np.array(
+                    data_info['images'][cam_type]['depth2img'])
+        else:
+            assert osp.isdir(img), f'{img} must be a file directory'
+            for _, img_info in data_info['images'].items():
+                img_info['img_path'] = osp.join(img, img_info['img_path'])
+                assert osp.isfile(img_info['img_path']
+                                  ), f'{img_info["img_path"]} does not exist.'
+            data_ = dict(
+                lidar_points=dict(lidar_path=pcd),
+                images=data_info['images'],
+                box_type_3d=box_type_3d,
+                box_mode_3d=box_mode_3d)
 
-        # LiDAR to image conversion for KITTI dataset
-        if box_mode_3d == Box3DMode.LIDAR:
-            data_['lidar2img'] = np.array(
-                data_info['images'][cam_type]['lidar2img'])
-        # Depth to image conversion for SUNRGBD dataset
-        elif box_mode_3d == Box3DMode.DEPTH:
-            data_['depth2img'] = np.array(
-                data_info['images'][cam_type]['depth2img'])
+        if 'timestamp' in data_info:
+            # Using multi-sweeps need `timestamp`
+            data_['timestamp'] = data_info['timestamp']
 
         data_ = test_pipeline(data_)
         data.append(data_)
@@ -295,7 +331,7 @@ def inference_mono_3d_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
-    data_list = mmengine.load(ann_file)
+    data_list = mmengine.load(ann_file)['data_list']
     assert len(imgs) == len(data_list)
 
     data = []
@@ -308,8 +344,10 @@ def inference_mono_3d_detector(model: nn.Module,
 
         # replace the img_path in data_info with img
         data_info['images'][cam_type]['img_path'] = img
+        # avoid data_info['images'] has multiple keys anout camera views.
+        mono_img_info = {f'{cam_type}': data_info['images'][cam_type]}
         data_ = dict(
-            images=data_info['images'],
+            images=mono_img_info,
             box_type_3d=box_type_3d,
             box_mode_3d=box_mode_3d)
 

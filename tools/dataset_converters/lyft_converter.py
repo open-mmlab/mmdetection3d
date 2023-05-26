@@ -40,10 +40,10 @@ def create_lyft_infos(root_path,
     available_vers = ['v1.01-train', 'v1.01-test']
     assert version in available_vers
     if version == 'v1.01-train':
-        train_scenes = mmcv.list_from_file('data/lyft/train.txt')
-        val_scenes = mmcv.list_from_file('data/lyft/val.txt')
+        train_scenes = mmengine.list_from_file('data/lyft/train.txt')
+        val_scenes = mmengine.list_from_file('data/lyft/val.txt')
     elif version == 'v1.01-test':
-        train_scenes = mmcv.list_from_file('data/lyft/test.txt')
+        train_scenes = mmengine.list_from_file('data/lyft/test.txt')
         val_scenes = []
     else:
         raise ValueError('unknown')

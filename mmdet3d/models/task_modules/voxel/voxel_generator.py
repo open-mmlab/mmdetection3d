@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple, Union
+
 import numba
 import numpy as np
 
@@ -18,10 +20,10 @@ class VoxelGenerator(object):
     """
 
     def __init__(self,
-                 voxel_size,
-                 point_cloud_range,
-                 max_num_points,
-                 max_voxels=20000):
+                 voxel_size: List[float],
+                 point_cloud_range: List[float],
+                 max_num_points: int,
+                 max_voxels: int = 20000):
 
         point_cloud_range = np.array(point_cloud_range, dtype=np.float32)
         # [0, -40, -3, 70.4, 40, 1]
@@ -36,33 +38,33 @@ class VoxelGenerator(object):
         self._max_voxels = max_voxels
         self._grid_size = grid_size
 
-    def generate(self, points):
+    def generate(self, points: np.ndarray) -> Tuple[np.ndarray]:
         """Generate voxels given points."""
         return points_to_voxel(points, self._voxel_size,
                                self._point_cloud_range, self._max_num_points,
                                True, self._max_voxels)
 
     @property
-    def voxel_size(self):
+    def voxel_size(self) -> List[float]:
         """list[float]: Size of a single voxel."""
         return self._voxel_size
 
     @property
-    def max_num_points_per_voxel(self):
+    def max_num_points_per_voxel(self) -> int:
         """int: Maximum number of points per voxel."""
         return self._max_num_points
 
     @property
-    def point_cloud_range(self):
+    def point_cloud_range(self) -> List[float]:
         """list[float]: Range of point cloud."""
         return self._point_cloud_range
 
     @property
-    def grid_size(self):
+    def grid_size(self) -> np.ndarray:
         """np.ndarray: The size of grids."""
         return self._grid_size
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """str: Return a string that describes the module."""
         repr_str = self.__class__.__name__
         indent = ' ' * (len(repr_str) + 1)
@@ -76,12 +78,13 @@ class VoxelGenerator(object):
         return repr_str
 
 
-def points_to_voxel(points,
-                    voxel_size,
-                    coors_range,
-                    max_points=35,
-                    reverse_index=True,
-                    max_voxels=20000):
+def points_to_voxel(points: np.ndarray,
+                    voxel_size: Union[list, tuple, np.ndarray],
+                    coors_range: Union[List[float], List[Tuple[float]],
+                                       List[np.ndarray]],
+                    max_points: int = 35,
+                    reverse_index: bool = True,
+                    max_voxels: int = 20000) -> Tuple[np.ndarray]:
     """convert kitti points(N, >=3) to voxels.
 
     Args:
@@ -138,15 +141,17 @@ def points_to_voxel(points,
 
 
 @numba.jit(nopython=True)
-def _points_to_voxel_reverse_kernel(points,
-                                    voxel_size,
-                                    coors_range,
-                                    num_points_per_voxel,
-                                    coor_to_voxelidx,
-                                    voxels,
-                                    coors,
-                                    max_points=35,
-                                    max_voxels=20000):
+def _points_to_voxel_reverse_kernel(points: np.ndarray,
+                                    voxel_size: Union[list, tuple, np.ndarray],
+                                    coors_range: Union[List[float],
+                                                       List[Tuple[float]],
+                                                       List[np.ndarray]],
+                                    num_points_per_voxel: int,
+                                    coor_to_voxelidx: np.ndarray,
+                                    voxels: np.ndarray,
+                                    coors: np.ndarray,
+                                    max_points: int = 35,
+                                    max_voxels: int = 20000):
     """convert kitti points(N, >=3) to voxels.
 
     Args:
@@ -212,15 +217,16 @@ def _points_to_voxel_reverse_kernel(points,
 
 
 @numba.jit(nopython=True)
-def _points_to_voxel_kernel(points,
-                            voxel_size,
-                            coors_range,
-                            num_points_per_voxel,
-                            coor_to_voxelidx,
-                            voxels,
-                            coors,
-                            max_points=35,
-                            max_voxels=20000):
+def _points_to_voxel_kernel(points: np.ndarray,
+                            voxel_size: Union[list, tuple, np.ndarray],
+                            coors_range: Union[List[float], List[Tuple[float]],
+                                               List[np.ndarray]],
+                            num_points_per_voxel: int,
+                            coor_to_voxelidx: np.ndarray,
+                            voxels: np.ndarray,
+                            coors: np.ndarray,
+                            max_points: int = 35,
+                            max_voxels: int = 200000):
     """convert kitti points(N, >=3) to voxels.
 
     Args:
@@ -230,7 +236,7 @@ def _points_to_voxel_kernel(points,
         coors_range (list[float | tuple[float] | ndarray]): Range of voxels.
             format: xyzxyz, minmax
         num_points_per_voxel (int): Number of points per voxel.
-        coor_to_voxel_idx (np.ndarray): A voxel grid of shape (D, H, W),
+        coor_to_voxelidx (np.ndarray): A voxel grid of shape (D, H, W),
             which has the same shape as the complete voxel map. It indicates
             the index of each corresponding voxel.
         voxels (np.ndarray): Created empty voxels.

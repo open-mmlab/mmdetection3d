@@ -4,6 +4,7 @@ from typing import List, Tuple
 import torch
 from mmcv.ops import points_in_boxes_all, three_interpolate, three_nn
 from mmdet.models.losses import sigmoid_focal_loss, smooth_l1_loss
+from mmengine.runner import amp
 from torch import Tensor
 from torch import nn as nn
 
@@ -68,7 +69,6 @@ class SparseEncoder(nn.Module):
         self.encoder_channels = encoder_channels
         self.encoder_paddings = encoder_paddings
         self.stage_num = len(self.encoder_channels)
-        self.fp16_enabled = False
         self.return_middle_feats = return_middle_feats
         # Spconv init all weight on its own
 
@@ -111,6 +111,7 @@ class SparseEncoder(nn.Module):
             indice_key='spconv_down2',
             conv_type='SparseConv3d')
 
+    @amp.autocast(enabled=False)
     def forward(self, voxel_features, coors, batch_size):
         """Forward of SparseEncoder.
 

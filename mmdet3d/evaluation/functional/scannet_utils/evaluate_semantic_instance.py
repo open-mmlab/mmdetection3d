@@ -25,8 +25,7 @@ def evaluate_matches(matches, class_labels, options):
     dist_confs = [options['distance_confs'][0]]
 
     # results: class x overlap
-    ap = np.zeros((len(dist_threshes), len(class_labels), len(overlaps)),
-                  np.float)
+    ap = np.zeros((len(dist_threshes), len(class_labels), len(overlaps)))
     for di, (min_region_size, distance_thresh, distance_conf) in enumerate(
             zip(min_region_sizes, dist_threshes, dist_confs)):
         for oi, overlap_th in enumerate(overlaps):

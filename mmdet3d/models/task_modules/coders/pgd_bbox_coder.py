@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Tuple
+
 import numpy as np
 import torch
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import TASK_UTILS
@@ -16,13 +19,13 @@ class PGDBBoxCoder(FCOS3DBBoxCoder):
         pass
 
     def decode_2d(self,
-                  bbox,
-                  scale,
-                  stride,
-                  max_regress_range,
-                  training,
-                  pred_keypoints=False,
-                  pred_bbox2d=True):
+                  bbox: Tensor,
+                  scale: tuple,
+                  stride: int,
+                  max_regress_range: int,
+                  training: bool,
+                  pred_keypoints: bool = False,
+                  pred_bbox2d: bool = True) -> Tensor:
         """Decode regressed 2D attributes.
 
         Args:
@@ -70,8 +73,9 @@ class PGDBBoxCoder(FCOS3DBBoxCoder):
                 bbox[:, -4:] = bbox.clone()[:, -4:].exp()
         return bbox
 
-    def decode_prob_depth(self, depth_cls_preds, depth_range, depth_unit,
-                          division, num_depth_cls):
+    def decode_prob_depth(self, depth_cls_preds: Tensor,
+                          depth_range: Tuple[float], depth_unit: int,
+                          division: str, num_depth_cls: int) -> Tensor:
         """Decode probabilistic depth map.
 
         Args:
