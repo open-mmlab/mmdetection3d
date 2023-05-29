@@ -108,7 +108,7 @@ train_pipeline = [
         type='GridMask',
         use_h=True,
         use_w=True,
-        max_epoch=5,
+        max_epoch=6,
         rotate=1,
         offset=False,
         ratio=0.5,
@@ -189,10 +189,10 @@ param_scheduler = [
     dict(
         type='CosineAnnealingLR',
         begin=0,
-        T_max=5,
-        end=5,
+        T_max=6,
+        end=6,
         by_epoch=True,
-        eta_min_ratio=1e-3,
+        eta_min_ratio=1e-4,
         convert_to_iter_based=True),
     # momentum scheduler
     # During the first 8 epochs, momentum increases from 1 to 0.85 / 0.95
@@ -208,13 +208,13 @@ param_scheduler = [
         type='CosineAnnealingMomentum',
         eta_min=1,
         begin=2.4,
-        end=5,
+        end=6,
         by_epoch=True,
         convert_to_iter_based=True)
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=5, val_interval=1)
+train_cfg = dict(by_epoch=True, max_epochs=6, val_interval=1)
 val_cfg = dict()
 test_cfg = dict()
 
