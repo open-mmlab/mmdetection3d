@@ -272,7 +272,7 @@ parser.add_argument('--extra-tag', type=str, default='kitti')
 parser.add_argument(
     '--workers', type=int, default=4, help='number of threads to be used')
 parser.add_argument(
-    '--only-gt-databse',
+    '--only-gt-database',
     action='store_true',
     help='Whether to only generate ground truth database.')
 args = parser.parse_args()
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     register_all_modules()
 
     if args.dataset == 'kitti':
-        if args.only_gt_databse:
+        if args.only_gt_database:
             create_groundtruth_database(
                 'KittiDataset',
                 args.root_path,
@@ -299,7 +299,7 @@ if __name__ == '__main__':
                 out_dir=args.out_dir,
                 with_plane=args.with_plane)
     elif args.dataset == 'nuscenes' and args.version != 'v1.0-mini':
-        if args.only_gt_databse:
+        if args.only_gt_database:
             create_groundtruth_database('NuScenesDataset', args.root_path,
                                         args.extra_tag,
                                         f'{args.extra_tag}_infos_train.pkl')
@@ -321,7 +321,7 @@ if __name__ == '__main__':
                 out_dir=args.out_dir,
                 max_sweeps=args.max_sweeps)
     elif args.dataset == 'nuscenes' and args.version == 'v1.0-mini':
-        if args.only_gt_databse:
+        if args.only_gt_database:
             create_groundtruth_database('NuScenesDataset', args.root_path,
                                         args.extra_tag,
                                         f'{args.extra_tag}_infos_train.pkl')

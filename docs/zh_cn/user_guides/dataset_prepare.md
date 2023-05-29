@@ -106,7 +106,7 @@ sh tools/create_data.sh <partition> kitti
 - **现成的标注文件**：我们已经提供了离线处理好的 [KITTI 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/kitti/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
 
 ```bash
-python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-database
 ```
 
 ### Waymo
@@ -160,7 +160,7 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 - **现成的标注文件**：我们已经提供了离线处理好的 [NuScenes 标注文件](#数据集标注文件列表)。您直接下载他们并放到 `data/nuscenes/` 目录下。然而，如果你想在点云检测方法中使用 `ObjectSample` 这一数据增强，你可以再额外使用以下命令来生成物体标注框数据库：
 
 ```bash
-python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-database
 ```
 
 ### Lyft
