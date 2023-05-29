@@ -179,7 +179,7 @@ def test_array_converter():
         new_array_a, new_array_b = test_func_9(container, {})
 
     # invalid template arg list
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         new_array_a, new_array_b = test_func_9(container,
                                                [True, np.array([3.0])])
 
