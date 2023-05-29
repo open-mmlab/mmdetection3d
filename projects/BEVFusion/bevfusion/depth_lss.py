@@ -17,7 +17,7 @@ def gen_dx_bx(xbound, ybound, zbound):
     return dx, bx, nx
 
 
-class BaseTransform(nn.Module):
+class BaseViewTransform(nn.Module):
 
     def __init__(
         self,
@@ -184,7 +184,7 @@ class BaseTransform(nn.Module):
 
 
 @MODELS.register_module()
-class LSSTransform(BaseTransform):
+class LSSTransform(BaseViewTransform):
 
     def __init__(
         self,
@@ -253,7 +253,7 @@ class LSSTransform(BaseTransform):
         return x
 
 
-class BaseDepthTransform(BaseTransform):
+class BaseDepthTransform(BaseViewTransform):
 
     def forward(
         self,
@@ -346,6 +346,8 @@ class DepthLSSTransform(BaseDepthTransform):
         dbound: Tuple[float, float, float],
         downsample: int = 1,
     ) -> None:
+        """Compared with `LSSTransform`, `DepthLSSTransform` adds sparse depth
+        information from lidar points into the inputs of the `depthnet`."""
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,

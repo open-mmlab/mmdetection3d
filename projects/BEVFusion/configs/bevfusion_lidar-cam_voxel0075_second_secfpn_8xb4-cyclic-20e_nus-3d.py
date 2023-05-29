@@ -42,7 +42,7 @@ model = dict(
         norm_cfg=dict(type='BN2d', requires_grad=True),
         act_cfg=dict(type='ReLU', inplace=True),
         upsample_cfg=dict(mode='bilinear', align_corners=False)),
-    vtransform=dict(
+    view_transform=dict(
         type='DepthLSSTransform',
         in_channels=256,
         out_channels=80,
