@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from mmcv.ops import points_in_boxes_all, three_interpolate, three_nn
@@ -18,6 +18,8 @@ if IS_SPCONV2_AVAILABLE:
 else:
     from mmcv.ops import SparseConvTensor, SparseSequential
 
+TwoTupleIntType = Tuple[Tuple[int]]
+
 
 @MODELS.register_module()
 class SparseEncoder(nn.Module):
@@ -26,7 +28,7 @@ class SparseEncoder(nn.Module):
     Args:
         in_channels (int): The number of input channels.
         sparse_shape (list[int]): The sparse shape of input tensor.
-        order (list[str], optional): Order of conv module.
+        order (tuple[str], optional): Order of conv module.
             Defaults to ('conv', 'norm', 'act').
         norm_cfg (dict, optional): Config of normalization layer. Defaults to
             dict(type='BN1d', eps=1e-3, momentum=0.01).
@@ -46,19 +48,24 @@ class SparseEncoder(nn.Module):
             Default to False.
     """
 
-    def __init__(self,
-                 in_channels,
-                 sparse_shape,
-                 order=('conv', 'norm', 'act'),
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 base_channels=16,
-                 output_channels=128,
-                 encoder_channels=((16, ), (32, 32, 32), (64, 64, 64), (64, 64,
-                                                                        64)),
-                 encoder_paddings=((1, ), (1, 1, 1), (1, 1, 1), ((0, 1, 1), 1,
-                                                                 1)),
-                 block_type='conv_module',
-                 return_middle_feats=False):
+    def __init__(
+            self,
+            in_channels: int,
+            sparse_shape: List[int],
+            order: Optional[Tuple[str]] = ('conv', 'norm', 'act'),
+            norm_cfg: Optional[dict] = dict(
+                type='BN1d', eps=1e-3, momentum=0.01),
+            base_channels: Optional[int] = 16,
+            output_channels: Optional[int] = 128,
+            encoder_channels: Optional[TwoTupleIntType] = ((16, ), (32, 32,
+                                                                    32),
+                                                           (64, 64,
+                                                            64), (64, 64, 64)),
+            encoder_paddings: Optional[TwoTupleIntType] = ((1, ), (1, 1, 1),
+                                                           (1, 1, 1),
+                                                           ((0, 1, 1), 1, 1)),
+            block_type: Optional[str] = 'conv_module',
+            return_middle_feats: Optional[bool] = False):
         super().__init__()
         assert block_type in ['conv_module', 'basicblock']
         self.sparse_shape = sparse_shape
@@ -112,7 +119,8 @@ class SparseEncoder(nn.Module):
             conv_type='SparseConv3d')
 
     @amp.autocast(enabled=False)
-    def forward(self, voxel_features, coors, batch_size):
+    def forward(self, voxel_features: Tensor, coors: Tensor,
+                batch_size: int) -> Union[Tensor, Tuple[Tensor, list]]:
         """Forward of SparseEncoder.
 
         Args:
@@ -154,12 +162,14 @@ class SparseEncoder(nn.Module):
         else:
             return spatial_features
 
-    def make_encoder_layers(self,
-                            make_block,
-                            norm_cfg,
-                            in_channels,
-                            block_type='conv_module',
-                            conv_cfg=dict(type='SubMConv3d')):
+    def make_encoder_layers(
+        self,
+        make_block: nn.Module,
+        norm_cfg: Dict,
+        in_channels: int,
+        block_type: Optional[str] = 'conv_module',
+        conv_cfg: Optional[dict] = dict(type='SubMConv3d')
+    ) -> int:
         """make encoder layers using sparse convs.
 
         Args:
@@ -256,18 +266,22 @@ class SparseEncoderSASSD(SparseEncoder):
             Defaults to 'conv_module'.
     """
 
-    def __init__(self,
-                 in_channels: int,
-                 sparse_shape: List[int],
-                 order: Tuple[str] = ('conv', 'norm', 'act'),
-                 norm_cfg: dict = dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 base_channels: int = 16,
-                 output_channels: int = 128,
-                 encoder_channels: Tuple[tuple] = ((16, ), (32, 32, 32),
-                                                   (64, 64, 64), (64, 64, 64)),
-                 encoder_paddings: Tuple[tuple] = ((1, ), (1, 1, 1), (1, 1, 1),
-                                                   ((0, 1, 1), 1, 1)),
-                 block_type: str = 'conv_module'):
+    def __init__(
+            self,
+            in_channels: int,
+            sparse_shape: List[int],
+            order: Tuple[str] = ('conv', 'norm', 'act'),
+            norm_cfg: dict = dict(type='BN1d', eps=1e-3, momentum=0.01),
+            base_channels: int = 16,
+            output_channels: int = 128,
+            encoder_channels: Optional[TwoTupleIntType] = ((16, ), (32, 32,
+                                                                    32),
+                                                           (64, 64,
+                                                            64), (64, 64, 64)),
+            encoder_paddings: Optional[TwoTupleIntType] = ((1, ), (1, 1, 1),
+                                                           (1, 1, 1),
+                                                           ((0, 1, 1), 1, 1)),
+            block_type: str = 'conv_module'):
         super(SparseEncoderSASSD, self).__init__(
             in_channels=in_channels,
             sparse_shape=sparse_shape,
