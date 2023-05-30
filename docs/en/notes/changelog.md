@@ -25,7 +25,7 @@
 - Support tensor-like operations for `BaseInstance3DBoxes` and `BasePoint`
 - Add information of LiDAR Segmentation in NuScenes annotation files
 - Provide annotation files of datasets generated offline (#2457)
-- Refactor documents structure (#2429)
+- Refactor document structure (#2429)
 - Complete typehints and docstring (#2396, #2457, #2468, #2464, #2485)
 
 #### Bug Fixes
