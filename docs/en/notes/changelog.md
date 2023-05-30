@@ -22,7 +22,7 @@
 - Replace `np.float` by default `float` in segmentation evaluation (#2527)
 - Add docs of converting SemanticKITTI datasets (#2515)
 - Support different colors for different classes in visualization (#2500)
-- Support tensor-like operations for BaseInstance3DBoxes and BasePoint
+- Support tensor-like operations for `BaseInstance3DBoxes` and `BasePoint`
 - Add information of LiDAR Segmentation in NuScenes annotation files
 - Provide offline annotations (#2457)
 - Refactor documents structure (#2429)
