@@ -20,7 +20,7 @@
 
 - Upload checkpoints and training log of PETR (#2555)
 - Replace `np.float` by default `float` in segmentation evaluation (#2527)
-- Add SemanticKITTI Datasets description (#2515)
+- Add docs of converting SemanticKITTI datasets (#2515)
 - Support different colors for different classes in visualization (#2500)
 - Support tensor-like operations for BaseInstance3DBoxes and BasePoint
 - Add information of LiDAR Segmentation in NuScenes annotation files
