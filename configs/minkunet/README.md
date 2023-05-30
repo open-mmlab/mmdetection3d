@@ -38,7 +38,7 @@ We implement MinkUNet with [TorchSparse](https://github.com/mit-han-lab/torchspa
 
 **Note:** Referring to [PCSeg](https://github.com/PJLab-ADG/PCSeg), MinkUNet34v2 is modified based on MinkUNet34.
 
-**Note\*:** Training Time and FPS measured on NVIDIA A100. The versions of Torchsparse, Minkowski Engine and Spconv are 0.5.4, 1.4.0 and 2.3.6 respectively. Since spconv 2.3.6 has a bug with fp16 on in inference stage, the actual FPS measurement using fp32.
+**Note\*:** Training Time and FPS are measured on NVIDIA A100. The versions of Torchsparse, Minkowski Engine and Spconv are 0.5.4, 1.4.0 and 2.3.6 respectively. Since spconv 2.3.6 has a bug with fp16 on in the inference stage, the actual FPS measurement using fp32.
 
 ## Citation
 
