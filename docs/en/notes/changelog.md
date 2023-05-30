@@ -30,7 +30,7 @@
 
 #### Bug Fixes
 
-- Fix bug when training SECOND in Automatic mixed precision(AMP) mode (#2452)
+- Fix the bug of abnormal loss when training SECOND in Automatic mixed precision(AMP) mode (#2452)
 - Add a warning in function `post_process_coords` in mmdet3d/dataset/convert_utils.py (#2557)
 - Fix invalid configs (#2477, #2536)
 - Fix Unit testing bug (#2466)
