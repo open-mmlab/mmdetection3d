@@ -33,7 +33,7 @@
 - Fix the bug of abnormal loss when training SECOND in Automatic mixed precision(AMP) mode (#2452)
 - Add a warning in function `post_process_coords` in mmdet3d/dataset/convert_utils.py (#2557)
 - Fix invalid configs (#2477, #2536)
-- Fix Unit testing bug (#2466)
+- Fix bugs of unit test (#2466)
 - Fix `local-rank` in test.py for pytorch 2.0 (#2469)
 - Fix docker file (#2451)
 - Fix demo and visualization (#2453)
