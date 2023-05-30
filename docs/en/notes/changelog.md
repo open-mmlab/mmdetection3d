@@ -18,7 +18,7 @@
 
 #### Improvements
 
-- Upload PETR checkpoints and training log (#2555)
+- Upload checkpoints and training log of PETR (#2555)
 - Replace `np.float` by default `float` in segmentation evaluation (#2527)
 - Add SemanticKITTI Datasets description (#2515)
 - Support different colors for different classes in visualization (#2500)
