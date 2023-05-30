@@ -27,7 +27,7 @@ class BEVFusion(Base3DDetector):
         fusion_layer: Optional[dict] = None,
         img_backbone: Optional[dict] = None,
         pts_backbone: Optional[dict] = None,
-        vtransform: Optional[dict] = None,
+        view_transform: Optional[dict] = None,
         img_neck: Optional[dict] = None,
         pts_neck: Optional[dict] = None,
         bbox_head: Optional[dict] = None,
@@ -48,8 +48,8 @@ class BEVFusion(Base3DDetector):
             img_backbone) if img_backbone is not None else None
         self.img_neck = MODELS.build(
             img_neck) if img_neck is not None else None
-        self.vtransform = MODELS.build(
-            vtransform) if vtransform is not None else None
+        self.view_transform = MODELS.build(
+            view_transform) if view_transform is not None else None
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
 
         self.fusion_layer = MODELS.build(
@@ -151,7 +151,7 @@ class BEVFusion(Base3DDetector):
         x = x.view(B, int(BN / B), C, H, W)
 
         with torch.autocast(device_type='cuda', dtype=torch.float32):
-            x = self.vtransform(
+            x = self.view_transform(
                 x,
                 points,
                 lidar2image,

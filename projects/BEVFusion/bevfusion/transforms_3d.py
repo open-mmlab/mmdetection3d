@@ -110,6 +110,8 @@ class ImageAug3D(BaseTransform):
 
 @TRANSFORMS.register_module()
 class BEVFusionRandomFlip3D:
+    """Compared with `RandomFlip3D`, this class directly records the lidar
+    augmentation matrix in the `data`."""
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         flip_horizontal = np.random.choice([0, 1])
@@ -143,6 +145,8 @@ class BEVFusionRandomFlip3D:
 
 @TRANSFORMS.register_module()
 class BEVFusionGlobalRotScaleTrans(GlobalRotScaleTrans):
+    """Compared with `GlobalRotScaleTrans`, the augmentation order in this
+    class is rotation, translation and scaling (RTS)."""
 
     def transform(self, input_dict: dict) -> dict:
         """Private function to rotate, scale and translate bounding boxes and

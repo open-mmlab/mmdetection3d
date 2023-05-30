@@ -115,7 +115,7 @@ sh tools/create_data.sh <partition> kitti
 - **Ready-made Annotations**. We have also provided kitti data annotation files generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/kitti/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate groundtruth database files and annotations.
 
   ```bash
-  python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-databse
+  python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --only-gt-database
   ```
 
 ### Waymo
@@ -171,7 +171,7 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 - **Ready-made Annotations**. We have also provided NuScenes data annotation files generated offline [here](#summary-of-annotation-files). You could download them and place them under `data/nuscenes/`. However, if you want to use `ObjectSample` Augmentation in LiDAR-based detection methods, you should additionally generate groundtruth database files and annotations.
 
 ```bash
-python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-databse
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes --only-gt-database
 ```
 
 ### Lyft
