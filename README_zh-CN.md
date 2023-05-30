@@ -51,7 +51,7 @@
 
 **v1.1.1** 版本已于 2023.5.30 发布
 
-我们在 SemanticKITTI 上构建了一个强大的点云语义分割基准，包括 Cylinder3D 、 MinkUNet 和 SPVCNN 。其中，改进后的 MinkUNetv2 在验证集上可以达到 70.3 mIoU 。我们还在 projects 中支持了 BEVFusion 的训练和全新的 3D 占有网格预测网络 TPVFormer 。更多关于 3D 感知的新特性正在开发中，请拭目以待！
+我们在 SemanticKITTI 上构建了一个全面的点云语义分割基准，包括 Cylinder3D 、 MinkUNet 和 SPVCNN 方法。其中，改进后的 MinkUNetv2 在验证集上可以达到 70.3 mIoU 。我们还在 projects 中支持了 BEVFusion 的训练和全新的 3D 占有网格预测网络 TPVFormer 。更多关于3D感知的新功能正在进行中。请继续关注!
 
 ## 简介
 
