@@ -14,9 +14,9 @@ Collections:
       Version: v1.1.0
 
 Models:
-  - Name: minkunet_w16_8xb2-15e_semantickitti
+  - Name: minkunet18_w16_torchsparse_8xb2-amp-15e_semantickitti
     In Collection: MinkUNet
-    Config: configs/minkunet/minkunet_w16_8xb2-15e_semantickitti.py
+    Config: configs/minkunet/minkunet18_w16_torchsparse_8xb2-amp-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 3.4
@@ -28,9 +28,9 @@ Models:
           mIoU: 60.3
     Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w16_8xb2-15e_semantickitti/minkunet_w16_8xb2-15e_semantickitti_20230309_160737-0d8ec25b.pth
 
-  - Name: minkunet_w20_8xb2-15e_semantickitti
+  - Name: minkunet18_w20_torchsparse_8xb2-amp-15e_semantickitti
     In Collection: MinkUNet
-    Config: configs/minkunet/minkunet_w20_8xb2-15e_semantickitti.py
+    Config: configs/minkunet/minkunet18_w20_torchsparse_8xb2-amp-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 3.7
@@ -42,9 +42,9 @@ Models:
           mIoU: 61.6
     Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w20_8xb2-15e_semantickitti/minkunet_w20_8xb2-15e_semantickitti_20230309_160718-c3b92e6e.pth
 
-  - Name: minkunet_w32_8xb2-15e_semantickitti
+  - Name: minkunet18_w32_torchsparse_8xb2-amp-15e_semantickitti
     In Collection: MinkUNet
-    Config: configs/minkunet/minkunet_w32_8xb2-15e_semantickitti.py
+    Config: configs/minkunet/minkunet18_w32_torchsparse_8xb2-amp-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 4.9
@@ -55,3 +55,87 @@ Models:
         Metrics:
           mIoU: 63.1
     Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet_w32_8xb2-15e_semantickitti/minkunet_w32_8xb2-15e_semantickitti_20230309_160710-7fa0a6f1.pth
+
+  - Name: minkunet34_w32_minkowski_8xb2-laser-polar-mix-3x_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet34_w32_minkowski_8xb2-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 11.5
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 69.2
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet34_w32_minkowski_8xb2-laser-polar-mix-3x_semantickitti_20230514_202236-839847a8.pth
+
+  - Name: minkunet34_w32_spconv_8xb2-amp-laser-polar-mix-3x_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet34_w32_spconv_8xb2-amp-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 6.7
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 68.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet34_w32_spconv_8xb2-amp-laser-polar-mix-3x_semantickitti_20230512_233152-e0698a0f.pth
+
+  - Name: minkunet34_w32_spconv_8xb2-laser-polar-mix-3x_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet34_w32_spconv_8xb2-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 10.5
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 69.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet34_w32_spconv_8xb2-laser-polar-mix-3x_semantickitti_20230512_233817-72b200d8.pth
+
+  - Name: minkunet34_w32_torchsparse_8xb2-amp-laser-polar-mix-3x_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet34_w32_torchsparse_8xb2-amp-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 6.6
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 69.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet34_w32_torchsparse_8xb2-amp-laser-polar-mix-3x_semantickitti_20230512_233511-bef6cad0.pth
+
+  - Name: minkunet34_w32_torchsparse_8xb2-laser-polar-mix-3x_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet34_w32_torchsparse_8xb2-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 11.8
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 68.7
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet34_w32_torchsparse_8xb2-laser-polar-mix-3x_semantickitti_20230512_233601-2b61b0ab.pth
+
+  - Name: minkunet34v2_w32_torchsparse_8xb2-amp-laser-polar-mix-3x_semantickitti
+    In Collection: MinkUNet
+    Config: configs/minkunet/minkunet34v2_w32_torchsparse_8xb2-amp-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 8.9
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIoU: 70.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/minkunet/minkunet34v2_w32_torchsparse_8xb2-amp-laser-polar-mix-3x_semantickitti_20230510_221853-b14a68b3.pth

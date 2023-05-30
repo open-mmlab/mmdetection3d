@@ -14,9 +14,9 @@ Collections:
       Version: v1.1.0
 
 Models:
-  - Name: spvcnn_w16_8xb2-15e_semantickitti
+  - Name: spvcnn_w16_8xb2-amp-15e_semantickitti
     In Collection: SPVCNN
-    Config: configs/spvcnn/spvcnn_w16_8xb2-15e_semantickitti.py
+    Config: configs/spvcnn/spvcnn_w16_8xb2-amp-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 3.9
@@ -28,9 +28,9 @@ Models:
           mIOU: 61.7
     Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w16_8xb2-15e_semantickitti/spvcnn_w16_8xb2-15e_semantickitti_20230321_011645-a2734d85.pth
 
-  - Name: spvcnn_w20_8xb2-15e_semantickitti
+  - Name: spvcnn_w20_8xb2-amp-15e_semantickitti
     In Collection: SPVCNN
-    Config: configs/spvcnn/spvcnn_w20_8xb2-15e_semantickitti.py
+    Config: configs/spvcnn/spvcnn_w20_8xb2-amp-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 4.2
@@ -42,9 +42,9 @@ Models:
           mIOU: 62.9
     Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w20_8xb2-15e_semantickitti/spvcnn_w20_8xb2-15e_semantickitti_20230321_011649-519e7eff.pth
 
-  - Name: spvcnn_w32_8xb2-15e_semantickitti
+  - Name: spvcnn_w32_8xb2-amp-15e_semantickitti
     In Collection: SPVCNN
-    Config: configs/spvcnn/spvcnn_w32_8xb2-15e_semantickitti.py
+    Config: configs/spvcnn/spvcnn_w32_8xb2-amp-15e_semantickitti.py
     Metadata:
       Training Data: SemanticKITTI
       Training Memory (GB): 5.4
@@ -55,3 +55,17 @@ Models:
         Metrics:
           mIOU: 64.3
     Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w32_8xb2-15e_semantickitti/spvcnn_w32_8xb2-15e_semantickitti_20230308_113324-f7c0c5b4.pth
+
+  - Name: spvcnn_w32_8xb2-amp-laser-polar-mix-3x_semantickitti
+    In Collection: SPVCNN
+    Config: configs/spvcnn/spvcnn_w32_8xb2-amp-laser-polar-mix-3x_semantickitti.py
+    Metadata:
+      Training Data: SemanticKITTI
+      Training Memory (GB): 7.2
+      Training Resources: 8x A100 GPUs
+    Results:
+      - Task: 3D Semantic Segmentation
+        Dataset: SemanticKITTI
+        Metrics:
+          mIOU: 64.3
+    Weights: https://download.openmmlab.com/mmdetection3d/v1.1.0_models/spvcnn/spvcnn_w32_8xb2-amp-laser-polar-mix-3x_semantickitti_20230425_125908-d68a68b7.pth
