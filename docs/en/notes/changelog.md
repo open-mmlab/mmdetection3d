@@ -14,7 +14,7 @@
 - Support the training of \[BEVFusion\] in `projects` ()
 - Support LiDAR-based 3D Semantic Segmentation Benchmark (#2530, #2559)
 - Support test-time augmentation for Segmentor (#2382)
-- Support Minkowski ConvModule and Residual Block (#2528)
+- Support `Minkowski ConvModule` and `Residual` Block (#2528)
 
 #### Improvements
 
