@@ -11,10 +11,11 @@
 #### New Features
 
 - Support [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf) in `projects` (#2399, #2517, #2535)
-- Support the training of \[BEVFusion\] in `projects` ()
-- Support LiDAR-based 3D Semantic Segmentation Benchmark (#2530, #2559)
+- Support the training of \[BEVFusion\] in `projects` (#2558)
+- Support lidar-based 3D Semantic Segmentation Benchmark (#2530, #2559)
 - Support test-time augmentation for Segmentor (#2382)
 - Support `Minkowski ConvModule` and `Residual` Block (#2528)
+- Support the visualization of multi-view images in multi-modal methods (#2453)
 
 #### Improvements
 
@@ -38,9 +39,8 @@
 - Fix docker file (#2451)
 - Fix demo and visualization (#2453)
 - Fix SUN RGB-D data converter (#2440)
-- Fix readthedocs building (#2459, #2419, #2505)
+- Fix readthedocs building (#2459, #2419, #2505, #2396)
 - Fix CI #(2445)
-- Update pre-commit-config-zh-cn.yaml (#2396)
 - Fix the version error of `torch` in github merge stage test (#2424)
 - Loose the version restriction of `numba` (#2416)
 
