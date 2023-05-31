@@ -42,30 +42,33 @@ python demo/multi_modality_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0
 1. You should train the lidar-only detector first:
 
 ```bash
-python tools/train.py projects/BEVFusion/configs/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py
+bash tools/dist_train.py projects/BEVFusion/configs/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 8
 ```
 
-2. Download the [Swin pre-trained model](<>). Given the image pre-trained backbone and the lidar-only pre-trained detector, you could train the lidar-camera fusion model:
+2. Download the [Swin pre-trained model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/swint-nuimages-pretrained.pth). Given the image pre-trained backbone and the lidar-only pre-trained detector, you could train the lidar-camera fusion model:
 
 ```bash
-python tools/train.py projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py --cfg-options load_from=${LIDAR_PRETRAINED_CHECKPOINT} model.img_backbone.init_cfg.checkpoint=${IMAGE_PRETRAINED_BACKBONE}
+bash tools/dist_train.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 8 --cfg-options load_from=${LIDAR_PRETRAINED_CHECKPOINT} model.img_backbone.init_cfg.checkpoint=${IMAGE_PRETRAINED_BACKBONE}
 ```
+
+**Note** that if you want to reduce CUDA memory usage and computational overhead, you could directly add `--amp` on the tail of the above commands. The model under this setting will be trained in fp16 mode.
 
 ### Testing commands
 
 In MMDetection3D's root directory, run the following command to test the model:
 
 ```bash
-python tools/test.py projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH}
+bash tools/dist_test.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH} 8
 ```
 
 ## Results and models
 
 ### NuScenes
 
-|                                    Backbone                                     | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) |  NDS  |  mAP  |                                                 Download                                                 |
-| :-----------------------------------------------------------------------------: | :---------------------: | :-: | :------: | :------------: | :---: | :---: | :------------------------------------------------------------------------------------------------------: |
-| [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |    -     |       -        | 71.62 | 68.77 | [converted_model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link) |
+|                                           Modality                                           | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) | NDS  | mAP  |                                                                                                                                                             Download                                                                                                                                                              |
+| :------------------------------------------------------------------------------------------: | :---------------------: | :-: | :------: | :------------: | :--: | :--: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|     [lidar](./configs/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py)     |      voxel (0.075)      |  ×  |    -     |       -        | 69.6 | 64.9 |     [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d-2628f933.pth) [logs](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20230322_053447.log)     |
+| [lidar-cam](./configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |    -     |       -        | 71.4 | 68.6 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d-5239b1af.pth) [logs](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20230524_001539.log) |
 
 ## Citation
 
