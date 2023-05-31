@@ -2,6 +2,8 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
+from mmengine.dataset import BaseDataset
+
 from mmdet3d.datasets.transforms import ObjectSample
 from mmdet3d.engine.hooks import DisableObjectSampleHook
 
@@ -10,7 +12,7 @@ class TestDisableObjectSampleHook(TestCase):
 
     runner = Mock()
     runner.train_dataloader = Mock()
-    runner.train_dataloader.dataset = Mock()
+    runner.train_dataloader.dataset = Mock(spec=BaseDataset)
     runner.train_dataloader.dataset.pipeline = Mock()
     runner.train_dataloader._DataLoader__initialized = True
     runner.train_dataloader.dataset.pipeline.transforms = [

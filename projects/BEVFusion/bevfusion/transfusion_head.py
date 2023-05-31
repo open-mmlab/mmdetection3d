@@ -1,6 +1,6 @@
 # modify from https://github.com/mit-han-lab/bevfusion
 import copy
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -74,8 +74,6 @@ class TransFusionHead(nn.Module):
         bbox_coder=None,
     ):
         super(TransFusionHead, self).__init__()
-
-        self.fp16_enabled = False
 
         self.num_classes = num_classes
         self.num_proposals = num_proposals
@@ -226,7 +224,8 @@ class TransFusionHead(nn.Module):
         #################################
         # query initialization
         #################################
-        dense_heatmap = self.heatmap_head(fusion_feat)
+        with torch.autocast('cuda', enabled=False):
+            dense_heatmap = self.heatmap_head(fusion_feat.float())
         heatmap = dense_heatmap.detach().sigmoid()
         padding = self.nms_kernel_size // 2
         local_max = torch.zeros_like(heatmap)
@@ -482,8 +481,6 @@ class TransFusionHead(nn.Module):
                     ret = dict(bboxes=boxes3d, scores=scores, labels=labels)
 
                 temp_instances = InstanceData()
-                ret['bboxes'][:, 2] = ret[
-                    'bboxes'][:, 2] - ret['bboxes'][:, 5] * 0.5  # noqa: E501
                 temp_instances.bboxes_3d = metas[0]['box_type_3d'](
                     ret['bboxes'], box_dim=ret['bboxes'].shape[-1])
                 temp_instances.scores_3d = ret['scores']
@@ -498,12 +495,23 @@ class TransFusionHead(nn.Module):
 
         return rets[0]
 
-    def get_targets(self, gt_bboxes_3d, gt_labels_3d, preds_dict):
+    def get_targets(self, batch_gt_instances_3d: List[InstanceData],
+                    preds_dict: List[dict]):
         """Generate training targets.
         Args:
-            gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): Ground truth gt boxes.
-            gt_labels_3d (torch.Tensor): Labels of boxes.
-            preds_dicts (tuple of dict): first index by layer (default 1)
+            batch_gt_instances_3d (List[InstanceData]):
+            preds_dict (list[dict]): The prediction results. The index of the
+                list is the index of layers. The inner dict contains
+                predictions of one mini-batch:
+                - center: (bs, 2, num_proposals)
+                - height: (bs, 1, num_proposals)
+                - dim: (bs, 3, num_proposals)
+                - rot: (bs, 2, num_proposals)
+                - vel: (bs, 2, num_proposals)
+                - cls_logit: (bs, num_classes, num_proposals)
+                - query_score: (bs, num_classes, num_proposals)
+                - heatmap: The original heatmap before fed into transformer
+                    decoder, with shape (bs, 10, h, w)
         Returns:
             tuple[torch.Tensor]: Tuple of target including \
                 the following results in order.
@@ -516,20 +524,23 @@ class TransFusionHead(nn.Module):
         # change preds_dict into list of dict (index by batch_id)
         # preds_dict[0]['center'].shape [bs, 3, num_proposal]
         list_of_pred_dict = []
-        for batch_idx in range(len(gt_bboxes_3d)):
+        for batch_idx in range(len(batch_gt_instances_3d)):
             pred_dict = {}
             for key in preds_dict[0].keys():
-                pred_dict[key] = preds_dict[0][key][batch_idx:batch_idx + 1]
+                preds = []
+                for i in range(self.num_decoder_layers):
+                    pred_one_layer = preds_dict[i][key][batch_idx:batch_idx +
+                                                        1]
+                    preds.append(pred_one_layer)
+                pred_dict[key] = torch.cat(preds)
             list_of_pred_dict.append(pred_dict)
 
-        assert len(gt_bboxes_3d) == len(list_of_pred_dict)
-
+        assert len(batch_gt_instances_3d) == len(list_of_pred_dict)
         res_tuple = multi_apply(
             self.get_targets_single,
-            gt_bboxes_3d,
-            gt_labels_3d,
+            batch_gt_instances_3d,
             list_of_pred_dict,
-            np.arange(len(gt_labels_3d)),
+            np.arange(len(batch_gt_instances_3d)),
         )
         labels = torch.cat(res_tuple[0], dim=0)
         label_weights = torch.cat(res_tuple[1], dim=0)
@@ -550,23 +561,26 @@ class TransFusionHead(nn.Module):
             heatmap,
         )
 
-    def get_targets_single(self, gt_bboxes_3d, gt_labels_3d, preds_dict,
-                           batch_idx):
+    def get_targets_single(self, gt_instances_3d, preds_dict, batch_idx):
         """Generate training targets for a single sample.
         Args:
-            gt_bboxes_3d (:obj:`LiDARInstance3DBoxes`): Ground truth gt boxes.
-            gt_labels_3d (torch.Tensor): Labels of boxes.
-            preds_dict (dict): dict of prediction result for a single sample
+            gt_instances_3d (:obj:`InstanceData`): ground truth of instances.
+            preds_dict (dict): dict of prediction result for a single sample.
         Returns:
             tuple[torch.Tensor]: Tuple of target including \
                 the following results in order.
                 - torch.Tensor: classification target.  [1, num_proposals]
-                - torch.Tensor: classification weights (mask) [1, num_proposals] # noqa: E501
+                - torch.Tensor: classification weights (mask) [1,
+                    num_proposals] # noqa: E501
                 - torch.Tensor: regression target. [1, num_proposals, 8]
                 - torch.Tensor: regression weights. [1, num_proposals, 8]
                 - torch.Tensor: iou target. [1, num_proposals]
                 - int: number of positive proposals
+                - torch.Tensor: heatmap targets.
         """
+        # 1. Assignment
+        gt_bboxes_3d = gt_instances_3d.bboxes_3d
+        gt_labels_3d = gt_instances_3d.labels_3d
         num_proposals = preds_dict['center'].shape[-1]
 
         # get pred boxes, carefully ! don't change the network outputs
@@ -628,14 +642,19 @@ class TransFusionHead(nn.Module):
                 [res.max_overlaps for res in assign_result_list]),
             labels=torch.cat([res.labels for res in assign_result_list]),
         )
+
+        # 2. Sampling. Compatible with the interface of `PseudoSampler` in
+        # mmdet.
+        gt_instances, pred_instances = InstanceData(
+            bboxes=gt_bboxes_tensor), InstanceData(priors=bboxes_tensor)
         sampling_result = self.bbox_sampler.sample(assign_result_ensemble,
-                                                   bboxes_tensor,
-                                                   gt_bboxes_tensor)
+                                                   pred_instances,
+                                                   gt_instances)
         pos_inds = sampling_result.pos_inds
         neg_inds = sampling_result.neg_inds
         assert len(pos_inds) + len(neg_inds) == num_proposals
 
-        # create target for loss computation
+        # 3. Create target for loss computation
         bbox_targets = torch.zeros([num_proposals, self.bbox_coder.code_size
                                     ]).to(center.device)
         bbox_weights = torch.zeros([num_proposals, self.bbox_coder.code_size
@@ -723,17 +742,29 @@ class TransFusionHead(nn.Module):
             heatmap[None],
         )
 
-    def loss(self, gt_bboxes_3d, gt_labels_3d, preds_dicts, **kwargs):
+    def loss(self, batch_feats, batch_data_samples):
         """Loss function for CenterHead.
 
         Args:
-            gt_bboxes_3d (list[:obj:`LiDARInstance3DBoxes`]): Ground
-                truth gt boxes.
-            gt_labels_3d (list[torch.Tensor]): Labels of boxes.
-            preds_dicts (list[list[dict]]): Output of forward function.
+            batch_feats (): Features in a batch.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`.
         Returns:
             dict[str:torch.Tensor]: Loss of heatmap and bbox of each task.
         """
+        batch_input_metas, batch_gt_instances_3d = [], []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+            batch_gt_instances_3d.append(data_sample.gt_instances_3d)
+        preds_dicts = self(batch_feats, batch_input_metas)
+        loss = self.loss_by_feat(preds_dicts, batch_gt_instances_3d)
+
+        return loss
+
+    def loss_by_feat(self, preds_dicts: Tuple[List[dict]],
+                     batch_gt_instances_3d: List[InstanceData], *args,
+                     **kwargs):
         (
             labels,
             label_weights,
@@ -743,7 +774,7 @@ class TransFusionHead(nn.Module):
             num_pos,
             matched_ious,
             heatmap,
-        ) = self.get_targets(gt_bboxes_3d, gt_labels_3d, preds_dicts[0])
+        ) = self.get_targets(batch_gt_instances_3d, preds_dicts[0])
         if hasattr(self, 'on_the_image_mask'):
             label_weights = label_weights * self.on_the_image_mask
             bbox_weights = bbox_weights * self.on_the_image_mask[:, :, None]
@@ -753,8 +784,8 @@ class TransFusionHead(nn.Module):
 
         # compute heatmap loss
         loss_heatmap = self.loss_heatmap(
-            clip_sigmoid(preds_dict['dense_heatmap']),
-            heatmap,
+            clip_sigmoid(preds_dict['dense_heatmap']).float(),
+            heatmap.float(),
             avg_factor=max(heatmap.eq(1).float().sum().item(), 1),
         )
         loss_dict['loss_heatmap'] = loss_heatmap
@@ -781,7 +812,7 @@ class TransFusionHead(nn.Module):
             layer_cls_score = layer_score.permute(0, 2, 1).reshape(
                 -1, self.num_classes)
             layer_loss_cls = self.loss_cls(
-                layer_cls_score,
+                layer_cls_score.float(),
                 layer_labels,
                 layer_label_weights,
                 avg_factor=max(num_pos, 1),

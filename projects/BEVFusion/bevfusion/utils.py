@@ -7,6 +7,8 @@ try:
 except ImportError:
     linear_sum_assignment = None
 
+from mmengine.structures import InstanceData
+
 from mmdet3d.registry import TASK_UTILS
 
 
@@ -273,8 +275,11 @@ class HungarianAssigner3D(BaseAssigner):
                 num_gts, assigned_gt_inds, None, labels=assigned_labels)
 
         # 2. compute the weighted costs
-        # see mmdetection/mmdet/core/bbox/match_costs/match_cost.py
-        cls_cost = self.cls_cost(cls_pred[0].T, gt_labels)
+        # Hard code here to be compatible with the interface of
+        # `ClassificationCost` in mmdet.
+        gt_instances, pred_instances = InstanceData(
+            labels=gt_labels), InstanceData(scores=cls_pred[0].T)
+        cls_cost = self.cls_cost(pred_instances, gt_instances)
         reg_cost = self.reg_cost(bboxes, gt_bboxes, train_cfg)
         iou = self.iou_calculator(bboxes, gt_bboxes)
         iou_cost = self.iou_cost(iou)

@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from mmengine.dataset import BaseDataset
 from mmengine.hooks import Hook
 from mmengine.model import is_model_wrapper
 from mmengine.runner import Runner
@@ -35,7 +36,11 @@ class DisableObjectSampleHook(Hook):
             model = model.module
         if epoch == self.disable_after_epoch:
             runner.logger.info('Disable ObjectSample')
-            for transform in runner.train_dataloader.dataset.pipeline.transforms:  # noqa: E501
+            dataset = runner.train_dataloader.dataset
+            # handle dataset wrapper
+            if not isinstance(dataset, BaseDataset):
+                dataset = dataset.dataset
+            for transform in dataset.pipeline.transforms:  # noqa: E501
                 if isinstance(transform, ObjectSample):
                     assert hasattr(transform, 'disabled')
                     transform.disabled = True
