@@ -52,15 +52,9 @@
 **We have renamed the branch `1.1`  to `main` and switched the default branch from `master` to `main`. We encourage
 users to migrate to the latest version, though it comes with some cost. Please refer to [Migration Guide](docs/en/migration.md) for more details.**
 
-**v1.1.0** was released in 6/4/2023
+**v1.1.1** was released in 30/5/2023
 
-We have supported more LiDAR-based segmentation methods, including Cylinder3D, MinkUNet and SPVCNN. More new features about 3D perception are on the way. Please stay tuned!
-
-**v1.1.0rc3** was released in 7/1/2023
-
-The compatibilities of models are broken due to the unification and simplification of coordinate systems after v1.0.0rc0. For now, most models are benchmarked with similar performance, though few models are still being benchmarked. In the following release, we will update all the model checkpoints and benchmarks. See more details in the [Changelog](docs/en/notes/changelog.md) and [Changelog-v1.0.x](docs/en/notes/changelog_v1.0.x.md).
-
-Documentation: https://mmdetection3d.readthedocs.io/
+We have constructed a comprehensive LiDAR semantic segmentation benchmark on SemanticKITTI, including Cylinder3D, MinkUNet and SPVCNN methods. Noteworthy, the improved MinkUNetv2 can achieve 70.3 mIoU on the validation set of SemanticKITTI. We have also supported the training of BEVFusion and an occupancy prediction method, TPVFomrer, in our `projects`. More new features about 3D perception are on the way. Please stay tuned!
 
 ## Introduction
 

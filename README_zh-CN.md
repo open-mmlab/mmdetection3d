@@ -49,15 +49,9 @@
 
 **我们将 `1.1` 分支重命名为 `main` 并将默认分支从 `master` 切换到 `main`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](docs/en/migration.md) 以了解更多细节。**
 
-**v1.1.0** 版本已经在 2023.4.6 发布。
+**v1.1.1** 版本已于 2023.5.30 发布
 
-我们已经支持了更多基于 LiDAR 的 3D 分割算法。更多关于 3D 感知的新特性正在开发中，请拭目以待！
-
-**v1.1.0rc3** 版本已经在 2023.1.7 发布。
-
-由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在[变更日志](docs/zh_cn/notes/changelog.md)和 [v1.0.x 版本变更日志](docs/zh_cn/notes/changelog_v1.0.x.md)中查看更多详细信息。
-
-文档：https://mmdetection3d.readthedocs.io/
+我们在 SemanticKITTI 上构建了一个全面的点云语义分割基准，包括 Cylinder3D 、 MinkUNet 和 SPVCNN 方法。其中，改进后的 MinkUNetv2 在验证集上可以达到 70.3 mIoU 。我们还在 projects 中支持了 BEVFusion 的训练和全新的 3D 占有网格预测网络 TPVFormer 。更多关于3D感知的新功能正在进行中。请继续关注!
 
 ## 简介
 
