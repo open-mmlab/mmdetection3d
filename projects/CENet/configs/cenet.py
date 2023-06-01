@@ -193,7 +193,8 @@ model = dict(
         out_channels=(128, 128, 128, 128),
         fuse_channels=(256, 128),
         strides=(1, 2, 2, 2),
-        dilations=(1, 1, 1, 1)),
+        dilations=(1, 1, 1, 1),
+        act_cfg=dict(type='HSwish', inplace=True)),
     decode_head=dict(
         type='RangeImageHead',
         channels=128,
@@ -207,8 +208,57 @@ model = dict(
         loss_lovasz=dict(type='LovaszLoss', loss_weight=1.5, reduction='none'),
         loss_boundary=dict(type='BoundaryLoss', loss_weight=1.0),
         conv_seg_kernel_size=1,
-        ignore_index=19,
-    ),
+        ignore_index=19),
+    auxiliary_head=[
+        dict(
+            type='RangeImageHead',
+            channels=128,
+            num_classes=20,
+            dropout_ratio=0,
+            loss_ce=dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=False,
+                class_weight=None,
+                loss_weight=1.0),
+            loss_lovasz=dict(
+                type='LovaszLoss', loss_weight=1.5, reduction='none'),
+            loss_boundary=dict(type='BoundaryLoss', loss_weight=1.0),
+            conv_seg_kernel_size=1,
+            ignore_index=19,
+            indices=2),
+        dict(
+            type='RangeImageHead',
+            channels=128,
+            num_classes=20,
+            dropout_ratio=0,
+            loss_ce=dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=False,
+                class_weight=None,
+                loss_weight=1.0),
+            loss_lovasz=dict(
+                type='LovaszLoss', loss_weight=1.5, reduction='none'),
+            loss_boundary=dict(type='BoundaryLoss', loss_weight=1.0),
+            conv_seg_kernel_size=1,
+            ignore_index=19,
+            indices=3),
+        dict(
+            type='RangeImageHead',
+            channels=128,
+            num_classes=20,
+            dropout_ratio=0,
+            loss_ce=dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=False,
+                class_weight=None,
+                loss_weight=1.0),
+            loss_lovasz=dict(
+                type='LovaszLoss', loss_weight=1.5, reduction='none'),
+            loss_boundary=dict(type='BoundaryLoss', loss_weight=1.0),
+            conv_seg_kernel_size=1,
+            ignore_index=19,
+            indices=4)
+    ],
     train_cfg=None,
     test_cfg=dict(use_knn=True, knn=7, search=7, sigma=1.0, cutoff=2.0))
 
@@ -216,8 +266,7 @@ model = dict(
 # This schedule is mainly used on S3DIS dataset in segmentation task
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(
-        type='SGD', lr=0.01, weight_decay=0.0001, momentum=0.9, nesterov=True))
+    optimizer=dict(type='SGD', lr=0.01, weight_decay=0.0001, momentum=0.9))
 
 param_scheduler = [
     dict(
@@ -226,14 +275,14 @@ param_scheduler = [
     dict(
         type='CosineAnnealingLR',
         begin=0,
-        T_max=50,
+        T_max=100,
         by_epoch=True,
         eta_min=1e-5,
         convert_to_iter_based=True)
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=50, val_interval=1)
+train_cfg = dict(by_epoch=True, max_epochs=100, val_interval=1)
 val_cfg = dict()
 test_cfg = dict()
 
