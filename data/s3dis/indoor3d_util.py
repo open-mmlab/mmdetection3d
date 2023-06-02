@@ -39,7 +39,7 @@ def export(anno_path, out_filename):
         one_class = osp.basename(f).split('_')[0]
         if one_class not in class_names:  # some rooms have 'staris' class
             one_class = 'clutter'
-        points = np.loadtxt(f)
+        points = pd.read_csv(f, header=None, sep=" ").to_numpy()
         labels = np.ones((points.shape[0], 1)) * class2label[one_class]
         ins_labels = np.ones((points.shape[0], 1)) * ins_idx
         ins_idx += 1
