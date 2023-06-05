@@ -60,13 +60,13 @@ We will stick to the three coordinate systems defined in this tutorial in the fu
 
 ## Definition of the yaw angle
 
-Please refer to [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) for the standard definition of the yaw angle. In object detection, we choose an axis as the gravity axis, and a reference direction on the plane $\Pi$ perpendicular to the gravity axis, then the reference direction has a yaw angle of 0, and other directions on $\Pi$ have non-zero yaw angles depending on its angle with the reference direction.
+Please refer to [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) for the standard definition of the yaw angle. In object detection, we choose an axis as the gravity axis, and a reference direction on the plane $\\Pi$ perpendicular to the gravity axis, then the reference direction has a yaw angle of 0, and other directions on $\\Pi$ have non-zero yaw angles depending on its angle with the reference direction.
 
 Currently, for all supported datasets, annotations do not include pitch angle and roll angle, which means we need only consider the yaw angle when predicting boxes and calculating overlap between boxes.
 
 In MMDetection3D, all three coordinate systems are right-handed coordinate systems, which means the ascending direction of the yaw angle is counter-clockwise if viewed from the negative direction of the gravity axis (the axis is pointing at one's eyes).
 
-The figure below shows that, in this right-handed coordinate system, if we set the positive direction of the x-axis as a reference direction, then the positive direction of the y-axis has a yaw angle of $\frac{\pi}{2}$.
+The figure below shows that, in this right-handed coordinate system, if we set the positive direction of the x-axis as a reference direction, then the positive direction of the y-axis has a yaw angle of $\\frac{\\pi}{2}$.
 
 ```
                      z up  y front (yaw=0.5*pi)
@@ -200,7 +200,7 @@ Then, the box dimensions before and after the conversion satisfy the following r
 
 Finally, the yaw angle should also be converted:
 
-- $r\_{LiDAR}=-\frac{\pi}{2}-r\_{camera}$
+- $r\_{LiDAR}=-\\frac{\\pi}{2}-r\_{camera}$
 
 See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/box_3d_mode.py) for more details.
 
@@ -228,18 +228,18 @@ For each box related op, we have marked the type of boxes to which we can apply 
 
 No. For example, in KITTI, we need a calibration matrix when converting from Camera coordinate system to LiDAR coordinate system.
 
-#### Q3: How does a phase difference of $2\pi$ in the yaw angle of a box affect evaluation?
+#### Q3: How does a phase difference of $2\\pi$ in the yaw angle of a box affect evaluation?
 
-For IoU calculation, a phase difference of $2\pi$ in the yaw angle will result in the same box, thus not affecting evaluation.
+For IoU calculation, a phase difference of $2\\pi$ in the yaw angle will result in the same box, thus not affecting evaluation.
 
-For angle prediction evaluation such as the NDS metric in NuScenes and the AOS metric in KITTI, the angle of predicted boxes will be first standardized, so the phase difference of $2\pi$ will not change the result.
+For angle prediction evaluation such as the NDS metric in NuScenes and the AOS metric in KITTI, the angle of predicted boxes will be first standardized, so the phase difference of $2\\pi$ will not change the result.
 
-#### Q4: How does a phase difference of $\pi$ in the yaw angle of a box affect evaluation?
+#### Q4: How does a phase difference of $\\pi$ in the yaw angle of a box affect evaluation?
 
-For IoU calculation, a phase difference of $\pi$ in the yaw angle will result in the same box, thus not affecting evaluation.
+For IoU calculation, a phase difference of $\\pi$ in the yaw angle will result in the same box, thus not affecting evaluation.
 
 However, for angle prediction evaluation, this will result in the exact opposite direction.
 
-Just think about a car. The yaw angle is the angle between the direction of the car front and the positive direction of the x-axis. If we add $\pi$ to this angle, the car front will become the car rear.
+Just think about a car. The yaw angle is the angle between the direction of the car front and the positive direction of the x-axis. If we add $\\pi$ to this angle, the car front will become the car rear.
 
-For categories such as barrier, the front and the rear have no difference, therefore a phase difference of $\pi$ will not affect the angle prediction score.
+For categories such as barrier, the front and the rear have no difference, therefore a phase difference of $\\pi$ will not affect the angle prediction score.
