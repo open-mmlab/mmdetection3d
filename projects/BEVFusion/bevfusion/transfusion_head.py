@@ -481,7 +481,7 @@ class TransFusionHead(nn.Module):
                     ret = dict(bboxes=boxes3d, scores=scores, labels=labels)
 
                 temp_instances = InstanceData()
-                temp_instances.bboxes_3d = metas[0]['box_type_3d'](
+                temp_instances.bboxes_3d = metas[0].box_type_3d(
                     ret['bboxes'], box_dim=ret['bboxes'].shape[-1])
                 temp_instances.scores_3d = ret['scores']
                 temp_instances.labels_3d = ret['labels'].int()
