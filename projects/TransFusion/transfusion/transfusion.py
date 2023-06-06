@@ -8,18 +8,18 @@ from mmdet3d.structures import Det3DDataSample
 
 
 @MODELS.register_module()
-class TransFusionDetector(MVXTwoStageDetector):
+class TransFusion(MVXTwoStageDetector):
     """Base class of Multi-modality VoxelNet."""
 
     def __init__(self, **kwargs):
-        super(TransFusionDetector, self).__init__(**kwargs)
+        super(TransFusion, self).__init__(**kwargs)
 
         self.freeze_img = kwargs.get('freeze_img', True)
         self.init_weights()
 
     def init_weights(self):
         """Initialize model weights."""
-        super(TransFusionDetector, self).init_weights()
+        super(TransFusion, self).init_weights()
 
         if self.freeze_img:
             if self.with_img_backbone:

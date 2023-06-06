@@ -38,7 +38,7 @@ input_modality = dict(
 backend_args = None
 
 model = dict(
-    type='TransFusionDetector',
+    type='TransFusion',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
