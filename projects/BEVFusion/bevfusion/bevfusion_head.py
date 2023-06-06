@@ -43,7 +43,7 @@ class ConvFuser(nn.Sequential):
 
 
 @MODELS.register_module()
-class TransFusionHead(nn.Module):
+class BEVFusionHead(nn.Module):
 
     def __init__(
         self,
@@ -73,7 +73,7 @@ class TransFusionHead(nn.Module):
         test_cfg=None,
         bbox_coder=None,
     ):
-        super(TransFusionHead, self).__init__()
+        super(BEVFusionHead, self).__init__()
 
         self.num_classes = num_classes
         self.num_proposals = num_proposals
