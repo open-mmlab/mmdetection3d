@@ -163,7 +163,8 @@ class BEVFusionHead(nn.Module):
 
     def create_2D_grid(self, x_size, y_size):
         meshgrid = [[0, x_size - 1, x_size], [0, y_size - 1, y_size]]
-        batch_y, batch_x = torch.meshgrid(
+        # NOTE: modified
+        batch_x, batch_y = torch.meshgrid(
             *[torch.linspace(it[0], it[1], it[2]) for it in meshgrid])
         batch_x = batch_x + 0.5
         batch_y = batch_y + 0.5
@@ -724,11 +725,10 @@ class BEVFusionHead(nn.Module):
                 center_int = center.to(torch.int32)
 
                 # original
-                draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]], center_int,
-                                      radius)  # noqa: E501
+                # draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]], center_int, radius) # noqa: E501
                 # NOTE: fix
-                # draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]],
-                #                       center_int[[1, 0]], radius)
+                draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]],
+                                      center_int[[1, 0]], radius)
 
         mean_iou = ious[pos_inds].sum() / max(len(pos_inds), 1)
         return (
