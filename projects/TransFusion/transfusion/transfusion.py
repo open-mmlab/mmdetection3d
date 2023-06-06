@@ -9,7 +9,7 @@ from mmdet3d.structures import Det3DDataSample
 
 @MODELS.register_module()
 class TransFusion(MVXTwoStageDetector):
-    """Base class of Multi-modality VoxelNet."""
+    """Base class of Multi-modality TransFusion."""
 
     def __init__(self, **kwargs):
         super(TransFusion, self).__init__(**kwargs)
