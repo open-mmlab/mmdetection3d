@@ -86,7 +86,20 @@ mmdetection3d
 
 ### KITTI
 
-Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare KITTI data splits by running:
+1. Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Alternatively, you
+   can download the dataset from [OpenDataLab](https://opendatalab.com/) using MIM. The command scripts are the following:
+
+```bash
+# install OpenDataLab CLI tools
+pip install -U opendatalab
+# log in OpenDataLab. Note that you should register an account on [OpenDataLab](https://opendatalab.com/) before.
+pip install odl
+odl login
+# download and preprocess by MIM
+mim download mmdet3d --dataset kitti
+```
+
+2. Prepare KITTI data splits by running:
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
