@@ -295,7 +295,7 @@ class Seg3DDataset(BaseDataset):
         Returns:
             dict: Results passed through ``self.pipeline``.
         """
-        if not self.test_mode:
+        if True:
             data_info = self.get_data_info(idx)
             # Pass the dataset to the pipeline during training to support mixed
             # data augmentation, such as polarmix and lasermix.

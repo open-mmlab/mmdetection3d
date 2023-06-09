@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import math
+import sys
 import time
 from typing import List, Optional, Sequence, Tuple, Union
 
@@ -136,17 +137,22 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             alpha=alpha)
         if points is not None:
             self.set_points(points, pcd_mode=pcd_mode, frame_cfg=frame_cfg)
-        self.pts_seg_num = 0
         self.multi_imgs_col = multi_imgs_col
         self.fig_show_cfg.update(fig_show_cfg)
+
+        self.flag_pause = False
+        self.flag_exit = False
+        self.flag_next = False
 
     def _clear_o3d_vis(self) -> None:
         """Clear open3d vis."""
 
         if hasattr(self, 'o3d_vis'):
             del self.o3d_vis
-            del self.pcd
             del self.points_colors
+            del self.view_control
+            if hasattr(self, 'pcd'):
+                del self.pcd
 
     def _initialize_o3d_vis(self, frame_cfg: dict) -> Visualizer:
         """Initialize open3d vis according to frame_cfg.
@@ -161,11 +167,25 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if o3d is None or geometry is None:
             raise ImportError(
                 'Please run "pip install open3d" to install open3d first.')
-        o3d_vis = o3d.visualization.Visualizer()
+        # o3d_vis = o3d.visualization.Visualizer()
+        glfw_key_escape = 256  # Esc
+        glfw_key_space = 32  # Space
+        glfw_key_right = 262  # Right
+        o3d_vis = o3d.visualization.VisualizerWithKeyCallback()
+        o3d_vis.register_key_callback(glfw_key_escape, self.escape_callback)
+        o3d_vis.register_key_action_callback(glfw_key_space,
+                                             self.space_action_callback)
+        o3d_vis.register_key_callback(glfw_key_right, self.down_callback)
         o3d_vis.create_window()
+        # o3d_vis.create_window(width=960, height=540)
         # create coordinate frame
-        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(**frame_cfg)
-        o3d_vis.add_geometry(mesh_frame)
+        # mesh_frame = geometry.TriangleMesh.
+        # create_coordinate_frame(**frame_cfg)
+        # o3d_vis.add_geometry(mesh_frame)
+        self.view_control = o3d_vis.get_view_control()
+        self.view_port = o3d.io.read_pinhole_camera_parameters(
+            'ScreenCamera_2023-05-29-16-38-17.json')
+
         return o3d_vis
 
     @master_only
@@ -234,6 +254,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 points_colors /= 255.0
         else:
             raise NotImplementedError
+
+        # mesh_frame = geometry.TriangleMesh.
+        # create_coordinate_frame(**frame_cfg)
+        # self.o3d_vis.add_geometry(mesh_frame)
 
         pcd.colors = o3d.utility.Vector3dVector(points_colors)
         self.o3d_vis.add_geometry(pcd)
@@ -572,12 +596,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # we can't draw the colors on existing points
         # in case gt and pred mask would overlap
         # instead we set a large offset along x-axis for each seg mask
-        self.pts_seg_num += 1
-        offset = (np.array(self.pcd.points).max(0) -
-                  np.array(self.pcd.points).min(0))[0] * 1.2 * self.pts_seg_num
-        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(
-            size=1, origin=[offset, 0, 0])  # create coordinate frame for seg
-        self.o3d_vis.add_geometry(mesh_frame)
+        if hasattr(self, 'pcd'):
+            offset = (np.array(self.pcd.points).max(0) -
+                      np.array(self.pcd.points).min(0))[0] * 1.2
+            mesh_frame = geometry.TriangleMesh.create_coordinate_frame(
+                size=1, origin=[offset, 0,
+                                0])  # create coordinate frame for seg
+            self.o3d_vis.add_geometry(mesh_frame)
+        else:
+            offset = 0
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
         self.set_points(seg_points, pcd_mode=2, vis_mode='add', mode='xyzrgb')
@@ -716,7 +743,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                           points: Union[Tensor, np.ndarray],
                           pts_seg: PointData,
                           palette: Optional[List[tuple]] = None,
-                          ignore_index: Optional[int] = None) -> None:
+                          keep_index: Optional[int] = None) -> None:
         """Draw 3D semantic mask of GT or prediction.
 
         Args:
@@ -733,14 +760,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pts_sem_seg = tensor2ndarray(pts_seg.pts_semantic_mask)
         palette = np.array(palette)
 
-        if ignore_index is not None:
-            points = points[pts_sem_seg != ignore_index]
-            pts_sem_seg = pts_sem_seg[pts_sem_seg != ignore_index]
+        if keep_index is not None:
+            keep_index = tensor2ndarray(keep_index)
+            points = points[keep_index]
+            pts_sem_seg = pts_sem_seg[keep_index]
 
         pts_color = palette[pts_sem_seg]
         seg_color = np.concatenate([points[:, :3], pts_color], axis=1)
 
-        self.set_points(points, pcd_mode=2, vis_mode='add')
         self.draw_seg_mask(seg_color)
 
     @master_only
@@ -749,7 +776,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
              drawn_img_3d: Optional[np.ndarray] = None,
              drawn_img: Optional[np.ndarray] = None,
              win_name: str = 'image',
-             wait_time: int = 0,
+             wait_time: int = -1,
              continue_key: str = ' ',
              vis_task: str = 'lidar_det') -> None:
         """Show the drawn point cloud/image.
@@ -768,10 +795,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 means "forever". Defaults to 0.
             continue_key (str): The key for users to continue. Defaults to ' '.
         """
-        if vis_task == 'multi-modality_det':
-            img_wait_time = 0.5
-        else:
-            img_wait_time = wait_time
+        # if vis_task == 'multi-modality_det':
+        #     img_wait_time = 0.5
+        # else:
+        #     img_wait_time = wait_time
+        img_wait_time = 0.5
 
         # In order to show multi-modal results at the same time, we show image
         # firstly and then show point cloud since the running of
@@ -783,6 +811,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                              continue_key)
             else:
                 if drawn_img_3d is not None:
+                    # t1=threading.Thread(target=super().show(),
+                    #                  args=(drawn_img_3d, win_name,
+                    #                        img_wait_time, continue_key))
+                    # t1.start()
                     super().show(drawn_img_3d, win_name, img_wait_time,
                                  continue_key)
                 if drawn_img is not None:
@@ -790,23 +822,62 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                  continue_key)
 
         if hasattr(self, 'o3d_vis'):
-            self.o3d_vis.poll_events()
-            self.o3d_vis.update_renderer()
-            if wait_time > 0:
-                time.sleep(wait_time)
+            self.view_control.convert_from_pinhole_camera_parameters(
+                self.view_port)
+            self.flag_exit = not self.o3d_vis.poll_events()
+            if wait_time != -1:
+                self.last_time = time.time()
+                while time.time(
+                ) - self.last_time < wait_time and self.o3d_vis.poll_events():
+                    self.o3d_vis.update_renderer()
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                while self.flag_pause and self.o3d_vis.poll_events():
+                    self.o3d_vis.update_renderer()
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+
             else:
-                self.o3d_vis.run()
+                while not self.flag_next and self.o3d_vis.poll_events():
+                    self.o3d_vis.update_renderer()
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                self.flag_next = False
+            self.o3d_vis.clear_geometries()
+            try:
+                del self.pcd
+            except KeyError:
+                pass
             if save_path is not None:
                 if not (save_path.endswith('.png')
                         or save_path.endswith('.jpg')):
                     save_path += '.png'
                 self.o3d_vis.capture_screen_image(save_path)
+            if self.flag_exit:
+                self.o3d_vis.clear_geometries()
+                self.o3d_vis.destroy_window()
+                self.o3d_vis.close()
+                self._clear_o3d_vis()
+                sys.exit(0)
 
-            # TODO: support more flexible window control
-            self.o3d_vis.clear_geometries()
-            self.o3d_vis.destroy_window()
-            self.o3d_vis.close()
-            self._clear_o3d_vis()
+    def escape_callback(self, vis):
+        self.flag_exit = True
+        return False
+
+    def space_action_callback(self, vis, action, mods):
+        if action == 1:
+            if self.flag_pause:
+                print('Playback continued, press [SPACE] to pause.')
+                # self.event.clear()
+            else:
+                print('Playback paused, press [SPACE] to continue.')
+                # self.event.set()
+            self.flag_pause = not self.flag_pause
+        return True
+
+    def down_callback(self, vis):
+        self.flag_next = True
+        return False
 
     # TODO: Support Visualize the 3D results from image and point cloud
     # respectively
@@ -862,6 +933,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # For object detection datasets, no palette is saved
         palette = self.dataset_meta.get('palette', None)
         ignore_index = self.dataset_meta.get('ignore_index', None)
+        if ignore_index is not None and 'gt_pts_seg' in data_sample and vis_task == 'lidar_seg':  # noqa: E501
+            keep_index = data_sample.gt_pts_seg.pts_semantic_mask != ignore_index  # noqa: E501
 
         gt_data_3d = None
         pred_data_3d = None
@@ -890,7 +963,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 self._draw_pts_sem_seg(data_input['points'],
                                        data_sample.gt_pts_seg, palette,
-                                       ignore_index)
+                                       keep_index)
 
         if draw_pred and data_sample is not None:
             if 'pred_instances_3d' in data_sample:
@@ -922,7 +995,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 self._draw_pts_sem_seg(data_input['points'],
                                        data_sample.pred_pts_seg, palette,
-                                       ignore_index)
+                                       keep_index)
 
         # monocular 3d object detection image
         if vis_task in ['mono_det', 'multi-modality_det']:

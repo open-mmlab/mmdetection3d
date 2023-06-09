@@ -113,7 +113,59 @@ test_pipeline = [
         dataset_type='semantickitti',
         backend_args=backend_args),
     dict(type='PointSegClassMapping'),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='RandomChoice',
+        transforms=[
+            [
+                dict(
+                    type='LaserMix',
+                    num_areas=[3, 4, 5, 6],
+                    pitch_angles=[-25, 3],
+                    pre_transform=[
+                        dict(
+                            type='LoadPointsFromFile',
+                            coord_type='LIDAR',
+                            load_dim=4,
+                            use_dim=4),
+                        dict(
+                            type='LoadAnnotations3D',
+                            with_bbox_3d=False,
+                            with_label_3d=False,
+                            with_seg_3d=True,
+                            seg_3d_dtype='np.int32',
+                            seg_offset=2**16,
+                            dataset_type='semantickitti'),
+                        dict(type='PointSegClassMapping')
+                    ],
+                    prob=1)
+            ],
+            [
+                dict(
+                    type='PolarMix',
+                    instance_classes=[0, 1, 2, 3, 4, 5, 6, 7],
+                    swap_ratio=0.5,
+                    rotate_paste_ratio=1.0,
+                    pre_transform=[
+                        dict(
+                            type='LoadPointsFromFile',
+                            coord_type='LIDAR',
+                            load_dim=4,
+                            use_dim=4),
+                        dict(
+                            type='LoadAnnotations3D',
+                            with_bbox_3d=False,
+                            with_label_3d=False,
+                            with_seg_3d=True,
+                            seg_3d_dtype='np.int32',
+                            seg_offset=2**16,
+                            dataset_type='semantickitti'),
+                        dict(type='PointSegClassMapping')
+                    ],
+                    prob=1)
+            ],
+        ],
+        prob=[0.5, 0.5]),
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
