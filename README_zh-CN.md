@@ -35,9 +35,11 @@
 
 </div>
 
-<div>
+<div align="center">
 
 [English](README.md) | 简体中文
+
+</div>
 
 <div align="center">
   <a href="https://openmmlab.medium.com/" style="text-decoration:none;">
