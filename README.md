@@ -187,6 +187,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
             <li><a href="configs/pv_rcnn">PV-RCNN (CVPR'2020)</a></li>
+            <li><a href="projects/CenterFormer">CenterFormer (ECCV'2022)</a></li>
         </ul>
         <li><b>Indoor</b></li>
         <ul>
@@ -271,6 +272,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 |   MinkUNet    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
 |    SPVCNN     |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
 |    BEVFusion  |   ✗    |   ✓    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|  CenterFormer |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 
