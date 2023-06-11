@@ -195,6 +195,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
             <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
             <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
             <li><a href="configs/fcaf3d">FCAF3D (ECCV'2022)</a></li>
+            <li><a href="projects/TR3D">TR3D (ArXiv'2023)</a></li>
       </ul>
       </td>
       <td>
@@ -273,6 +274,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 |    SPVCNN     |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
 |    BEVFusion  |   ✗    |   ✓    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
 |  CenterFormer |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|      TR3D     |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✓      |     ✗      |    ✗     |
 
 **Note:** All the about **300+ models, methods of 40+ papers** in 2D detection supported by [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/en/model_zoo.md) can be trained or used in this codebase.
 
