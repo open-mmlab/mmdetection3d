@@ -1,6 +1,29 @@
-kitti:   # 数据集名称
-  dataset: KITTI_Object   # OpenDataLab 中的数据集名称，可以通过 odl get {dataset} 进行下载，
-                      # 参考 https://opendatalab.com/KITTI_Object/cli
-  download_root: data  # 数据集下载路径，从 OpenDatalab 下载的压缩包存放路径
-  data_root: data/kitti  # 数据集存放路径，预处理后的数据路径
-  script: tools/dataset_converters/kitti_preprocess.sh  # 数据集预处理脚本路径
+kitti:
+  # The name of dataset in OpenDataLab referring to
+  # https://opendatalab.com/KITTI_Object/cli. You can also download it
+  # by running `odl get ${dataset}` independently
+  dataset: KITTI_Object
+  download_root: data
+  data_root: data/kitti
+  # Scripts for unzipping datasets
+  script: tools/dataset_converters/kitti_unzip.sh
+
+nuscenes:
+  # The name of dataset in OpenDataLab referring to
+  # https://opendatalab.com/nuScenes/cli. You can also download it
+  # by running `odl get ${dataset}` independently
+  dataset: nuScenes
+  download_root: data
+  data_root: data/nuscenes
+  # Scripts for unzipping datasets
+  script: tools/dataset_converters/nuscenes_unzip.sh
+
+semantickitti:
+  # The name of dataset in OpenDataLab referring to
+  # https://opendatalab.com/KITTI_Object/cli. You can also download it
+  # by running `odl get ${dataset}` independently
+  dataset: SemanticKITTI
+  download_root: data
+  data_root: data/semantickitti_tmp
+  # Scripts for unzipping datasets
+  script: tools/dataset_converters/scannet_unzip.sh
