@@ -20,10 +20,10 @@ nuscenes:
 
 semantickitti:
   # The name of dataset in OpenDataLab referring to
-  # https://opendatalab.com/KITTI_Object/cli. You can also download it
+  # https://opendatalab.com/SemanticKITTI/cli. You can also download it
   # by running `odl get ${dataset}` independently
   dataset: SemanticKITTI
   download_root: data
-  data_root: data/semantickitti_tmp
+  data_root: data/semantickitti
   # Scripts for unzipping datasets
-  script: tools/dataset_converters/scannet_unzip.sh
+  script: tools/dataset_converters/semantickitti_unzip.sh
