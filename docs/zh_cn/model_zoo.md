@@ -108,6 +108,34 @@
 
 请参考 [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcaf3d) 获取更多的细节，我们在 ScanNet, S3DIS 和 SUN RGB-D 数据集上给出了相应的基准结果。
 
+### PV-RCNN
+
+请参考 [PV-RCNN](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/pv_rcnn) 获取更多的细节，我们在 KITTI 数据集上给出了相应的基准结果。
+
+### BEVFusion
+
+请参考 [BEVFusion](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/BEVFusion) 获取更多的细节, 我们在 NuScenes 数据集上给出了相应的基准结果。
+
+### CenterFormer
+
+请参考 [CenterFormer](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/CenterFormer) 获取更多的细节, 我们在 Waymo 数据集上给出了相应的基准结果。
+
+### TR3D
+
+请参考 [TR3D](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/TR3D) 获取更多的细节, 我们在 ScanNet, SUN RGB-D 和 S3DIS 数据集上给出了相应的基准结果。
+
+### DETR3D
+
+请参考 [DETR3D](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/DETR3D) 获取更多的细节, 我们在 NuScenes 数据集上给出了相应的基准结果。
+
+### PETR
+
+请参考 [PETR](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/PETR) 获取更多的细节, 我们在 NuScenes 数据集上给出了相应的基准结果。
+
+### TPVFormer
+
+请参考 [TPVFormer](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/TPVFormer) 获取更多的细节, 我们在 NuScenes 数据集上给出了相应的基准结果。
+
 ### Mixed Precision (FP16) Training
 
 细节请参考 [Mixed Precision (FP16) Training 在 PointPillars 训练的样例](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb2-amp-2x_nus-3d.py)。

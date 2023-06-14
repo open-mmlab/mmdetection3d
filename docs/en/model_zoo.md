@@ -112,6 +112,30 @@ Please refer to [FCAF3D](https://github.com/open-mmlab/mmdetection3d/blob/main/c
 
 Please refer to [PV-RCNN](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/pv_rcnn) for details. We provide PV-RCNN baselines on the KITTI dataset.
 
+### BEVFusion
+
+Please refer to [BEVFusion](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/BEVFusion) for details. We provide BEVFusion baselines on the NuScenes dataset.
+
+### CenterFormer
+
+Please refer to [CenterFormer](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/CenterFormer) for details. We provide CenterFormer baselines on the Waymo dataset.
+
+### TR3D
+
+Please refer to [TR3D](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/TR3D) for details. We provide TR3D baselines on the ScanNet, SUN RGB-D and S3DIS dataset.
+
+### DETR3D
+
+Please refer to [DETR3D](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/DETR3D) for details. We provide DETR3D baselines on the nuScenes dataset.
+
+### PETR
+
+Please refer to [PETR](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/PETR) for details. We provide PETR baselines on the nuScenes dataset.
+
+### TPVFormer
+
+Please refer to [TPVFormer](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/projects/TPVFormer) for details. We provide TPVFormer baselines on the nuScenes dataset.
+
 ### Mixed Precision (FP16) Training
 
 Please refer to [Mixed Precision (FP16) Training on PointPillars](https://github.com/open-mmlab/mmdetection3d/tree/v1.0.0.dev0/configs/pointpillars/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d.py) for details.
