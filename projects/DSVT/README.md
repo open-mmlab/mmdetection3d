@@ -63,9 +63,9 @@ The support of training DSVT is on the way.
 
 ### Waymo
 
-|               Middle Encoder                                   Backbone                |                                        Load Interval                                        | Voxel type (voxel size) | Multi-Class NMS | Multi-frames | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 | mAP@L2 | **mAPH@L2** | Download |
-| :------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: | :---------------------: | :-------------: | :----------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :------: |
-| [DSVT](./configs/dsvt_voxel032_res-second_secfpn_8xb1-cyclic-12e_waymoD5-3d-3class.py) | [ResSECOND](./configs/dsvt_voxel032_res-second_secfpn_8xb1-cyclic-12e_waymoD5-3d-3class.py) |            5            |  voxel (0.32)   |      ✓       |    ×     |                |        |  75.2   |  72.2  |    68.9     |   66.1   |
+|                                     Middle Encoder                                     |                                          Backbone                                           | Load Interval | Voxel type (voxel size) | Multi-Class NMS | Multi-frames | Mem (GB) | Inf time (fps) | mAP@L1 | mAPH@L1 | mAP@L2 | **mAPH@L2** | Download |
+| :------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: | :-----------: | :---------------------: | :-------------: | :----------: | :------: | :------------: | :----: | :-----: | :----: | :---------: | :------: |
+| [DSVT](./configs/dsvt_voxel032_res-second_secfpn_8xb1-cyclic-12e_waymoD5-3d-3class.py) | [ResSECOND](./configs/dsvt_voxel032_res-second_secfpn_8xb1-cyclic-12e_waymoD5-3d-3class.py) |       5       |      voxel (0.32)       |        ✓        |      ×       |          |                |  75.2  |  72.2   |  68.9  |    66.1     |          |
 
 **Note** that `ResSECOND` denotes the base block in SECOND has residual layers.
 

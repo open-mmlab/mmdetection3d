@@ -328,7 +328,8 @@ class DSVTCenterHead(CenterHead):
                 all_selected_mask = torch.zeros_like(top_labels, dtype=bool)
                 all_indices = torch.arange(top_labels.size(0)).to(
                     top_labels.device)
-                # transformer to old mmdet3d coordinate
+                # Mind this when training on the new coordinate
+                # Transform to old mmdet3d coordinate
                 boxes_for_nms[:, 4] = (-boxes_for_nms[:, 4] + torch.pi / 2 * 1)
                 boxes_for_nms[:, 4] = (boxes_for_nms[:, 4] +
                                        torch.pi) % (2 * torch.pi) - torch.pi
