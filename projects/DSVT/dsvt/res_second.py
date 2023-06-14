@@ -1,4 +1,5 @@
-# Copyright (c) OpenMMLab. All rights reserved.
+# modified from https://github.com/Haiyang-W/DSVT
+
 import warnings
 from typing import Optional, Sequence, Tuple
 
@@ -69,7 +70,8 @@ class BasicResBlock(nn.Module):
 
 @MODELS.register_module()
 class ResSECOND(BaseModule):
-    """Backbone network for SECOND/PointPillars/PartA2/MVXNet.
+    """Backbone network for DSVT. The difference between `ResSECOND` and
+    `SECOND` is that the basic block in this module contains residual layers.
 
     Args:
         in_channels (int): Input channels.

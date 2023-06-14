@@ -7,7 +7,6 @@ grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
 data_root = 'data/waymo/kitti_format/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
-tasks = [dict(num_class=3, class_names=['car', 'pedestrian', 'cyclist'])]
 metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=True, use_camera=False)
 backend_args = None
@@ -66,9 +65,7 @@ model = dict(
     bbox_head=dict(
         type='DSVTCenterHead',
         in_channels=sum([128, 128, 128]),
-        tasks=[
-            dict(num_class=3, class_names=['Car', 'Pedestrian', 'Cyclist'])
-        ],
+        tasks=[dict(num_class=3, class_names=class_names)],
         common_heads=dict(
             reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), iou=(1, 2)),
         share_conv_channel=64,
@@ -234,8 +231,8 @@ test_cfg = dict()
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=16)
+#   - `base_batch_size` = (8 GPUs) x (1 samples per GPU).
+# auto_scale_lr = dict(enable=False, base_batch_size=8)
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),

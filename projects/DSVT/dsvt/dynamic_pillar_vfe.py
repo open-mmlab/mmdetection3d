@@ -1,3 +1,4 @@
+# modified from https://github.com/Haiyang-W/DSVT
 import torch
 import torch.nn as nn
 import torch_scatter
@@ -43,6 +44,8 @@ class PFNLayerV2(nn.Module):
 
 @MODELS.register_module()
 class DynamicPillarVFE3D(nn.Module):
+    """The difference between `DynamicPillarVFE3D` and `DynamicPillarVFE` is
+    that the voxel in this module is along 3 dims: (x, y, z)."""
 
     def __init__(self, with_distance, use_absolute_xyz, use_norm, num_filters,
                  num_point_features, voxel_size, grid_size, point_cloud_range):

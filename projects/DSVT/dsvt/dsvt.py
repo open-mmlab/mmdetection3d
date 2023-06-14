@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, List, Optional
 
 import torch
@@ -11,7 +10,7 @@ from mmdet3d.structures import Det3DDataSample
 
 @MODELS.register_module()
 class DSVT(Base3DDetector):
-    """Base class of Multi-modality VoxelNet."""
+    """DSVT detector."""
 
     def __init__(self,
                  voxel_encoder: Optional[dict] = None,

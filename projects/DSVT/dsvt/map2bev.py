@@ -1,3 +1,4 @@
+# modified from https://github.com/Haiyang-W/DSVT
 import torch
 import torch.nn as nn
 
@@ -6,6 +7,8 @@ from mmdet3d.registry import MODELS
 
 @MODELS.register_module()
 class PointPillarsScatter3D(nn.Module):
+    """The difference between `PointPillarsScatter3D` and `PointPillarsScatter`
+    is that the voxel in this module is along 3 dims: (x, y, z)."""
 
     def __init__(self, output_shape, num_bev_feats, **kwargs):
         super().__init__()

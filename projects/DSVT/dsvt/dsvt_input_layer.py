@@ -1,3 +1,4 @@
+# modified from https://github.com/Haiyang-W/DSVT
 from math import ceil
 
 import torch
@@ -367,7 +368,7 @@ class DSVTInputLayer(nn.Module):
     def get_pos_embed(self, coors_in_win, stage_id, block_id, shift_id):
         '''
         Args:
-        coors_in_win: shape=[N, 3], order: z, y, x
+            coors_in_win: shape=[N, 3], order: z, y, x
         '''
         # [N,]
         window_shape = self.window_shape[stage_id][shift_id]

@@ -1,4 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, List, Tuple
 
 import torch
@@ -14,7 +13,8 @@ from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
 
 @MODELS.register_module()
 class DSVTCenterHead(CenterHead):
-    """CenterHead for CenterPoint.
+    """CenterHead for DSVT. This head adds IoU prediction head based on the
+    original CenterHead.
 
     Args:
         in_channels (list[int] | int, optional): Channels of the input
@@ -48,13 +48,6 @@ class DSVTCenterHead(CenterHead):
 
     def __init__(self, *args, **kwargs):
         super(DSVTCenterHead, self).__init__(*args, **kwargs)
-        # self.cls_id_mapping_per_task = []
-        # totol_num = 0
-        # for cur_class_names in self.class_names:
-        #     cls_num = len(cur_class_names)
-        #     cur_class_id_mapping = totol_num + torch.arange(cls_num).cuda()
-        #     self.cls_id_mapping_per_task.append(cur_class_id_mapping)
-        #     totol_num += cls_num
 
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.
@@ -307,7 +300,6 @@ class DSVTCenterHead(CenterHead):
             pred_iou = torch.clamp(iou_preds, min=0, max=1.0)
             iou_rectifier = pred_iou.new_tensor(
                 self.test_cfg['iou_rectifier'][task_id])
-            # cls_labels = self.cls_id_mapping_per_task[task_id][cls_labels]
             cls_preds = torch.pow(cls_preds,
                                   1 - iou_rectifier[cls_labels]) * torch.pow(
                                       pred_iou, iou_rectifier[cls_labels])
@@ -326,18 +318,7 @@ class DSVTCenterHead(CenterHead):
                 top_labels = cls_labels.long()
                 top_scores = cls_preds
 
-            # if self.test_cfg['score_threshold'] > 0.0:
-            #     thresh = torch.tensor(
-            #         [self.test_cfg['score_threshold']],
-            #         device=cls_preds.device).type_as(cls_preds)
-            #     top_scores_keep = top_scores >= thresh
-            #     top_scores = top_scores.masked_select(top_scores_keep)
-
             if top_scores.shape[0] != 0:
-                # if self.test_cfg['score_threshold'] > 0.0:
-                #     box_preds = box_preds[top_scores_keep]
-                #     top_labels = top_labels[top_scores_keep]
-
                 boxes_for_nms = xywhr2xyxyr(img_metas[i]['box_type_3d'](
                     box_preds[:, :], self.bbox_coder.code_size).bev)
 

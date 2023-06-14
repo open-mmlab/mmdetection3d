@@ -172,7 +172,10 @@ def get_continous_inds(setnum_per_win):
 
 @TASK_UTILS.register_module()
 class DSVTBBoxCoder(CenterPointBBoxCoder):
-    """Bbox coder for DSVT."""
+    """Bbox coder for DSVT.
+
+    Compared with `CenterPointBBoxCoder`, this coder contains IoU predictions
+    """
 
     def __init__(self, *args, **kwargs) -> None:
         super(DSVTBBoxCoder, self).__init__(*args, **kwargs)
@@ -186,7 +189,7 @@ class DSVTBBoxCoder(CenterPointBBoxCoder):
                vel: Tensor,
                reg: Optional[Tensor] = None,
                iou: Optional[Tensor] = None) -> List[Dict[str, Tensor]]:
-        """Decode bboxes.
+        """
 
         Args:
             heat (torch.Tensor): Heatmap with the shape of [B, N, W, H].

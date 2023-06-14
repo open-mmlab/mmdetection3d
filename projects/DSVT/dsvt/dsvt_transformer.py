@@ -1,3 +1,4 @@
+# modified from https://github.com/Haiyang-W/DSVT
 import torch
 import torch.nn as nn
 
@@ -91,15 +92,14 @@ class DSVTMiddleEncoder(nn.Module):
                         downsample_window).prod().item()
                     self.__setattr__(
                         f'stage_{stage_id}_reduction',
-                        Stage_Reduction_Block(cat_feat_dim, dmodel_next_stage))
+                        StageReductionBlock(cat_feat_dim, dmodel_next_stage))
                 elif self.reduction_type == 'maxpool':
                     self.__setattr__(f'stage_{stage_id}_reduction',
                                      torch.nn.MaxPool1d(pool_volume))
                 elif self.reduction_type == 'attention':
                     self.__setattr__(
                         f'stage_{stage_id}_reduction',
-                        Stage_ReductionAtt_Block(dmodel_this_stage,
-                                                 pool_volume))
+                        StageReductionAttBlock(dmodel_this_stage, pool_volume))
                 else:
                     raise NotImplementedError
 
@@ -229,10 +229,10 @@ class DSVTBlock(nn.Module):
                  batch_first=True):
         super().__init__()
 
-        encoder_1 = DSVT_EncoderLayer(dim_model, nhead, dim_feedforward,
-                                      dropout, activation, batch_first)
-        encoder_2 = DSVT_EncoderLayer(dim_model, nhead, dim_feedforward,
-                                      dropout, activation, batch_first)
+        encoder_1 = DSVTEncoderLayer(dim_model, nhead, dim_feedforward,
+                                     dropout, activation, batch_first)
+        encoder_2 = DSVTEncoderLayer(dim_model, nhead, dim_feedforward,
+                                     dropout, activation, batch_first)
         self.encoder_list = nn.ModuleList([encoder_1, encoder_2])
 
     def forward(
@@ -258,7 +258,7 @@ class DSVTBlock(nn.Module):
         return output
 
 
-class DSVT_EncoderLayer(nn.Module):
+class DSVTEncoderLayer(nn.Module):
 
     def __init__(self,
                  dim_model,
@@ -365,7 +365,7 @@ class SetAttention(nn.Module):
         return src
 
 
-class Stage_Reduction_Block(nn.Module):
+class StageReductionBlock(nn.Module):
 
     def __init__(self, input_channel, output_channel):
         super().__init__()
@@ -378,7 +378,7 @@ class Stage_Reduction_Block(nn.Module):
         return src
 
 
-class Stage_ReductionAtt_Block(nn.Module):
+class StageReductionAttBlock(nn.Module):
 
     def __init__(self, input_channel, pool_volume):
         super().__init__()
