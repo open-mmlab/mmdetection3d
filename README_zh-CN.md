@@ -120,45 +120,43 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 ## 教程
 
-- 用户指南
+<details>
+<summary>用户指南</summary>
 
-  <details>
+- [训练 & 测试](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/index.html#train-test)
+  - [学习配置文件](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/config.html)
+  - [坐标系](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/coord_sys_tutorial.html)
+  - [数据预处理](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/dataset_prepare.html)
+  - [自定义数据预处理流程](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/data_pipeline.html)
+  - [在标注数据集上测试和训练](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/train_test.html)
+  - [推理](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/inference.html)
+  - [在自定义数据集上进行训练](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/new_data_model.html)
+- [实用工具](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/index.html#useful-tools)
 
-  - [训练 & 测试](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/index.html#train-test)
-    - [学习配置文件](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/config.html)
-    - [坐标系](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/coord_sys_tutorial.html)
-    - [数据预处理](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/dataset_prepare.html)
-    - [自定义数据预处理流程](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/data_pipeline.html)
-    - [在标注数据集上测试和训练](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/train_test.html)
-    - [推理](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/inference.html)
-    - [在自定义数据集上进行训练](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/new_data_model.html)
-  - [实用工具](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/index.html#useful-tools)
+</details>
 
-  </details>
+<details>
+<summary>进阶教程</summary>
 
-- 进阶教程
+- [数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#datasets)
+  - [KITTI 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/kitti.html)
+  - [NuScenes 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/nuscenes.html)
+  - [Lyft 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/lyft.html)
+  - [Waymo 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/waymo.html)
+  - [SUN RGB-D 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/sunrgbd.html)
+  - [ScanNet 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/scannet.html)
+  - [S3DIS 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/s3dis.html)
+  - [SemanticKITTI 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/semantickitti.html)
+- [支持的任务](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#supported-tasks)
+  - [基于激光雷达的 3D 检测](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/lidar_det3d.html)
+  - [基于视觉的 3D 检测](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/vision_det3d.html)
+  - [基于激光雷达的 3D 语义分割](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/lidar_sem_seg3d.html)
+- [自定义项目](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#customization)
+  - [自定义数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_dataset.html)
+  - [自定义模型](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_models.html)
+  - [自定义运行时配置](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_runtime.html)
 
-  <details>
-
-  - [数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#datasets)
-    - [KITTI 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/kitti.html)
-    - [NuScenes 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/nuscenes.html)
-    - [Lyft 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/lyft.html)
-    - [Waymo 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/waymo.html)
-    - [SUN RGB-D 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/sunrgbd.html)
-    - [ScanNet 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/scannet.html)
-    - [S3DIS 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/s3dis.html)
-    - [SemanticKITTI 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/semantickitti.html)
-  - [支持的任务](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#supported-tasks)
-    - [基于激光雷达的 3D 检测](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/lidar_det3d.html)
-    - [基于视觉的 3D 检测](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/vision_det3d.html)
-    - [基于激光雷达的 3D 语义分割](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/lidar_sem_seg3d.html)
-  - [自定义项目](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#customization)
-    - [自定义数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_dataset.html)
-    - [自定义模型](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_models.html)
-    - [自定义运行时配置](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_runtime.html)
-
-  </details>
+</details>
 
 ## 基准测试和模型库
 
