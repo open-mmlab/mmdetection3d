@@ -48,6 +48,13 @@ class DSVTCenterHead(CenterHead):
 
     def __init__(self, *args, **kwargs):
         super(DSVTCenterHead, self).__init__(*args, **kwargs)
+        # self.cls_id_mapping_per_task = []
+        # totol_num = 0
+        # for cur_class_names in self.class_names:
+        #     cls_num = len(cur_class_names)
+        #     cur_class_id_mapping = totol_num + torch.arange(cls_num).cuda()
+        #     self.cls_id_mapping_per_task.append(cur_class_id_mapping)
+        #     totol_num += cls_num
 
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.
@@ -186,8 +193,10 @@ class DSVTCenterHead(CenterHead):
             else:
                 batch_dim = preds_dict[0]['dim']
 
-            batch_rots = preds_dict[0]['rot'][:, 0].unsqueeze(1)
-            batch_rotc = preds_dict[0]['rot'][:, 1].unsqueeze(1)
+            batch_rotc = preds_dict[0]['rot'][:, 0].unsqueeze(1)
+            batch_rots = preds_dict[0]['rot'][:, 1].unsqueeze(1)
+            batch_iou = (preds_dict[0]['iou'] +
+                         1) * 0.5 if 'iou' in preds_dict[0] else None
 
             if 'vel' in preds_dict[0]:
                 batch_vel = preds_dict[0]['vel']
@@ -201,13 +210,13 @@ class DSVTCenterHead(CenterHead):
                 batch_dim,
                 batch_vel,
                 reg=batch_reg,
-                task_id=task_id)
+                iou=batch_iou)
             assert self.test_cfg['nms_type'] in ['circle', 'rotate']
             batch_reg_preds, batch_cls_preds, batch_cls_labels, batch_iou_preds = [], [], [], []  # noqa: E501
             for box in temp:
                 batch_reg_preds.append(box['bboxes'])
                 batch_cls_preds.append(box['scores'])
-                batch_cls_labels.append(box['labels'])
+                batch_cls_labels.append(box['labels'].long())
                 batch_iou_preds.append(box['iou'])
             if self.test_cfg['nms_type'] == 'circle':
                 ret_task = []
@@ -265,7 +274,7 @@ class DSVTCenterHead(CenterHead):
         return ret_list
 
     def get_task_detections(self, task_id, num_class_with_bg, batch_cls_preds,
-                            batch_iou_preds, batch_reg_preds, batch_cls_labels,
+                            batch_reg_preds, batch_iou_preds, batch_cls_labels,
                             img_metas):
         """Rotate nms for each task.
 
@@ -273,10 +282,10 @@ class DSVTCenterHead(CenterHead):
             num_class_with_bg (int): Number of classes for the current task.
             batch_cls_preds (list[torch.Tensor]): Prediction score with the
                 shape of [N].
-            batch_iou_preds (list[torch.Tensor]): Prediction IoU with the
-                shape of [N].
             batch_reg_preds (list[torch.Tensor]): Prediction bbox with the
                 shape of [N, 9].
+            batch_iou_preds (list[torch.Tensor]): Prediction IoU with the
+                shape of [N].
             batch_cls_labels (list[torch.Tensor]): Prediction label with the
                 shape of [N].
             img_metas (list[dict]): Meta information of each sample.
@@ -292,29 +301,22 @@ class DSVTCenterHead(CenterHead):
                     shape of [N].
         """
         predictions_dicts = []
-        post_center_range = self.test_cfg['post_center_limit_range']
-        if len(post_center_range) > 0:
-            post_center_range = torch.tensor(
-                post_center_range,
-                dtype=batch_reg_preds[0].dtype,
-                device=batch_reg_preds[0].device)
-
         for i, (box_preds, cls_preds, iou_preds, cls_labels) in enumerate(
                 zip(batch_reg_preds, batch_cls_preds, batch_iou_preds,
                     batch_cls_labels)):
-
             pred_iou = torch.clamp(iou_preds, min=0, max=1.0)
-            iou_rectifier = pred_iou.new_tensor(self.test_cfg['iou_rectifier'])
+            iou_rectifier = pred_iou.new_tensor(
+                self.test_cfg['iou_rectifier'][task_id])
+            # cls_labels = self.cls_id_mapping_per_task[task_id][cls_labels]
             cls_preds = torch.pow(cls_preds,
-                                  1 - iou_rectifier[cls_preds]) * torch.pow(
-                                      pred_iou, iou_rectifier[cls_preds])
+                                  1 - iou_rectifier[cls_labels]) * torch.pow(
+                                      pred_iou, iou_rectifier[cls_labels])
 
             # Apply NMS in bird eye view
-
             # get the highest score per prediction, then apply nms
             # to remove overlapped box.
             if num_class_with_bg == 1:
-                top_scores = cls_preds.squeeze(-1)
+                top_scores = cls_preds
                 top_labels = torch.zeros(
                     cls_preds.shape[0],
                     device=cls_preds.device,
@@ -322,37 +324,51 @@ class DSVTCenterHead(CenterHead):
 
             else:
                 top_labels = cls_labels.long()
-                top_scores = cls_preds.squeeze(-1)
+                top_scores = cls_preds
 
-            if self.test_cfg['score_threshold'] > 0.0:
-                thresh = torch.tensor(
-                    [self.test_cfg['score_threshold']],
-                    device=cls_preds.device).type_as(cls_preds)
-                top_scores_keep = top_scores >= thresh
-                top_scores = top_scores.masked_select(top_scores_keep)
+            # if self.test_cfg['score_threshold'] > 0.0:
+            #     thresh = torch.tensor(
+            #         [self.test_cfg['score_threshold']],
+            #         device=cls_preds.device).type_as(cls_preds)
+            #     top_scores_keep = top_scores >= thresh
+            #     top_scores = top_scores.masked_select(top_scores_keep)
 
             if top_scores.shape[0] != 0:
-                if self.test_cfg['score_threshold'] > 0.0:
-                    box_preds = box_preds[top_scores_keep]
-                    top_labels = top_labels[top_scores_keep]
+                # if self.test_cfg['score_threshold'] > 0.0:
+                #     box_preds = box_preds[top_scores_keep]
+                #     top_labels = top_labels[top_scores_keep]
 
                 boxes_for_nms = xywhr2xyxyr(img_metas[i]['box_type_3d'](
                     box_preds[:, :], self.bbox_coder.code_size).bev)
-                # the nms in 3d detection just remove overlap boxes.
 
-                selected = nms_bev(
-                    boxes_for_nms,
-                    top_scores,
-                    thresh=self.test_cfg['nms_thr'][task_id],
-                    pre_max_size=self.test_cfg['pre_max_size'],
-                    post_max_size=self.test_cfg['post_max_size'])
+                pre_max_size = self.test_cfg['pre_max_size'][task_id]
+                post_max_size = self.test_cfg['post_max_size'][task_id]
+                # cls_label_per_task = self.cls_id_mapping_per_task[task_id]
+                all_selected_mask = torch.zeros_like(top_labels, dtype=bool)
+                all_indices = torch.arange(top_labels.size(0)).to(
+                    top_labels.device)
+                # transformer to old mmdet3d coordinate
+                boxes_for_nms[:, 4] = (-boxes_for_nms[:, 4] + torch.pi / 2 * 1)
+                boxes_for_nms[:, 4] = (boxes_for_nms[:, 4] +
+                                       torch.pi) % (2 * torch.pi) - torch.pi
+
+                for i, nms_thr in enumerate(self.test_cfg['nms_thr'][task_id]):
+                    label_mask = top_labels == i
+                    selected = nms_bev(
+                        boxes_for_nms[label_mask],
+                        top_scores[label_mask],
+                        thresh=nms_thr,
+                        pre_max_size=pre_max_size[i],
+                        post_max_size=post_max_size[i])
+                    indices = all_indices[label_mask][selected]
+                    all_selected_mask.scatter_(0, indices, True)
             else:
-                selected = []
+                all_selected_mask = []
 
             # if selected is not None:
-            selected_boxes = box_preds[selected]
-            selected_labels = top_labels[selected]
-            selected_scores = top_scores[selected]
+            selected_boxes = box_preds[all_selected_mask]
+            selected_labels = top_labels[all_selected_mask]
+            selected_scores = top_scores[all_selected_mask]
 
             # finally generate predictions.
             if selected_boxes.shape[0] != 0:
@@ -362,20 +378,10 @@ class DSVTCenterHead(CenterHead):
                 final_box_preds = box_preds
                 final_scores = scores
                 final_labels = label_preds
-                if post_center_range is not None:
-                    mask = (final_box_preds[:, :3] >=
-                            post_center_range[:3]).all(1)
-                    mask &= (final_box_preds[:, :3] <=
-                             post_center_range[3:]).all(1)
-                    predictions_dict = dict(
-                        bboxes=final_box_preds[mask],
-                        scores=final_scores[mask],
-                        labels=final_labels[mask])
-                else:
-                    predictions_dict = dict(
-                        bboxes=final_box_preds,
-                        scores=final_scores,
-                        labels=final_labels)
+                predictions_dict = dict(
+                    bboxes=final_box_preds,
+                    scores=final_scores,
+                    labels=final_labels)
             else:
                 dtype = batch_reg_preds[0].dtype
                 device = batch_reg_preds[0].device

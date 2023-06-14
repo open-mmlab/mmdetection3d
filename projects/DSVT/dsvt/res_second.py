@@ -2,14 +2,69 @@
 import warnings
 from typing import Optional, Sequence, Tuple
 
-import torch.nn.functional as F
-from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmengine.model import BaseModule
 from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import ConfigType, OptMultiConfig
+from mmdet3d.utils import OptMultiConfig
+
+
+class BasicResBlock(nn.Module):
+    expansion: int = 1
+
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        padding: int = 1,
+        downsample: bool = False,
+    ) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(
+            inplanes,
+            planes,
+            kernel_size=3,
+            stride=stride,
+            padding=padding,
+            bias=False)
+        self.bn1 = nn.BatchNorm2d(planes, eps=1e-3, momentum=0.01)
+        self.relu1 = nn.ReLU()
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes, eps=1e-3, momentum=0.01)
+        self.relu2 = nn.ReLU()
+        self.downsample = downsample
+        if self.downsample:
+            self.downsample_layer = nn.Sequential(
+                nn.Conv2d(
+                    inplanes,
+                    planes,
+                    kernel_size=1,
+                    stride=stride,
+                    padding=0,
+                    bias=False),
+                nn.BatchNorm2d(planes, eps=1e-3, momentum=0.01))
+        self.stride = stride
+
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu1(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample:
+            identity = self.downsample_layer(x)
+
+        out += identity
+        out = self.relu2(out)
+
+        return out
 
 
 @MODELS.register_module()
@@ -19,7 +74,7 @@ class ResSECOND(BaseModule):
     Args:
         in_channels (int): Input channels.
         out_channels (list[int]): Output channels for multi-scale feature maps.
-        layer_nums (list[int]): Number of layers in each stage.
+        blocks_nums (list[int]): Number of blocks in each stage.
         layer_strides (list[int]): Strides of each stage.
         norm_cfg (dict): Config dict of normalization layers.
         conv_cfg (dict): Config dict of convolutional layers.
@@ -28,69 +83,29 @@ class ResSECOND(BaseModule):
     def __init__(self,
                  in_channels: int = 128,
                  out_channels: Sequence[int] = [128, 128, 256],
-                 layer_nums: Sequence[int] = [3, 5, 5],
+                 blocks_nums: Sequence[int] = [1, 2, 2],
                  layer_strides: Sequence[int] = [2, 2, 2],
-                 norm_cfg: ConfigType = dict(
-                     type='BN', eps=1e-3, momentum=0.01),
-                 conv_cfg: ConfigType = dict(type='Conv2d', bias=False),
                  init_cfg: OptMultiConfig = None,
                  pretrained: Optional[str] = None) -> None:
         super(ResSECOND, self).__init__(init_cfg=init_cfg)
-        assert len(layer_strides) == len(layer_nums)
-        assert len(out_channels) == len(layer_nums)
+        assert len(layer_strides) == len(blocks_nums)
+        assert len(out_channels) == len(blocks_nums)
 
         in_filters = [in_channels, *out_channels[:-1]]
-        # note that when stride > 1, conv2d with same padding isn't
-        # equal to pad-conv2d. we should use pad-conv2d.
-        post_blocks = []
-        downsample_layers = []
-        pre_blocks = []
-        for i, layer_num in enumerate(layer_nums):
-            pre_block = [
-                build_conv_layer(
-                    conv_cfg,
+        blocks = []
+        for i, block_num in enumerate(blocks_nums):
+            cur_layers = [
+                BasicResBlock(
                     in_filters[i],
                     out_channels[i],
-                    3,
                     stride=layer_strides[i],
-                    padding=1),
-                build_norm_layer(norm_cfg, out_channels[i])[1],
-                nn.ReLU(inplace=True),
-                build_conv_layer(
-                    conv_cfg, out_channels[i], out_channels[i], 3, padding=1),
-                build_norm_layer(norm_cfg, out_channels[i])[1]
+                    downsample=True)
             ]
-            pre_blocks.append(nn.Sequential(*pre_block))
-            downsample_layers.append(
-                nn.Sequential(
-                    build_conv_layer(
-                        conv_cfg,
-                        in_filters[i],
-                        out_channels[i],
-                        1,
-                        stride=layer_strides[i],
-                        padding=0),
-                    build_norm_layer(norm_cfg, out_channels[i])[1]))
-            post_block = []
-            for _ in range(layer_num - 1):
-                post_block.append(
-                    build_conv_layer(
-                        conv_cfg,
-                        out_channels[i],
-                        out_channels[i],
-                        3,
-                        padding=1))
-                post_block.append(
-                    build_norm_layer(norm_cfg, out_channels[i])[1])
-                post_block.append(nn.ReLU(inplace=True))
-
-            post_block = nn.Sequential(*post_block)
-            post_blocks.append(post_block)
-
-        self.pre_blocks = nn.ModuleList(pre_blocks)
-        self.downsample_layers = nn.ModuleList(downsample_layers)
-        self.post_blocks = nn.ModuleList(post_blocks)
-
+            for _ in range(block_num):
+                cur_layers.append(
+                    BasicResBlock(out_channels[i], out_channels[i]))
+            blocks.append(nn.Sequential(*cur_layers))
+        self.blocks = nn.Sequential(*blocks)
         assert not (init_cfg and pretrained), \
             'init_cfg and pretrained cannot be setting at the same time'
         if isinstance(pretrained, str):
@@ -110,9 +125,7 @@ class ResSECOND(BaseModule):
             tuple[torch.Tensor]: Multi-scale features.
         """
         outs = []
-        for i in range(len(self.post_blocks)):
-            x = self.pre_blocks[i](x) + self.downsample_layers[i](x)
-            x = F.relu(x)
-            x = self.post_blocks[i](x)
+        for i in range(len(self.blocks)):
+            x = self.blocks[i](x)
             outs.append(x)
         return tuple(outs)

@@ -175,7 +175,7 @@ class DSVTBBoxCoder(CenterPointBBoxCoder):
     """Bbox coder for DSVT."""
 
     def __init__(self, *args, **kwargs) -> None:
-        super(DSVTBBoxCoder).__init__(*args, **kwargs)
+        super(DSVTBBoxCoder, self).__init__(*args, **kwargs)
 
     def decode(self,
                heat: Tensor,
@@ -279,14 +279,14 @@ class DSVTBBoxCoder(CenterPointBBoxCoder):
                 boxes3d = final_box_preds[i, cmask]
                 scores = final_scores[i, cmask]
                 labels = final_preds[i, cmask]
-                if iou is not None:
-                    pred_iou = iou[i, cmask]
                 predictions_dict = {
                     'bboxes': boxes3d,
                     'scores': scores,
                     'labels': labels,
-                    'pred_iou': pred_iou
                 }
+                if iou is not None:
+                    pred_iou = iou[i, cmask]
+                    predictions_dict['iou'] = pred_iou
 
                 predictions_dicts.append(predictions_dict)
         else:

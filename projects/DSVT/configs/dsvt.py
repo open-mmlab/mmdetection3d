@@ -5,7 +5,7 @@ custom_imports = dict(
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
-data_root = 'data/waymo_mini/kitti_format/'
+data_root = 'data/waymo/kitti_format/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 tasks = [dict(num_class=3, class_names=['car', 'pedestrian', 'cyclist'])]
 metainfo = dict(classes=class_names)
@@ -15,11 +15,6 @@ backend_args = None
 model = dict(
     type='DSVT',
     data_preprocessor=dict(type='Det3DDataPreprocessor', voxel=False),
-    # voxel_layer=dict(
-    #     max_num_points=10,
-    #     voxel_size=voxel_size,
-    #     point_cloud_range=point_cloud_range,
-    #     max_voxels=(90000, 120000))),
     voxel_encoder=dict(
         type='DynamicPillarVFE3D',
         with_distance=False,
@@ -58,10 +53,8 @@ model = dict(
         type='ResSECOND',
         in_channels=192,
         out_channels=[128, 128, 256],
-        layer_nums=[3, 5, 5],
-        layer_strides=[1, 2, 2],
-        norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-        conv_cfg=dict(type='Conv2d', bias=False)),
+        blocks_nums=[1, 2, 2],
+        layer_strides=[1, 2, 2]),
     neck=dict(
         type='SECONDFPN',
         in_channels=[128, 128, 256],
@@ -79,17 +72,22 @@ model = dict(
         common_heads=dict(
             reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), iou=(1, 2)),
         share_conv_channel=64,
+        conv_cfg=dict(type='Conv2d'),
+        norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.01),
         bbox_coder=dict(
             type='DSVTBBoxCoder',
             pc_range=point_cloud_range,
             max_num=500,
             post_center_range=[-80, -80, -10.0, 80, 80, 10.0],
             score_threshold=0.1,
-            out_size_factor=4,
+            out_size_factor=1,
             voxel_size=voxel_size[:2],
             code_size=7),
         separate_head=dict(
-            type='SeparateHead', init_bias=-2.19, final_kernel=3),
+            type='SeparateHead',
+            init_bias=-2.19,
+            final_kernel=3,
+            norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.01)),
         loss_cls=dict(
             type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
         loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=2.0),
@@ -106,20 +104,18 @@ model = dict(
             min_radius=2,
             code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])),
     test_cfg=dict(
-        pts=dict(
-            post_center_limit_range=[-80, -80, -10.0, 80, 80, 10.0],
-            max_per_img=500,
-            max_pool_nms=False,
-            min_radius=[4, 12, 10, 1, 0.85, 0.175],
-            iou_rectifier=[0.68, 0.71, 0.65],
-            score_threshold=0.1,
-            pc_range=[-80, -80],
-            out_size_factor=4,
-            voxel_size=voxel_size[:2],
-            nms_type='rotate',
-            pre_max_size=[4096, 4096, 4096],
-            post_max_size=[500, 500, 500],
-            nms_thr=[0.7, 0.6, 0.55])))
+        max_per_img=500,
+        max_pool_nms=False,
+        min_radius=[4, 12, 10, 1, 0.85, 0.175],
+        iou_rectifier=[[0.68, 0.71, 0.65]],
+        pc_range=[-80, -80],
+        out_size_factor=4,
+        voxel_size=voxel_size[:2],
+        nms_type='rotate',
+        multi_class_nms=True,
+        pre_max_size=[[4096, 4096, 4096]],
+        post_max_size=[[500, 500, 500]],
+        nms_thr=[[0.7, 0.6, 0.55]]))
 
 db_sampler = dict(
     data_root=data_root,
@@ -177,6 +173,7 @@ test_pipeline = [
         load_dim=6,
         use_dim=5,
         norm_intensity=True,
+        norm_elongation=True,
         backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
@@ -198,8 +195,8 @@ test_pipeline = [
 
 dataset_type = 'WaymoDataset'
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
