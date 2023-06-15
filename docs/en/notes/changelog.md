@@ -5,7 +5,7 @@
 #### Highlights
 
 - Support [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf) in `projects` (#2399, #2517, #2535)
-- Support the training of \[BEVFusion\] in `projects` (#2546)
+- Support the training of BEVFusion in `projects` (#2546)
 - Support lidar-based 3D semantic segmentation benchmark (#2530, #2559)
 
 #### New Features
