@@ -13,37 +13,9 @@ from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
 
 @MODELS.register_module()
 class DSVTCenterHead(CenterHead):
-    """CenterHead for DSVT. This head adds IoU prediction head based on the
-    original CenterHead.
+    """CenterHead for DSVT.
 
-    Args:
-        in_channels (list[int] | int, optional): Channels of the input
-            feature map. Default: [128].
-        tasks (list[dict], optional): Task information including class number
-            and class names. Default: None.
-        bbox_coder (dict, optional): Bbox coder configs. Default: None.
-        common_heads (dict, optional): Conv information for common heads.
-            Default: dict().
-        loss_cls (dict, optional): Config of classification loss function.
-            Default: dict(type='GaussianFocalLoss', reduction='mean').
-        loss_bbox (dict, optional): Config of regression loss function.
-            Default: dict(type='L1Loss', reduction='none').
-        separate_head (dict, optional): Config of separate head. Default: dict(
-            type='SeparateHead', init_bias=-2.19, final_kernel=3)
-        share_conv_channel (int, optional): Output channels for share_conv
-            layer. Default: 64.
-        num_heatmap_convs (int, optional): Number of conv layers for heatmap
-            conv layer. Default: 2.
-        conv_cfg (dict, optional): Config of conv layer.
-            Default: dict(type='Conv2d')
-        norm_cfg (dict, optional): Config of norm layer.
-            Default: dict(type='BN2d').
-        bias (str): Type of bias. Default: 'auto'.
-        norm_bbox (bool): Whether normalize the bbox predictions.
-            Defaults to True.
-        train_cfg (dict, optional): Train-time configs. Default: None.
-        test_cfg (dict, optional): Test-time configs. Default: None.
-        init_cfg (dict, optional): Config for initialization.
+    This head adds IoU prediction branch based on the original CenterHead.
     """
 
     def __init__(self, *args, **kwargs):
@@ -83,7 +55,7 @@ class DSVTCenterHead(CenterHead):
     def loss(self, pts_feats: List[Tensor],
              batch_data_samples: List[Det3DDataSample], *args,
              **kwargs) -> Dict[str, Tensor]:
-        """Forward function for point cloud branch.
+        """Forward function of training.
 
         Args:
             pts_feats (list[torch.Tensor]): Features of point cloud branch

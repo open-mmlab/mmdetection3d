@@ -579,8 +579,8 @@ class LoadPointsFromFile(BaseTransform):
         use_color (bool): Whether to use color features. Defaults to False.
         norm_intensity (bool): Whether to normlize the intensity. Defaults to
             False.
-        norm_elongation (bool): Whether to normlize the elongation. Defaults to
-            False.
+        norm_elongation (bool): Whether to normlize the elongation. This is
+            usually used in Waymo dataset.Defaults to False.
         backend_args (dict, optional): Arguments to instantiate the
             corresponding backend. Defaults to None.
     """
@@ -674,7 +674,7 @@ class LoadPointsFromFile(BaseTransform):
                     points.shape[1] - 2,
                     points.shape[1] - 1,
                 ]))
-        # points = np.load('results/dsvt_points.npy')
+
         points_class = get_points_type(self.coord_type)
         points = points_class(
             points, points_dim=points.shape[-1], attribute_dims=attribute_dims)
