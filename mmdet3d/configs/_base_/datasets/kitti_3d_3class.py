@@ -8,7 +8,7 @@ from mmdet3d.datasets.transforms.formating import Pack3DDetInputs
 from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
                                                  LoadPointsFromFile)
 from mmdet3d.datasets.transforms.test_time_aug import MultiScaleFlipAug3D
-from mmdet3d.datasets.transforms.transforms_3d import (
+from mmdet3d.datasets.transforms.transforms_3d import (  # noqa
     GlobalRotScaleTrans, ObjectNoise, ObjectRangeFilter, ObjectSample,
     PointShuffle, PointsRangeFilter, RandomFlip3D)
 from mmdet3d.evaluation.metrics.kitti_metric import KittiMetric

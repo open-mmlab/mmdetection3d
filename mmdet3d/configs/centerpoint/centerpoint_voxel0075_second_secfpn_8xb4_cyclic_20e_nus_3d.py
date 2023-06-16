@@ -7,7 +7,7 @@ from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
                                                  LoadPointsFromFile,
                                                  LoadPointsFromMultiSweeps)
 from mmdet3d.datasets.transforms.test_time_aug import MultiScaleFlipAug3D
-from mmdet3d.datasets.transforms.transforms_3d import (
+from mmdet3d.datasets.transforms.transforms_3d import (  # noqa
     GlobalRotScaleTrans, ObjectNameFilter, ObjectRangeFilter, ObjectSample,
     PointShuffle, PointsRangeFilter, RandomFlip3D)
 
