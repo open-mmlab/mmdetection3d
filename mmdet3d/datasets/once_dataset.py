@@ -84,9 +84,10 @@ class OnceDataset(Custom3DDataset):
         ]
         self.data_infos = list(filter(self._check_annos, self.data_infos))
 
+        # TODO: check
         # reset group flag for the samplers after data_infos changed
-        if not self.test_mode:
-            self._set_group_flag()
+        # if not self.test_mode:
+        #     self._set_group_flag()
 
     def __len__(self):
         """Return the length of data infos.
@@ -255,6 +256,7 @@ class OnceDataset(Custom3DDataset):
 
     def evaluate(self,
                  results,
+                 metric='bbox',
                  eval_mode='Overall&Distance',
                  logger=None,
                  jsonfile_prefix=None,
