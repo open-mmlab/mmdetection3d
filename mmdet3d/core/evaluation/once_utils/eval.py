@@ -3,6 +3,7 @@ r"""Adapted from `once_benchmark
     <https://github.com/PointsCoder/ONCE_Benchmark>`_.
 """
 
+import mmcv
 import numba
 import numpy as np
 
@@ -74,7 +75,8 @@ def once_eval(gt_annos,
             # filter data & determine score thresholds on p-r curve
             accum_all_scores, gt_flags, dt_flags = [], [], []
             num_valid_gt = 0
-            for sample_idx in range(num_samples):
+            print(f"Compute scores ...")
+            for sample_idx in range(mmcv.track_iter_progress(num_samples)):
                 gt_anno = gt_annos[sample_idx]
                 dt_anno = dt_annos[sample_idx]
                 pred_score = dt_anno['score']
@@ -98,7 +100,8 @@ def once_eval(gt_annos,
             # compute tp/fp/fn
             confusion_matrix = np.zeros([len(thresholds),
                                          3])  # only record tp/fp/fn
-            for sample_idx in range(num_samples):
+            print(f"Compute tp/fp/fn ...")
+            for sample_idx in range(mmcv.track_iter_progress(num_samples)):
                 pred_score = dt_annos[sample_idx]['score']
                 iou = ious[sample_idx]
                 gt_flag, pred_flag = gt_flags[sample_idx], dt_flags[sample_idx]

@@ -84,10 +84,9 @@ class OnceDataset(Custom3DDataset):
         ]
         self.data_infos = list(filter(self._check_annos, self.data_infos))
 
-        # TODO: check
-        # reset group flag for the samplers after data_infos changed
-        # if not self.test_mode:
-        #     self._set_group_flag()
+        # Update group flag for the samplers after data_infos changed
+        if not self.test_mode:
+            self._set_group_flag()
 
     def __len__(self):
         """Return the length of data infos.
@@ -288,7 +287,7 @@ class OnceDataset(Custom3DDataset):
         gt_annos = [info['annos'] for info in self.data_infos]
 
         ap_result_str, ap_dict = once_eval(gt_annos, results_list,
-                                           self.CLASSES)
+                                           self.CLASSES, eval_mode=eval_mode)
         print_log('\n' + ap_result_str, logger=logger)
 
         if tmp_dir is not None:
