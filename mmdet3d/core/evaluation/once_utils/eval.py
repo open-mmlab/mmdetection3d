@@ -76,7 +76,7 @@ def once_eval(gt_annos,
             accum_all_scores, gt_flags, dt_flags = [], [], []
             num_valid_gt = 0
             print(f"Compute scores ...")
-            for sample_idx in range(mmcv.track_iter_progress(num_samples)):
+            for sample_idx in mmcv.track_iter_progress(range(num_samples)):
                 gt_anno = gt_annos[sample_idx]
                 dt_anno = dt_annos[sample_idx]
                 pred_score = dt_anno['score']
@@ -101,7 +101,7 @@ def once_eval(gt_annos,
             confusion_matrix = np.zeros([len(thresholds),
                                          3])  # only record tp/fp/fn
             print(f"Compute tp/fp/fn ...")
-            for sample_idx in range(mmcv.track_iter_progress(num_samples)):
+            for sample_idx in mmcv.track_iter_progress(range(num_samples)):
                 pred_score = dt_annos[sample_idx]['score']
                 iou = ious[sample_idx]
                 gt_flag, pred_flag = gt_flags[sample_idx], dt_flags[sample_idx]
