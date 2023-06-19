@@ -45,7 +45,7 @@ def main(args):
         data_sample=result,
         draw_gt=False,
         show=args.show,
-        wait_time=0,
+        wait_time=-1,
         out_file=args.out_dir,
         vis_task='lidar_seg')
 

@@ -13,6 +13,7 @@ from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from mmdet.visualization import DetLocalVisualizer, get_palette
 from mmengine.dist import master_only
+from mmengine.logging import print_log
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer as MMENGINE_Visualizer
 from mmengine.visualization.utils import (check_type, color_val_matplotlib,
@@ -167,7 +168,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if o3d is None or geometry is None:
             raise ImportError(
                 'Please run "pip install open3d" to install open3d first.')
-        # o3d_vis = o3d.visualization.Visualizer()
         glfw_key_escape = 256  # Esc
         glfw_key_space = 32  # Space
         glfw_key_right = 262  # Right
@@ -175,17 +175,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         o3d_vis.register_key_callback(glfw_key_escape, self.escape_callback)
         o3d_vis.register_key_action_callback(glfw_key_space,
                                              self.space_action_callback)
-        o3d_vis.register_key_callback(glfw_key_right, self.down_callback)
+        o3d_vis.register_key_callback(glfw_key_right, self.right_callback)
         o3d_vis.create_window()
-        # o3d_vis.create_window(width=960, height=540)
-        # create coordinate frame
-        # mesh_frame = geometry.TriangleMesh.
-        # create_coordinate_frame(**frame_cfg)
-        # o3d_vis.add_geometry(mesh_frame)
         self.view_control = o3d_vis.get_view_control()
-        self.view_port = o3d.io.read_pinhole_camera_parameters(
-            'ScreenCamera_2023-05-29-16-38-17.json')
-
         return o3d_vis
 
     @master_only
@@ -855,26 +847,30 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                      continue_key)
 
         if hasattr(self, 'o3d_vis'):
-            self.view_control.convert_from_pinhole_camera_parameters(
-                self.view_port)
+            if hasattr(self, 'view_port'):
+                self.view_control.convert_from_pinhole_camera_parameters(
+                    self.view_port)
             self.flag_exit = not self.o3d_vis.poll_events()
+            self.o3d_vis.update_renderer()
+            self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
+            )
             if wait_time != -1:
                 self.last_time = time.time()
                 while time.time(
                 ) - self.last_time < wait_time and self.o3d_vis.poll_events():
                     self.o3d_vis.update_renderer()
-                    self.view_port = \
-                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                    self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
+                    )
                 while self.flag_pause and self.o3d_vis.poll_events():
                     self.o3d_vis.update_renderer()
-                    self.view_port = \
-                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                    self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
+                    )
 
             else:
                 while not self.flag_next and self.o3d_vis.poll_events():
                     self.o3d_vis.update_renderer()
-                    self.view_port = \
-                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                    self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
+                    )
                 self.flag_next = False
             self.o3d_vis.clear_geometries()
             try:
@@ -900,15 +896,17 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def space_action_callback(self, vis, action, mods):
         if action == 1:
             if self.flag_pause:
-                print('Playback continued, press [SPACE] to pause.')
-                # self.event.clear()
+                print_log(
+                    'Playback continued, press [SPACE] to pause.',
+                    logger='current')
             else:
-                print('Playback paused, press [SPACE] to continue.')
-                # self.event.set()
+                print_log(
+                    'Playback paused, press [SPACE] to continue.',
+                    logger='current')
             self.flag_pause = not self.flag_pause
         return True
 
-    def down_callback(self, vis):
+    def right_callback(self, vis):
         self.flag_next = True
         return False
 

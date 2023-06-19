@@ -7,6 +7,7 @@ import mmcv
 import numpy as np
 from mmengine.fileio import get
 from mmengine.hooks import Hook
+from mmengine.logging import print_log
 from mmengine.runner import Runner
 from mmengine.utils import mkdir_or_exist
 from mmengine.visualization import Visualizer
@@ -73,9 +74,12 @@ class Det3DVisualizationHook(Hook):
         self.vis_task = vis_task
 
         if wait_time == -1:
-            print('Manual control mode, press [Right ->] to next sample.')
+            print_log(
+                'Manual control mode, press [Right] to next sample.',
+                logger='current')
         else:
-            print('Autoplay mode, press [SPACE] to pause.')
+            print_log(
+                'Autoplay mode, press [SPACE] to pause.', logger='current')
         self.wait_time = wait_time
         self.backend_args = backend_args
         self.draw = draw
@@ -206,9 +210,7 @@ class Det3DVisualizationHook(Hook):
                 pts_bytes = get(lidar_path, backend_args=self.backend_args)
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
                 points = points.reshape(-1, num_pts_feats)
-                # data_input['points'] = points
-                data_input['points'] = data_batch['inputs']['points'][0].numpy(
-                )
+                data_input['points'] = points
                 if self.test_out_dir is not None:
                     o3d_save_path = osp.basename(lidar_path).split(
                         '.')[0] + '.png'

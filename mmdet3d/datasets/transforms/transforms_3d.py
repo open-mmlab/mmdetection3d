@@ -2432,13 +2432,9 @@ class PolarMix(BaseTransform):
         """
         mix_points = mix_results['points']
         mix_pts_semantic_mask = mix_results['pts_semantic_mask']
-        mix_pts_idx = torch.ones(
-            mix_pts_semantic_mask.shape, dtype=torch.int64) * 9
 
         points = input_dict['points']
         pts_semantic_mask = input_dict['pts_semantic_mask']
-        pts_idx = torch.zeros(
-            input_dict['pts_semantic_mask'].shape, dtype=torch.int64)
 
         # 1. swap point cloud
         if np.random.random() < self.swap_ratio:
@@ -2459,7 +2455,6 @@ class PolarMix(BaseTransform):
                 (pts_semantic_mask[idx.numpy()],
                  mix_pts_semantic_mask[mix_idx.numpy()]),
                 axis=0)
-            pts_idx = torch.cat((pts_idx[idx], mix_pts_idx[mix_idx]), dim=0)
 
         # 2. rotate-pasting
         if np.random.random() < self.rotate_paste_ratio:
@@ -2493,13 +2488,8 @@ class PolarMix(BaseTransform):
             points = points.cat([points, copy_points])
             pts_semantic_mask = np.concatenate(
                 (pts_semantic_mask, copy_pts_semantic_mask), axis=0)
-            pts_idx = torch.cat(
-                (pts_idx,
-                 torch.ones(copy_points.shape[0], dtype=torch.int64) * 9),
-                dim=0)
-
         input_dict['points'] = points
-        input_dict['pts_semantic_mask'] = pts_idx
+        input_dict['pts_semantic_mask'] = pts_semantic_mask
         return input_dict
 
     def transform(self, input_dict: dict) -> dict:
@@ -2608,12 +2598,10 @@ class LaserMix(BaseTransform):
             dict: output dict after transformation.
         """
         mix_points = mix_results['points']
-        mix_pts_semantic_mask = torch.ones(
-            mix_results['pts_semantic_mask'].shape, dtype=torch.int64) * 9
+        mix_pts_semantic_mask = mix_results['pts_semantic_mask']
 
         points = input_dict['points']
-        pts_semantic_mask = torch.zeros(
-            input_dict['pts_semantic_mask'].shape, dtype=torch.int64)
+        pts_semantic_mask = input_dict['pts_semantic_mask']
 
         rho = torch.sqrt(points.coord[:, 0]**2 + points.coord[:, 1]**2)
         pitch = torch.atan2(points.coord[:, 2], rho)
