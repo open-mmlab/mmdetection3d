@@ -9,11 +9,11 @@ default_hooks = dict(
     visualization=dict(
         type='Det3DVisualizationHook',
         draw=True,
-        vis_task='multi-modality_det',
+        vis_task='lidar_seg',
         wait_time=-1,
         draw_gt=False,
         draw_pred=True,
-        test_out_dir='results',
+        # test_out_dir='results',
         show=True))
 
 env_cfg = dict(

@@ -255,9 +255,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         else:
             raise NotImplementedError
 
-        # mesh_frame = geometry.TriangleMesh.
-        # create_coordinate_frame(**frame_cfg)
-        # self.o3d_vis.add_geometry(mesh_frame)
+        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(**frame_cfg)
+        self.o3d_vis.add_geometry(mesh_frame)
 
         pcd.colors = o3d.utility.Vector3dVector(points_colors)
         self.o3d_vis.add_geometry(pcd)
@@ -777,7 +776,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
              drawn_img: Optional[np.ndarray] = None,
              win_name: str = 'image',
              wait_time: int = -1,
-             continue_key: str = ' ',
+             continue_key: str = 'right',
              vis_task: str = 'lidar_det') -> None:
         """Show the drawn point cloud/image.
 
@@ -799,7 +798,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         #     img_wait_time = 0.5
         # else:
         #     img_wait_time = wait_time
-        img_wait_time = 0.5
+        # img_wait_time = 0.5
 
         # In order to show multi-modal results at the same time, we show image
         # firstly and then show point cloud since the running of
@@ -807,19 +806,53 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if hasattr(self, '_image'):
             if drawn_img is None and drawn_img_3d is None:
                 # use the image got by Visualizer.get_image()
-                super().show(drawn_img_3d, win_name, img_wait_time,
-                             continue_key)
+                if vis_task == 'multi-modality_det':
+                    import matplotlib.pyplot as plt
+                    is_inline = 'inline' in plt.get_backend()
+                    img = self.get_image() if drawn_img is None else drawn_img
+                    self._init_manager(win_name)
+                    fig = self.manager.canvas.figure
+                    # remove white edges by set subplot margin
+                    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+                    fig.clear()
+                    ax = fig.add_subplot()
+                    ax.axis(False)
+                    ax.imshow(img)
+                    self.manager.canvas.draw()
+                    if is_inline:
+                        return fig
+                    else:
+                        fig.show()
+                    self.manager.canvas.flush_events()
+                else:
+                    super().show(drawn_img_3d, win_name, wait_time,
+                                 continue_key)
             else:
-                if drawn_img_3d is not None:
-                    # t1=threading.Thread(target=super().show(),
-                    #                  args=(drawn_img_3d, win_name,
-                    #                        img_wait_time, continue_key))
-                    # t1.start()
-                    super().show(drawn_img_3d, win_name, img_wait_time,
-                                 continue_key)
-                if drawn_img is not None:
-                    super().show(drawn_img, win_name, img_wait_time,
-                                 continue_key)
+                if vis_task == 'multi-modality_det':
+                    import matplotlib.pyplot as plt
+                    is_inline = 'inline' in plt.get_backend()
+                    img = drawn_img if drawn_img_3d is None else drawn_img_3d
+                    self._init_manager(win_name)
+                    fig = self.manager.canvas.figure
+                    # remove white edges by set subplot margin
+                    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+                    fig.clear()
+                    ax = fig.add_subplot()
+                    ax.axis(False)
+                    ax.imshow(img)
+                    self.manager.canvas.draw()
+                    if is_inline:
+                        return fig
+                    else:
+                        fig.show()
+                    self.manager.canvas.flush_events()
+                else:
+                    if drawn_img_3d is not None:
+                        super().show(drawn_img_3d, win_name, wait_time,
+                                     continue_key)
+                    if drawn_img is not None:
+                        super().show(drawn_img, win_name, wait_time,
+                                     continue_key)
 
         if hasattr(self, 'o3d_vis'):
             self.view_control.convert_from_pinhole_camera_parameters(
