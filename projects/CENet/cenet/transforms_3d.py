@@ -16,10 +16,10 @@ class SemkittiRangeView(BaseTransform):
                  W: int = 2048,
                  fov_up: float = 3.0,
                  fov_down: float = -25.0,
-                 means: Sequence[float] = (-0.1023471, 0.4952, -1.0545, 0.2877,
-                                           11.71279),
-                 stds: Sequence[float] = (12.295865, 9.4287, 0.8643, 0.1450,
-                                          10.24),
+                 means: Sequence[float] = (11.71279, -0.1023471, 0.4952,
+                                           -1.0545, 0.2877),
+                 stds: Sequence[float] = (10.24, 12.295865, 9.4287, 0.8643,
+                                          0.1450),
                  ignore_index: int = 19) -> None:
         self.H = H
         self.W = W
@@ -67,11 +67,11 @@ class SemkittiRangeView(BaseTransform):
         # order in decreasing depth
         indices = np.arange(depth.shape[0])
         order = np.argsort(depth)[::-1]
-        proj_idx[proj_y[order], proj_x[proj_x]] = indices[order]
-        proj_image[proj_y[order], proj_x[order], :4] = points_numpy[order]
-        proj_image[proj_y[order], proj_x[order], 4] = depth[order]
-        proj_mask = proj_idx > 0
-        results['proj_range'] = proj_image[..., 4]
+        proj_idx[proj_y[order], proj_x[order]] = indices[order]
+        proj_image[proj_y[order], proj_x[order], 0] = depth[order]
+        proj_image[proj_y[order], proj_x[order], 1:] = points_numpy[order]
+        proj_mask = (proj_idx > 0).astype(np.int32)
+        results['proj_range'] = proj_image[..., 0]
 
         proj_image = (proj_image -
                       self.means[None, None, :]) / self.stds[None, None, :]

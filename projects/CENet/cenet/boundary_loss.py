@@ -38,6 +38,7 @@ class BoundaryLoss(nn.Module):
         Returns:
             Tensor: Loss tensor.
         """
+        pred = F.softmax(pred, dim=1)
         n, c, _, _ = pred.shape
 
         # one-hot vector of ground truth

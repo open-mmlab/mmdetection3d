@@ -2,7 +2,8 @@
 from typing import Optional, Sequence, Tuple
 
 import torch
-from mmcv.cnn import build_activation_layer, build_conv_layer, build_norm_layer
+from mmcv.cnn import (ConvModule, build_activation_layer, build_conv_layer,
+                      build_norm_layer)
 from mmengine.model import BaseModule
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -123,8 +124,14 @@ class CENet(BaseModule):
         in_channels = stem_channels + sum(out_channels)
         self.fuse_layers = []
         for i, fuse_channel in enumerate(fuse_channels):
-            fuse_layer = build_conv_layer(
-                conv_cfg, in_channels, fuse_channel, kernel_size=3, padding=1)
+            fuse_layer = ConvModule(
+                in_channels,
+                fuse_channel,
+                kernel_size=3,
+                padding=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
             in_channels = fuse_channel
             layer_name = f'fuse_layer{i + 1}'
             self.add_module(layer_name, fuse_layer)

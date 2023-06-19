@@ -102,11 +102,11 @@ train_pipeline = [
     dict(
         type='SemkittiRangeView',
         H=64,
-        W=2048,
+        W=512,
         fov_up=3.0,
         fov_down=-25.0,
-        means=(-0.1023471, 0.4952, -1.0545, 0.2877, 11.71279),
-        stds=(12.295865, 9.4287, 0.8643, 0.1450, 10.24),
+        means=(11.71279, -0.1023471, 0.4952, -1.0545, 0.2877),
+        stds=(10.24, 12.295865, 9.4287, 0.8643, 0.1450),
         ignore_index=19),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_semantic_seg'])
 ]
@@ -130,11 +130,11 @@ test_pipeline = [
     dict(
         type='SemkittiRangeView',
         H=64,
-        W=2048,
+        W=512,
         fov_up=3.0,
         fov_down=-25.0,
-        means=(-0.1023471, 0.4952, -1.0545, 0.2877, 11.71279),
-        stds=(12.295865, 9.4287, 0.8643, 0.1450, 10.24),
+        means=(11.71279, -0.1023471, 0.4952, -1.0545, 0.2877),
+        stds=(10.24, 12.295865, 9.4287, 0.8643, 0.1450),
         ignore_index=19),
     dict(
         type='Pack3DDetInputs',
@@ -270,14 +270,18 @@ optim_wrapper = dict(
 
 param_scheduler = [
     dict(
-        type='LinearLR', start_factor=0.001, by_epoch=False, begin=0,
-        end=2000),
+        type='LinearLR',
+        start_factor=0.01,
+        by_epoch=True,
+        begin=0,
+        end=1,
+        convert_to_iter_based=True),
     dict(
         type='CosineAnnealingLR',
-        begin=0,
+        begin=1,
         T_max=100,
         by_epoch=True,
-        eta_min=1e-5,
+        eta_min=1e-4,
         convert_to_iter_based=True)
 ]
 
