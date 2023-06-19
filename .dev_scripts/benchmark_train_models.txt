@@ -3,7 +3,6 @@ configs/centerpoint/centerpoint_pillar02_second_secfpn_head-dcn_8xb4-cyclic-20e_
 configs/dynamic_voxelization/second_dv_secfpn_8xb2-cosine-80e_kitti-3d-3class.py
 configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py
 configs/mvxnet/mvxnet_fpn_dv_second_secfpn_8xb2-80e_kitti-3d-3class.py
-configs/point_rcnn/point-rcnn_8xb2_kitti-3d-3class.py
 configs/pointnet2/pointnet2_msg_2xb16-cosine-80e_s3dis-seg.py
 configs/pointnet2/pointnet2_msg_2xb16-cosine-250e_scannet-seg.py
 configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py
