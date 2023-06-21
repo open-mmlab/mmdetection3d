@@ -142,7 +142,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         self.fig_show_cfg.update(fig_show_cfg)
 
         self.flag_pause = False
-        self.flag_exit = False
         self.flag_next = False
 
     def _clear_o3d_vis(self) -> None:
@@ -850,27 +849,27 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if hasattr(self, 'view_port'):
                 self.view_control.convert_from_pinhole_camera_parameters(
                     self.view_port)
-            self.flag_exit = not self.o3d_vis.poll_events()
+            self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
-            self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
-            )
+            self.view_port = \
+                self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
             if wait_time != -1:
                 self.last_time = time.time()
                 while time.time(
                 ) - self.last_time < wait_time and self.o3d_vis.poll_events():
                     self.o3d_vis.update_renderer()
-                    self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
-                    )
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
                 while self.flag_pause and self.o3d_vis.poll_events():
                     self.o3d_vis.update_renderer()
-                    self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
-                    )
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
 
             else:
                 while not self.flag_next and self.o3d_vis.poll_events():
                     self.o3d_vis.update_renderer()
-                    self.view_port = self.view_control.convert_to_pinhole_camera_parameters(  # noqa: E501
-                    )
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
                 self.flag_next = False
             self.o3d_vis.clear_geometries()
             try:
@@ -882,16 +881,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         or save_path.endswith('.jpg')):
                     save_path += '.png'
                 self.o3d_vis.capture_screen_image(save_path)
-            if self.flag_exit:
-                self.o3d_vis.clear_geometries()
-                self.o3d_vis.destroy_window()
-                self.o3d_vis.close()
-                self._clear_o3d_vis()
-                sys.exit(0)
 
     def escape_callback(self, vis):
-        self.flag_exit = True
-        return False
+        self.o3d_vis.clear_geometries()
+        self.o3d_vis.destroy_window()
+        self.o3d_vis.close()
+        self._clear_o3d_vis()
+        sys.exit(0)
 
     def space_action_callback(self, vis, action, mods):
         if action == 1:
