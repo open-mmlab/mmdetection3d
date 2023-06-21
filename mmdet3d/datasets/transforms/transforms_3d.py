@@ -2488,6 +2488,7 @@ class PolarMix(BaseTransform):
             points = points.cat([points, copy_points])
             pts_semantic_mask = np.concatenate(
                 (pts_semantic_mask, copy_pts_semantic_mask), axis=0)
+
         input_dict['points'] = points
         input_dict['pts_semantic_mask'] = pts_semantic_mask
         return input_dict
