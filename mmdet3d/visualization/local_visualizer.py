@@ -154,7 +154,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if hasattr(self, 'pcd'):
                 del self.pcd
 
-    def _initialize_o3d_vis(self, frame_cfg: dict) -> Visualizer:
+    def _initialize_o3d_vis(self) -> Visualizer:
         """Initialize open3d vis according to frame_cfg.
 
         Args:
@@ -216,7 +216,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         check_type('points', points, np.ndarray)
 
         if not hasattr(self, 'o3d_vis'):
-            self.o3d_vis = self._initialize_o3d_vis(frame_cfg)
+            self.o3d_vis = self._initialize_o3d_vis()
 
         # for now we convert points into depth mode for visualization
         if pcd_mode != Coord3DMode.DEPTH:
@@ -246,6 +246,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         else:
             raise NotImplementedError
 
+        # create coordinate frame
         mesh_frame = geometry.TriangleMesh.create_coordinate_frame(**frame_cfg)
         self.o3d_vis.add_geometry(mesh_frame)
 
@@ -785,11 +786,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 means "forever". Defaults to 0.
             continue_key (str): The key for users to continue. Defaults to ' '.
         """
-        # if vis_task == 'multi-modality_det':
-        #     img_wait_time = 0.5
-        # else:
-        #     img_wait_time = wait_time
-        # img_wait_time = 0.5
 
         # In order to show multi-modal results at the same time, we show image
         # firstly and then show point cloud since the running of

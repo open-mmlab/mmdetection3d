@@ -6,16 +6,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(
-        type='Det3DVisualizationHook',
-        draw=True,
-        vis_task='multi-modality_det',
-        # vis_task='lidar_seg',
-        wait_time=0.1,
-        draw_gt=False,
-        draw_pred=True,
-        # test_out_dir='results',
-        show=True))
+    visualization=dict(type='Det3DVisualizationHook'))
 
 env_cfg = dict(
     cudnn_benchmark=False,
