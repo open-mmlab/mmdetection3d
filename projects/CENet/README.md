@@ -9,7 +9,7 @@
 Accurate and fast scene understanding is one of the challenging task for autonomous driving, which requires to take full advantage of LiDAR point clouds for semantic segmentation. In this paper, we present a concise and efficient image-based semantic segmentation network, named CENet. In order to improve the descriptive power of learned features and reduce the computational as well as time complexity, our CENet integrates the convolution with larger kernel size instead of MLP, carefully-selected activation functions, and multiple auxiliary segmentation heads with corresponding loss functions into architecture. Quantitative and qualitative experiments conducted on publicly available benchmarks, SemanticKITTI and SemanticPOSS, demonstrate that our pipeline achieves much better mIoU and inference performance compared with state-of-the-art models. The code will be available at https://github.com/huixiancheng/CENet.
 
 <div align=center>
-<img src="" width="800"/>
+<img src="https://github.com/open-mmlab/mmdetection3d/assets/55445986/2c268392-0e0c-4e93-bb9d-dc3417c56dad" width="800"/>
 </div>
 
 ## Introduction
@@ -20,34 +20,18 @@ We implement CENet and provide the results and pretrained checkpoints on Semanti
 
 <!-- For a typical model, this section should contain the commands for training and testing. You are also suggested to dump your environment specification to env.yml by `conda env export > env.yml`. -->
 
-### Compiling operations on CUDA
-
-**Note** that the voxelization OP in the original implementation of `BEVFusion` is different from the implementation in MMCV. If you want to use the original pretrained model [here](https://github.com/mit-han-lab/bevfusion/blob/main/README.md), you need to use the original implementation of voxelization OP.
-
-```python
-python projects/BEVFusion/setup.py develop
-```
-
-### Demo
-
-Run a demo on NuScenes data using [BEVFusion model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link):
-
-```shell
-python demo/multi_modality_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__LIDAR_TOP__1532402927647951.pcd.bin demo/data/nuscenes/ demo/data/nuscenes/n015-2018-07-24-11-22-45+0800.pkl projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_FILE} --cam-type all --score-thr 0.2 --show
-```
-
 ### Training commands
 
 In MMDetection3D's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py
+python tools/train.py projects/CENet/configs/cenet-64x512_4xb4_semantickitti.py
 ```
 
 For multi-gpu training, run:
 
 ```bash
-python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${NUM_GPUS} --master_port=29506 --master_addr="127.0.0.1" tools/train.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py
+python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${NUM_GPUS} --master_port=29506 --master_addr="127.0.0.1" tools/train.py projects/CENet/configs/cenet-64x512_4xb4_semantickitti.py
 ```
 
 ### Testing commands
@@ -55,16 +39,24 @@ python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${N
 In MMDetection3D's root directory, run the following command to test the model:
 
 ```bash
-python tools/test.py projects/BEVFusion/configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH}
+python tools/test.py projects/CENet/configs/cenet-64x512_4xb4_semantickitti.py ${CHECKPOINT_PATH}
 ```
 
 ## Results and models
 
 ### NuScenes
 
-|                                    Backbone                                     | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) |  NDS  |  mAP  |                                                 Download                                                 |
-| :-----------------------------------------------------------------------------: | :---------------------: | :-: | :------: | :------------: | :---: | :---: | :------------------------------------------------------------------------------------------------------: |
-| [SECFPN](./configs/bevfusion_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |    -     |       -        | 71.62 | 68.77 | [converted_model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link) |
+|                        Backbone                        | Input resolution | Mem (GB) | Inf time (fps) | mIoU  |         Download         |
+| :----------------------------------------------------: | :--------------: | :------: | :------------: | :---: | :----------------------: |
+| [CENet](./configs/cenet-64x512_4xb4_semantickitti.py)  |     64\*512      |          |                | 61.10 | [model](<>) \| [log](<>) |
+| [CENet](./configs/cenet-64x1024_4xb4_semantickitti.py) |     64\*1024     |          |                | 62.20 | [model](<>) \| [log](<>) |
+| [CENet](./configs/cenet-64x2048_4xb4_semantickitti.py) |     64\*2048     |          |                | 62.64 | [model](<>) \| [log](<>) |
+
+**Note**
+
+- We report point-based mIoU instead of range-view based mIoU
+- The mIoU is the best results during inference after each epoch training, which is consistent with official code
+- If your setting is different with our settings, we strongly suggest to enable `auto_scale_lr` to achieve comparable results.
 
 ## Citation
 
@@ -104,9 +96,9 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
     <!-- As this template does. -->
 
-- [ ] Milestone 2: Indicates a successful model implementation.
+- [x] Milestone 2: Indicates a successful model implementation.
 
-  - [ ] Training-time correctness
+  - [x] Training-time correctness
 
     <!-- If you are reproducing the result from a paper, checking this item means that you should have trained your model from scratch based on the original paper's specification and verified that the final result matches the report within a minor error range. -->
 

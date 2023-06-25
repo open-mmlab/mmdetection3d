@@ -102,7 +102,7 @@ train_pipeline = [
     dict(
         type='SemkittiRangeView',
         H=64,
-        W=512,
+        W=1024,
         fov_up=3.0,
         fov_down=-25.0,
         means=(11.71279, -0.1023471, 0.4952, -1.0545, 0.2877),
@@ -130,7 +130,7 @@ test_pipeline = [
     dict(
         type='SemkittiRangeView',
         H=64,
-        W=512,
+        W=1024,
         fov_up=3.0,
         fov_down=-25.0,
         means=(11.71279, -0.1023471, 0.4952, -1.0545, 0.2877),
@@ -143,7 +143,7 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=2,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -263,32 +263,38 @@ model = dict(
     test_cfg=dict(use_knn=True, knn=7, search=7, sigma=1.0, cutoff=2.0))
 
 # optimizer
-# This schedule is mainly used on S3DIS dataset in segmentation task
+# This schedule is mainly used on Semantickitti dataset in segmentation task
 optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='SGD', lr=0.01, weight_decay=0.0001, momentum=0.9))
+    type='AmpOptimWrapper',
+    loss_scale='dynamic',
+    optimizer=dict(
+        type='AdamW',
+        lr=0.04,
+        betas=(0.9, 0.999),
+        weight_decay=(0.01),
+        eps=0.000005))
 
 param_scheduler = [
     dict(
-        type='LinearLR', start_factor=0.001, by_epoch=False, begin=0, end=500),
-    dict(
-        type='CosineAnnealingLR',
-        begin=0,
-        T_max=100,
+        type='OneCycleLR',
+        total_steps=50,
         by_epoch=True,
-        eta_min=1e-5,
+        eta_max=0.0025,
+        pct_start=0.2,
+        div_factor=25.0,
+        final_div_factor=100.0,
         convert_to_iter_based=True)
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=100, val_interval=1)
+train_cfg = dict(by_epoch=True, max_epochs=50, val_interval=1)
 val_cfg = dict()
 test_cfg = dict()
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (4 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=8)
+#   - `base_batch_size` = (4 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=1))
