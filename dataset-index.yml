@@ -1,0 +1,29 @@
+kitti:
+  # The name of dataset in OpenDataLab referring to
+  # https://opendatalab.com/KITTI_Object/cli. You can also download it
+  # by running `odl get ${dataset}` independently
+  dataset: KITTI_Object
+  download_root: data
+  data_root: data/kitti
+  # Scripts for unzipping datasets
+  script: tools/dataset_converters/kitti_unzip.sh
+
+nuscenes:
+  # The name of dataset in OpenDataLab referring to
+  # https://opendatalab.com/nuScenes/cli. You can also download it
+  # by running `odl get ${dataset}` independently
+  dataset: nuScenes
+  download_root: data
+  data_root: data/nuscenes
+  # Scripts for unzipping datasets
+  script: tools/dataset_converters/nuscenes_unzip.sh
+
+semantickitti:
+  # The name of dataset in OpenDataLab referring to
+  # https://opendatalab.com/SemanticKITTI/cli. You can also download it
+  # by running `odl get ${dataset}` independently
+  dataset: SemanticKITTI
+  download_root: data
+  data_root: data/semantickitti
+  # Scripts for unzipping datasets
+  script: tools/dataset_converters/semantickitti_unzip.sh

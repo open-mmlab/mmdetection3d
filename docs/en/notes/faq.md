@@ -12,10 +12,10 @@ We list some potential troubles encountered by users and developers, along with 
   | --------------------- | :----------------------: | :---------------------: | :----------------------: |
   | dev-1.x               | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
   | main                  | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
+  | v1.1.1                | mmengine>=0.7.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |  mmdet>=3.0.0, \<3.1.0   |
   | v1.1.0rc3             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc3, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc2             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc3, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
   | v1.1.0rc1             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
-  | v1.1.0rc0             | mmengine>=0.1.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 | mmdet>=3.0.0rc0, \<3.1.0 |
 
   **Note:** If you want to install mmdet3d-v1.0.0rcx, the compatible MMDetection, MMSegmentation and MMCV versions table can be found at [here](https://mmdetection3d.readthedocs.io/en/latest/faq.html#mmcv-mmdet-mmdet3d-installation). Please choose the correct version of MMCV, MMDetection and MMSegmentation to avoid installation issues.
 

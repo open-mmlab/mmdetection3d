@@ -17,7 +17,7 @@ def gen_dx_bx(xbound, ybound, zbound):
     return dx, bx, nx
 
 
-class BaseTransform(nn.Module):
+class BaseViewTransform(nn.Module):
 
     def __init__(
         self,
@@ -156,6 +156,7 @@ class BaseTransform(nn.Module):
         camera2lidar,
         img_aug_matrix,
         lidar_aug_matrix,
+        metas,
         **kwargs,
     ):
         intrins = camera_intrinsics[..., :3, :3]
@@ -182,7 +183,77 @@ class BaseTransform(nn.Module):
         return x
 
 
-class BaseDepthTransform(BaseTransform):
+@MODELS.register_module()
+class LSSTransform(BaseViewTransform):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        image_size: Tuple[int, int],
+        feature_size: Tuple[int, int],
+        xbound: Tuple[float, float, float],
+        ybound: Tuple[float, float, float],
+        zbound: Tuple[float, float, float],
+        dbound: Tuple[float, float, float],
+        downsample: int = 1,
+    ) -> None:
+        super().__init__(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            image_size=image_size,
+            feature_size=feature_size,
+            xbound=xbound,
+            ybound=ybound,
+            zbound=zbound,
+            dbound=dbound,
+        )
+        self.depthnet = nn.Conv2d(in_channels, self.D + self.C, 1)
+        if downsample > 1:
+            assert downsample == 2, downsample
+            self.downsample = nn.Sequential(
+                nn.Conv2d(
+                    out_channels, out_channels, 3, padding=1, bias=False),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(True),
+                nn.Conv2d(
+                    out_channels,
+                    out_channels,
+                    3,
+                    stride=downsample,
+                    padding=1,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(True),
+                nn.Conv2d(
+                    out_channels, out_channels, 3, padding=1, bias=False),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(True),
+            )
+        else:
+            self.downsample = nn.Identity()
+
+    def get_cam_feats(self, x):
+        B, N, C, fH, fW = x.shape
+
+        x = x.view(B * N, C, fH, fW)
+
+        x = self.depthnet(x)
+        depth = x[:, :self.D].softmax(dim=1)
+        x = depth.unsqueeze(1) * x[:, self.D:(self.D + self.C)].unsqueeze(2)
+
+        x = x.view(B, N, self.C, self.D, fH, fW)
+        x = x.permute(0, 1, 3, 4, 5, 2)
+        return x
+
+    def forward(self, *args, **kwargs):
+        x = super().forward(*args, **kwargs)
+        x = self.downsample(x)
+        return x
+
+
+class BaseDepthTransform(BaseViewTransform):
 
     def forward(
         self,
@@ -201,8 +272,6 @@ class BaseDepthTransform(BaseTransform):
         post_trans = img_aug_matrix[..., :3, 3]
         camera2lidar_rots = camera2lidar[..., :3, :3]
         camera2lidar_trans = camera2lidar[..., :3, 3]
-
-        # print(img.shape, self.image_size, self.feature_size)
 
         batch_size = len(points)
         depth = torch.zeros(batch_size, img.shape[1], 1,
@@ -241,6 +310,7 @@ class BaseDepthTransform(BaseTransform):
             for c in range(on_img.shape[0]):
                 masked_coords = cur_coords[c, on_img[c]].long()
                 masked_dist = dist[c, on_img[c]]
+                depth = depth.to(masked_dist.dtype)
                 depth[b, c, 0, masked_coords[:, 0],
                       masked_coords[:, 1]] = masked_dist
 
@@ -276,6 +346,8 @@ class DepthLSSTransform(BaseDepthTransform):
         dbound: Tuple[float, float, float],
         downsample: int = 1,
     ) -> None:
+        """Compared with `LSSTransform`, `DepthLSSTransform` adds sparse depth
+        information from lidar points into the inputs of the `depthnet`."""
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
