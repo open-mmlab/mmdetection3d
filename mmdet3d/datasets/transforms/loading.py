@@ -579,6 +579,8 @@ class LoadPointsFromFile(BaseTransform):
         use_color (bool): Whether to use color features. Defaults to False.
         norm_intensity (bool): Whether to normlize the intensity. Defaults to
             False.
+        norm_elongation (bool): Whether to normlize the elongation. This is
+            usually used in Waymo dataset.Defaults to False.
         backend_args (dict, optional): Arguments to instantiate the
             corresponding backend. Defaults to None.
     """
@@ -590,6 +592,7 @@ class LoadPointsFromFile(BaseTransform):
                  shift_height: bool = False,
                  use_color: bool = False,
                  norm_intensity: bool = False,
+                 norm_elongation: bool = False,
                  backend_args: Optional[dict] = None) -> None:
         self.shift_height = shift_height
         self.use_color = use_color
@@ -603,6 +606,7 @@ class LoadPointsFromFile(BaseTransform):
         self.load_dim = load_dim
         self.use_dim = use_dim
         self.norm_intensity = norm_intensity
+        self.norm_elongation = norm_elongation
         self.backend_args = backend_args
 
     def _load_points(self, pts_filename: str) -> np.ndarray:
@@ -646,6 +650,10 @@ class LoadPointsFromFile(BaseTransform):
             assert len(self.use_dim) >= 4, \
                 f'When using intensity norm, expect used dimensions >= 4, got {len(self.use_dim)}'  # noqa: E501
             points[:, 3] = np.tanh(points[:, 3])
+        if self.norm_elongation:
+            assert len(self.use_dim) >= 5, \
+                f'When using elongation norm, expect used dimensions >= 5, got {len(self.use_dim)}'  # noqa: E501
+            points[:, 4] = np.tanh(points[:, 4])
         attribute_dims = None
 
         if self.shift_height:
@@ -682,6 +690,8 @@ class LoadPointsFromFile(BaseTransform):
         repr_str += f'backend_args={self.backend_args}, '
         repr_str += f'load_dim={self.load_dim}, '
         repr_str += f'use_dim={self.use_dim})'
+        repr_str += f'norm_intensity={self.norm_intensity})'
+        repr_str += f'norm_elongation={self.norm_elongation})'
         return repr_str
 
 

@@ -1,4 +1,5 @@
 include mmdet3d/.mim/model-index.yml
+include mmdet3d/.mim/dataset-index.yml
 include requirements/*.txt
 recursive-include mmdet3d/.mim/ops *.cpp *.cu *.h *.cc
 recursive-include mmdet3d/.mim/configs *.py *.yml

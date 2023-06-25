@@ -86,7 +86,20 @@ mmdetection3d
 
 ### KITTI
 
-Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Prepare KITTI data splits by running:
+1. Download KITTI 3D detection data [HERE](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d). Alternatively, you
+   can download the dataset from [OpenDataLab](https://opendatalab.com/) using MIM. The command scripts are the following:
+
+```bash
+# install OpenDataLab CLI tools
+pip install -U opendatalab
+# log in OpenDataLab. Note that you should register an account on [OpenDataLab](https://opendatalab.com/) before.
+pip install odl
+odl login
+# download and preprocess by MIM
+mim download mmdet3d --dataset kitti
+```
+
+2. Prepare KITTI data splits by running:
 
 ```bash
 mkdir ./data/kitti/ && mkdir ./data/kitti/ImageSets
@@ -98,7 +111,7 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/second/data/ImageSets/trainval.txt --no-check-certificate --content-disposition -O ./data/kitti/ImageSets/trainval.txt
 ```
 
-Then generate info files by running:
+3. Generate info files by running:
 
 ```bash
 python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
@@ -160,7 +173,20 @@ Note that:
 
 ### NuScenes
 
-Download nuScenes V1.0 full dataset data [HERE](https://www.nuscenes.org/download). Prepare nuscenes data by running:
+1. Download nuScenes V1.0 full dataset data [HERE](https://www.nuscenes.org/download). Alternatively, you
+   can download the dataset from [OpenDataLab](https://opendatalab.com/) using MIM. The downloading and unzipping command scripts are the following:
+
+```bash
+# install OpenDataLab CLI tools
+pip install -U opendatalab
+# log in OpenDataLab. Note that you should register an account on [OpenDataLab](https://opendatalab.com/) before.
+pip install odl
+odl login
+# download and preprocess by MIM
+mim download mmdet3d --dataset nuscenes
+```
+
+2. Prepare nuscenes data by running:
 
 ```bash
 python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
@@ -187,9 +213,20 @@ Note that we follow the original folder names for clear organization. Please ren
 
 ### SemanticKITTI
 
-Download SemanticKITTI dataset [HERE](http://semantic-kitti.org/dataset.html#download) and unzip all zip files.
+1. Download SemanticKITTI dataset [HERE](http://semantic-kitti.org/dataset.html#download) and unzip all zip files. Alternatively, you
+   can download the dataset from [OpenDataLab](https://opendatalab.com/) using MIM. The downloading and unzipping command scripts are the following:
 
-Then generate info files by running:
+```bash
+# install OpenDataLab CLI tools
+pip install -U opendatalab
+# log in OpenDataLab. Note that you should register an account on [OpenDataLab](https://opendatalab.com/) before.
+pip install odl
+odl login
+# download and preprocess by MIM
+mim download mmdet3d --dataset semantickitti
+```
+
+2. Generate info files by running:
 
 ```bash
 python ./tools/create_data.py semantickitti --root-path ./data/semantickitti --out-dir ./data/semantickitti --extra-tag semantickitti
