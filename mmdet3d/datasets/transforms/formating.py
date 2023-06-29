@@ -75,7 +75,8 @@ class Pack3DDetInputs(BaseTransform):
                             'affine_aug', 'sweep_img_metas', 'ori_cam2img',
                             'cam2global', 'crop_offset', 'img_crop_offset',
                             'resize_img_shape', 'lidar2cam', 'ori_lidar2img',
-                            'num_ref_frames', 'num_views', 'ego2global')
+                            'num_ref_frames', 'num_views', 'ego2global',
+                            'axis_align_matrix')
     ) -> None:
         self.keys = keys
         self.meta_keys = meta_keys
