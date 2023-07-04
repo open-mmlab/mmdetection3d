@@ -23,9 +23,9 @@ from torch import Tensor
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
                                 CameraInstance3DBoxes, Coord3DMode,
-                                DepthInstance3DBoxes, Det3DDataSample,
-                                LiDARInstance3DBoxes, PointData,
-                                points_cam2img)
+                                DepthInstance3DBoxes, DepthPoints,
+                                Det3DDataSample, LiDARInstance3DBoxes,
+                                PointData, points_cam2img)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode)
 
@@ -293,7 +293,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # convert bboxes to numpy dtype
         bboxes_3d = tensor2ndarray(bboxes_3d.tensor)
 
-        in_box_color = np.array(points_in_box_color)
+        # in_box_color = np.array(points_in_box_color)
 
         for i in range(len(bboxes_3d)):
             center = bboxes_3d[i, 0:3]
@@ -320,7 +320,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if self.pcd is not None and mode == 'xyz':
                 indices = box3d.get_point_indices_within_bounding_box(
                     self.pcd.points)
-                self.points_colors[indices] = in_box_color
+                self.points_colors[indices] = np.array(bbox_color[i]) / 255.
 
         # update points colors
         if self.pcd is not None:
@@ -606,6 +606,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                            instances: InstanceData,
                            input_meta: dict,
                            vis_task: str,
+                           show_pcd_rgb: bool = False,
                            palette: Optional[List[tuple]] = None) -> dict:
         """Draw 3D instances of GT or prediction.
 
@@ -616,6 +617,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             input_meta (dict): Meta information.
             vis_task (str): Visualization task, it includes: 'lidar_det',
                 'multi-modality_det', 'mono_det'.
+            show_pcd_rgb (bool): Whether to show RGB point cloud.
             palette (List[tuple], optional): Palette information corresponding
                 to the category. Defaults to None.
 
@@ -643,13 +645,22 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             else:
                 bboxes_3d_depth = bboxes_3d.clone()
 
+            if 'axis_align_matrix' in input_meta:
+                points = DepthPoints(points, points_dim=points.shape[1])
+                rot_mat = input_meta['axis_align_matrix'][:3, :3]
+                trans_vec = input_meta['axis_align_matrix'][:3, -1]
+                points.rotate(rot_mat.T)
+                points.translate(trans_vec)
+                points = tensor2ndarray(points.tensor)
+
             max_label = int(max(labels_3d) if len(labels_3d) > 0 else 0)
             bbox_color = palette if self.bbox_color is None \
                 else self.bbox_color
             bbox_palette = get_palette(bbox_color, max_label + 1)
             colors = [bbox_palette[label] for label in labels_3d]
 
-            self.set_points(points, pcd_mode=2)
+            self.set_points(
+                points, pcd_mode=2, mode='xyzrgb' if show_pcd_rgb else 'xyz')
             self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -871,7 +882,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.o3d_vis.clear_geometries()
             try:
                 del self.pcd
-            except KeyError:
+            except (KeyError, AttributeError):
                 pass
             if save_path is not None:
                 if not (save_path.endswith('.png')
@@ -923,7 +934,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        o3d_save_path: Optional[str] = None,
                        vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
-                       step: int = 0) -> None:
+                       step: int = 0,
+                       show_pcd_rgb: bool = False) -> None:
         """Draw datasample and save to all backends.
 
         - If GT and prediction are plotted at the same time, they are displayed
@@ -954,6 +966,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             pred_score_thr (float): The threshold to visualize the bboxes
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
+            show_pcd_rgb (bool): Whether to show RGB point cloud. Defaults to
+                False.
         """
         assert vis_task in (
             'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
@@ -976,7 +990,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
                     data_input, data_sample.gt_instances_3d,
-                    data_sample.metainfo, vis_task, palette)
+                    data_sample.metainfo, vis_task, show_pcd_rgb, palette)
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -1006,7 +1020,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 pred_data_3d = self._draw_instances_3d(data_input,
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
-                                                       vis_task, palette)
+                                                       vis_task, show_pcd_rgb,
+                                                       palette)
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
