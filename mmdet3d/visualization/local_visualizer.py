@@ -964,6 +964,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ignore_index = self.dataset_meta.get('ignore_index', None)
         if ignore_index is not None and 'gt_pts_seg' in data_sample and vis_task == 'lidar_seg':  # noqa: E501
             keep_index = data_sample.gt_pts_seg.pts_semantic_mask != ignore_index  # noqa: E501
+        else:
+            keep_index = None
 
         gt_data_3d = None
         pred_data_3d = None

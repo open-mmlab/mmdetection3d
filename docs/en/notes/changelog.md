@@ -1,5 +1,38 @@
 # Changelog of v1.1
 
+### v1.2.0 (4/7/2023)
+
+#### Highlights
+
+- Support [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) in `mmdet3d/config`  (#2608)
+- Support the inference of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`  (#2606)
+- Support downloading datasets from [OpenDataLab](https://opendatalab.com/) using `mim`  (#2593)
+
+#### New Features
+
+- Support [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) in `mmdet3d/config`  (#2608)
+- Support the inference of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`  (#2606)
+- Support downloading datasets from [OpenDataLab](https://opendatalab.com/) using `mim`  (#2593)
+
+#### Improvements
+
+- Enhanced visualization in interactive form (#2611)
+- Update README.md and Model Zoo (#2599, #2600)
+- Speed up S3DIS data preparation (#2585)
+
+#### Bug Fixes
+
+- Remove PointRCNN in benchmark training (#2610)
+- Fix wrong indoor detection visualization (#2625)
+- Fix MinkUNet download link (#2590)
+- Fix the formula in the `readthedocs` (#2580)
+
+#### Contributors
+
+A total of 5 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @JingweiZhang12, @col14m, @zhulf0804
+
 ### v1.1.1 (30/5/2023)
 
 #### Highlights
