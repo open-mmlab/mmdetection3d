@@ -23,7 +23,7 @@
 #### Bug Fixes
 
 - Remove PointRCNN in benchmark training (#2610)
-- Fix wrong indoor detection visualization (#2601)
+- Fix wrong indoor detection visualization (#2625)
 - Fix MinkUNet download link (#2590)
 - Fix the formula in the `readthedocs` (#2580)
 
