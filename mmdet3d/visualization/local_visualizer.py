@@ -882,7 +882,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.o3d_vis.clear_geometries()
             try:
                 del self.pcd
-            except KeyError:
+            except (KeyError, AttributeError):
                 pass
             if save_path is not None:
                 if not (save_path.endswith('.png')
