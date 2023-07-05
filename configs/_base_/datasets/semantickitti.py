@@ -113,7 +113,7 @@ test_pipeline = [
         dataset_type='semantickitti',
         backend_args=backend_args),
     dict(type='PointSegClassMapping'),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points', 'pts_semantic_mask'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)

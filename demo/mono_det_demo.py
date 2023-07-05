@@ -59,7 +59,7 @@ def main(args):
         data_sample=result,
         draw_gt=False,
         show=args.show,
-        wait_time=0,
+        wait_time=-1,
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
         vis_task='mono_det')

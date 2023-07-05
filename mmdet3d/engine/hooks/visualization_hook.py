@@ -7,6 +7,7 @@ import mmcv
 import numpy as np
 from mmengine.fileio import get
 from mmengine.hooks import Hook
+from mmengine.logging import print_log
 from mmengine.runner import Runner
 from mmengine.utils import mkdir_or_exist
 from mmengine.visualization import Visualizer
@@ -42,6 +43,10 @@ class Det3DVisualizationHook(Hook):
         show (bool): Whether to display the drawn image. Default to False.
         vis_task (str): Visualization task. Defaults to 'mono_det'.
         wait_time (float): The interval of show (s). Defaults to 0.
+        draw_gt (bool): Whether to draw ground truth. Defaults to True.
+        draw_pred (bool): Whether to draw prediction. Defaults to True.
+        show_pcd_rgb (bool): Whether to show RGB point cloud. Defaults to
+            False.
         test_out_dir (str, optional): directory where painted images
             will be saved in testing process.
         backend_args (dict, optional): Arguments to instantiate the
@@ -56,6 +61,9 @@ class Det3DVisualizationHook(Hook):
                  vis_task: str = 'mono_det',
                  wait_time: float = 0.,
                  test_out_dir: Optional[str] = None,
+                 draw_gt: bool = False,
+                 draw_pred: bool = True,
+                 show_pcd_rgb: bool = False,
                  backend_args: Optional[dict] = None):
         self._visualizer: Visualizer = Visualizer.get_current_instance()
         self.interval = interval
@@ -70,11 +78,21 @@ class Det3DVisualizationHook(Hook):
                           'needs to be excluded.')
         self.vis_task = vis_task
 
+        if wait_time == -1:
+            print_log(
+                'Manual control mode, press [Right] to next sample.',
+                logger='current')
+        else:
+            print_log(
+                'Autoplay mode, press [SPACE] to pause.', logger='current')
         self.wait_time = wait_time
         self.backend_args = backend_args
         self.draw = draw
         self.test_out_dir = test_out_dir
         self._test_index = 0
+        self.draw_gt = draw_gt
+        self.draw_pred = draw_pred
+        self.show_pcd_rgb = show_pcd_rgb
 
     def after_val_iter(self, runner: Runner, batch_idx: int, data_batch: dict,
                        outputs: Sequence[Det3DDataSample]) -> None:
@@ -130,11 +148,14 @@ class Det3DVisualizationHook(Hook):
                 'val sample',
                 data_input,
                 data_sample=outputs[0],
+                draw_gt=self.draw_gt,
+                draw_pred=self.draw_pred,
                 show=self.show,
                 vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
-                step=total_curr_iter)
+                step=total_curr_iter,
+                show_pcd_rgb=self.show_pcd_rgb)
 
     def after_test_iter(self, runner: Runner, batch_idx: int, data_batch: dict,
                         outputs: Sequence[Det3DDataSample]) -> None:
@@ -208,10 +229,13 @@ class Det3DVisualizationHook(Hook):
                 'test sample',
                 data_input,
                 data_sample=data_sample,
+                draw_gt=self.draw_gt,
+                draw_pred=self.draw_pred,
                 show=self.show,
                 vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
                 out_file=out_file,
                 o3d_save_path=o3d_save_path,
-                step=self._test_index)
+                step=self._test_index,
+                show_pcd_rgb=self.show_pcd_rgb)
