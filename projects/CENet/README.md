@@ -48,9 +48,9 @@ python tools/test.py projects/CENet/configs/cenet-64x512_4xb4_semantickitti.py $
 
 |                        Backbone                        | Input resolution | Mem (GB) | Inf time (fps) | mIoU  |         Download         |
 | :----------------------------------------------------: | :--------------: | :------: | :------------: | :---: | :----------------------: |
-| [CENet](./configs/cenet-64x512_4xb4_semantickitti.py)  |     64\*512      |          |                | 61.10 | [model](<>) \| [log](<>) |
-| [CENet](./configs/cenet-64x1024_4xb4_semantickitti.py) |     64\*1024     |          |                | 62.20 | [model](<>) \| [log](<>) |
-| [CENet](./configs/cenet-64x2048_4xb4_semantickitti.py) |     64\*2048     |          |                | 62.64 | [model](<>) \| [log](<>) |
+| [CENet](./configs/cenet-64x512_4xb4_semantickitti.py)  |     64\*512      |          |      41.7      | 61.10 | [model](<>) \| [log](<>) |
+| [CENet](./configs/cenet-64x1024_4xb4_semantickitti.py) |     64\*1024     |          |      26.8      | 62.20 | [model](<>) \| [log](<>) |
+| [CENet](./configs/cenet-64x2048_4xb4_semantickitti.py) |     64\*2048     |          |      14.1      | 62.64 | [model](<>) \| [log](<>) |
 
 **Note**
 

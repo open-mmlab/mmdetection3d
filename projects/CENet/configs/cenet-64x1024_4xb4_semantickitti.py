@@ -1,4 +1,4 @@
-_base_ = ['./cenet-64x512_4xb4_semantickitti']
+_base_ = ['./cenet-64x512_4xb4_semantickitti.py']
 
 backend_args = None
 train_pipeline = [
