@@ -24,8 +24,8 @@ class HardSimpleVFE(nn.Module):
         super(HardSimpleVFE, self).__init__()
         self.num_features = num_features
 
-    def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
-                *args, **kwargs) -> Tensor:
+    def forward(self, features: Tensor, num_points: Tensor, *args,
+                **kwargs) -> Tensor:
         """Forward function.
 
         Args:
@@ -34,7 +34,6 @@ class HardSimpleVFE(nn.Module):
                 number of points inside a single voxel.
             num_points (torch.Tensor): Number of points in each voxel,
                  shape (N, ).
-            coors (torch.Tensor): Coordinates of voxels.
 
         Returns:
             torch.Tensor: Mean of points inside each voxel in shape (N, 3(4))
