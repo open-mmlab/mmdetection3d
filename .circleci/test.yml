@@ -54,9 +54,7 @@ jobs:
             pip install wheel
       - run:
           name: Install PyTorch
-          command: |
-            python -V
-            python -m pip install torch==<< parameters.torch >>+cpu torchvision==<< parameters.torchvision >>+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          command: pip install torch==<< parameters.torch >>+cpu torchvision==<< parameters.torchvision >>+cpu -f https://download.pytorch.org/whl/torch_stable.html
       - when:
           condition:
             equal: ["3.9.0", << parameters.python >>]
@@ -65,11 +63,11 @@ jobs:
       - run:
           name: Install mmdet3d dependencies
           command: |
-            python -m pip install git+ssh://git@github.com/open-mmlab/mmengine.git@main
+            pip install git+ssh://git@github.com/open-mmlab/mmengine.git@main
             pip install -U openmim
             mim install 'mmcv >= 2.0.0rc4'
-            mim install 'mmdet >= 3.0.0'
-            pip install -r requirements.txt
+            pip install git+ssh://git@github.com/open-mmlab/mmdetection.git@dev-3.x
+            pip install -r requirements/tests.txt
       - run:
           name: Build and install
           command: |
@@ -77,9 +75,9 @@ jobs:
       - run:
           name: Run unittests
           command: |
-            python -m coverage run --branch --source mmdet3d -m pytest tests/
-            python -m coverage xml
-            python -m coverage report -m
+            coverage run --branch --source mmdet3d -m pytest tests/
+            coverage xml
+            coverage report -m
 
   build_cuda:
     parameters:
@@ -87,7 +85,7 @@ jobs:
         type: string
       cuda:
         type: enum
-        enum: ["10.1", "10.2", "11.1"]
+        enum: ["10.1", "10.2", "11.1", "11.7"]
       cudnn:
         type: integer
         default: 7
@@ -116,7 +114,7 @@ jobs:
             docker exec mmdet3d pip install -U openmim
             docker exec mmdet3d mim install 'mmcv >= 2.0.0rc4'
             docker exec mmdet3d pip install -e /mmdetection
-            docker exec mmdet3d pip install -r requirements.txt
+            docker exec mmdet3d pip install -r requirements/tests.txt
       - run:
           name: Build and install
           command: |
@@ -124,7 +122,7 @@ jobs:
       - run:
           name: Run unittests
           command: |
-            docker exec mmdet3d python -m pytest tests/
+            docker exec mmdet3d pytest tests/
 
 workflows:
   pr_stage_lint:
@@ -148,15 +146,15 @@ workflows:
                 - dev-1.x
       - build_cpu:
           name: minimum_version_cpu
-          torch: 1.6.0
-          torchvision: 0.7.0
+          torch: 1.8.1
+          torchvision: 0.9.1
           python: 3.7.4 # The lowest python 3.7.x version available on CircleCI images
           requires:
             - lint
       - build_cpu:
           name: maximum_version_cpu
-          torch: 1.13.0
-          torchvision: 0.14.0
+          torch: 2.0.0
+          torchvision: 0.15.1
           python: 3.9.0
           requires:
             - minimum_version_cpu
@@ -172,14 +170,21 @@ workflows:
           cuda: "10.2"
           requires:
             - hold
+      - build_cuda:
+          name: maximum_version_gpu
+          torch: 2.0.0
+          cuda: "11.7"
+          cudnn: 8
+          requires:
+            - hold
   merge_stage_test:
     when:
       not: << pipeline.parameters.lint_only >>
     jobs:
       - build_cuda:
           name: minimum_version_gpu
-          torch: 1.6.0
-          cuda: "10.1"
+          torch: 1.8.1
+          cuda: "10.2"
           filters:
             branches:
               only:
