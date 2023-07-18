@@ -147,7 +147,7 @@ test_pipeline = [
     dict(type=Pack3DDetInputs, keys=['points'])
 ]
 
-train_dataloader.update(
+train_dataloader.merge(
     dict(
         _delete_=True,
         batch_size=4,
@@ -169,13 +169,13 @@ train_dataloader.update(
                 # and box_type_3d='Depth' in sunrgbd and scannet dataset.
                 box_type_3d='LiDAR',
                 backend_args=backend_args))))
-test_dataloader.merge(
+test_dataloader.update(
     dict(
         dataset=dict(
             pipeline=test_pipeline, metainfo=dict(classes=class_names))))
-val_dataloader.merge(
+val_dataloader.update(
     dict(
         dataset=dict(
             pipeline=test_pipeline, metainfo=dict(classes=class_names))))
 
-train_cfg.merge(dict(val_interval=20))
+train_cfg.update(dict(val_interval=20))

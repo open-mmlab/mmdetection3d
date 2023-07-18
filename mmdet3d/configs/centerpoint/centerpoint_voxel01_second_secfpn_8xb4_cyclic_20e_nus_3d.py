@@ -147,7 +147,7 @@ test_pipeline = [
     dict(type=Pack3DDetInputs, keys=['points'])
 ]
 
-train_dataloader.update(
+train_dataloader.merge(
     dict(
         _delete_=True,
         batch_size=4,
