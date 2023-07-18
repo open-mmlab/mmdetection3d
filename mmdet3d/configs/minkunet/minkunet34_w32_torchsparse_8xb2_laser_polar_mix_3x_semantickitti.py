@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-if '_base_':
+from mmengine import read_base
+
+with read_base():
     from .._base_.datasets.semantickitti import *
     from .._base_.models.minkunet import *
     from .._base_.schedules.schedule_3x import *
@@ -15,7 +17,7 @@ from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
 from mmdet3d.datasets.transforms.transforms_3d import (GlobalRotScaleTrans,
                                                        LaserMix, PolarMix)
 
-model.merge(
+model.update(
     dict(
         data_preprocessor=dict(max_voxels=None),
         backbone=dict(encoder_blocks=[2, 3, 4, 6])))
@@ -92,6 +94,6 @@ train_pipeline = [
     dict(type=Pack3DDetInputs, keys=['points', 'pts_semantic_mask'])
 ]
 
-train_dataloader.merge(dict(dataset=dict(pipeline=train_pipeline)))
+train_dataloader.update(dict(dataset=dict(pipeline=train_pipeline)))
 
-default_hooks.merge(dict(checkpoint=dict(type=CheckpointHook, interval=1)))
+default_hooks.update(dict(checkpoint=dict(type=CheckpointHook, interval=1)))

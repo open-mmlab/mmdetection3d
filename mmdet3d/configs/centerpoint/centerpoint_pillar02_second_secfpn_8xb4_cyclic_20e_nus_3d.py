@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-if '_base_':
+from mmengine.config import read_base
+
+with read_base():
     from .._base_.datasets.nus_3d import *
     from .._base_.models.centerpoint_pillar02_second_secfpn_nus import *
     from .._base_.schedules.cyclic_20e import *
@@ -29,9 +31,9 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-data_prefix.merge(
+data_prefix.update(
     dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP'))
-model.merge(
+model.update(
     dict(
         data_preprocessor=dict(
             voxel_layer=dict(point_cloud_range=point_cloud_range)),
@@ -145,7 +147,7 @@ test_pipeline = [
     dict(type=Pack3DDetInputs, keys=['points'])
 ]
 
-train_dataloader.merge(
+train_dataloader.update(
     dict(
         _delete_=True,
         batch_size=4,
