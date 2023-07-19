@@ -7,6 +7,328 @@ from mmdet3d.registry import MODELS
 
 
 @MODELS.register_module()
+class TPVFormerOCCDecoder(BaseModule):
+
+    def __init__(self,
+                 tpv_h,
+                 tpv_w,
+                 tpv_z,
+                 num_classes=20,
+                 in_dims=64,
+                 hidden_dims=128,
+                 out_dims=None,
+                 scale_h=2,
+                 scale_w=2,
+                 scale_z=2,
+                 ignore_index=0,
+                 loss_lovasz=None,
+                 loss_ce=None,
+                 lovasz_input='voxel',
+                 ce_input='voxel'):
+        super().__init__()
+        self.tpv_h = tpv_h
+        self.tpv_w = tpv_w
+        self.tpv_z = tpv_z
+        self.scale_h = scale_h
+        self.scale_w = scale_w
+        self.scale_z = scale_z
+
+        out_dims = in_dims if out_dims is None else out_dims
+        self.in_dims = in_dims
+        self.decoder = nn.Sequential(
+            nn.Linear(in_dims, hidden_dims), nn.Softplus(),
+            nn.Linear(hidden_dims, out_dims))
+        self.classes = num_classes
+        self.classifier = nn.Linear(out_dims, num_classes)
+        self.loss_lovasz = MODELS.build(loss_lovasz)
+        self.loss_ce = MODELS.build(loss_ce)
+        self.ignore_index = ignore_index
+        self.lovasz_input = lovasz_input
+        self.ce_input = ce_input
+
+    def forward(self, tpv_list, points=None):
+        """
+        tpv_list[0]: bs, h*w, c
+        tpv_list[1]: bs, z*h, c
+        tpv_list[2]: bs, w*z, c
+        """
+        tpv_hw, tpv_zh, tpv_wz = tpv_list[0], tpv_list[1], tpv_list[2]
+        bs, _, c = tpv_hw.shape
+        tpv_hw = tpv_hw.permute(0, 2, 1).reshape(bs, c, self.tpv_h, self.tpv_w)
+        tpv_zh = tpv_zh.permute(0, 2, 1).reshape(bs, c, self.tpv_z, self.tpv_h)
+        tpv_wz = tpv_wz.permute(0, 2, 1).reshape(bs, c, self.tpv_w, self.tpv_z)
+
+        if self.scale_h != 1 or self.scale_w != 1:
+            tpv_hw = F.interpolate(
+                tpv_hw,
+                size=(self.tpv_h * self.scale_h, self.tpv_w * self.scale_w),
+                mode='bilinear')
+        if self.scale_z != 1 or self.scale_h != 1:
+            tpv_zh = F.interpolate(
+                tpv_zh,
+                size=(self.tpv_z * self.scale_z, self.tpv_h * self.scale_h),
+                mode='bilinear')
+        if self.scale_w != 1 or self.scale_z != 1:
+            tpv_wz = F.interpolate(
+                tpv_wz,
+                size=(self.tpv_w * self.scale_w, self.tpv_z * self.scale_z),
+                mode='bilinear')
+
+        if points is not None:
+            # points: bs, n, 3
+            _, n, _ = points.shape
+            points = points.reshape(bs, 1, n, 3).float()
+            points[...,
+                   0] = points[..., 0] / (self.tpv_w * self.scale_w) * 2 - 1
+            points[...,
+                   1] = points[..., 1] / (self.tpv_h * self.scale_h) * 2 - 1
+            points[...,
+                   2] = points[..., 2] / (self.tpv_z * self.scale_z) * 2 - 1
+            sample_loc = points[:, :, :, [0, 1]]
+            tpv_hw_pts = F.grid_sample(tpv_hw,
+                                       sample_loc).squeeze(2)  # bs, c, n
+            sample_loc = points[:, :, :, [1, 2]]
+            tpv_zh_pts = F.grid_sample(tpv_zh, sample_loc).squeeze(2)
+            sample_loc = points[:, :, :, [2, 0]]
+            tpv_wz_pts = F.grid_sample(tpv_wz, sample_loc).squeeze(2)
+
+            tpv_hw_vox = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(
+                -1, -1, -1, -1, self.scale_z * self.tpv_z)
+            tpv_zh_vox = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(
+                -1, -1, self.scale_w * self.tpv_w, -1, -1)
+            tpv_wz_vox = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(
+                -1, -1, -1, self.scale_h * self.tpv_h, -1)
+
+            fused_vox = (tpv_hw_vox + tpv_zh_vox + tpv_wz_vox).flatten(2)
+            fused_pts = tpv_hw_pts + tpv_zh_pts + tpv_wz_pts
+            fused = torch.cat([fused_vox, fused_pts], dim=-1)  # bs, c, whz+n
+            fused = fused.permute(0, 2, 1)
+            if self.use_checkpoint:
+                fused = torch.utils.checkpoint.checkpoint(self.decoder, fused)
+                logits = torch.utils.checkpoint.checkpoint(
+                    self.classifier, fused)
+            else:
+                fused = self.decoder(fused)
+                logits = self.classifier(fused)
+            logits = logits.permute(0, 2, 1)
+            logits_vox = logits[:, :, :(-n)].reshape(bs, self.classes,
+                                                     self.scale_w * self.tpv_w,
+                                                     self.scale_h * self.tpv_h,
+                                                     self.scale_z * self.tpv_z)
+            logits_pts = logits[:, :, (-n):].reshape(bs, self.classes, n, 1, 1)
+            import ipdb; ipdb.set_trace()
+            return logits_vox
+            # return logits_vox, logits_pts
+
+        else:
+            tpv_hw = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(
+                -1, -1, -1, -1, self.scale_z * self.tpv_z)
+            tpv_zh = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(
+                -1, -1, self.scale_w * self.tpv_w, -1, -1)
+            tpv_wz = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(
+                -1, -1, -1, self.scale_h * self.tpv_h, -1)
+
+            fused = tpv_hw + tpv_zh + tpv_wz
+            fused = fused.permute(0, 2, 3, 4, 1)
+            if self.use_checkpoint:
+                fused = torch.utils.checkpoint.checkpoint(self.decoder, fused)
+                logits = torch.utils.checkpoint.checkpoint(
+                    self.classifier, fused)
+            else:
+                fused = self.decoder(fused)
+                logits = self.classifier(fused)
+            logits = logits.permute(0, 4, 1, 2, 3)
+
+            return logits
+
+    def predict(self, tpv_list, batch_data_samples):
+        tpv_hw, tpv_zh, tpv_wz = tpv_list
+        bs, _, c = tpv_hw.shape
+        tpv_hw = tpv_hw.permute(0, 2, 1).reshape(bs, c, self.tpv_h, self.tpv_w)
+        tpv_zh = tpv_zh.permute(0, 2, 1).reshape(bs, c, self.tpv_z, self.tpv_h)
+        tpv_wz = tpv_wz.permute(0, 2, 1).reshape(bs, c, self.tpv_w, self.tpv_z)
+
+        batch_size = len(batch_data_samples)
+
+        points = [torch.as_tensor(batch_data.point_coors.unsqueeze(0)) for batch_data in batch_data_samples]
+        points = torch.cat(points, axis = 0)       
+        if self.scale_h != 1 or self.scale_w != 1:
+            tpv_hw = F.interpolate(
+                tpv_hw,
+                size=(self.tpv_h * self.scale_h, self.tpv_w * self.scale_w),
+                mode='bilinear')
+        if self.scale_z != 1 or self.scale_h != 1:
+            tpv_zh = F.interpolate(
+                tpv_zh,
+                size=(self.tpv_z * self.scale_z, self.tpv_h * self.scale_h),
+                mode='bilinear')
+        if self.scale_w != 1 or self.scale_z != 1:
+            tpv_wz = F.interpolate(
+                tpv_wz,
+                size=(self.tpv_w * self.scale_w, self.tpv_z * self.scale_z),
+                mode='bilinear')
+
+        logits = []
+        if points is not None:
+            _, n, _ = points.shape
+            points = points.reshape(bs, 1, n, 3).float()
+            points[...,
+                   0] = points[..., 0] / (self.tpv_w * self.scale_w) * 2 - 1
+            points[...,
+                   1] = points[..., 1] / (self.tpv_h * self.scale_h) * 2 - 1
+            points[...,
+                   2] = points[..., 2] / (self.tpv_z * self.scale_z) * 2 - 1
+            sample_loc = points[:, :, :, [0, 1]]
+            tpv_hw_pts = F.grid_sample(tpv_hw,
+                                       sample_loc).squeeze(2)  # bs, c, n
+            sample_loc = points[:, :, :, [1, 2]]
+            tpv_zh_pts = F.grid_sample(tpv_zh, sample_loc).squeeze(2)
+            sample_loc = points[:, :, :, [2, 0]]
+            tpv_wz_pts = F.grid_sample(tpv_wz, sample_loc).squeeze(2)
+
+            tpv_hw_vox = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(
+                -1, -1, -1, -1, self.scale_z * self.tpv_z)
+            tpv_zh_vox = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(
+                -1, -1, self.scale_w * self.tpv_w, -1, -1)
+            tpv_wz_vox = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(
+                -1, -1, -1, self.scale_h * self.tpv_h, -1)
+
+            fused_vox = (tpv_hw_vox + tpv_zh_vox + tpv_wz_vox).flatten(2)
+            fused_pts = tpv_hw_pts + tpv_zh_pts + tpv_wz_pts
+            fused = torch.cat([fused_vox, fused_pts], dim=-1)  # bs, c, whz+n
+            fused = fused.permute(0, 2, 1)
+
+
+            fused = self.decoder(fused)
+            logits = self.classifier(fused)
+            logits = logits.permute(0, 2, 1)
+            logits_vox = logits[:, :, :(-n)].reshape(bs, self.classes,
+                                                     self.scale_w * self.tpv_w,
+                                                     self.scale_h * self.tpv_h,
+                                                     self.scale_z * self.tpv_z)
+            logits_pts = logits[:, :, (-n):].reshape(bs, self.classes, n, 1, 1)
+
+            return logits_vox, logits_pts
+
+        else:
+            tpv_hw = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(
+                -1, -1, -1, -1, self.scale_z * self.tpv_z)
+            tpv_zh = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(
+                -1, -1, self.scale_w * self.tpv_w, -1, -1)
+            tpv_wz = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(
+                -1, -1, -1, self.scale_h * self.tpv_h, -1)
+
+            fused = tpv_hw + tpv_zh + tpv_wz
+            fused = fused.permute(0, 2, 3, 4, 1)
+            if self.use_checkpoint:
+                fused = torch.utils.checkpoint.checkpoint(self.decoder, fused)
+                logits = torch.utils.checkpoint.checkpoint(
+                    self.classifier, fused)
+            else:
+                fused = self.decoder(fused)
+                logits = self.classifier(fused)
+            logits = logits.permute(0, 4, 1, 2, 3)
+
+            return logits
+        
+    def loss(self, tpv_list, batch_data_samples):
+        tpv_hw, tpv_zh, tpv_wz = tpv_list
+        bs, _, c = tpv_hw.shape
+        tpv_hw = tpv_hw.permute(0, 2, 1).reshape(bs, c, self.tpv_h, self.tpv_w)
+        tpv_zh = tpv_zh.permute(0, 2, 1).reshape(bs, c, self.tpv_z, self.tpv_h)
+        tpv_wz = tpv_wz.permute(0, 2, 1).reshape(bs, c, self.tpv_w, self.tpv_z)
+
+        if self.scale_h != 1 or self.scale_w != 1:
+            tpv_hw = F.interpolate(
+                tpv_hw,
+                size=(self.tpv_h * self.scale_h, self.tpv_w * self.scale_w),
+                mode='bilinear')
+        if self.scale_z != 1 or self.scale_h != 1:
+            tpv_zh = F.interpolate(
+                tpv_zh,
+                size=(self.tpv_z * self.scale_z, self.tpv_h * self.scale_h),
+                mode='bilinear')
+        if self.scale_w != 1 or self.scale_z != 1:
+            tpv_wz = F.interpolate(
+                tpv_wz,
+                size=(self.tpv_w * self.scale_w, self.tpv_z * self.scale_z),
+                mode='bilinear')
+        ee = batch_data_samples[0].point_coors
+        points = batch_data_samples[0].point_coors
+        points = points.float()
+        if points is not None:
+            num_points, _ = points.shape
+            points = points.reshape(bs, 1, num_points, 3)
+            points[..., 0] = points[..., 0] / (self.tpv_w*self.scale_w) * 2 - 1
+            points[..., 1] = points[..., 1] / (self.tpv_h*self.scale_h) * 2 - 1
+            points[..., 2] = points[..., 2] / (self.tpv_z*self.scale_z) * 2 - 1
+            sample_loc = points[:, :, :, [0, 1]]
+            tpv_hw_pts = F.grid_sample(tpv_hw, sample_loc).squeeze(2) # bs, c, n
+            sample_loc = points[:, :, :, [1, 2]]
+            tpv_zh_pts = F.grid_sample(tpv_zh, sample_loc).squeeze(2)
+            sample_loc = points[:, :, :, [2, 0]]
+            tpv_wz_pts = F.grid_sample(tpv_wz, sample_loc).squeeze(2)
+
+            tpv_hw_vox = tpv_hw.unsqueeze(-1).permute(0, 1, 3, 2, 4).expand(-1, -1, -1, -1, self.scale_z*self.tpv_z)
+            tpv_zh_vox = tpv_zh.unsqueeze(-1).permute(0, 1, 4, 3, 2).expand(-1, -1, self.scale_w*self.tpv_w, -1, -1)
+            tpv_wz_vox = tpv_wz.unsqueeze(-1).permute(0, 1, 2, 4, 3).expand(-1, -1, -1, self.scale_h*self.tpv_h, -1)
+        
+            fused_vox = (tpv_hw_vox + tpv_zh_vox + tpv_wz_vox).flatten(2)
+            fused_pts = tpv_hw_pts + tpv_zh_pts + tpv_wz_pts
+            fused = torch.cat([fused_vox, fused_pts], dim=-1) # bs, c, whz+n
+            
+            fused = fused.permute(0, 2, 1)
+
+        decoder_output = self.decoder(fused)
+
+        logits = self.classifier(decoder_output)
+        logits = logits.permute(0, 2, 1)
+        vox_logits = logits[:, :, :(-num_points)].reshape(bs, 18, self.scale_w*self.tpv_w, self.scale_h*self.tpv_h, self.scale_z*self.tpv_z)
+        pts_logits = logits[:, :, (-num_points):].reshape(bs, 18, num_points, 1, 1)
+        
+        pts_seg_label = batch_data_samples[0].gt_pts_seg.pts_semantic_mask.cpu().numpy()
+        voxel_seg_label = batch_data_samples[0].gt_pts_seg.voxel_semantic_mask.cpu().numpy()
+        
+        # TODO(chris): remove hard code .
+        # generate occ label
+        occ_fill_label  = 17 
+        occ_grid_size = np.array([100, 100, 8])
+        
+        ignore_label = 0
+
+        grid_ind = batch_data_samples[0].point_coors.cpu().numpy()
+        pts_seg_label = pts_seg_label.reshape(num_points, 1)
+        processed_label = np.ones(occ_grid_size, dtype=np.uint8) * occ_fill_label # 200, 200, 16 zero
+        label_voxel_pair = np.concatenate([grid_ind, pts_seg_label], axis=1) # (34720, 4)
+
+
+        label_voxel_pair = label_voxel_pair[np.lexsort((grid_ind[:, 0], grid_ind[:, 1], grid_ind[:, 2])), :] # sort by class [0-16]
+        processed_label = nb_process_label(np.copy(processed_label), label_voxel_pair)
+        
+        processed_label = np.expand_dims(processed_label, 0)
+        processed_label = torch.tensor(processed_label).cuda()
+
+        ce_loss_func = torch.nn.CrossEntropyLoss(ignore_index=ignore_label)
+        lovasz_softmax_func = lovasz_softmax
+
+        ce_inputs = vox_logits
+        lo_inputs = vox_logits
+        ce_label = processed_label.type(torch.LongTensor).cuda()
+        lovasz_loss = lovasz_softmax(
+                torch.nn.functional.softmax(lo_inputs, dim=1), 
+                processed_label, ignore=ignore_label
+            )
+        
+        ce_loss = ce_loss_func(ce_inputs, ce_label)
+
+        loss = dict()
+        loss['loss_ce'] = ce_loss
+        loss['loss_lovasz'] = lovasz_loss
+
+        return loss
+
+
+@MODELS.register_module()
 class TPVFormerDecoder(BaseModule):
 
     def __init__(self,
@@ -111,6 +433,7 @@ class TPVFormerDecoder(BaseModule):
             else:
                 fused = self.decoder(fused)
                 logits = self.classifier(fused)
+            import ipdb; ipdb.set_trace()
             logits = logits.permute(0, 2, 1)
             logits_vox = logits[:, :, :(-n)].reshape(bs, self.classes,
                                                      self.scale_w * self.tpv_w,
