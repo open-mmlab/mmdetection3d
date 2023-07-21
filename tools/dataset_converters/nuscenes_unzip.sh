@@ -8,7 +8,7 @@ for split in $DOWNLOAD_DIR/nuScenes/raw/*; do
         if [[ $tgz_file == *.tgz ]]
         then
             echo "Unzipping $tgz_file to $DATA_ROOT ......"
-            tar zxvf $tgz_file -C $DATA_ROOT/
+            tar -zxvf $tgz_file -C $DATA_ROOT/
             echo "[Done] Unzip $tgz_file to $DATA_ROOT"
         fi
         # delete the original files
