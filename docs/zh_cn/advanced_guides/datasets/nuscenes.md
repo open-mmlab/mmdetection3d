@@ -149,25 +149,19 @@ train_pipeline = [
 nuScenes 上基于图像的 3D 检测的典型训练流水线如下。
 
 ```python
-train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox=True,
-        with_label=True,
-        with_attr_label=True,
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_bbox_depth=True),
-    dict(type='mmdet.Resize', img_scale=(1600, 900), keep_ratio=True),
-    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
-    dict(
-        type='Pack3DDetInputs',
-        keys=[
-            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
-            'gt_labels_3d', 'centers_2d', 'depths'
-        ]),
-]
+    train_pipeline = [
+        dict(type='LoadMultiViewImageFromFiles',
+             to_float32=True,
+             num_views=6),
+        dict(type='LoadAnnotations3D', ),
+        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+        dict(
+            type='Pack3DDetInputs',
+            keys=[
+                'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
+                'gt_labels_3d', 'centers_2d', 'depths'
+            ]),
+    ]
 ```
 
 它遵循 2D 检测的一般流水线，但在一些细节上有所不同：

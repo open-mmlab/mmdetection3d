@@ -156,25 +156,19 @@ Intensity is not used by default due to its yielded noise when concatenating the
 A typical training pipeline of image-based 3D detection on nuScenes is as below.
 
 ```python
-train_pipeline = [
-    dict(type='LoadImageFromFileMono3D'),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox=True,
-        with_label=True,
-        with_attr_label=True,
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_bbox_depth=True),
-    dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
-    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
-    dict(
-        type='Pack3DDetInputs',
-        keys=[
-            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
-            'gt_labels_3d', 'centers_2d', 'depths'
-        ]),
-]
+    train_pipeline = [
+        dict(type='LoadMultiViewImageFromFiles',
+             to_float32=True,
+             num_views=6),
+        dict(type='LoadAnnotations3D', ),
+        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+        dict(
+            type='Pack3DDetInputs',
+            keys=[
+                'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
+                'gt_labels_3d', 'centers_2d', 'depths'
+            ]),
+    ]
 ```
 
 It follows the general pipeline of 2D detection while differs in some details:
