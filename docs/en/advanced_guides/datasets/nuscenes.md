@@ -161,7 +161,6 @@ A typical training pipeline of image-based 3D detection on nuScenes is as below.
              to_float32=True,
              num_views=6),
         dict(type='LoadAnnotations3D', ),
-        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
         dict(
             type='Pack3DDetInputs',
             keys=[

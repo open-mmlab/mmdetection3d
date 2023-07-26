@@ -154,7 +154,6 @@ nuScenes 上基于图像的 3D 检测的典型训练流水线如下。
              to_float32=True,
              num_views=6),
         dict(type='LoadAnnotations3D', ),
-        dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
         dict(
             type='Pack3DDetInputs',
             keys=[
