@@ -146,21 +146,28 @@ train_pipeline = [
 
 ### 基于视觉的方法
 
-nuScenes 上基于图像的 3D 检测的典型训练流水线如下。
+nuScenes 上基于图像的单目 3D 检测的典型训练流水线如下。
 
 ```python
-    train_pipeline = [
-        dict(type='LoadMultiViewImageFromFiles',
-             to_float32=True,
-             num_views=6),
-        dict(type='LoadAnnotations3D', ),
-        dict(
-            type='Pack3DDetInputs',
-            keys=[
-                'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
-                'gt_labels_3d', 'centers_2d', 'depths'
-            ]),
-    ]
+train_pipeline = [
+    dict(type='LoadImageFromFileMono3D'),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox=True,
+        with_label=True,
+        with_attr_label=True,
+        with_bbox_3d=True,
+        with_label_3d=True,
+        with_bbox_depth=True),
+    dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+    dict(
+        type='Pack3DDetInputs',
+        keys=[
+            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
+            'gt_labels_3d', 'centers_2d', 'depths'
+        ]),
+]
 ```
 
 它遵循 2D 检测的一般流水线，但在一些细节上有所不同：
@@ -168,6 +175,39 @@ nuScenes 上基于图像的 3D 检测的典型训练流水线如下。
 - 它使用单目流水线加载图像，其中包括额外的必需信息，如相机内参矩阵。
 - 它需要加载 3D 标注。
 - 一些数据增强技术需要调整，例如`RandomFlip3D`。目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
+
+同时, 鸟瞰图，BEV（Bird's-Eye-View），是另一种常见的 3D 检测方法。 它利用环绕自车的多个视角图像进行 3D 检测。对于 nuScenes 数据集而言，这些视角包括前方、左前方、右前方、后方、左后方、右后方。一个基本的用于 BEV 方法的流水线如下。
+
+```python
+    train_pipeline = [
+        dict(type='LoadMultiViewImageFromFiles',
+             to_float32=True, num_views=6),
+        dict(type='LoadAnnotations3D', ),
+        dict(type='Pack3DDetInputs',
+             keys=['img', 'gt_bboxes_3d', 'gt_labels_3d', ]),
+    ]
+```
+
+为了读取多个视角的图像，数据集也应进行相应微调。
+
+```python
+data_prefix = dict(
+    pts='samples/LIDAR_TOP',
+    CAM_FRONT='samples/CAM_FRONT',
+    CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+    CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+    CAM_BACK='samples/CAM_BACK',
+    CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+    CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
+    sweeps='sweeps/LIDAR_TOP')
+    
+dataset = NuScenesDataset(data_root="./data/nuScenes",
+                          ann_file="nuscenes_infos_train.pkl",
+                          data_prefix=data_prefix,
+                          modality=dict(use_camera=True, use_lidar=False, ),
+                          pipeline=train_pipeline,
+                          test_mode=False, )
+```
 
 ## 评估
 

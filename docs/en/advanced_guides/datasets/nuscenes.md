@@ -153,21 +153,28 @@ Intensity is not used by default due to its yielded noise when concatenating the
 
 ### Vision-Based Methods
 
-A typical training pipeline of image-based 3D detection on nuScenes is as below.
+A typical training pipeline of monocular image-based 3D detection on nuScenes is as below.
 
 ```python
-    train_pipeline = [
-        dict(type='LoadMultiViewImageFromFiles',
-             to_float32=True,
-             num_views=6),
-        dict(type='LoadAnnotations3D', ),
-        dict(
-            type='Pack3DDetInputs',
-            keys=[
-                'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
-                'gt_labels_3d', 'centers_2d', 'depths'
-            ]),
-    ]
+train_pipeline = [
+    dict(type='LoadImageFromFileMono3D'),
+    dict(
+        type='LoadAnnotations3D',
+        with_bbox=True,
+        with_label=True,
+        with_attr_label=True,
+        with_bbox_3d=True,
+        with_label_3d=True,
+        with_bbox_depth=True),
+    dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+    dict(
+        type='Pack3DDetInputs',
+        keys=[
+            'img', 'gt_bboxes', 'gt_bboxes_labels', 'attr_labels', 'gt_bboxes_3d',
+            'gt_labels_3d', 'centers_2d', 'depths'
+        ]),
+]
 ```
 
 It follows the general pipeline of 2D detection while differs in some details:
@@ -176,6 +183,39 @@ It follows the general pipeline of 2D detection while differs in some details:
 - It needs to load 3D annotations.
 - Some data augmentation techniques need to be adjusted, such as `RandomFlip3D`.
   Currently we do not support more augmentation methods, because how to transfer and apply other techniques is still under explored.
+
+Alternatively, BEV, Bird's-Eye-View, is another popular 3D detection method. It takes multiple surrounding views of ego vehicle to perform 3D detection, for nuScenes, it's CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT and CAM_BACK_RIGHT. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
+
+```python
+    train_pipeline = [
+        dict(type='LoadMultiViewImageFromFiles',
+             to_float32=True, num_views=6),
+        dict(type='LoadAnnotations3D', ),
+        dict(type='Pack3DDetInputs',
+             keys=['img', 'gt_bboxes_3d', 'gt_labels_3d', ]),
+    ]
+```
+
+To load multiple view of images, a little modification should be made to the dataset.
+
+```python
+data_prefix = dict(
+    pts='samples/LIDAR_TOP',
+    CAM_FRONT='samples/CAM_FRONT',
+    CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+    CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+    CAM_BACK='samples/CAM_BACK',
+    CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+    CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
+    sweeps='sweeps/LIDAR_TOP')
+    
+dataset = NuScenesDataset(data_root="./data/nuScenes",
+                          ann_file="nuscenes_infos_train.pkl",
+                          data_prefix=data_prefix,
+                          modality=dict(use_camera=True, use_lidar=False, ),
+                          pipeline=train_pipeline,
+                          test_mode=False, )
+```
 
 ## Evaluation
 
