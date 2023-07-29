@@ -200,7 +200,7 @@ data_prefix = dict(
     CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
-    
+
 dataset = NuScenesDataset(data_root="./data/nuScenes",
                           ann_file="nuscenes_infos_train.pkl",
                           data_prefix=data_prefix,
