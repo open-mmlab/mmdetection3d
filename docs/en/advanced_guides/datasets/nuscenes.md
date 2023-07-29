@@ -153,7 +153,7 @@ Intensity is not used by default due to its yielded noise when concatenating the
 
 ### Vision-Based Methods
 
-A typical training pipeline of monocular image-based 3D detection on nuScenes is as below.
+A typical training pipeline of image-based monocular 3D detection on nuScenes is as below.
 
 ```python
 train_pipeline = [
