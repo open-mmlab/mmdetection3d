@@ -184,7 +184,7 @@ It follows the general pipeline of 2D detection while differs in some details:
 - Some data augmentation techniques need to be adjusted, such as `RandomFlip3D`.
   Currently we do not support more augmentation methods, because how to transfer and apply other techniques is still under explored.
 
-Alternatively, BEV, Bird's-Eye-View, is another popular 3D detection method. It takes multiple surrounding views of ego vehicle to perform 3D detection, for nuScenes, it's CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT and CAM_BACK_RIGHT. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
+Alternatively, BEV, Bird's-Eye-View, is another popular 3D detection method. It takes multiple surrounding views of ego vehicle to perform 3D detection, for nuScenes, they are CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT and CAM_BACK_RIGHT. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
 
 ```python
     train_pipeline = [
