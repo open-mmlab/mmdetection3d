@@ -147,7 +147,7 @@ train_pipeline = [
 ### 基于视觉的方法
 
 1. 基于单目方法
-  在NuScenes数据集中，对于多视角图像，单目检测范式通常由针对每张图像检测和输出 3D 检测结果以及通过后处理（例如 NMS ）得到最终检测结果两步组成。从本质上来说，这种范式直接将单目 3D 检测扩展到多视角任务。NuScenes 上基于图像的 3D 检测的典型训练流水线如下。
+   在NuScenes数据集中，对于多视角图像，单目检测范式通常由针对每张图像检测和输出 3D 检测结果以及通过后处理（例如 NMS ）得到最终检测结果两步组成。从本质上来说，这种范式直接将单目 3D 检测扩展到多视角任务。NuScenes 上基于图像的 3D 检测的典型训练流水线如下。
 
 ```python
 train_pipeline = [
@@ -178,7 +178,7 @@ train_pipeline = [
 - 一些数据增强技术需要调整，例如`RandomFlip3D`。目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
 
 2. 基于BEV方法
-   鸟瞰图，BEV（Bird's-Eye-View），是另一种常用的 3D 检测范式。 它直接利用多个视角图像进行 3D 检测。对于 nuScenes 数据集而言，这些视角包括前方`CAM_FRONT`、左前方`CAM_FRONT_LEFT`、右前方`CAM_FRONT_RIGHT`、后方`CAM_BACK`、左后方`CAM_BACK_LEFT`、右后方`CAM_BACK_RIGHT`。一个基本的用于 BEV 方法的流水线如下。
+   鸟瞰图，BEV（Bird's-Eye-View），是另一种常用的 3D 检测范式。它直接利用多个视角图像进行 3D 检测。对于 NuScenes 数据集而言，这些视角包括前方`CAM_FRONT`、左前方`CAM_FRONT_LEFT`、右前方`CAM_FRONT_RIGHT`、后方`CAM_BACK`、左后方`CAM_BACK_LEFT`、右后方`CAM_BACK_RIGHT`。一个基本的用于 BEV 方法的流水线如下。
 
 ```python
     train_pipeline = [
