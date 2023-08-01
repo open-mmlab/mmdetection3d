@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-if '_base_':
+from mmengine import read_base
+
+with read_base():
     from .._base_.datasets.nus_3d import *
     from .._base_.models.centerpoint_voxel01_second_secfpn_nus import *
     from .._base_.schedules.cyclic_20e import *
@@ -29,9 +31,9 @@ class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
 ]
-data_prefix.merge(
+data_prefix.update(
     dict(pts='samples/LIDAR_TOP', img='', sweeps='sweeps/LIDAR_TOP'))
-model.merge(
+model.update(
     dict(
         data_preprocessor=dict(
             voxel_layer=dict(point_cloud_range=point_cloud_range)),
@@ -167,13 +169,13 @@ train_dataloader.merge(
                 # and box_type_3d='Depth' in sunrgbd and scannet dataset.
                 box_type_3d='LiDAR',
                 backend_args=backend_args))))
-test_dataloader.merge(
+test_dataloader.update(
     dict(
         dataset=dict(
             pipeline=test_pipeline, metainfo=dict(classes=class_names))))
-val_dataloader.merge(
+val_dataloader.update(
     dict(
         dataset=dict(
             pipeline=test_pipeline, metainfo=dict(classes=class_names))))
 
-train_cfg.merge(dict(val_interval=20))
+train_cfg.update(dict(val_interval=20))

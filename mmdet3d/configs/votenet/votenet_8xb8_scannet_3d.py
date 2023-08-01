@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-if '_base_':
+from mmengine import read_base
+
+with read_base():
     from .._base_.datasets.scannet_3d import *
     from .._base_.models.votenet import *
     from .._base_.schedules.schedule_3x import *
@@ -11,7 +13,7 @@ from mmdet3d.models.task_modules.coders.partial_bin_based_bbox_coder import \
     PartialBinBasedBBoxCoder
 
 # model settings
-model.merge(
+model.update(
     dict(
         bbox_head=dict(
             num_classes=18,
@@ -39,9 +41,9 @@ model.merge(
                             [1.1511526, 1.0546296, 0.49706793],
                             [0.47535285, 0.49249494, 0.5802117]]))))
 
-default_hooks.merge(dict(logger=dict(type=LoggerHook, interval=30)))
+default_hooks.update(dict(logger=dict(type=LoggerHook, interval=30)))
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (8 samples per GPU).
-auto_scale_lr.merge(dict(enable=False, base_batch_size=64))
+auto_scale_lr.update(dict(enable=False, base_batch_size=64))

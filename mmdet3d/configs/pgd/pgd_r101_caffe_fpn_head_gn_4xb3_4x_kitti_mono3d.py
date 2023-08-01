@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-if '_base_':
+from mmengine import read_base
+
+with read_base():
     from .._base_.datasets.kitti_mono3d import *
     from .._base_.models.pgd import *
     from .._base_.schedules.mmdet_schedule_1x import *
@@ -19,7 +21,7 @@ from mmdet3d.models.losses.uncertain_smooth_l1_loss import \
 from mmdet3d.models.task_modules.coders.pgd_bbox_coder import PGDBBoxCoder
 
 # model settings
-model.merge(
+model.update(
     dict(
         data_preprocessor=dict(
             type=Det3DDataPreprocessor,
@@ -121,13 +123,13 @@ test_pipeline = [
     dict(type=Pack3DDetInputs, keys=['img'])
 ]
 
-train_dataloader.merge(
+train_dataloader.update(
     dict(batch_size=3, num_workers=3, dataset=dict(pipeline=train_pipeline)))
-test_dataloader.merge(dict(dataset=dict(pipeline=test_pipeline)))
-val_dataloader.merge(dict(dataset=dict(pipeline=test_pipeline)))
+test_dataloader.update(dict(dataset=dict(pipeline=test_pipeline)))
+val_dataloader.update(dict(dataset=dict(pipeline=test_pipeline)))
 
 # optimizer
-optim_wrapper.merge(
+optim_wrapper.update(
     dict(
         optimizer=dict(lr=0.001),
         paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.),
@@ -146,5 +148,5 @@ param_scheduler = [
         gamma=0.1)
 ]
 
-train_cfg.merge(dict(max_epochs=48, val_interval=2))
-auto_scale_lr.merge(dict(base_batch_size=12))
+train_cfg.update(dict(max_epochs=48, val_interval=2))
+auto_scale_lr.update(dict(base_batch_size=12))
