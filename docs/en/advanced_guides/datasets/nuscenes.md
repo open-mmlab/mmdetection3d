@@ -153,7 +153,8 @@ Intensity is not used by default due to its yielded noise when concatenating the
 
 ### Vision-Based Methods
 
-A typical training pipeline of image-based monocular 3D detection on nuScenes is as below.
+1. Monocular-based
+  In the NuScenes dataset, for multi-view images, this paradigm usually involves detecting and outputting 3D object detection results separately for each image, and then obtaining the final detection results through post-processing (such as NMS). Essentially, it directly extends monocular 3D detection to multi-view settings. A typical training pipeline of image-based monocular 3D detection on nuScenes is as below.
 
 ```python
 train_pipeline = [
@@ -184,7 +185,8 @@ It follows the general pipeline of 2D detection while differs in some details:
 - Some data augmentation techniques need to be adjusted, such as `RandomFlip3D`.
   Currently we do not support more augmentation methods, because how to transfer and apply other techniques is still under explored.
 
-Alternatively, BEV, Bird's-Eye-View, is another popular 3D detection method. It takes multiple surrounding views of ego vehicle to perform 3D detection, for nuScenes, they are CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT and CAM_BACK_RIGHT. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
+2. BEV-based
+BEV, Bird's-Eye-View, is another popular 3D detection paradigm. It directly takes multi-view images to perform 3D detection, for nuScenes, they are `CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT` and `CAM_BACK_RIGHT`. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
 
 ```python
     train_pipeline = [
