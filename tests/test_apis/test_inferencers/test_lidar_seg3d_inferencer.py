@@ -1,10 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
 import os.path as osp
 import tempfile
 from unittest import TestCase
 
 import mmengine
 import numpy as np
+import pytest
 import torch
 from mmengine.utils import is_list_of
 
@@ -33,9 +35,11 @@ class TestLiDARSeg3DInferencer(TestCase):
                 np.allclose(pred1['pts_semantic_mask'],
                             pred2['pts_semantic_mask']))
 
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason='requires CUDA support')
+    @pytest.mark.skipif(
+        'DISPLAY' not in os.environ, reason='requires DISPLAY device')
     def test_call(self):
-        if not torch.cuda.is_available():
-            return
         # single point cloud
         inputs = dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
         torch.manual_seed(0)
@@ -79,9 +83,11 @@ class TestLiDARSeg3DInferencer(TestCase):
         self.assertIn('visualization', res_bs2)
         self.assertIn('predictions', res_bs2)
 
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason='requires CUDA support')
+    @pytest.mark.skipif(
+        'DISPLAY' not in os.environ, reason='requires DISPLAY device')
     def test_visualizer(self):
-        if not torch.cuda.is_available():
-            return
         inputs = dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
