@@ -186,7 +186,7 @@ It follows the general pipeline of 2D detection while differs in some details:
   Currently we do not support more augmentation methods, because how to transfer and apply other techniques is still under explored.
 
 2. BEV-based
-BEV, Bird's-Eye-View, is another popular 3D detection paradigm. It directly takes multi-view images to perform 3D detection, for nuScenes, they are `CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT` and `CAM_BACK_RIGHT`. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
+  BEV, Bird's-Eye-View, is another popular 3D detection paradigm. It directly takes multi-view images to perform 3D detection, for nuScenes, they are `CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT` and `CAM_BACK_RIGHT`. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
 
 ```python
     train_pipeline = [
