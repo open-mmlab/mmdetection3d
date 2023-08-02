@@ -9,12 +9,11 @@ with read_base():
 
 from mmcv.ops.modulated_deform_conv import ModulatedDeformConv2dPack as DCNv2
 from mmcv.transforms.processing import Resize
-
 from mmengine.optim.scheduler.lr_scheduler import LinearLR, MultiStepLR
 
 from mmdet3d.datasets.transforms.formating import Pack3DDetInputs
-from mmdet3d.datasets.transforms.loading import (LoadImageFromFileMono3D,
-                                                 LoadAnnotations3D)
+from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
+                                                 LoadImageFromFileMono3D)
 from mmdet3d.datasets.transforms.transforms_3d import RandomFlip3D
 from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
 
