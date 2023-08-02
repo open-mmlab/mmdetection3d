@@ -34,9 +34,7 @@ model.update(
 backend_args = None
 
 train_pipeline = [
-    dict(
-        type=LoadImageFromFileMono3D,
-        backend_args=backend_args),
+    dict(type=LoadImageFromFileMono3D, backend_args=backend_args),
     dict(
         type=LoadAnnotations3D,
         with_bbox=True,
@@ -62,14 +60,9 @@ test_pipeline = [
 ]
 
 train_dataloader.update(
-    dict(
-        batch_size=2,
-        num_workers=2,
-        dataset=dict(pipeline=train_pipeline)))
-test_dataloader.update(
-    dict(dataset=dict(pipeline=test_pipeline)))
-val_dataloader.update(
-    dict(dataset=dict(pipeline=test_pipeline)))
+    dict(batch_size=2, num_workers=2, dataset=dict(pipeline=train_pipeline)))
+test_dataloader.update(dict(dataset=dict(pipeline=test_pipeline)))
+val_dataloader.update(dict(dataset=dict(pipeline=test_pipeline)))
 
 # optimizer
 optim_wrapper.update(
@@ -81,11 +74,7 @@ optim_wrapper.update(
 # learning rate
 param_scheduler = [
     dict(
-        type=LinearLR,
-        start_factor=1.0 / 3,
-        by_epoch=False,
-        begin=0,
-        end=500),
+        type=LinearLR, start_factor=1.0 / 3, by_epoch=False, begin=0, end=500),
     dict(
         type=MultiStepLR,
         begin=0,
