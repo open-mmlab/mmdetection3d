@@ -246,7 +246,7 @@ class MVXTwoStageDetector(Base3DDetector):
             batch_input_metas=batch_input_metas)
         return (img_feats, pts_feats)
 
-    def loss(self, batch_inputs_dict: Dict[str, Union[List[torch.Tensor], torch.Tensor]],
+    def loss(self, batch_inputs_dict: Dict[List, torch.Tensor],
              batch_data_samples: List[Det3DDataSample],
              **kwargs) -> List[Det3DDataSample]:
         """
