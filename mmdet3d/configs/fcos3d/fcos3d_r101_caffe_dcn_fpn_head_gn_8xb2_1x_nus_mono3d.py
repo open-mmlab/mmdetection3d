@@ -13,7 +13,8 @@ from mmcv.transforms.processing import Resize
 from mmengine.optim.scheduler.lr_scheduler import LinearLR, MultiStepLR
 
 from mmdet3d.datasets.transforms.formating import Pack3DDetInputs
-from mmdet3d.datasets.transforms.loading import LoadImageFromFileMono3D, LoadAnnotations3D
+from mmdet3d.datasets.transforms.loading import (LoadImageFromFileMono3D,
+                                                 LoadAnnotations3D)
 from mmdet3d.datasets.transforms.transforms_3d import RandomFlip3D
 from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
 
@@ -62,8 +63,8 @@ test_pipeline = [
 
 train_dataloader.update(
     dict(
-        batch_size=2, 
-        num_workers=2, 
+        batch_size=2,
+        num_workers=2,
         dataset=dict(pipeline=train_pipeline)))
 test_dataloader.update(
     dict(dataset=dict(pipeline=test_pipeline)))
