@@ -11,7 +11,7 @@ from mmcv.transforms.wrappers import RandomChoice
 
 from mmdet3d.datasets.transforms.transforms_3d import LaserMix, PolarMix
 
-train_pipeline.update([
+train_pipeline = [
     dict(type=LoadPointsFromFile, coord_type='LIDAR', load_dim=4, use_dim=4),
     dict(
         type=LoadAnnotations3D,
@@ -81,7 +81,7 @@ train_pipeline.update([
         translation_std=[0, 0, 0],
     ),
     dict(type=Pack3DDetInputs, keys=['points', 'pts_semantic_mask'])
-])
+]
 
 train_dataloader.update(dict(dataset=dict(pipeline=train_pipeline)))
 
