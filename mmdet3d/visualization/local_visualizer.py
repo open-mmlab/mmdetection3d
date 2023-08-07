@@ -1087,10 +1087,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     out_3d_file = out_file.replace('.jpg', '_3d.jpg')
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_3d_file)
             if drawn_img is not None:
-                if out_file.endswith('.png'):
-                    out_2d_file = out_file.replace('.png', '_2d.png')
-                else:
-                    out_2d_file = out_file.replace('.jpg', '_2d.jpg')
-                mmcv.imwrite(drawn_img[..., ::-1], out_2d_file)
+                mmcv.imwrite(drawn_img[..., ::-1], out_file)
         else:
             self.add_image(name, drawn_img_3d, step)
