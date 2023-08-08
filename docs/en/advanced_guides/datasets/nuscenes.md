@@ -212,7 +212,7 @@ train_pipeline = [
          with_bbox_3d=True,
          with_label_3d=True,
          with_attr_label=False),
-    # optional augmentation
+    # optional, data augmentation
     dict(type='MultiViewWrapper', transforms=train_transforms),
     # optional, filter object within specific point cloud range
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),

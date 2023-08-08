@@ -204,11 +204,11 @@ train_pipeline = [
          with_bbox_3d=True,
          with_label_3d=True,
          with_attr_label=False),
-    # optional augmentation
+    # 可选，数据增强
     dict(type='MultiViewWrapper', transforms=train_transforms),
-    # optional, filter object within specific point cloud range
+    # 可选, 筛选特定点云范围内物体
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    # optional, filter object of specific classes
+    # 可选, 筛选特定类别物体
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
