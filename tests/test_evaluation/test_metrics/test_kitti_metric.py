@@ -87,3 +87,38 @@ def test_kitti_metric_mAP():
         3.0303030303030307)
     assert np.isclose(ap_dict['pred_instances_3d/KITTI/Overall_3D_AP11_hard'],
                       3.0303030303030307)
+
+
+def test_kitti_metric_indices():
+    if not torch.cuda.is_available():
+        pytest.skip('test requires GPU and torch+cuda')
+    indices = [0, 2]
+    kittimetric = KittiMetric(
+        data_root + '/kitti_infos_train.pkl', metric=['mAP'], indices=indices)
+    kittimetric.dataset_meta = dict(classes=['Pedestrian', 'Cyclist', 'Car'])
+    data_infos = {
+        'data_list': [{
+            'test_id': 0,
+            'instances': []
+        }, {
+            'test_id': 1,
+            'instances': []
+        }, {
+            'test_id': 2,
+            'instances': []
+        }],
+        'metainfo': {
+            'categories': {
+                'Pedestrian': 0,
+                'Cyclist': 1,
+                'Car': 2
+            },
+        }
+    }
+    kitti_annos = kittimetric.convert_annos_to_kitti_annos(data_infos)
+
+    assert len(kitti_annos) == len(indices)
+    assert np.all([
+        indx == kitti_anno['test_id']
+        for indx, kitti_anno in zip(indices, kitti_annos)
+    ])

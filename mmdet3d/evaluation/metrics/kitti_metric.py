@@ -35,6 +35,8 @@ class KittiMetric(BaseMetric):
         default_cam_key (str): The default camera for lidar to camera
             conversion. By default, KITTI: 'CAM2', Waymo: 'CAM_FRONT'.
             Defaults to 'CAM2'.
+        indices (List[int], optional): Supports only evaluating on a subset of
+            data from the annotation file
         format_only (bool): Format the output results without perform
             evaluation. It is useful when you want to format the result to a
             specific format and submit it to the test server.
@@ -56,6 +58,7 @@ class KittiMetric(BaseMetric):
                  prefix: Optional[str] = None,
                  pklfile_prefix: Optional[str] = None,
                  default_cam_key: str = 'CAM2',
+                 indices: Optional[List[int]] = None,
                  format_only: bool = False,
                  submission_prefix: Optional[str] = None,
                  collect_device: str = 'cpu',
@@ -76,6 +79,7 @@ class KittiMetric(BaseMetric):
         self.submission_prefix = submission_prefix
         self.default_cam_key = default_cam_key
         self.backend_args = backend_args
+        self.indices = indices
 
         allowed_metrics = ['bbox', 'img_bbox', 'mAP', 'LET_mAP']
         self.metrics = metric if isinstance(metric, list) else [metric]
@@ -95,6 +99,8 @@ class KittiMetric(BaseMetric):
             List[dict]: List of Kitti annotations.
         """
         data_annos = data_infos['data_list']
+        if self.indices is not None:
+            data_annos = [data_annos[i] for i in self.indices]
         if not self.format_only:
             cat2label = data_infos['metainfo']['categories']
             label2cat = dict((v, k) for (k, v) in cat2label.items())
