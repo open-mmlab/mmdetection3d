@@ -247,10 +247,10 @@ class BasePoints:
         """
         in_range_flags = ((self.tensor[:, 0] > point_range[0])
                           & (self.tensor[:, 1] > point_range[1])
-                          & (self.tensor[:, 2] > point_range[2])
+                          #   & (self.tensor[:, 2] > point_range[2])
                           & (self.tensor[:, 0] < point_range[3])
-                          & (self.tensor[:, 1] < point_range[4])
-                          & (self.tensor[:, 2] < point_range[5]))
+                          & (self.tensor[:, 1] < point_range[4]))
+        #   & (self.tensor[:, 2] < point_range[5]))
         return in_range_flags
 
     @property
