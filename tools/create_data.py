@@ -7,8 +7,10 @@ from tools.dataset_converters import kitti_converter as kitti
 from tools.dataset_converters import lyft_converter as lyft_converter
 from tools.dataset_converters import nuscenes_converter as nuscenes_converter
 from tools.dataset_converters import semantickitti_converter
-from tools.dataset_converters.create_gt_database import (
-    GTDatabaseCreater, create_groundtruth_database)
+# from tools.dataset_converters.create_gt_database import (
+#     GTDatabaseCreater, create_groundtruth_database)
+from tools.dataset_converters.create_gt_database import \
+    create_groundtruth_database
 from tools.dataset_converters.update_infos_to_v2 import update_pkl_infos
 
 
@@ -185,9 +187,7 @@ def waymo_data_prep(root_path,
     """
     from tools.dataset_converters import waymo_converter as waymo
 
-    splits = [
-        'training', 'validation', 'testing', 'testing_3d_camera_only_detection'
-    ]
+    splits = ['training', 'validation']
     for i, split in enumerate(splits):
         load_dir = osp.join(root_path, 'waymo_format', split)
         if split == 'validation':
@@ -203,29 +203,29 @@ def waymo_data_prep(root_path,
                        in ['testing', 'testing_3d_camera_only_detection']))
         converter.convert()
 
-    from tools.dataset_converters.waymo_converter import \
-        create_ImageSets_img_ids
-    create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
+    # from tools.dataset_converters.waymo_converter import \
+    #     create_ImageSets_img_ids
+    # create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
     # Generate waymo infos
     out_dir = osp.join(out_dir, 'kitti_format')
-    kitti.create_waymo_info_file(
-        out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
+    # kitti.create_waymo_info_file(
+    #     out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
-    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
+    # info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_train_path)
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_val_path)
     update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_trainval_path)
-    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_test_path)
-    GTDatabaseCreater(
-        'WaymoDataset',
-        out_dir,
-        info_prefix,
-        f'{info_prefix}_infos_train.pkl',
-        relative_path=False,
-        with_mask=False,
-        num_worker=workers).create()
+    # update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_test_path)
+    # GTDatabaseCreater(
+    #     'WaymoDataset',
+    #     out_dir,
+    #     info_prefix,
+    #     f'{info_prefix}_infos_train.pkl',
+    #     relative_path=False,
+    #     with_mask=False,
+    #     num_worker=workers).create()
 
 
 def semantickitti_data_prep(info_prefix, out_dir):

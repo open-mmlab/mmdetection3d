@@ -109,6 +109,7 @@ class Waymo2KITTI(object):
     def convert(self):
         """Convert action."""
         print('Start converting ...')
+        # mmengine.track_progress(self.convert_one, range(len(self)))
         mmengine.track_parallel_progress(self.convert_one, range(len(self)),
                                          self.workers)
         print('\nFinished ...')
@@ -131,11 +132,11 @@ class Waymo2KITTI(object):
                     not in self.selected_waymo_locations):
                 continue
 
-            self.save_image(frame, file_idx, frame_idx)
-            self.save_calib(frame, file_idx, frame_idx)
-            self.save_lidar(frame, file_idx, frame_idx)
-            self.save_pose(frame, file_idx, frame_idx)
-            self.save_timestamp(frame, file_idx, frame_idx)
+            # self.save_image(frame, file_idx, frame_idx)
+            # self.save_calib(frame, file_idx, frame_idx)
+            # self.save_lidar(frame, file_idx, frame_idx)
+            # self.save_pose(frame, file_idx, frame_idx)
+            # self.save_timestamp(frame, file_idx, frame_idx)
 
             if not self.test_mode:
                 # TODO save the depth image for waymo challenge solution.
@@ -354,16 +355,17 @@ class Waymo2KITTI(object):
             width = box3d.width
             length = box3d.length
 
+            # TODO: Discuss if we should keep kitti_format
             x = box3d.center_x
             y = box3d.center_y
             z = box3d.center_z - height / 2
 
-            # project bounding box to the virtual reference frame
-            pt_ref = self.T_velo_to_front_cam @ \
-                np.array([x, y, z, 1]).reshape((4, 1))
-            x, y, z, _ = pt_ref.flatten().tolist()
+            # # project bounding box to the virtual reference frame
+            # pt_ref = self.T_velo_to_front_cam @ \
+            #     np.array([x, y, z, 1]).reshape((4, 1))
+            # x, y, z, _ = pt_ref.flatten().tolist()
 
-            rotation_y = -box3d.heading - np.pi / 2
+            rotation_y = box3d.heading
             track_id = obj.id
 
             # not available
@@ -373,25 +375,28 @@ class Waymo2KITTI(object):
 
             line = my_type + \
                 ' {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n'.format(
-                    round(truncated, 2), occluded, round(alpha, 2),
-                    round(bounding_box[0], 2), round(bounding_box[1], 2),
-                    round(bounding_box[2], 2), round(bounding_box[3], 2),
-                    round(height, 2), round(width, 2), round(length, 2),
-                    round(x, 2), round(y, 2), round(z, 2),
-                    round(rotation_y, 2))
+                    truncated, occluded, alpha,
+                    bounding_box[0], bounding_box[1],
+                    bounding_box[2], bounding_box[3],
+                    width, height, length,
+                    x, y, z, rotation_y)
 
             if self.save_track_id:
                 line_all = line[:-1] + ' ' + name + ' ' + track_id + '\n'
             else:
                 line_all = line[:-1] + ' ' + name + '\n'
 
-            label_path = f'{self.label_save_dir}{name}/{self.prefix}' + \
-                f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'
-            if cam_sync:
-                label_path = label_path.replace('label_', 'cam_sync_label_')
-            fp_label = open(label_path, 'a')
-            fp_label.write(line)
-            fp_label.close()
+            # Save num_lidar_points_in_box
+            line_all = line_all[:-1] + ' ' + str(
+                obj.num_lidar_points_in_box) + '\n'
+
+            # label_path = f'{self.label_save_dir}{name}/{self.prefix}' + \
+            #     f'{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}.txt'
+            # if cam_sync:
+            #     label_path = label_path.replace('label_', 'cam_sync_label_')
+            # fp_label = open(label_path, 'a')
+            # fp_label.write(line)
+            # fp_label.close()
 
             fp_label_all.write(line_all)
 
@@ -627,6 +632,6 @@ def create_ImageSets_img_ids(root_dir, splits):
     open(save_dir + 'train.txt', 'w').writelines(idx_all[0])
     open(save_dir + 'val.txt', 'w').writelines(idx_all[1])
     open(save_dir + 'trainval.txt', 'w').writelines(idx_all[0] + idx_all[1])
-    open(save_dir + 'test.txt', 'w').writelines(idx_all[2])
+    # open(save_dir + 'test.txt', 'w').writelines(idx_all[2])
     # open(save_dir+'test_cam_only.txt','w').writelines(idx_all[3])
     print('created txt files indicating what to collect in ', splits)
