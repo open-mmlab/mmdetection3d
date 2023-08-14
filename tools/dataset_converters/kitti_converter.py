@@ -296,9 +296,9 @@ def create_waymo_info_file(data_path,
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Waymo info val file is saved to {filename}')
     mmengine.dump(waymo_infos_val, filename)
-    # filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
-    # print(f'Waymo info trainval file is saved to {filename}')
-    # mmengine.dump(waymo_infos_train + waymo_infos_val, filename)
+    filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
+    print(f'Waymo info trainval file is saved to {filename}')
+    mmengine.dump(waymo_infos_train + waymo_infos_val, filename)
     # waymo_infos_test = waymo_infos_gatherer_test.gather(test_img_ids)
     # filename = save_path / f'{pkl_prefix}_infos_test.pkl'
     # print(f'Waymo info test file is saved to {filename}')

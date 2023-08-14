@@ -208,8 +208,8 @@ def waymo_data_prep(root_path,
     # create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
     # Generate waymo infos
     out_dir = osp.join(out_dir, 'kitti_format')
-    # kitti.create_waymo_info_file(
-    #     out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
+    kitti.create_waymo_info_file(
+        out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')

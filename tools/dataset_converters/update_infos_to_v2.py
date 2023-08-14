@@ -1062,9 +1062,9 @@ def update_waymo_infos(pkl_path, out_dir):
                 instance_list.append(empty_instance)
             temp_data_info['cam_sync_instances'] = instance_list
 
-            # cam_instances = generate_waymo_camera_instances(
-            #     ori_info_dict, camera_types)
-            # temp_data_info['cam_instances'] = cam_instances
+            cam_instances = generate_waymo_camera_instances(
+                ori_info_dict, camera_types)
+            temp_data_info['cam_instances'] = cam_instances
 
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)

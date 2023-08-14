@@ -6,6 +6,7 @@ export PYTHONPATH=`pwd`:$PYTHONPATH
 PARTITION=$1
 JOB_NAME=$2
 DATASET=$3
+WORKERS=$4
 GPUS=${GPUS:-1}
 GPUS_PER_NODE=${GPUS_PER_NODE:-1}
 SRUN_ARGS=${SRUN_ARGS:-""}
@@ -21,4 +22,5 @@ srun -p ${PARTITION} \
     python -u tools/create_data.py ${DATASET} \
             --root-path ./data/${DATASET} \
             --out-dir ./data/${DATASET} \
+            --workers ${WORKERS} \
             --extra-tag ${DATASET}
