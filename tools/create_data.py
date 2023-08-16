@@ -279,7 +279,7 @@ parser.add_argument(
     '--skip-extract-kitti-format',
     action='store_true',
     help='''Whether to skip extracting kitti format image and point cloud.
-    Only used when dataset is waymo!''')
+        Only used when dataset is waymo!''')
 args = parser.parse_args()
 
 if __name__ == '__main__':
