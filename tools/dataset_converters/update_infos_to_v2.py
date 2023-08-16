@@ -961,18 +961,22 @@ def update_waymo_infos(pkl_path, out_dir):
             lidar_sweep['timestamp'] = ori_sweep['timestamp']
             lidar_sweep['lidar_points']['lidar_path'] = Path(
                 ori_sweep['velodyne_path']).name
+            # delete the num_pts_feats and lidar2ego
+            del lidar_sweep['lidar_points']['num_pts_feats']
+            del lidar_sweep['lidar_points']['lidar2ego']
+            # TODO: refactor image_sweeps info when we really need it.
             # image sweeps
             # image_sweep = dict()
             # image_sweep['sample_idx']= ori_sweep['image']['image_idx']
-            image_sweep = get_single_image_sweep(camera_types)
-            image_sweep['ego2global'] = ori_sweep['pose']
-            image_sweep['timestamp'] = ori_sweep['timestamp']
-            img_path = Path(ori_sweep['image_path']).name
-            for cam_idx, cam_key in enumerate(camera_types):
-                image_sweep['images'][cam_key]['img_path'] = img_path
+            # image_sweep = get_single_image_sweep(camera_types)
+            # image_sweep['ego2global'] = ori_sweep['pose']
+            # image_sweep['timestamp'] = ori_sweep['timestamp']
+            # img_path = Path(ori_sweep['image_path']).name
+            # for cam_idx, cam_key in enumerate(camera_types):
+            #     image_sweep['images'][cam_key]['img_path'] = img_path
 
             temp_data_info['lidar_sweeps'].append(lidar_sweep)
-            temp_data_info['image_sweeps'].append(image_sweep)
+            # temp_data_info['image_sweeps'].append(image_sweep)
 
         anns = ori_info_dict.get('annos', None)
         ignore_class_name = set()
@@ -1107,8 +1111,8 @@ def generate_waymo_camera_instances(ori_info_dict, cam_keys):
 
     for cam_idx, cam_key in enumerate(cam_keys):
         annos = copy.deepcopy(ori_info_dict['cam_sync_annos'])
-        if cam_idx != 0:
-            annos = convert_annos(ori_info_dict, cam_idx)
+
+        annos = convert_annos(ori_info_dict, cam_idx)
 
         ann_infos = get_kitti_style_2d_boxes(
             ori_info_dict, cam_idx, occluded=[0], annos=annos, dataset='waymo')

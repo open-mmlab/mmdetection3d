@@ -5,8 +5,8 @@ custom_imports = dict(
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
-# data_root = 'data/waymo_mini/kitti_format/'
-data_root = 'data/waymo/kitti_format/'
+data_root = 'data/waymo_mini/kitti_format/'
+# data_root = 'data/waymo/kitti_format/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=True, use_camera=False)
@@ -193,7 +193,7 @@ test_pipeline = [
 
 dataset_type = 'WaymoDataset'
 val_dataloader = dict(
-    batch_size=4,
+    batch_size=1,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -211,22 +211,22 @@ val_dataloader = dict(
         backend_args=backend_args))
 test_dataloader = val_dataloader
 
-# val_evaluator = dict(
-#     type='WaymoMetric',
-#     ann_file='./data/waymo_mini/kitti_format/waymo_infos_val.pkl',
-#     waymo_bin_file='./data/waymo_mini/waymo_format/gt_mini.bin',
-#     data_root='./data/waymo_mini/waymo_format',
-#     backend_args=backend_args,
-#     convert_kitti_format=False,
-#     idx2metainfo='./data/waymo_mini/waymo_format/idx2metainfo.pkl')
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
+    ann_file='./data/waymo_mini/kitti_format/waymo_infos_val.pkl',
+    waymo_bin_file='./data/waymo_mini/waymo_format/gt_mini.bin',
+    data_root='./data/waymo_mini/waymo_format',
     backend_args=backend_args,
     convert_kitti_format=False,
-    idx2metainfo='./data/waymo/waymo_format/idx2metainfo.pkl')
+    idx2metainfo='./data/waymo_mini/waymo_format/idx2metainfo.pkl')
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
+#     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
+#     data_root='./data/waymo/waymo_format',
+#     backend_args=backend_args,
+#     convert_kitti_format=False,
+#     idx2metainfo='./data/waymo/waymo_format/idx2metainfo.pkl')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

@@ -173,7 +173,7 @@ def waymo_data_prep(root_path,
                     version,
                     out_dir,
                     workers,
-                    max_sweeps=5):
+                    max_sweeps=10):
     """Prepare the info file for waymo dataset.
 
     Args:
@@ -275,11 +275,16 @@ parser.add_argument(
     '--only-gt-database',
     action='store_true',
     help='Whether to only generate ground truth database.')
+parser.add_argument(
+    '--skip-extract-kitti-format',
+    action='store_true',
+    help='''Whether to skip extracting kitti format image and point cloud.
+    Only used when dataset is waymo!''')
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    from mmdet3d.utils import register_all_modules
-    register_all_modules()
+    from mmengine.registry import init_default_scope
+    init_default_scope('mmdet3d')
 
     if args.dataset == 'kitti':
         if args.only_gt_database:
@@ -334,6 +339,22 @@ if __name__ == '__main__':
                 dataset_name='NuScenesDataset',
                 out_dir=args.out_dir,
                 max_sweeps=args.max_sweeps)
+    elif args.dataset == 'waymo' and args.version == 'v1.4':
+        waymo_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            version=args.version,
+            out_dir=args.out_dir,
+            workers=args.workers,
+            max_sweeps=args.max_sweeps)
+    elif args.dataset == 'waymo' and args.version == 'v1.4-mini':
+        waymo_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            version=args.version,
+            out_dir=args.out_dir,
+            workers=args.workers,
+            max_sweeps=args.max_sweeps)
     elif args.dataset == 'lyft':
         train_version = f'{args.version}-train'
         lyft_data_prep(
@@ -346,14 +367,6 @@ if __name__ == '__main__':
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             version=test_version,
-            max_sweeps=args.max_sweeps)
-    elif args.dataset == 'waymo':
-        waymo_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=args.version,
-            out_dir=args.out_dir,
-            workers=args.workers,
             max_sweeps=args.max_sweeps)
     elif args.dataset == 'scannet':
         scannet_data_prep(

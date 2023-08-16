@@ -319,7 +319,11 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
     """Convert front-cam anns to i-th camera (KITTI-style info)."""
     rect = info['calib']['R0_rect'].astype(np.float32)
     # lidar2cam0 = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-    lidar2cami = info['calib'][f'Tr_velo_to_cam{cam_idx}'].astype(np.float32)
+    if cam_idx == 0:
+        lidar2cami = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+    else:
+        lidar2cami = info['calib'][f'Tr_velo_to_cam{cam_idx}'].astype(
+            np.float32)
     annos = info['annos']
     converted_annos = copy.deepcopy(annos)
     loc = annos['location']
@@ -336,7 +340,7 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
     # gt_bboxes_3d = gt_bboxes_3d.convert_to(
     #     Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).numpy()
     gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d).convert_to(
-        Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True)
+        Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).numpy()
 
     converted_annos['location'] = gt_bboxes_3d[:, :3]
     converted_annos['dimensions'] = gt_bboxes_3d[:, 3:6]

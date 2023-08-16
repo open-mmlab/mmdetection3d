@@ -92,7 +92,7 @@ class Waymo2KITTI(object):
         self.tfrecord_pathnames = sorted(
             glob(join(self.load_dir, '*.tfrecord')))
 
-        self.label_save_dir = f'{self.save_dir}/label_'
+        # self.label_save_dir = f'{self.save_dir}/label_'
         self.label_all_save_dir = f'{self.save_dir}/label_all'
         self.image_save_dir = f'{self.save_dir}/image_'
         self.calib_save_dir = f'{self.save_dir}/calib'
@@ -100,7 +100,7 @@ class Waymo2KITTI(object):
         self.pose_save_dir = f'{self.save_dir}/pose'
         self.timestamp_save_dir = f'{self.save_dir}/timestamp'
         if self.save_cam_sync_labels:
-            self.cam_sync_label_save_dir = f'{self.save_dir}/cam_sync_label_'
+            # self.cam_sync_label_save_dir = f'{self.save_dir}/cam_sync_label_'
             self.cam_sync_label_all_save_dir = \
                 f'{self.save_dir}/cam_sync_label_all'
 
@@ -450,10 +450,10 @@ class Waymo2KITTI(object):
                 self.pose_save_dir,
                 self.timestamp_save_dir,
             ]
-            dir_list2 = [self.label_save_dir, self.image_save_dir]
+            dir_list2 = [self.image_save_dir]
             if self.save_cam_sync_labels:
                 dir_list1.append(self.cam_sync_label_all_save_dir)
-                dir_list2.append(self.cam_sync_label_save_dir)
+                # dir_list2.append(self.cam_sync_label_save_dir)
         else:
             dir_list1 = [
                 self.calib_save_dir, self.pose_save_dir,
