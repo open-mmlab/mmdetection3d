@@ -171,13 +171,14 @@ def waymo_data_prep(root_path,
                     version,
                     out_dir,
                     workers,
-                    max_sweeps=10):
+                    max_sweeps=10,
+                    skip_gather_cam_instances_info=False):
     """Prepare waymo dataset. There are 3 steps as follows: Step 1. Extract
     camera images and lidar point clouds from waymo raw data in '*.tfreord' and
     save as kitti format. Step 2. Generate waymo train/val/test infos and save
-    as pickle file. Step 3. Generate waymo ground truth database (point clouds
-    within each 3D bounding box) for data augmentation in training. Steps 1 and
-    2 will be done in Waymo2KITTI, and step 3 will be done in
+    as pickle file. Step 3. Generate waymo ground truth database (point
+    cloudswithin each 3D bounding box) for data augmentation in training. Steps
+    1 and 2 will be done in Waymo2KITTI, and step 3 will be done in
     GTDatabaseCreater.
 
     Args:
@@ -186,14 +187,22 @@ def waymo_data_prep(root_path,
         out_dir (str): Output directory of the generated info file.
         workers (int): Number of threads to be used.
         max_sweeps (int, optional): Number of input consecutive frames.
-            Default: 5. Here we store pose information of these frames
-            for later use.
-    """  # noqa: E501
+            Default to 10. Here we store ego2global information of these
+            frames for later use.
+        skip_gather_cam_instances_info (bool, optional): Whether to skip
+            gather cam_instances infos in Step 2. Default to False.
+    """  # noqa
     from tools.dataset_converters import waymo_converter as waymo
 
-    splits = [
-        'training', 'validation', 'testing', 'testing_3d_camera_only_detection'
-    ]
+    if version == 'v1.4':
+        splits = [
+            'training', 'validation', 'testing',
+            'testing_3d_camera_only_detection'
+        ]
+    elif version == 'v1.4-mini':
+        splits = ['training', 'validation']
+    else:
+        raise NotImplementedError(f'Unsupported Waymo version {version}!')
     for i, split in enumerate(splits):
         load_dir = osp.join(root_path, 'waymo_format', split)
         if split == 'validation':
@@ -207,7 +216,10 @@ def waymo_data_prep(root_path,
             workers=workers,
             test_mode=(split
                        in ['testing', 'testing_3d_camera_only_detection']),
-            info_prefix=info_prefix)
+            info_prefix=info_prefix,
+            max_sweeps=max_sweeps,
+            split=split,
+            save_cam_instances=not skip_gather_cam_instances_info)
         converter.convert()
 
     from tools.dataset_converters.waymo_converter import \
@@ -283,9 +295,9 @@ parser.add_argument(
     action='store_true',
     help='Whether to only generate ground truth database.')
 parser.add_argument(
-    '--skip-extract-kitti-format',
+    '--skip-gather-cam_instances-info',
     action='store_true',
-    help='''Whether to skip extracting kitti format image and point cloud.
+    help='''Whether to skip gathering cam_instances info.
         Only used when dataset is waymo!''')
 args = parser.parse_args()
 
@@ -346,22 +358,15 @@ if __name__ == '__main__':
                 dataset_name='NuScenesDataset',
                 out_dir=args.out_dir,
                 max_sweeps=args.max_sweeps)
-    elif args.dataset == 'waymo' and args.version == 'v1.4':
+    elif args.dataset == 'waymo':
         waymo_data_prep(
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             version=args.version,
             out_dir=args.out_dir,
             workers=args.workers,
-            max_sweeps=args.max_sweeps)
-    elif args.dataset == 'waymo' and args.version == 'v1.4-mini':
-        waymo_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=args.version,
-            out_dir=args.out_dir,
-            workers=args.workers,
-            max_sweeps=args.max_sweeps)
+            max_sweeps=args.max_sweeps,
+            skip_gather_cam_instances_info=args.skip_gather_cam_instances_info)
     elif args.dataset == 'lyft':
         train_version = f'{args.version}-train'
         lyft_data_prep(

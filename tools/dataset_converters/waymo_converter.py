@@ -13,6 +13,7 @@ import copy
 import os
 import os.path as osp
 from glob import glob
+from io import BytesIO
 from os.path import exists, join
 
 import mmengine
@@ -47,7 +48,11 @@ class Waymo2KITTI(object):
             instances. Defaults to True.
         save_cam_instances (bool, optional): Whether to save cam instances.
             Defaults to False.
-    """
+        info_prefix (str, optional): Prefix of info filename.
+            Defaults to 'waymo'.
+        max_sweeps (int, optional): Max length of sweeps. Defaults to 10.
+        split (str, optional): Split of the data. Defaults to 'training'.
+    """  # noqa
 
     def __init__(self,
                  load_dir,
@@ -56,8 +61,10 @@ class Waymo2KITTI(object):
                  workers=64,
                  test_mode=False,
                  save_cam_sync_instances=True,
-                 save_cam_instances=False,
-                 info_prefix='waymo'):
+                 save_cam_instances=True,
+                 info_prefix='waymo',
+                 max_sweeps=10,
+                 split='training'):
         # turn on eager execution for older tensorflow versions
         if int(tf.__version__.split('.')[0]) < 2:
             tf.enable_eager_execution()
@@ -92,6 +99,9 @@ class Waymo2KITTI(object):
         self.test_mode = test_mode
         self.save_cam_sync_instances = save_cam_sync_instances
         self.save_cam_instances = save_cam_instances
+        self.info_prefix = info_prefix
+        self.max_sweeps = max_sweeps
+        self.split = split
 
         # TODO: Discuss filter_empty_3dboxes and filter_no_label_zone_points
         self.filter_empty_3dboxes = True
@@ -128,7 +138,7 @@ class Waymo2KITTI(object):
         waymo_infos = dict(data_infos=data_list, metainfo=metainfo)
         filenames = osp.join(
             osp.dirname(self.save_dir),
-            f'{self.prefix}_infos_f{osp.basename(self.save_dir)}.pkl')
+            f'{self.info_prefix}_infos_{self.split}.pkl')
         mmengine.dump(waymo_infos, filenames)
         print('\nFinished ...')
 
@@ -149,15 +159,11 @@ class Waymo2KITTI(object):
 
         # NOTE: file_infos is not shared between processes, only stores frame
         # infos within the current file.
-        self.file_infos = []
+        file_infos = []
         for frame_idx, data in enumerate(dataset):
 
             frame = dataset_pb2.Frame()
             frame.ParseFromString(bytearray(data.numpy()))
-            if (self.selected_waymo_locations is not None
-                    and frame.context.stats.location
-                    not in self.selected_waymo_locations):
-                continue
 
             # Step 1.
             self.save_image(frame, file_idx, frame_idx)
@@ -165,12 +171,8 @@ class Waymo2KITTI(object):
 
             # Step 2.
             # TODO save the depth image for waymo challenge solution.
-            self.create_waymo_info_file(frame, file_idx, frame_idx)
-            if not self.test_mode:
-
-                self.save_label(frame, file_idx, frame_idx)
-                if self.save_cam_sync_labels:
-                    self.save_label(frame, file_idx, frame_idx, cam_sync=True)
+            self.create_waymo_info_file(frame, file_idx, frame_idx, file_infos)
+        return file_infos
 
     def __len__(self):
         """Length of the filename list."""
@@ -610,17 +612,17 @@ class Waymo2KITTI(object):
             raise ValueError(mat.shape)
         return ret
 
-    def create_waymo_info_file(self, frame, file_idx, frame_idx):
+    def create_waymo_info_file(self, frame, file_idx, frame_idx, file_infos):
         frame_infos = dict()
 
         # Gather frame infos
-        sample_idx = int(
-            f'{self.prefix}{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}')
-        frame_infos['sample_idx'] = sample_idx
+        sample_idx = \
+            f'{self.prefix}{str(file_idx).zfill(3)}{str(frame_idx).zfill(3)}'
+        frame_infos['sample_idx'] = int(sample_idx)
         frame_infos['timestamp'] = frame.timestamp_micros
         frame_infos['ego2global'] = np.array(frame.pose.transform).reshape(
             4, 4).astype(np.float32).tolist()
-        frame_infos['context_name'] = frame.context_name
+        frame_infos['context_name'] = frame.context.name
 
         # Gather camera infos
         frame_infos['images'] = dict()
@@ -645,8 +647,6 @@ class Waymo2KITTI(object):
             camera_calib[0, 2] = camera.intrinsic[2]
             camera_calib[1, 2] = camera.intrinsic[3]
             camera_calib[2, 2] = 1
-            camera_calib = list(camera_calib.reshape(12))
-            camera_calib = [f'{i:e}' for i in camera_calib]
             camera_calibs.append(camera_calib)
 
         for cam_key, camera_calib, Tr_velo_to_cam, img in zip(
@@ -654,7 +654,7 @@ class Waymo2KITTI(object):
                 frame.images):
             cam_infos = dict()
             cam_infos['img_path'] = str(sample_idx) + '.jpg'
-            width, height = Image.open(img).size
+            width, height = Image.open(BytesIO(img.image)).size
             cam_infos['height'] = height
             cam_infos['width'] = width
             cam_infos['lidar2cam'] = Tr_velo_to_cam.astype(np.float32).tolist()
@@ -673,12 +673,11 @@ class Waymo2KITTI(object):
         # TODO: Add lidar2img in image sweeps infos when we need it.
         # TODO: Consider merging lidar sweeps infos and image sweeps infos.
         lidar_sweeps_infos, image_sweeps_infos = [], []
-        while len(lidar_sweeps_infos) < self.max_sweeps:
+        for prev_offset in range(-1, -self.max_sweeps - 1, -1):
             prev_lidar_infos = dict()
             prev_image_infos = dict()
-            if frame_idx - len(lidar_sweeps_infos) - 1 >= 0:
-                prev_frame_infos = self.file_infos[-len(lidar_sweeps_infos) -
-                                                   1]
+            if frame_idx + prev_offset >= 0:
+                prev_frame_infos = file_infos[prev_offset]
                 prev_lidar_infos['timestamp'] = prev_frame_infos['timestamp']
                 prev_lidar_infos['ego2global'] = prev_frame_infos['ego2global']
                 lidar_path = prev_frame_infos['lidar_points']['lidar_path']
@@ -692,9 +691,11 @@ class Waymo2KITTI(object):
                     prev_image_infos['images'][cam_key] = dict()
                     img_path = prev_frame_infos['images'][cam_key]['img_path']
                     prev_image_infos['images'][cam_key]['img_path'] = img_path
-                image_sweeps_infos.append(prev_image_infos[cam_key])
-        frame_infos['lidar_sweeps'] = lidar_sweeps_infos
-        frame_infos['images_sweeps'] = image_sweeps_infos
+                image_sweeps_infos.append(prev_image_infos)
+        if lidar_sweeps_infos:
+            frame_infos['lidar_sweeps'] = lidar_sweeps_infos
+        if image_sweeps_infos:
+            frame_infos['images_sweeps'] = image_sweeps_infos
 
         if not self.test_mode:
             # Gather instances infos which is used for lidar-based 3D detection
@@ -710,6 +711,7 @@ class Waymo2KITTI(object):
                 frame_infos['cam_instances'] = self.gather_cam_instance_info(
                     copy.deepcopy(frame_infos['cam_sync_instances']),
                     frame_infos['images'])
+        file_infos.append(frame_infos)
 
     def gather_instance_info(self, frame, cam_sync=False):
         id_to_bbox = dict()
@@ -762,6 +764,8 @@ class Waymo2KITTI(object):
 
             if my_type not in self.selected_waymo_classes:
                 continue
+            else:
+                label = self.selected_waymo_classes.index(my_type)
 
             if self.filter_empty_3dboxes and obj.num_lidar_points_in_box < 1:
                 continue
@@ -770,7 +774,7 @@ class Waymo2KITTI(object):
             instance_info['group_id'] = group_id
             instance_info['camera_id'] = name
             instance_info['bbox'] = bounding_box
-            instance_info['bbox_label'] = obj.type - 1
+            instance_info['bbox_label'] = label
 
             height = box3d.height
             width = box3d.width
@@ -786,7 +790,7 @@ class Waymo2KITTI(object):
             instance_info['bbox3d'] = np.array(
                 [x, y, z, length, width, height,
                  rotation_y]).astype(np.float32).tolist()
-            instance_info['bbox_label_3d'] = obj.type - 1
+            instance_info['bbox_label_3d'] = label
             instance_info['num_lidar_pts'] = obj.num_lidar_points_in_box
 
             if self.save_track_id:
@@ -798,16 +802,17 @@ class Waymo2KITTI(object):
 
         cam_instances = dict()
         for cam_type in self.camera_types:
-            lidar2cam = images[cam_type]['lidar2cam']
-            cam2img = images[cam_type]['cam2img']
+            lidar2cam = np.array(images[cam_type]['lidar2cam'])
+            cam2img = np.array(images[cam_type]['cam2img'])
             cam_instances[cam_type] = []
             for instance in cam_sync_instances:
                 cam_instance = dict()
-                gt_bboxes_3d = instance['bbox3d']
+                gt_bboxes_3d = np.array(instance['bbox3d'])
                 # Convert lidar coordinates to camera coordinates
-                gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d).convert_to(
-                    Box3DMode.CAM, lidar2cam, correct_yaw=True).numpy()
-                corners_3d = gt_bboxes_3d.corners
+                gt_bboxes_3d = LiDARInstance3DBoxes(
+                    gt_bboxes_3d[None, :]).convert_to(
+                        Box3DMode.CAM, lidar2cam, correct_yaw=True)
+                corners_3d = gt_bboxes_3d.corners.numpy()
                 corners_3d = corners_3d[0].T  # (1, 8, 3) -> (3, 8)
                 in_camera = np.argwhere(corners_3d[2, :] > 0).flatten()
                 corners_3d = corners_3d[:, in_camera]
@@ -818,7 +823,7 @@ class Waymo2KITTI(object):
                 # Keep only corners that fall within the image.
                 final_coords = post_process_coords(
                     corner_coords,
-                    imsize=(images[cam_type]['weight'],
+                    imsize=(images[cam_type]['width'],
                             images[cam_type]['height']))
 
                 # Skip if the convex hull of the re-projected corners
@@ -830,7 +835,7 @@ class Waymo2KITTI(object):
 
                 cam_instance['bbox'] = [min_x, min_y, max_x, max_y]
                 cam_instance['bbox_label'] = instance['bbox_label']
-                cam_instance['bbox3d'] = gt_bboxes_3d.astype(
+                cam_instance['bbox3d'] = gt_bboxes_3d.numpy().astype(
                     np.float32).tolist()
                 cam_instance['bbox_label_3d'] = instance['bbox_label_3d']
 
