@@ -1,24 +1,21 @@
+from mmdet.models.losses import CrossEntropyLoss, FocalLoss, SmoothL1Loss
+
 from mmdet3d.models import VoxelNet
 from mmdet3d.models.backbones import SECOND
 from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
-from mmdet3d.models.necks import SECONDFPN
-from mmdet3d.models.voxel_encoders import HardSimpleVFE
-from mmdet3d.models.middle_encoders import SparseEncoder
 from mmdet3d.models.dense_heads import Anchor3DHead
-from mmdet3d.models.task_modules import Anchor3DRangeGenerator
-from mmdet3d.models.task_modules import DeltaXYZWLHRBBoxCoder
-from mmdet3d.models.task_modules import Max3DIoUAssigner
+from mmdet3d.models.middle_encoders import SparseEncoder
+from mmdet3d.models.necks import SECONDFPN
+from mmdet3d.models.task_modules import (Anchor3DRangeGenerator,
+                                         DeltaXYZWLHRBBoxCoder,
+                                         Max3DIoUAssigner)
+from mmdet3d.models.voxel_encoders import HardSimpleVFE
 from mmdet3d.structures import BboxOverlapsNearest3D
-
-from mmdet.models.losses import FocalLoss, SmoothL1Loss, CrossEntropyLoss
-
 
 voxel_size = [0.05, 0.05, 0.1]
 
 model = dict(
-
     type=VoxelNet,
-
     data_preprocessor=dict(
         type=Det3DDataPreprocessor,
         voxel=True,
@@ -27,28 +24,23 @@ model = dict(
             point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
-
     voxel_encoder=dict(type=HardSimpleVFE),
-
     middle_encoder=dict(
         type=SparseEncoder,
         in_channels=4,
         sparse_shape=[41, 1600, 1408],
         order=('conv', 'norm', 'act')),
-
     backbone=dict(
         type=SECOND,
         in_channels=256,
         layer_nums=[5, 5],
         layer_strides=[1, 2],
         out_channels=[128, 256]),
-
     neck=dict(
         type=SECONDFPN,
         in_channels=[128, 256],
         upsample_strides=[1, 2],
         out_channels=[256, 256]),
-
     bbox_head=dict(
         type=Anchor3DHead,
         num_classes=3,
@@ -73,11 +65,9 @@ model = dict(
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(
-            type=SmoothL1Loss, beta=1.0 / 9.0, loss_weight=2.0),
+        loss_bbox=dict(type=SmoothL1Loss, beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type=CrossEntropyLoss, use_sigmoid=False,
-            loss_weight=0.2)),
+            type=CrossEntropyLoss, use_sigmoid=False, loss_weight=0.2)),
 
     # model training and testing settings
     train_cfg=dict(
@@ -107,7 +97,6 @@ model = dict(
         allowed_border=0,
         pos_weight=-1,
         debug=False),
-
     test_cfg=dict(
         use_rotate_nms=True,
         nms_across_levels=False,
@@ -115,5 +104,4 @@ model = dict(
         score_thr=0.1,
         min_bbox_size=0,
         nms_pre=100,
-        max_num=50)
-        )
+        max_num=50))

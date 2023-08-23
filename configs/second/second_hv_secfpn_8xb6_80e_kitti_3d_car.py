@@ -2,13 +2,10 @@
 from mmengine import read_base
 
 with read_base():
+    from .._base_.datasets.kitti_3d_car import *
     from .._base_.default_runtime import *
     from .._base_.models.second_hv_secfpn_kitti import *
     from .._base_.schedules.cyclic_40e import *
-    from .._base_.datasets.kitti_3d_car import *
-
-
-
 
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
