@@ -19,6 +19,7 @@ from os.path import exists, join
 import mmengine
 import numpy as np
 import tensorflow as tf
+from mmengine import print_log
 from nuscenes.utils.geometry_utils import view_points
 from PIL import Image
 from waymo_open_dataset.utils import range_image_utils, transform_utils
@@ -130,7 +131,7 @@ class Waymo2KITTI(object):
 
     def convert(self):
         """Convert action."""
-        print('Start converting ...')
+        print_log(f'Start converting {self.split} dataset', logger='current')
         if self.workers == 0:
             data_infos = mmengine.track_progress(self.convert_one,
                                                  range(len(self)))
@@ -144,12 +145,11 @@ class Waymo2KITTI(object):
         metainfo['dataset'] = 'waymo'
         metainfo['version'] = '1.4'
         metainfo['info_version'] = '1.1'
-        waymo_infos = dict(data_infos=data_list, metainfo=metainfo)
+        waymo_infos = dict(data_list=data_list, metainfo=metainfo)
         filenames = osp.join(
             osp.dirname(self.save_dir),
             f'{self.info_prefix + self.info_map[self.split]}')
         mmengine.dump(waymo_infos, filenames)
-        print('\nFinished ...')
 
     def convert_one(self, file_idx):
         """Convert one '*.tfrecord' file to kitti format. Each file stores all
@@ -437,12 +437,14 @@ class Waymo2KITTI(object):
             camera_calib[2, 2] = 1
             camera_calibs.append(camera_calib)
 
-        for cam_key, camera_calib, Tr_velo_to_cam, img in zip(
-                self.camera_types, camera_calibs, Tr_velo_to_cams,
-                frame.images):
+        for i, (cam_key, camera_calib, Tr_velo_to_cam) in enumerate(
+                zip(self.camera_types, camera_calibs, Tr_velo_to_cams)):
             cam_infos = dict()
             cam_infos['img_path'] = str(sample_idx) + '.jpg'
-            width, height = Image.open(BytesIO(img.image)).size
+            # NOTE: frames.images order is different
+            for img in frame.images:
+                if img.name == i + 1:
+                    width, height = Image.open(BytesIO(img.image)).size
             cam_infos['height'] = height
             cam_infos['width'] = width
             cam_infos['lidar2cam'] = Tr_velo_to_cam.astype(np.float32).tolist()
@@ -468,8 +470,9 @@ class Waymo2KITTI(object):
                 prev_frame_infos = file_infos[prev_offset]
                 prev_lidar_infos['timestamp'] = prev_frame_infos['timestamp']
                 prev_lidar_infos['ego2global'] = prev_frame_infos['ego2global']
+                prev_lidar_infos['lidar_points'] = dict()
                 lidar_path = prev_frame_infos['lidar_points']['lidar_path']
-                prev_lidar_infos['lidar_path'] = lidar_path
+                prev_lidar_infos['lidar_points']['lidar_path'] = lidar_path
                 lidar_sweeps_infos.append(prev_lidar_infos)
 
                 prev_image_infos['timestamp'] = prev_frame_infos['timestamp']
@@ -483,7 +486,7 @@ class Waymo2KITTI(object):
         if lidar_sweeps_infos:
             frame_infos['lidar_sweeps'] = lidar_sweeps_infos
         if image_sweeps_infos:
-            frame_infos['images_sweeps'] = image_sweeps_infos
+            frame_infos['image_sweeps'] = image_sweeps_infos
 
         if not self.test_mode:
             # Gather instances infos which is used for lidar-based 3D detection
@@ -495,9 +498,10 @@ class Waymo2KITTI(object):
                     frame, cam_sync=True)
             # Gather cam_instances infos which is used for image-based
             # (monocular) 3D detection (optional).
+            # TODO: Should we use cam_sync_instances to generate cam_instances?
             if self.save_cam_instances:
                 frame_infos['cam_instances'] = self.gather_cam_instance_info(
-                    copy.deepcopy(frame_infos['cam_sync_instances']),
+                    copy.deepcopy(frame_infos['instances']),
                     frame_infos['images'])
         file_infos.append(frame_infos)
 
@@ -575,7 +579,7 @@ class Waymo2KITTI(object):
 
             rotation_y = box3d.heading
 
-            instance_info['bbox3d'] = np.array(
+            instance_info['bbox_3d'] = np.array(
                 [x, y, z, length, width, height,
                  rotation_y]).astype(np.float32).tolist()
             instance_info['bbox_label_3d'] = label
@@ -586,16 +590,16 @@ class Waymo2KITTI(object):
             instance_infos.append(instance_info)
         return instance_infos
 
-    def gather_cam_instance_info(self, cam_sync_instances: dict, images: dict):
+    def gather_cam_instance_info(self, instances: dict, images: dict):
 
         cam_instances = dict()
         for cam_type in self.camera_types:
             lidar2cam = np.array(images[cam_type]['lidar2cam'])
             cam2img = np.array(images[cam_type]['cam2img'])
             cam_instances[cam_type] = []
-            for instance in cam_sync_instances:
+            for instance in instances:
                 cam_instance = dict()
-                gt_bboxes_3d = np.array(instance['bbox3d'])
+                gt_bboxes_3d = np.array(instance['bbox_3d'])
                 # Convert lidar coordinates to camera coordinates
                 gt_bboxes_3d = LiDARInstance3DBoxes(
                     gt_bboxes_3d[None, :]).convert_to(
@@ -609,10 +613,14 @@ class Waymo2KITTI(object):
                                             True).T[:, :2].tolist()
 
                 # Keep only corners that fall within the image.
+                # TODO: imsize should be determined by the current image size
+                # CAM_FRONT: (1920, 1280)
+                # CAM_FRONT_LEFT: (1920, 1280)
+                # CAM_SIDE_LEFT: (1920, 886)
                 final_coords = post_process_coords(
                     corner_coords,
-                    imsize=(images[cam_type]['width'],
-                            images[cam_type]['height']))
+                    imsize=(images['CAM_FRONT']['width'],
+                            images['CAM_FRONT']['height']))
 
                 # Skip if the convex hull of the re-projected corners
                 # does not intersect the image canvas.
@@ -623,13 +631,13 @@ class Waymo2KITTI(object):
 
                 cam_instance['bbox'] = [min_x, min_y, max_x, max_y]
                 cam_instance['bbox_label'] = instance['bbox_label']
-                cam_instance['bbox3d'] = gt_bboxes_3d.numpy().astype(
+                cam_instance['bbox_3d'] = gt_bboxes_3d.numpy().astype(
                     np.float32).tolist()
                 cam_instance['bbox_label_3d'] = instance['bbox_label_3d']
 
                 center_3d = gt_bboxes_3d.gravity_center.numpy()
                 center_2d_with_depth = points_cam2img(
-                    center_3d, lidar2cam, with_depth=True)
+                    center_3d, cam2img, with_depth=True)
                 center_2d_with_depth = center_2d_with_depth.squeeze().tolist()
 
                 # normalized center2D + depth
@@ -642,7 +650,7 @@ class Waymo2KITTI(object):
                 # TODO: Discuss whether following info is necessary
                 cam_instance['bbox_3d_isvalid'] = True
                 cam_instance['velocity'] = -1
-            cam_instances[cam_type].append(cam_instance)
+                cam_instances[cam_type].append(cam_instance)
 
         return cam_instances
 
@@ -670,7 +678,7 @@ def create_ImageSets_img_ids(root_dir, splits):
     if not exists(save_dir):
         os.mkdir(save_dir)
 
-    idx_all = [[] for i in splits]
+    idx_all = [[] for _ in range(4)]
     for i, split in enumerate(splits):
         path = join(root_dir, splits[i], 'image_0')
         if not exists(path):
@@ -679,8 +687,8 @@ def create_ImageSets_img_ids(root_dir, splits):
             RawNames = os.listdir(path)
 
         for name in RawNames:
-            if name.endswith('.txt'):
-                idx = name.replace('.txt', '\n')
+            if name.endswith('.jpg'):
+                idx = name.replace('.jpg', '\n')
                 idx_all[int(idx[0])].append(idx)
         idx_all[i].sort()
 

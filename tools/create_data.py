@@ -225,10 +225,10 @@ def waymo_data_prep(root_path,
         converter.convert()
         if split == 'validation':
             converter.merge_trainval_infos()
-
+    out_dir = osp.join(out_dir, 'kitti_format')
     from tools.dataset_converters.waymo_converter import \
         create_ImageSets_img_ids
-    create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
+    create_ImageSets_img_ids(out_dir, splits)
 
     GTDatabaseCreater(
         'WaymoDataset',
