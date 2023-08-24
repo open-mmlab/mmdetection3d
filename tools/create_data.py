@@ -173,12 +173,14 @@ def waymo_data_prep(root_path,
                     workers,
                     max_sweeps=10,
                     skip_gather_cam_instances_info=False):
-    """Prepare waymo dataset. There are 3 steps as follows: Step 1. Extract
-    camera images and lidar point clouds from waymo raw data in '*.tfreord' and
-    save as kitti format. Step 2. Generate waymo train/val/test infos and save
-    as pickle file. Step 3. Generate waymo ground truth database (point
-    cloudswithin each 3D bounding box) for data augmentation in training. Steps
-    1 and 2 will be done in Waymo2KITTI, and step 3 will be done in
+    """Prepare waymo dataset. There are 3 steps as follows:
+
+    Step 1. Extract camera images and lidar point clouds from waymo raw
+        data in '*.tfreord' and save as kitti format.
+    Step 2. Generate waymo train/val/test infos and save as pickle file.
+    Step 3. Generate waymo ground truth database (point clouds within
+        each 3D bounding box) for data augmentation in training.
+    Steps 1 and 2 will be done in Waymo2KITTI, and step 3 will be done in
     GTDatabaseCreater.
 
     Args:
@@ -191,7 +193,7 @@ def waymo_data_prep(root_path,
             frames for later use.
         skip_gather_cam_instances_info (bool, optional): Whether to skip
             gather cam_instances infos in Step 2. Default to False.
-    """  # noqa
+    """
     from tools.dataset_converters import waymo_converter as waymo
 
     if version == 'v1.4':
@@ -221,22 +223,13 @@ def waymo_data_prep(root_path,
             split=split,
             save_cam_instances=not skip_gather_cam_instances_info)
         converter.convert()
+        if split == 'validation':
+            converter.merge_trainval_infos()
 
     from tools.dataset_converters.waymo_converter import \
         create_ImageSets_img_ids
     create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
-    # Generate waymo infos
-    # out_dir = osp.join(out_dir, 'kitti_format')
-    # kitti.create_waymo_info_file(
-    #     out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
-    # info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
-    # info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
-    # info_trainval_path = osp.join(out_d, f'{info_prefix}_infos_trainval.pkl')
-    # info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
-    # update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_train_path)
-    # update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_val_path)
-    # update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_trainval_path)
-    # update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_test_path)
+
     GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
