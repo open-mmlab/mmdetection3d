@@ -188,7 +188,10 @@ test_pipeline = [
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp']),
 ]
 
 dataset_type = 'WaymoDataset'
@@ -215,10 +218,8 @@ val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo_mini/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo_mini/waymo_format/gt_mini.bin',
-    data_root='./data/waymo_mini/waymo_format',
     backend_args=backend_args,
-    convert_kitti_format=False,
-    idx2metainfo='./data/waymo_mini/waymo_format/idx2metainfo.pkl')
+    convert_kitti_format=False)
 # val_evaluator = dict(
 #     type='WaymoMetric',
 #     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
