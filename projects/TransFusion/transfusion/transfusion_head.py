@@ -194,9 +194,8 @@ class TransFusionHead(nn.Module):
         #################################
         # image to BEV
         #################################
-        lidar_feat_flatten = lidar_feat.view(batch_size,
-                                               lidar_feat.shape[1],
-                                               -1)  # [BS, C, H*W]
+        lidar_feat_flatten = lidar_feat.view(batch_size, lidar_feat.shape[1],
+                                             -1)  # [BS, C, H*W]
         bev_pos = self.bev_pos.repeat(batch_size, 1, 1).to(lidar_feat.device)
 
         #################################
@@ -702,7 +701,8 @@ class TransFusionHead(nn.Module):
                                       device=device)
                 center_int = center.to(torch.int32)
 
-                draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]], center_int, radius)
+                draw_heatmap_gaussian(heatmap[gt_labels_3d[idx]], center_int,
+                                      radius)
 
         mean_iou = ious[pos_inds].sum() / max(len(pos_inds), 1)
         return (
