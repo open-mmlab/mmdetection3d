@@ -188,11 +188,12 @@ class _DynamicScatter(Function):
     point2voxel_map."""
 
     @staticmethod
-    def forward(ctx: Any,
-                feats: torch.Tensor,
-                coors: torch.Tensor,
-                reduce_type: str = 'max',
-                return_map: str = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        ctx: Any,
+        feats: torch.Tensor,
+        coors: torch.Tensor,
+        reduce_type: str = 'max'
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """convert kitti points(N, >=3) to voxels.
 
         Args:
@@ -201,14 +202,14 @@ class _DynamicScatter(Function):
             coors (torch.Tensor): [N, ndim]. Corresponding voxel coordinates
                 (specifically multi-dim voxel index) of each points.
             reduce_type (str, optional): Reduce op. support 'max', 'sum' and
-                'mean'. Default: 'max'.
-            return_map (str, optional): Whether to return point2voxel_map.
+                'mean'. Defaults to 'max'.
 
         Returns:
-            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            tuple[torch.Tensor]: A tuple contains three elements. The first one
             is the voxel features with shape [M, C] which are respectively
             reduced from input features that share the same voxel coordinates.
-            The second is voxel coordinates with shape [M, ndim].
+            The second is voxel coordinates with shape [M, ndim]. The third is
+            point2voxel_map with shape [M].
         """
         results = ext_module.dynamic_point_to_voxel_forward(
             feats, coors, reduce_type)
@@ -218,15 +219,13 @@ class _DynamicScatter(Function):
         ctx.save_for_backward(feats, voxel_feats, point2voxel_map,
                               voxel_points_count)
         ctx.mark_non_differentiable(voxel_coors)
-        if return_map:
-            return voxel_feats, voxel_coors, point2voxel_map
-        else:
-            return voxel_feats, voxel_coors
+        return voxel_feats, voxel_coors, point2voxel_map
 
     @staticmethod
     def backward(ctx: Any,
                  grad_voxel_feats: torch.Tensor,
-                 grad_voxel_coors: Optional[torch.Tensor] = None) -> tuple:
+                 grad_voxel_coors: Optional[torch.Tensor] = None,
+                 grad_point2voxel_map: Optional[torch.Tensor] = None) -> tuple:
         (feats, voxel_feats, point2voxel_map,
          voxel_points_count) = ctx.saved_tensors
         grad_feats = torch.zeros_like(feats)
@@ -285,8 +284,9 @@ class DynamicScatter3D(nn.Module):
         return dynamic_scatter_3d(points.contiguous(), coors.contiguous(),
                                   reduce)
 
-    def forward(self, points: torch.Tensor,
-                coors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, points: torch.Tensor, coors: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, List[torch.Tensor]]:
         """Scatters points/features into voxels.
 
         Args:
@@ -295,27 +295,29 @@ class DynamicScatter3D(nn.Module):
                 multi-dim voxel index) of each points.
 
         Returns:
-            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            tuple[torch.Tensor]: A tuple contains first elements. The first one
             is the voxel features with shape [M, C] which are respectively
             reduced from input features that share the same voxel coordinates.
-            The second is voxel coordinates with shape [M, ndim].
+            The second is voxel coordinates with shape [M, ndim]. The third is
+            a list of point2voxel_map.
         """
         if coors.size(-1) == 3:
             return self.forward_single(points, coors)
         else:
             batch_size = coors[-1, 0] + 1
-            voxels, voxel_coors = [], []
+            voxels, voxel_coors, point2voxel_maps = [], [], []
             for i in range(batch_size):
                 inds = torch.where(coors[:, 0] == i)
-                voxel, voxel_coor = self.forward_single(
+                voxel, voxel_coor, point2voxel_map = self.forward_single(
                     points[inds], coors[inds][:, 1:])
                 coor_pad = F.pad(voxel_coor, (1, 0), mode='constant', value=i)
                 voxel_coors.append(coor_pad)
                 voxels.append(voxel)
+                point2voxel_maps.append(point2voxel_map)
             features = torch.cat(voxels, dim=0)
             feature_coors = torch.cat(voxel_coors, dim=0)
 
-            return features, feature_coors
+            return features, feature_coors, point2voxel_maps
 
     def __repr__(self):
         s = self.__class__.__name__ + '('

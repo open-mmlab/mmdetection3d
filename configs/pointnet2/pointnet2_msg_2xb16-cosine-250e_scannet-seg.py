@@ -12,7 +12,7 @@ model = dict(
         # `data/scannet/seg_info/train_label_weight.npy`
         # you can copy paste the values here, or input the file path as
         # `class_weight=data/scannet/seg_info/train_label_weight.npy`
-        loss_decode=dict(class_weight=[
+        loss_ce=dict(class_weight=[
             2.389689, 2.7215734, 4.5944676, 4.8543367, 4.096086, 4.907941,
             4.690836, 4.512031, 4.623311, 4.9242644, 5.358117, 5.360071,
             5.019636, 4.967126, 5.3502126, 5.4023647, 5.4027233, 5.4169416,
