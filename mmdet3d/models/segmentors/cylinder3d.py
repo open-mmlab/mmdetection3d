@@ -151,7 +151,7 @@ class Cylinder3D(EncoderDecoder3D):
 
     def _forward(self,
                  batch_inputs_dict: dict,
-                 batch_data_samples: OptSampleList = None) -> Tensor:
+                 batch_data_samples: OptSampleList = None) -> dict:
         """Network forward process.
 
         Args:
@@ -165,7 +165,8 @@ class Cylinder3D(EncoderDecoder3D):
                 `gt_pts_seg`.
 
         Returns:
-            Tensor: Forward output of model without any post-processes.
+            dict: The dict containing forward output of model without any
+            post-processes.
         """
         voxel_dict = self.extract_feat(batch_inputs_dict)
-        return self.decode_head.forward(voxel_dict)['logits']
+        return self.decode_head.forward(voxel_dict)
