@@ -67,7 +67,7 @@ class Cylinder3D(EncoderDecoder3D):
 
         self.voxel_encoder = MODELS.build(voxel_encoder)
 
-    def extract_feat(self, batch_inputs_dict: dict) -> Tensor:
+    def extract_feat(self, batch_inputs_dict: dict) -> dict:
         """Extract features from points."""
         voxel_dict = batch_inputs_dict['voxels'].copy()
         voxel_dict = self.voxel_encoder(voxel_dict)
