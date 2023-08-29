@@ -16,7 +16,7 @@ except ImportError:
 from typing import List, Optional
 
 import mmengine
-import numpy as np
+from mmengine import print_log
 
 
 class Prediction2Waymo(object):
@@ -48,7 +48,7 @@ class Prediction2Waymo(object):
                  waymo_results_save_dir: str,
                  waymo_results_final_path: str,
                  classes: dict,
-                 workers: int = 2,
+                 workers: int = 4,
                  backend_args: Optional[dict] = None):
 
         self.results = results
@@ -104,71 +104,48 @@ class Prediction2Waymo(object):
         Returns:
             metrics_pb2.Objects: The parsed object.
         """
-        lidar_boxes = result['pred_instances_3d']['bboxes_3d'].tensor
+        lidar_boxes = result['pred_instances_3d']['bboxes_3d']
         scores = result['pred_instances_3d']['scores_3d']
         labels = result['pred_instances_3d']['labels_3d']
 
-        def parse_one_object(index):
-            class_name = self.classes[labels[index].item()]
-
+        objects = metrics_pb2.Objects()
+        for lidar_box, score, label in zip(lidar_boxes, scores, labels):
+            # Parse one object
             box = label_pb2.Label.Box()
-            height = lidar_boxes[index][5].item()
-            heading = lidar_boxes[index][6].item()
+            height = lidar_box[5]
+            heading = lidar_box[6]
 
-            while heading < -np.pi:
-                heading += 2 * np.pi
-            while heading > np.pi:
-                heading -= 2 * np.pi
-
-            box.center_x = lidar_boxes[index][0].item()
-            box.center_y = lidar_boxes[index][1].item()
-            box.center_z = lidar_boxes[index][2].item() + height / 2
-            box.length = lidar_boxes[index][3].item()
-            box.width = lidar_boxes[index][4].item()
+            box.center_x = lidar_box[0]
+            box.center_y = lidar_box[1]
+            box.center_z = lidar_box[2] + height / 2
+            box.length = lidar_box[3]
+            box.width = lidar_box[4]
             box.height = height
             box.heading = heading
 
-            o = metrics_pb2.Object()
-            o.object.box.CopyFrom(box)
-            o.object.type = self.k2w_cls_map[class_name]
-            o.score = scores[index].item()
-            o.context_name = contextname
-            o.frame_timestamp_micros = timestamp
+            object = metrics_pb2.Object()
+            object.object.box.CopyFrom(box)
 
-            return o
-
-        objects = metrics_pb2.Objects()
-        for i in range(len(lidar_boxes)):
-            objects.objects.append(parse_one_object(i))
+            class_name = self.classes[label]
+            object.object.type = self.k2w_cls_map[class_name]
+            object.score = score
+            object.context_name = contextname
+            object.frame_timestamp_micros = timestamp
+            objects.objects.append(object)
 
         return objects
 
     def convert(self):
         """Convert action."""
-        print('Start converting ...')
+        print_log('Start converting ...', logger='current')
 
-        # from torch.multiprocessing import set_sharing_strategy
-        # # Force using "file_system" sharing strategy for stability
-        # set_sharing_strategy("file_system")
-
-        # mmengine.track_parallel_progress(convert_func, range(len(self)),
-        #                                  self.workers)
-
-        # TODO: Support multiprocessing. Now, multiprocessing evaluation will
-        # cause shared memory error in torch-1.10 and torch-1.11. Details can
-        # be seen in https://github.com/pytorch/pytorch/issues/67864.
-        objects_list = []
-        prog_bar = mmengine.ProgressBar(len(self))
-        for i in range(len(self)):
-            objects = self.convert_one_fast(i)
-            objects_list.append(objects)
-            prog_bar.update()
+        objects_list = mmengine.track_parallel_progress(
+            self.convert_one_fast, range(len(self)), self.workers)
 
         combined = metrics_pb2.Objects()
         for objects in objects_list:
             for o in objects.objects:
                 combined.objects.append(o)
-        print('\nFinished ...')
 
         with open(self.waymo_results_final_path, 'wb') as f:
             f.write(combined.SerializeToString())

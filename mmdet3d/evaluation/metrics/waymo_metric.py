@@ -129,14 +129,15 @@ class WaymoMetric(KittiMetric):
 
         for data_sample in data_samples:
             result = dict()
-            pred_3d = data_sample['pred_instances_3d']
-            pred_2d = data_sample['pred_instances']
-            for attr_name in pred_3d:
-                pred_3d[attr_name] = pred_3d[attr_name].to('cpu')
-            result['pred_instances_3d'] = pred_3d
-            for attr_name in pred_2d:
-                pred_2d[attr_name] = pred_2d[attr_name].to('cpu')
-            result['pred_instances'] = pred_2d
+            result['pred_instances_3d'] = dict()
+            data_sample['pred_instances_3d']['bboxes_3d'].limit_yaw(
+                offset=0.5, period=np.pi * 2)
+            result['pred_instances_3d']['bboxes_3d'] = data_sample[
+                'pred_instances_3d']['bboxes_3d'].tensor.cpu().numpy()
+            result['pred_instances_3d']['scores_3d'] = data_sample[
+                'pred_instances_3d']['scores_3d'].cpu().numpy()
+            result['pred_instances_3d']['labels_3d'] = data_sample[
+                'pred_instances_3d']['labels_3d'].cpu().numpy()
             result['sample_idx'] = data_sample['sample_idx']
             result['context_name'] = data_sample['context_name']
             result['timestamp'] = data_sample['timestamp']
@@ -372,17 +373,12 @@ class WaymoMetric(KittiMetric):
         if self.convert_kitti_format:
             results_kitti_format, tmp_dir = super().format_results(
                 results, pklfile_prefix, submission_prefix, classes)
-            final_results = results_kitti_format['pred_instances_3d']
-        else:
-            final_results = results
-            for res in final_results:
-                res['pred_instances_3d']['bboxes_3d'].limit_yaw(
-                    offset=0.5, period=np.pi * 2)
+            results = results_kitti_format['pred_instances_3d']
 
         from ..functional.waymo_utils.prediction_to_waymo import \
             Prediction2Waymo
         converter = Prediction2Waymo(
-            final_results,
+            results,
             waymo_results_save_dir,
             waymo_results_final_path,
             classes,

@@ -46,6 +46,8 @@ class Waymo2KITTI(object):
             Defaults to 64.
         test_mode (bool, optional): Whether in the test_mode.
             Defaults to False.
+        save_image_and_lidar (bool, optional): Whether to save image and lidar
+            data. Defaults to True.
         save_cam_sync_instances (bool, optional): Whether to save cam sync
             instances. Defaults to True.
         save_cam_instances (bool, optional): Whether to save cam instances.
@@ -62,6 +64,7 @@ class Waymo2KITTI(object):
                  prefix,
                  workers=64,
                  test_mode=False,
+                 save_image_and_lidar=True,
                  save_cam_sync_instances=True,
                  save_cam_instances=True,
                  info_prefix='waymo',
@@ -105,6 +108,7 @@ class Waymo2KITTI(object):
         self.prefix = prefix
         self.workers = int(workers)
         self.test_mode = test_mode
+        self.save_image_and_lidar = save_image_and_lidar
         self.save_cam_sync_instances = save_cam_sync_instances
         self.save_cam_instances = save_cam_instances
         self.info_prefix = info_prefix
@@ -175,8 +179,9 @@ class Waymo2KITTI(object):
             frame.ParseFromString(bytearray(data.numpy()))
 
             # Step 1.
-            self.save_image(frame, file_idx, frame_idx)
-            self.save_lidar(frame, file_idx, frame_idx)
+            if self.save_image_and_lidar:
+                self.save_image(frame, file_idx, frame_idx)
+                self.save_lidar(frame, file_idx, frame_idx)
 
             # Step 2.
             # TODO save the depth image for waymo challenge solution.
