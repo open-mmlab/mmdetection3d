@@ -393,7 +393,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             coors = torch.cat(coors, dim=0)
         elif self.voxel_type == 'cylindrical':
             voxels, coors = [], []
-            for i, (res, data_sample) in enumerate(zip(points, data_samples)):
+            for i, res in enumerate(points):
                 rho = torch.sqrt(res[:, 0]**2 + res[:, 1]**2)
                 phi = torch.atan2(res[:, 1], res[:, 0])
                 polar_res = torch.stack((rho, phi, res[:, 2]), dim=-1)
