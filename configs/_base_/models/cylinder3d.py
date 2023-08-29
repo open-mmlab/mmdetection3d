@@ -36,6 +36,7 @@ model = dict(
             class_weight=None,
             loss_weight=1.0),
         loss_lovasz=dict(type='LovaszLoss', loss_weight=1.0, reduction='none'),
+        conv_seg_kernel_size=3,
         ignore_index=19),
     train_cfg=None,
     test_cfg=dict(mode='whole'))
