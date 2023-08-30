@@ -139,8 +139,10 @@ class Prediction2Waymo(object):
         """Convert action."""
         print_log('Start converting ...', logger='current')
 
-        objects_list = mmengine.track_parallel_progress(
-            self.convert_one_fast, range(len(self)), self.workers)
+        # objects_list = mmengine.track_parallel_progress(
+        #     self.convert_one_fast, range(len(self)), self.workers)
+        objects_list = mmengine.track_progress(self.convert_one_fast,
+                                               range(len(self)))
 
         combined = metrics_pb2.Objects()
         for objects in objects_list:
