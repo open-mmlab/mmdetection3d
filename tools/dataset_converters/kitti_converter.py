@@ -5,6 +5,7 @@ from pathlib import Path
 import mmcv
 import mmengine
 import numpy as np
+from mmengine import logging, print_log
 from nuscenes.utils.geometry_utils import view_points
 
 from mmdet3d.structures import points_cam2img
@@ -109,9 +110,8 @@ class _NumPointsInGTCalculater:
         return info
 
     def calculate(self, infos):
-        # ret_infos = mmengine.track_parallel_progress(self.calculate_single,
-        #                                              infos, self.num_worker)
-        ret_infos = [self.calculate_single(info) for info in infos]
+        ret_infos = mmengine.track_parallel_progress(self.calculate_single,
+                                                     infos, self.num_worker)
         for i, ret_info in enumerate(ret_infos):
             infos[i] = ret_info
 
@@ -250,10 +250,16 @@ def create_waymo_info_file(data_path,
         max_sweeps (int, optional): Max sweeps before the detection frame
             to be used. Default: 5.
     """
+    print_log(
+        'Deprecation Warning: related functions has been migrated to '
+        '`Waymo2KITTI.create_waymo_info_file`. It will be removed in '
+        'the future!',
+        logger='current',
+        level=logging.WARNING)
     imageset_folder = Path(data_path) / 'ImageSets'
     train_img_ids = _read_imageset_file(str(imageset_folder / 'train.txt'))
     val_img_ids = _read_imageset_file(str(imageset_folder / 'val.txt'))
-    # test_img_ids = _read_imageset_file(str(imageset_folder / 'test.txt'))
+    test_img_ids = _read_imageset_file(str(imageset_folder / 'test.txt'))
 
     print('Generate info. this may take several minutes.')
     if save_path is None:
@@ -269,40 +275,40 @@ def create_waymo_info_file(data_path,
         relative_path=relative_path,
         max_sweeps=max_sweeps,
         num_worker=workers)
-    # waymo_infos_gatherer_test = WaymoInfoGatherer(
-    #     data_path,
-    #     training=False,
-    #     label_info=False,
-    #     velodyne=True,
-    #     calib=True,
-    #     pose=True,
-    #     relative_path=relative_path,
-    #     max_sweeps=max_sweeps,
-    #     num_worker=workers)
-    # num_points_in_gt_calculater = _NumPointsInGTCalculater(
-    #     data_path,
-    #     relative_path,
-    #     num_features=6,
-    #     remove_outside=False,
-    #     num_worker=workers)
+    waymo_infos_gatherer_test = WaymoInfoGatherer(
+        data_path,
+        training=False,
+        label_info=False,
+        velodyne=True,
+        calib=True,
+        pose=True,
+        relative_path=relative_path,
+        max_sweeps=max_sweeps,
+        num_worker=workers)
+    num_points_in_gt_calculater = _NumPointsInGTCalculater(
+        data_path,
+        relative_path,
+        num_features=6,
+        remove_outside=False,
+        num_worker=workers)
 
     waymo_infos_train = waymo_infos_gatherer_trainval.gather(train_img_ids)
-    # num_points_in_gt_calculater.calculate(waymo_infos_train)
+    num_points_in_gt_calculater.calculate(waymo_infos_train)
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Waymo info train file is saved to {filename}')
     mmengine.dump(waymo_infos_train, filename)
     waymo_infos_val = waymo_infos_gatherer_trainval.gather(val_img_ids)
-    # num_points_in_gt_calculater.calculate(waymo_infos_val)
+    num_points_in_gt_calculater.calculate(waymo_infos_val)
     filename = save_path / f'{pkl_prefix}_infos_val.pkl'
     print(f'Waymo info val file is saved to {filename}')
     mmengine.dump(waymo_infos_val, filename)
     filename = save_path / f'{pkl_prefix}_infos_trainval.pkl'
     print(f'Waymo info trainval file is saved to {filename}')
     mmengine.dump(waymo_infos_train + waymo_infos_val, filename)
-    # waymo_infos_test = waymo_infos_gatherer_test.gather(test_img_ids)
-    # filename = save_path / f'{pkl_prefix}_infos_test.pkl'
-    # print(f'Waymo info test file is saved to {filename}')
-    # mmengine.dump(waymo_infos_test, filename)
+    waymo_infos_test = waymo_infos_gatherer_test.gather(test_img_ids)
+    filename = save_path / f'{pkl_prefix}_infos_test.pkl'
+    print(f'Waymo info test file is saved to {filename}')
+    mmengine.dump(waymo_infos_test, filename)
 
 
 def _create_reduced_point_cloud(data_path,

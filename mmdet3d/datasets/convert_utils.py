@@ -318,7 +318,6 @@ def get_kitti_style_2d_boxes(info: dict,
 def convert_annos(info: dict, cam_idx: int) -> dict:
     """Convert front-cam anns to i-th camera (KITTI-style info)."""
     rect = info['calib']['R0_rect'].astype(np.float32)
-    # lidar2cam0 = info['calib']['Tr_velo_to_cam'].astype(np.float32)
     if cam_idx == 0:
         lidar2cami = info['calib']['Tr_velo_to_cam'].astype(np.float32)
     else:
@@ -331,14 +330,8 @@ def convert_annos(info: dict, cam_idx: int) -> dict:
     rots = annos['rotation_y']
     gt_bboxes_3d = np.concatenate([loc, dims, rots[..., np.newaxis]],
                                   axis=1).astype(np.float32)
-    # convert gt_bboxes_3d to velodyne coordinates
     # BC-breaking: gt_bboxes_3d is already in lidar coordinates
-    # TODO: Discuss correcet_yaw if necessary
-    # gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
-    #     Box3DMode.LIDAR, np.linalg.inv(rect @ lidar2cam0), correct_yaw=True)
     # convert gt_bboxes_3d to cam coordinates
-    # gt_bboxes_3d = gt_bboxes_3d.convert_to(
-    #     Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).numpy()
     gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d).convert_to(
         Box3DMode.CAM, rect @ lidar2cami, correct_yaw=True).numpy()
 

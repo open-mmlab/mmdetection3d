@@ -683,9 +683,9 @@ def create_ImageSets_img_ids(root_dir, splits):
     if not exists(save_dir):
         os.mkdir(save_dir)
 
-    idx_all = [[] for _ in range(4)]
+    idx_all = [[] for _ in splits]
     for i, split in enumerate(splits):
-        path = join(root_dir, splits[i], 'image_0')
+        path = join(root_dir, split, 'image_0')
         if not exists(path):
             RawNames = []
         else:
@@ -700,6 +700,8 @@ def create_ImageSets_img_ids(root_dir, splits):
     open(save_dir + 'train.txt', 'w').writelines(idx_all[0])
     open(save_dir + 'val.txt', 'w').writelines(idx_all[1])
     open(save_dir + 'trainval.txt', 'w').writelines(idx_all[0] + idx_all[1])
-    open(save_dir + 'test.txt', 'w').writelines(idx_all[2])
-    open(save_dir + 'test_cam_only.txt', 'w').writelines(idx_all[3])
+    if idx_all[2]:
+        open(save_dir + 'test.txt', 'w').writelines(idx_all[2])
+    if idx_all[3]:
+        open(save_dir + 'test_cam_only.txt', 'w').writelines(idx_all[3])
     print('created txt files indicating what to collect in ', splits)

@@ -923,8 +923,8 @@ def update_waymo_infos(pkl_path, out_dir):
         base_img_path = Path(ori_info_dict['image']['image_path']).name
 
         for cam_idx, cam_key in enumerate(camera_types):
-            # temp_data_info['images'][cam_key]['timestamp'] = ori_info_dict[
-            #     'timestamp']
+            temp_data_info['images'][cam_key]['timestamp'] = ori_info_dict[
+                'timestamp']
             temp_data_info['images'][cam_key]['img_path'] = base_img_path
 
         h, w = ori_info_dict['image']['image_shape']
@@ -934,16 +934,16 @@ def update_waymo_infos(pkl_path, out_dir):
         temp_data_info['images'][camera_types[0]]['width'] = w
         temp_data_info['lidar_points']['num_pts_feats'] = ori_info_dict[
             'point_cloud']['num_features']
-        # temp_data_info['lidar_points']['timestamp'] = ori_info_dict[
-        #     'timestamp']
+        temp_data_info['lidar_points']['timestamp'] = ori_info_dict[
+            'timestamp']
         velo_path = ori_info_dict['point_cloud'].get('velodyne_path')
         if velo_path is not None:
             temp_data_info['lidar_points']['lidar_path'] = Path(velo_path).name
 
         # TODO discuss the usage of Tr_velo_to_cam in lidar
-        # Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
+        Trv2c = ori_info_dict['calib']['Tr_velo_to_cam'].astype(np.float32)
 
-        # temp_data_info['lidar_points']['Tr_velo_to_cam'] = Trv2c.tolist()
+        temp_data_info['lidar_points']['Tr_velo_to_cam'] = Trv2c.tolist()
 
         # for potential usage
         # temp_data_info['images']['R0_rect'] = ori_info_dict['calib'][
@@ -951,8 +951,7 @@ def update_waymo_infos(pkl_path, out_dir):
 
         # for the sweeps part:
         temp_data_info['timestamp'] = ori_info_dict['timestamp']
-        temp_data_info['ego2global'] = ori_info_dict['pose'].astype(
-            np.float32).tolist()
+        temp_data_info['ego2global'] = ori_info_dict['pose']
 
         for ori_sweep in ori_info_dict['sweeps']:
             # lidar sweeps
@@ -961,22 +960,16 @@ def update_waymo_infos(pkl_path, out_dir):
             lidar_sweep['timestamp'] = ori_sweep['timestamp']
             lidar_sweep['lidar_points']['lidar_path'] = Path(
                 ori_sweep['velodyne_path']).name
-            # delete the num_pts_feats and lidar2ego
-            del lidar_sweep['lidar_points']['num_pts_feats']
-            del lidar_sweep['lidar_points']['lidar2ego']
-            # TODO: refactor image_sweeps info when we really need it.
             # image sweeps
-            # image_sweep = dict()
-            # image_sweep['sample_idx']= ori_sweep['image']['image_idx']
-            # image_sweep = get_single_image_sweep(camera_types)
-            # image_sweep['ego2global'] = ori_sweep['pose']
-            # image_sweep['timestamp'] = ori_sweep['timestamp']
-            # img_path = Path(ori_sweep['image_path']).name
-            # for cam_idx, cam_key in enumerate(camera_types):
-            #     image_sweep['images'][cam_key]['img_path'] = img_path
+            image_sweep = get_single_image_sweep(camera_types)
+            image_sweep['ego2global'] = ori_sweep['pose']
+            image_sweep['timestamp'] = ori_sweep['timestamp']
+            img_path = Path(ori_sweep['image_path']).name
+            for cam_idx, cam_key in enumerate(camera_types):
+                image_sweep['images'][cam_key]['img_path'] = img_path
 
             temp_data_info['lidar_sweeps'].append(lidar_sweep)
-            # temp_data_info['image_sweeps'].append(image_sweep)
+            temp_data_info['image_sweeps'].append(image_sweep)
 
         anns = ori_info_dict.get('annos', None)
         ignore_class_name = set()
@@ -1072,7 +1065,6 @@ def update_waymo_infos(pkl_path, out_dir):
 
         temp_data_info, _ = clear_data_info_unused_keys(temp_data_info)
         converted_list.append(temp_data_info)
-    del data_list
     pkl_name = Path(pkl_path).name
     out_path = osp.join(out_dir, pkl_name)
     print(f'Writing to output file: {out_path}.')
@@ -1111,8 +1103,8 @@ def generate_waymo_camera_instances(ori_info_dict, cam_keys):
 
     for cam_idx, cam_key in enumerate(cam_keys):
         annos = copy.deepcopy(ori_info_dict['cam_sync_annos'])
-
-        annos = convert_annos(ori_info_dict, cam_idx)
+        if cam_idx != 0:
+            annos = convert_annos(ori_info_dict, cam_idx)
 
         ann_infos = get_kitti_style_2d_boxes(
             ori_info_dict, cam_idx, occluded=[0], annos=annos, dataset='waymo')
