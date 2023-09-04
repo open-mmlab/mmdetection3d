@@ -5,7 +5,7 @@ from typing import Callable, List, Union
 import numpy as np
 
 from mmdet3d.registry import DATASETS
-from mmdet3d.structures import CameraInstance3DBoxes
+from mmdet3d.structures import LiDARInstance3DBoxes
 from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
 
@@ -163,13 +163,7 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        # in waymo, lidar2cam = R0_rect @ Tr_velo_to_cam
-        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
-        lidar2cam = np.array(info['images'][self.default_cam_key]['lidar2cam'])
-        gt_bboxes_3d = CameraInstance3DBoxes(
-            ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
-                                                 np.linalg.inv(lidar2cam))
-        ann_info['gt_bboxes_3d'] = gt_bboxes_3d
+        gt_bboxes_3d = LiDARInstance3DBoxes(ann_info['gt_bboxes_3d'])
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,

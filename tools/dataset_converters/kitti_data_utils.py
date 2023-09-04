@@ -148,10 +148,14 @@ def get_label_anno(label_path):
                                         for x in content]).reshape(-1, 3)
     annotations['rotation_y'] = np.array([float(x[14])
                                           for x in content]).reshape(-1)
-    if len(content) != 0 and len(content[0]) == 16:  # have score
+    if len(content) != 0 and len(content[0]) >= 16:  # have score
         annotations['score'] = np.array([float(x[15]) for x in content])
     else:
         annotations['score'] = np.zeros((annotations['bbox'].shape[0], ))
+    # have num_lidar_points_in_box, given in waymo
+    if len(content) != 0 and len(content[0]) == 17:
+        annotations['num_points_in_gt'] = np.array(
+            [int(x[16]) for x in content])
     index = list(range(num_objects)) + [-1] * (num_gt - num_objects)
     annotations['index'] = np.array(index, dtype=np.int32)
     annotations['group_ids'] = np.arange(num_gt, dtype=np.int32)
@@ -552,6 +556,7 @@ class WaymoInfoGatherer:
         image_infos = mmengine.track_parallel_progress(self.gather_single,
                                                        image_ids,
                                                        self.num_worker)
+        # image_infos = mmengine.track_progress(self.gather_single, image_ids)
         return list(image_infos)
 
 

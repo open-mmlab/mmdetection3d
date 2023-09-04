@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import tempfile
 from os import path as osp
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import mmengine
 import numpy as np
@@ -79,7 +79,6 @@ class WaymoMetric(KittiMetric):
     def __init__(self,
                  ann_file: str,
                  waymo_bin_file: str,
-                 data_root: str,
                  split: str = 'training',
                  metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
@@ -92,19 +91,12 @@ class WaymoMetric(KittiMetric):
                  default_cam_key: str = 'CAM_FRONT',
                  use_pred_sample_idx: bool = False,
                  collect_device: str = 'cpu',
-                 backend_args: Optional[dict] = None,
-                 idx2metainfo: Optional[str] = None) -> None:
+                 backend_args: Optional[dict] = None) -> None:
         self.waymo_bin_file = waymo_bin_file
-        self.data_root = data_root
         self.split = split
         self.load_type = load_type
         self.use_pred_sample_idx = use_pred_sample_idx
         self.convert_kitti_format = convert_kitti_format
-
-        if idx2metainfo is not None:
-            self.idx2metainfo = mmengine.load(idx2metainfo)
-        else:
-            self.idx2metainfo = None
 
         super(WaymoMetric, self).__init__(
             ann_file=ann_file,
@@ -124,6 +116,33 @@ class WaymoMetric(KittiMetric):
 
         self.default_prefix = 'Waymo metric'
 
+    def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
+        """Process one batch of data samples and predictions.
+
+        The processed results should be stored in ``self.results``, which will
+        be used to compute the metrics when all batches have been processed.
+
+        Args:
+            data_batch (dict): A batch of data from the dataloader.
+            data_samples (Sequence[dict]): A batch of outputs from the model.
+        """
+
+        for data_sample in data_samples:
+            result = dict()
+            result['pred_instances_3d'] = dict()
+            data_sample['pred_instances_3d']['bboxes_3d'].limit_yaw(
+                offset=0.5, period=np.pi * 2)
+            result['pred_instances_3d']['bboxes_3d'] = data_sample[
+                'pred_instances_3d']['bboxes_3d'].tensor.cpu().numpy()
+            result['pred_instances_3d']['scores_3d'] = data_sample[
+                'pred_instances_3d']['scores_3d'].cpu().numpy()
+            result['pred_instances_3d']['labels_3d'] = data_sample[
+                'pred_instances_3d']['labels_3d'].cpu().numpy()
+            result['sample_idx'] = data_sample['sample_idx']
+            result['context_name'] = data_sample['context_name']
+            result['timestamp'] = data_sample['timestamp']
+            self.results.append(result)
+
     def compute_metrics(self, results: List[dict]) -> Dict[str, float]:
         """Compute the metrics from processed results.
 
@@ -137,13 +156,13 @@ class WaymoMetric(KittiMetric):
         logger: MMLogger = MMLogger.get_current_instance()
         self.classes = self.dataset_meta['classes']
 
-        # load annotations
-        self.data_infos = load(self.ann_file)['data_list']
-        assert len(results) == len(self.data_infos), \
-            'invalid list length of network outputs'
         # different from kitti, waymo do not need to convert the ann file
         # handle the mv_image_based load_mode
         if self.load_type == 'mv_image_based':
+            # load annotations
+            self.data_infos = load(self.ann_file)['data_list']
+            assert len(results) == len(self.data_infos), \
+                'invalid list length of network outputs'
             new_data_infos = []
             for info in self.data_infos:
                 height = info['images'][self.default_cam_key]['height']
@@ -179,7 +198,7 @@ class WaymoMetric(KittiMetric):
             eval_tmp_dir = None
             pklfile_prefix = self.pklfile_prefix
 
-        result_dict, tmp_dir = self.format_results(
+        self.format_results(
             results,
             pklfile_prefix=pklfile_prefix,
             submission_prefix=self.submission_prefix,
@@ -199,8 +218,6 @@ class WaymoMetric(KittiMetric):
         if eval_tmp_dir is not None:
             eval_tmp_dir.cleanup()
 
-        if tmp_dir is not None:
-            tmp_dir.cleanup()
         return metric_dict
 
     def waymo_evaluate(self,
@@ -356,42 +373,18 @@ class WaymoMetric(KittiMetric):
         if self.convert_kitti_format:
             results_kitti_format, tmp_dir = super().format_results(
                 results, pklfile_prefix, submission_prefix, classes)
-            final_results = results_kitti_format['pred_instances_3d']
-        else:
-            final_results = results
-            for i, res in enumerate(final_results):
-                # Actually, `sample_idx` here is the filename without suffix.
-                # It's for identitying the sample in formating.
-                res['sample_idx'] = self.data_infos[i]['sample_idx']
-                res['pred_instances_3d']['bboxes_3d'].limit_yaw(
-                    offset=0.5, period=np.pi * 2)
-
-        waymo_root = self.data_root
-        if self.split == 'training':
-            waymo_tfrecords_dir = osp.join(waymo_root, 'validation')
-            prefix = '1'
-        elif self.split == 'testing':
-            waymo_tfrecords_dir = osp.join(waymo_root, 'testing')
-            prefix = '2'
-        else:
-            raise ValueError('Not supported split value.')
+            results = results_kitti_format['pred_instances_3d']
 
         from ..functional.waymo_utils.prediction_to_waymo import \
             Prediction2Waymo
         converter = Prediction2Waymo(
-            final_results,
-            waymo_tfrecords_dir,
+            results,
             waymo_results_save_dir,
             waymo_results_final_path,
-            prefix,
             classes,
-            backend_args=self.backend_args,
-            from_kitti_format=self.convert_kitti_format,
-            idx2metainfo=self.idx2metainfo)
+            backend_args=self.backend_args)
         converter.convert()
         waymo_save_tmp_dir.cleanup()
-
-        return final_results, waymo_save_tmp_dir
 
     def merge_multi_view_boxes(self, box_dict_per_frame: List[dict],
                                cam0_info: dict) -> dict:

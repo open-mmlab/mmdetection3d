@@ -5,6 +5,7 @@ from pathlib import Path
 import mmcv
 import mmengine
 import numpy as np
+from mmengine import logging, print_log
 from nuscenes.utils.geometry_utils import view_points
 
 from mmdet3d.structures import points_cam2img
@@ -249,6 +250,12 @@ def create_waymo_info_file(data_path,
         max_sweeps (int, optional): Max sweeps before the detection frame
             to be used. Default: 5.
     """
+    print_log(
+        'Deprecation Warning: related functions has been migrated to '
+        '`Waymo2KITTI.create_waymo_info_file`. It will be removed in '
+        'the future!',
+        logger='current',
+        level=logging.WARNING)
     imageset_folder = Path(data_path) / 'ImageSets'
     train_img_ids = _read_imageset_file(str(imageset_folder / 'train.txt'))
     val_img_ids = _read_imageset_file(str(imageset_folder / 'val.txt'))
