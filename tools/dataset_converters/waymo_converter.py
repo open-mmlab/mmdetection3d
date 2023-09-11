@@ -153,6 +153,7 @@ class Waymo2KITTI(object):
         filenames = osp.join(
             osp.dirname(self.save_dir),
             f'{self.info_prefix + self.info_map[self.split]}')
+        print_log(f'Saving {self.split} dataset infos into {filenames}')
         mmengine.dump(waymo_infos, filenames)
 
     def convert_one(self, file_idx):

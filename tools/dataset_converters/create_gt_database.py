@@ -622,7 +622,8 @@ class GTDatabaseCreater:
                 self.create_single,
                 ((loop_dataset(i)
                   for i in range(len(self.dataset))), len(self.dataset)),
-                self.num_worker)
+                self.num_worker,
+                chunksize=1000)
         print_log('Make global unique group id', logger='current')
         group_counter_offset = 0
         all_db_infos = dict()
@@ -640,5 +641,6 @@ class GTDatabaseCreater:
         for k, v in all_db_infos.items():
             print_log(f'load {len(v)} {k} database infos', logger='current')
 
+        print_log(f'Saving GT database infos into {self.db_info_save_path}')
         with open(self.db_info_save_path, 'wb') as f:
             pickle.dump(all_db_infos, f)

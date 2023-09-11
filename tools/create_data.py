@@ -2,6 +2,8 @@
 import argparse
 from os import path as osp
 
+from mmengine import print_log
+
 from tools.dataset_converters import indoor_converter as indoor
 from tools.dataset_converters import kitti_converter as kitti
 from tools.dataset_converters import lyft_converter as lyft_converter
@@ -244,10 +246,12 @@ def waymo_data_prep(root_path,
         'WaymoDataset',
         out_dir,
         info_prefix,
-        f'{info_prefix}_infos_train.pkl',
+        f'{info_prefix}_wo_cam_ins_infos_train.pkl',
         relative_path=False,
         with_mask=False,
         num_worker=workers).create()
+
+    print_log('Successfully preparing Waymo Open Dataset')
 
 
 def semantickitti_data_prep(info_prefix, out_dir):
