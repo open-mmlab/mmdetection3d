@@ -52,5 +52,6 @@ MMDetection3D does not support point cloud annotation. Some open-source annotati
 
 - [SUSTechPOINTS](https://github.com/naurril/SUSTechPOINTS)
 - [LATTE](https://github.com/bernwang/latte)
+- [Segments.ai](https://segments.ai) (closed-source, offers a [free academic license](https://segments.ai/pricing))
 
 Besides, we improved [LATTE](https://github.com/bernwang/latte) for better use. More details can be found [here](https://arxiv.org/abs/2011.10174).
