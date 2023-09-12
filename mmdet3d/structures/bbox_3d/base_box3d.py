@@ -275,12 +275,13 @@ class BaseInstance3DBoxes:
             Tensor: A binary vector indicating whether each point is inside the
             reference range.
         """
-        in_range_flags = ((self.tensor[:, 0] > box_range[0])
-                          & (self.tensor[:, 1] > box_range[1])
-                          & (self.tensor[:, 2] > box_range[2])
-                          & (self.tensor[:, 0] < box_range[3])
-                          & (self.tensor[:, 1] < box_range[4])
-                          & (self.tensor[:, 2] < box_range[5]))
+        gravity_center = self.gravity_center
+        in_range_flags = ((gravity_center[:, 0] > box_range[0])
+                          & (gravity_center[:, 1] > box_range[1])
+                          & (gravity_center[:, 2] > box_range[2])
+                          & (gravity_center[:, 0] < box_range[3])
+                          & (gravity_center[:, 1] < box_range[4])
+                          & (gravity_center[:, 2] < box_range[5]))
         return in_range_flags
 
     @abstractmethod

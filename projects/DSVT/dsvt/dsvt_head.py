@@ -161,6 +161,7 @@ class DSVTCenterHead(CenterHead):
         iou_target = iou_target * 2 - 1  # [0, 1] ==> [-1, 1]
 
         loss = self.loss_iou(selected_iou_preds.view(-1), iou_target)
+        loss = loss / torch.clamp(mask.sum(), min=1e-4)
         return loss
 
     def calc_iou_reg_loss(self, batch_box_preds, mask, ind, gt_boxes):
@@ -222,10 +223,10 @@ class DSVTCenterHead(CenterHead):
         # Transpose inds
         inds = list(map(list, zip(*inds)))
         inds = [torch.stack(inds_) for inds_ in inds]
-        # Transpose inds
+        # Transpose masks
         masks = list(map(list, zip(*masks)))
         masks = [torch.stack(masks_) for masks_ in masks]
-        # Transpose inds
+        # Transpose task_gt_bboxes
         task_gt_bboxes = list(map(list, zip(*task_gt_bboxes)))
         return heatmaps, anno_boxes, inds, masks, task_gt_bboxes
 
@@ -358,8 +359,8 @@ class DSVTCenterHead(CenterHead):
                     anno_box[new_idx] = torch.cat([
                         center - torch.tensor([x, y], device=device),
                         z.unsqueeze(0), box_dim,
-                        torch.sin(rot).unsqueeze(0),
-                        torch.cos(rot).unsqueeze(0)
+                        torch.cos(rot).unsqueeze(0),
+                        torch.sin(rot).unsqueeze(0)
                     ])
 
             heatmaps.append(heatmap)
@@ -432,7 +433,7 @@ class DSVTCenterHead(CenterHead):
                 loss_dict[f'task{task_id}.loss_iou'] = self.calc_iou_loss(
                     iou_preds=preds_dict[0]['iou'],
                     batch_box_preds=batch_box_preds_for_iou.clone().detach(),
-                    mask=mask.all(dim=-1),
+                    mask=masks[task_id],
                     ind=ind,
                     gt_boxes=task_gt_bboxes[task_id])
 
@@ -440,7 +441,7 @@ class DSVTCenterHead(CenterHead):
                     loss_dict[f'task{task_id}.loss_reg_iou'] = \
                         self.calc_iou_reg_loss(
                             batch_box_preds=batch_box_preds_for_iou,
-                            mask=mask.all(dim=-1),
+                            mask=masks[task_id],
                             ind=ind,
                             gt_boxes=task_gt_bboxes[task_id])
 
@@ -517,6 +518,7 @@ class DSVTCenterHead(CenterHead):
             else:
                 batch_dim = preds_dict[0]['dim']
 
+            # It's different from CenterHead
             batch_rotc = preds_dict[0]['rot'][:, 0].unsqueeze(1)
             batch_rots = preds_dict[0]['rot'][:, 1].unsqueeze(1)
             batch_iou = (preds_dict[0]['iou'] +

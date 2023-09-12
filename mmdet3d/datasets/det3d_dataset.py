@@ -143,7 +143,9 @@ class Det3DDataset(BaseDataset):
 
             # show statistics of this dataset
             print_log('-' * 30, 'current')
-            print_log(f'The length of the dataset: {len(self)}', 'current')
+            print_log(
+                f'The length of {"test" if self.test_mode else "training"} dataset: {len(self)}',  # noqa: E501
+                'current')
             content_show = [['category', 'number']]
             for label, num in enumerate(self.num_ins_per_cat):
                 cat_name = self.metainfo['classes'][label]

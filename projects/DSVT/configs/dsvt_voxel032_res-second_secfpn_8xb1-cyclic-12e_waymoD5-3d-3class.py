@@ -2,6 +2,7 @@ _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
     imports=['projects.DSVT.dsvt'], allow_failed_imports=False)
 
+# load_from = 'checkpoints/dsvt_init_mm3d.pth'
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
@@ -89,7 +90,7 @@ model = dict(
         loss_cls=dict(
             type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
         loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=2.0),
-        loss_iou=dict(type='mmdet.L1Loss', reduction='none', loss_weight=1.0),
+        loss_iou=dict(type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
         loss_reg_iou=dict(
             type='mmdet3d.DIoU3DLoss', reduction='mean', loss_weight=2.0),
         norm_bbox=True),
@@ -163,9 +164,9 @@ train_pipeline = [
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05],
         translation_std=[0.5, 0.5, 0.5]),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='DSVTPointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='DSVTObjectRangeFilter', point_cloud_range=point_cloud_range),
+    # dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -181,8 +182,11 @@ test_pipeline = [
         norm_intensity=True,
         norm_elongation=True,
         backend_args=backend_args),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(type='DSVTPointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 
 dataset_type = 'WaymoDataset'
@@ -237,17 +241,9 @@ val_evaluator = dict(
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
     backend_args=backend_args,
     convert_kitti_format=False)
-# val_evaluator = dict(
-#     type='WaymoMetric',
-#     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-#     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-#     data_root='./data/waymo/waymo_format',
-#     backend_args=backend_args,
-#     convert_kitti_format=False,
-#     idx2metainfo='./data/waymo/waymo_format/idx2metainfo.pkl')
 test_evaluator = val_evaluator
 
-vis_backends = [dict(type='LocalVisBackend')]
+vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 lr = 1e-5
@@ -295,7 +291,7 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=12, val_interval=12)
+train_cfg = dict(by_epoch=True, max_epochs=12, val_interval=1)
 
 # runtime settings
 val_cfg = dict()
@@ -309,5 +305,5 @@ test_cfg = dict()
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=5))
+    checkpoint=dict(type='CheckpointHook', interval=1))
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=11)]
