@@ -261,7 +261,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     # for better detection performance comparison
     def draw_bboxes_3d(self,
                        bboxes_3d: BaseInstance3DBoxes,
-                       bbox_color: Tuple[float] = (0, 1, 0),
+                       bbox_colors: Union[Tuple[float],
+                                          List[Tuple[float]]] = (0, 1, 0),
                        points_in_box_color: Tuple[float] = (1, 0, 0),
                        rot_axis: int = 2,
                        center_mode: str = 'lidar_bottom',
@@ -272,7 +273,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         Args:
             bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bbox
                 (x, y, z, x_size, y_size, z_size, yaw) to visualize.
-            bbox_color (Tuple[float]): The color of 3D bboxes.
+            bbox_colors Tuple[float] or List[Tuple[float]]:
+                The color of 3D bboxes.
                 Defaults to (0, 1, 0).
             points_in_box_color (Tuple[float]): The color of points inside 3D
                 bboxes. Defaults to (1, 0, 0).
@@ -294,8 +296,16 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         bboxes_3d = tensor2ndarray(bboxes_3d.tensor)
 
         # in_box_color = np.array(points_in_box_color)
+        if isinstance(bbox_colors, list):
+            assert len(bbox_colors) == len(
+                bboxes_3d), 'specify color for every bounding box'
 
         for i in range(len(bboxes_3d)):
+            if isinstance(bbox_colors, tuple):
+                bbox_color = bbox_colors
+            else:
+                bbox_color = bbox_colors[i]
+
             center = bboxes_3d[i, 0:3]
             dim = bboxes_3d[i, 3:6]
             yaw = np.zeros(3)
@@ -312,7 +322,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
             line_set = geometry.LineSet.create_from_oriented_bounding_box(
                 box3d)
-            line_set.paint_uniform_color(np.array(bbox_color[i]) / 255.)
+            line_set.paint_uniform_color(
+                np.array(bbox_color, dtype=np.float64))
             # draw bboxes on visualizer
             self.o3d_vis.add_geometry(line_set)
 
@@ -320,7 +331,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if self.pcd is not None and mode == 'xyz':
                 indices = box3d.get_point_indices_within_bounding_box(
                     self.pcd.points)
-                self.points_colors[indices] = np.array(bbox_color[i]) / 255.
+                self.points_colors[indices] = np.array(
+                    bbox_color, dtype=np.float64)
 
         # update points colors
         if self.pcd is not None:
