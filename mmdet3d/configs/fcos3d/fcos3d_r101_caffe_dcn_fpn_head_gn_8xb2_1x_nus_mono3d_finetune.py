@@ -12,4 +12,3 @@ model.update(
 
 # optimizer
 optim_wrapper.update(dict(optimizer=dict(lr=0.001)))
-load_from = 'work_dirs/fcos3d_nus/latest.pth'
