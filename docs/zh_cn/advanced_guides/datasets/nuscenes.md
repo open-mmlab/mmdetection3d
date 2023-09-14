@@ -146,7 +146,9 @@ train_pipeline = [
 
 ### 基于视觉的方法
 
-nuScenes 上基于图像的 3D 检测的典型训练流水线如下。
+#### 基于单目方法
+
+在NuScenes数据集中，对于多视角图像，单目检测范式通常由针对每张图像检测和输出 3D 检测结果以及通过后处理（例如 NMS ）得到最终检测结果两步组成。从本质上来说，这种范式直接将单目 3D 检测扩展到多视角任务。NuScenes 上基于图像的 3D 检测的典型训练流水线如下。
 
 ```python
 train_pipeline = [
@@ -159,7 +161,7 @@ train_pipeline = [
         with_bbox_3d=True,
         with_label_3d=True,
         with_bbox_depth=True),
-    dict(type='mmdet.Resize', img_scale=(1600, 900), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1600, 900), keep_ratio=True),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
@@ -175,6 +177,68 @@ train_pipeline = [
 - 它使用单目流水线加载图像，其中包括额外的必需信息，如相机内参矩阵。
 - 它需要加载 3D 标注。
 - 一些数据增强技术需要调整，例如`RandomFlip3D`。目前我们不支持更多的增强方法，因为如何迁移和应用其他技术仍在探索中。
+
+#### 基于BEV方法
+
+鸟瞰图，BEV（Bird's-Eye-View），是另一种常用的 3D 检测范式。它直接利用多个视角图像进行 3D 检测。对于 NuScenes 数据集而言，这些视角包括前方`CAM_FRONT`、左前方`CAM_FRONT_LEFT`、右前方`CAM_FRONT_RIGHT`、后方`CAM_BACK`、左后方`CAM_BACK_LEFT`、右后方`CAM_BACK_RIGHT`。一个基本的用于 BEV 方法的流水线如下。
+
+```python
+class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
+point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+train_transforms = [
+    dict(type='PhotoMetricDistortion3D'),
+    dict(
+        type='RandomResize3D',
+        scale=(1600, 900),
+        ratio_range=(1., 1.),
+        keep_ratio=True)
+]
+train_pipeline = [
+    dict(type='LoadMultiViewImageFromFiles',
+         to_float32=True,
+         num_views=6, ),
+    dict(type='LoadAnnotations3D',
+         with_bbox_3d=True,
+         with_label_3d=True,
+         with_attr_label=False),
+    # 可选，数据增强
+    dict(type='MultiViewWrapper', transforms=train_transforms),
+    # 可选, 筛选特定点云范围内物体
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    # 可选, 筛选特定类别物体
+    dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
+]
+```
+
+为了读取多个视角的图像，数据集也应进行相应微调。
+
+```python
+data_prefix = dict(
+    CAM_FRONT='samples/CAM_FRONT',
+    CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+    CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+    CAM_BACK='samples/CAM_BACK',
+    CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+    CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
+)
+train_dataloader = dict(
+    batch_size=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
+        type="NuScenesDataset",
+        data_root="./data/nuScenes",
+        ann_file="nuscenes_infos_train.pkl",
+        data_prefix=data_prefix,
+        modality=dict(use_camera=True, use_lidar=False, ),
+        pipeline=train_pipeline,
+        test_mode=False, )
+)
+```
 
 ## 评估
 
