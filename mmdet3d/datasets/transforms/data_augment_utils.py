@@ -409,3 +409,18 @@ def noise_per_object_v3_(gt_boxes,
                           rot_transforms, valid_mask)
 
     box3d_transform_(gt_boxes, loc_transforms, rot_transforms, valid_mask)
+
+
+def get_dtu_raydir(pixelcoords, intrinsic, rot, dir_norm=None):
+    # rot is c2w
+    # pixelcoords: H x W x 2
+    x = (pixelcoords[..., 0] + 0.5 - intrinsic[0, 2]) / intrinsic[0, 0]
+    y = (pixelcoords[..., 1] + 0.5 - intrinsic[1, 2]) / intrinsic[1, 1]
+    z = np.ones_like(x)
+    dirs = np.stack([x, y, z], axis=-1)
+    # dirs = np.sum(dirs[...,None,:] * rot[:,:], axis=-1) # h*w*1*3   x   3*3
+    dirs = dirs @ rot[:, :].T  #
+    if dir_norm:
+        dirs = dirs / (np.linalg.norm(dirs, axis=-1, keepdims=True) + 1e-5)
+
+    return dirs

@@ -2680,3 +2680,252 @@ class LaserMix(BaseTransform):
         repr_str += f'pre_transform={self.pre_transform}, '
         repr_str += f'prob={self.prob})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class MultiViewPipeline(BaseTransform):
+    """MultiViewPipeline used in nerfdet.
+
+    Required Keys:
+
+    -depth_info (str): Filename of depth images.
+    -img_prefix (str | None): The prefix of rgb images.
+    -img_info (str): Filename of the rgb images.
+    -lidar2img
+        --extrinsic (array | 4x4): The inverse aligned extrinsic matrix.
+        --intrinsic (array | 4x4): The intrinsic martrix.
+        --origin (array | 1x3): [.0, .0, .5].
+    -c2w (array | 4x4): The aligned extrinsic matrix.
+    -camrotc2w (array | 3x3): The rotation matrix.
+    -lightpos (array | 1x3): The transform parameters of the camera.
+    -ray_info
+        --c2w (array | 4x4): The same 'c2w' as above.
+        --camrotc2w (array | 3x3): The same 'camrotc2w' as above.
+        --lightpos (array | 1x3): The same 'lightpos' as above.
+
+    Modified Keys:
+
+    -lidar2img
+        --extrinsic
+
+    Added Keys:
+
+    -img (list): The loaded origin image which will be used in the
+        nerfdet detection branch.
+    -denorm_images (list): The normalized image which will be used
+        in the nerfdet detection branch.
+    -depth (list): The origin depth image which will be used in the
+        nerfdet detection branch.
+
+    -c2w (list): The c2w matrixes which will be used in the nerfdet
+        nerf branch.
+    -camrotc2w (list): The rotation matrixes which will be used in
+        the nerfdet nerf branch.
+    -lightpos (list): The transform parameters of the camera which
+        will be used in the nerfdet nerf branch.
+    -pixels (list): Some pixel information which will be used in the
+        nerfdet nerf branch.
+    -raydirs (list): The raydirections which will be used in the
+        nerfdet nerf branch.
+    -gt_images (list): The groundtruth images which will be used in
+        the nerfdet nerf branch.
+    -gt_depths (list): The groundtruth depth images which will be
+        used in the nerfdet nerf branch.
+    -nerf_sizes (list): The list of the groundtruth images which will
+        be used in the nerfdet nerf branch.
+
+    -depth_range (array): The range of the depth.
+    """
+
+    def __init__(self,
+                 transforms: dict,
+                 n_images: int,
+                 mean: tuple = [123.675, 116.28, 103.53],
+                 std: tuple = [58.395, 57.12, 57.375],
+                 margin: int = 10,
+                 depth_range: tuple = [0.5, 5.5],
+                 loading: str = 'random',
+                 nerf_target_views: int = 10,
+                 sample_freq: int = 3):
+        self.transforms = Compose(transforms)
+        self.depth_transforms = Compose([transforms[1], transforms[3]])
+        self.n_images = n_images
+        self.mean = np.array(mean)
+        self.std = np.array(std)
+        self.margin = margin
+        self.depth_range = depth_range
+        self.loading = loading
+        self.sample_freq = sample_freq
+        self.nerf_target_views = nerf_target_views
+
+    def transform(self, results: dict) -> dict:
+        """Nerfdet transform function.
+
+        Args:
+            results (dict): Result dict from loading pipeline
+
+        Returns:
+            dict: Processed nerfdet results.The related information
+            used in detectin branch and nerf branch are sampled
+            and pre-processed.
+        """
+        imgs = []
+        depths = []
+        extrinsics = []
+        c2ws = []
+        camrotc2ws = []
+        lightposes = []
+        pixels = []
+        raydirs = []
+        gt_images = []
+        gt_depths = []
+        denorm_imgs_list = []
+        nerf_sizes = []
+
+        if self.loading == 'random':
+            ids = np.arange(len(results['img_info']))  # 300
+            replace = True if self.n_images > len(ids) else False
+            ids = np.random.choice(
+                ids, self.n_images, replace=replace)  # sample some images
+            if self.nerf_target_views != 0:
+                target_id = np.random.choice(
+                    ids, self.nerf_target_views, replace=False)
+                ids = np.setdiff1d(
+                    ids, target_id
+                )  # make sure the targed_id is different from the id
+                ids = ids.tolist()
+                target_id = target_id.tolist()
+
+        else:
+            ids = np.arange(len(results['img_info']))
+            begin_id = 0
+            ids = np.arange(begin_id,
+                            begin_id + self.n_images * self.sample_freq,
+                            self.sample_freq)
+            if self.nerf_target_views != 0:
+                target_id = ids
+
+        ratio = 0
+        for i in ids:  # det information
+            _results = dict()
+            _results['img_path'] = results['img_info'][i]['filename']
+
+            _results = self.transforms(_results)
+            ori_shape = _results['ori_shape']
+            aft_shape = _results['img_shape']
+            ratio = ori_shape[0] / aft_shape[0]
+            # prepare the depth information
+            from PIL import Image
+            if 'depth_info' in results.keys():
+                if '.npy' in results['depth_info'][i]['filename']:
+                    _results['depth'] = np.load(
+                        results['depth_info'][i]['filename'])
+                else:
+                    _results['depth'] = np.asarray((Image.open(
+                        results['depth_info'][i]['filename']))) / 1000
+                    _results['depth'] = mmcv.imresize(
+                        _results['depth'], (aft_shape[1], aft_shape[0]))
+                depths.append(_results['depth'])
+
+            denorm_img = mmcv.imdenormalize(
+                _results['img'], self.mean, self.std, to_bgr=True).astype(
+                    np.uint8) / 255.0
+            denorm_imgs_list.append(denorm_img)
+            imgs.append(_results['img'])
+            height, width = imgs[0].shape[:2]
+            extrinsics.append(results['lidar2img']['extrinsic'][i])
+
+        # prepare the nerf information
+        if 'ray_info' in results.keys():
+            intrinsics_nerf = results['lidar2img']['intrinsic'].copy()
+            intrinsics_nerf[:2] = intrinsics_nerf[:2] / ratio
+            assert self.nerf_target_views > 0
+            for i in target_id:
+                c2ws.append(results['c2w'][i])
+                camrotc2ws.append(results['camrotc2w'][i])
+                lightposes.append(results['lightpos'][i])
+                px, py = np.meshgrid(
+                    np.arange(self.margin,
+                              width - self.margin).astype(np.float32),
+                    np.arange(self.margin,
+                              height - self.margin).astype(np.float32))
+                pixelcoords = np.stack((px, py),
+                                       axis=-1).astype(np.float32)  # H x W x 2
+                pixels.append(pixelcoords)
+                from .data_augment_utils import get_dtu_raydir
+                raydir = get_dtu_raydir(pixelcoords, intrinsics_nerf,
+                                        results['camrotc2w'][i])
+                raydirs.append(np.reshape(raydir.astype(np.float32), (-1, 3)))
+                # read target images
+                temp_results = dict()
+                temp_results['img_path'] = results['img_info'][i]['filename']
+
+                temp_results_ = self.transforms(temp_results)
+                # denormalize target_images.
+                denorm_imgs = mmcv.imdenormalize(
+                    temp_results_['img'], self.mean, self.std,
+                    to_bgr=True).astype(np.uint8)
+                gt_rgb_shape = denorm_imgs.shape
+
+                gt_image = denorm_imgs[py.astype(np.int32),
+                                       px.astype(np.int32), :]
+                nerf_sizes.append(np.array(gt_image.shape))
+                gt_image = np.reshape(gt_image, (-1, 3))
+                gt_images.append(gt_image / 255.0)
+                if 'depth_info' in results.keys():
+                    if '.npy' in results['depth_info'][i]['filename']:
+                        _results['depth'] = np.load(
+                            results['depth_info'][i]['filename'])
+                    else:
+                        depth_image = Image.open(
+                            results['depth_info'][i]['filename'])
+                        _results['depth'] = np.asarray(depth_image) / 1000
+                        _results['depth'] = mmcv.imresize(
+                            _results['depth'],
+                            (gt_rgb_shape[1], gt_rgb_shape[0]))
+
+                    _results['depth'] = _results['depth']
+                    gt_depth = _results['depth'][py.astype(np.int32),
+                                                 px.astype(np.int32)]
+                    gt_depths.append(gt_depth)
+
+        for key in _results.keys():
+            if key not in ['img', 'img_prefix', 'img_info']:
+                results[key] = _results[key]
+        results['img'] = imgs
+
+        if 'ray_info' in results.keys():
+            results['c2w'] = c2ws
+            results['camrotc2w'] = camrotc2ws
+            results['lightpos'] = lightposes
+            results['pixels'] = pixels
+            results['raydirs'] = raydirs
+            results['gt_images'] = gt_images
+            results['gt_depths'] = gt_depths
+            results['nerf_sizes'] = nerf_sizes
+            results['denorm_images'] = denorm_imgs_list
+            '''
+            Hard code here!!!!!!!!! Should be carefully pick up the value.
+            point-NeRF it also add middle points!!!
+            One important idea here is that we sample more rays
+            in the object bounding box as we already have bounding
+            boxes!!! Take advantage of everything
+            '''
+            results['depth_range'] = np.array([self.depth_range])
+
+        if len(depths) != 0:
+            results['depth'] = depths
+        results['lidar2img']['extrinsic'] = extrinsics
+        return results
+
+
+@TRANSFORMS.register_module()
+class RandomShiftOrigin(BaseTransform):
+
+    def __init__(self, std):
+        self.std = std
+
+    def transform(self, results):
+        shift = np.random.normal(.0, self.std, 3)
+        results['lidar2img']['origin'] += shift
+        return results

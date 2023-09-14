@@ -5,8 +5,9 @@ import numpy as np
 import torch
 from mmengine.testing import assert_allclose
 
-from mmdet3d.datasets import ScanNetDataset, ScanNetSegDataset
-from mmdet3d.structures import DepthInstance3DBoxes
+from mmdet3d.datasets import (ScanNetDataset, ScanNetMultiViewDataset,
+                              ScanNetSegDataset)
+from mmdet3d.structures import DepthInstance3DBoxes, Det3DDataSample
 from mmdet3d.utils import register_all_modules
 
 
@@ -124,6 +125,55 @@ def _generate_scannet_dataset_config():
     return data_root, ann_file, classes, data_prefix, pipeline, modality
 
 
+def _generate_scannet_multiview_dataset_config():
+    data_root = 'tests/data/scannet'
+    ann_file = data_root + 'scannet_infos_train.pkl'
+    classes = ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
+               'bookshelf', 'picture', 'counter', 'desk', 'curtain',
+               'refrigerator', 'showercurtrain', 'toilet', 'sink', 'bathtub',
+               'garbagebin')
+    input_modality = dict(
+        use_camera=True,
+        use_depth=True,
+        use_lidar=False,
+        use_neuralrecon_depth=False,
+        use_ray=True)
+    img_norm_cfg = dict(
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True)
+    file_client_args = dict(backend='disk')
+    pipeline = [
+        dict(type='LoadAnnotations3D'),
+        dict(
+            type='MultiViewPipeline',
+            n_images=50,
+            transforms=[
+                dict(
+                    type='LoadImageFromFile',
+                    file_client_args=file_client_args),
+                dict(type='Resize', scale=(320, 240), keep_ratio=True),
+                dict(type='Normalize', **img_norm_cfg),
+                dict(type='Pad', size=(240, 320))
+            ],
+            mean=[123.675, 116.28, 103.53],
+            std=[58.395, 57.12, 57.375],
+            margin=10,
+            depth_range=[0.5, 5.5],
+            loading='random',
+            nerf_target_views=10),
+        dict(type='RandomShiftOrigin', std=(.7, .7, .0)),
+        dict(
+            type='Pack3DDetInputs',
+            keys=[
+                'img', 'gt_bboxes_3d', 'gt_labels_3d', 'depth', 'lightpos',
+                'nerf_sizes', 'raydirs', 'gt_images', 'gt_depths',
+                'denorm_images'
+            ])
+    ]
+    return data_root, ann_file, classes, pipeline, input_modality
+
+
 class TestScanNetDataset(unittest.TestCase):
 
     def test_scannet(self):
@@ -227,3 +277,42 @@ class TestScanNetDataset(unittest.TestCase):
         assert torch.allclose(points, expected_points, 1e-2)
         self.assertTrue(
             (pts_semantic_mask.numpy() == expected_pts_semantic_mask).all())
+
+    def test_scannet_multiview(self):
+        data_root, ann_file, classes, pipeline, \
+            modality, = _generate_scannet_multiview_dataset_config()
+        register_all_modules()
+        np.random.seed(2)
+        scannet_multiview_dataset = ScanNetMultiViewDataset(
+            data_root,
+            ann_file,
+            metainfo=dict(classes=classes),
+            pipeline=pipeline,
+            modality=modality,
+            box_type_3d='Depth',
+            filter_empty_gt=True,
+            test_mode=True)
+        n_images = 50
+        nerf_target_views = 10
+        # input_dict = scannet_multiview_dataset.get_data_info(0)
+        data = scannet_multiview_dataset[np.random.randint(
+            len(scannet_multiview_dataset))]
+
+        # assert the keys in the data
+        self.assertIsInstance(data, dict)
+        self.assertIsInstance(data['data_samples'], Det3DDataSample)
+        self.assertIsInstance(data['inputs'], dict)
+        # assert the components in the data_samples
+
+        # assert the input information
+        self.assertEqual(
+            len(data['inputs']['img']), n_images - nerf_target_views)
+        self.assertEqual(
+            len(data['inputs']['denorm_images']), n_images - nerf_target_views)
+        self.assertEqual(
+            len(data['inputs']['depth']), n_images - nerf_target_views)
+
+        self.assertEqual(len(data['inputs']['lightpos']), nerf_target_views)
+        self.assertEqual(len(data['inputs']['nerf_sizes']), nerf_target_views)
+        self.assertEqual(len(data['inputs']['raydirs']), nerf_target_views)
+        print('done')

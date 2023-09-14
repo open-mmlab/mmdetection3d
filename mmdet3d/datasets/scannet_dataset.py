@@ -356,12 +356,12 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
 @DATASETS.register_module()
 class ScanNetMultiViewDataset(Det3DDataset):
     r"""ScanNet Dataset for NeRF-detection Task
-    
+
     This class serves as the API for experiments on the ScanNet Dataset.
-    
+
     Please refer to the `github repo <https://github.com/ScanNet/ScanNet>`_
     for data downloading.
-    
+
     Args:
         data_root (str): Path of dataset root.
         ann_file (str): Path of annotation file.
@@ -390,26 +390,15 @@ class ScanNetMultiViewDataset(Det3DDataset):
         'classes':
         ('cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
          'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
-         'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin'),
-        # the valid ids of segmentation annotations
-        'seg_valid_class_ids':
-        (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39),
-        'seg_all_class_ids':
-        tuple(range(1, 41)),
-        'palette': [(31, 119, 180), (255, 187, 120), (188, 189, 34),
-                    (140, 86, 75), (255, 152, 150), (214, 39, 40),
-                    (197, 176, 213), (148, 103, 189), (196, 156, 148),
-                    (23, 190, 207), (247, 182, 210), (219, 219, 141),
-                    (255, 127, 14), (158, 218, 229), (44, 160, 44),
-                    (112, 128, 144), (227, 119, 194), (82, 84, 163)]
+         'showercurtrain', 'toilet', 'sink', 'bathtub', 'garbagebin')
     }
-    
+
     def __init__(self,
                  data_root: str,
                  ann_file: str,
                  metainfo: Optional[dict] = None,
                  pipeline: List[Union[dict, Callable]] = [],
-                 modality: dict=dict(use_camera=False, use_depth=True),
+                 modality: dict = dict(use_camera=True, use_lidar=False),
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
                  test_mode: bool = False,
@@ -422,139 +411,182 @@ class ScanNetMultiViewDataset(Det3DDataset):
             modality=modality,
             box_type_3d=box_type_3d,
             filter_empty_gt=filter_empty_gt,
-            test_mode=test_mode)
-        
-        assert 'use_camera' in self.modality and \
-               'use_lidar' in self.modality
-        assert self.modality['use_camera'] or self.modality['use_depth']
-        
-    def get_data_info(self, index):
-        """Get data info according to the given index.
-        
+            test_mode=test_mode,
+            **kwargs)
+
+    def parse_data_info(self, info: dict) -> dict:
+        """Process the raw data info.
+
+        Convert all relative path of needed modality data file to
+        the absolute path.
+
         Args:
-            index(int): Index of the sample data to get.
-            
+            info (dict): Raw info dict.
+
         Returns:
-            dict: Data information that will be passed to the data \
-                preprocessing pipelines. It includes the following keys:
-                
-                -depth_info
-                -img_prefix
-                -img_info
-                -lidar2img
-                    --extrinsic
-                    --intrinsic
-                    --origin
-                -c2w
-                -camrotc2w
-                -lightpos
-                -ray_info
-                    --c2w
-                    --camrotc2w
-                    --lightpos
-                -anno_info
-                    --gt_bboxes_3d
-                    --gt_labels_3d
-                    --axis_align_matrix
+            dict: Has `ann_info` in training stage. And
+            all path has been converted to absolute path.
         """
-        import mmengine
         from collections import defaultdict
-        info = mmengine.load(self.ann_file)
         input_dict = defaultdict(list)
-        
+
         if self.modality is not None:
-            if self.modality["use_depth"]:
+            if self.modality['use_depth']:
                 input_dict['depth_info'] = []
-            if self.modality["use_neuralrecon_depth"]:
+            if self.modality['use_neuralrecon_depth']:
                 input_dict['depth_info'] = []
-            if self.modality["use_lidar"]:
-                sample_idx = info['point_cloud']['lidar_idx']
-                pts_filename = osp.join(self.data_root, info['pts_path'])
-                input_dict['pts_filename'] = pts_filename
-                input_dict['sample_idx'] = sample_idx
-                input_dict['file_name'] = pts_filename
-                
-        axis_align_matrix = info['annos']['axis_align_matrix'].astype(np.float32)
-        
+            if self.modality['use_lidar']:
+                # implement lidar processing in the future
+                raise NotImplementedError(
+                    'Please modified '
+                    '`MultiViewPipeline` to support lidar processing')
+
+        axis_align_matrix = np.array(
+            info['axis_align_matrix'], dtype=np.float32)
+
         for i in range(len(info['img_paths'])):
             img_filename = osp.join(self.data_root, info['img_paths'][i])
-            input_dict['img_prefix'].append(None)
+
             input_dict['img_info'].append(dict(filename=img_filename))
-            if "depth_info" in input_dict.keys():
-                if self.modality["use_neuralrecon_depth"]:
-                    input_dict['depth_info'].append(dict(filename=img_filename[:-4]+'.npy'))
+            if 'depth_info' in input_dict.keys():
+                if self.modality['use_neuralrecon_depth']:
+                    input_dict['depth_info'].append(
+                        dict(filename=img_filename[:-4] + '.npy'))
                 else:
-                    input_dict['depth_info'].append(dict(filename=img_filename[:-4]+'.png'))
+                    input_dict['depth_info'].append(
+                        dict(filename=img_filename[:-4] + '.png'))
             # implement lidar_info in input.keys() in the future.
-            extrinsic = np.linalg.inv(axis_align_matrix @ info['extrinsics'][i])
+            extrinsic = np.linalg.inv(
+                axis_align_matrix @ info['extrinsics'][i])
             input_dict['lidar2img'].append(extrinsic.astype(np.float32))
-            if self.modality["use_ray"]:
-                c2w = (axis_align_matrix @ info['extrinsics'][i]).astype(np.float32)
+            if self.modality['use_ray']:
+                c2w = (axis_align_matrix @ info['extrinsics'][i]).astype(
+                    np.float32)
                 input_dict['c2w'].append(c2w)
                 input_dict['camrotc2w'].append(c2w[0:3, 0:3])
                 input_dict['lightpos'].append(c2w[0:3, 3])
-                
+
         input_dict = dict(input_dict)
         origin = np.array([.0, .0, .5])
         input_dict['lidar2img'] = dict(
             extrinsic=input_dict['lidar2img'],
             intrinsic=info['intrinsics'].astype(np.float32),
-            origin=origin.astype(np.float32)
-        )
-        
-        if self.modality["use_ray"]:
+            origin=origin.astype(np.float32))
+
+        if self.modality['use_ray']:
             input_dict['ray_info'] = dict(
-            c2w=input_dict['c2w'],
-            camrotc2w=input_dict['camrotc2w'],
-            lightpos=input_dict['lightpos'],
-        )
+                c2w=input_dict['c2w'],
+                camrotc2w=input_dict['camrotc2w'],
+                lightpos=input_dict['lightpos'],
+            )
 
         if not self.test_mode:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
-            if self.filter_empty_gt and len(annos['gt_bboxes_3d']) == 0:
+            input_dict['ann_info'] = self.parse_ann_info(info)
+            if self.filter_empty_gt and len(
+                    input_dict['ann_info']['gt_bboxes_3d']) == 0:
                 return None
         else:
-            annos = self.get_ann_info(index)
-            input_dict['ann_info'] = annos
+            input_dict['ann_info'] = self.parse_ann_info(info)
+            # input_dict['eval_ann_info'] = input_dict['ann_info']
 
         return input_dict
-    
-    def get_ann_info(self, index: int) -> dict:
-        """Get annotation info according to the given index.
-        
-        Use index to get the corresponding annotations, thus the 
-        evalhook could use this api.
-        
+
+    def get_data_info(self, index):
+        r"""Get data info according to the given index.
+
         Args:
-            index (int): Index of the annotation data to get.
-            
+            index(int): Index of the sample data to get.
+
         Returns:
-            dict: Annotation information.
+            dict: Data information that will be passed to the data \
+                preprocessing pipelines. It includes the following keys:
+
+                -depth_info (str): Filename of depth images.
+                -img_info (str): Filename of the rgb images.
+                -lidar2img
+                    --extrinsic (array | 4x4): The inverse
+                        aligned extrinsic matrix.
+                    --intrinsic (array | 4x4): The intrinsic martrix.
+                    --origin (array | 1x3): [.0, .0, .5].
+                -c2w (array | 4x4): The aligned extrinsic matrix.
+                -camrotc2w (array | 3x3): The rotation matrix.
+                -lightpos (array | 1x3): The transform
+                    parameters of the camera.
+                -ray_info
+                    --c2w (array | 4x4): The same 'c2w' as above.
+                    --camrotc2w (array | 3x3): The same 'camrotc2w' as above.
+                    --lightpos (array | 1x3): The same 'lightpos' as above.
+                -ann_info
+                    --gt_bboxes_3d (DepthInstance3DBoxes):
+                        All the objs in the scene,each obj is
+                        represented by a 6-dim tensor.
+                    --gt_labels_3d (array | 1xn):
+                        All the labels of the obj in the scene.
+                    --axis_align_matrix (array | 4x4): The align matrix.
         """
-        # info = self.get_data_info(index) # need double check
         import mmengine
-        info = mmengine.load(self.ann_file)
-        if info['annos']['gt_num'] != 0:
-            gt_bboxes_3d = info['annos']['gt_boxes_upright_depth'].astype(
-                np.float32)  #k, 6
-            gt_labels_3d = info['annos']['class'].astype(np.long)
-        else:
-            gt_bboxes_3d = np.zeros((0, 6), dtype=np.float32)
-            gt_labels_3d = np.zeros((0,), dtype=np.long)
-            
+        data_list = mmengine.load(self.ann_file)['data_list']
+        info = data_list[index]
+        return self.parse_data_info(info)
+
+    def parse_ann_info(self, info: dict) -> dict:
+        """Process the `instances` in data info to `ann_info`.
+
+        Args:
+            info (dict): Info dict.
+
+        Returns:
+            dict: Processed `ann_info`.
+        """
+        gt_bboxes_3d = np.zeros((len(info['instances']), 6), dtype=np.float32)
+        gt_labels_3d = np.zeros((len(info['instances']), ), dtype=np.int64)
+        if len(info['instances']) != 0:
+            for i in range(len(info['instances'])):
+                gt_bboxes_3d[i] = info['instances'][i]['bbox_3d']
+                gt_labels_3d[i] = info['instances'][i]['bbox_label_3d']
+
         from mmdet3d.structures.bbox_3d import DepthInstance3DBoxes
+
         # to target box structure
         gt_bboxes_3d = DepthInstance3DBoxes(
             gt_bboxes_3d,
             box_dim=gt_bboxes_3d.shape[-1],
             with_yaw=False,
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
-        
-        axis_align_matrix = info['annos']['axis_align_matrix'].astype(np.float32)
+
+        # axis_align_matrix = info['axis_align_matrix'].astype(np.float32)
+        axis_align_matrix = np.array(
+            info['axis_align_matrix'], dtype=np.float32)
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
             axis_align_matrix=axis_align_matrix)
+        # print(anns_results)
+        for label in anns_results['gt_labels_3d']:
+            if label != -1:
+                cat_name = self.metainfo['classes'][label]
+                self.num_ins_per_cat[cat_name] += 1
+
         return anns_results
-        
+
+    # may not need new function
+    def get_ann_info(self, index: int) -> dict:
+        """Get annotation info according to the given index.
+
+        Use index to get the corresponding annotations, thus the
+        evalhook could use this api.
+
+        Args:
+            index (int): Index of the annotation data to get.
+
+        Returns:
+            dict: Annotation information.
+        """
+        data_info = self.get_data_info(index)
+        # test model
+        if 'ann_info' not in data_info:
+            ann_info = self.parse_ann_info(data_info)
+        else:
+            ann_info = data_info['ann_info']
+
+        return ann_info

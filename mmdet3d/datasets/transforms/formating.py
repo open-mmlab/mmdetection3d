@@ -48,6 +48,10 @@ def to_tensor(
 @TRANSFORMS.register_module()
 class Pack3DDetInputs(BaseTransform):
     INPUTS_KEYS = ['points', 'img']
+    NERF_INPUT_KEYS = [
+        'img', 'denorm_images', 'depth', 'lightpos', 'nerf_sizes', 'raydirs'
+    ]
+
     INSTANCEDATA_3D_KEYS = [
         'gt_bboxes_3d', 'gt_labels_3d', 'attr_labels', 'depths', 'centers_2d'
     ]
@@ -55,6 +59,7 @@ class Pack3DDetInputs(BaseTransform):
         'gt_bboxes',
         'gt_bboxes_labels',
     ]
+    NERF_3D_KEYS = ['gt_images', 'gt_depths']
 
     SEG_KEYS = [
         'gt_seg_map', 'pts_instance_mask', 'pts_semantic_mask',
@@ -191,10 +196,16 @@ class Pack3DDetInputs(BaseTransform):
         if 'gt_seg_map' in results:
             results['gt_seg_map'] = results['gt_seg_map'][None, ...]
 
+        if 'gt_images' in results:
+            results['gt_images'] = to_tensor(results['gt_images'])
+        if 'gt_depths' in results:
+            results['gt_depths'] = to_tensor(results['gt_depths'])
+
         data_sample = Det3DDataSample()
         gt_instances_3d = InstanceData()
         gt_instances = InstanceData()
         gt_pts_seg = PointData()
+        gt_nerf_3d = InstanceData()
 
         data_metas = {}
         for key in self.meta_keys:
@@ -223,8 +234,11 @@ class Pack3DDetInputs(BaseTransform):
         inputs = {}
         for key in self.keys:
             if key in results:
-                if key in self.INPUTS_KEYS:
+                # if key in self.INPUTS_KEYS:
+                if key in self.NERF_INPUT_KEYS:
                     inputs[key] = results[key]
+                elif key in self.NERF_3D_KEYS:
+                    gt_nerf_3d[self._remove_prefix(key)] = results[key]
                 elif key in self.INSTANCEDATA_3D_KEYS:
                     gt_instances_3d[self._remove_prefix(key)] = results[key]
                 elif key in self.INSTANCEDATA_2D_KEYS:
@@ -243,6 +257,7 @@ class Pack3DDetInputs(BaseTransform):
         data_sample.gt_instances_3d = gt_instances_3d
         data_sample.gt_instances = gt_instances
         data_sample.gt_pts_seg = gt_pts_seg
+        data_sample.gt_nerf_3d = gt_nerf_3d
         if 'eval_ann_info' in results:
             data_sample.eval_ann_info = results['eval_ann_info']
         else:
