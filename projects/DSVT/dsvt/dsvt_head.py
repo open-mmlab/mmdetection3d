@@ -32,6 +32,11 @@ class DSVTCenterHead(CenterHead):
         self.loss_iou_reg = MODELS.build(
             loss_reg_iou) if loss_reg_iou is not None else None
 
+    def init_weights(self):
+        super().init_weights()
+        for task_head in self.task_heads:
+            task_head.init_weights()
+
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.
 

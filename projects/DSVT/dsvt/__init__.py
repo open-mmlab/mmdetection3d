@@ -1,3 +1,4 @@
+from .disable_aug_hook import DisableAugHook
 from .dsvt import DSVT
 from .dsvt_head import DSVTCenterHead
 from .dsvt_transformer import DSVTMiddleEncoder
@@ -10,5 +11,5 @@ from .utils import DSVTBBoxCoder
 __all__ = [
     'DSVTCenterHead', 'DSVT', 'DSVTMiddleEncoder', 'DynamicPillarVFE3D',
     'PointPillarsScatter3D', 'ResSECOND', 'DSVTBBoxCoder',
-    'DSVTObjectRangeFilter', 'DSVTPointsRangeFilter'
+    'DSVTObjectRangeFilter', 'DSVTPointsRangeFilter', 'DisableAugHook'
 ]

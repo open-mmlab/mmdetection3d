@@ -2,7 +2,7 @@ _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
     imports=['projects.DSVT.dsvt'], allow_failed_imports=False)
 
-# load_from = 'checkpoints/dsvt_init_mm3d.pth'
+# load_from = 'checkpoints/dsvt_init.pth'
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
@@ -143,15 +143,8 @@ train_pipeline = [
         load_dim=6,
         use_dim=5,
         norm_intensity=True,
+        norm_elongation=True,
         backend_args=backend_args),
-    # Add this if using `MultiFrameDeformableDecoderRPN`
-    # dict(
-    #     type='LoadPointsFromMultiSweeps',
-    #     sweeps_num=9,
-    #     load_dim=6,
-    #     use_dim=[0, 1, 2, 3, 4],
-    #     pad_empty_sweeps=True,
-    #     remove_close=True),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
@@ -194,6 +187,7 @@ train_dataloader = dict(
     batch_size=1,
     num_workers=4,
     persistent_workers=True,
+    # sampler=dict(type='DefaultSampler', shuffle=False),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
@@ -211,8 +205,8 @@ train_dataloader = dict(
         load_interval=5,
         backend_args=backend_args))
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -244,6 +238,7 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+# vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 lr = 1e-5
@@ -251,7 +246,7 @@ lr = 1e-5
 # max_norm=10 is better for SECOND
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='Adam', lr=lr, weight_decay=0.05, betas=(0.9, 0.999)),
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.05, betas=(0.9, 0.99)),
     clip_grad=dict(max_norm=10, norm_type=2))
 # learning rate
 param_scheduler = [
@@ -306,4 +301,11 @@ test_cfg = dict()
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=1))
-custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=11)]
+custom_hooks = [
+    dict(
+        type='DisableAugHook',
+        disable_after_epoch=11,
+        disable_aug_list=[
+            'GlobalRotScaleTrans', 'RandomFlip3D', 'ObjectSample'
+        ])
+]
