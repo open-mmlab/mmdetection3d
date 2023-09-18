@@ -1,6 +1,9 @@
 import torch
 
-from . import bev_pool_ext
+try:
+    from . import bev_pool_ext
+except ImportError:
+    print("Failed to import 'bev_pool_ext'. bev_pool will fail")
 
 
 class QuickCumsum(torch.autograd.Function):

@@ -4,7 +4,10 @@ from torch import nn
 from torch.autograd import Function
 from torch.nn.modules.utils import _pair
 
-from .voxel_layer import dynamic_voxelize, hard_voxelize
+try:
+    from .voxel_layer import dynamic_voxelize, hard_voxelize
+except ImportError:
+    print("Failed to import CUDA hard_voxelize.")
 
 
 class _Voxelization(Function):

@@ -2,8 +2,11 @@ import torch
 from torch import nn
 from torch.autograd import Function
 
-from .voxel_layer import (dynamic_point_to_voxel_backward,
-                          dynamic_point_to_voxel_forward)
+try:
+    from .voxel_layer import (dynamic_point_to_voxel_backward,
+                              dynamic_point_to_voxel_forward)
+except ImportError:
+    print("Failed to import CUDA dynamic_point_to_voxel.")
 
 
 class _dynamic_scatter(Function):
