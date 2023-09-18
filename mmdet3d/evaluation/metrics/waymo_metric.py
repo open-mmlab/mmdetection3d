@@ -24,8 +24,6 @@ class WaymoMetric(KittiMetric):
     Args:
         ann_file (str): The path of the annotation file in kitti format.
         waymo_bin_file (str): The path of the annotation file in waymo format.
-        data_root (str): Path of dataset root. Used for storing waymo
-            evaluation programs.
         split (str): The split of the evaluation set. Defaults to 'training'.
         metric (str or List[str]): Metrics to be evaluated. Defaults to 'mAP'.
         pcd_limit_range (List[float]): The range of point cloud used to filter
@@ -69,10 +67,6 @@ class WaymoMetric(KittiMetric):
             'gpu'. Defaults to 'cpu'.
         backend_args (dict, optional): Arguments to instantiate the
             corresponding backend. Defaults to None.
-        idx2metainfo (str, optional): The file path of the metainfo in waymo.
-            It stores the mapping from sample_idx to metainfo. The metainfo
-            must contain the keys: 'idx2contextname' and 'idx2timestamp'.
-            Defaults to None.
     """
     num_cams = 5
 

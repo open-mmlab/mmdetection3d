@@ -164,7 +164,6 @@ val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
     convert_kitti_format=False,
     backend_args=backend_args)
 test_evaluator = val_evaluator

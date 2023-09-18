@@ -89,7 +89,10 @@ test_pipeline = [
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -100,7 +103,10 @@ eval_pipeline = [
         load_dim=6,
         use_dim=5,
         backend_args=backend_args),
-    dict(type='Pack3DDetInputs', keys=['points']),
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp']),
 ]
 
 train_dataloader = dict(
@@ -167,7 +173,6 @@ val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
     backend_args=backend_args,
     convert_kitti_format=False)
 test_evaluator = val_evaluator
