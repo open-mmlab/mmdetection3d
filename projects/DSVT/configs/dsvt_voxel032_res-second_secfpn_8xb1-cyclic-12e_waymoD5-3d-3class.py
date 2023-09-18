@@ -133,6 +133,8 @@ db_sampler = dict(
         coord_type='LIDAR',
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4],
+        norm_intensity=True,
+        norm_elongation=True,
         backend_args=backend_args),
     backend_args=backend_args)
 
@@ -192,7 +194,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_infos_train.pkl',
+        ann_file='waymo_wo_cam_ins_infos_train.pkl',
         data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         pipeline=train_pipeline,
         modality=input_modality,
@@ -214,7 +216,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
-        ann_file='waymo_infos_val.pkl',
+        ann_file='waymo_wo_cam_ins_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,

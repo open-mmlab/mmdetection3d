@@ -9,7 +9,7 @@ from torch import Tensor
 from mmdet3d.models.task_modules import CenterPointBBoxCoder
 from mmdet3d.registry import MODELS, TASK_UTILS
 from .ops.ingroup_inds.ingroup_inds_op import ingroup_inds
-
+from mmengine import print_log
 get_inner_win_inds_cuda = ingroup_inds
 
 
@@ -267,7 +267,7 @@ class DSVTBBoxCoder(CenterPointBBoxCoder):
             thresh_mask = final_scores > self.score_threshold
 
         if self.post_center_range is not None:
-            self.post_center_range = torch.tensor(
+            self.post_center_range = torch.as_tensor(
                 self.post_center_range, device=heat.device)
             mask = (final_box_preds[..., :3] >=
                     self.post_center_range[:3]).all(2)

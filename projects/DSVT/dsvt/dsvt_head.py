@@ -12,6 +12,10 @@ from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
                                   gaussian_radius)
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
+from mmengine.model import kaiming_init
+import math
+from torch.nn.init import constant_
+import torch.nn as nn
 
 
 @MODELS.register_module()
@@ -33,9 +37,22 @@ class DSVTCenterHead(CenterHead):
             loss_reg_iou) if loss_reg_iou is not None else None
 
     def init_weights(self):
-        super().init_weights()
-        for task_head in self.task_heads:
-            task_head.init_weights()
+        kaiming_init(
+            self.shared_conv.conv,
+            a=math.sqrt(5),
+            mode='fan_in',
+            nonlinearity='leaky_relu',
+            distribution='uniform')
+        for head in self.task_heads[0].heads:
+            if head == 'heatmap':
+                constant_(self.task_heads[0].__getattr__(head)[-1].bias,
+                          self.task_heads[0].init_bias)
+            else:
+                for m in self.task_heads[0].__getattr__(head).modules():
+                    if isinstance(m, nn.Conv2d):
+                        kaiming_init(
+                            m, mode='fan_in', nonlinearity='leaky_relu')
+
 
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.
