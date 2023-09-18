@@ -36,7 +36,7 @@ class WaymoMetric(KittiMetric):
         prefix (str, optional): The prefix that will be added in the metric
             names to disambiguate homonymous metrics of different evaluators.
             If prefix is not provided in the argument, self.default_prefix will
-            be used instead. Defaults to None.
+            be used instead. Defaults to 'Waymo metric'.
         format_only (bool): Format the output results without perform
             evaluation. It is useful when you want to format the result to a
             specific format and submit it to the test server.
@@ -83,7 +83,7 @@ class WaymoMetric(KittiMetric):
                  metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
                  convert_kitti_format: bool = True,
-                 prefix: Optional[str] = None,
+                 prefix: Optional[str] = 'Waymo metric',
                  format_only: bool = False,
                  pklfile_prefix: Optional[str] = None,
                  submission_prefix: Optional[str] = None,

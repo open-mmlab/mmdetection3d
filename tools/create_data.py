@@ -246,7 +246,7 @@ def waymo_data_prep(root_path,
         'WaymoDataset',
         out_dir,
         info_prefix,
-        f'{info_prefix}_wo_cam_ins_infos_train.pkl',
+        f'{info_prefix}_infos_train.pkl',
         relative_path=False,
         with_mask=False,
         num_worker=workers).create()

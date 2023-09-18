@@ -407,6 +407,11 @@ class Waymo2KITTI(object):
         return ret
 
     def create_waymo_info_file(self, frame, file_idx, frame_idx, file_infos):
+        """Generate waymo train/val/test infos.
+
+        For more details about infos, please refer to:
+        https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html
+        """  # noqa: E501
         frame_infos = dict()
 
         # Gather frame infos
@@ -512,6 +517,11 @@ class Waymo2KITTI(object):
         file_infos.append(frame_infos)
 
     def gather_instance_info(self, frame, cam_sync=False):
+        """Generate instances and cam_sync_instances infos.
+
+        For more details about infos, please refer to:
+        https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html
+        """  # noqa: E501
         id_to_bbox = dict()
         id_to_name = dict()
         for labels in frame.projected_lidar_labels:
@@ -597,7 +607,11 @@ class Waymo2KITTI(object):
         return instance_infos
 
     def gather_cam_instance_info(self, instances: dict, images: dict):
+        """Generate cam_instances infos.
 
+        For more details about infos, please refer to:
+        https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html
+        """  # noqa: E501
         cam_instances = dict()
         for cam_type in self.camera_types:
             lidar2cam = np.array(images[cam_type]['lidar2cam'])
@@ -701,8 +715,8 @@ def create_ImageSets_img_ids(root_dir, splits):
     open(save_dir + 'train.txt', 'w').writelines(idx_all[0])
     open(save_dir + 'val.txt', 'w').writelines(idx_all[1])
     open(save_dir + 'trainval.txt', 'w').writelines(idx_all[0] + idx_all[1])
-    if idx_all[2]:
+    if len(idx_all) >= 3:
         open(save_dir + 'test.txt', 'w').writelines(idx_all[2])
-    if idx_all[3]:
+    if len(idx_all) >= 4:
         open(save_dir + 'test_cam_only.txt', 'w').writelines(idx_all[3])
     print('created txt files indicating what to collect in ', splits)
