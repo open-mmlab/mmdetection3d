@@ -153,7 +153,9 @@ Intensity is not used by default due to its yielded noise when concatenating the
 
 ### Vision-Based Methods
 
-A typical training pipeline of image-based 3D detection on nuScenes is as below.
+#### Monocular-based
+
+In the NuScenes dataset, for multi-view images, this paradigm usually involves detecting and outputting 3D object detection results separately for each image, and then obtaining the final detection results through post-processing (such as NMS). Essentially, it directly extends monocular 3D detection to multi-view settings. A typical training pipeline of image-based monocular 3D detection on nuScenes is as below.
 
 ```python
 train_pipeline = [
@@ -183,6 +185,68 @@ It follows the general pipeline of 2D detection while differs in some details:
 - It needs to load 3D annotations.
 - Some data augmentation techniques need to be adjusted, such as `RandomFlip3D`.
   Currently we do not support more augmentation methods, because how to transfer and apply other techniques is still under explored.
+
+#### BEV-based
+
+BEV, Bird's-Eye-View, is another popular 3D detection paradigm. It directly takes multi-view images to perform 3D detection, for nuScenes, they are `CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT` and `CAM_BACK_RIGHT`. A basic training pipeline of bev-based 3D detection on nuScenes is as below.
+
+```python
+class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
+point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+train_transforms = [
+    dict(type='PhotoMetricDistortion3D'),
+    dict(
+        type='RandomResize3D',
+        scale=(1600, 900),
+        ratio_range=(1., 1.),
+        keep_ratio=True)
+]
+train_pipeline = [
+    dict(type='LoadMultiViewImageFromFiles',
+         to_float32=True,
+         num_views=6, ),
+    dict(type='LoadAnnotations3D',
+         with_bbox_3d=True,
+         with_label_3d=True,
+         with_attr_label=False),
+    # optional, data augmentation
+    dict(type='MultiViewWrapper', transforms=train_transforms),
+    # optional, filter object within specific point cloud range
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    # optional, filter object of specific classes
+    dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d'])
+]
+```
+
+To load multiple view of images, a little modification should be made to the dataset.
+
+```python
+data_prefix = dict(
+    CAM_FRONT='samples/CAM_FRONT',
+    CAM_FRONT_LEFT='samples/CAM_FRONT_LEFT',
+    CAM_FRONT_RIGHT='samples/CAM_FRONT_RIGHT',
+    CAM_BACK='samples/CAM_BACK',
+    CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
+    CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
+)
+train_dataloader = dict(
+    batch_size=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
+        type="NuScenesDataset",
+        data_root="./data/nuScenes",
+        ann_file="nuscenes_infos_train.pkl",
+        data_prefix=data_prefix,
+        modality=dict(use_camera=True, use_lidar=False, ),
+        pipeline=train_pipeline,
+        test_mode=False, )
+)
+```
 
 ## Evaluation
 
