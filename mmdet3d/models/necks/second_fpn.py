@@ -22,7 +22,7 @@ class SECONDFPN(BaseModule):
         conv_cfg (dict): Config dict of conv layers.
         use_conv_for_no_stride (bool): Whether to use conv when stride is 1.
         init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
-            optional): Initialization config dict. Defaults to 
+            optional): Initialization config dict. Defaults to
             [dict(type='Kaiming', layer='ConvTranspose2d'),
              dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)].
     """

@@ -1,7 +1,5 @@
 # modified from https://github.com/Haiyang-W/DSVT
-
-import warnings
-from typing import Optional, Sequence, Tuple
+from typing import Sequence, Tuple
 
 from mmengine.model import BaseModule
 from torch import Tensor

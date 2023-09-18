@@ -1,10 +1,14 @@
+import math
 from typing import Dict, List, Tuple
 
 import torch
+import torch.nn as nn
 from mmcv.ops import boxes_iou3d
 from mmdet.models.utils import multi_apply
+from mmengine.model import kaiming_init
 from mmengine.structures import InstanceData
 from torch import Tensor
+from torch.nn.init import constant_
 
 from mmdet3d.models import CenterHead
 from mmdet3d.models.layers import circle_nms, nms_bev
@@ -12,10 +16,6 @@ from mmdet3d.models.utils import (clip_sigmoid, draw_heatmap_gaussian,
                                   gaussian_radius)
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample, xywhr2xyxyr
-from mmengine.model import kaiming_init
-import math
-from torch.nn.init import constant_
-import torch.nn as nn
 
 
 @MODELS.register_module()
@@ -52,7 +52,6 @@ class DSVTCenterHead(CenterHead):
                     if isinstance(m, nn.Conv2d):
                         kaiming_init(
                             m, mode='fan_in', nonlinearity='leaky_relu')
-
 
     def forward_single(self, x: Tensor) -> dict:
         """Forward function for CenterPoint.

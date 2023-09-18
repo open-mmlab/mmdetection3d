@@ -9,7 +9,7 @@ from torch import Tensor
 from mmdet3d.models.task_modules import CenterPointBBoxCoder
 from mmdet3d.registry import MODELS, TASK_UTILS
 from .ops.ingroup_inds.ingroup_inds_op import ingroup_inds
-from mmengine import print_log
+
 get_inner_win_inds_cuda = ingroup_inds
 
 

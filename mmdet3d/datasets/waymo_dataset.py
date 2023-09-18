@@ -2,7 +2,6 @@
 import os.path as osp
 from typing import Callable, List, Union
 
-import mmengine
 import numpy as np
 from mmengine import print_log
 from mmengine.fileio import load
