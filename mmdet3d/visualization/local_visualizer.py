@@ -273,7 +273,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         Args:
             bboxes_3d (:obj:`BaseInstance3DBoxes`): 3D bbox
                 (x, y, z, x_size, y_size, z_size, yaw) to visualize.
-            bbox_colors Tuple[float] or List[Tuple[float]]:
+            bbox_colors (Tuple[float] | List[Tuple[float]]):
                 The color of 3D bboxes.
                 Defaults to (0, 1, 0).
             points_in_box_color (Tuple[float]): The color of points inside 3D
