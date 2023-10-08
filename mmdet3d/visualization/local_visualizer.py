@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import logging
 import math
+import os
 import sys
 import time
 from typing import List, Optional, Sequence, Tuple, Union
@@ -176,8 +178,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         o3d_vis.register_key_action_callback(glfw_key_space,
                                              self.space_action_callback)
         o3d_vis.register_key_callback(glfw_key_right, self.right_callback)
-        o3d_vis.create_window()
-        self.view_control = o3d_vis.get_view_control()
+        if os.environ.get('DISPLAY', None) is not None:
+            o3d_vis.create_window()
+            print_log('No display device found', level=logging.WARNING)
+            self.view_control = o3d_vis.get_view_control()
         return o3d_vis
 
     @master_only

@@ -4,11 +4,14 @@ from typing import Dict, List, Optional, Sequence, Union
 
 import mmengine
 import numpy as np
+import torch
 from mmengine.dataset import Compose
 from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
 from mmdet3d.registry import INFERENCERS
+from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
+                                Det3DDataSample, LiDARInstance3DBoxes)
 from mmdet3d.utils import ConfigType
 from .base_3d_inferencer import Base3DInferencer
 
@@ -42,16 +45,6 @@ class LidarDet3DInferencer(Base3DInferencer):
         palette (str): Color palette used for visualization. The order of
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
-
-    preprocess_kwargs: set = set()
-    forward_kwargs: set = set()
-    visualize_kwargs: set = {
-        'return_vis', 'show', 'wait_time', 'draw_pred', 'pred_score_thr',
-        'img_out_dir'
-    }
-    postprocess_kwargs: set = {
-        'print_result', 'pred_out_file', 'return_datasample'
-    }
 
     def __init__(self,
                  model: Union[ModelType, str, None] = None,
@@ -113,9 +106,10 @@ class LidarDet3DInferencer(Base3DInferencer):
                   preds: PredType,
                   return_vis: bool = False,
                   show: bool = False,
-                  wait_time: int = 0,
+                  wait_time: int = -1,
                   draw_pred: bool = True,
                   pred_score_thr: float = 0.3,
+                  no_save_vis: bool = False,
                   img_out_dir: str = '') -> Union[List[np.ndarray], None]:
         """Visualize predictions.
 
@@ -131,6 +125,8 @@ class LidarDet3DInferencer(Base3DInferencer):
                 Defaults to True.
             pred_score_thr (float): Minimum score of bboxes to draw.
                 Defaults to 0.3.
+            no_save_vis (bool): Whether to force not to save prediction
+                vis results. Defaults to False.
             img_out_dir (str): Output directory of visualization results.
                 If left as empty, no file will be saved. Defaults to ''.
 
@@ -138,8 +134,10 @@ class LidarDet3DInferencer(Base3DInferencer):
             List[np.ndarray] or None: Returns visualization results only if
             applicable.
         """
-        if self.visualizer is None or (not show and img_out_dir == ''
-                                       and not return_vis):
+        if no_save_vis is True:
+            img_out_dir = ''
+
+        if not show and img_out_dir == '' and not return_vis:
             return None
 
         if getattr(self, 'visualizer') is None:
@@ -156,17 +154,20 @@ class LidarDet3DInferencer(Base3DInferencer):
                 points = points.reshape(-1, self.load_dim)
                 points = points[:, self.use_dim]
                 pc_name = osp.basename(single_input).split('.bin')[0]
-                pc_name = f'{pc_name}.png'
+                pc_name = f'vis_lidar/{pc_name}.png'
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
                 pc_num = str(self.num_visualized_frames).zfill(8)
-                pc_name = f'pc_{pc_num}.png'
+                pc_name = f'vis_lidar/{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
                                  f'{type(single_input)}')
 
-            o3d_save_path = osp.join(img_out_dir, pc_name) \
-                if img_out_dir != '' else None
+            if img_out_dir != '' and show:
+                o3d_save_path = osp.join(img_out_dir, pc_name)
+                mmengine.mkdir_or_exist(osp.dirname(o3d_save_path))
+            else:
+                o3d_save_path = None
 
             data_input = dict(points=points)
             self.visualizer.add_datasample(
@@ -185,3 +186,53 @@ class LidarDet3DInferencer(Base3DInferencer):
             self.num_visualized_frames += 1
 
         return results
+
+    def visualize_preds_fromfile(self, inputs: InputsType, preds: PredType,
+                                 **kwargs) -> Union[List[np.ndarray], None]:
+        """Visualize predictions from `*.json` files.
+
+        Args:
+            inputs (InputsType): Inputs for the inferencer.
+            preds (PredType): Predictions of the model.
+            return_vis (bool): Whether to return the visualization result.
+                Defaults to False.
+            show (bool): Whether to display the image in a popup window.
+                Defaults to False.
+            wait_time (float): The interval of show (s). Defaults to 0.
+            draw_pred (bool): Whether to draw predicted bounding boxes.
+                Defaults to True.
+            pred_score_thr (float): Minimum score of bboxes to draw.
+                Defaults to 0.3.
+            no_save_vis (bool): Whether to force not to save prediction
+                vis results. Defaults to False.
+            img_out_dir (str): Output directory of visualization results.
+                If left as empty, no file will be saved. Defaults to ''.
+
+        Returns:
+            List[np.ndarray] or None: Returns visualization results only if
+            applicable.
+        """
+        data_samples = []
+        for pred in preds:
+            pred = mmengine.load(pred)
+            data_sample = Det3DDataSample()
+            data_sample.pred_instances_3d = InstanceData()
+
+            data_sample.pred_instances_3d.labels_3d = torch.tensor(
+                pred['labels_3d'])
+            data_sample.pred_instances_3d.scores_3d = torch.tensor(
+                pred['scores_3d'])
+            if pred['box_type_3d'] == 'LiDAR':
+                data_sample.pred_instances_3d.bboxes_3d = \
+                    LiDARInstance3DBoxes(pred['bboxes_3d'])
+            elif pred['box_type_3d'] == 'Camera':
+                data_sample.pred_instances_3d.bboxes_3d = \
+                    CameraInstance3DBoxes(pred['bboxes_3d'])
+            elif pred['box_type_3d'] == 'Depth':
+                data_sample.pred_instances_3d.bboxes_3d = \
+                    DepthInstance3DBoxes(pred['bboxes_3d'])
+            else:
+                raise ValueError('Unsupported box type: '
+                                 f'{pred["box_type_3d"]}')
+            data_samples.append(data_sample)
+        return self.visualize(inputs=inputs, preds=data_samples, **kwargs)
