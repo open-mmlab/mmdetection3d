@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 from mmengine.logging import print_log
 
-from mmdet3d.apis import LidarDet3DInferencer
+from mmdet3d.apis import LidarSeg3DInferencer
 
 
 def parse_args():
@@ -15,11 +15,6 @@ def parse_args():
     parser.add_argument('weights', help='Checkpoint file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
-    parser.add_argument(
-        '--pred-score-thr',
-        type=float,
-        default=0.3,
-        help='bbox score threshold')
     parser.add_argument(
         '--out-dir',
         type=str,
@@ -76,7 +71,7 @@ def main():
     # TODO: Support inference of point cloud numpy file.
     init_args, call_args = parse_args()
 
-    inferencer = LidarDet3DInferencer(**init_args)
+    inferencer = LidarSeg3DInferencer(**init_args)
     inferencer(**call_args)
 
     if call_args['out_dir'] != '' and not (call_args['no_save_vis']

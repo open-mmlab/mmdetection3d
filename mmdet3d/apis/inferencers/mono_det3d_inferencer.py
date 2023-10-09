@@ -44,16 +44,6 @@ class MonoDet3DInferencer(Base3DInferencer):
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
 
-    preprocess_kwargs: set = set()
-    forward_kwargs: set = set()
-    visualize_kwargs: set = {
-        'return_vis', 'show', 'wait_time', 'draw_pred', 'pred_score_thr',
-        'img_out_dir'
-    }
-    postprocess_kwargs: set = {
-        'print_result', 'pred_out_file', 'return_datasample'
-    }
-
     def __init__(self,
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
@@ -70,7 +60,7 @@ class MonoDet3DInferencer(Base3DInferencer):
             scope=scope,
             palette=palette)
 
-    def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
+    def _inputs_to_list(self, inputs: Union[dict, list], **kwargs) -> list:
         """Preprocess the inputs to a list.
 
         Preprocess inputs to a list according to its type:
@@ -88,7 +78,7 @@ class MonoDet3DInferencer(Base3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='img')
+        return super()._inputs_to_list(inputs, modality_key='img', **kwargs)
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
@@ -110,7 +100,9 @@ class MonoDet3DInferencer(Base3DInferencer):
                   wait_time: int = 0,
                   draw_pred: bool = True,
                   pred_score_thr: float = 0.3,
-                  img_out_dir: str = '') -> Union[List[np.ndarray], None]:
+                  no_save_vis: bool = False,
+                  img_out_dir: str = '',
+                  cam_type_dir: str = 'CAM2') -> Union[List[np.ndarray], None]:
         """Visualize predictions.
 
         Args:
@@ -132,8 +124,10 @@ class MonoDet3DInferencer(Base3DInferencer):
             List[np.ndarray] or None: Returns visualization results only if
             applicable.
         """
-        if self.visualizer is None or (not show and img_out_dir == ''
-                                       and not return_vis):
+        if no_save_vis is True:
+            img_out_dir = ''
+
+        if not show and img_out_dir == '' and not return_vis:
             return None
 
         if getattr(self, 'visualizer') is None:
@@ -156,8 +150,8 @@ class MonoDet3DInferencer(Base3DInferencer):
                 raise ValueError('Unsupported input type: '
                                  f"{type(single_input['img'])}")
 
-            out_file = osp.join(img_out_dir, img_name) if img_out_dir != '' \
-                else None
+            out_file = osp.join(img_out_dir, 'vis_camera', cam_type_dir,
+                                img_name) if img_out_dir != '' else None
 
             data_input = dict(img=img)
             self.visualizer.add_datasample(

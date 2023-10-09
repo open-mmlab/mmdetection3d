@@ -5,16 +5,22 @@ from argparse import ArgumentParser
 
 from mmengine.logging import print_log
 
-from mmdet3d.apis import LidarDet3DInferencer
+from mmdet3d.apis import MonoDet3DInferencer
 
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('pcd', help='Point cloud file')
+    parser.add_argument('img', help='Image file')
+    parser.add_argument('infos', help='Infos file with annotations')
     parser.add_argument('model', help='Config file')
     parser.add_argument('weights', help='Checkpoint file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
+    parser.add_argument(
+        '--cam-type',
+        type=str,
+        default='CAM_BACK',
+        help='choose camera type to inference')
     parser.add_argument(
         '--pred-score-thr',
         type=float,
@@ -49,7 +55,9 @@ def parse_args():
         help='Whether to print the results.')
     call_args = vars(parser.parse_args())
 
-    call_args['inputs'] = dict(points=call_args.pop('pcd'))
+    call_args['inputs'] = dict(
+        img=call_args.pop('img'), infos=call_args.pop('infos'))
+    call_args.pop('cam_type')
 
     if call_args['no_save_vis'] and call_args['no_save_pred']:
         call_args['out_dir'] = ''
@@ -76,7 +84,7 @@ def main():
     # TODO: Support inference of point cloud numpy file.
     init_args, call_args = parse_args()
 
-    inferencer = LidarDet3DInferencer(**init_args)
+    inferencer = MonoDet3DInferencer(**init_args)
     inferencer(**call_args)
 
     if call_args['out_dir'] != '' and not (call_args['no_save_vis']

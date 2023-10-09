@@ -4,6 +4,7 @@ import os.path as osp
 from copy import deepcopy
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
+import mmengine
 import numpy as np
 import torch.nn as nn
 from mmengine import dump, print_log
@@ -50,11 +51,11 @@ class Base3DInferencer(BaseInferencer):
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
 
-    preprocess_kwargs: set = set()
+    preprocess_kwargs: set = {'cam_type'}
     forward_kwargs: set = set()
     visualize_kwargs: set = {
         'return_vis', 'show', 'wait_time', 'draw_pred', 'pred_score_thr',
-        'img_out_dir', 'no_save_vis'
+        'img_out_dir', 'no_save_vis', 'cam_type_dir'
     }
     postprocess_kwargs: set = {
         'print_result', 'pred_out_dir', 'return_datasample', 'no_save_pred'
@@ -131,10 +132,10 @@ class Base3DInferencer(BaseInferencer):
         model.eval()
         return model
 
-    def _inputs_to_list(
-            self,
-            inputs: Union[dict, list],
-            modality_key: Union[str, List[str]] = 'points') -> list:
+    def _inputs_to_list(self,
+                        inputs: Union[dict, list],
+                        modality_key: Union[str, List[str]] = 'points',
+                        cam_type='CAM2') -> list:
         """Preprocess the inputs to a list.
 
         Preprocess inputs to a list according to its type:
@@ -158,6 +159,11 @@ class Base3DInferencer(BaseInferencer):
             modality_key = [modality_key]
         assert set(modality_key).issubset({'points', 'img'})
 
+        if 'infos' in inputs:
+            infos = inputs.pop('infos')
+        else:
+            infos = None
+
         for key in modality_key:
             if isinstance(inputs, dict) and isinstance(inputs[key], str):
                 img = inputs[key]
@@ -173,6 +179,31 @@ class Base3DInferencer(BaseInferencer):
 
         if not isinstance(inputs, (list, tuple)):
             inputs = [inputs]
+
+        # get cam2img, lidar2cam and lidar2img from infos
+        if infos is not None:
+            info_list = mmengine.load(infos)['data_list']
+            assert len(info_list) == len(inputs)
+            for index, input in enumerate(inputs):
+                data_info = info_list[index]
+                img_path = data_info['images'][cam_type]['img_path']
+                if osp.basename(img_path) != osp.basename(input['img']):
+                    raise ValueError(
+                        f'the info file of {img_path} is not provided.')
+                cam2img = np.asarray(
+                    data_info['images'][cam_type]['cam2img'], dtype=np.float32)
+                lidar2cam = np.asarray(
+                    data_info['images'][cam_type]['lidar2cam'],
+                    dtype=np.float32)
+                if 'lidar2img' in data_info['images'][cam_type]:
+                    lidar2img = np.asarray(
+                        data_info['images'][cam_type]['lidar2img'],
+                        dtype=np.float32)
+                else:
+                    lidar2img = cam2img @ lidar2cam
+                input['cam2img'] = cam2img
+                input['lidar2cam'] = lidar2cam
+                input['lidar2img'] = lidar2img
 
         return list(inputs)
 
@@ -193,12 +224,14 @@ class Base3DInferencer(BaseInferencer):
 
     def _dispatch_kwargs(self,
                          out_dir: str = '',
+                         cam_type: str = '',
                          **kwargs) -> Tuple[Dict, Dict, Dict, Dict]:
         """Dispatch kwargs to preprocess(), forward(), visualize() and
         postprocess() according to the actual demands.
 
         Args:
             out_dir (str): Dir to save the inference results.
+            cam_type (str): Camera type. Defaults to 'CAM2'.
             **kwargs (dict): Key words arguments passed to :meth:`preprocess`,
                 :meth:`forward`, :meth:`visualize` and :meth:`postprocess`.
                 Each key in kwargs should be in the corresponding set of
@@ -211,6 +244,8 @@ class Base3DInferencer(BaseInferencer):
         """
         kwargs['img_out_dir'] = out_dir
         kwargs['pred_out_dir'] = out_dir
+        if cam_type != '':
+            kwargs['cam_type_dir'] = cam_type
         return super()._dispatch_kwargs(**kwargs)
 
     def __call__(self,
@@ -243,7 +278,8 @@ class Base3DInferencer(BaseInferencer):
             postprocess_kwargs,
         ) = self._dispatch_kwargs(**kwargs)
 
-        ori_inputs = self._inputs_to_list(inputs)
+        cam_type = preprocess_kwargs.pop('cam_type', 'CAM2')
+        ori_inputs = self._inputs_to_list(inputs, cam_type=cam_type)
         inputs = self.preprocess(
             ori_inputs, batch_size=batch_size, **preprocess_kwargs)
         preds = []
@@ -374,6 +410,11 @@ class Base3DInferencer(BaseInferencer):
                 lidar_path = osp.splitext(lidar_path)[0]
                 out_json_path = osp.join(pred_out_dir, 'preds',
                                          lidar_path + '.json')
+            elif 'img_path' in data_sample:
+                img_path = osp.basename(data_sample.img_path)
+                img_path = osp.splitext(img_path)[0]
+                out_json_path = osp.join(pred_out_dir, 'preds',
+                                         img_path + '.json')
             else:
                 out_json_path = osp.join(
                     pred_out_dir, 'preds',

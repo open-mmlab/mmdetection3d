@@ -62,7 +62,7 @@ class LidarDet3DInferencer(Base3DInferencer):
             scope=scope,
             palette=palette)
 
-    def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
+    def _inputs_to_list(self, inputs: Union[dict, list], **kwargs) -> list:
         """Preprocess the inputs to a list.
 
         Preprocess inputs to a list according to its type:
@@ -80,7 +80,7 @@ class LidarDet3DInferencer(Base3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='points')
+        return super()._inputs_to_list(inputs, modality_key='points', **kwargs)
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
@@ -154,17 +154,17 @@ class LidarDet3DInferencer(Base3DInferencer):
                 points = points.reshape(-1, self.load_dim)
                 points = points[:, self.use_dim]
                 pc_name = osp.basename(single_input).split('.bin')[0]
-                pc_name = f'vis_lidar/{pc_name}.png'
+                pc_name = f'{pc_name}.png'
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
                 pc_num = str(self.num_visualized_frames).zfill(8)
-                pc_name = f'vis_lidar/{pc_num}.png'
+                pc_name = f'{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
                                  f'{type(single_input)}')
 
             if img_out_dir != '' and show:
-                o3d_save_path = osp.join(img_out_dir, pc_name)
+                o3d_save_path = osp.join(img_out_dir, 'vis_lidar', pc_name)
                 mmengine.mkdir_or_exist(osp.dirname(o3d_save_path))
             else:
                 o3d_save_path = None
