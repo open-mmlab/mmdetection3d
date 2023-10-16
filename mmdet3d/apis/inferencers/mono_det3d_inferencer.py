@@ -108,8 +108,8 @@ class MonoDet3DInferencer(Base3DInferencer):
             for index, input in enumerate(inputs):
                 data_info = info_list[index]
                 img_path = data_info['images'][cam_type]['img_path']
-                if osp.isfile(input['img']) and osp.basename(
-                        img_path) != osp.basename(input['img']):
+                if isinstance(input['img'], str) and \
+                        osp.basename(img_path) != osp.basename(input['img']):
                     raise ValueError(
                         f'the info file of {img_path} is not provided.')
                 cam2img = np.asarray(
@@ -136,8 +136,8 @@ class MonoDet3DInferencer(Base3DInferencer):
                     'in `.pkl`, when inputs is a list.'
                 data_info = info_list[0]
                 img_path = data_info['images'][cam_type]['img_path']
-                if osp.isfile(input['img']) and osp.basename(
-                        img_path) != osp.basename(input['img']):
+                if isinstance(input['img'], str) and \
+                        osp.basename(img_path) != osp.basename(input['img']):
                     raise ValueError(
                         f'the info file of {img_path} is not provided.')
                 cam2img = np.asarray(
