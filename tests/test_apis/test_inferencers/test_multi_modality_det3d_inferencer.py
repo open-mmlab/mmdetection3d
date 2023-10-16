@@ -44,11 +44,11 @@ class TestMultiModalityDet3DInferencer(TestCase):
     def test_call(self):
         if not torch.cuda.is_available():
             return
-        calib_path = 'tests/data/kitti/training/calib/000000.pkl'
-        points_path = 'tests/data/kitti/training/velodyne/000000.bin'
-        img_path = 'tests/data/kitti/training/image_2/000000.png'
+        infos_path = 'demo/data/kitti/000008.pkl'
+        points_path = 'demo/data/kitti/000008.bin'
+        img_path = 'demo/data/kitti/000008.png'
         # single img & point cloud
-        inputs = dict(points=points_path, img=img_path, calib=calib_path)
+        inputs = dict(points=points_path, img=img_path, infos=infos_path)
         res_path = self.inferencer(inputs, return_vis=True)
 
         # ndarray
@@ -57,7 +57,7 @@ class TestMultiModalityDet3DInferencer(TestCase):
         points = points.reshape(-1, 4)
         points = points[:, :4]
         img = mmcv.imread(inputs['img'])
-        inputs = dict(points=points, img=img, calib=calib_path)
+        inputs = dict(points=points, img=img, infos=infos_path)
         res_ndarray = self.inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
@@ -66,8 +66,8 @@ class TestMultiModalityDet3DInferencer(TestCase):
 
         # multiple imgs & point clouds
         inputs = [
-            dict(points=points_path, img=img_path, calib=calib_path),
-            dict(points=points_path, img=img_path, calib=calib_path)
+            dict(points=points_path, img=img_path, infos=infos_path),
+            dict(points=points_path, img=img_path, infos=infos_path)
         ]
         res_path = self.inferencer(inputs, return_vis=True)
         # list of ndarray
@@ -77,7 +77,7 @@ class TestMultiModalityDet3DInferencer(TestCase):
             points = np.frombuffer(pts_bytes, dtype=np.float32)
             points = points.reshape(-1, 4)
             img = mmcv.imread(p['img'])
-            all_inputs.append(dict(points=points, img=img, calib=p['calib']))
+            all_inputs.append(dict(points=points, img=img, infos=infos_path))
 
         res_ndarray = self.inferencer(all_inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
@@ -89,12 +89,12 @@ class TestMultiModalityDet3DInferencer(TestCase):
         if not torch.cuda.is_available():
             return
         inputs = dict(
-            points='tests/data/kitti/training/velodyne/000000.bin',
-            img='tests/data/kitti/training/image_2/000000.png',
-            calib='tests/data/kitti/training/calib/000000.pkl'),
+            points='demo/data/kitti/000008.bin',
+            img='demo/data/kitti/000008.png',
+            infos='demo/data/kitti/000008.pkl'),
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            self.inferencer(inputs, img_out_dir=tmp_dir)
+            self.inferencer(inputs, out_dir=tmp_dir)
             # TODO: For results of LiDAR-based detection, the saved image only
             # exists when show=True.
             # self.assertTrue(osp.exists(osp.join(tmp_dir, '000000.png')))
@@ -103,18 +103,18 @@ class TestMultiModalityDet3DInferencer(TestCase):
         if not torch.cuda.is_available():
             return
         # return_datasample
-        inputs = dict(
-            points='tests/data/kitti/training/velodyne/000000.bin',
-            img='tests/data/kitti/training/image_2/000000.png',
-            calib='tests/data/kitti/training/calib/000000.pkl')
+        infos_path = 'demo/data/kitti/000008.pkl'
+        points_path = 'demo/data/kitti/000008.bin'
+        img_path = 'demo/data/kitti/000008.png'
+        # single img & point cloud
+        inputs = dict(points=points_path, img=img_path, infos=infos_path)
         res = self.inferencer(inputs, return_datasamples=True)
         self.assertTrue(is_list_of(res['predictions'], Det3DDataSample))
 
-        # pred_out_file
+        # pred_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            pred_out_file = osp.join(tmp_dir, 'tmp.json')
-            res = self.inferencer(
-                inputs, print_result=True, pred_out_file=pred_out_file)
-            dumped_res = mmengine.load(pred_out_file)
-            self.assert_predictions_equal(res['predictions'],
-                                          dumped_res['predictions'])
+            inputs = dict(points=points_path, img=img_path, infos=infos_path)
+            res = self.inferencer(inputs, print_result=True, out_dir=tmp_dir)
+            dumped_res = mmengine.load(
+                osp.join(tmp_dir, 'preds', '000008.json'))
+            self.assertEqual(res['predictions'][0], dumped_res)

@@ -6,6 +6,8 @@ import mmcv
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
+from mmengine.fileio import (get_file_backend, isdir, join_path,
+                             list_dir_or_file)
 from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
@@ -60,7 +62,10 @@ class MonoDet3DInferencer(Base3DInferencer):
             scope=scope,
             palette=palette)
 
-    def _inputs_to_list(self, inputs: Union[dict, list], **kwargs) -> list:
+    def _inputs_to_list(self,
+                        inputs: Union[dict, list],
+                        cam_type='CAM2',
+                        **kwargs) -> list:
         """Preprocess the inputs to a list.
 
         Preprocess inputs to a list according to its type:
@@ -78,7 +83,79 @@ class MonoDet3DInferencer(Base3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='img', **kwargs)
+        if isinstance(inputs, dict):
+            assert 'infos' in inputs
+            infos = inputs.pop('infos')
+
+            if isinstance(inputs['img'], str):
+                img = inputs['img']
+                backend = get_file_backend(img)
+                if hasattr(backend, 'isdir') and isdir(img):
+                    # Backends like HttpsBackend do not implement `isdir`, so
+                    # only those backends that implement `isdir` could accept
+                    # the inputs as a directory
+                    filename_list = list_dir_or_file(img, list_dir=False)
+                    inputs = [{
+                        'img': join_path(img, filename)
+                    } for filename in filename_list]
+
+            if not isinstance(inputs, (list, tuple)):
+                inputs = [inputs]
+
+            # get cam2img, lidar2cam and lidar2img from infos
+            info_list = mmengine.load(infos)['data_list']
+            assert len(info_list) == len(inputs)
+            for index, input in enumerate(inputs):
+                data_info = info_list[index]
+                img_path = data_info['images'][cam_type]['img_path']
+                if osp.isfile(input['img']) and osp.basename(
+                        img_path) != osp.basename(input['img']):
+                    raise ValueError(
+                        f'the info file of {img_path} is not provided.')
+                cam2img = np.asarray(
+                    data_info['images'][cam_type]['cam2img'], dtype=np.float32)
+                lidar2cam = np.asarray(
+                    data_info['images'][cam_type]['lidar2cam'],
+                    dtype=np.float32)
+                if 'lidar2img' in data_info['images'][cam_type]:
+                    lidar2img = np.asarray(
+                        data_info['images'][cam_type]['lidar2img'],
+                        dtype=np.float32)
+                else:
+                    lidar2img = cam2img @ lidar2cam
+                input['cam2img'] = cam2img
+                input['lidar2cam'] = lidar2cam
+                input['lidar2img'] = lidar2img
+        elif isinstance(inputs, (list, tuple)):
+            # get cam2img, lidar2cam and lidar2img from infos
+            for input in inputs:
+                assert 'infos' in input
+                infos = input.pop('infos')
+                info_list = mmengine.load(infos)['data_list']
+                assert len(info_list) == 1, 'Only support single sample info' \
+                    'in `.pkl`, when inputs is a list.'
+                data_info = info_list[0]
+                img_path = data_info['images'][cam_type]['img_path']
+                if osp.isfile(input['img']) and osp.basename(
+                        img_path) != osp.basename(input['img']):
+                    raise ValueError(
+                        f'the info file of {img_path} is not provided.')
+                cam2img = np.asarray(
+                    data_info['images'][cam_type]['cam2img'], dtype=np.float32)
+                lidar2cam = np.asarray(
+                    data_info['images'][cam_type]['lidar2cam'],
+                    dtype=np.float32)
+                if 'lidar2img' in data_info['images'][cam_type]:
+                    lidar2img = np.asarray(
+                        data_info['images'][cam_type]['lidar2img'],
+                        dtype=np.float32)
+                else:
+                    lidar2img = cam2img @ lidar2cam
+                input['cam2img'] = cam2img
+                input['lidar2cam'] = lidar2cam
+                input['lidar2img'] = lidar2img
+
+        return list(inputs)
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""

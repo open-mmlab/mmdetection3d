@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Sequence, Union
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
+from mmengine.fileio import (get_file_backend, isdir, join_path,
+                             list_dir_or_file)
 from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
@@ -77,7 +79,22 @@ class LidarSeg3DInferencer(Base3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='points', **kwargs)
+        if isinstance(inputs, dict) and isinstance(inputs['points'], str):
+            pcd = inputs['points']
+            backend = get_file_backend(pcd)
+            if hasattr(backend, 'isdir') and isdir(pcd):
+                # Backends like HttpsBackend do not implement `isdir`, so
+                # only those backends that implement `isdir` could accept
+                # the inputs as a directory
+                filename_list = list_dir_or_file(pcd, list_dir=False)
+                inputs = [{
+                    'points': join_path(pcd, filename)
+                } for filename in filename_list]
+
+        if not isinstance(inputs, (list, tuple)):
+            inputs = [inputs]
+
+        return list(inputs)
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
