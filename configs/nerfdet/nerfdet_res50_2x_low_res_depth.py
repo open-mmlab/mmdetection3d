@@ -38,8 +38,10 @@ model = dict(
         out_channels=128,
         n_blocks=[1, 1, 1]),
     bbox_head=dict(
+        # type='ImVoxelHead',
         type='ScannetImVoxelHead',
         bbox_loss=dict(type='AxisAlignedIoULoss', loss_weight=1.0),
+        # bbox_loss=dict(type='RotatedIoU3DLoss'),
         n_classes=18,
         n_levels=3,
         n_channels=128,
@@ -75,7 +77,7 @@ file_client_args = dict(backend='disk')
 
 input_modality = dict(
     use_camera=True,
-    use_depth=False,
+    use_depth=True,
     use_lidar=False,
     use_neuralrecon_depth=False,
     use_ray=True)
