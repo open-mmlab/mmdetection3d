@@ -370,7 +370,7 @@ class ScanNetMultiViewDataset(Det3DDataset):
         pipeline (List[dict]): Pipeline used for data processing.
             Defaults to [].
         modality (dict): Modality to specify the sensor data used as input.
-            Defaults to dict(use_camera=False, use_lidar=True).
+            Defaults to dict(use_camera=True, use_lidar=False).
         box_type_3d (str): Type of 3D box of this dataset.
             Based on the `box_type_3d`, the dataset will encapsulate the box
             to its original format then converted them to `box_type_3d`.
@@ -482,12 +482,10 @@ class ScanNetMultiViewDataset(Det3DDataset):
 
         if not self.test_mode:
             input_dict['ann_info'] = self.parse_ann_info(info)
-            if self.filter_empty_gt and len(
-                    input_dict['ann_info']['gt_bboxes_3d']) == 0:
-                return None
+
         else:
             input_dict['ann_info'] = self.parse_ann_info(info)
-            # input_dict['eval_ann_info'] = input_dict['ann_info']
+            input_dict['eval_ann_info'] = input_dict['ann_info']
 
         return input_dict
 
@@ -501,28 +499,17 @@ class ScanNetMultiViewDataset(Det3DDataset):
             dict: Data information that will be passed to the data \
                 preprocessing pipelines. It includes the following keys:
 
-                -depth_info (str): Filename of depth images.
-                -img_info (str): Filename of the rgb images.
-                -lidar2img
-                    --extrinsic (array | 4x4): The inverse
-                        aligned extrinsic matrix.
-                    --intrinsic (array | 4x4): The intrinsic martrix.
-                    --origin (array | 1x3): [.0, .0, .5].
-                -c2w (array | 4x4): The aligned extrinsic matrix.
-                -camrotc2w (array | 3x3): The rotation matrix.
-                -lightpos (array | 1x3): The transform
-                    parameters of the camera.
-                -ray_info
-                    --c2w (array | 4x4): The same 'c2w' as above.
-                    --camrotc2w (array | 3x3): The same 'camrotc2w' as above.
-                    --lightpos (array | 1x3): The same 'lightpos' as above.
-                -ann_info
-                    --gt_bboxes_3d (DepthInstance3DBoxes):
-                        All the objs in the scene,each obj is
-                        represented by a 6-dim tensor.
-                    --gt_labels_3d (array | 1xn):
-                        All the labels of the obj in the scene.
-                    --axis_align_matrix (array | 4x4): The align matrix.
+                - depth_info (str): Filename of depth images.
+                - img_info (str): Filename of the rgb images.
+                - lidar2img (dict): Information of lider2img.Containing
+                  'extrinsic', 'intrinsic' and 'origin'.
+                - c2w (array | 4x4): The aligned extrinsic matrix.
+                - camrotc2w (array | 3x3): The rotation matrix.
+                - lightpos (array | 1x3): The camera's transform parameters
+                - ray_info (dict): The information of the rays.Containing
+                  'c2w', 'camrotc2w' and 'lightpos'.
+                - ann_info (dict): THe information of annotations.Containing
+                  'gt_bboxes_3d', 'gt_labels_3d' and 'axis_align_matrix'.
         """
         import mmengine
         data_list = mmengine.load(self.ann_file)['data_list']
@@ -554,39 +541,17 @@ class ScanNetMultiViewDataset(Det3DDataset):
             with_yaw=False,
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
-        # axis_align_matrix = info['axis_align_matrix'].astype(np.float32)
         axis_align_matrix = np.array(
             info['axis_align_matrix'], dtype=np.float32)
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
             gt_labels_3d=gt_labels_3d,
             axis_align_matrix=axis_align_matrix)
-        # print(anns_results)
+
+        # count the numbers
         for label in anns_results['gt_labels_3d']:
             if label != -1:
                 cat_name = self.metainfo['classes'][label]
                 self.num_ins_per_cat[cat_name] += 1
 
         return anns_results
-
-    # may not need new function
-    def get_ann_info(self, index: int) -> dict:
-        """Get annotation info according to the given index.
-
-        Use index to get the corresponding annotations, thus the
-        evalhook could use this api.
-
-        Args:
-            index (int): Index of the annotation data to get.
-
-        Returns:
-            dict: Annotation information.
-        """
-        data_info = self.get_data_info(index)
-        # test model
-        if 'ann_info' not in data_info:
-            ann_info = self.parse_ann_info(data_info)
-        else:
-            ann_info = data_info['ann_info']
-
-        return ann_info
