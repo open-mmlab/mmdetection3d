@@ -24,13 +24,13 @@ def parse_args():
         '--out-dir',
         type=str,
         default='outputs',
-        help='Output directory of prediction results.')
+        help='Output directory of prediction and visualization results.')
     parser.add_argument(
         '--show',
         action='store_true',
         help='Show online visualization results')
     parser.add_argument(
-        '--wait_time',
+        '--wait-time',
         type=float,
         default=-1,
         help='The interval of show (s). Demo will be blocked in showing'
@@ -38,11 +38,11 @@ def parse_args():
     parser.add_argument(
         '--no-save-vis',
         action='store_true',
-        help='Do not save detection vis results')
+        help='Do not save detection visualization results')
     parser.add_argument(
         '--no-save-pred',
         action='store_true',
-        help='Do not save detection json results')
+        help='Do not save detection prediction results')
     parser.add_argument(
         '--print-result',
         action='store_true',

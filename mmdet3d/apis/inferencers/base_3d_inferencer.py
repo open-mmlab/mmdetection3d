@@ -247,7 +247,7 @@ class Base3DInferencer(BaseInferencer):
                 Defaults to False.
             print_result (bool): Whether to print the inference result w/o
                 visualization to the console. Defaults to False.
-            pred_out_dir (str): Dir to save the inference results w/o
+            pred_out_dir (str): Directory to save the inference results w/o
                 visualization. If left as empty, no file will be saved.
                 Defaults to ''.
 

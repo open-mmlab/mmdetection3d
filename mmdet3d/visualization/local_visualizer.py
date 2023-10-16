@@ -991,7 +991,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
 
-        if not hasattr(self, 'o3d_vis'):
+        if not hasattr(self, 'o3d_vis') and vis_task in [
+                'multi-view_det', 'lidar_det', 'lidar_seg',
+                'multi-modality_det'
+        ]:
             self.o3d_vis = self._initialize_o3d_vis(show=show)
 
         if draw_gt and data_sample is not None:
