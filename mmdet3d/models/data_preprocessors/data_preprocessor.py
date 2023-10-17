@@ -204,6 +204,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 for batch_aug in self.batch_augments:
                     imgs, data_samples = batch_aug(imgs, data_samples)
             batch_inputs['imgs'] = imgs
+        # Hard code here, will be changed later.
+        # if len(inputs['depth']) != 0:
+        if 'depth' in inputs.keys():
+            batch_inputs['depth'] = inputs['depth']
+        batch_inputs['lightpos'] = inputs['lightpos']
+        batch_inputs['nerf_sizes'] = inputs['nerf_sizes']
+        batch_inputs['denorm_images'] = inputs['denorm_images']
+        batch_inputs['raydirs'] = inputs['raydirs']
 
         return {'inputs': batch_inputs, 'data_samples': data_samples}
 
@@ -294,6 +302,31 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                     f'{type(data)}: {data}')
 
             data['inputs']['imgs'] = batch_imgs
+        if 'raydirs' in data['inputs']:
+            _batch_dirs = data['inputs']['raydirs']
+            batch_dirs = stack_batch(_batch_dirs)
+            data['inputs']['raydirs'] = batch_dirs
+
+        if 'lightpos' in data['inputs']:
+            _batch_poses = data['inputs']['lightpos']
+            batch_poses = stack_batch(_batch_poses)
+            data['inputs']['lightpos'] = batch_poses
+
+        if 'denorm_images' in data['inputs']:
+            _batch_denorm_imgs = data['inputs']['denorm_images']
+            # Process data with `pseudo_collate`.
+            if is_seq_of(_batch_denorm_imgs, torch.Tensor):
+                denorm_img_dim = _batch_denorm_imgs[0].dim()
+                # Pad and stack Tensor.
+                if denorm_img_dim == 3:
+                    batch_denorm_imgs = stack_batch(_batch_denorm_imgs,
+                                                    self.pad_size_divisor,
+                                                    self.pad_value)
+                elif denorm_img_dim == 4:
+                    batch_denorm_imgs = multiview_img_stack_batch(
+                        _batch_denorm_imgs, self.pad_size_divisor,
+                        self.pad_value)
+            data['inputs']['denorm_images'] = batch_denorm_imgs
 
         data.setdefault('data_samples', None)
 

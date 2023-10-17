@@ -2688,53 +2688,33 @@ class MultiViewPipeline(BaseTransform):
 
     Required Keys:
 
-    -depth_info (str): Filename of depth images.
-    -img_prefix (str | None): The prefix of rgb images.
-    -img_info (str): Filename of the rgb images.
-    -lidar2img
-        --extrinsic (array | 4x4): The inverse aligned extrinsic matrix.
-        --intrinsic (array | 4x4): The intrinsic martrix.
-        --origin (array | 1x3): [.0, .0, .5].
-    -c2w (array | 4x4): The aligned extrinsic matrix.
-    -camrotc2w (array | 3x3): The rotation matrix.
-    -lightpos (array | 1x3): The transform parameters of the camera.
-    -ray_info
-        --c2w (array | 4x4): The same 'c2w' as above.
-        --camrotc2w (array | 3x3): The same 'camrotc2w' as above.
-        --lightpos (array | 1x3): The same 'lightpos' as above.
+    - depth_info
+    - img_prefix
+    - img_info
+    - lidar2img
+    - c2w
+    - cammrotc2w
+    - lightpos
+    - ray_info
 
     Modified Keys:
 
-    -lidar2img
-        --extrinsic
+    - lidar2img
 
     Added Keys:
 
-    -img (list): The loaded origin image which will be used in the
-        nerfdet detection branch.
-    -denorm_images (list): The normalized image which will be used
-        in the nerfdet detection branch.
-    -depth (list): The origin depth image which will be used in the
-        nerfdet detection branch.
-
-    -c2w (list): The c2w matrixes which will be used in the nerfdet
-        nerf branch.
-    -camrotc2w (list): The rotation matrixes which will be used in
-        the nerfdet nerf branch.
-    -lightpos (list): The transform parameters of the camera which
-        will be used in the nerfdet nerf branch.
-    -pixels (list): Some pixel information which will be used in the
-        nerfdet nerf branch.
-    -raydirs (list): The raydirections which will be used in the
-        nerfdet nerf branch.
-    -gt_images (list): The groundtruth images which will be used in
-        the nerfdet nerf branch.
-    -gt_depths (list): The groundtruth depth images which will be
-        used in the nerfdet nerf branch.
-    -nerf_sizes (list): The list of the groundtruth images which will
-        be used in the nerfdet nerf branch.
-
-    -depth_range (array): The range of the depth.
+    - img
+    - denorm_images
+    - depth
+    - c2w
+    - camrotc2w
+    - lightpos
+    - pixels
+    - raydirs
+    - gt_images
+    - gt_depths
+    - nerf_sizes
+    - depth_range
     """
 
     def __init__(self,
@@ -2745,13 +2725,13 @@ class MultiViewPipeline(BaseTransform):
                  margin: int = 10,
                  depth_range: tuple = [0.5, 5.5],
                  loading: str = 'random',
-                 nerf_target_views: int = 10,
+                 nerf_target_views: int = 0,
                  sample_freq: int = 3):
         self.transforms = Compose(transforms)
-        self.depth_transforms = Compose([transforms[1], transforms[3]])
+        self.depth_transforms = Compose(transforms[1])
         self.n_images = n_images
-        self.mean = np.array(mean)
-        self.std = np.array(std)
+        self.mean = np.array(mean, dtype=np.float32)
+        self.std = np.array(std, dtype=np.float32)
         self.margin = margin
         self.depth_range = depth_range
         self.loading = loading
@@ -2765,9 +2745,21 @@ class MultiViewPipeline(BaseTransform):
             results (dict): Result dict from loading pipeline
 
         Returns:
-            dict: Processed nerfdet results.The related information
-            used in detectin branch and nerf branch are sampled
-            and pre-processed.
+            dict: Processed nerfdet results.Updated key and value
+            are described below.
+
+                - img (list): The loaded origin image.
+                - denorm_images (list): The normalized image.
+                - depth (list): The origin depth image.
+                - c2w (list): The c2w matrixes.
+                - camrotc2w (list): The rotation matrixes.
+                - lightpos (list): The transform parameters of the camera.
+                - pixels (list): Some pixel information.
+                - raydirs (list): The ray-directions.
+                - gt_images (list): The groundtruth images.
+                - gt_depths (list): The groundtruth depth images.
+                - nerf_sizes (list): The size of the groundtruth images.
+                - depth_range (array): The range of the depth.
         """
         imgs = []
         depths = []
@@ -2790,9 +2782,7 @@ class MultiViewPipeline(BaseTransform):
             if self.nerf_target_views != 0:
                 target_id = np.random.choice(
                     ids, self.nerf_target_views, replace=False)
-                ids = np.setdiff1d(
-                    ids, target_id
-                )  # make sure the targed_id is different from the id
+                ids = np.setdiff1d(ids, target_id)
                 ids = ids.tolist()
                 target_id = target_id.tolist()
 
@@ -2806,11 +2796,24 @@ class MultiViewPipeline(BaseTransform):
                 target_id = ids
 
         ratio = 0
-        for i in ids:  # det information
+        size = (240, 320)
+        for i in ids:
             _results = dict()
             _results['img_path'] = results['img_info'][i]['filename']
-
             _results = self.transforms(_results)
+            imgs.append(_results['img'])
+            # normalize
+            for key in _results.get('img_fields', ['img']):
+                _results[key] = mmcv.imnormalize(_results[key], self.mean,
+                                                 self.std, True)
+            _results['img_norm_cfg'] = dict(
+                mean=self.mean, std=self.std, to_rgb=True)
+            # pad
+            for key in _results.get('img_fields', ['img']):
+                padded_img = mmcv.impad(_results[key], shape=size, pad_val=0)
+                _results[key] = padded_img
+            _results['pad_shape'] = padded_img.shape
+            _results['pad_fixed_size'] = size
             ori_shape = _results['ori_shape']
             aft_shape = _results['img_shape']
             ratio = ori_shape[0] / aft_shape[0]
@@ -2831,7 +2834,6 @@ class MultiViewPipeline(BaseTransform):
                 _results['img'], self.mean, self.std, to_bgr=True).astype(
                     np.uint8) / 255.0
             denorm_imgs_list.append(denorm_img)
-            imgs.append(_results['img'])
             height, width = imgs[0].shape[:2]
             extrinsics.append(results['lidar2img']['extrinsic'][i])
 
@@ -2861,6 +2863,19 @@ class MultiViewPipeline(BaseTransform):
                 temp_results['img_path'] = results['img_info'][i]['filename']
 
                 temp_results_ = self.transforms(temp_results)
+                # normalize
+                for key in temp_results.get('img_fields', ['img']):
+                    temp_results[key] = mmcv.imnormalize(
+                        temp_results[key], self.mean, self.std, True)
+                temp_results['img_norm_cfg'] = dict(
+                    mean=self.mean, std=self.std, to_rgb=True)
+                # pad
+                for key in temp_results.get('img_fields', ['img']):
+                    padded_img = mmcv.impad(
+                        temp_results[key], shape=size, pad_val=0)
+                    temp_results[key] = padded_img
+                temp_results['pad_shape'] = padded_img.shape
+                temp_results['pad_fixed_size'] = size
                 # denormalize target_images.
                 denorm_imgs = mmcv.imdenormalize(
                     temp_results_['img'], self.mean, self.std,
@@ -2890,7 +2905,7 @@ class MultiViewPipeline(BaseTransform):
                     gt_depths.append(gt_depth)
 
         for key in _results.keys():
-            if key not in ['img', 'img_prefix', 'img_info']:
+            if key not in ['img', 'img_info']:
                 results[key] = _results[key]
         results['img'] = imgs
 
