@@ -207,16 +207,28 @@ class Det3DDataSample(DetDataSample):
         del self._pred_pts_seg
 
     @property
-    def gt_nerf_3d(self) -> InstanceData:
-        return self._gt_nerf_3d
+    def gt_nerf_images(self) -> InstanceData:
+        return self._gt_nerf_images
 
-    @gt_nerf_3d.setter
-    def gt_nerf_3d(self, value: InstanceData) -> None:
-        self.set_field(value, '_gt_nerf_3d', dtype=InstanceData)
+    @gt_nerf_images.setter
+    def gt_nerf_images(self, value: InstanceData) -> None:
+        self.set_field(value, '_gt_nerf_images', dtype=InstanceData)
 
-    @gt_nerf_3d.deleter
-    def gt_nerf_3d(self) -> None:
-        del self._gt_nerf_3d
+    @gt_nerf_images.deleter
+    def gt_nerf_images(self) -> None:
+        del self._gt_nerf_images
+
+    @property
+    def gt_nerf_depths(self) -> InstanceData:
+        return self._gt_nerf_depths
+
+    @gt_nerf_depths.setter
+    def gt_nerf_depths(self, value: InstanceData) -> None:
+        self.set_field(value, '_gt_nerf_depths', dtype=InstanceData)
+
+    @gt_nerf_depths.deleter
+    def gt_nerf_depths(self) -> None:
+        del self._gt_nerf_depths
 
 
 SampleList = List[Det3DDataSample]
