@@ -141,6 +141,10 @@ You will see a visualizer interface with point cloud, where bounding boxes are p
 
 **Note**:
 
+If you install MMDetection3D on a remote server without display device, you can leave out the `--show` argument. Demo will still save the predictions to  `outputs/pred/000008.json` file.
+
+**Note**:
+
 If you want to input a `.ply` file, you can use the following function and convert it to `.bin` format. Then you can use the converted `.bin` file to run demo.
 Note that you need to install `pandas` and `plyfile` before using this script. This function can also be used for data preprocessing for training `ply data`.
 

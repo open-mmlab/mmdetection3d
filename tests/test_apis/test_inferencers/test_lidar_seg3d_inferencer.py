@@ -91,7 +91,7 @@ class TestLiDARSeg3DInferencer(TestCase):
         inputs = dict(points='tests/data/s3dis/points/Area_1_office_2.bin')
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            self.inferencer(inputs, img_out_dir=tmp_dir)
+            self.inferencer(inputs, out_dir=tmp_dir)
 
     def test_post_processor(self):
         if not torch.cuda.is_available():
@@ -101,11 +101,9 @@ class TestLiDARSeg3DInferencer(TestCase):
         res = self.inferencer(inputs, return_datasamples=True)
         self.assertTrue(is_list_of(res['predictions'], Det3DDataSample))
 
-        # pred_out_file
+        # pred_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            pred_out_file = osp.join(tmp_dir, 'tmp.json')
-            res = self.inferencer(
-                inputs, print_result=True, pred_out_file=pred_out_file)
-            dumped_res = mmengine.load(pred_out_file)
-            self.assert_predictions_equal(res['predictions'],
-                                          dumped_res['predictions'])
+            res = self.inferencer(inputs, print_result=True, out_dir=tmp_dir)
+            dumped_res = mmengine.load(
+                osp.join(tmp_dir, 'preds', 'Area_1_office_2.json'))
+            self.assertEqual(res['predictions'][0], dumped_res)

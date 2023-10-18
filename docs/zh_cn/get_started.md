@@ -139,6 +139,10 @@ python demo/pcd_demo.py demo/data/kitti/000008.bin pointpillars_hv_secfpn_8xb6-1
 
 **注意**：
 
+如果你在没有显示设备的服务器上安装 MMDetection3D ，你可以忽略 `--show` 参数。Demo 仍会将预测结果保存到 `outputs/pred/000008.json` 文件中。
+
+**注意**：
+
 如果您想输入一个 `.ply` 文件，您可以使用如下函数将它转换成 `.bin` 格式。然后您可以使用转化的 `.bin` 文件来运行样例。请注意在使用此脚本之前，您需要安装 `pandas` 和 `plyfile`。这个函数也可以用于训练 `ply 数据`时作为数据预处理来使用。
 
 ```python
