@@ -233,6 +233,7 @@ class MultiModalityDet3DInferencer(Base3DInferencer):
             wait_time (float): The interval of show (s). Defaults to 0.
             draw_pred (bool): Whether to draw predicted bounding boxes.
                 Defaults to True.
+            no_save_vis (bool): Whether to save visualization results.
             pred_score_thr (float): Minimum score of bboxes to draw.
                 Defaults to 0.3.
             img_out_dir (str): Output directory of visualization results.

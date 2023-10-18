@@ -194,8 +194,10 @@ class MonoDet3DInferencer(Base3DInferencer):
                 Defaults to True.
             pred_score_thr (float): Minimum score of bboxes to draw.
                 Defaults to 0.3.
+            no_save_vis (bool): Whether to save visualization results.
             img_out_dir (str): Output directory of visualization results.
                 If left as empty, no file will be saved. Defaults to ''.
+            cam_type_dir (str): Camera type directory. Defaults to 'CAM2'.
 
         Returns:
             List[np.ndarray] or None: Returns visualization results only if

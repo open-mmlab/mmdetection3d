@@ -153,7 +153,7 @@ class Base3DInferencer(BaseInferencer):
 
         Args:
             out_dir (str): Dir to save the inference results.
-            cam_type (str): Camera type. Defaults to 'CAM2'.
+            cam_type (str): Camera type. Defaults to ''.
             **kwargs (dict): Key words arguments passed to :meth:`preprocess`,
                 :meth:`forward`, :meth:`visualize` and :meth:`postprocess`.
                 Each key in kwargs should be in the corresponding set of
@@ -172,16 +172,16 @@ class Base3DInferencer(BaseInferencer):
 
     def __call__(self,
                  inputs: InputsType,
-                 batch_size=1,
+                 batch_size: int = 1,
                  return_datasamples: bool = False,
                  **kwargs) -> Optional[dict]:
         """Call the inferencer.
 
         Args:
             inputs (InputsType): Inputs for the inferencer.
+            batch_size (int): Batch size. Defaults to 1.
             return_datasamples (bool): Whether to return results as
                 :obj:`BaseDataElement`. Defaults to False.
-            batch_size (int): Batch size. Defaults to 1.
             **kwargs: Key words arguments passed to :meth:`preprocess`,
                 :meth:`forward`, :meth:`visualize` and :meth:`postprocess`.
                 Each key in kwargs should be in the corresponding set of

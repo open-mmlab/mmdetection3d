@@ -147,6 +147,7 @@ class LidarSeg3DInferencer(Base3DInferencer):
                 Defaults to True.
             pred_score_thr (float): Minimum score of bboxes to draw.
                 Defaults to 0.3.
+            no_save_vis (bool): Whether to save visualization results.
             img_out_dir (str): Output directory of visualization results.
                 If left as empty, no file will be saved. Defaults to ''.
 

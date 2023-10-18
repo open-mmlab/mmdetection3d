@@ -137,7 +137,7 @@ class LidarDet3DInferencer(Base3DInferencer):
                 Defaults to False.
             show (bool): Whether to display the image in a popup window.
                 Defaults to False.
-            wait_time (float): The interval of show (s). Defaults to 0.
+            wait_time (float): The interval of show (s). Defaults to -1.
             draw_pred (bool): Whether to draw predicted bounding boxes.
                 Defaults to True.
             pred_score_thr (float): Minimum score of bboxes to draw.
@@ -211,19 +211,6 @@ class LidarDet3DInferencer(Base3DInferencer):
         Args:
             inputs (InputsType): Inputs for the inferencer.
             preds (PredType): Predictions of the model.
-            return_vis (bool): Whether to return the visualization result.
-                Defaults to False.
-            show (bool): Whether to display the image in a popup window.
-                Defaults to False.
-            wait_time (float): The interval of show (s). Defaults to 0.
-            draw_pred (bool): Whether to draw predicted bounding boxes.
-                Defaults to True.
-            pred_score_thr (float): Minimum score of bboxes to draw.
-                Defaults to 0.3.
-            no_save_vis (bool): Whether to force not to save prediction
-                vis results. Defaults to False.
-            img_out_dir (str): Output directory of visualization results.
-                If left as empty, no file will be saved. Defaults to ''.
 
         Returns:
             List[np.ndarray] or None: Returns visualization results only if
