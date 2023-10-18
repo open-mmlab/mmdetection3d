@@ -28,6 +28,12 @@
 - Fix readthedocs building and link. (#2739, #2650)
 - Fix potential bug in LaserMix. (#2710)
 
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @ZhaoCake, @LRJKD, @crazysteeaam, @wep21, @zhiqwang
+
 ### v1.2.0 (4/7/2023)
 
 #### Highlights
