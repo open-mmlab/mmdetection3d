@@ -92,7 +92,7 @@ jobs:
     machine:
       image: linux-cuda-11:default
       # docker_layer_caching: true
-    resource_class: gpu.nvidia.small
+    resource_class: gpu.nvidia.small.multi
     steps:
       - checkout
       - run:
