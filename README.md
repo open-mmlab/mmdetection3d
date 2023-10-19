@@ -108,9 +108,14 @@ Like [MMDetection](https://github.com/open-mmlab/mmdetection) and [MMCV](https:/
 
 We have constructed a comprehensive LiDAR semantic segmentation benchmark on SemanticKITTI, including Cylinder3D, MinkUNet and SPVCNN methods. Noteworthy, the improved MinkUNetv2 can achieve 70.3 mIoU on the validation set of SemanticKITTI. We have also supported the training of BEVFusion and an occupancy prediction method, TPVFomrer, in our `projects`. More new features about 3D perception are on the way. Please stay tuned!
 
+**v1.3.0** was released in 18/10/2023:
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects`
+- Enhance demos with new 3D inferencers
+
 **v1.2.0** was released in 4/7/2023
 
-- Support [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) in `mmdet3d/config`
+- Support [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) in `mmdet3d/configs`
 - Support the inference of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`
 - Support downloading datasets from [OpenDataLab](https://opendatalab.com/) using `mim`
 
