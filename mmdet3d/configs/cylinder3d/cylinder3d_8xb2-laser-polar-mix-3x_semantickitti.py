@@ -3,24 +3,13 @@ from mmengine import read_base
 
 with read_base():
     from .._base_.datasets.semantickitti import *
-    from .._base_.models.minkunet import *
-    from .._base_.schedules.schedule_3x import *
     from .._base_.default_runtime import *
+    from .._base_.models.cylinder3d import *
+    from .._base_.schedules.schedule_3x import *
 
 from mmcv.transforms.wrappers import RandomChoice
-from mmengine.hooks.checkpoint_hook import CheckpointHook
 
-from mmdet3d.datasets.transforms.formating import Pack3DDetInputs
-from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
-                                                 LoadPointsFromFile,
-                                                 PointSegClassMapping)
-from mmdet3d.datasets.transforms.transforms_3d import (GlobalRotScaleTrans,
-                                                       LaserMix, PolarMix)
-
-model.update(
-    dict(
-        data_preprocessor=dict(max_voxels=None),
-        backbone=dict(encoder_blocks=[2, 3, 4, 6])))
+from mmdet3d.datasets.transforms.transforms_3d import LaserMix, PolarMix
 
 train_pipeline = [
     dict(type=LoadPointsFromFile, coord_type='LIDAR', load_dim=4, use_dim=4),

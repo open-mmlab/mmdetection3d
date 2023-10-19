@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-if '_base_':
+from mmengine import read_base
+
+with read_base():
     from .._base_.schedules.cosine import *
     from .._base_.default_runtime import *
 
@@ -293,7 +295,7 @@ test_dataloader = dict(
         box_type_3d='LiDAR',
         backend_args=backend_args))
 
-optim_wrapper.merge(
+optim_wrapper.update(
     dict(
         optimizer=dict(weight_decay=0.01),
         clip_grad=dict(max_norm=35, norm_type=2),

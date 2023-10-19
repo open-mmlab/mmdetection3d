@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
         torch: [1.8.1]
         include:
           - torch: 1.8.1
@@ -43,7 +43,7 @@ jobs:
           pip install -U openmim
           mim install 'mmcv >= 2.0.0rc4'
       - name: Install MMDet
-        run: mim install 'mmdet>=3.0.0'
+        run: pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
       - name: Install other dependencies
         run: pip install -r requirements/tests.txt
       - name: Build and install
@@ -59,12 +59,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-        torch: [1.6.0, 1.7.1, 1.8.1, 1.9.1, 1.10.1, 1.11.0, 1.12.1, 1.13.0]
+        torch: [1.8.1, 1.9.1, 1.10.1, 1.11.0, 1.12.0, 1.13.0]
         include:
-          - torch: 1.6.0
-            torchvision: 0.7.0
-          - torch: 1.7.1
-            torchvision: 0.8.2
           - torch: 1.8.1
             torchvision: 0.9.1
           - torch: 1.9.1
@@ -73,13 +69,13 @@ jobs:
             torchvision: 0.11.2
           - torch: 1.11.0
             torchvision: 0.12.0
-          - torch: 1.12.1
-            torchvision: 0.13.1
+          - torch: 1.12.0
+            torchvision: 0.13.0
           - torch: 1.13.0
             torchvision: 0.14.0
-          - torch: 2.0.0
+          - python-version: 3.8
+            torch: 2.0.0
             torchvision: 0.15.1
-            python-version: 3.8
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -97,7 +93,7 @@ jobs:
           pip install -U openmim
           mim install 'mmcv >= 2.0.0rc4'
       - name: Install MMDet
-        run: mim install 'mmdet>=3.0.0'
+        run: pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
       - name: Install other dependencies
         run: pip install -r requirements/tests.txt
       - name: Build and install
@@ -147,7 +143,7 @@ jobs:
           pip install git+https://github.com/open-mmlab/mmengine.git@main
           pip install -U openmim
           mim install 'mmcv >= 2.0.0rc4'
-          mim install 'mmdet>=3.0.0'
+          pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
         run: pip install -e .
@@ -183,7 +179,43 @@ jobs:
           pip install git+https://github.com/open-mmlab/mmengine.git@main
           pip install -U openmim
           mim install 'mmcv >= 2.0.0rc4'
-          mim install 'mmdet>=3.0.0'
+          pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
+          pip install -r requirements/tests.txt
+      - name: Build and install
+        run: pip install -e .
+      - name: Run unittests and generate coverage report
+        run: |
+          coverage run --branch --source mmcv -m pytest tests
+          coverage xml
+          coverage report -m
+
+  build_cu117:
+    runs-on: ubuntu-22.04
+    container:
+      image: pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel
+    strategy:
+      matrix:
+        python-version: [3.9]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        run: pip install pip --upgrade && pip install wheel
+      - name: Fetch GPG keys
+        run: |
+          apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+          apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y git ffmpeg libturbojpeg
+      - name: Install mmdet3d dependencies
+        run: |
+          pip install git+https://github.com/open-mmlab/mmengine.git@main
+          pip install -U openmim
+          mim install 'mmcv >= 2.0.0rc4'
+          pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
         run: pip install -e .
@@ -201,12 +233,17 @@ jobs:
         platform: [cpu, cu111]
         torch: [1.8.1]
         torchvision: [0.9.1]
+        include:
+          - python-version: 3.8
+            platform: cu117
+            torch: 2.0.0
+            torchvision: 0.15.1
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python }}
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
         run: python -m pip install pip --upgrade && pip install wheel
       - name: Install lmdb
@@ -218,7 +255,7 @@ jobs:
           pip install git+https://github.com/open-mmlab/mmengine.git@main
           pip install -U openmim
           mim install 'mmcv >= 2.0.0rc4'
-          mim install 'mmdet>=3.0.0'
+          pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
           pip install -r requirements/tests.txt
       - name: Build and install
         run: pip install -e .
