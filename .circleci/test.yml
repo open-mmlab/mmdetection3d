@@ -85,10 +85,10 @@ jobs:
         type: string
       cuda:
         type: enum
-        enum: ["10.1", "10.2", "11.1", "11.7"]
+        enum: ["11.1", "11.7"]
       cudnn:
         type: integer
-        default: 7
+        default: 8
     machine:
       image: ubuntu-2004-cuda-11.4:202110-01
       # docker_layer_caching: true
@@ -184,7 +184,7 @@ workflows:
       - build_cuda:
           name: minimum_version_gpu
           torch: 1.8.1
-          cuda: "10.2"
+          cuda: "11.1"
           filters:
             branches:
               only:
