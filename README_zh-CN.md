@@ -110,9 +110,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 **v1.3.0** 版本已经在 2023.10.18 发布：
 
-- 在 `mmdet3d/configs`中支持 [新Config样式](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta)
-- 在 `projects` 中支持 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的推理
-- 支持通过 `mim` 从 [OpenDataLab](https://opendatalab.com/) 下载数据集
+- 在 `projects` 中支持 [CENet](https://arxiv.org/abs/2207.12691)
+- 使用新的 3D inferencers 增强演示代码效果
 
 **v1.2.0** 版本已经在 2023.7.4 发布：
 

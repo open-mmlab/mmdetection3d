@@ -111,7 +111,7 @@ We have constructed a comprehensive LiDAR semantic segmentation benchmark on Sem
 **v1.3.0** was released in 18/10/2023:
 
 - Support [CENet](https://arxiv.org/abs/2207.12691) in `projects`
-- Enhance Demos with new 3DInferencer.
+- Enhance demos with new 3D inferencers
 
 **v1.2.0** was released in 4/7/2023
 

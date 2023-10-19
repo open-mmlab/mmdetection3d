@@ -4,29 +4,30 @@
 
 #### Highlights
 
-- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects`. (#2619)
-- Enhance Demos with new 3DInferencer. (#2763)
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+- Enhance demos with new 3D inferencers (#2763)
 
 #### New Features
 
-- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects`. (#2619)
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
 
-#### Imporvments
+#### Improvements
 
-- Enhance Demos with new 3DInferencer. (#2763)
-- Add BEV-based detection pipeline in NuScenes Dataset tutorial. (#2672)
-- Add the new config type of Cylinder3D in `mmdet3d/configs`. (#2681)
-- Update New Config Type. (#2655)
-- Update QR code in README.md. (#2703)
+- Enhance demos with new 3D inferencers (#2763)
+- Add BEV-based detection pipeline in nuScenes dataset tutorial (#2672)
+- Add the new config type of Cylinder3D in `mmdet3d/configs` (#2681)
+- Update [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) (#2655)
+- Update the QR code in README.md (#2703)
 
 #### Bug Fixes
 
-- Fix download script of nuScenes dataset. (#2660)
-- Fix CI. (#2652, #2633)
-- Fix unused New Config Type. (#2773)
-- Fix support devices in FreeAnchor3DHead. (#2769)
-- Fix readthedocs building and link. (#2739, #2650)
-- Fix potential bug in LaserMix. (#2710)
+- Fix the download script of nuScenes dataset (#2660)
+- Fix circleCI and GitHub workflow configuration (#2652)
+- Fix the version of Open3D in requirements (#2633)
+- Fix unused files in `mmdet3d/configs` (#2773)
+- Fix support devices in FreeAnchor3DHead (#2769)
+- Fix readthedocs building and link (#2739, #2650)
+- Fix the pitch angle bug in LaserMix (#2710)
 
 #### Contributors
 
