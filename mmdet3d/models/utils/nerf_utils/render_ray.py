@@ -438,7 +438,7 @@ def render_rays(
         ray_o = ray_o.view(-1, 3)
         ray_d = ray_d.view(-1, 3)
         gt_rgb = gt_rgb.view(-1, 3)
-        if len(gt_depth) != 0:
+        if gt_depth.shape[1] != 0:
             gt_depth = gt_depth.view(-1, 1)
             non_zero_depth = (gt_depth > 0).squeeze(-1)
             ray_o = ray_o[non_zero_depth]

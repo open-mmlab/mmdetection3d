@@ -37,7 +37,8 @@ class NerfDet(Base3DDetector):
             hyper-parameters. Defaults to None.
         init_cfg (:obj:`ConfigDict` or dict, optional): The initialization
             config. Defaults to None.
-
+        render_testing (bool): If you want to render novel view, please set
+            "render_testing = True" in config
         The other args are the parameters of NeRF, you can just use the
             default values.
     """
@@ -48,9 +49,9 @@ class NerfDet(Base3DDetector):
             neck: ConfigType,
             neck_3d: ConfigType,
             bbox_head: ConfigType,
-            prior_generator: ConfigType,  #
+            prior_generator: ConfigType,
             n_voxels: List,
-            voxel_size: List,  # dc
+            voxel_size: List,
             head_2d: ConfigType = None,
             train_cfg: OptConfigType = None,
             test_cfg: OptConfigType = None,
