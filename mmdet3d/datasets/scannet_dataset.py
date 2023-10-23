@@ -355,7 +355,7 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
 
 @DATASETS.register_module()
 class ScanNetMultiViewDataset(Det3DDataset):
-    r"""ScanNet Dataset for NeRF-detection Task
+    r"""Multi-View ScanNet Dataset for NeRF-detection Task
 
     This class serves as the API for experiments on the ScanNet Dataset.
 
@@ -401,8 +401,12 @@ class ScanNetMultiViewDataset(Det3DDataset):
                  modality: dict = dict(use_camera=True, use_lidar=False),
                  box_type_3d: str = 'Depth',
                  filter_empty_gt: bool = True,
+                 remove_dontcare: bool = False,
                  test_mode: bool = False,
                  **kwargs) -> None:
+
+        self.remove_dontcare = remove_dontcare
+
         super().__init__(
             data_root=data_root,
             ann_file=ann_file,
@@ -413,6 +417,28 @@ class ScanNetMultiViewDataset(Det3DDataset):
             filter_empty_gt=filter_empty_gt,
             test_mode=test_mode,
             **kwargs)
+
+        assert 'use_camera' in self.modality and \
+               'use_lidar' in self.modality
+        assert self.modality['use_camera'] or self.modality['use_lidar']
+
+    @staticmethod
+    def _get_axis_align_matrix(info: dict) -> np.ndarray:
+        """Get axis_align_matrix from info. If not exist, return identity mat.
+
+        Args:
+            info (dict): Info of a single sample data.
+
+        Returns:
+            np.ndarray: 4x4 transformation matrix.
+        """
+        if 'axis_align_matrix' in info:
+            return np.array(info['axis_align_matrix'])
+        else:
+            warnings.warn(
+                'axis_align_matrix is not found in ScanNet data info, please '
+                'use new pre-process scripts to re-generate ScanNet data')
+            return np.eye(4).astype(np.float32)
 
     def parse_data_info(self, info: dict) -> dict:
         """Process the raw data info.
@@ -427,94 +453,62 @@ class ScanNetMultiViewDataset(Det3DDataset):
             dict: Has `ann_info` in training stage. And
             all path has been converted to absolute path.
         """
-        from collections import defaultdict
-        input_dict = defaultdict(list)
+        if self.modality['use_depth']:
+            info['depth_info'] = []
+        if self.modality['use_neuralrecon_depth']:
+            info['depth_info'] = []
 
-        if self.modality is not None:
-            if self.modality['use_depth']:
-                input_dict['depth_info'] = []
-            if self.modality['use_neuralrecon_depth']:
-                input_dict['depth_info'] = []
-            if self.modality['use_lidar']:
-                # implement lidar processing in the future
-                raise NotImplementedError(
-                    'Please modified '
-                    '`MultiViewPipeline` to support lidar processing')
+        if self.modality['use_lidar']:
+            # implement lidar processing in the future
+            raise NotImplementedError(
+                'Please modified '
+                '`MultiViewPipeline` to support lidar processing')
 
-        axis_align_matrix = np.array(
-            info['axis_align_matrix'], dtype=np.float32)
-
+        info['axis_align_matrix'] = self._get_axis_align_matrix(info)
+        info['img_info'] = []
+        info['lidar2img'] = []
+        info['c2w'] = []
+        info['camrotc2w'] = []
+        info['lightpos'] = []
+        # load img and depth_img
         for i in range(len(info['img_paths'])):
             img_filename = osp.join(self.data_root, info['img_paths'][i])
 
-            input_dict['img_info'].append(dict(filename=img_filename))
-            if 'depth_info' in input_dict.keys():
+            info['img_info'].append(dict(filename=img_filename))
+            if 'depth_info' in info.keys():
                 if self.modality['use_neuralrecon_depth']:
-                    input_dict['depth_info'].append(
+                    info['depth_info'].append(
                         dict(filename=img_filename[:-4] + '.npy'))
                 else:
-                    input_dict['depth_info'].append(
+                    info['depth_info'].append(
                         dict(filename=img_filename[:-4] + '.png'))
             # implement lidar_info in input.keys() in the future.
             extrinsic = np.linalg.inv(
-                axis_align_matrix @ info['extrinsics'][i])
-            input_dict['lidar2img'].append(extrinsic.astype(np.float32))
+                info['axis_align_matrix'] @ info['extrinsics'][i])
+            info['lidar2img'].append(extrinsic.astype(np.float32))
             if self.modality['use_ray']:
-                c2w = (axis_align_matrix @ info['extrinsics'][i]).astype(
-                    np.float32)
-                input_dict['c2w'].append(c2w)
-                input_dict['camrotc2w'].append(c2w[0:3, 0:3])
-                input_dict['lightpos'].append(c2w[0:3, 3])
-
-        input_dict = dict(input_dict)
+                c2w = (
+                    info['axis_align_matrix'] @ info['extrinsics'][i]).astype(
+                        np.float32)  # noqa
+                info['c2w'].append(c2w)
+                info['camrotc2w'].append(c2w[0:3, 0:3])
+                info['lightpos'].append(c2w[0:3, 3])
         origin = np.array([.0, .0, .5])
-        input_dict['lidar2img'] = dict(
-            extrinsic=input_dict['lidar2img'],
+        info['lidar2img'] = dict(
+            extrinsic=info['lidar2img'],
             intrinsic=info['intrinsics'].astype(np.float32),
             origin=origin.astype(np.float32))
 
         if self.modality['use_ray']:
-            input_dict['ray_info'] = dict(
-                c2w=input_dict['c2w'],
-                camrotc2w=input_dict['camrotc2w'],
-                lightpos=input_dict['lightpos'],
-            )
+            info['ray_info'] = []
 
         if not self.test_mode:
-            input_dict['ann_info'] = self.parse_ann_info(info)
+            info['ann_info'] = self.parse_ann_info(info)
+        if self.test_mode and self.load_eval_anns:
+            info['ann_info'] = self.parse_ann_info(info)
+            info['eval_ann_info'] = self._remove_dontcare(info['ann_info'])
 
-        else:
-            input_dict['ann_info'] = self.parse_ann_info(info)
-            input_dict['eval_ann_info'] = input_dict['ann_info']
-
-        return input_dict
-
-    def get_data_info(self, index):
-        r"""Get data info according to the given index.
-
-        Args:
-            index(int): Index of the sample data to get.
-
-        Returns:
-            dict: Data information that will be passed to the data \
-                preprocessing pipelines. It includes the following keys:
-
-                - depth_info (str): Filename of depth images.
-                - img_info (str): Filename of the rgb images.
-                - lidar2img (dict): Information of lider2img.Containing
-                  'extrinsic', 'intrinsic' and 'origin'.
-                - c2w (array | 4x4): The aligned extrinsic matrix.
-                - camrotc2w (array | 3x3): The rotation matrix.
-                - lightpos (array | 1x3): The camera's transform parameters
-                - ray_info (dict): The information of the rays.Containing
-                  'c2w', 'camrotc2w' and 'lightpos'.
-                - ann_info (dict): THe information of annotations.Containing
-                  'gt_bboxes_3d', 'gt_labels_3d' and 'axis_align_matrix'.
-        """
-        import mmengine
-        data_list = mmengine.load(self.ann_file)['data_list']
-        info = data_list[index]
-        return self.parse_data_info(info)
+        return info
 
     def parse_ann_info(self, info: dict) -> dict:
         """Process the `instances` in data info to `ann_info`.
@@ -525,33 +519,27 @@ class ScanNetMultiViewDataset(Det3DDataset):
         Returns:
             dict: Processed `ann_info`.
         """
-        gt_bboxes_3d = np.zeros((len(info['instances']), 6), dtype=np.float32)
-        gt_labels_3d = np.zeros((len(info['instances']), ), dtype=np.int64)
-        if len(info['instances']) != 0:
-            for i in range(len(info['instances'])):
-                gt_bboxes_3d[i] = info['instances'][i]['bbox_3d']
-                gt_labels_3d[i] = info['instances'][i]['bbox_label_3d']
+        ann_info = super().parse_ann_info(info)
 
-        from mmdet3d.structures.bbox_3d import DepthInstance3DBoxes
+        if self.remove_dontcare:
+            ann_info = self._remove_dontcare(ann_info)
 
-        # to target box structure
-        gt_bboxes_3d = DepthInstance3DBoxes(
-            gt_bboxes_3d,
-            box_dim=gt_bboxes_3d.shape[-1],
+        # empty gt
+        if ann_info is None:
+            ann_info = dict()
+            ann_info['gt_bboxes_3d'] = np.zeros((0, 6), dtype=np.float32)
+            ann_info['gt_labels_3d'] = np.zeros((0, ), dtype=np.int64)
+
+        ann_info['gt_bboxes_3d'] = DepthInstance3DBoxes(
+            ann_info['gt_bboxes_3d'],
+            box_dim=ann_info['gt_bboxes_3d'].shape[-1],
             with_yaw=False,
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
-        axis_align_matrix = np.array(
-            info['axis_align_matrix'], dtype=np.float32)
-        anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            axis_align_matrix=axis_align_matrix)
-
         # count the numbers
-        for label in anns_results['gt_labels_3d']:
+        for label in ann_info['gt_labels_3d']:
             if label != -1:
                 cat_name = self.metainfo['classes'][label]
                 self.num_ins_per_cat[cat_name] += 1
 
-        return anns_results
+        return ann_info
