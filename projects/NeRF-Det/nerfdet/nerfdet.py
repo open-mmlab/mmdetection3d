@@ -9,9 +9,9 @@ from mmdet3d.models.detectors import Base3DDetector
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import ConfigType, OptConfigType
-from ..utils.nerf_utils.nerf_mlp import VanillaNeRFRadianceField
-from ..utils.nerf_utils.projection import Projector
-from ..utils.nerf_utils.render_ray import render_rays
+from .nerf_utils.nerf_mlp import VanillaNeRFRadianceField
+from .nerf_utils.projection import Projector
+from .nerf_utils.render_ray import render_rays
 
 # from ..utils.nerf_utils.save_rendered_img import save_rendered_img
 
