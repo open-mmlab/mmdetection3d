@@ -5,7 +5,7 @@ import torch
 from mmdet.structures import DetDataSample
 from mmengine.structures import InstanceData
 
-from .point_data import PointData
+from mmdet3d.structures import PointData
 
 
 class Det3DDataSample(DetDataSample):
@@ -205,6 +205,30 @@ class Det3DDataSample(DetDataSample):
     @pred_pts_seg.deleter
     def pred_pts_seg(self) -> None:
         del self._pred_pts_seg
+
+    @property
+    def gt_nerf_images(self) -> InstanceData:
+        return self._gt_nerf_images
+
+    @gt_nerf_images.setter
+    def gt_nerf_images(self, value: InstanceData) -> None:
+        self.set_field(value, '_gt_nerf_images', dtype=InstanceData)
+
+    @gt_nerf_images.deleter
+    def gt_nerf_images(self) -> None:
+        del self._gt_nerf_images
+
+    @property
+    def gt_nerf_depths(self) -> InstanceData:
+        return self._gt_nerf_depths
+
+    @gt_nerf_depths.setter
+    def gt_nerf_depths(self, value: InstanceData) -> None:
+        self.set_field(value, '_gt_nerf_depths', dtype=InstanceData)
+
+    @gt_nerf_depths.deleter
+    def gt_nerf_depths(self) -> None:
+        del self._gt_nerf_depths
 
 
 SampleList = List[Det3DDataSample]
