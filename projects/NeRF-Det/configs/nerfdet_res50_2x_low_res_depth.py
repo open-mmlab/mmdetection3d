@@ -1,6 +1,5 @@
-_base_ = [
-    '../_base_/schedules/mmdet-schedule-1x.py', '../_base_/default_runtime.py'
-]
+_base_ = ['./nerfdet_res50_2x_low_res.py']
+custom_imports = dict(imports=['projects.NeRF-Det.nerfdet'])
 prior_generator = dict(
     type='AlignedAnchor3DRangeGenerator',
     ranges=[[-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]],
@@ -12,7 +11,7 @@ prior_generator = dict(
 model = dict(
     type='NerfDet',
     data_preprocessor=dict(
-        type='Det3DDataPreprocessor',
+        type='NeRFDetDataPreprocessor',
         mean=[123.675, 116.28, 103.53],
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=True,
@@ -38,10 +37,8 @@ model = dict(
         out_channels=128,
         n_blocks=[1, 1, 1]),
     bbox_head=dict(
-        # type='ImVoxelHead',
         type='ScannetImVoxelHead',
         bbox_loss=dict(type='AxisAlignedIoULoss', loss_weight=1.0),
-        # bbox_loss=dict(type='RotatedIoU3DLoss'),
         n_classes=18,
         n_levels=3,
         n_channels=128,
@@ -122,7 +119,7 @@ train_pipeline = [
         loading='random',
         nerf_target_views=10),
     dict(type='RandomShiftOrigin', std=(.7, .7, .0)),
-    dict(type='Pack3DDetInputs', keys=train_collect_keys)
+    dict(type='PackNeRFDetInputs', keys=train_collect_keys)
 ]
 
 test_pipeline = [
@@ -140,7 +137,7 @@ test_pipeline = [
         depth_range=[0.5, 5.5],
         loading='random',
         nerf_target_views=1),
-    dict(type='Pack3DDetInputs', keys=test_collect_keys)
+    dict(type='PackNeRFDetInputs', keys=test_collect_keys)
 ]
 
 train_dataloader = dict(
@@ -183,6 +180,8 @@ val_evaluator = dict(type='IndoorMetric')
 test_evaluator = val_evaluator
 
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=1)
+test_cfg = dict()
+val_cfg = dict()
 
 optim_wrapper = dict(
     type='OptimWrapper',
