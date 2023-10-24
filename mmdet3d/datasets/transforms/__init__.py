@@ -12,12 +12,11 @@ from .test_time_aug import MultiScaleFlipAug3D
 from .transforms_3d import (AffineResize, BackgroundPointsFilter,
                             GlobalAlignment, GlobalRotScaleTrans,
                             IndoorPatchPointSample, IndoorPointSample,
-                            LaserMix, MultiViewPipeline, MultiViewWrapper,
-                            ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
-                            ObjectSample, PhotoMetricDistortion3D, PointSample,
-                            PointShuffle, PointsRangeFilter, PolarMix,
-                            RandomDropPointsColor, RandomFlip3D,
-                            RandomJitterPoints, RandomResize3D,
+                            LaserMix, MultiViewWrapper, ObjectNameFilter,
+                            ObjectNoise, ObjectRangeFilter, ObjectSample,
+                            PhotoMetricDistortion3D, PointSample, PointShuffle,
+                            PointsRangeFilter, PolarMix, RandomDropPointsColor,
+                            RandomFlip3D, RandomJitterPoints, RandomResize3D,
                             RandomShiftScale, Resize3D, VoxelBasedPointSampler)
 
 __all__ = [
@@ -33,5 +32,5 @@ __all__ = [
     'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
     'MultiViewWrapper', 'PhotoMetricDistortion3D', 'MonoDet3DInferencerLoader',
     'LidarDet3DInferencerLoader', 'PolarMix', 'LaserMix',
-    'MultiModalityDet3DInferencerLoader', 'MultiViewPipeline'
+    'MultiModalityDet3DInferencerLoader'
 ]
