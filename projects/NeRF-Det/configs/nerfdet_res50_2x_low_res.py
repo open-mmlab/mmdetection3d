@@ -55,7 +55,7 @@ model = dict(
     N_samples=64,
     N_rand=2048,
     nerf_mode='image',
-    depth_supervise=True,
+    depth_supervise=False,
     use_nerf_mask=True,
     nerf_sample_view=20,
     squeeze_scale=4,
@@ -143,7 +143,7 @@ test_pipeline = [
 
 train_dataloader = dict(
     batch_size=1,
-    num_workers=1,
+    num_workers=5,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -161,7 +161,7 @@ train_dataloader = dict(
             metainfo=metainfo)))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=1,
+    num_workers=5,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -201,6 +201,7 @@ param_scheduler = [
 
 # hooks
 default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
     checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=1))
 
 # runtime

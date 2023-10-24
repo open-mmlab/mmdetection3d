@@ -163,7 +163,7 @@ train_dataloader = dict(
             metainfo=metainfo)))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=1,
+    num_workers=5,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
