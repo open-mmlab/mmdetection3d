@@ -9,8 +9,9 @@ from mmengine.structures import InstanceData
 from numpy import dtype
 
 from mmdet3d.registry import TRANSFORMS
-from mmdet3d.structures import BaseInstance3DBoxes, Det3DDataSample, PointData
+from mmdet3d.structures import BaseInstance3DBoxes, PointData
 from mmdet3d.structures.points import BasePoints
+from .det3d_data_sample import Det3DDataSample
 
 
 def to_tensor(
@@ -46,8 +47,12 @@ def to_tensor(
 
 
 @TRANSFORMS.register_module()
-class Pack3DDetInputs(BaseTransform):
+class PackNeRFDetInputs(BaseTransform):
     INPUTS_KEYS = ['points', 'img']
+    NERF_INPUT_KEYS = [
+        'img', 'denorm_images', 'depth', 'lightpos', 'nerf_sizes', 'raydirs'
+    ]
+
     INSTANCEDATA_3D_KEYS = [
         'gt_bboxes_3d', 'gt_labels_3d', 'attr_labels', 'depths', 'centers_2d'
     ]
@@ -55,6 +60,7 @@ class Pack3DDetInputs(BaseTransform):
         'gt_bboxes',
         'gt_bboxes_labels',
     ]
+    NERF_3D_KEYS = ['gt_images', 'gt_depths']
 
     SEG_KEYS = [
         'gt_seg_map', 'pts_instance_mask', 'pts_semantic_mask',
@@ -170,6 +176,72 @@ class Pack3DDetInputs(BaseTransform):
                         np.ascontiguousarray(img.transpose(2, 0, 1)))
                 results['img'] = img
 
+        if 'depth' in results:
+            if isinstance(results['depth'], list):
+                # process multiple depth imgs in single frame
+                depth_imgs = np.stack(results['depth'], axis=0)
+                if depth_imgs.flags.c_contiguous:
+                    depth_imgs = to_tensor(depth_imgs).contiguous()
+                else:
+                    depth_imgs = to_tensor(np.ascontiguousarray(depth_imgs))
+                results['depth'] = depth_imgs
+            else:
+                depth_img = results['depth']
+                if len(depth_img.shape) < 3:
+                    depth_img = np.expand_dims(depth_img, -1)
+                if depth_img.flags.c_contiguous:
+                    depth_img = to_tensor(depth_img).contiguous()
+                else:
+                    depth_img = to_tensor(np.ascontiguousarray(depth_img))
+                results['depth'] = depth_img
+
+        if 'ray_info' in results:
+            if isinstance(results['raydirs'], list):
+                raydirs = np.stack(results['raydirs'], axis=0)
+                if raydirs.flags.c_contiguous:
+                    raydirs = to_tensor(raydirs).contiguous()
+                else:
+                    raydirs = to_tensor(np.ascontiguousarray(raydirs))
+                results['raydirs'] = raydirs
+
+            if isinstance(results['lightpos'], list):
+                lightposes = np.stack(results['lightpos'], axis=0)
+                if lightposes.flags.c_contiguous:
+                    lightposes = to_tensor(lightposes).contiguous()
+                else:
+                    lightposes = to_tensor(np.ascontiguousarray(lightposes))
+                lightposes = lightposes.unsqueeze(1).repeat(
+                    1, raydirs.shape[1], 1)
+                results['lightpos'] = lightposes
+
+            if isinstance(results['gt_images'], list):
+                gt_images = np.stack(results['gt_images'], axis=0)
+                if gt_images.flags.c_contiguous:
+                    gt_images = to_tensor(gt_images).contiguous()
+                else:
+                    gt_images = to_tensor(np.ascontiguousarray(gt_images))
+                results['gt_images'] = gt_images
+
+            if isinstance(results['gt_depths'],
+                          list) and len(results['gt_depths']) != 0:
+                gt_depths = np.stack(results['gt_depths'], axis=0)
+                if gt_depths.flags.c_contiguous:
+                    gt_depths = to_tensor(gt_depths).contiguous()
+                else:
+                    gt_depths = to_tensor(np.ascontiguousarray(gt_depths))
+                results['gt_depths'] = gt_depths
+
+            if isinstance(results['denorm_images'], list):
+                denorm_imgs = np.stack(results['denorm_images'], axis=0)
+                if denorm_imgs.flags.c_contiguous:
+                    denorm_imgs = to_tensor(denorm_imgs).permute(
+                        0, 3, 1, 2).contiguous()
+                else:
+                    denorm_imgs = to_tensor(
+                        np.ascontiguousarray(
+                            denorm_imgs.transpose(0, 3, 1, 2)))
+                results['denorm_images'] = denorm_imgs
+
         for key in [
                 'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
                 'gt_bboxes_labels', 'attr_labels', 'pts_instance_mask',
@@ -191,10 +263,17 @@ class Pack3DDetInputs(BaseTransform):
         if 'gt_seg_map' in results:
             results['gt_seg_map'] = results['gt_seg_map'][None, ...]
 
+        if 'gt_images' in results:
+            results['gt_images'] = to_tensor(results['gt_images'])
+        if 'gt_depths' in results:
+            results['gt_depths'] = to_tensor(results['gt_depths'])
+
         data_sample = Det3DDataSample()
         gt_instances_3d = InstanceData()
         gt_instances = InstanceData()
         gt_pts_seg = PointData()
+        gt_nerf_images = InstanceData()
+        gt_nerf_depths = InstanceData()
 
         data_metas = {}
         for key in self.meta_keys:
@@ -223,8 +302,14 @@ class Pack3DDetInputs(BaseTransform):
         inputs = {}
         for key in self.keys:
             if key in results:
-                if key in self.INPUTS_KEYS:
+                # if key in self.INPUTS_KEYS:
+                if key in self.NERF_INPUT_KEYS:
                     inputs[key] = results[key]
+                elif key in self.NERF_3D_KEYS:
+                    if key == 'gt_images':
+                        gt_nerf_images[self._remove_prefix(key)] = results[key]
+                    else:
+                        gt_nerf_depths[self._remove_prefix(key)] = results[key]
                 elif key in self.INSTANCEDATA_3D_KEYS:
                     gt_instances_3d[self._remove_prefix(key)] = results[key]
                 elif key in self.INSTANCEDATA_2D_KEYS:
@@ -243,6 +328,8 @@ class Pack3DDetInputs(BaseTransform):
         data_sample.gt_instances_3d = gt_instances_3d
         data_sample.gt_instances = gt_instances
         data_sample.gt_pts_seg = gt_pts_seg
+        data_sample.gt_nerf_images = gt_nerf_images
+        data_sample.gt_nerf_depths = gt_nerf_depths
         if 'eval_ann_info' in results:
             data_sample.eval_ann_info = results['eval_ann_info']
         else:
