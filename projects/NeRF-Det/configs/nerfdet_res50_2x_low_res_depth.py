@@ -185,8 +185,7 @@ val_cfg = dict()
 
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(
-        _delete_=True, type='AdamW', lr=0.0002, weight_decay=0.0001),
+    optimizer=dict(type='AdamW', lr=0.0002, weight_decay=0.0001),
     paramwise_cfg=dict(
         custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
     clip_grad=dict(max_norm=35., norm_type=2))
