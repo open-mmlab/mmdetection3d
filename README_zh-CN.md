@@ -108,9 +108,14 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 我们在 SemanticKITTI 上构建了一个全面的点云语义分割基准，包括 Cylinder3D 、MinkUNet 和 SPVCNN 方法。其中，改进后的 MinkUNetv2 在验证集上可以达到 70.3 mIoU。我们还在 `projects` 中支持了 BEVFusion 的训练和全新的 3D 占有网格预测网络 TPVFormer。更多关于 3D 感知的新功能正在进行中。请继续关注！
 
+**v1.3.0** 版本已经在 2023.10.18 发布：
+
+- 在 `projects` 中支持 [CENet](https://arxiv.org/abs/2207.12691)
+- 使用新的 3D inferencers 增强演示代码效果
+
 **v1.2.0** 版本已经在 2023.7.4 发布：
 
-- 在 `mmdet3d/config`中支持 [新Config样式](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta)
+- 在 `mmdet3d/configs`中支持 [新Config样式](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta)
 - 在 `projects` 中支持 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的推理
 - 支持通过 `mim` 从 [OpenDataLab](https://opendatalab.com/) 下载数据集
 

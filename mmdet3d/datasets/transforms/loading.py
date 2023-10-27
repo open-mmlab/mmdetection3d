@@ -1153,7 +1153,6 @@ class MonoDet3DInferencerLoader(BaseTransform):
 
     Added keys:
       - img
-      - cam2img
       - box_type_3d
       - box_mode_3d
 
@@ -1176,32 +1175,19 @@ class MonoDet3DInferencerLoader(BaseTransform):
             dict: The dict contains loaded image and meta information.
         """
         box_type_3d, box_mode_3d = get_box_type('camera')
-        assert 'calib' in single_input and 'img' in single_input, \
-            "key 'calib' and 'img' must be in input dict"
-        if isinstance(single_input['calib'], str):
-            calib_path = single_input['calib']
-            with open(calib_path, 'r') as f:
-                lines = f.readlines()
-            cam2img = np.array([
-                float(info) for info in lines[0].split(' ')[0:16]
-            ]).reshape([4, 4])
-        elif isinstance(single_input['calib'], np.ndarray):
-            cam2img = single_input['calib']
-        else:
-            raise ValueError('Unsupported input calib type: '
-                             f"{type(single_input['calib'])}")
 
         if isinstance(single_input['img'], str):
             inputs = dict(
                 images=dict(
                     CAM_FRONT=dict(
-                        img_path=single_input['img'], cam2img=cam2img)),
+                        img_path=single_input['img'],
+                        cam2img=single_input['cam2img'])),
                 box_mode_3d=box_mode_3d,
                 box_type_3d=box_type_3d)
         elif isinstance(single_input['img'], np.ndarray):
             inputs = dict(
                 img=single_input['img'],
-                cam2img=cam2img,
+                cam2img=single_input['cam2img'],
                 box_type_3d=box_type_3d,
                 box_mode_3d=box_mode_3d)
         else:
@@ -1252,9 +1238,9 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
             dict: The dict contains loaded image, point cloud and meta
             information.
         """
-        assert 'points' in single_input and 'img' in single_input and \
-            'calib' in single_input, "key 'points', 'img' and 'calib' must be "
-        f'in input dict, but got {single_input}'
+        assert 'points' in single_input and 'img' in single_input, \
+            "key 'points', 'img' and must be in input dict," \
+            f'but got {single_input}'
         if isinstance(single_input['points'], str):
             inputs = dict(
                 lidar_points=dict(lidar_path=single_input['points']),
@@ -1283,36 +1269,21 @@ class MultiModalityDet3DInferencerLoader(BaseTransform):
         multi_modality_inputs = points_inputs
 
         box_type_3d, box_mode_3d = get_box_type('lidar')
-        if isinstance(single_input['calib'], str):
-            calib = mmengine.load(single_input['calib'])
-
-        elif isinstance(single_input['calib'], dict):
-            calib = single_input['calib']
-        else:
-            raise ValueError('Unsupported input calib type: '
-                             f"{type(single_input['calib'])}")
-
-        cam2img = np.asarray(calib['cam2img'], dtype=np.float32)
-        lidar2cam = np.asarray(calib['lidar2cam'], dtype=np.float32)
-        if 'lidar2cam' in calib:
-            lidar2img = np.asarray(calib['lidar2img'], dtype=np.float32)
-        else:
-            lidar2img = cam2img @ lidar2cam
 
         if isinstance(single_input['img'], str):
             inputs = dict(
                 img_path=single_input['img'],
-                cam2img=cam2img,
-                lidar2img=lidar2img,
-                lidar2cam=lidar2cam,
+                cam2img=single_input['cam2img'],
+                lidar2img=single_input['lidar2img'],
+                lidar2cam=single_input['lidar2cam'],
                 box_mode_3d=box_mode_3d,
                 box_type_3d=box_type_3d)
         elif isinstance(single_input['img'], np.ndarray):
             inputs = dict(
                 img=single_input['img'],
-                cam2img=cam2img,
-                lidar2img=lidar2img,
-                lidar2cam=lidar2cam,
+                cam2img=single_input['cam2img'],
+                lidar2img=single_input['lidar2img'],
+                lidar2cam=single_input['lidar2cam'],
                 box_type_3d=box_type_3d,
                 box_mode_3d=box_mode_3d)
         else:

@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import math
+import os
 import sys
 import time
 from typing import List, Optional, Sequence, Tuple, Union
@@ -155,7 +156,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if hasattr(self, 'pcd'):
                 del self.pcd
 
-    def _initialize_o3d_vis(self) -> Visualizer:
+    def _initialize_o3d_vis(self, show=True) -> Visualizer:
         """Initialize open3d vis according to frame_cfg.
 
         Args:
@@ -176,8 +177,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         o3d_vis.register_key_action_callback(glfw_key_space,
                                              self.space_action_callback)
         o3d_vis.register_key_callback(glfw_key_right, self.right_callback)
-        o3d_vis.create_window()
-        self.view_control = o3d_vis.get_view_control()
+        if os.environ.get('DISPLAY', None) is not None and show:
+            o3d_vis.create_window()
+            self.view_control = o3d_vis.get_view_control()
         return o3d_vis
 
     @master_only
@@ -859,6 +861,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     self.view_port)
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
+            # if not hasattr(self, 'view_control'):
+            #     self.o3d_vis.create_window()
+            #     self.view_control = self.o3d_vis.get_view_control()
             self.view_port = \
                 self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
             if wait_time != -1:
@@ -976,7 +981,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # For object detection datasets, no palette is saved
         palette = self.dataset_meta.get('palette', None)
         ignore_index = self.dataset_meta.get('ignore_index', None)
-        if ignore_index is not None and 'gt_pts_seg' in data_sample and vis_task == 'lidar_seg':  # noqa: E501
+        if vis_task == 'lidar_seg' and ignore_index is not None and 'pts_semantic_mask' in data_sample.gt_pts_seg:  # noqa: E501
             keep_index = data_sample.gt_pts_seg.pts_semantic_mask != ignore_index  # noqa: E501
         else:
             keep_index = None
@@ -985,6 +990,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pred_data_3d = None
         gt_img_data = None
         pred_img_data = None
+
+        if not hasattr(self, 'o3d_vis') and vis_task in [
+                'multi-view_det', 'lidar_det', 'lidar_seg',
+                'multi-modality_det'
+        ]:
+            self.o3d_vis = self._initialize_o3d_vis(show=show)
 
         if draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
@@ -1083,6 +1094,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
-                mmcv.imwrite(drawn_img[..., ::-1], out_file)
+                mmcv.imwrite(drawn_img[..., ::-1],
+                             out_file[:-4] + '_2d' + out_file[-4:])
         else:
             self.add_image(name, drawn_img_3d, step)
