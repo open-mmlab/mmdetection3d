@@ -392,7 +392,8 @@ def inference_segmentor(model: nn.Module, pcds: PointsType):
 
     new_test_pipeline = []
     for pipeline in test_pipeline:
-        if pipeline['type'] != 'LoadAnnotations3D':
+        if pipeline['type'] != 'LoadAnnotations3D' and pipeline[
+                'type'] != 'PointSegClassMapping':
             new_test_pipeline.append(pipeline)
     test_pipeline = Compose(new_test_pipeline)
 

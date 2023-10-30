@@ -1,5 +1,40 @@
 # Changelog of v1.1
 
+### v1.3.0 (18/10/2023)
+
+#### Highlights
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+- Enhance demos with new 3D inferencers (#2763)
+
+#### New Features
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+
+#### Improvements
+
+- Enhance demos with new 3D inferencers (#2763)
+- Add BEV-based detection pipeline in nuScenes dataset tutorial (#2672)
+- Add the new config type of Cylinder3D in `mmdet3d/configs` (#2681)
+- Update [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) (#2655)
+- Update the QR code in README.md (#2703)
+
+#### Bug Fixes
+
+- Fix the download script of nuScenes dataset (#2660)
+- Fix circleCI and GitHub workflow configuration (#2652)
+- Fix the version of Open3D in requirements (#2633)
+- Fix unused files in `mmdet3d/configs` (#2773)
+- Fix support devices in FreeAnchor3DHead (#2769)
+- Fix readthedocs building and link (#2739, #2650)
+- Fix the pitch angle bug in LaserMix (#2710)
+
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @ZhaoCake, @LRJKD, @crazysteeaam, @wep21, @zhiqwang
+
 ### v1.2.0 (4/7/2023)
 
 #### Highlights

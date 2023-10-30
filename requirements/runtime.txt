@@ -3,7 +3,7 @@ networkx>=2.5
 numba # you should install numba==0.53.0 if your environment is cuda-9.0
 numpy
 nuscenes-devkit
-open3d==0.16.0
+open3d
 plyfile
 scikit-image
 # by default we also use tensorboard to log results
