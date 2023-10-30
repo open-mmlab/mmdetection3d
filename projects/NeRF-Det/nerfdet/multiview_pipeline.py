@@ -62,10 +62,10 @@ class MultiViewPipeline(BaseTransform):
         n_images (int): The number of sampled views.
         mean (array): The mean values used in normalization.
         std (array): The variance values used in normalization.
-        margin (int): The margin value.Defaults to 10.
+        margin (int): The margin value. Defaults to 10.
         depth_range (array): The range of the depth.
             Defaults to [0.5, 5.5].
-        loading (str): The mode of loading.Defaults to 'random'.
+        loading (str): The mode of loading. Defaults to 'random'.
         nerf_target_views (int): The number of novel views.
         sample_freq (int): The frequency of sampling.
     """
@@ -269,13 +269,6 @@ class MultiViewPipeline(BaseTransform):
             results['gt_depths'] = gt_depths
             results['nerf_sizes'] = nerf_sizes
             results['denorm_images'] = denorm_imgs_list
-            '''
-            Hard code here!!!!!!!!! Should be carefully pick up the value.
-            point-NeRF it also add middle points!!!
-            One important idea here is that we sample more rays
-            in the object bounding box as we already have bounding
-            boxes!!! Take advantage of everything
-            '''
             results['depth_range'] = np.array([self.depth_range])
 
         if len(depths) != 0:

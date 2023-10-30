@@ -37,7 +37,7 @@ The new format of the pkl is organized as below:
   - info\['img_paths'\]: The paths of the 300 rgb pictures.
   - info\['axis_align_matrix'\]: The align matrix.Every scene has one matrix.
 
-Also, you can download the processed pkls in [website](<>).
+Also, you can download the processed pkls [here](<>).
 
 After preparing your scannet dataset pkls,please change the paths in configs to fit your project.
 
@@ -51,13 +51,13 @@ python tools/train.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${WO
 
 ## Evaluation using pretrained models
 
-1. Download the pretrained weights accordingly.
+1. Download the pretrained weights accordingly. (Here NeRF-Det-R50\* means this model uses depth in the training step)
 
-   |                               Backbone                               | mAP@25 | mAP@50 |                                                      Download                                                       |
-   | :------------------------------------------------------------------: | :----: | :----: | :-----------------------------------------------------------------------------------------------------------------: |
-   |        [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)         |  53.1  |  27.4  |         [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask.pth)         |
-   |    [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)     |  52.5  |  29.2  |      [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_r101_gridmask_cbgs.pth)       |
-   | [NeRF-Det-R101\*](./configs/detr3d_vovnet_gridmask_trainval_cbgs.py) |        |        | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/detr3d/detr3d_vovnet_gridmask_trainval_cbgs.pth) |
+   |                            Backbone                             | mAP@25 | mAP@50 |  Download   |
+   | :-------------------------------------------------------------: | :----: | :----: | :---------: |
+   |      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  51.5  |  27.2  | [model](<>) |
+   |  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.4  |  29.1  | [model](<>) |
+   | [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.2  |  28.8  | [model](<>) |
 
 2. Testing
 
@@ -66,18 +66,6 @@ python tools/train.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${WO
    ```bash
    python tools/test.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${CHECKPOINT_PATH}
    ```
-
-## Converting old models (Optional)
-
-For old models please refer to [NeRF-Det](https://github.com/facebookresearch/NeRF-Det)
-
-From v0.8.0 to v1.2.0, mmdet3d has changed some names of the model layers. For instance, the 'neck_3d.down_layer_0.0.conv1.weight' has been changed to 'neck_3d.down_layer_0.0.conv0.conv.weight' in the lateset version.
-
-If you trained models in the origin project, please use the following command to convert the old weights.
-
-```bash
-python projects/NeRF-Det/nerfdet/old_nerfdet_converter.py ${CHECKPOINT_DIR}/epoch_xx.pth ${CHECKPOINT_DIR}/epoch_xx_converted.pth --model res50
-```
 
 ## Citation
 
@@ -109,21 +97,21 @@ OpenMMLab's maintainer will review the code to ensure the project's quality. Rea
 Note that keeping this section up-to-date is crucial not only for this project's developers but the entire community, since there might be some other contributors joining this project and deciding their starting point from this list. It also helps maintainers accurately estimate time and effort on further code polishing, if needed.
 A project does not necessarily have to be finished in a single PR, but it's essential for the project to at least reach the first milestone in its very first PR. -->
 
-- [ ] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
+- [x] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
 
-  - \[ x \] Finish the code
+  - [x] Finish the code
 
     <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmdet3d.registry.MODELS` and configurable via a config file. -->
 
-  - [ ] Basic docstrings & proper citation
+  - [x] Basic docstrings & proper citation
 
     <!-- Each major object should contain a docstring, describing its functionality and arguments. If you have adapted the code from other open-source projects, don't forget to cite the source project in docstring and make sure your behavior is not against its license. Typically, we do not accept any code snippet under GPL license. [A Short Guide to Open Source Licenses](https://medium.com/nationwide-technology/a-short-guide-to-open-source-licenses-cf5b1c329edd) -->
 
-  - [ ] Test-time correctness
+  - [x] Test-time correctness
 
     <!-- If you are reproducing the result from a paper, make sure your model's inference-time performance matches that in the original paper. The weights usually could be obtained by simply renaming the keys in the official pre-trained weights. This test could be skipped though, if you are able to prove the training-time correctness and check the second milestone. -->
 
-  - [ ] A full README
+  - [x] A full README
 
     <!-- As this template does. -->
 
