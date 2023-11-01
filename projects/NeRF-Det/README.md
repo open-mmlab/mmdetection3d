@@ -53,11 +53,11 @@ python tools/train.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${WO
 
 1. Download the pretrained weights accordingly. (Here NeRF-Det-R50\* means this model uses depth in the training step)
 
-   |                            Backbone                             | mAP@25 | mAP@50 |  Download   |
-   | :-------------------------------------------------------------: | :----: | :----: | :---------: |
-   |      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  51.5  |  27.2  | [model](<>) |
-   |  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.4  |  29.1  | [model](<>) |
-   | [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.2  |  28.8  | [model](<>) |
+   |                            Backbone                             | mAP@25 | mAP@50 |  Download   |    Log    |
+   | :-------------------------------------------------------------: | :----: | :----: | :---------: | :-------: |
+   |      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  53.0  |  26.7  | [model](<>) | [log](<>) |
+   |  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.4  |  29.1  | [model](<>) | [log](<>) |
+   | [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.2  |  28.8  | [model](<>) | [log](<>) |
 
 2. Testing
 

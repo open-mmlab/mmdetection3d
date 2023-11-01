@@ -185,7 +185,7 @@ class MultiViewPipeline(BaseTransform):
                 _results['img'], self.mean, self.std, to_bgr=True).astype(
                     np.uint8) / 255.0
             denorm_imgs_list.append(denorm_img)
-            height, width = imgs[0].shape[:2]
+            height, width = padded_img.shape[:2]
             extrinsics.append(results['lidar2img']['extrinsic'][i])
 
         # prepare the nerf information
