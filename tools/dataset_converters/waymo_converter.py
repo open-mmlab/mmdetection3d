@@ -651,8 +651,8 @@ class Waymo2KITTI(object):
 
                 cam_instance['bbox'] = [min_x, min_y, max_x, max_y]
                 cam_instance['bbox_label'] = instance['bbox_label']
-                cam_instance['bbox_3d'] = gt_bboxes_3d.numpy().astype(
-                    np.float32).tolist()
+                cam_instance['bbox_3d'] = gt_bboxes_3d.numpy().squeeze(
+                ).astype(np.float32).tolist()
                 cam_instance['bbox_label_3d'] = instance['bbox_label_3d']
 
                 center_3d = gt_bboxes_3d.gravity_center.numpy()

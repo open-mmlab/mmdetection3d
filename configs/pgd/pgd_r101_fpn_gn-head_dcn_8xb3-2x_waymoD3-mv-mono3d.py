@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/datasets/waymoD5-fov-mono3d-3class.py',
+    '../_base_/datasets/waymoD3-mv-mono3d-3class.py',
     '../_base_/models/pgd.py', '../_base_/schedules/mmdet-schedule-1x.py',
     '../_base_/default_runtime.py'
 ]
@@ -68,10 +68,9 @@ model = dict(
             type='PGDBBoxCoder',
             base_depths=((41.01, 18.44), ),
             base_dims=(
-                (4.73, 1.77, 2.08),  # Car
                 (0.91, 1.74, 0.84),  # Pedestrian
                 (1.81, 1.77, 0.84),  # Cyclist
-            ),
+                (4.73, 1.77, 2.08)),  # Car
             code_size=7)),
     # set weight 1.0 for base 7 dims (offset, depth, size, rot)
     # 0.2 for 16-dim keypoint offsets and 1.0 for 4-dim 2D distance targets
@@ -80,33 +79,3 @@ model = dict(
         0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0
     ]),
     test_cfg=dict(nms_pre=100, nms_thr=0.05, score_thr=0.001, max_per_img=20))
-
-# optimizer
-optim_wrapper = dict(
-    optimizer=dict(
-        type='SGD',
-        lr=0.008,
-    ),
-    paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.),
-    clip_grad=dict(max_norm=35, norm_type=2))
-
-param_scheduler = [
-    dict(
-        type='LinearLR',
-        start_factor=1.0 / 3,
-        by_epoch=False,
-        begin=0,
-        end=500),
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=24,
-        by_epoch=True,
-        milestones=[16, 22],
-        gamma=0.1)
-]
-
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-auto_scale_lr = dict(base_batch_size=48)

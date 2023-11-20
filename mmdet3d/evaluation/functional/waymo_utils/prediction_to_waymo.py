@@ -81,7 +81,7 @@ class Prediction2Waymo(object):
             res_index (int): The indices of the results.
         """
         sample_idx = self.results[res_index]['sample_idx']
-        if len(self.results[res_index]['pred_instances_3d']) > 0:
+        if len(self.results[res_index]['labels_3d']) > 0:
             objects = self.parse_objects_from_origin(
                 self.results[res_index],
                 self.results[res_index]['context_name'],
@@ -104,9 +104,9 @@ class Prediction2Waymo(object):
         Returns:
             metrics_pb2.Objects: The parsed object.
         """
-        lidar_boxes = result['pred_instances_3d']['bboxes_3d']
-        scores = result['pred_instances_3d']['scores_3d']
-        labels = result['pred_instances_3d']['labels_3d']
+        lidar_boxes = result['bboxes_3d']
+        scores = result['scores_3d']
+        labels = result['labels_3d']
 
         objects = metrics_pb2.Objects()
         for lidar_box, score, label in zip(lidar_boxes, scores, labels):
