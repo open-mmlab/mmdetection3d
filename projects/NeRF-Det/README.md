@@ -37,8 +37,6 @@ The new format of the pkl is organized as below:
   - info\['img_paths'\]: The paths of the 300 rgb pictures.
   - info\['axis_align_matrix'\]: The align matrix.Every scene has one matrix.
 
-Also, you can download the processed pkls [here](<>).
-
 After preparing your scannet dataset pkls,please change the paths in configs to fit your project.
 
 ## Train
@@ -49,15 +47,37 @@ In MMDet3D's root directory, run the following command to train the model:
 python tools/train.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${WORK_DIR}
 ```
 
+## Results and Models
+
+### NeRF-Det
+
+|                            Backbone                             | mAP@25 | mAP@50 |  Download   |    Log    |
+| :-------------------------------------------------------------: | :----: | :----: | :---------: | :-------: |
+|      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  53.0  |  26.8  | [model](<>) | [log](<>) |
+|  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.2  |  28.5  | [model](<>) | [log](<>) |
+| [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.3  |  28.5  | [model](<>) | [log](<>) |
+
+(Here NeRF-Det-R50\* means this model uses depth information in the training step)
+
+### Notes
+
+- The values showed in the chart all represents the best mAP in the training.
+
+- Since there is a lot of randomness in the behavior of the model, we conducted three experiments on each config and took the average. The mAP showed on the above chart are all average values.
+
+- We also conducted the same experiments in the original code, the results are showed below.
+
+  |    Backbone     | mAP@25 | mAP@50 |
+  | :-------------: | :----: | :----: |
+  |  NeRF-Det-R50   |  52.8  |  26.8  |
+  | NeRF-Det-R50\*  |  52.4  |  27.5  |
+  | NeRF-Det-R101\* |  52.8  |  28.6  |
+
+- Attention: Because of the randomness in the construction of the ScanNet dataset itself and the behavior of the model, the training results will fluctuate considerably.
+
 ## Evaluation using pretrained models
 
-1. Download the pretrained weights accordingly. (Here NeRF-Det-R50\* means this model uses depth in the training step)
-
-   |                            Backbone                             | mAP@25 | mAP@50 |  Download   |    Log    |
-   | :-------------------------------------------------------------: | :----: | :----: | :---------: | :-------: |
-   |      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  53.0  |  26.7  | [model](<>) | [log](<>) |
-   |  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.4  |  29.1  | [model](<>) | [log](<>) |
-   | [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.2  |  28.8  | [model](<>) | [log](<>) |
+1. Download the pretrained checkpoints through the linkings in the above chart.
 
 2. Testing
 

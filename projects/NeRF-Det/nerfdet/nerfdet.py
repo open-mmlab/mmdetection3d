@@ -524,7 +524,7 @@ class NerfDet(Base3DDetector):
         else:
             x, valids, features_2d, rgb_preds = self.extract_feat(
                 batch_inputs_dict, batch_data_samples, 'train')
-        # x += (valids, )
+        x += (valids, )
         results = self.bbox_head.forward(x)
         return results
 
