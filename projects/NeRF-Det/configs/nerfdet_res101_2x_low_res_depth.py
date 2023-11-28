@@ -4,9 +4,6 @@ prior_generator = dict(
     type='AlignedAnchor3DRangeGenerator',
     ranges=[[-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]],
     rotations=[.0])
-# the actual ranges should be
-# [-3.2, -3.2, -0.78, 3.2, 3.2, 1.78]
-# because the default origin is [0, 0, 0.5]
 
 model = dict(
     type='NerfDet',
@@ -37,7 +34,7 @@ model = dict(
         out_channels=128,
         n_blocks=[1, 1, 1]),
     bbox_head=dict(
-        type='ScannetImVoxelHead',
+        type='NerfDetHead',
         bbox_loss=dict(type='AxisAlignedIoULoss', loss_weight=1.0),
         n_classes=18,
         n_levels=3,
@@ -160,7 +157,7 @@ train_dataloader = dict(
             metainfo=metainfo)))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=1,
+    num_workers=5,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -201,17 +198,7 @@ param_scheduler = [
 
 # hooks
 default_hooks = dict(
-    checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=1))
+    checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=12))
 
 # runtime
 find_unused_parameters = True  # only 1 of 4 FPN outputs is used
-
-# visualizer
-# vis_backends = [
-#     dict(type='TensorboardVisBackend'),
-#     dict(type='LocalVisBackend')
-# ]
-# visualizer = dict(
-#     type='Det3DLocalVisualizer',
-#     vis_backends=vis_backends,
-#     name='visualizer')

@@ -33,7 +33,7 @@ def get_points(n_voxels, voxel_size, origin):
 
 
 @MODELS.register_module()
-class ScannetImVoxelHead(BaseModule):
+class NerfDetHead(BaseModule):
     r"""`ImVoxelNet<https://arxiv.org/abs/2106.01178>`_ head for indoor
     datasets.
 
@@ -73,7 +73,7 @@ class ScannetImVoxelHead(BaseModule):
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptConfigType = None):
-        super(ScannetImVoxelHead, self).__init__(init_cfg)
+        super(NerfDetHead, self).__init__(init_cfg)
         self.n_classes = n_classes
         self.n_levels = n_levels
         self.n_reg_outs = n_reg_outs

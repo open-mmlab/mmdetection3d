@@ -22,7 +22,7 @@ This is an implementation of \[XXX\]. -->
 
 ## Dataset
 
-The format of the scannet dataset in the latest version of mmdet3d only supports the lidar tasks.For NeRF-Det,we need to create the new format of scannet dataset.
+The format of the scannet dataset in the latest version of mmdet3d only supports the lidar tasks.For NeRF-Det,we need to create the new format of ScanNet Dataset.
 
 To perpare the new dataset, please use the `update_infos_to_v2.py` in this folder to replace the file with the same name in `tools/dataset_converters/`.And then refer to [scannet dataset](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/scannet.html) and following the instructions.
 
@@ -73,7 +73,7 @@ python tools/train.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${WO
   | NeRF-Det-R50\*  |  52.4  |  27.5  |
   | NeRF-Det-R101\* |  52.8  |  28.6  |
 
-- Attention: Because of the randomness in the construction of the ScanNet dataset itself and the behavior of the model, the training results will fluctuate considerably.
+- Attention: Because of the randomness in the construction of the ScanNet dataset itself and the behavior of the model, the training results will fluctuate considerably. According to experimental results and experience, the experimental results will fluctuate by plus or minus 1.5 points.
 
 ## Evaluation using pretrained models
 
@@ -109,58 +109,3 @@ year={2023},
 url={https://openreview.net/forum?id=H3HcEJA2Um}
 }
 ```
-
-## Checklist
-
-<!-- Here is a checklist illustrating a usual development workflow of a successful project, and also serves as an overview of this project's progress. The PIC (person in charge) or contributors of this project should check all the items that they believe have been finished, which will further be verified by codebase maintainers via a PR.
-OpenMMLab's maintainer will review the code to ensure the project's quality. Reaching the first milestone means that this project suffices the minimum requirement of being merged into 'projects/'. But this project is only eligible to become a part of the core package upon attaining the last milestone.
-Note that keeping this section up-to-date is crucial not only for this project's developers but the entire community, since there might be some other contributors joining this project and deciding their starting point from this list. It also helps maintainers accurately estimate time and effort on further code polishing, if needed.
-A project does not necessarily have to be finished in a single PR, but it's essential for the project to at least reach the first milestone in its very first PR. -->
-
-- [x] Milestone 1: PR-ready, and acceptable to be one of the `projects/`.
-
-  - [x] Finish the code
-
-    <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmdet3d.registry.MODELS` and configurable via a config file. -->
-
-  - [x] Basic docstrings & proper citation
-
-    <!-- Each major object should contain a docstring, describing its functionality and arguments. If you have adapted the code from other open-source projects, don't forget to cite the source project in docstring and make sure your behavior is not against its license. Typically, we do not accept any code snippet under GPL license. [A Short Guide to Open Source Licenses](https://medium.com/nationwide-technology/a-short-guide-to-open-source-licenses-cf5b1c329edd) -->
-
-  - [x] Test-time correctness
-
-    <!-- If you are reproducing the result from a paper, make sure your model's inference-time performance matches that in the original paper. The weights usually could be obtained by simply renaming the keys in the official pre-trained weights. This test could be skipped though, if you are able to prove the training-time correctness and check the second milestone. -->
-
-  - [x] A full README
-
-    <!-- As this template does. -->
-
-- [ ] Milestone 2: Indicates a successful model implementation.
-
-  - [ ] Training-time correctness
-
-    <!-- If you are reproducing the result from a paper, checking this item means that you should have trained your model from scratch based on the original paper's specification and verified that the final result matches the report within a minor error range. -->
-
-- [ ] Milestone 3: Good to be a part of our core package!
-
-  - [ ] Type hints and docstrings
-
-    <!-- Ideally *all* the methods should have [type hints](https://www.pythontutorial.net/python-basics/python-type-hints/) and [docstrings](https://google.github.io/styleguide/pyguide.html#381-docstrings). [Example](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/mmdet3d/models/detectors/fcos_mono3d.py) -->
-
-  - [ ] Unit tests
-
-    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/tests/test_models/test_dense_heads/test_fcos_mono3d_head.py) -->
-
-  - [ ] Code polishing
-
-    <!-- Refactor your code according to reviewer's comment. -->
-
-  - [ ] Metafile.yml
-
-    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmdetection3d/blob/dev-1.x/configs/fcos3d/metafile.yml) -->
-
-- [ ] Move your modules into the core package following the codebase's file hierarchy structure.
-
-  <!-- In particular, you may have to refactor this README into a standard one. [Example](/configs/textdet/dbnet/README.md) -->
-
-- [ ] Refactor your modules into the core package following the codebase's file hierarchy structure.
