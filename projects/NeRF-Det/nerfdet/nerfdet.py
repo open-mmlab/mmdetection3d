@@ -422,13 +422,13 @@ class NerfDet(Base3DDetector):
 
                     - imgs (torch.Tensor, optional): Image of each sample.
 
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+            batch_data_samples (List[:obj:`NeRFDet3DDataSample`]): The Data
                 Samples. It usually includes information such as
                 `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
 
         Returns:
-            list[:obj:`Det3DDataSample`]: Detection results of the
-            input images. Each Det3DDataSample usually contain
+            list[:obj:`NeRFDet3DDataSample`]: Detection results of the
+            input images. Each NeRFDet3DDataSample usually contain
             'pred_instances_3d'. And the ``pred_instances_3d`` usually
             contains following keys.
 
@@ -487,7 +487,7 @@ class NerfDet(Base3DDetector):
 
                     - imgs (torch.Tensor, optional): Image of each sample.
 
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+            batch_data_samples (List[:obj:`NeRFDet3DDataSample`]): The Data
                 Samples. It usually includes information such as
                 `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`
 

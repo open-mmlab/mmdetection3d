@@ -22,7 +22,13 @@ from mmdet3d.utils import OptConfigType
 
 @MODELS.register_module()
 class NeRFDetDataPreprocessor(DetDataPreprocessor):
-    """Points / Image pre-processor for point clouds / vision-only / multi-
+    """In NeRF-Det, some extra information is needed in NeRF branch. We put the
+    datapreprocessor operations of these new information such as stack and pack
+    operations in this class. You can find the stack operations in subfuction
+    'collate_data' and the pack operations in 'simple_process'. Other codes are
+    the same as the default class 'DetDataPreprocessor'.
+
+    Points / Image pre-processor for point clouds / vision-only / multi-
     modality 3D detection tasks.
 
     It provides the data pre-processing as follows
@@ -379,8 +385,9 @@ class NeRFDetDataPreprocessor(DetDataPreprocessor):
 
         Args:
             points (List[Tensor]): Point cloud in one data batch.
-            data_samples: (list[:obj:`Det3DDataSample`]): The annotation data
-                of every samples. Add voxel-wise annotation for segmentation.
+            data_samples: (list[:obj:`NeRFDet3DDataSample`]): The annotation
+                data of every samples. Add voxel-wise annotation for
+                segmentation.
 
         Returns:
             Dict[str, Tensor]: Voxelization information.
@@ -507,7 +514,7 @@ class NeRFDetDataPreprocessor(DetDataPreprocessor):
 
         Args:
             res_coors (Tensor): The voxel coordinates of points, Nx3.
-            data_sample: (:obj:`Det3DDataSample`): The annotation data of
+            data_sample: (:obj:`NeRFDet3DDataSample`): The annotation data of
                 every samples. Add voxel-wise annotation forsegmentation.
         """
 

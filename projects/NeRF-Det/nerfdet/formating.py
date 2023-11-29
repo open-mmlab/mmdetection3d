@@ -11,7 +11,8 @@ from numpy import dtype
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures import BaseInstance3DBoxes, PointData
 from mmdet3d.structures.points import BasePoints
-from .det3d_data_sample import Det3DDataSample
+# from .det3d_data_sample import Det3DDataSample
+from .nerf_det3d_data_sample import NeRFDet3DDataSample
 
 
 def to_tensor(
@@ -109,8 +110,8 @@ class PackNeRFDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_samples' (:obj:`Det3DDataSample`): The annotation info of
-              the sample.
+            - 'data_samples' (:obj:`NeRFDet3DDataSample`): The annotation info
+              of the sample.
         """
         # augtest
         if isinstance(results, list):
@@ -143,7 +144,7 @@ class PackNeRFDetInputs(BaseTransform):
                 - points
                 - img
 
-            - 'data_samples' (:obj:`Det3DDataSample`): The annotation info
+            - 'data_samples' (:obj:`NeRFDet3DDataSample`): The annotation info
               of the sample.
         """
         # Format 3D data
@@ -268,7 +269,7 @@ class PackNeRFDetInputs(BaseTransform):
         if 'gt_depths' in results:
             results['gt_depths'] = to_tensor(results['gt_depths'])
 
-        data_sample = Det3DDataSample()
+        data_sample = NeRFDet3DDataSample()
         gt_instances_3d = InstanceData()
         gt_instances = InstanceData()
         gt_pts_seg = PointData()

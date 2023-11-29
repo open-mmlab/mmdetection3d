@@ -113,6 +113,14 @@ class MultiViewPipeline(BaseTransform):
                 - gt_depths (list): The groundtruth depth images.
                 - nerf_sizes (array): The size of the groundtruth images.
                 - depth_range (array): The range of the depth.
+
+        Here we give a detailed explanation of some keys mentioned above.
+        Let P_c be the coordinate of camera, P_w be the coordinate of world.
+        There is such a conversion relationship: P_c = R @ P_w + T.
+        The 'camrotc2w' mentioned above corresponds to the R matrix here.
+        The 'lightpos' corresponds to the T matrix here. And if you put
+        R and T together, you can get the camera extrinsics matrix. It
+        corresponds to the 'c2w' mentioned above.
         """
         imgs = []
         depths = []
