@@ -711,8 +711,8 @@ def update_scannet_infos_nerfdet(pkl_path, out_dir):
         temp_data_info = get_empty_standard_data_info()
 
         # intrinsics, extrinsics and imgs
-        temp_data_info['intrinsics'] = ori_info_dict['intrinsics']
-        temp_data_info['extrinsics'] = ori_info_dict['extrinsics']
+        temp_data_info['cam2img'] = ori_info_dict['intrinsics']
+        temp_data_info['lidar2cam'] = ori_info_dict['extrinsics']
         temp_data_info['img_paths'] = ori_info_dict['img_paths']
 
         # annotation information

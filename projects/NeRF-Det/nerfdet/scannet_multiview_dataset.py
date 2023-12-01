@@ -141,11 +141,11 @@ class ScanNetMultiViewDataset(Det3DDataset):
                         dict(filename=img_filename[:-4] + '.png'))
             # implement lidar_info in input.keys() in the future.
             extrinsic = np.linalg.inv(
-                info['axis_align_matrix'] @ info['extrinsics'][i])
+                info['axis_align_matrix'] @ info['lidar2cam'][i])
             info['lidar2img'].append(extrinsic.astype(np.float32))
             if self.modality['use_ray']:
                 c2w = (
-                    info['axis_align_matrix'] @ info['extrinsics'][i]).astype(
+                    info['axis_align_matrix'] @ info['lidar2cam'][i]).astype(
                         np.float32)  # noqa
                 info['c2w'].append(c2w)
                 info['camrotc2w'].append(c2w[0:3, 0:3])
@@ -153,7 +153,7 @@ class ScanNetMultiViewDataset(Det3DDataset):
         origin = np.array([.0, .0, .5])
         info['lidar2img'] = dict(
             extrinsic=info['lidar2img'],
-            intrinsic=info['intrinsics'].astype(np.float32),
+            intrinsic=info['cam2img'].astype(np.float32),
             origin=origin.astype(np.float32))
 
         if self.modality['use_ray']:

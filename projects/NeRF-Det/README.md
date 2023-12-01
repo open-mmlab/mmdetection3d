@@ -32,8 +32,8 @@ The new format of the pkl is organized as below:
   - info\['instances'\]:A list of dict contains all annotations, each dict contains all annotation information of single instance.For the i-th instance:
     - info\['instances'\]\[i\]\['bbox_3d'\]: List of 6 numbers representing the axis_aligned in depth coordinate system, in (x,y,z,l,w,h) order.
     - info\['instances'\]\[i\]\['bbox_label_3d'\]: The label of each 3d bounding boxes.
-  - info\['intrinsics'\]: The intrinsic matrix.Every scene has one matrix.
-  - info\['extrinsics'\]: The extrinsic matrixes.Every scene has 300 matrixes.
+  - info\['cam2img'\]: The intrinsic matrix.Every scene has one matrix.
+  - info\['lidar2cam'\]: The extrinsic matrixes.Every scene has 300 matrixes.
   - info\['img_paths'\]: The paths of the 300 rgb pictures.
   - info\['axis_align_matrix'\]: The align matrix.Every scene has one matrix.
 
