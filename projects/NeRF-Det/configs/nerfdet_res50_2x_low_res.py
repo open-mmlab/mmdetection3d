@@ -1,63 +1,6 @@
-_base_ = ['../../../configs/_base_/default_runtime.py']
-custom_imports = dict(imports=['projects.NeRF-Det.nerfdet'])
-prior_generator = dict(
-    type='AlignedAnchor3DRangeGenerator',
-    ranges=[[-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]],
-    rotations=[.0])
+_base_ = ['./nerfdet_res50_2x_low_res_depth.py']
 
-model = dict(
-    type='NerfDet',
-    data_preprocessor=dict(
-        type='NeRFDetDataPreprocessor',
-        mean=[123.675, 116.28, 103.53],
-        std=[58.395, 57.12, 57.375],
-        bgr_to_rgb=True,
-        pad_size_divisor=10),
-    backbone=dict(
-        type='mmdet.ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=False),
-        norm_eval=True,
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50'),
-        style='pytorch'),
-    neck=dict(
-        type='mmdet.FPN',
-        in_channels=[256, 512, 1024, 2048],
-        out_channels=256,
-        num_outs=4),
-    neck_3d=dict(
-        type='IndoorImVoxelNeck',
-        in_channels=256,
-        out_channels=128,
-        n_blocks=[1, 1, 1]),
-    bbox_head=dict(
-        type='NerfDetHead',
-        bbox_loss=dict(type='AxisAlignedIoULoss', loss_weight=1.0),
-        n_classes=18,
-        n_levels=3,
-        n_channels=128,
-        n_reg_outs=6,
-        pts_assign_threshold=27,
-        pts_center_threshold=18,
-        prior_generator=prior_generator),
-    prior_generator=prior_generator,
-    voxel_size=[.16, .16, .2],
-    n_voxels=[40, 40, 16],
-    aabb=([-2.7, -2.7, -0.78], [3.7, 3.7, 1.78]),
-    near_far_range=[0.2, 8.0],
-    N_samples=64,
-    N_rand=2048,
-    nerf_mode='image',
-    depth_supervise=False,
-    use_nerf_mask=True,
-    nerf_sample_view=20,
-    squeeze_scale=4,
-    nerf_density=True,
-    train_cfg=dict(),
-    test_cfg=dict(nms_pre=1000, iou_thr=.25, score_thr=.01))
+model = dict(depth_supervise=False)
 
 dataset_type = 'ScanNetMultiViewDataset'
 data_root = 'data/scannet/'
@@ -69,36 +12,23 @@ class_names = [
 metainfo = dict(CLASSES=class_names)
 file_client_args = dict(backend='disk')
 
-input_modality = dict(
-    use_camera=True,
-    use_depth=False,
-    use_lidar=False,
-    use_neuralrecon_depth=False,
-    use_ray=True)
+input_modality = dict(use_depth=False)
 backend_args = None
 
-train_collect_keys = ['img', 'gt_bboxes_3d', 'gt_labels_3d']
-test_collect_keys = ['img']
-if input_modality['use_depth']:
-    train_collect_keys.append('depth')
-    test_collect_keys.append('depth')
-if input_modality['use_lidar']:
-    train_collect_keys.append('lidar')
-    test_collect_keys.append('lidar')
-if input_modality['use_ray']:
-    for key in [
-            # 'c2w',
-            # 'camrotc2w',
-            'lightpos',
-            # 'pixels',
-            'nerf_sizes',
-            'raydirs',
-            'gt_images',
-            'gt_depths',
-            'denorm_images'
-    ]:
-        train_collect_keys.append(key)
-        test_collect_keys.append(key)
+train_collect_keys = [
+    'img', 'gt_bboxes_3d', 'gt_labels_3d', 'lightpos', 'nerf_sizes', 'raydirs',
+    'gt_images', 'gt_depths', 'denorm_images'
+]
+
+test_collect_keys = [
+    'img',
+    'lightpos',
+    'nerf_sizes',
+    'raydirs',
+    'gt_images',
+    'gt_depths',
+    'denorm_images',
+]
 
 train_pipeline = [
     dict(type='LoadAnnotations3D'),
@@ -148,7 +78,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='scannet_infos_train.pkl',
+            ann_file='scannet_infos_train_new.pkl',
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
@@ -164,7 +94,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='scannet_infos_val.pkl',
+        ann_file='scannet_infos_val_new.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
@@ -172,33 +102,3 @@ val_dataloader = dict(
         box_type_3d='Depth',
         metainfo=metainfo))
 test_dataloader = val_dataloader
-
-val_evaluator = dict(type='IndoorMetric')
-test_evaluator = val_evaluator
-
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=1)
-test_cfg = dict()
-val_cfg = dict()
-
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=0.0002, weight_decay=0.0001),
-    paramwise_cfg=dict(
-        custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
-    clip_grad=dict(max_norm=35., norm_type=2))
-param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=12,
-        by_epoch=True,
-        milestones=[8, 11],
-        gamma=0.1)
-]
-
-# hooks
-default_hooks = dict(
-    checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=12))
-
-# runtime
-find_unused_parameters = True  # only 1 of 4 FPN outputs is used

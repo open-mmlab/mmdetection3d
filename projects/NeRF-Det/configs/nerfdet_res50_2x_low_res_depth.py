@@ -1,4 +1,5 @@
-_base_ = ['./nerfdet_res50_2x_low_res.py']
+_base_ = ['../../../configs/_base_/default_runtime.py']
+
 custom_imports = dict(imports=['projects.NeRF-Det.nerfdet'])
 prior_generator = dict(
     type='AlignedAnchor3DRangeGenerator',
@@ -77,28 +78,21 @@ input_modality = dict(
     use_ray=True)
 backend_args = None
 
-train_collect_keys = ['img', 'gt_bboxes_3d', 'gt_labels_3d']
-test_collect_keys = ['img']
-if input_modality['use_depth']:
-    train_collect_keys.append('depth')
-    test_collect_keys.append('depth')
-if input_modality['use_lidar']:
-    train_collect_keys.append('lidar')
-    test_collect_keys.append('lidar')
-if input_modality['use_ray']:
-    for key in [
-            # 'c2w',
-            # 'camrotc2w',
-            'lightpos',
-            # 'pixels',
-            'nerf_sizes',
-            'raydirs',
-            'gt_images',
-            'gt_depths',
-            'denorm_images'
-    ]:
-        train_collect_keys.append(key)
-        test_collect_keys.append(key)
+train_collect_keys = [
+    'img', 'gt_bboxes_3d', 'gt_labels_3d', 'depth', 'lightpos', 'nerf_sizes',
+    'raydirs', 'gt_images', 'gt_depths', 'denorm_images'
+]
+
+test_collect_keys = [
+    'img',
+    'depth',
+    'lightpos',
+    'nerf_sizes',
+    'raydirs',
+    'gt_images',
+    'gt_depths',
+    'denorm_images',
+]
 
 train_pipeline = [
     dict(type='LoadAnnotations3D'),
@@ -148,7 +142,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='scannet_infos_train.pkl',
+            ann_file='scannet_infos_train_new.pkl',
             pipeline=train_pipeline,
             modality=input_modality,
             test_mode=False,
@@ -164,7 +158,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='scannet_infos_val.pkl',
+        ann_file='scannet_infos_val_new.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
