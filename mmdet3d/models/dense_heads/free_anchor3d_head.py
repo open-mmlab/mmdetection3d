@@ -2,6 +2,7 @@
 from typing import Dict, List
 
 import torch
+from mmengine.device import get_device
 from torch import Tensor
 from torch.nn import functional as F
 
@@ -79,7 +80,9 @@ class FreeAnchor3DHead(Anchor3DHead):
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
 
-        anchor_list = self.get_anchors(featmap_sizes, batch_input_metas)
+        device = get_device()
+        anchor_list = self.get_anchors(featmap_sizes, batch_input_metas,
+                                       device)
         mlvl_anchors = [torch.cat(anchor) for anchor in anchor_list]
 
         # concatenate each level
