@@ -1,7 +1,7 @@
 grid_shape = [480, 360, 32]
 point_cloud_range = [0, -3.14159265359, -4, 50, 3.14159265359, 2]
 model = dict(
-    type='Cylinder3D',
+    type='VoxelSegmentor',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,

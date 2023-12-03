@@ -13,9 +13,6 @@ from mmdet3d.testing import get_detector_cfg
 class TestSeg3DTTAModel(TestCase):
 
     def test_seg3d_tta_model(self):
-        import mmdet3d.models
-
-        assert hasattr(mmdet3d.models, 'Cylinder3D')
         DefaultScope.get_instance('test_cylinder3d', scope_name='mmdet3d')
         segmentor3d_cfg = get_detector_cfg(
             'cylinder3d/cylinder3d_4xb4-3x_semantickitti.py')

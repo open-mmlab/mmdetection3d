@@ -24,10 +24,11 @@ def test_minkunet_backbone():
         features.append(f)
     features = torch.cat(features, dim=0).cuda()
     coordinates = torch.cat(coordinates, dim=0).cuda()
+    voxel_dict = {'voxels': features, 'coors': coordinates}
 
     cfg = dict(type='MinkUNetBackbone')
     self = MODELS.build(cfg).cuda()
     self.init_weights()
 
-    y = self(features, coordinates)
-    assert y.shape == torch.Size([200, 96])
+    voxel_dict = self(voxel_dict)
+    assert voxel_dict['voxel_feats'].shape == torch.Size([200, 96])

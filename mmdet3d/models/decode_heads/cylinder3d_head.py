@@ -9,7 +9,7 @@ from torch import Tensor
 from mmdet3d.models.data_preprocessors.voxelize import dynamic_scatter_3d
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import OptConfigType
+from mmdet3d.utils import ConfigType, OptConfigType
 from .decode_head import Base3DDecodeHead
 
 
@@ -88,36 +88,32 @@ class Cylinder3DHead(Base3DDecodeHead):
 
         return loss
 
-    def predict(
-        self,
-        voxel_dict: dict,
-        batch_data_samples: SampleList,
-    ) -> List[Tensor]:
+    def predict(self, voxel_dict: dict, batch_input_metas: List[dict],
+                test_cfg: ConfigType) -> List[Tensor]:
         """Forward function for testing.
 
         Args:
             voxel_dict (dict): Features from backbone.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`. We use `point2voxel_map` in this function.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
+            test_cfg (dict or :obj:`ConfigDict`): The testing config.
 
         Returns:
             List[Tensor]: List of point-wise segmentation logits.
         """
         voxel_dict = self.forward(voxel_dict)
-        seg_pred_list = self.predict_by_feat(voxel_dict, batch_data_samples)
+        seg_pred_list = self.predict_by_feat(voxel_dict, batch_input_metas)
         return seg_pred_list
 
     def predict_by_feat(self, voxel_dict: dict,
-                        batch_data_samples: SampleList) -> List[Tensor]:
+                        batch_input_metas: List[dict]) -> Tensor:
         """Predict function.
 
         Args:
             voxel_dict (dict): The dict may contain `logits`,
                 `point2voxel_map`.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
 
         Returns:
             List[Tensor]: List of point-wise segmentation logits.
@@ -126,7 +122,7 @@ class Cylinder3DHead(Base3DDecodeHead):
 
         seg_pred_list = []
         coors = voxel_dict['voxel_coors']
-        for batch_idx in range(len(batch_data_samples)):
+        for batch_idx in range(len(batch_input_metas)):
             batch_mask = coors[:, 0] == batch_idx
             seg_logits_sample = seg_logits[batch_mask]
             point2voxel_map = voxel_dict['point2voxel_maps'][batch_idx].long()

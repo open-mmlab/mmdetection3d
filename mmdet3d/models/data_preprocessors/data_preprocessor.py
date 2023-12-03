@@ -424,9 +424,9 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             voxels = torch.cat(voxels, dim=0)
             coors = torch.cat(coors, dim=0)
         elif self.voxel_type == 'minkunet':
-            voxels, coors = [], []
+            voxels, coors, point2voxel_maps, voxel_inds = [], [], [], []
             voxel_size = points[0].new_tensor(self.voxel_layer.voxel_size)
-            for i, (res, data_sample) in enumerate(zip(points, data_samples)):
+            for i, res in enumerate(points):
                 res_coors = torch.round(res[:, :3] / voxel_size).int()
                 res_coors -= res_coors.min(0)[0]
 
@@ -439,24 +439,22 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                         inds = np.random.choice(
                             inds, self.max_voxels, replace=False)
                 inds = torch.from_numpy(inds).cuda()
-                if hasattr(data_sample.gt_pts_seg, 'pts_semantic_mask'):
-                    data_sample.gt_pts_seg.voxel_semantic_mask \
-                        = data_sample.gt_pts_seg.pts_semantic_mask[inds]
                 res_voxel_coors = res_coors[inds]
                 res_voxels = res[inds]
                 if self.batch_first:
                     res_voxel_coors = F.pad(
                         res_voxel_coors, (1, 0), mode='constant', value=i)
-                    data_sample.batch_idx = res_voxel_coors[:, 0]
                 else:
                     res_voxel_coors = F.pad(
                         res_voxel_coors, (0, 1), mode='constant', value=i)
-                    data_sample.batch_idx = res_voxel_coors[:, -1]
-                data_sample.point2voxel_map = point2voxel_map.long()
                 voxels.append(res_voxels)
                 coors.append(res_voxel_coors)
+                point2voxel_maps.append(point2voxel_map)
+                voxel_inds.append(inds)
             voxels = torch.cat(voxels, dim=0)
             coors = torch.cat(coors, dim=0)
+            voxel_dict['point2voxel_maps'] = point2voxel_maps
+            voxel_dict['voxel_inds'] = voxel_inds
 
         else:
             raise ValueError(f'Invalid voxelization type {self.voxel_type}')

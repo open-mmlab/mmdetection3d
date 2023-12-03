@@ -70,5 +70,5 @@ class TestCylinder3DHead(TestCase):
         self.assertGreater(loss_ce, 0, 'ce loss should be positive')
         self.assertGreater(loss_lovasz, 0, 'lovasz loss should be positive')
 
-        point_logits = cylinder3d_head.predict(voxel_dict, [datasample])
+        point_logits = cylinder3d_head.predict(voxel_dict, [datasample], None)
         assert point_logits[0].shape == torch.Size([100, 20])

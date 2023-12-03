@@ -3,10 +3,10 @@ from mmdet3d.models.backbones.minkunet_backbone import MinkUNetBackbone
 from mmdet3d.models.data_preprocessors.data_preprocessor import \
     Det3DDataPreprocessor
 from mmdet3d.models.decode_heads.minkunet_head import MinkUNetHead
-from mmdet3d.models.segmentors.minkunet import MinkUNet
+from mmdet3d.models.segmentors import VoxelSegmentor
 
 model = dict(
-    type=MinkUNet,
+    type=VoxelSegmentor,
     data_preprocessor=dict(
         type=Det3DDataPreprocessor,
         voxel=True,

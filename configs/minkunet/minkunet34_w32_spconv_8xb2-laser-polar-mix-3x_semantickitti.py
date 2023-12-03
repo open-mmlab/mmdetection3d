@@ -4,4 +4,5 @@ _base_ = [
 
 model = dict(
     data_preprocessor=dict(batch_first=True),
-    backbone=dict(sparseconv_backend='spconv'))
+    backbone=dict(sparseconv_backend='spconv'),
+    decode_head=dict(batch_first=True))

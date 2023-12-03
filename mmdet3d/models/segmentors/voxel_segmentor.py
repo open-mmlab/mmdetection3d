@@ -4,78 +4,51 @@ from typing import Dict
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
-from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
+from mmdet3d.utils import OptConfigType
 from ...structures.det3d_data_sample import OptSampleList, SampleList
 from .encoder_decoder import EncoderDecoder3D
 
 
 @MODELS.register_module()
-class Cylinder3D(EncoderDecoder3D):
-    """`Cylindrical and Asymmetrical 3D Convolution Networks for LiDAR
-    Segmentation.
-
-        <https://arxiv.org/abs/2011.10033>`_.
+class VoxelSegmentor(EncoderDecoder3D):
+    """Voxel-Based Methods for LiDAR Segmentation.
 
     Args:
-        voxel_encoder (dict or :obj:`ConfigDict`): The config for the
-            points2voxel encoder of segmentor.
-        backbone (dict or :obj:`ConfigDict`): The config for the backnone of
-            segmentor.
-        decode_head (dict or :obj:`ConfigDict`): The config for the decode
-            head of segmentor.
-        neck (dict or :obj:`ConfigDict`, optional): The config for the neck of
-            segmentor. Defaults to None.
-        auxiliary_head (dict or :obj:`ConfigDict` or List[dict or
-            :obj:`ConfigDict`], optional): The config for the auxiliary head of
-            segmentor. Defaults to None.
-        loss_regularization (dict or :obj:`ConfigDict` or List[dict or
-            :obj:`ConfigDict`], optional): The config for the regularization
-            loass. Defaults to None.
-        train_cfg (dict or :obj:`ConfigDict`, optional): The config for
-            training. Defaults to None.
-        test_cfg (dict or :obj:`ConfigDict`, optional): The config for testing.
-            Defaults to None.
-        data_preprocessor (dict or :obj:`ConfigDict`, optional): The
-            pre-process config of :class:`BaseDataPreprocessor`.
-            Defaults to None.
-        init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`],
-            optional): The weight initialized config for :class:`BaseModule`.
-            Defaults to None.
+        voxel_encoder (dict or :obj:`ConfigDict`, optional): The config for the
+            points2voxel encoder of segmentor. Defaults to None.
     """
 
-    def __init__(self,
-                 voxel_encoder: ConfigType,
-                 backbone: ConfigType,
-                 decode_head: ConfigType,
-                 neck: OptConfigType = None,
-                 auxiliary_head: OptConfigType = None,
-                 loss_regularization: OptConfigType = None,
-                 train_cfg: OptConfigType = None,
-                 test_cfg: OptConfigType = None,
-                 data_preprocessor: OptConfigType = None,
-                 init_cfg: OptMultiConfig = None) -> None:
-        super(Cylinder3D, self).__init__(
-            backbone=backbone,
-            decode_head=decode_head,
-            neck=neck,
-            auxiliary_head=auxiliary_head,
-            loss_regularization=loss_regularization,
-            train_cfg=train_cfg,
-            test_cfg=test_cfg,
-            data_preprocessor=data_preprocessor,
-            init_cfg=init_cfg)
+    def __init__(self, voxel_encoder: OptConfigType = None, **kwargs) -> None:
+        super(VoxelSegmentor, self).__init__(**kwargs)
 
-        self.voxel_encoder = MODELS.build(voxel_encoder)
+        if voxel_encoder is not None:
+            self.voxel_encoder = MODELS.build(voxel_encoder)
+
+    @property
+    def with_voxel_encoder(self) -> bool:
+        """bool: Whether the segmentor has voxel_encoder."""
+        return hasattr(self, 'voxel_encoder') and \
+            self.voxel_encoder is not None
 
     def extract_feat(self, batch_inputs_dict: dict) -> dict:
-        """Extract features from points."""
+        """Extract features from voxels.
+
+        Args:
+            batch_inputs_dict (dict): Input sample dict which includes 'points'
+                and 'voxels' keys.
+
+                - points (List[Tensor]): Point cloud of each sample.
+                - voxels (dict): Voxel feature and coords after voxelization.
+
+        Returns:
+            dict: The dict containing features.
+        """
         voxel_dict = batch_inputs_dict['voxels'].copy()
-        voxel_dict = self.voxel_encoder(voxel_dict)
-        x = self.backbone(voxel_dict['voxel_feats'], voxel_dict['voxel_coors'],
-                          len(batch_inputs_dict['points']))
+        if self.with_voxel_encoder:
+            voxel_dict = self.voxel_encoder(voxel_dict)
+        voxel_dict = self.backbone(voxel_dict)
         if self.with_neck:
-            x = self.neck(x)
-        voxel_dict['voxel_feats'] = x
+            voxel_dict = self.neck(voxel_dict)
         return voxel_dict
 
     def loss(self, batch_inputs_dict: dict,
@@ -141,9 +114,14 @@ class Cylinder3D(EncoderDecoder3D):
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
+        batch_input_metas = []
+        for data_sample in batch_data_samples:
+            batch_input_metas.append(data_sample.metainfo)
+
         voxel_dict = self.extract_feat(batch_inputs_dict)
         seg_logits_list = self.decode_head.predict(voxel_dict,
-                                                   batch_data_samples)
+                                                   batch_input_metas,
+                                                   self.test_cfg)
         for i in range(len(seg_logits_list)):
             seg_logits_list[i] = seg_logits_list[i].transpose(0, 1)
 
