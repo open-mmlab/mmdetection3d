@@ -19,7 +19,7 @@ data_root = 'data/waymo/kitti_format/'
 #      }))
 backend_args = None
 
-class_names = ['Car', 'Pedestrian', 'Cyclist']
+class_names = ['Pedestrian', 'Cyclist', 'Car']
 input_modality = dict(use_lidar=False, use_camera=True)
 point_cloud_range = [-35.0, -75.0, -2, 75.0, 75.0, 4]
 
@@ -29,8 +29,9 @@ train_transforms = [
         type='RandomResize3D',
         scale=(1248, 832),
         ratio_range=(0.95, 1.05),
+        # ratio_range=(1., 1.),
         keep_ratio=True),
-    dict(type='RandomCrop3D', crop_size=(720, 1080)),
+    dict(type='RandomCrop3D', crop_size=(1080, 720)),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5, flip_box3d=False),
 ]
 
@@ -48,6 +49,9 @@ train_pipeline = [
         with_label_3d=True,
         with_bbox_depth=True),
     dict(type='MultiViewWrapper', transforms=train_transforms),
+        #  randomness_keys= [
+        #     'scale', 'scale_factor', 'crop_size', 'img_crop_offset', 'flip',
+        #     'flip_direction']),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(
@@ -70,7 +74,11 @@ test_pipeline = [
         to_float32=True,
         backend_args=backend_args),
     dict(type='MultiViewWrapper', transforms=test_transforms),
-    dict(type='Pack3DDetInputs', keys=['img'])
+    dict(type='Pack3DDetInputs', keys=['img'], meta_keys=[
+            'box_type_3d', 'img_shape', 'ori_cam2img', 'scale_factor',
+            'sample_idx', 'context_name', 'timestamp', 'lidar2cam',
+            'num_ref_frames', 'num_views'
+        ])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -80,7 +88,11 @@ eval_pipeline = [
         to_float32=True,
         backend_args=backend_args),
     dict(type='MultiViewWrapper', transforms=test_transforms),
-    dict(type='Pack3DDetInputs', keys=['img'])
+    dict(type='Pack3DDetInputs', keys=['img'], meta_keys=[
+            'box_type_3d', 'img_shape', 'ori_cam2img', 'scale_factor',
+            'sample_idx', 'context_name', 'timestamp', 'lidar2cam',
+            'num_ref_frames', 'num_views'
+        ])
 ]
 metainfo = dict(classes=class_names)
 
@@ -103,6 +115,7 @@ train_dataloader = dict(
         pipeline=train_pipeline,
         modality=input_modality,
         test_mode=False,
+        cam_sync_instances=True,
         metainfo=metainfo,
         box_type_3d='Lidar',
         load_interval=5,
@@ -149,7 +162,7 @@ test_dataloader = dict(
             CAM_FRONT_RIGHT='training/image_2',
             CAM_SIDE_LEFT='training/image_3',
             CAM_SIDE_RIGHT='training/image_4'),
-        pipeline=eval_pipeline,
+        pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
         metainfo=metainfo,
@@ -159,7 +172,8 @@ val_evaluator = dict(
     type='WaymoMetric',
     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
-    data_root='./data/waymo/waymo_format',
+    pklfile_prefix='./mmdet3d_mvfoc3d_pred',
+    convert_kitti_format=False,
     metric='LET_mAP',
     backend_args=backend_args)
 

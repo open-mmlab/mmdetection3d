@@ -35,7 +35,7 @@ train_pipeline = [
     # base shape (1248, 832), scale (0.95, 1.05)
     dict(
         type='RandomResize3D',
-        scale=(1284, 832),
+        scale=(1248, 832),
         ratio_range=(0.95, 1.05),
         # ratio_range=(1., 1.),
         interpolation='nearest',

@@ -2,7 +2,7 @@
 # D3 in the config name means the whole dataset is divided into 3 folds
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
-data_root = 'data/waymo_mini/kitti_format/'
+data_root = 'data/waymo/kitti_format/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=False, use_camera=True)
@@ -35,11 +35,13 @@ train_pipeline = [
     # base shape (1248, 832), scale (0.95, 1.05)
     dict(
         type='RandomResize3D',
-        scale=(1284, 832),
+        scale=(1248, 832),
+        # ratio_range=(1., 1.),
         ratio_range=(0.95, 1.05),
+        interpolation='nearest',
         keep_ratio=True,
     ),
-    # dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='Pack3DDetInputs',
         keys=[
@@ -83,9 +85,9 @@ eval_pipeline = [
 
 train_dataloader = dict(
     batch_size=3,
-    num_workers=0,
-    persistent_workers=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
+    num_workers=3,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
@@ -170,9 +172,9 @@ test_dataloader = dict(
 
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo_mini/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo_mini/waymo_format/cam_gt_mini.bin',
-    pklfile_prefix='./waymo_mv_pred_fix_resize_2',
+    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
+    waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
+    pklfile_prefix='./pgd_mv',
     metric='LET_mAP',
     convert_kitti_format=False,
     load_type='mv_image_based',

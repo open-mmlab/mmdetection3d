@@ -79,3 +79,33 @@ model = dict(
         0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0
     ]),
     test_cfg=dict(nms_pre=100, nms_thr=0.05, score_thr=0.001, max_per_img=20))
+
+# optimizer
+optim_wrapper = dict(
+    optimizer=dict(
+        type='SGD',
+        lr=0.008,
+    ),
+    paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.),
+    clip_grad=dict(max_norm=35, norm_type=2))
+
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=1.0 / 3,
+        by_epoch=False,
+        begin=0,
+        end=500),
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=24,
+        by_epoch=True,
+        milestones=[16, 22],
+        gamma=0.1)
+]
+
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+auto_scale_lr = dict(enable=False, base_batch_size=48)

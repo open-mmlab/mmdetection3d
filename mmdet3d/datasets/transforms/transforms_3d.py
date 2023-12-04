@@ -2071,6 +2071,7 @@ class RandomCrop3D(RandomCrop):
                 offset_w = np.random.randint(
                     self.rel_offset_w[0] * margin_w,
                     self.rel_offset_w[1] * margin_w + 1)
+                # offset_h, offset_w = 0, 0
             else:
                 offset_w, offset_h = results['img_crop_offset']
 
