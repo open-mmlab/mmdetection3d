@@ -22,6 +22,12 @@ def parse_args():
         default=False,
         help='enable automatic-mixed-precision training')
     parser.add_argument(
+        '--sync_bn',
+        choices=['none', 'torch', 'mmcv'],
+        default='none',
+        help='convert all BatchNorm layers in the model to SyncBatchNorm '
+        '(SyncBN) or mmcv.ops.sync_bn.SyncBatchNorm (MMSyncBN) layers.')
+    parser.add_argument(
         '--auto-scale-lr',
         action='store_true',
         help='enable automatically scaling LR.')
@@ -97,6 +103,10 @@ def main():
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
+
+    # convert BatchNorm layers
+    if args.sync_bn != 'none':
+        cfg.sync_bn = args.sync_bn
 
     # enable automatically scaling LR
     if args.auto_scale_lr:

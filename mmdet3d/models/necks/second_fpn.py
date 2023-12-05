@@ -21,6 +21,10 @@ class SECONDFPN(BaseModule):
         upsample_cfg (dict): Config dict of upsample layers.
         conv_cfg (dict): Config dict of conv layers.
         use_conv_for_no_stride (bool): Whether to use conv when stride is 1.
+        init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
+            optional): Initialization config dict. Defaults to
+            [dict(type='Kaiming', layer='ConvTranspose2d'),
+             dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)].
     """
 
     def __init__(self,
@@ -31,7 +35,13 @@ class SECONDFPN(BaseModule):
                  upsample_cfg=dict(type='deconv', bias=False),
                  conv_cfg=dict(type='Conv2d', bias=False),
                  use_conv_for_no_stride=False,
-                 init_cfg=None):
+                 init_cfg=[
+                     dict(type='Kaiming', layer='ConvTranspose2d'),
+                     dict(
+                         type='Constant',
+                         layer='NaiveSyncBatchNorm2d',
+                         val=1.0)
+                 ]):
         # if for GroupNorm,
         # cfg is dict(type='GN', num_groups=num_groups, eps=1e-3, affine=True)
         super(SECONDFPN, self).__init__(init_cfg=init_cfg)
@@ -63,12 +73,6 @@ class SECONDFPN(BaseModule):
                                     nn.ReLU(inplace=True))
             deblocks.append(deblock)
         self.deblocks = nn.ModuleList(deblocks)
-
-        if init_cfg is None:
-            self.init_cfg = [
-                dict(type='Kaiming', layer='ConvTranspose2d'),
-                dict(type='Constant', layer='NaiveSyncBatchNorm2d', val=1.0)
-            ]
 
     def forward(self, x):
         """Forward function.

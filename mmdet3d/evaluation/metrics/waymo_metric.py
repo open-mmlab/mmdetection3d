@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from mmengine import Config
+from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger, print_log
 
 from mmdet3d.models.layers import box3d_multiclass_nms
@@ -13,39 +14,16 @@ from mmdet3d.registry import METRICS
 from mmdet3d.structures import (Box3DMode, CameraInstance3DBoxes,
                                 LiDARInstance3DBoxes, points_cam2img,
                                 xywhr2xyxyr)
-from .kitti_metric import KittiMetric
 
 
 @METRICS.register_module()
-class WaymoMetric(KittiMetric):
+class WaymoMetric(BaseMetric):
     """Waymo evaluation metric.
 
     Args:
-        ann_file (str): The path of the annotation file in kitti format.
         waymo_bin_file (str): The path of the annotation file in waymo format.
-        split (str): The split of the evaluation set. Defaults to 'training'.
         metric (str or List[str]): Metrics to be evaluated. Defaults to 'mAP'.
-        pcd_limit_range (List[float]): The range of point cloud used to filter
-            invalid predicted boxes. Defaults to [-85, -85, -5, 85, 85, 5].
-        convert_kitti_format (bool): Whether to convert the results to kitti
-            format. Now, in order to be compatible with camera-based methods,
-            defaults to True.
-        prefix (str, optional): The prefix that will be added in the metric
-            names to disambiguate homonymous metrics of different evaluators.
-            If prefix is not provided in the argument, self.default_prefix will
-            be used instead. Defaults to 'Waymo metric'.
-        format_only (bool): Format the output results without perform
-            evaluation. It is useful when you want to format the result to a
-            specific format and submit it to the test server.
-            Defaults to False.
-        pklfile_prefix (str, optional): The prefix of pkl files, including the
-            file path and the prefix of filename, e.g., "a/b/prefix". If not
-            specified, a temp file will be created. Defaults to None.
-        submission_prefix (str, optional): The prefix of submission data. If
-            not specified, the submission data will not be generated.
-            Defaults to None.
         load_type (str): Type of loading mode during training.
-
             - 'frame_based': Load all of the instances in the frame.
             - 'mv_image_based': Load all of the instances in the frame and need
               to convert to the FOV-based data type to support image-based
@@ -53,61 +31,35 @@ class WaymoMetric(KittiMetric):
             - 'fov_image_based': Only load the instances inside the default cam
               and need to convert to the FOV-based data type to support image-
               based detector.
-        default_cam_key (str): The default camera for lidar to camera
-            conversion. By default, KITTI: 'CAM2', Waymo: 'CAM_FRONT'.
-            Defaults to 'CAM_FRONT'.
-        use_pred_sample_idx (bool): In formating results, use the sample index
-            from the prediction or from the load annotations. By default,
-            KITTI: True, Waymo: False, Waymo has a conversion process, which
-            needs to use the sample idx from load annotation.
+        result_prefix (str, optional): The prefix of result '*.bin' file,
+            including the file path and the prefix of filename, e.g.,
+            "a/b/prefix". If not specified, a temp file will be created.
+            Defaults to None.
+        format_only (bool): Format the output results without perform
+            evaluation. It is useful when you want to format the result to a
+            specific format and submit it to the test server.
             Defaults to False.
-        collect_device (str): Device name used for collecting results from
-            different ranks during distributed training. Must be 'cpu' or
-            'gpu'. Defaults to 'cpu'.
-        backend_args (dict, optional): Arguments to instantiate the
-            corresponding backend. Defaults to None.
     """
     num_cams = 5
+    default_prefix = 'Waymo metric'
 
     def __init__(self,
-                 ann_file: str,
                  waymo_bin_file: str,
-                 split: str = 'training',
                  metric: Union[str, List[str]] = 'mAP',
-                 pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
-                 convert_kitti_format: bool = True,
-                 prefix: Optional[str] = 'Waymo metric',
-                 format_only: bool = False,
-                 pklfile_prefix: Optional[str] = None,
-                 submission_prefix: Optional[str] = None,
                  load_type: str = 'frame_based',
-                 default_cam_key: str = 'CAM_FRONT',
-                 use_pred_sample_idx: bool = False,
-                 collect_device: str = 'cpu',
-                 backend_args: Optional[dict] = None) -> None:
+                 result_prefix: Optional[str] = None,
+                 format_only: bool = False,
+                 **kwargs) -> None:
+        super().__init__(**kwargs)
         self.waymo_bin_file = waymo_bin_file
-        self.split = split
+        self.metrics = metric if isinstance(metric, list) else [metric]
         self.load_type = load_type
-        self.use_pred_sample_idx = use_pred_sample_idx
-        self.convert_kitti_format = convert_kitti_format
-
-        super(WaymoMetric, self).__init__(
-            ann_file=ann_file,
-            metric=metric,
-            pcd_limit_range=pcd_limit_range,
-            prefix=prefix,
-            pklfile_prefix=pklfile_prefix,
-            submission_prefix=submission_prefix,
-            default_cam_key=default_cam_key,
-            collect_device=collect_device,
-            backend_args=backend_args)
         self.format_only = format_only
+        self.result_prefix = result_prefix
         if self.format_only:
-            assert pklfile_prefix is not None, 'pklfile_prefix must be not '
+            assert result_prefix is not None, 'result_prefix must be not '
             'None when format_only is True, otherwise the result files will '
             'be saved to a temp directory which will be cleaned up at the end.'
-
-        self.default_prefix = 'Waymo metric'
 
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
@@ -187,29 +139,25 @@ class WaymoMetric(KittiMetric):
             ]
             results = self.merge_multi_view_boxes(frame_results)
 
-        if self.pklfile_prefix is None:
+        if self.result_prefix is None:
             eval_tmp_dir = tempfile.TemporaryDirectory()
-            pklfile_prefix = osp.join(eval_tmp_dir.name, 'results')
+            result_prefix = osp.join(eval_tmp_dir.name, 'results')
         else:
             eval_tmp_dir = None
-            pklfile_prefix = self.pklfile_prefix
+            result_prefix = self.result_prefix
 
-        self.format_results(
-            results,
-            pklfile_prefix=pklfile_prefix,
-            submission_prefix=self.submission_prefix,
-            classes=self.classes)
+        self.format_results(results, result_prefix=result_prefix)
 
         metric_dict = {}
 
         if self.format_only:
             logger.info('results are saved in '
-                        f'{osp.dirname(self.pklfile_prefix)}')
+                        f'{osp.dirname(self.result_prefix)}')
             return metric_dict
 
         for metric in self.metrics:
             ap_dict = self.waymo_evaluate(
-                pklfile_prefix, metric=metric, logger=logger)
+                result_prefix, metric=metric, logger=logger)
             metric_dict.update(ap_dict)
         if eval_tmp_dir is not None:
             eval_tmp_dir.cleanup()
@@ -217,13 +165,13 @@ class WaymoMetric(KittiMetric):
         return metric_dict
 
     def waymo_evaluate(self,
-                       pklfile_prefix: str,
+                       result_prefix: str,
                        metric: Optional[str] = None,
                        logger: Optional[MMLogger] = None) -> Dict[str, float]:
         """Evaluation in Waymo protocol.
 
         Args:
-            pklfile_prefix (str): The location that stored the prediction
+            result_prefix (str): The location that stored the prediction
                 results.
             metric (str, optional): Metric to be evaluated. Defaults to None.
             logger (MMLogger, optional): Logger used for printing related
@@ -237,7 +185,7 @@ class WaymoMetric(KittiMetric):
 
         if metric == 'mAP':
             eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
-                f'compute_detection_metrics_main {pklfile_prefix}.bin ' + \
+                f'compute_detection_metrics_main {result_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
             print(eval_str)
             ret_bytes = subprocess.check_output(eval_str, shell=True)
@@ -288,7 +236,7 @@ class WaymoMetric(KittiMetric):
                     ap_dict['Cyclist/L2 mAPH']) / 3
         elif metric == 'LET_mAP':
             eval_str = 'mmdet3d/evaluation/functional/waymo_utils/' + \
-                f'compute_detection_let_metrics_main {pklfile_prefix}.bin ' + \
+                f'compute_detection_let_metrics_main {result_prefix}.bin ' + \
                 f'{self.waymo_bin_file}'
 
             print(eval_str)
@@ -338,49 +286,24 @@ class WaymoMetric(KittiMetric):
     def format_results(
         self,
         results: List[dict],
-        pklfile_prefix: Optional[str] = None,
-        submission_prefix: Optional[str] = None,
-        classes: Optional[List[str]] = None
+        result_prefix: Optional[str] = None
     ) -> Tuple[dict, Union[tempfile.TemporaryDirectory, None]]:
         """Format the results to bin file.
 
         Args:
             results (List[dict]): Testing results of the dataset.
-            pklfile_prefix (str, optional): The prefix of pkl files. It
+            result_prefix (str, optional): The prefix of result file. It
                 includes the file path and the prefix of filename, e.g.,
                 "a/b/prefix". If not specified, a temp file will be created.
                 Defaults to None.
-            submission_prefix (str, optional): The prefix of submitted files.
-                It includes the file path and the prefix of filename, e.g.,
-                "a/b/prefix". If not specified, a temp file will be created.
-                Defaults to None.
-            classes (List[str], optional): A list of class name.
-                Defaults to None.
-
-        Returns:
-            tuple: (result_dict, tmp_dir), result_dict is a dict containing the
-            formatted result, tmp_dir is the temporal directory created for
-            saving json files when jsonfile_prefix is not specified.
         """
-        waymo_save_tmp_dir = tempfile.TemporaryDirectory()
-        waymo_results_save_dir = waymo_save_tmp_dir.name
-        waymo_results_final_path = f'{pklfile_prefix}.bin'
-
-        if self.convert_kitti_format:
-            results_kitti_format, tmp_dir = super().format_results(
-                results, pklfile_prefix, submission_prefix, classes)
-            results = results_kitti_format['pred_instances_3d']
+        waymo_results_final_path = f'{result_prefix}.bin'
 
         from ..functional.waymo_utils.prediction_to_waymo import \
             Prediction2Waymo
-        converter = Prediction2Waymo(
-            results,
-            waymo_results_save_dir,
-            waymo_results_final_path,
-            classes,
-            backend_args=self.backend_args)
+        converter = Prediction2Waymo(results, waymo_results_final_path,
+                                     self.classes)
         converter.convert()
-        waymo_save_tmp_dir.cleanup()
 
     def merge_multi_view_boxes(self, frame_results) -> dict:
         """Merge bounding boxes predicted from multi-view images.
@@ -391,7 +314,7 @@ class WaymoMetric(KittiMetric):
             cam0_info (dict): Store the sample idx for the given frame.
 
         Returns:
-            dict: Merged results.
+            Dict: Merged results.
         """
         merged_results = []
         for frame_result in frame_results:
