@@ -3,9 +3,11 @@ import os.path as osp
 from typing import Callable, List, Union
 
 import numpy as np
+from mmengine import print_log
+from mmengine.fileio import load
 
 from mmdet3d.registry import DATASETS
-from mmdet3d.structures import CameraInstance3DBoxes
+from mmdet3d.structures import CameraInstance3DBoxes, LiDARInstance3DBoxes
 from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
 
@@ -163,13 +165,10 @@ class WaymoDataset(KittiDataset):
             centers_2d = np.zeros((0, 2), dtype=np.float32)
             depths = np.zeros((0), dtype=np.float32)
 
-        # in waymo, lidar2cam = R0_rect @ Tr_velo_to_cam
-        # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
-        lidar2cam = np.array(info['images'][self.default_cam_key]['lidar2cam'])
-        gt_bboxes_3d = CameraInstance3DBoxes(
-            ann_info['gt_bboxes_3d']).convert_to(self.box_mode_3d,
-                                                 np.linalg.inv(lidar2cam))
-        ann_info['gt_bboxes_3d'] = gt_bboxes_3d
+        if self.load_type == 'frame_based':
+            gt_bboxes_3d = LiDARInstance3DBoxes(ann_info['gt_bboxes_3d'])
+        else:
+            gt_bboxes_3d = CameraInstance3DBoxes(ann_info['gt_bboxes_3d'])
 
         anns_results = dict(
             gt_bboxes_3d=gt_bboxes_3d,
@@ -182,9 +181,58 @@ class WaymoDataset(KittiDataset):
         return anns_results
 
     def load_data_list(self) -> List[dict]:
-        """Add the load interval."""
-        data_list = super().load_data_list()
-        data_list = data_list[::self.load_interval]
+        """Add the load interval.
+
+        Returns:
+            list[dict]: A list of annotation.
+        """  # noqa: E501
+        # `self.ann_file` denotes the absolute annotation file path if
+        # `self.root=None` or relative path if `self.root=/path/to/data/`.
+        annotations = load(self.ann_file)
+        if not isinstance(annotations, dict):
+            raise TypeError(f'The annotations loaded from annotation file '
+                            f'should be a dict, but got {type(annotations)}!')
+        if 'data_list' not in annotations or 'metainfo' not in annotations:
+            raise ValueError('Annotation must have data_list and metainfo '
+                             'keys')
+        metainfo = annotations['metainfo']
+        raw_data_list = annotations['data_list']
+        raw_data_list = raw_data_list[::self.load_interval]
+        if self.load_interval > 1:
+            print_log(
+                f'Sample size will be reduced to 1/{self.load_interval} of'
+                ' the original data sample',
+                logger='current')
+
+        # Meta information load from annotation file will not influence the
+        # existed meta information load from `BaseDataset.METAINFO` and
+        # `metainfo` arguments defined in constructor.
+        for k, v in metainfo.items():
+            self._metainfo.setdefault(k, v)
+
+        # load and parse data_infos.
+        data_list = []
+        for raw_data_info in raw_data_list:
+            # parse raw data information to target format
+            data_info = self.parse_data_info(raw_data_info)
+            if isinstance(data_info, dict):
+                # For image tasks, `data_info` should information if single
+                # image, such as dict(img_path='xxx', width=360, ...)
+                data_list.append(data_info)
+            elif isinstance(data_info, list):
+                # For video tasks, `data_info` could contain image
+                # information of multiple frames, such as
+                # [dict(video_path='xxx', timestamps=...),
+                #  dict(video_path='xxx', timestamps=...)]
+                for item in data_info:
+                    if not isinstance(item, dict):
+                        raise TypeError('data_info must be list of dict, but '
+                                        f'got {type(item)}')
+                data_list.extend(data_info)
+            else:
+                raise TypeError('data_info should be a dict or list of dict, '
+                                f'but got {type(data_info)}')
+
         return data_list
 
     def parse_data_info(self, info: dict) -> Union[dict, List[dict]]:
@@ -203,44 +251,39 @@ class WaymoDataset(KittiDataset):
                 info['images'][self.default_cam_key]
             info['images'] = new_image_info
             info['instances'] = info['cam_instances'][self.default_cam_key]
-            return super().parse_data_info(info)
+            return Det3DDataset.parse_data_info(self, info)
         else:
             # in the mono3d, the instances is from cam sync.
+            # Convert frame-based infos to multi-view image-based
             data_list = []
-            if self.modality['use_lidar']:
-                info['lidar_points']['lidar_path'] =  \
-                    osp.join(
-                        self.data_prefix.get('pts', ''),
-                        info['lidar_points']['lidar_path'])
-
-            if self.modality['use_camera']:
-                for cam_key, img_info in info['images'].items():
-                    if 'img_path' in img_info:
-                        cam_prefix = self.data_prefix.get(cam_key, '')
-                        img_info['img_path'] = osp.join(
-                            cam_prefix, img_info['img_path'])
-
             for (cam_key, img_info) in info['images'].items():
                 camera_info = dict()
+                camera_info['sample_idx'] = info['sample_idx']
+                camera_info['timestamp'] = info['timestamp']
+                camera_info['context_name'] = info['context_name']
                 camera_info['images'] = dict()
                 camera_info['images'][cam_key] = img_info
-                if 'cam_instances' in info \
-                        and cam_key in info['cam_instances']:
-                    camera_info['instances'] = info['cam_instances'][cam_key]
+                if 'img_path' in img_info:
+                    cam_prefix = self.data_prefix.get(cam_key, '')
+                    camera_info['images'][cam_key]['img_path'] = osp.join(
+                        cam_prefix, img_info['img_path'])
+                if 'lidar2cam' in img_info:
+                    camera_info['lidar2cam'] = np.array(img_info['lidar2cam'])
+                if 'cam2img' in img_info:
+                    camera_info['cam2img'] = np.array(img_info['cam2img'])
+                if 'lidar2img' in img_info:
+                    camera_info['lidar2img'] = np.array(img_info['lidar2img'])
                 else:
-                    camera_info['instances'] = []
-                camera_info['ego2global'] = info['ego2global']
-                if 'image_sweeps' in info:
-                    camera_info['image_sweeps'] = info['image_sweeps']
-
-                # TODO check if need to modify the sample id
-                # TODO check when will use it except for evaluation.
-                camera_info['sample_idx'] = info['sample_idx']
+                    camera_info['lidar2img'] = camera_info[
+                        'cam2img'] @ camera_info['lidar2cam']
 
                 if not self.test_mode:
                     # used in training
+                    camera_info['instances'] = info['cam_instances'][cam_key]
                     camera_info['ann_info'] = self.parse_ann_info(camera_info)
                 if self.test_mode and self.load_eval_anns:
-                    info['eval_ann_info'] = self.parse_ann_info(info)
+                    camera_info['instances'] = info['cam_instances'][cam_key]
+                    camera_info['eval_ann_info'] = self.parse_ann_info(
+                        camera_info)
                 data_list.append(camera_info)
             return data_list

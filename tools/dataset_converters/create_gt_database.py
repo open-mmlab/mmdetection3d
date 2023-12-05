@@ -7,7 +7,7 @@ import mmengine
 import numpy as np
 from mmcv.ops import roi_align
 from mmdet.evaluation import bbox_overlaps
-from mmengine import track_iter_progress
+from mmengine import print_log, track_iter_progress
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 
@@ -504,7 +504,9 @@ class GTDatabaseCreater:
         return single_db_infos
 
     def create(self):
-        print(f'Create GT Database of {self.dataset_class_name}')
+        print_log(
+            f'Create GT Database of {self.dataset_class_name}',
+            logger='current')
         dataset_cfg = dict(
             type=self.dataset_class_name,
             data_root=self.data_path,
@@ -610,12 +612,19 @@ class GTDatabaseCreater:
             input_dict['box_mode_3d'] = self.dataset.box_mode_3d
             return input_dict
 
-        multi_db_infos = mmengine.track_parallel_progress(
-            self.create_single,
-            ((loop_dataset(i)
-              for i in range(len(self.dataset))), len(self.dataset)),
-            self.num_worker)
-        print('Make global unique group id')
+        if self.num_worker == 0:
+            multi_db_infos = mmengine.track_progress(
+                self.create_single,
+                ((loop_dataset(i)
+                  for i in range(len(self.dataset))), len(self.dataset)))
+        else:
+            multi_db_infos = mmengine.track_parallel_progress(
+                self.create_single,
+                ((loop_dataset(i)
+                  for i in range(len(self.dataset))), len(self.dataset)),
+                self.num_worker,
+                chunksize=1000)
+        print_log('Make global unique group id', logger='current')
         group_counter_offset = 0
         all_db_infos = dict()
         for single_db_infos in track_iter_progress(multi_db_infos):
@@ -630,7 +639,8 @@ class GTDatabaseCreater:
             group_counter_offset += (group_id + 1)
 
         for k, v in all_db_infos.items():
-            print(f'load {len(v)} {k} database infos')
+            print_log(f'load {len(v)} {k} database infos', logger='current')
 
+        print_log(f'Saving GT database infos into {self.db_info_save_path}')
         with open(self.db_info_save_path, 'wb') as f:
             pickle.dump(all_db_infos, f)
