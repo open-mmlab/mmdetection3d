@@ -80,10 +80,11 @@ class WaymoMetric(KittiMetric):
                  ann_file: str,
                  waymo_bin_file: str,
                  data_root: str,
-                 split: str = 'training',
+                 load_interval: int = 1,
+                 split: str = 'validation',
                  metric: Union[str, List[str]] = 'mAP',
                  pcd_limit_range: List[float] = [-85, -85, -5, 85, 85, 5],
-                 convert_kitti_format: bool = True,
+                 convert_kitti_format: bool = False,
                  prefix: Optional[str] = None,
                  format_only: bool = False,
                  pklfile_prefix: Optional[str] = None,
@@ -105,6 +106,7 @@ class WaymoMetric(KittiMetric):
             self.idx2metainfo = mmengine.load(idx2metainfo)
         else:
             self.idx2metainfo = None
+        self.load_interval = load_interval
 
         super(WaymoMetric, self).__init__(
             ann_file=ann_file,
@@ -138,7 +140,8 @@ class WaymoMetric(KittiMetric):
         self.classes = self.dataset_meta['classes']
 
         # load annotations
-        self.data_infos = load(self.ann_file)['data_list']
+        self.data_infos = load(
+            self.ann_file)['data_list'][::self.load_interval]
         assert len(results) == len(self.data_infos), \
             'invalid list length of network outputs'
         # different from kitti, waymo do not need to convert the ann file
@@ -203,6 +206,20 @@ class WaymoMetric(KittiMetric):
             tmp_dir.cleanup()
         return metric_dict
 
+    def generate_gt_bin(self):
+        from tools.dataset_converters.waymo_gtbin_creator import gt_bin_creator
+        creator = gt_bin_creator(
+            self.ann_file,
+            self.data_root,
+            self.split,
+            self.waymo_bin_file,
+            self.load_interval,
+            for_cam_only_challenge=True)
+        if self.load_interval == 1:
+            self.waymo_bin_file = creator.create_whole()
+        else:
+            self.waymo_bin_file = creator.create_subset()
+
     def waymo_evaluate(self,
                        pklfile_prefix: str,
                        metric: Optional[str] = None,
@@ -219,6 +236,7 @@ class WaymoMetric(KittiMetric):
         Returns:
             Dict[str, float]: Results of each evaluation metric.
         """
+        self.generate_gt_bin()
 
         import subprocess
 
@@ -368,6 +386,9 @@ class WaymoMetric(KittiMetric):
 
         waymo_root = self.data_root
         if self.split == 'training':
+            waymo_tfrecords_dir = osp.join(waymo_root, 'training')
+            prefix = '0'
+        elif self.split == 'validation':
             waymo_tfrecords_dir = osp.join(waymo_root, 'validation')
             prefix = '1'
         elif self.split == 'testing':
@@ -387,7 +408,8 @@ class WaymoMetric(KittiMetric):
             classes,
             backend_args=self.backend_args,
             from_kitti_format=self.convert_kitti_format,
-            idx2metainfo=self.idx2metainfo)
+            idx2metainfo=self.idx2metainfo,
+            ann_file=self.ann_file)
         converter.convert()
         waymo_save_tmp_dir.cleanup()
 
