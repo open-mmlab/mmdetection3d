@@ -121,6 +121,7 @@ def scannet_data_prep(root_path, info_prefix, out_dir, workers, version=''):
         info_prefix (str): The prefix of info filenames.
         out_dir (str): Output directory of the generated info file.
         workers (int): Number of threads to be used.
+        version (str): Only used to generate the dataset of nerfdet now.
     """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)

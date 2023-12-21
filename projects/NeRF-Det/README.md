@@ -24,6 +24,13 @@ This is an implementation of \[XXX\]. -->
 
 The format of the scannet dataset in the latest version of mmdet3d only supports the lidar tasks.For NeRF-Det,we need to create the new format of ScanNet Dataset.
 
+Please following the files in mmdet3d to prepare the raw data of ScanNet. After that, please use this command to generate the pkls used in nerfdet.
+
+```bash
+python tools/create_data.py scannet --root-path ./data/scannet \
+--out-dir ./data/scannet --extra-tag scannet --version nerfdet
+```
+
 To perpare the new dataset, please use the `update_infos_to_v2.py` in this folder to replace the file with the same name in `tools/dataset_converters/`.And then refer to [scannet dataset](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/scannet.html) and following the instructions.
 
 The new format of the pkl is organized as below:
