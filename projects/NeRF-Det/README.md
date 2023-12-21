@@ -31,8 +31,6 @@ python tools/create_data.py scannet --root-path ./data/scannet \
 --out-dir ./data/scannet --extra-tag scannet --version nerfdet
 ```
 
-To perpare the new dataset, please use the `update_infos_to_v2.py` in this folder to replace the file with the same name in `tools/dataset_converters/`.And then refer to [scannet dataset](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/scannet.html) and following the instructions.
-
 The new format of the pkl is organized as below:
 
 - scannet_infos_train.pkl: The train data infos, the detailed info of each scan is as follows:
@@ -58,11 +56,11 @@ python tools/train.py projects/NeRF-Det/configs/nerfdet_res50_2x_low_res.py ${WO
 
 ### NeRF-Det
 
-|                            Backbone                             | mAP@25 | mAP@50 |  Download   |    Log    |
-| :-------------------------------------------------------------: | :----: | :----: | :---------: | :-------: |
-|      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  53.0  |  26.8  | [model](<>) | [log](<>) |
-|  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.2  |  28.5  | [model](<>) | [log](<>) |
-| [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.3  |  28.5  | [model](<>) | [log](<>) |
+|                            Backbone                             | mAP@25 | mAP@50 |    Log    |
+| :-------------------------------------------------------------: | :----: | :----: | :-------: |
+|      [NeRF-Det-R50](./configs/nerfdet_res50_2x_low_res.py)      |  53.0  |  26.8  | [log](<>) |
+|  [NeRF-Det-R50\*](./configs/nerfdet_res50_2x_low_res_depth.py)  |  52.2  |  28.5  | [log](<>) |
+| [NeRF-Det-R101\*](./configs/nerfdet_res101_2x_low_res_depth.py) |  52.3  |  28.5  | [log](<>) |
 
 (Here NeRF-Det-R50\* means this model uses depth information in the training step)
 
