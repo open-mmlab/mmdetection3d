@@ -777,11 +777,11 @@ def nusc_box_to_cam_box3d(
     dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
     rots = -rots
 
-    boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
+    boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1)
     cam_boxes3d = CameraInstance3DBoxes(
         boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
-    scores = torch.Tensor([b.score for b in boxes]).cuda()
-    labels = torch.LongTensor([b.label for b in boxes]).cuda()
+    scores = torch.Tensor([b.score for b in boxes])
+    labels = torch.LongTensor([b.label for b in boxes])
     nms_scores = scores.new_zeros(scores.shape[0], 10 + 1)
     indices = labels.new_tensor(list(range(scores.shape[0])))
     nms_scores[indices, labels] = scores
