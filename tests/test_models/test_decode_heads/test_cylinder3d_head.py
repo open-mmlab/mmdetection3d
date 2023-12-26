@@ -43,15 +43,15 @@ class TestCylinder3DHead(TestCase):
 
         sparse_voxels = SparseConvTensor(voxel_feats, voxel_coors, grid_size,
                                          batch_size)
-        voxel_dict = dict(
+        feat_dict = dict(
             voxel_feats=sparse_voxels,
             voxel_coors=voxel_coors,
             coors=coors,
             point2voxel_maps=[point2voxel_map])
         # Test forward
-        voxel_dict = cylinder3d_head.forward(voxel_dict)
+        feat_dict = cylinder3d_head.forward(feat_dict)
 
-        self.assertEqual(voxel_dict['logits'].shape,
+        self.assertEqual(feat_dict['logits'].shape,
                          torch.Size([voxel_coors.shape[0], 20]))
 
         # When truth is non-empty then losses
@@ -62,7 +62,7 @@ class TestCylinder3DHead(TestCase):
         datasample = Det3DDataSample()
         datasample.gt_pts_seg = gt_pts_seg
 
-        losses = cylinder3d_head.loss_by_feat(voxel_dict, [datasample])
+        losses = cylinder3d_head.loss_by_feat(feat_dict, [datasample])
 
         loss_ce = losses['loss_ce'].item()
         loss_lovasz = losses['loss_lovasz'].item()
@@ -70,5 +70,5 @@ class TestCylinder3DHead(TestCase):
         self.assertGreater(loss_ce, 0, 'ce loss should be positive')
         self.assertGreater(loss_lovasz, 0, 'lovasz loss should be positive')
 
-        point_logits = cylinder3d_head.predict(voxel_dict, [datasample])
+        point_logits = cylinder3d_head.predict(feat_dict, [datasample])
         assert point_logits[0].shape == torch.Size([100, 20])
