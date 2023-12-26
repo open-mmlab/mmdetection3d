@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from copy import deepcopy
 from typing import Dict
 
 from torch import Tensor
@@ -69,14 +70,14 @@ class Cylinder3D(EncoderDecoder3D):
 
     def extract_feat(self, batch_inputs_dict: dict) -> dict:
         """Extract features from points."""
-        voxel_dict = batch_inputs_dict['voxels'].copy()
-        voxel_dict = self.voxel_encoder(voxel_dict)
-        x = self.backbone(voxel_dict['voxel_feats'], voxel_dict['voxel_coors'],
+        feat_dict = deepcopy(batch_inputs_dict['voxels'])
+        feat_dict = self.voxel_encoder(feat_dict)
+        x = self.backbone(feat_dict['voxel_feats'], feat_dict['voxel_coors'],
                           len(batch_inputs_dict['points']))
         if self.with_neck:
             x = self.neck(x)
-        voxel_dict['voxel_feats'] = x
-        return voxel_dict
+        feat_dict['voxel_feats'] = x
+        return feat_dict
 
     def loss(self, batch_inputs_dict: dict,
              batch_data_samples: SampleList) -> Dict[str, Tensor]:
@@ -160,9 +161,9 @@ class Cylinder3D(EncoderDecoder3D):
 
                 - points (List[Tensor]): Point cloud of each sample.
                 - imgs (Tensor, optional): Image tensor has shape (B, C, H, W).
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`.
+            batch_data_samples (List[:obj:`Det3DDataSample`], optional): The
+                det3d data samples. It usually includes information such as
+                `metainfo` and `gt_pts_seg`. Defaults to None.
 
         Returns:
             dict: The dict containing forward output of model without any

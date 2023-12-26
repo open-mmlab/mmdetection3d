@@ -595,19 +595,19 @@ class SegVFE(nn.Module):
             self.compression_layers = nn.Sequential(
                 nn.Linear(feat_channels[-1], feat_compression), nn.ReLU())
 
-    def forward(self, voxel_dict: dict) -> dict:
+    def forward(self, feat_dict: dict) -> dict:
         """Forward functions.
 
         Args:
-            voxel_dict (dict): The dict will contain features of voxels and
-                coordinates.
+            feat_dict (dict): The dict will contain features of both voxels and
+                points.
 
         Returns:
             dict: The dict of returned voxel features and its coordinates,
             point2voxel_maps, and point features extracted after voxel_encoder.
         """
-        features = voxel_dict['voxels']
-        coors = voxel_dict['coors']
+        features = feat_dict['voxels']
+        coors = feat_dict['coors']
         features_ls = [features]
 
         # Find distance of x, y, and z from voxel center
@@ -636,8 +636,8 @@ class SegVFE(nn.Module):
         if self.compression_layers is not None:
             voxel_feats = self.compression_layers(voxel_feats)
 
-        voxel_dict['voxel_feats'] = voxel_feats
-        voxel_dict['voxel_coors'] = voxel_coors
-        voxel_dict['point2voxel_maps'] = point2voxel_maps
-        voxel_dict['point_feats'] = point_feats
-        return voxel_dict
+        feat_dict['voxel_feats'] = voxel_feats
+        feat_dict['voxel_coors'] = voxel_coors
+        feat_dict['point2voxel_maps'] = point2voxel_maps
+        feat_dict['point_feats'] = point_feats
+        return feat_dict

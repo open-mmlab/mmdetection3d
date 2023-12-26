@@ -275,10 +275,11 @@ class DynamicScatter3D(nn.Module):
                 multi-dim voxel index) of each points.
 
         Returns:
-            tuple[torch.Tensor]: A tuple contains two elements. The first one
+            tuple[torch.Tensor]: A tuple contains three elements. The first one
             is the voxel features with shape [M, C] which are respectively
             reduced from input features that share the same voxel coordinates.
-            The second is voxel coordinates with shape [M, ndim].
+            The second is voxel coordinates with shape [M, ndim]. The third is
+            a list of point2voxel_map with shape [M].
         """
         reduce = 'mean' if self.average_points else 'max'
         return dynamic_scatter_3d(points.contiguous(), coors.contiguous(),
@@ -295,11 +296,11 @@ class DynamicScatter3D(nn.Module):
                 multi-dim voxel index) of each points.
 
         Returns:
-            tuple[torch.Tensor]: A tuple contains first elements. The first one
+            tuple[torch.Tensor]: A tuple contains three elements. The first one
             is the voxel features with shape [M, C] which are respectively
             reduced from input features that share the same voxel coordinates.
             The second is voxel coordinates with shape [M, ndim]. The third is
-            a list of point2voxel_map.
+            a list of point2voxel_map with shape [M].
         """
         if coors.size(-1) == 3:
             return self.forward_single(points, coors)

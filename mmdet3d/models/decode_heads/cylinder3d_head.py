@@ -45,19 +45,19 @@ class Cylinder3DHead(Base3DDecodeHead):
             padding=1,
             bias=True)
 
-    def forward(self, voxel_dict: dict) -> dict:
+    def forward(self, feat_dict: dict) -> dict:
         """Forward function."""
-        sparse_logits = self.cls_seg(voxel_dict['voxel_feats'])
-        voxel_dict['logits'] = sparse_logits.features
-        return voxel_dict
+        sparse_logits = self.cls_seg(feat_dict['voxel_feats'])
+        # put logits into `feat_dict` for voxel2point mapping.
+        feat_dict['logits'] = sparse_logits.features
+        return feat_dict
 
-    def loss_by_feat(self, voxel_dict: dict,
+    def loss_by_feat(self, feat_dict: dict,
                      batch_data_samples: SampleList) -> Dict[str, Tensor]:
         """Compute semantic segmentation loss.
 
         Args:
-            voxel_dict (dict): The dict may contain `logits`,
-                `point2voxel_map`.
+            feat_dict (dict): The dict may contain `logits`, `point2voxel_map`.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
                 samples. It usually includes information such as `metainfo` and
                 `gt_pts_seg`.
@@ -67,7 +67,7 @@ class Cylinder3DHead(Base3DDecodeHead):
         """
 
         voxel_semantic_segs = []
-        coors = voxel_dict['coors']
+        coors = feat_dict['coors']
         for batch_idx, data_sample in enumerate(batch_data_samples):
             pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
             batch_mask = coors[:, 0] == batch_idx
@@ -78,7 +78,7 @@ class Cylinder3DHead(Base3DDecodeHead):
             voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
             voxel_semantic_segs.append(voxel_semantic_mask)
         seg_label = torch.cat(voxel_semantic_segs)
-        seg_logit_feat = voxel_dict['logits']
+        seg_logit_feat = feat_dict['logits']
         loss = dict()
         loss['loss_ce'] = self.loss_ce(
             seg_logit_feat, seg_label, ignore_index=self.ignore_index)
@@ -90,13 +90,13 @@ class Cylinder3DHead(Base3DDecodeHead):
 
     def predict(
         self,
-        voxel_dict: dict,
+        feat_dict: dict,
         batch_data_samples: SampleList,
     ) -> List[Tensor]:
         """Forward function for testing.
 
         Args:
-            voxel_dict (dict): Features from backbone.
+            feat_dict (dict): Features from backbone.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
                 samples. It usually includes information such as `metainfo` and
                 `gt_pts_seg`. We use `point2voxel_map` in this function.
@@ -104,17 +104,16 @@ class Cylinder3DHead(Base3DDecodeHead):
         Returns:
             List[Tensor]: List of point-wise segmentation logits.
         """
-        voxel_dict = self.forward(voxel_dict)
-        seg_pred_list = self.predict_by_feat(voxel_dict, batch_data_samples)
+        feat_dict = self.forward(feat_dict)
+        seg_pred_list = self.predict_by_feat(feat_dict, batch_data_samples)
         return seg_pred_list
 
-    def predict_by_feat(self, voxel_dict: dict,
+    def predict_by_feat(self, feat_dict: dict,
                         batch_data_samples: SampleList) -> List[Tensor]:
         """Predict function.
 
         Args:
-            voxel_dict (dict): The dict may contain `logits`,
-                `point2voxel_map`.
+            feat_dict (dict): The dict may contain `logits`, `point2voxel_map`.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
                 samples. It usually includes information such as `metainfo` and
                 `gt_pts_seg`.
@@ -122,14 +121,14 @@ class Cylinder3DHead(Base3DDecodeHead):
         Returns:
             List[Tensor]: List of point-wise segmentation logits.
         """
-        seg_logits = voxel_dict['logits']
+        seg_logits = feat_dict['logits']
 
         seg_pred_list = []
-        coors = voxel_dict['voxel_coors']
+        coors = feat_dict['voxel_coors']
         for batch_idx in range(len(batch_data_samples)):
             batch_mask = coors[:, 0] == batch_idx
             seg_logits_sample = seg_logits[batch_mask]
-            point2voxel_map = voxel_dict['point2voxel_maps'][batch_idx].long()
+            point2voxel_map = feat_dict['point2voxel_maps'][batch_idx].long()
             point_seg_predicts = seg_logits_sample[point2voxel_map]
             seg_pred_list.append(point_seg_predicts)
 
