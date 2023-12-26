@@ -23,7 +23,7 @@ class Cylinder3DHead(Base3DDecodeHead):
 
     Args:
         loss_lovasz (dict or :obj:`ConfigDict`, optional): Config of Lovasz
-            loss. Defaults to None. dict(type='LovaszLoss', loss_weight=1.0).
+            loss. Defaults to None.
     """
 
     def __init__(self, loss_lovasz: OptConfigType = None, **kwargs) -> None:
