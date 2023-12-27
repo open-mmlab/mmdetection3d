@@ -166,7 +166,7 @@ class Waymo2KITTI(object):
             file_idx (int): Index of the file to be converted.
 
         Returns:
-            file_infos (list): Waymo infos for all frames in current file.
+            List[dict]: Waymo infos for all frames in current file.
         """
         pathname = self.tfrecord_pathnames[file_idx]
         dataset = tf.data.TFRecordDataset(pathname, compression_type='')
@@ -408,7 +408,7 @@ class Waymo2KITTI(object):
         return ret
 
     def create_waymo_info_file(self, frame, file_idx, frame_idx, file_infos):
-        """Generate waymo train/val/test infos.
+        r"""Generate waymo train/val/test infos.
 
         For more details about infos, please refer to:
         https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html
