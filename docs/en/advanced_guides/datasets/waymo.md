@@ -108,15 +108,15 @@ mmdetection3d
     - info\['images'\]\['CAM_XXX'\]\['cam2img'\]: The transformation matrix recording the intrinsic parameters when projecting 3D points to each image plane. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: The transformation matrix from lidar sensor to this camera. (4x4 list)
     - info\['images'\]\['CAM_XXX'\]\['lidar2img'\]: The transformation matrix from lidar sensor to each image plane. (4x4 list)
-  - info\['image_sweeps'\]: A list contains sweeps information of images.
+  - info\['image_sweeps'\]: A list containing sweeps information of images.
     - info\['image_sweeps'\]\[i\]\['images'\]\['CAM_XXX'\]\['img_path'\]: The image path of i-th sweep.
     - info\['image_sweeps'\]\[i\]\['ego2global'\]: The transformation matrix from the ego vehicle to global coordinates. (4x4 list)
     - info\['image_sweeps'\]\[i\]\['timestamp'\]: Timestamp of the sweep data.
   - info\['instances'\]: It is a list of dict. Each dict contains all annotation information of single instance. For the i-th instance:
     - info\['instances'\]\[i\]\['bbox_3d'\]: List of 7 numbers representing the 3D bounding box of the instance, in (x, y, z, l, w, h, yaw) order.
     - info\['instances'\]\[i\]\['bbox'\]: List of 4 numbers representing the 2D bounding box of the instance, in (x1, y1, x2, y2) order. (some instances may not have a corresponding 2D bounding box)
-    - info\['instances'\]\[i\]\['bbox_label_3d'\]: A int indicate the label of instance and the -1 indicate ignore.
-    - info\['instances'\]\[i\]\['bbox_label'\]: A int indicate the label of instance and the -1 indicate ignore.
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: A int indicating the label of instance and the -1 indicating ignore.
+    - info\['instances'\]\[i\]\['bbox_label'\]: A int indicating the label of instance and the -1 indicating ignore.
     - info\['instances'\]\[i\]\['num_lidar_pts'\]: Number of lidar points included in each 3D bounding box.
     - info\['instances'\]\[i\]\['camera_id'\]: The index of the most visible camera for this instance.
     - info\['instances'\]\[i\]\['group_id'\]: The index of this instance in this sample.
