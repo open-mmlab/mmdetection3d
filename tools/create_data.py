@@ -175,7 +175,7 @@ def waymo_data_prep(root_path,
                     workers,
                     max_sweeps=10,
                     only_gt_database=False,
-                    skip_image_and_lidar=False,
+                    save_senor_data=False,
                     skip_cam_instances_infos=False):
     """Prepare waymo dataset. There are 3 steps as follows:
 
@@ -197,7 +197,7 @@ def waymo_data_prep(root_path,
             frames for later use.
         only_gt_database (bool, optional): Whether to only generate ground
             truth database. Default to False.
-        skip_image_and_lidar (bool, optional): Whether to skip saving
+        save_senor_data (bool, optional): Whether to skip saving
             image and lidar. Default to False.
         skip_cam_instances_infos (bool, optional): Whether to skip
             gathering cam_instances infos in Step 2. Default to False.
@@ -232,7 +232,7 @@ def waymo_data_prep(root_path,
                 info_prefix=info_prefix,
                 max_sweeps=max_sweeps,
                 split=split,
-                save_image_and_lidar=not skip_image_and_lidar,
+                save_senor_data=save_senor_data,
                 save_cam_instances=not skip_cam_instances_infos)
             converter.convert()
             if split == 'validation':
@@ -308,7 +308,7 @@ parser.add_argument(
     help='''Whether to skip gathering cam_instances infos.
         Only used when dataset is Waymo!''')
 parser.add_argument(
-    '--skip-image-and-lidar',
+    '--skip-saving-sensor-data',
     action='store_true',
     help='''Whether to skip saving image and lidar.
         Only used when dataset is Waymo!''')
@@ -380,7 +380,7 @@ if __name__ == '__main__':
             workers=args.workers,
             max_sweeps=args.max_sweeps,
             only_gt_database=args.only_gt_database,
-            skip_image_and_lidar=args.skip_image_and_lidar,
+            save_senor_data=not args.skip_saving_sensor_data,
             skip_cam_instances_infos=args.skip_cam_instances_infos)
     elif args.dataset == 'lyft':
         train_version = f'{args.version}-train'

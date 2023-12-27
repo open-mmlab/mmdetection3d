@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 from mmengine import Config
+from mmengine.device import get_device
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger, print_log
 
@@ -39,6 +40,9 @@ class WaymoMetric(BaseMetric):
             evaluation. It is useful when you want to format the result to a
             specific format and submit it to the test server.
             Defaults to False.
+        nms_cfg (dict): The configuration of non-maximum suppression for
+            the mergence of multi-image predicted bboxes, only use when
+            load_type == 'mv_image_based'. Defaults to None.
     """
     num_cams = 5
     default_prefix = 'Waymo metric'
@@ -49,17 +53,23 @@ class WaymoMetric(BaseMetric):
                  load_type: str = 'frame_based',
                  result_prefix: Optional[str] = None,
                  format_only: bool = False,
+                 nms_cfg=None,
                  **kwargs) -> None:
         super().__init__(**kwargs)
         self.waymo_bin_file = waymo_bin_file
         self.metrics = metric if isinstance(metric, list) else [metric]
         self.load_type = load_type
+        self.result_prefix = result_prefix
         self.format_only = format_only
         self.result_prefix = result_prefix
         if self.format_only:
             assert result_prefix is not None, 'result_prefix must be not '
             'None when format_only is True, otherwise the result files will '
             'be saved to a temp directory which will be cleaned up at the end.'
+        if nms_cfg is not None:
+            assert load_type == 'mv_image_based', 'nms_cfg in WaymoMetric '
+            'only use when load_type == \'mv_image_based\'.'
+            self.nms_cfg = Config(nms_cfg)
 
     def process(self, data_batch: dict, data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions.
@@ -305,7 +315,7 @@ class WaymoMetric(BaseMetric):
                                      self.classes)
         converter.convert()
 
-    def merge_multi_view_boxes(self, frame_results) -> dict:
+    def merge_multi_view_boxes(self, frame_results: List[dict]) -> dict:
         """Merge bounding boxes predicted from multi-view images.
 
         Args:
@@ -332,19 +342,12 @@ class WaymoMetric(BaseMetric):
             bboxes_3d = np.concatenate(bboxes_3d)
             scores_3d = np.concatenate(scores_3d)
             labels_3d = np.concatenate(labels_3d)
-            nms_cfg = dict(
-                use_rotate_nms=True,
-                nms_across_levels=False,
-                nms_pre=500,
-                nms_thr=0.05,
-                score_thr=0.001,
-                min_bbox_size=0,
-                max_per_frame=100)
-            nms_cfg = Config(nms_cfg)
+
+            device = get_device()
             lidar_boxes3d = LiDARInstance3DBoxes(
-                torch.from_numpy(bboxes_3d).cuda())
-            scores = torch.from_numpy(scores_3d).cuda()
-            labels = torch.from_numpy(labels_3d).long().cuda()
+                torch.from_numpy(bboxes_3d).to(device))
+            scores = torch.from_numpy(scores_3d).to(device)
+            labels = torch.from_numpy(labels_3d).long().to(device)
             nms_scores = scores.new_zeros(scores.shape[0],
                                           len(self.classes) + 1)
             indices = labels.new_tensor(list(range(scores.shape[0])))
@@ -352,8 +355,9 @@ class WaymoMetric(BaseMetric):
             lidar_boxes3d_for_nms = xywhr2xyxyr(lidar_boxes3d.bev)
             boxes3d = lidar_boxes3d.tensor
             bboxes_3d, scores_3d, labels_3d = box3d_multiclass_nms(
-                boxes3d, lidar_boxes3d_for_nms, nms_scores, nms_cfg.score_thr,
-                nms_cfg.max_per_frame, nms_cfg)
+                boxes3d, lidar_boxes3d_for_nms, nms_scores,
+                self.nms_cfg.score_thr, self.nms_cfg.max_per_frame,
+                self.nms_cfg)
 
             merged_result['bboxes_3d'] = bboxes_3d.cpu().numpy()
             merged_result['scores_3d'] = scores_3d.cpu().numpy()

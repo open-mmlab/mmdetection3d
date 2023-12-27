@@ -52,19 +52,18 @@ class Prediction2Waymo(object):
             'Cyclist': label_pb2.Label.TYPE_CYCLIST,
         }
 
-    def convert_one(self, res_index: int):
+    def convert_one(self, res_idx: int):
         """Convert action for single file. It read the metainfo from the
         preprocessed file offline and will be faster.
 
         Args:
-            res_index (int): The indices of the results.
+            res_idx (int): The indices of the results.
         """
-        sample_idx = self.results[res_index]['sample_idx']
-        if len(self.results[res_index]['labels_3d']) > 0:
+        sample_idx = self.results[res_idx]['sample_idx']
+        if len(self.results[res_idx]['labels_3d']) > 0:
             objects = self.parse_objects_from_origin(
-                self.results[res_index],
-                self.results[res_index]['context_name'],
-                self.results[res_index]['timestamp'])
+                self.results[res_idx], self.results[res_idx]['context_name'],
+                self.results[res_idx]['timestamp'])
         else:
             print(sample_idx, 'not found.')
             objects = metrics_pb2.Objects()

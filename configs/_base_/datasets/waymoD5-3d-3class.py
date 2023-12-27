@@ -106,7 +106,7 @@ eval_pipeline = [
     dict(
         type='Pack3DDetInputs',
         keys=['points'],
-        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp']),
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 
 train_dataloader = dict(
@@ -170,11 +170,7 @@ test_dataloader = dict(
         backend_args=backend_args))
 
 val_evaluator = dict(
-    type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    backend_args=backend_args,
-    convert_kitti_format=False)
+    type='WaymoMetric', waymo_bin_file='./data/waymo/waymo_format/gt.bin')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

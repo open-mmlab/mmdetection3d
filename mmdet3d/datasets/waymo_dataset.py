@@ -2,7 +2,6 @@
 import os.path as osp
 from typing import Callable, List, Union
 
-import mmengine
 import numpy as np
 from mmengine import print_log
 from mmengine.fileio import load
@@ -213,7 +212,7 @@ class WaymoDataset(KittiDataset):
 
         # load and parse data_infos.
         data_list = []
-        for raw_data_info in mmengine.track_iter_progress(raw_data_list):
+        for raw_data_info in raw_data_list:
             # parse raw data information to target format
             data_info = self.parse_data_info(raw_data_info)
             if isinstance(data_info, dict):
