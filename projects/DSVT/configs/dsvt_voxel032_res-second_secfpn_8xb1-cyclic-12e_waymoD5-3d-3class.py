@@ -6,7 +6,6 @@ custom_imports = dict(
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
-# data_root = 'data/waymo_mini/kitti_format/'
 data_root = 'data/waymo/kitti_format/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
@@ -194,7 +193,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_wo_cam_ins_infos_train.pkl',
+        ann_file='waymo_infos_train.pkl',
         data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         pipeline=train_pipeline,
         modality=input_modality,
@@ -216,7 +215,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
-        ann_file='waymo_wo_cam_ins_infos_val.pkl',
+        ann_file='waymo_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
         test_mode=True,
@@ -225,32 +224,23 @@ val_dataloader = dict(
         backend_args=backend_args))
 test_dataloader = val_dataloader
 
-# val_evaluator = dict(
-#     type='WaymoMetric',
-#     ann_file='./data/waymo_mini/kitti_format/waymo_infos_val.pkl',
-#     waymo_bin_file='./data/waymo_mini/waymo_format/gt_mini.bin',
-#     backend_args=backend_args,
-#     convert_kitti_format=False)
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    backend_args=backend_args,
-    convert_kitti_format=False)
+    result_prefix='./dsvt_pred')
 test_evaluator = val_evaluator
 
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
-# vis_backends = [dict(type='LocalVisBackend')]
+# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+# schedules
 lr = 1e-5
-# This schedule is mainly used by models on nuScenes dataset
-# max_norm=10 is better for SECOND
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.05, betas=(0.9, 0.99)),
     clip_grad=dict(max_norm=10, norm_type=2))
-# learning rate
 param_scheduler = [
     dict(
         type='CosineAnnealingLR',
