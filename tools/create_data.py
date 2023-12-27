@@ -232,7 +232,7 @@ def waymo_data_prep(root_path,
                 info_prefix=info_prefix,
                 max_sweeps=max_sweeps,
                 split=split,
-                save_senor_data=not save_senor_data,
+                save_senor_data=save_senor_data,
                 save_cam_instances=not skip_cam_instances_infos)
             converter.convert()
             if split == 'validation':
@@ -308,7 +308,7 @@ parser.add_argument(
     help='''Whether to skip gathering cam_instances infos.
         Only used when dataset is Waymo!''')
 parser.add_argument(
-    '--skip-saving-senor-data',
+    '--skip-saving-sensor-data',
     action='store_true',
     help='''Whether to skip saving image and lidar.
         Only used when dataset is Waymo!''')
