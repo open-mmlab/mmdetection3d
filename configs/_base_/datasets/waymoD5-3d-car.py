@@ -62,7 +62,8 @@ train_pipeline = [
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
-        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 test_pipeline = [
     dict(
@@ -86,7 +87,10 @@ test_pipeline = [
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -161,12 +165,7 @@ test_dataloader = dict(
         backend_args=backend_args))
 
 val_evaluator = dict(
-    type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
-    convert_kitti_format=False,
-    backend_args=backend_args)
+    type='WaymoMetric', waymo_bin_file='./data/waymo/waymo_format/gt.bin')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

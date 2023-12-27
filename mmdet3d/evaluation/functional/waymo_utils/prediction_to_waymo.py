@@ -13,7 +13,7 @@ except ImportError:
         'Please run "pip install waymo-open-dataset-tf-2-1-0==1.2.0" '
         'to install the official devkit first.')
 
-from typing import List, Optional
+from typing import List
 
 import mmengine
 from mmengine import print_log
@@ -28,37 +28,22 @@ class Prediction2Waymo(object):
 
     Args:
         results (list[dict]): Prediction results.
-        waymo_tfrecords_dir (str): Directory to load waymo raw data.
         waymo_results_save_dir (str): Directory to save converted predictions
             in waymo format (.bin files).
         waymo_results_final_path (str): Path to save combined
             predictions in waymo format (.bin file), like 'a/b/c.bin'.
-        prefix (str): Prefix of filename. In general, 0 for training, 1 for
-            validation and 2 for testing.
-        classes (dict): A list of class name.
-        workers (str): Number of parallel processes. Defaults to 2.
-        backend_args (dict, optional): Arguments to instantiate the
-            corresponding backend. Defaults to None.
-        from_kitti_format (bool, optional): Whether the reuslts are kitti
-            format. Defaults to False.
+        num_workers (str): Number of parallel processes. Defaults to 4.
     """
 
     def __init__(self,
                  results: List[dict],
-                 waymo_results_save_dir: str,
                  waymo_results_final_path: str,
                  classes: dict,
-                 workers: int = 4,
-                 backend_args: Optional[dict] = None):
-
+                 num_workers: int = 4):
         self.results = results
-        self.waymo_results_save_dir = waymo_results_save_dir
         self.waymo_results_final_path = waymo_results_final_path
         self.classes = classes
-        self.workers = int(workers)
-        self.backend_args = backend_args
-
-        self.name2idx = {}
+        self.num_workers = num_workers
 
         self.k2w_cls_map = {
             'Car': label_pb2.Label.TYPE_VEHICLE,
@@ -67,25 +52,18 @@ class Prediction2Waymo(object):
             'Cyclist': label_pb2.Label.TYPE_CYCLIST,
         }
 
-        self.create_folder()
-
-    def create_folder(self):
-        """Create folder for data conversion."""
-        mmengine.mkdir_or_exist(self.waymo_results_save_dir)
-
-    def convert_one_fast(self, res_index: int):
+    def convert_one(self, res_idx: int):
         """Convert action for single file. It read the metainfo from the
         preprocessed file offline and will be faster.
 
         Args:
-            res_index (int): The indices of the results.
+            res_idx (int): The indices of the results.
         """
-        sample_idx = self.results[res_index]['sample_idx']
-        if len(self.results[res_index]['pred_instances_3d']) > 0:
+        sample_idx = self.results[res_idx]['sample_idx']
+        if len(self.results[res_idx]['labels_3d']) > 0:
             objects = self.parse_objects_from_origin(
-                self.results[res_index],
-                self.results[res_index]['context_name'],
-                self.results[res_index]['timestamp'])
+                self.results[res_idx], self.results[res_idx]['context_name'],
+                self.results[res_idx]['timestamp'])
         else:
             print(sample_idx, 'not found.')
             objects = metrics_pb2.Objects()
@@ -104,9 +82,9 @@ class Prediction2Waymo(object):
         Returns:
             metrics_pb2.Objects: The parsed object.
         """
-        lidar_boxes = result['pred_instances_3d']['bboxes_3d']
-        scores = result['pred_instances_3d']['scores_3d']
-        labels = result['pred_instances_3d']['labels_3d']
+        lidar_boxes = result['bboxes_3d']
+        scores = result['scores_3d']
+        labels = result['labels_3d']
 
         objects = metrics_pb2.Objects()
         for lidar_box, score, label in zip(lidar_boxes, scores, labels):
@@ -139,9 +117,11 @@ class Prediction2Waymo(object):
         """Convert action."""
         print_log('Start converting ...', logger='current')
 
+        # TODO: use parallel processes.
         # objects_list = mmengine.track_parallel_progress(
-        #     self.convert_one_fast, range(len(self)), self.workers)
-        objects_list = mmengine.track_progress(self.convert_one_fast,
+        #     self.convert_one, range(len(self)), self.num_workers)
+
+        objects_list = mmengine.track_progress(self.convert_one,
                                                range(len(self)))
 
         combined = metrics_pb2.Objects()

@@ -16,7 +16,7 @@ This is an implementation of *PETR*.
 In MMDet3D's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/PETR/config/petr/petr_vovnet_gridmask_p4_800x320.py
+python tools/train.py projects/PETR/configs/petr_vovnet_gridmask_p4_800x320.py
 ```
 
 ### Testing commands
@@ -24,7 +24,7 @@ python tools/train.py projects/PETR/config/petr/petr_vovnet_gridmask_p4_800x320.
 In MMDet3D's root directory, run the following command to test the model:
 
 ```bash
-python tools/test.py projects/PETR/config/petr/petr_vovnet_gridmask_p4_800x320.py ${CHECKPOINT_PATH}
+python tools/test.py projects/PETR/configs/petr_vovnet_gridmask_p4_800x320.py ${CHECKPOINT_PATH}
 ```
 
 ## Results

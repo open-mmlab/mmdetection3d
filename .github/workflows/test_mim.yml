@@ -21,11 +21,11 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-        torch: [1.8.0]
+        torch: [1.8.1]
         include:
-          - torch: 1.8.0
+          - torch: 1.8.1
             torch_version: torch1.8
-            torchvision: 0.9.0
+            torchvision: 0.9.1
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
