@@ -1,5 +1,5 @@
 # dataset settings
-# D3 in the config name means the whole dataset is divided into 3 folds
+# D5 in the config name means the whole dataset is divided into 3 folds
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
 data_root = 'data/waymo/kitti_format/'
@@ -49,9 +49,6 @@ train_pipeline = [
         with_label_3d=True,
         with_bbox_depth=True),
     dict(type='MultiViewWrapper', transforms=train_transforms),
-        #  randomness_keys= [
-        #     'scale', 'scale_factor', 'crop_size', 'img_crop_offset', 'flip',
-        #     'flip_direction']),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(
@@ -74,7 +71,10 @@ test_pipeline = [
         to_float32=True,
         backend_args=backend_args),
     dict(type='MultiViewWrapper', transforms=test_transforms),
-    dict(type='Pack3DDetInputs', keys=['img'], meta_keys=[
+    dict(
+        type='Pack3DDetInputs',
+        keys=['img'],
+        meta_keys=[
             'box_type_3d', 'img_shape', 'ori_cam2img', 'scale_factor',
             'sample_idx', 'context_name', 'timestamp', 'lidar2cam',
             'num_ref_frames', 'num_views'
@@ -88,7 +88,10 @@ eval_pipeline = [
         to_float32=True,
         backend_args=backend_args),
     dict(type='MultiViewWrapper', transforms=test_transforms),
-    dict(type='Pack3DDetInputs', keys=['img'], meta_keys=[
+    dict(
+        type='Pack3DDetInputs',
+        keys=['img'],
+        meta_keys=[
             'box_type_3d', 'img_shape', 'ori_cam2img', 'scale_factor',
             'sample_idx', 'context_name', 'timestamp', 'lidar2cam',
             'num_ref_frames', 'num_views'
@@ -170,11 +173,8 @@ test_dataloader = dict(
         backend_args=backend_args))
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
-    pklfile_prefix='./mmdet3d_mvfoc3d_pred',
-    convert_kitti_format=False,
     metric='LET_mAP',
-    backend_args=backend_args)
+    result_prefix='./mvfoc3d_pred')
 
 test_evaluator = val_evaluator

@@ -44,6 +44,6 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-load_from = 'work_dirs/pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-mv-mono3d/epoch_24.pth'
+load_from = None
 resume = False
 find_unused_parameters = True  # only 1 of 4 FPN outputs is used
