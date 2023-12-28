@@ -2,7 +2,6 @@ _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
     imports=['projects.DSVT.dsvt'], allow_failed_imports=False)
 
-# load_from = 'checkpoints/dsvt_init.pth'
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
