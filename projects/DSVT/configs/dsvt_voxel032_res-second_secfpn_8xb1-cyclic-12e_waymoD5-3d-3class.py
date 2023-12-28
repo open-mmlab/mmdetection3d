@@ -159,7 +159,6 @@ train_pipeline = [
         translation_std=[0.5, 0.5, 0.5]),
     dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter3D', point_cloud_range=point_cloud_range),
-    # dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -187,7 +186,6 @@ train_dataloader = dict(
     batch_size=1,
     num_workers=4,
     persistent_workers=True,
-    # sampler=dict(type='DefaultSampler', shuffle=False),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,

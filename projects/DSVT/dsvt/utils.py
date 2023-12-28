@@ -371,7 +371,7 @@ def diou3d_loss(pred_boxes, gt_boxes, eps: float = 1e-7):
 @MODELS.register_module()
 class DIoU3DLoss(nn.Module):
     r"""3D bboxes Implementation of `Distance-IoU Loss: Faster and Better
-    Learning for Bounding Box Regression <https://arxiv.org/abs/1911.08287>`.
+    Learning for Bounding Box Regression <https://arxiv.org/abs/1911.08287>`_.
 
     Code is modified from https://github.com/Zzh-tju/DIoU.
 
