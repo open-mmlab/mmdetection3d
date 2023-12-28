@@ -6,7 +6,6 @@ from pathlib import Path
 
 import mmengine
 import numpy as np
-from mmengine import logging, print_log
 from PIL import Image
 from skimage import io
 
@@ -350,12 +349,6 @@ class WaymoInfoGatherer:
         self.relative_path = relative_path
         self.with_imageshape = with_imageshape
         self.max_sweeps = max_sweeps
-        print_log(
-            'Deprecation Warning: `WaymoInfoGatherer` has been migrated to '
-            '`Waymo2KITTI.create_waymo_info_file`. It will be removed in '
-            'the future!',
-            logger='current',
-            level=logging.WARNING)
 
     def gather_single(self, idx):
         root_path = Path(self.path)

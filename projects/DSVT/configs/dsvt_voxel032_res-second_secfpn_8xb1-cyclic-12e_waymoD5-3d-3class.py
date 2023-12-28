@@ -228,56 +228,9 @@ val_evaluator = dict(
     result_prefix='./dsvt_pred')
 test_evaluator = val_evaluator
 
-# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
-lr = 1e-5
-# This schedule is mainly used by models on nuScenes dataset
-# max_norm=10 is better for SECOND
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.05, betas=(0.9, 0.99)),
-    clip_grad=dict(max_norm=10, norm_type=2))
-# learning rate
-param_scheduler = [
-    dict(
-        type='CosineAnnealingLR',
-        T_max=1.2,
-        eta_min=lr * 100,
-        begin=0,
-        end=1.2,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingLR',
-        T_max=10.8,
-        eta_min=lr * 1e-4,
-        begin=1.2,
-        end=12,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    # momentum scheduler
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=1.2,
-        eta_min=0.85,
-        begin=0,
-        end=1.2,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=10.8,
-        eta_min=0.95,
-        begin=1.2,
-        end=12,
-        by_epoch=True,
-        convert_to_iter_based=True)
-]
-
-# runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=12, val_interval=1)
 
 # schedules
 lr = 1e-5

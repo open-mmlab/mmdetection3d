@@ -57,7 +57,8 @@ class DfM(BaseDetector):
                  test_cfg=None,
                  pretrained=None,
                  init_cfg=None):
-        super().__init__(data_preprocessor= data_preprocessor,init_cfg=init_cfg)
+        super().__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
         self.backbone = MODELS.build(backbone)
         self.neck = MODELS.build(neck)
         if backbone_stereo is not None:

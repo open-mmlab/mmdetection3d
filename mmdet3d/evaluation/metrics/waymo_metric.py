@@ -61,7 +61,6 @@ class WaymoMetric(BaseMetric):
         self.load_type = load_type
         self.result_prefix = result_prefix
         self.format_only = format_only
-        self.result_prefix = result_prefix
         if self.format_only:
             assert result_prefix is not None, 'result_prefix must be not '
             'None when format_only is True, otherwise the result files will '

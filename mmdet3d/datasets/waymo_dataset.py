@@ -249,7 +249,6 @@ class WaymoDataset(KittiDataset):
             new_image_info = {}
             new_image_info[self.default_cam_key] = \
                 info['images'][self.default_cam_key]
-            # cam_prefix = self.data_prefix[self.default_cam_key]
             info['images'] = new_image_info
             info['instances'] = info['cam_instances'][self.default_cam_key]
             return Det3DDataset.parse_data_info(self, info)
@@ -258,7 +257,6 @@ class WaymoDataset(KittiDataset):
             # Convert frame-based infos to multi-view image-based
             data_list = []
             for (cam_key, img_info) in info['images'].items():
-                # camera_info = deepcopy(info)
                 camera_info = dict()
                 camera_info['sample_idx'] = info['sample_idx']
                 camera_info['timestamp'] = info['timestamp']

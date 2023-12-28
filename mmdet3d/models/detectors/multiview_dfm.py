@@ -1,18 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Union
+
 import numpy as np
 import torch
+from mmengine.structures import InstanceData
 from torch import Tensor
-from typing import Union
 
 from mmdet3d.models.layers.fusion_layers.point_fusion import (point_sample,
                                                               voxel_sample)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d.utils import get_lidar2img
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmengine.structures import InstanceData
-from mmdet3d.utils import ConfigType, OptConfigType
+from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
 from .dfm import DfM
-from mmdet3d.utils.typing_utils import OptConfigType, OptInstanceList
+
 
 @MODELS.register_module()
 class MultiViewDfM(DfM):
@@ -356,7 +357,7 @@ class MultiViewDfM(DfM):
         return transform_feats
 
     def loss(self, batch_inputs: Tensor,
-                batch_data_samples: SampleList) -> Union[dict, tuple]:
+             batch_data_samples: SampleList) -> Union[dict, tuple]:
         """Calculate losses from a batch of inputs dict and data samples.
 
         Args:
@@ -393,7 +394,7 @@ class MultiViewDfM(DfM):
             batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
                 samples. It usually includes information such as
                 `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
-        
+
         Returns:
             list[:obj:`Det3DDataSample`]: Detection results of the
             input samples. Each Det3DDataSample usually contain
@@ -409,14 +410,15 @@ class MultiViewDfM(DfM):
         """
         feats = self.extract_feat(batch_inputs, batch_data_samples)
         bev_feat = feats[0]
-        results_list = self.bbox_head_3d.predict([bev_feat], batch_data_samples)
+        results_list = self.bbox_head_3d.predict([bev_feat],
+                                                 batch_data_samples)
         predictions = self.add_pred_to_datasample(batch_data_samples,
                                                   results_list)
         return predictions
 
     def _forward(self,
-                batch_inputs: Tensor,
-                batch_data_samples: SampleList = None):
+                 batch_inputs: Tensor,
+                 batch_data_samples: SampleList = None):
         """Network forward process.
 
         Usually includes backbone, neck and head forward without any post-
@@ -426,12 +428,11 @@ class MultiViewDfM(DfM):
         bev_feat = feats[0]
         self.bbox_head.forward(bev_feat, batch_data_samples)
 
-
     def add_pred_to_datasample(
-    self,
-    data_samples: SampleList,
-    data_instances_3d: OptInstanceList = None,
-    data_instances_2d: OptInstanceList = None,
+        self,
+        data_samples: SampleList,
+        data_instances_3d: OptInstanceList = None,
+        data_instances_2d: OptInstanceList = None,
     ) -> SampleList:
         """Convert results list to `Det3DDataSample`.
 
