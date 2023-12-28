@@ -76,6 +76,8 @@ class ResSECOND(BaseModule):
         out_channels (list[int]): Output channels for multi-scale feature maps.
         blocks_nums (list[int]): Number of blocks in each stage.
         layer_strides (list[int]): Strides of each stage.
+        init_cfg (dict, optional): Config for weight initialization.
+            Defaults to None.
     """
 
     def __init__(self,

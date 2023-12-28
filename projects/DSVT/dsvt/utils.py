@@ -313,13 +313,13 @@ def center_to_corner2d(center, dim):
 @weighted_loss
 def diou3d_loss(pred_boxes, gt_boxes, eps: float = 1e-7):
     """
-    https://github.com/agent-sgs/PillarNet/blob/master/det3d/core/utils/center_utils.py # noqa
+    modified from https://github.com/agent-sgs/PillarNet/blob/master/det3d/core/utils/center_utils.py # noqa
     Args:
         pred_boxes (N, 7):
         gt_boxes (N, 7):
 
     Returns:
-        _type_: _description_
+        Tensor: Distance-IoU Loss.
     """
     assert pred_boxes.shape[0] == gt_boxes.shape[0]
 
@@ -371,14 +371,15 @@ def diou3d_loss(pred_boxes, gt_boxes, eps: float = 1e-7):
 @MODELS.register_module()
 class DIoU3DLoss(nn.Module):
     r"""3D bboxes Implementation of `Distance-IoU Loss: Faster and Better
-    Learning for Bounding Box Regression https://arxiv.org/abs/1911.08287`_.
+    Learning for Bounding Box Regression <https://arxiv.org/abs/1911.08287>`.
 
     Code is modified from https://github.com/Zzh-tju/DIoU.
 
     Args:
-        eps (float): Epsilon to avoid log(0).
+        eps (float): Epsilon to avoid log(0). Defaults to 1e-6.
         reduction (str): Options are "none", "mean" and "sum".
-        loss_weight (float): Weight of loss.
+            Defaults to "mean".
+        loss_weight (float): Weight of loss. Defaults to 1.0.
     """
 
     def __init__(self,

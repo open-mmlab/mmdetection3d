@@ -7,7 +7,7 @@ from mmdet3d.registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()
-class DSVTObjectRangeFilter(BaseTransform):
+class ObjectRangeFilter3D(BaseTransform):
     """Filter objects by the range. It differs from `ObjectRangeFilter` by
     using `in_range_3d` instead of `in_range_bev`.
 
@@ -61,7 +61,7 @@ class DSVTObjectRangeFilter(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class DSVTPointsRangeFilter(BaseTransform):
+class PointsRangeFilter3D(BaseTransform):
     """Filter points by the range. It differs from `PointRangeFilter` by using
     `in_range_bev` instead of `in_range_3d`.
 

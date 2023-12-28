@@ -2,7 +2,6 @@ _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
     imports=['projects.DSVT.dsvt'], allow_failed_imports=False)
 
-# load_from = 'checkpoints/dsvt_init.pth'
 voxel_size = [0.32, 0.32, 6]
 grid_size = [468, 468, 1]
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4.0]
@@ -158,8 +157,8 @@ train_pipeline = [
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05],
         translation_std=[0.5, 0.5, 0.5]),
-    dict(type='DSVTPointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='DSVTObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter3D', point_cloud_range=point_cloud_range),
     # dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(
@@ -176,7 +175,7 @@ test_pipeline = [
         norm_intensity=True,
         norm_elongation=True,
         backend_args=backend_args),
-    dict(type='DSVTPointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
     dict(
         type='Pack3DDetInputs',
         keys=['points'],
@@ -230,7 +229,6 @@ val_evaluator = dict(
     result_prefix='./dsvt_pred')
 test_evaluator = val_evaluator
 
-# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')

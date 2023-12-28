@@ -77,7 +77,6 @@ class DynamicPillarVFE3D(nn.Module):
         self.voxel_x = voxel_size[0]
         self.voxel_y = voxel_size[1]
         self.voxel_z = voxel_size[2]
-        # TODO: remove it after 对齐精度
         point_cloud_range = np.array(point_cloud_range).astype(np.float32)
         self.x_offset = self.voxel_x / 2 + point_cloud_range[0]
         self.y_offset = self.voxel_y / 2 + point_cloud_range[1]
