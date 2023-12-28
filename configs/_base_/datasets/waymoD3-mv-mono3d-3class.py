@@ -172,13 +172,18 @@ test_dataloader = dict(
 
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
-    pklfile_prefix='./pgd_mv',
     metric='LET_mAP',
-    convert_kitti_format=False,
     load_type='mv_image_based',
-    backend_args=backend_args)
+    result_prefix='./pgd_mv_pred',
+    nms_cfg=dict(
+        use_rotate_nms=True,
+        nms_across_levels=False,
+        nms_pre=500,
+        nms_thr=0.05,
+        score_thr=0.001,
+        min_bbox_size=0,
+        max_per_frame=100))
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

@@ -173,12 +173,10 @@ test_dataloader = dict(
 
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/fov_gt.bin',
-    pklfile_prefix='./pgd_fov_pred',
     metric='LET_mAP',
-    convert_kitti_format=False,
-    backend_args=backend_args)
+    load_type='fov_image_based',
+    result_prefix='./pgd_fov_pred')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
