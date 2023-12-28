@@ -101,7 +101,7 @@ class SeparateHead(BaseModule):
         Returns:
             dict[str: torch.Tensor]: contains the following keys:
 
-                -reg （torch.Tensor): 2D regression value with the
+                -reg (torch.Tensor): 2D regression value with the
                     shape of [B, 2, H, W].
                 -height (torch.Tensor): Height value with the
                     shape of [B, 1, H, W].
@@ -217,7 +217,7 @@ class DCNSeparateHead(BaseModule):
         Returns:
             dict[str: torch.Tensor]: contains the following keys:
 
-                -reg （torch.Tensor): 2D regression value with the
+                -reg (torch.Tensor): 2D regression value with the
                     shape of [B, 2, H, W].
                 -height (torch.Tensor): Height value with the
                     shape of [B, 1, H, W].
