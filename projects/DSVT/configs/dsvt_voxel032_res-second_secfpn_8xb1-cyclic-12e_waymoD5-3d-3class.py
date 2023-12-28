@@ -158,9 +158,8 @@ train_pipeline = [
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05],
         translation_std=[0.5, 0.5, 0.5]),
-    dict(type='DSVTPointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='DSVTObjectRangeFilter', point_cloud_range=point_cloud_range),
-    # dict(type='ObjectNameFilter', classes=class_names),
+    dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter3D', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -176,7 +175,7 @@ test_pipeline = [
         norm_intensity=True,
         norm_elongation=True,
         backend_args=backend_args),
-    dict(type='DSVTPointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
     dict(
         type='Pack3DDetInputs',
         keys=['points'],
@@ -188,12 +187,11 @@ train_dataloader = dict(
     batch_size=1,
     num_workers=4,
     persistent_workers=True,
-    # sampler=dict(type='DefaultSampler', shuffle=False),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='waymo_train.pkl',
+        ann_file='waymo_infos_train.pkl',
         data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
         pipeline=train_pipeline,
         modality=input_modality,
@@ -227,7 +225,7 @@ test_dataloader = val_dataloader
 val_evaluator = dict(
     type='WaymoMetric',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    result_prefix='./dsvt_pred.bin')
+    result_prefix='./dsvt_pred')
 test_evaluator = val_evaluator
 
 # vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
@@ -242,6 +240,51 @@ optim_wrapper = dict(
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.05, betas=(0.9, 0.99)),
     clip_grad=dict(max_norm=10, norm_type=2))
 # learning rate
+param_scheduler = [
+    dict(
+        type='CosineAnnealingLR',
+        T_max=1.2,
+        eta_min=lr * 100,
+        begin=0,
+        end=1.2,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=10.8,
+        eta_min=lr * 1e-4,
+        begin=1.2,
+        end=12,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    # momentum scheduler
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=1.2,
+        eta_min=0.85,
+        begin=0,
+        end=1.2,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=10.8,
+        eta_min=0.95,
+        begin=1.2,
+        end=12,
+        by_epoch=True,
+        convert_to_iter_based=True)
+]
+
+# runtime settings
+train_cfg = dict(by_epoch=True, max_epochs=12, val_interval=1)
+
+# schedules
+lr = 1e-5
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.05, betas=(0.9, 0.99)),
+    clip_grad=dict(max_norm=10, norm_type=2))
 param_scheduler = [
     dict(
         type='CosineAnnealingLR',

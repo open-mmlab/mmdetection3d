@@ -26,10 +26,10 @@ class DSVTCenterHead(CenterHead):
     """
 
     def __init__(self,
-                 *args,
                  loss_iou=dict(
                      type='mmdet.L1Loss', reduction='mean', loss_weight=1),
                  loss_reg_iou=None,
+                 *args,
                  **kwargs):
         super(DSVTCenterHead, self).__init__(*args, **kwargs)
         self.loss_iou = MODELS.build(loss_iou)
@@ -165,6 +165,7 @@ class DSVTCenterHead(CenterHead):
             gt_boxes: List of batch groundtruth boxes.
 
         Returns:
+            Tensor: IoU Loss.
         """
         if mask.sum() == 0:
             return iou_preds.new_zeros((1))
@@ -256,7 +257,7 @@ class DSVTCenterHead(CenterHead):
         """Generate training targets for a single sample.
 
         Args:
-            gt_instances_3d (:obj:`InstanceData`): Gt_instances of
+            gt_instances_3d (:obj:`InstanceData`): Gt_instances_3d of
                 single data sample. It usually includes
                 ``bboxes_3d`` and ``labels_3d`` attributes.
 
@@ -401,7 +402,7 @@ class DSVTCenterHead(CenterHead):
                 tasks head, and the internal list indicate different
                 FPN level.
             batch_gt_instances_3d (list[:obj:`InstanceData`]): Batch of
-                gt_instances. It usually includes ``bboxes_3d`` and
+                gt_instances_3d. It usually includes ``bboxes_3d`` and
                 ``labels_3d`` attributes.
 
         Returns:
