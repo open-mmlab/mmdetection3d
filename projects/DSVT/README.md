@@ -73,9 +73,9 @@ tools/dist_train.sh projects/DSVT/configs/dsvt_voxel032_res-second_secfpn_8xb1-c
 
 **Note**:
 
-\-  that `ResSECOND` denotes the base block in SECOND has residual layers.
+- `ResSECOND` denotes the base block in SECOND has residual layers.
 
-\- Regrettably, we are unable to provide the pre-trained model weights due to [Waymo Dataset License Agreement](https://waymo.com/open/terms/), so we only provide the training logs as shown above.
+- Regrettably, we are unable to provide the pre-trained model weights due to [Waymo Dataset License Agreement](https://waymo.com/open/terms/), so we only provide the training logs as shown above.
 
 ## Citation
 
