@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import functools
 import math
 from typing import Callable, Optional
 
@@ -14,18 +13,20 @@ class MLP(nn.Module):
     Args:
         input_dim (int): The number of input tensor channels.
         output_dim (int): The number of output tensor channels.
-        net_depth (int): The depth of the MLP.
-        net_width (int): The width of the MLP.
-        skip_layer (int): The layer to add skip layers to.
+        net_depth (int): The depth of the MLP. Defaults to 8.
+        net_width (int): The width of the MLP. Defaults to 256.
+        skip_layer (int): The layer to add skip layers to. Defaults to 4.
 
         hidden_init (Callable): The initialize method of the hidden layers.
         hidden_activation (Callable): The activation function of hidden
-            layers,defaults to ReLU
-        output_enabled (bool): If true,the output layers will be used.
+            layers, defaults to ReLU.
+        output_enabled (bool): If true, the output layers will be used.
+            Defaults to True.
         output_init (Optional): The initialize method of the output layer.
         output_activation(Optional): The activation function of output layers.
-        bias_enabled (Bool): If true,the bias will be used.
+        bias_enabled (Bool): If true, the bias will be used.
         bias_init (Callable): The initialize method of the bias.
+            Defaults to True.
     """
 
     def __init__(
@@ -127,12 +128,14 @@ class NerfMLP(nn.Module):
     Args:
         input_dim (int): The number of input tensor channels.
         condition_dim (int): The number of condition tensor channels.
-        feature_dim (int): The number of feature channels.
-        net_depth (int): The depth of the MLP
-        net_width (int): The width of the MLP
-        skip_layer (int): The layer to add skip layers to.
+        feature_dim (int): The number of feature channels. Defaults to 0.
+        net_depth (int): The depth of the MLP. Defaults to 8.
+        net_width (int): The width of the MLP. Defaults to 256.
+        skip_layer (int): The layer to add skip layers to. Defaults to 4.
         net_depth_condition (int): The depth of the second part of MLP.
+            Defaults to 1.
         net_width_condition (int): The width of the second part of MLP.
+            Defaults to 128.
     """
 
     def __init__(
@@ -214,12 +217,6 @@ class SinusoidalEncoder(nn.Module):
                 (self.max_deg - self.min_deg) * 2) * self.x_dim
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: [..., x_dim]
-        Returns:
-            latent: [...,latent_dim]
-        """
         if self.max_deg == self.min_deg:
             return x
         xb = torch.reshape(
@@ -232,18 +229,18 @@ class SinusoidalEncoder(nn.Module):
         return latent
 
 
-class VanillaNeRFRadianceField(nn.Module):
+class VanillaNeRF(nn.Module):
     """The Nerf-MLP with the positional encoder.
 
     Args:
-        input_dim (int): The number of input tensor channels.
-        condition_dim (int): The number of condition tensor channels.
-        feature_dim (int): The number of feature channels.
-        net_depth (int): The depth of the MLP
-        net_width (int): The width of the MLP
-        skip_layer (int): The layer to add skip layers to.
+        net_depth (int): The depth of the MLP. Defaults to 8.
+        net_width (int): The width of the MLP. Defaults to 256.
+        skip_layer (int): The layer to add skip layers to. Defaults to 4.
+        feature_dim (int): The number of feature channels. Defaults to 0.
         net_depth_condition (int): The depth of the second part of MLP.
+            Defaults to 1.
         net_width_condition (int): The width of the second part of MLP.
+            Defaults to 128.
     """
 
     def __init__(self,
@@ -278,33 +275,3 @@ class VanillaNeRFRadianceField(nn.Module):
             condition = self.view_encoder(condition)
         rgb, sigma = self.mlp(x, condition=condition, features=features)
         return torch.sigmoid(rgb), F.relu(sigma)
-
-
-class DNeRFRadianceField(nn.Module):
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.posi_encoder = SinusoidalEncoder(3, 0, 0, True)
-        self.time_encoder = SinusoidalEncoder(1, 0, 0, True)
-        self.warp = MLP(
-            input_dim=self.posi_encoder.latent_dim +
-            self.time_encoder.latent_dim,
-            output_dim=3,
-            net_depth=4,
-            net_width=64,
-            skip_layer=2,
-            output_init=functools.partial(torch.nn.init.uniform_, b=1e-4),
-        )
-        self.nerf = VanillaNeRFRadianceField()
-
-    def query_density(self, x, t):
-        x = x + self.warp(
-            torch.cat([self.posi_encoder(x),
-                       self.time_encoder(t)], dim=-1))
-        return self.nerf.query_density(x)
-
-    def forward(self, x, t, condition=None):
-        x = x + self.warp(
-            torch.cat([self.posi_encoder(x),
-                       self.time_encoder(t)], dim=-1))
-        return self.nerf(x, condition=condition)

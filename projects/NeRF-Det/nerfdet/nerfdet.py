@@ -9,7 +9,7 @@ from mmdet3d.models.detectors import Base3DDetector
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import ConfigType, OptConfigType
-from .nerf_utils.nerf_mlp import VanillaNeRFRadianceField
+from .nerf_utils.nerf_mlp import VanillaNeRF
 from .nerf_utils.projection import Projector
 from .nerf_utils.render_ray import render_rays
 
@@ -94,7 +94,7 @@ class NerfDet(Base3DDetector):
         self.use_nerf_mask = use_nerf_mask
         self.rgb_supervision = rgb_supervision
         nerf_feature_dim = neck['out_channels'] // squeeze_scale
-        self.nerf_mlp = VanillaNeRFRadianceField(
+        self.nerf_mlp = VanillaNeRF(
             net_depth=4,  # The depth of the MLP
             net_width=256,  # The width of the MLP
             skip_layer=3,  # The layer to add skip layers to.
