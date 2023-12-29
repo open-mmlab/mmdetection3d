@@ -20,8 +20,6 @@ import torch.nn.functional as F
 
 rng = np.random.RandomState(234)
 
-# from tqdm import tqdm
-
 
 # helper functions for nerf ray rendering
 def volume_sampling(sample_pts, features, aabb):
@@ -45,8 +43,6 @@ def volume_sampling(sample_pts, features, aabb):
     masks = (masks.view(N_rays, N_samples) == 3)
     # x,y,z should be all in the volume.
 
-    # TODO: return a mask represent whether the point is placed in volume.
-    # TODO: Use border sampling, them mask filter.
     return sample_features.view(C, N_rays,
                                 N_samples).permute(1, 2, 0).contiguous(), masks
 
