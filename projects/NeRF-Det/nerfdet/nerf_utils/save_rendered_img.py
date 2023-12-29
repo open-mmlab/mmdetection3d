@@ -1,14 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-# import logging
 import os
 
 import cv2
-# import imageio
 import numpy as np
 import torch
 from skimage.metrics import structural_similarity
-
-# from tqdm import tqdm
 
 
 def compute_psnr_from_mse(mse):
@@ -20,7 +16,6 @@ def compute_psnr(pred, target, mask=None):
     if mask is not None:
         pred, target = pred[mask], target[mask]
     mse = ((pred - target)**2).mean()
-    # import pdb; pdb.set_trace()
     return compute_psnr_from_mse(mse).cpu().numpy()
 
 
@@ -43,7 +38,6 @@ def compute_ssim(pred, target, mask=None):
 def save_rendered_img(img_meta, rendered_results):
     filename = img_meta[0]['filename']
     scenes = filename.split('/')[-2]
-    # metrics = dict()
 
     for ret in rendered_results:
         depth = ret['outputs_coarse']['depth']
@@ -51,8 +45,7 @@ def save_rendered_img(img_meta, rendered_results):
         gt = ret['gt_rgb']
         gt_depth = ret['gt_depth']
 
-    # psnr = compute_psnr(rgb, gt, mask=None)
-    # # save images
+    # save images
     psnr_total = 0
     ssim_total = 0
     rsme = 0
