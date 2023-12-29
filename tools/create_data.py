@@ -113,7 +113,7 @@ def lyft_data_prep(root_path, info_prefix, version, max_sweeps=10):
         update_pkl_infos('lyft', out_dir=root_path, pkl_path=info_val_path)
 
 
-def scannet_data_prep(root_path, info_prefix, out_dir, workers, version=''):
+def scannet_data_prep(root_path, info_prefix, out_dir, workers):
     """Prepare the info file for scannet dataset.
 
     Args:
@@ -121,19 +121,15 @@ def scannet_data_prep(root_path, info_prefix, out_dir, workers, version=''):
         info_prefix (str): The prefix of info filenames.
         out_dir (str): Output directory of the generated info file.
         workers (int): Number of threads to be used.
-        version (str): Only used to generate the dataset of nerfdet now.
     """
     indoor.create_indoor_info_file(
         root_path, info_prefix, out_dir, workers=workers)
     info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
     info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
     info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
-    update_pkl_infos(
-        'scannet', out_dir=out_dir, pkl_path=info_train_path, version=version)
-    update_pkl_infos(
-        'scannet', out_dir=out_dir, pkl_path=info_val_path, version=version)
-    update_pkl_infos(
-        'scannet', out_dir=out_dir, pkl_path=info_test_path, version=version)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_val_path)
+    update_pkl_infos('scannet', out_dir=out_dir, pkl_path=info_test_path)
 
 
 def s3dis_data_prep(root_path, info_prefix, out_dir, workers):
@@ -364,8 +360,7 @@ if __name__ == '__main__':
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             out_dir=args.out_dir,
-            workers=args.workers,
-            version=args.version)
+            workers=args.workers)
     elif args.dataset == 's3dis':
         s3dis_data_prep(
             root_path=args.root_path,
