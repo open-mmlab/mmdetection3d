@@ -2,7 +2,7 @@ _base_ = ['./nerfdet_res50_2x_low_res_depth.py']
 
 model = dict(depth_supervise=False)
 
-dataset_type = 'ScanNetMultiViewDataset'
+dataset_type = 'MultiViewScanNetDataset'
 data_root = 'data/scannet/'
 class_names = [
     'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window', 'bookshelf',

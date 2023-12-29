@@ -3,9 +3,9 @@ from .formating import PackNeRFDetInputs
 from .multiview_pipeline import MultiViewPipeline, RandomShiftOrigin
 from .nerfdet import NerfDet
 from .nerfdet_head import NerfDetHead
-from .scannet_multiview_dataset import ScanNetMultiViewDataset
+from .scannet_multiview_dataset import MultiViewScanNetDataset
 
 __all__ = [
-    'ScanNetMultiViewDataset', 'MultiViewPipeline', 'RandomShiftOrigin',
+    'MultiViewScanNetDataset', 'MultiViewPipeline', 'RandomShiftOrigin',
     'PackNeRFDetInputs', 'NeRFDetDataPreprocessor', 'NerfDetHead', 'NerfDet'
 ]

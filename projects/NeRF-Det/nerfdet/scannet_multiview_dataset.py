@@ -11,7 +11,7 @@ from mmdet3d.structures import DepthInstance3DBoxes
 
 
 @DATASETS.register_module()
-class ScanNetMultiViewDataset(Det3DDataset):
+class MultiViewScanNetDataset(Det3DDataset):
     r"""Multi-View ScanNet Dataset for NeRF-detection Task
 
     This class serves as the API for experiments on the ScanNet Dataset.

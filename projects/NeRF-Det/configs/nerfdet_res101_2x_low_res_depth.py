@@ -60,7 +60,7 @@ model = dict(
     train_cfg=dict(),
     test_cfg=dict(nms_pre=1000, iou_thr=.25, score_thr=.01))
 
-dataset_type = 'ScanNetMultiViewDataset'
+dataset_type = 'MultiViewScanNetDataset'
 data_root = 'data/scannet/'
 class_names = [
     'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window', 'bookshelf',
