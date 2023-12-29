@@ -27,8 +27,7 @@ The format of the scannet dataset in the latest version of mmdet3d only supports
 Please following the files in mmdet3d to prepare the raw data of ScanNet. After that, please use this command to generate the pkls used in nerfdet.
 
 ```bash
-python tools/create_data.py scannet --root-path ./data/scannet \
---out-dir ./data/scannet --extra-tag scannet --version nerfdet
+python projects/NeRF-Det/prepare_infos.py --root-path ./data/scannet --out-dir ./data/scannet
 ```
 
 The new format of the pkl is organized as below:
