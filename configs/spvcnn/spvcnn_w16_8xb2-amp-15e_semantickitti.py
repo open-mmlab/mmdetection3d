@@ -1,4 +1,4 @@
-_base_ = ['./spvcnn_w32_8xb2-15e_semantickitti.py']
+_base_ = ['./spvcnn_w32_8xb2-amp-15e_semantickitti.py']
 
 model = dict(
     backbone=dict(
