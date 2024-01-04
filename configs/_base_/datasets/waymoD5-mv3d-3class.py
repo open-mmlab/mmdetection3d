@@ -29,7 +29,6 @@ train_transforms = [
         type='RandomResize3D',
         scale=(1248, 832),
         ratio_range=(0.95, 1.05),
-        # ratio_range=(1., 1.),
         keep_ratio=True),
     dict(type='RandomCrop3D', crop_size=(1080, 720)),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5, flip_box3d=False),
@@ -174,7 +173,6 @@ test_dataloader = dict(
 val_evaluator = dict(
     type='WaymoMetric',
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
-    metric='LET_mAP',
-    result_prefix='./mvfoc3d_pred')
+    metric='LET_mAP')
 
 test_evaluator = val_evaluator

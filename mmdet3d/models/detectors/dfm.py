@@ -14,7 +14,7 @@ class DfM(BaseDetector):
 
     Args:
         data_preprocessor (:obj:`ConfigDict` or dict): The pre-process
-            config of :class:`BaseDataPreprocessor`.  it usually includes,
+            config of :class:`BaseDataPreprocessor`. it usually includes,
             ``pad_size_divisor``, ``pad_value``, ``mean`` and ``std``.
         backbone (:obj:`ConfigDict` or dict): The backbone config.
         neck (:obj:`ConfigDict` or dict): The neck config.
