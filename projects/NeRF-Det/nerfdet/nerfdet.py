@@ -25,7 +25,7 @@ class NerfDet(Base3DDetector):
         neck (:obj:`ConfigDict` or dict): The neck config.
         neck_3d(:obj:`ConfigDict` or dict): The 3D neck config.
         bbox_head(:obj:`ConfigDict` or dict): The bbox head config.
-        anchor_generator (:obj:`ConfigDict` or dict): The anchor generator
+        prior_generator (:obj:`ConfigDict` or dict): The prior generator
             config.
         n_voxels (list): Number of voxels along x, y, z axis.
         voxel_size (list): The size of voxels.Each voxel represents
