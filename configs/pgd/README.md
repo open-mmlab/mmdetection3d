@@ -50,6 +50,23 @@ Note: mAP represents Car moderate 3D strict AP11 / AP40 results. Because of the 
 | [above w/ finetune](./pgd_r101-caffe_fpn_head-gn_16xb2-2x_nus-mono3d_finetune.py) |   2x    |   9.20   | 35.8 | 42.5 | [model](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune_20211114_162135-5ec7c1cd.pth) \| [log](https://download.openmmlab.com/mmdetection3d/v1.0.0_models/pgd/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune/pgd_r101_caffe_fpn_gn-head_2x16_2x_nus-mono3d_finetune_20211114_162135.log.json) |
 |                                   above w/ tta                                    |   2x    |   9.20   | 36.8 | 43.1 |                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
+### Waymo
+
+|                                   Backbone                                   | Load Interval |  Camera view  | mAPL | mAP  | mAPH  |                                                                                             Download                                                                                              |
+| :--------------------------------------------------------------------------: | :-----------: | :-----------: | :--: | :--: | :---: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [ResNet101 w/ DCN](./pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-fov-mono3d.py) |      3x       | front-of-view | 15.8 | 22.7 | 21.51 | [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/pgd/pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-fov-mono3d/pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-fov-mono3d_20231107_164117.log) |
+|                                 above @ Car                                  |               |               | 36.7 | 51.6 | 51.0  |                                                                                                                                                                                                   |
+|                              above @ Pedestrian                              |               |               | 9.0  | 14.1 | 11.4  |                                                                                                                                                                                                   |
+|                               above @ Cyclist                                |               |               | 1.6  | 2.5  |  2.2  |                                                                                                                                                                                                   |
+| [ResNet101 w/ DCN](./pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-mv-mono3d.py)  |      3x       |  multi-view   | 20.8 | 29.3 | 27.7  |  [log](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/pgd/pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-mv-mono3d/pgd_r101_fpn_gn-head_dcn_8xb3-2x_waymoD3-mv-mono3d_20231120_202732.log)  |
+|                                 above @ Car                                  |               |               | 41.2 | 56.1 | 55.2  |                                                                                                                                                                                                   |
+|                              above @ Pedestrian                              |               |               | 20.0 | 29.6 | 25.8  |                                                                                                                                                                                                   |
+|                               above @ Cyclist                                |               |               | 1.4  | 2.2  |  2.0  |                                                                                                                                                                                                   |
+
+**Note**:
+
+Regrettably, we are unable to provide the pre-trained model weights due to [Waymo Dataset License Agreement](https://waymo.com/open/terms/), so we only provide the training logs as shown above.
+
 ## Citation
 
 ```latex

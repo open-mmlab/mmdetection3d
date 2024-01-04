@@ -1,8 +1,9 @@
 _base_ = [
-    '../_base_/datasets/waymoD5-fov-mono3d-3class.py',
+    '../_base_/datasets/waymoD3-fov-mono3d-3class.py',
     '../_base_/models/pgd.py', '../_base_/schedules/mmdet-schedule-1x.py',
     '../_base_/default_runtime.py'
 ]
+# load_from = '../Depth-from-Motion/checkpoints/pgd_init.pth'
 # model settings
 model = dict(
     backbone=dict(
@@ -68,10 +69,9 @@ model = dict(
             type='PGDBBoxCoder',
             base_depths=((41.01, 18.44), ),
             base_dims=(
-                (4.73, 1.77, 2.08),  # Car
                 (0.91, 1.74, 0.84),  # Pedestrian
                 (1.81, 1.77, 0.84),  # Cyclist
-            ),
+                (4.73, 1.77, 2.08)),  # Car
             code_size=7)),
     # set weight 1.0 for base 7 dims (offset, depth, size, rot)
     # 0.2 for 16-dim keypoint offsets and 1.0 for 4-dim 2D distance targets
@@ -109,4 +109,4 @@ param_scheduler = [
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-auto_scale_lr = dict(base_batch_size=48)
+auto_scale_lr = dict(enable=False, base_batch_size=48)
