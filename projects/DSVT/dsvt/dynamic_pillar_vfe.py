@@ -1,4 +1,5 @@
 # modified from https://github.com/Haiyang-W/DSVT
+import numpy as np
 import torch
 import torch.nn as nn
 import torch_scatter
@@ -76,6 +77,7 @@ class DynamicPillarVFE3D(nn.Module):
         self.voxel_x = voxel_size[0]
         self.voxel_y = voxel_size[1]
         self.voxel_z = voxel_size[2]
+        point_cloud_range = np.array(point_cloud_range).astype(np.float32)
         self.x_offset = self.voxel_x / 2 + point_cloud_range[0]
         self.y_offset = self.voxel_y / 2 + point_cloud_range[1]
         self.z_offset = self.voxel_z / 2 + point_cloud_range[2]

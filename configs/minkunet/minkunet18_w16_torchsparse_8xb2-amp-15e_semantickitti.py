@@ -1,4 +1,4 @@
-_base_ = ['./minkunet_w32_8xb2-15e_semantickitti.py']
+_base_ = ['./minkunet18_w32_torchsparse_8xb2-amp-15e_semantickitti.py']
 
 model = dict(
     backbone=dict(

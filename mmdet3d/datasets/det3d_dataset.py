@@ -113,7 +113,7 @@ class Det3DDataset(BaseDataset):
                 ori_label = self.METAINFO['classes'].index(name)
                 self.label_mapping[ori_label] = label_idx
 
-            self.num_ins_per_cat = {name: 0 for name in metainfo['classes']}
+            self.num_ins_per_cat = [0] * len(metainfo['classes'])
         else:
             self.label_mapping = {
                 i: i
@@ -121,10 +121,7 @@ class Det3DDataset(BaseDataset):
             }
             self.label_mapping[-1] = -1
 
-            self.num_ins_per_cat = {
-                name: 0
-                for name in self.METAINFO['classes']
-            }
+            self.num_ins_per_cat = [0] * len(self.METAINFO['classes'])
 
         super().__init__(
             ann_file=ann_file,
@@ -146,9 +143,12 @@ class Det3DDataset(BaseDataset):
 
             # show statistics of this dataset
             print_log('-' * 30, 'current')
-            print_log(f'The length of the dataset: {len(self)}', 'current')
+            print_log(
+                f'The length of {"test" if self.test_mode else "training"} dataset: {len(self)}',  # noqa: E501
+                'current')
             content_show = [['category', 'number']]
-            for cat_name, num in self.num_ins_per_cat.items():
+            for label, num in enumerate(self.num_ins_per_cat):
+                cat_name = self.metainfo['classes'][label]
                 content_show.append([cat_name, num])
             table = AsciiTable(content_show)
             print_log(
@@ -256,8 +256,7 @@ class Det3DDataset(BaseDataset):
 
             for label in ann_info['gt_labels_3d']:
                 if label != -1:
-                    cat_name = self.metainfo['classes'][label]
-                    self.num_ins_per_cat[cat_name] += 1
+                    self.num_ins_per_cat[label] += 1
 
         return ann_info
 

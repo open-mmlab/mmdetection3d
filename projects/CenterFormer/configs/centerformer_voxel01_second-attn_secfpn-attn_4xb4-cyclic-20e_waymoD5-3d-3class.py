@@ -179,7 +179,10 @@ test_pipeline = [
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 
 dataset_type = 'WaymoDataset'
@@ -223,13 +226,7 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
-    type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
-    backend_args=backend_args,
-    convert_kitti_format=False,
-    idx2metainfo='./data/waymo/waymo_format/idx2metainfo.pkl')
+    type='WaymoMetric', waymo_bin_file='./data/waymo/waymo_format/gt.bin')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

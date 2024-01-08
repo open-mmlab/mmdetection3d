@@ -1,7 +1,5 @@
 # modified from https://github.com/Haiyang-W/DSVT
-
-import warnings
-from typing import Optional, Sequence, Tuple
+from typing import Sequence, Tuple
 
 from mmengine.model import BaseModule
 from torch import Tensor
@@ -78,8 +76,8 @@ class ResSECOND(BaseModule):
         out_channels (list[int]): Output channels for multi-scale feature maps.
         blocks_nums (list[int]): Number of blocks in each stage.
         layer_strides (list[int]): Strides of each stage.
-        norm_cfg (dict): Config dict of normalization layers.
-        conv_cfg (dict): Config dict of convolutional layers.
+        init_cfg (dict, optional): Config for weight initialization.
+            Defaults to None.
     """
 
     def __init__(self,
@@ -87,8 +85,7 @@ class ResSECOND(BaseModule):
                  out_channels: Sequence[int] = [128, 128, 256],
                  blocks_nums: Sequence[int] = [1, 2, 2],
                  layer_strides: Sequence[int] = [2, 2, 2],
-                 init_cfg: OptMultiConfig = None,
-                 pretrained: Optional[str] = None) -> None:
+                 init_cfg: OptMultiConfig = None) -> None:
         super(ResSECOND, self).__init__(init_cfg=init_cfg)
         assert len(layer_strides) == len(blocks_nums)
         assert len(out_channels) == len(blocks_nums)
@@ -108,14 +105,6 @@ class ResSECOND(BaseModule):
                     BasicResBlock(out_channels[i], out_channels[i]))
             blocks.append(nn.Sequential(*cur_layers))
         self.blocks = nn.Sequential(*blocks)
-        assert not (init_cfg and pretrained), \
-            'init_cfg and pretrained cannot be setting at the same time'
-        if isinstance(pretrained, str):
-            warnings.warn('DeprecationWarning: pretrained is a deprecated, '
-                          'please use "init_cfg" instead')
-            self.init_cfg = dict(type='Pretrained', checkpoint=pretrained)
-        else:
-            self.init_cfg = dict(type='Kaiming', layer='Conv2d')
 
     def forward(self, x: Tensor) -> Tuple[Tensor, ...]:
         """Forward function.

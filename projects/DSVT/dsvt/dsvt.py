@@ -103,7 +103,11 @@ class DSVT(Base3DDetector):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
-        pass
+        pts_feats = self.extract_feat(batch_inputs_dict)
+        losses = dict()
+        loss = self.bbox_head.loss(pts_feats, batch_data_samples)
+        losses.update(loss)
+        return losses
 
     def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
                 batch_data_samples: List[Det3DDataSample],

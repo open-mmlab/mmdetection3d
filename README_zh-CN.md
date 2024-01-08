@@ -104,9 +104,15 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 ### 亮点
 
-**我们将 `1.1` 分支重命名为 `main` 并将默认分支从 `master` 切换到 `main`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](docs/en/migration.md)以了解更多细节。**
+在1.4版本中，MMDetecion3D 重构了 Waymo 数据集, 加速了 Waymo 数据集的预处理、训练/测试启动、验证的速度。并且在 Waymo 上拓展了对 单目/BEV 等基于相机的三维目标检测模型的支持。在[这里](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html)提供了对 Waymo 数据信息的详细解读。
 
-我们在 SemanticKITTI 上构建了一个全面的点云语义分割基准，包括 Cylinder3D 、MinkUNet 和 SPVCNN 方法。其中，改进后的 MinkUNetv2 在验证集上可以达到 70.3 mIoU。我们还在 `projects` 中支持了 BEVFusion 的训练和全新的 3D 占有网格预测网络 TPVFormer。更多关于 3D 感知的新功能正在进行中。请继续关注！
+此外，在1.4版本中，MMDetection3D 提供了 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) 来帮助社区用户上手 Waymo 并用于快速迭代开发。
+
+**v1.4.0** 版本已经在 2024.1.8 发布：
+
+- 在 `projects` 中支持了 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的训练
+- 在 `projects` 中支持了 [Nerf-Det](https://arxiv.org/abs/2307.14620)
+- 重构了 Waymo 数据集
 
 **v1.3.0** 版本已经在 2023.10.18 发布：
 
@@ -168,8 +174,6 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
   - [自定义运行时配置](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_runtime.html)
 
 </details>
-
-## 基准测试和模型库
 
 ## 基准测试和模型库
 

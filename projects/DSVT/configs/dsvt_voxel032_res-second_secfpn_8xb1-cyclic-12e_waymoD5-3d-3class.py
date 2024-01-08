@@ -88,25 +88,28 @@ model = dict(
         loss_cls=dict(
             type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
         loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=2.0),
+        loss_iou=dict(type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
+        loss_reg_iou=dict(
+            type='mmdet3d.DIoU3DLoss', reduction='mean', loss_weight=2.0),
         norm_bbox=True),
     # model training and testing settings
     train_cfg=dict(
-        pts=dict(
-            grid_size=grid_size,
-            voxel_size=voxel_size,
-            out_size_factor=4,
-            dense_reg=1,
-            gaussian_overlap=0.1,
-            max_objs=500,
-            min_radius=2,
-            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])),
+        grid_size=grid_size,
+        voxel_size=voxel_size,
+        point_cloud_range=point_cloud_range,
+        out_size_factor=1,
+        dense_reg=1,
+        gaussian_overlap=0.1,
+        max_objs=500,
+        min_radius=2,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]),
     test_cfg=dict(
         max_per_img=500,
         max_pool_nms=False,
         min_radius=[4, 12, 10, 1, 0.85, 0.175],
         iou_rectifier=[[0.68, 0.71, 0.65]],
         pc_range=[-80, -80],
-        out_size_factor=4,
+        out_size_factor=1,
         voxel_size=voxel_size[:2],
         nms_type='rotate',
         multi_class_nms=True,
@@ -128,6 +131,8 @@ db_sampler = dict(
         coord_type='LIDAR',
         load_dim=6,
         use_dim=[0, 1, 2, 3, 4],
+        norm_intensity=True,
+        norm_elongation=True,
         backend_args=backend_args),
     backend_args=backend_args)
 
@@ -138,25 +143,22 @@ train_pipeline = [
         load_dim=6,
         use_dim=5,
         norm_intensity=True,
+        norm_elongation=True,
         backend_args=backend_args),
-    # Add this if using `MultiFrameDeformableDecoderRPN`
-    # dict(
-    #     type='LoadPointsFromMultiSweeps',
-    #     sweeps_num=9,
-    #     load_dim=6,
-    #     use_dim=[0, 1, 2, 3, 4],
-    #     pad_empty_sweeps=True,
-    #     remove_close=True),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
+    dict(
+        type='RandomFlip3D',
+        sync_2d=False,
+        flip_ratio_bev_horizontal=0.5,
+        flip_ratio_bev_vertical=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05],
-        translation_std=[0.5, 0.5, 0]),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectNameFilter', classes=class_names),
+        translation_std=[0.5, 0.5, 0.5]),
+    dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter3D', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -172,25 +174,34 @@ test_pipeline = [
         norm_intensity=True,
         norm_elongation=True,
         backend_args=backend_args),
+    dict(type='PointsRangeFilter3D', point_cloud_range=point_cloud_range),
     dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1333, 800),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='GlobalRotScaleTrans',
-                rot_range=[0, 0],
-                scale_ratio_range=[1., 1.],
-                translation_std=[0, 0, 0]),
-            dict(type='RandomFlip3D'),
-            dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
-        ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
+        type='Pack3DDetInputs',
+        keys=['points'],
+        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 
 dataset_type = 'WaymoDataset'
+train_dataloader = dict(
+    batch_size=1,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='waymo_infos_train.pkl',
+        data_prefix=dict(pts='training/velodyne', sweeps='training/velodyne'),
+        pipeline=train_pipeline,
+        modality=input_modality,
+        test_mode=False,
+        metainfo=metainfo,
+        # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
+        # and box_type_3d='Depth' in sunrgbd and scannet dataset.
+        box_type_3d='LiDAR',
+        # load one frame every five frames
+        load_interval=5,
+        backend_args=backend_args))
 val_dataloader = dict(
     batch_size=4,
     num_workers=4,
@@ -212,17 +223,58 @@ test_dataloader = val_dataloader
 
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
-    backend_args=backend_args,
-    convert_kitti_format=False,
-    idx2metainfo='./data/waymo/waymo_format/idx2metainfo.pkl')
+    result_prefix='./dsvt_pred')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+# schedules
+lr = 1e-5
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.05, betas=(0.9, 0.99)),
+    clip_grad=dict(max_norm=10, norm_type=2))
+param_scheduler = [
+    dict(
+        type='CosineAnnealingLR',
+        T_max=1.2,
+        eta_min=lr * 100,
+        begin=0,
+        end=1.2,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=10.8,
+        eta_min=lr * 1e-4,
+        begin=1.2,
+        end=12,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    # momentum scheduler
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=1.2,
+        eta_min=0.85,
+        begin=0,
+        end=1.2,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=10.8,
+        eta_min=0.95,
+        begin=1.2,
+        end=12,
+        by_epoch=True,
+        convert_to_iter_based=True)
+]
+
+# runtime settings
+train_cfg = dict(by_epoch=True, max_epochs=12, val_interval=1)
 
 # runtime settings
 val_cfg = dict()
@@ -236,4 +288,12 @@ test_cfg = dict()
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=5))
+    checkpoint=dict(type='CheckpointHook', interval=1))
+custom_hooks = [
+    dict(
+        type='DisableAugHook',
+        disable_after_epoch=11,
+        disable_aug_list=[
+            'GlobalRotScaleTrans', 'RandomFlip3D', 'ObjectSample'
+        ])
+]

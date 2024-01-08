@@ -1,20 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Union
+
 import numpy as np
 import torch
-from mmdet.models.detectors import BaseDetector
+from mmengine.structures import InstanceData
+from torch import Tensor
 
 from mmdet3d.models.layers.fusion_layers.point_fusion import (point_sample,
                                                               voxel_sample)
 from mmdet3d.registry import MODELS, TASK_UTILS
 from mmdet3d.structures.bbox_3d.utils import get_lidar2img
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import ConfigType, OptConfigType
+from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
 from .dfm import DfM
-from .imvoxelnet import ImVoxelNet
 
 
 @MODELS.register_module()
-class MultiViewDfM(ImVoxelNet, DfM):
+class MultiViewDfM(DfM):
     r"""Waymo challenge solution of `MV-FCOS3D++
     <https://arxiv.org/abs/2207.12716>`_.
 
@@ -25,7 +27,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
         config.
         backbone_3d (:obj:`ConfigDict` or dict): The 3d backbone config.
         neck_3d (:obj:`ConfigDict` or dict): The 3D neck config.
-        bbox_head (:obj:`ConfigDict` or dict): The bbox head config.
+        bbox_head_3d (:obj:`ConfigDict` or dict): The bbox head config.
         voxel_size (:obj:`ConfigDict` or dict): The voxel size.
         anchor_generator (:obj:`ConfigDict` or dict): The anchor generator
             config.
@@ -60,7 +62,7 @@ class MultiViewDfM(ImVoxelNet, DfM):
                  backbone_stereo: ConfigType,
                  backbone_3d: ConfigType,
                  neck_3d: ConfigType,
-                 bbox_head: ConfigType,
+                 bbox_head_3d: ConfigType,
                  voxel_size: ConfigType,
                  anchor_generator: ConfigType,
                  neck_2d: ConfigType = None,
@@ -71,41 +73,24 @@ class MultiViewDfM(ImVoxelNet, DfM):
                  test_cfg: OptConfigType = None,
                  data_preprocessor: OptConfigType = None,
                  valid_sample: bool = True,
-                 temporal_aggregate: str = 'concat',
+                 temporal_aggregate: str = 'mean',
                  transform_depth: bool = True,
                  init_cfg: OptConfigType = None):
-        # TODO merge with DFM
-        BaseDetector.__init__(
-            self, data_preprocessor=data_preprocessor, init_cfg=init_cfg)
-
-        self.backbone = MODELS.build(backbone)
-        self.neck = MODELS.build(neck)
-        if backbone_stereo is not None:
-            backbone_stereo.update(cat_img_feature=self.neck.cat_img_feature)
-            backbone_stereo.update(in_sem_channels=self.neck.sem_channels[-1])
-            self.backbone_stereo = MODELS.build(backbone_stereo)
-            assert self.neck.cat_img_feature == \
-                self.backbone_stereo.cat_img_feature
-            assert self.neck.sem_channels[
-                -1] == self.backbone_stereo.in_sem_channels
-        if backbone_3d is not None:
-            self.backbone_3d = MODELS.build(backbone_3d)
-        if neck_3d is not None:
-            self.neck_3d = MODELS.build(neck_3d)
-        if neck_2d is not None:
-            self.neck_2d = MODELS.build(neck_2d)
-        if bbox_head_2d is not None:
-            self.bbox_head_2d = MODELS.build(bbox_head_2d)
-        if depth_head_2d is not None:
-            self.depth_head_2d = MODELS.build(depth_head_2d)
-        if depth_head is not None:
-            self.depth_head = MODELS.build(depth_head)
-            self.depth_samples = self.depth_head.depth_samples
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
-        bbox_head.update(train_cfg=train_cfg)
-        bbox_head.update(test_cfg=test_cfg)
-        self.bbox_head = MODELS.build(bbox_head)
+        super().__init__(
+            data_preprocessor=data_preprocessor,
+            backbone=backbone,
+            neck=neck,
+            backbone_stereo=backbone_stereo,
+            backbone_3d=backbone_3d,
+            neck_3d=neck_3d,
+            bbox_head_3d=bbox_head_3d,
+            neck_2d=neck_2d,
+            bbox_head_2d=bbox_head_2d,
+            depth_head_2d=depth_head_2d,
+            depth_head=depth_head,
+            train_cfg=train_cfg,
+            test_cfg=test_cfg,
+            init_cfg=init_cfg)
         self.voxel_size = voxel_size
         self.voxel_range = anchor_generator['ranges'][0]
         self.n_voxels = [
@@ -370,6 +355,139 @@ class MultiViewDfM(ImVoxelNet, DfM):
         if self.with_depth_head:
             transform_feats += (batch_stereo_feats, )
         return transform_feats
+
+    def loss(self, batch_inputs: Tensor,
+             batch_data_samples: SampleList) -> Union[dict, tuple]:
+        """Calculate losses from a batch of inputs dict and data samples.
+
+        Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'img' keys.
+
+                    - points (list[torch.Tensor]): Point cloud of each sample.
+                    - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            dict: A dictionary of loss components.
+        """
+        feats = self.extract_feat(batch_inputs, batch_data_samples)
+        bev_feat = feats[0]
+        losses = self.bbox_head_3d.loss([bev_feat], batch_data_samples)
+        return losses
+
+    def predict(self, batch_inputs: Tensor,
+                batch_data_samples: SampleList) -> SampleList:
+        """Predict results from a batch of inputs and data samples with post-
+        processing.
+
+        Args:
+            batch_inputs_dict (dict): The model input dict which include
+                'points', 'imgs' keys.
+
+                - points (list[torch.Tensor]): Point cloud of each sample.
+                - imgs (torch.Tensor, optional): Image of each sample.
+
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The Data
+                samples. It usually includes information such as
+                `gt_instance_3d`, `gt_panoptic_seg_3d` and `gt_sem_seg_3d`.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input samples. Each Det3DDataSample usually contain
+            'pred_instances_3d'. And the ``pred_instances_3d`` usually
+            contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+                (num_instance, )
+            - labels_3d (Tensor): Labels of bboxes, has a shape
+                (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+                (num_instances, C) where C >=7.
+        """
+        feats = self.extract_feat(batch_inputs, batch_data_samples)
+        bev_feat = feats[0]
+        results_list = self.bbox_head_3d.predict([bev_feat],
+                                                 batch_data_samples)
+        predictions = self.add_pred_to_datasample(batch_data_samples,
+                                                  results_list)
+        return predictions
+
+    def _forward(self,
+                 batch_inputs: Tensor,
+                 batch_data_samples: SampleList = None):
+        """Network forward process.
+
+        Usually includes backbone, neck and head forward without any post-
+        processing.
+        """
+        feats = self.extract_feat(batch_inputs, batch_data_samples)
+        bev_feat = feats[0]
+        self.bbox_head.forward(bev_feat, batch_data_samples)
+
+    def add_pred_to_datasample(
+        self,
+        data_samples: SampleList,
+        data_instances_3d: OptInstanceList = None,
+        data_instances_2d: OptInstanceList = None,
+    ) -> SampleList:
+        """Convert results list to `Det3DDataSample`.
+
+        Subclasses could override it to be compatible for some multi-modality
+        3D detectors.
+
+        Args:
+            data_samples (list[:obj:`Det3DDataSample`]): The input data.
+            data_instances_3d (list[:obj:`InstanceData`], optional): 3D
+                Detection results of each sample.
+            data_instances_2d (list[:obj:`InstanceData`], optional): 2D
+                Detection results of each sample.
+
+        Returns:
+            list[:obj:`Det3DDataSample`]: Detection results of the
+            input. Each Det3DDataSample usually contains
+            'pred_instances_3d'. And the ``pred_instances_3d`` normally
+            contains following keys.
+
+            - scores_3d (Tensor): Classification scores, has a shape
+              (num_instance, )
+            - labels_3d (Tensor): Labels of 3D bboxes, has a shape
+              (num_instances, ).
+            - bboxes_3d (Tensor): Contains a tensor with shape
+              (num_instances, C) where C >=7.
+
+            When there are image prediction in some models, it should
+            contains  `pred_instances`, And the ``pred_instances`` normally
+            contains following keys.
+
+            - scores (Tensor): Classification scores of image, has a shape
+              (num_instance, )
+            - labels (Tensor): Predict Labels of 2D bboxes, has a shape
+              (num_instances, ).
+            - bboxes (Tensor): Contains a tensor with shape
+              (num_instances, 4).
+        """
+
+        assert (data_instances_2d is not None) or \
+               (data_instances_3d is not None),\
+               'please pass at least one type of data_samples'
+
+        if data_instances_2d is None:
+            data_instances_2d = [
+                InstanceData() for _ in range(len(data_instances_3d))
+            ]
+        if data_instances_3d is None:
+            data_instances_3d = [
+                InstanceData() for _ in range(len(data_instances_2d))
+            ]
+
+        for i, data_sample in enumerate(data_samples):
+            data_sample.pred_instances_3d = data_instances_3d[i]
+            data_sample.pred_instances = data_instances_2d[i]
+        return data_samples
 
     def aug_test(self, imgs, img_metas, **kwargs):
         """Test with augmentations.
