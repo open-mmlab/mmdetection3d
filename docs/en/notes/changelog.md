@@ -1,5 +1,37 @@
 # Changelog of v1.1
 
+### v1.4.0 (8/1/2024)
+
+#### Highlights
+
+- Refactor Waymo dataset (#2836)
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
+
+#### New Features
+
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
+- Support [MV-FCOS3D++](https://arxiv.org/abs/2207.12716)
+- Refactor Waymo dataset (#2836)
+
+#### Improvements
+
+- Support [PGD](https://arxiv.org/abs/2107.14160)) (front-of-view / multi-view) on Waymo dataset (#2835)
+- Release new [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) for verify some methods or debug quickly (#2835)
+
+#### Bug Fixes
+
+- Fix MinkUNet and SPVCNN some wrong configs (#2854)
+- Fix incorrect number of arguments in PETR (#2800)
+- Delete unused files in `mmdet3d/configs` (#2773)
+
+#### Contributors
+
+A total of 5 developers contributed to this release.
+
+@sunjiahao1999, @WendellZ524, @Yanyirong, @JingweiZhang12, @Tai-Wang
+
 ### v1.3.0 (18/10/2023)
 
 #### Highlights

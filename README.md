@@ -104,9 +104,15 @@ Like [MMDetection](https://github.com/open-mmlab/mmdetection) and [MMCV](https:/
 
 ### Highlight
 
-**We have renamed the branch `1.1` to `main` and switched the default branch from `master` to `main`. We encourage users to migrate to the latest version, though it comes with some cost. Please refer to [Migration Guide](docs/en/migration.md) for more details.**
+In version 1.4, MMDetecion3D refactors the Waymo dataset and accelerates the preprocessing, training/testing setup, and evaluation of Waymo dataset. We also extends the support for camera-based, such as Monocular and BEV, 3D object detection models on Waymo. A detailed description of the Waymo data information is provided [here](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html).
 
-We have constructed a comprehensive LiDAR semantic segmentation benchmark on SemanticKITTI, including Cylinder3D, MinkUNet and SPVCNN methods. Noteworthy, the improved MinkUNetv2 can achieve 70.3 mIoU on the validation set of SemanticKITTI. We have also supported the training of BEVFusion and an occupancy prediction method, TPVFomrer, in our `projects`. More new features about 3D perception are on the way. Please stay tuned!
+Besides, in version 1.4, MMDetection3D provides [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) to help community users get started with Waymo and use it for quick iterative development.
+
+**v1.4.0** was released in 8/1/2024：
+
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects`
+- Refactor Waymo dataset
 
 **v1.3.0** was released in 18/10/2023:
 
