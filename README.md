@@ -108,11 +108,11 @@ In version 1.4, MMDetecion3D refactors the Waymo dataset and accelerates the pre
 
 Besides, in version 1.4, MMDetection3D provides [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) to help community users get started with Waymo and use it for quick iterative development.
 
-**v1.4.0** 版本已经在 2024.01.05 发布：
+**v1.4.0** was released in 8/1/2024：
 
-- Refactor Waymo dataset
 - Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`
 - Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects`
+- Refactor Waymo dataset
 
 **v1.3.0** was released in 18/10/2023:
 

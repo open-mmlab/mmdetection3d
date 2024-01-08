@@ -108,11 +108,11 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 此外，在1.4版本中，MMDetection3D 提供了 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) 来帮助社区用户上手 Waymo 并用于快速迭代开发。
 
-**v1.4.0** 版本已经在 2024.01.05 发布：
+**v1.4.0** 版本已经在 2024.1.8 发布：
 
+- 在 `projects` 中支持了 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的训练
+- 在 `projects` 中支持了 [Nerf-Det](https://arxiv.org/abs/2307.14620)
 - 重构了 Waymo 数据集
-- 在 `projects` 中支持 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的训练
-- 在 projects 中支持了 [Nerf-Det](https://arxiv.org/abs/2307.14620)
 
 **v1.3.0** 版本已经在 2023.10.18 发布：
 

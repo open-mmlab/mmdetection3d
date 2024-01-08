@@ -1,6 +1,6 @@
 # Changelog of v1.1
 
-### v1.4.0 (05/01/2024)
+### v1.4.0 (8/1/2024)
 
 #### Highlights
 
@@ -10,10 +10,10 @@
 
 #### New Features
 
-- Refactor Waymo dataset for speeding up dataset preprocessing, setup, and evaluation. (#2836)
 - Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
 - Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
 - Support [MV-FCOS3D++](https://arxiv.org/abs/2207.12716)
+- Refactor Waymo dataset (#2836)
 
 #### Improvements
 
