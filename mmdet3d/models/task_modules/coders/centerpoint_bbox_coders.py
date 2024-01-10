@@ -36,7 +36,8 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         self.pc_range = pc_range
         self.out_size_factor = out_size_factor
         self.voxel_size = voxel_size
-        self.post_center_range = Tensor(post_center_range)
+        self.post_center_range = Tensor(
+            post_center_range) if post_center_range is not None else None
         self.max_num = max_num
         self.score_threshold = score_threshold
         self.code_size = code_size
