@@ -41,8 +41,8 @@ class BboxOverlapsNearest3D(object):
 
         Return:
             torch.Tensor: If ``is_aligned`` is ``True``, return ious between
-                bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
-                ``False``, return shape is M.
+                bboxes1 and bboxes2 with shape (M, N, 1). If ``is_aligned`` is
+                ``False``, return shape is (M, 1).
         """
         return bbox_overlaps_nearest_3d(bboxes1, bboxes2, mode, is_aligned,
                                         self.coordinate)
@@ -85,7 +85,7 @@ class BboxOverlaps3D(object):
 
         Return:
             torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
-                with shape (M, N) (aligned mode is not supported currently).
+                with shape (M, N, 1) (aligned mode is not supported currently).
         """
         return bbox_overlaps_3d(bboxes1, bboxes2, mode, self.coordinate)
 
@@ -124,8 +124,8 @@ def bbox_overlaps_nearest_3d(bboxes1,
 
     Return:
         torch.Tensor: If ``is_aligned`` is ``True``, return ious between
-            bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
-            ``False``, return shape is M.
+            bboxes1 and bboxes2 with shape (M, N, 1). If ``is_aligned`` is
+            ``False``, return shape is (M, 1).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
 
@@ -164,7 +164,7 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode='iou', coordinate='camera'):
 
     Return:
         torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2
-            with shape (M, N) (aligned mode is not supported currently).
+            with shape (M, N, 1) (aligned mode is not supported currently).
     """
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
 
@@ -195,7 +195,7 @@ class AxisAlignedBboxOverlaps3D(object):
             is_aligned (bool, optional): If True, then m and n must be equal.
                 Defaults to False.
         Returns:
-            Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
+            Tensor: shape (m, n, 1) if ``is_aligned`` is False else shape (m, 1)
         """
         assert bboxes1.size(-1) == bboxes2.size(-1) == 6
         return axis_aligned_bbox_overlaps_3d(bboxes1, bboxes2, mode,
@@ -232,7 +232,7 @@ def axis_aligned_bbox_overlaps_3d(bboxes1,
             stability. Defaults to 1e-6.
 
     Returns:
-        Tensor: shape (m, n) if ``is_aligned`` is False else shape (m,)
+        Tensor: shape (m, n, 1) if ``is_aligned`` is False else shape (m, 1)
 
     Example:
         >>> bboxes1 = torch.FloatTensor([
