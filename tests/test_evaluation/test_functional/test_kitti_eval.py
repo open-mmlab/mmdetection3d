@@ -1,14 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-import pytest
-import torch
 
 from mmdet3d.evaluation import do_eval, eval_class, kitti_eval
 
 
 def test_do_eval():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and CUDA')
     gt_name = np.array(
         ['Pedestrian', 'Cyclist', 'Car', 'Car', 'Car', 'DontCare', 'DontCare'])
     gt_truncated = np.array([0., 0., 0., -1., -1., -1., -1.])
@@ -128,8 +124,6 @@ def test_do_eval():
 
 
 def test_kitti_eval():
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and CUDA')
     gt_name = np.array(
         ['Pedestrian', 'Cyclist', 'Car', 'Car', 'Car', 'DontCare', 'DontCare'])
     gt_truncated = np.array([0., 0., 0., -1., -1., -1., -1.])
