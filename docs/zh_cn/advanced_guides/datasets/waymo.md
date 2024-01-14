@@ -7,12 +7,7 @@
 在准备 Waymo 数据集之前，如果您之前只安装了 `requirements/build.txt` 和 `requirements/runtime.txt` 中的依赖，请通过运行如下指令额外安装 Waymo 数据集所依赖的官方包：
 
 ```
-# tf 2.1.0.
-pip install waymo-open-dataset-tf-2-1-0==1.2.0
-# tf 2.0.0
-# pip install waymo-open-dataset-tf-2-0-0==1.2.0
-# tf 1.15.0
-# pip install waymo-open-dataset-tf-1-15-0==1.2.0
+pip install waymo-open-dataset-tf-2-6-0
 ```
 
 或者
@@ -38,6 +33,8 @@ mmdetection3d
 │   │   │   ├── validation
 │   │   │   ├── testing
 │   │   │   ├── gt.bin
+│   │   │   ├── cam_gt.bin
+│   │   │   ├── fov_gt.bin
 │   │   ├── kitti_format
 │   │   │   ├── ImageSets
 
@@ -46,7 +43,9 @@ mmdetection3d
 您可以在[这里](https://waymo.com/open/download/)下载 1.2 版本的 Waymo 公开数据集，并在[这里](https://drive.google.com/drive/folders/18BVuF_RYJF0NjZpt8SnfzANiakoRMf0o?usp=sharing)下载其训练/验证/测试集拆分文件。接下来，请将 `tfrecord` 文件放入 `data/waymo/waymo_format/` 下的对应文件夹，并将 txt 格式的数据集拆分文件放入 `data/waymo/kitti_format/ImageSets`。在[这里](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0/validation/ground_truth_objects)下载验证集使用的 bin 格式真实标注 (Ground Truth) 文件并放入 `data/waymo/waymo_format/`。小窍门：您可以使用 `gsutil` 来在命令行下载大规模数据集。您可以将该[工具](https://github.com/RalphMao/Waymo-Dataset-Tool) 作为一个例子来查看更多细节。之后，通过运行如下指令准备 Waymo 数据：
 
 ```bash
-python tools/create_data.py waymo --root-path ./data/waymo/ --out-dir ./data/waymo/ --workers 128 --extra-tag waymo
+# TF_CPP_MIN_LOG_LEVEL=3 will disable all logging output from TensorFlow.
+# The number of `--workers` depends on the maximum number of cores in your CPU.
+TF_CPP_MIN_LOG_LEVEL=3 python tools/create_data.py waymo --root-path ./data/waymo --out-dir ./data/waymo --workers 128 --extra-tag waymo --version v1.4
 ```
 
 请注意，如果您的本地磁盘没有足够空间保存转换后的数据，您可以将 `--out-dir` 改为其他目录；只要在创建文件夹、准备数据并转换格式后，将数据文件链接到 `data/waymo/kitti_format` 即可。
@@ -65,22 +64,16 @@ mmdetection3d
 │   │   │   ├── validation
 │   │   │   ├── testing
 │   │   │   ├── gt.bin
+│   │   │   ├── cam_gt.bin
+│   │   │   ├── fov_gt.bin
 │   │   ├── kitti_format
 │   │   │   ├── ImageSets
 │   │   │   ├── training
-│   │   │   │   ├── calib
 │   │   │   │   ├── image_0
 │   │   │   │   ├── image_1
 │   │   │   │   ├── image_2
 │   │   │   │   ├── image_3
 │   │   │   │   ├── image_4
-│   │   │   │   ├── label_0
-│   │   │   │   ├── label_1
-│   │   │   │   ├── label_2
-│   │   │   │   ├── label_3
-│   │   │   │   ├── label_4
-│   │   │   │   ├── label_all
-│   │   │   │   ├── pose
 │   │   │   │   ├── velodyne
 │   │   │   ├── testing
 │   │   │   │   ├── (the same as training)
@@ -93,7 +86,48 @@ mmdetection3d
 
 ```
 
-因为 Waymo 数据的来源包含数个相机，这里我们将每个相机对应的图像和标签文件分别存储，并将相机位姿 (pose) 文件存储下来以供后续处理连续多帧的点云。我们使用 `{a}{bbb}{ccc}` 的名称编码方式为每帧数据命名，其中 `a` 是不同数据拆分的前缀（`0` 指代训练集，`1` 指代验证集，`2` 指代测试集），`bbb` 是分割部分 (segment) 的索引，而 `ccc` 是帧索引。您可以轻而易举地按照如上命名规则定位到所需的帧。我们将训练和验证所需数据按 KITTI 的方式集合在一起，然后将训练集/验证集/测试集的索引存储在 `ImageSet` 下的文件中。
+- `kitti_format/training/image_{0-4}/{a}{bbb}{ccc}.jpg` 因为 Waymo 数据的来源包含数个相机，这里我们将每个相机对应的图像和标签文件分别存储，并将相机位姿 (pose) 文件存储下来以供后续处理连续多帧的点云。我们使用 `{a}{bbb}{ccc}` 的名称编码方式为每帧数据命名，其中 `a` 是不同数据拆分的前缀（`0` 指代训练集，`1` 指代验证集，`2` 指代测试集），`bbb` 是分割部分 (segment) 的索引，而 `ccc` 是帧索引。您可以轻而易举地按照如上命名规则定位到所需的帧。我们将训练和验证所需数据按 KITTI 的方式集合在一起，然后将训练集/验证集/测试集的索引存储在 `ImageSet` 下的文件中。
+- `kitti_format/training/velodyne/{a}{bbb}{ccc}.bin` 当前样本的点云数据
+- `kitti_format/waymo_gt_database/xxx_{Car/Pedestrian/Cyclist}_x.bin`. 训练数据集的每个 3D 包围框中包含的点云数据。这些点云会在数据增强中被使用，例如. `ObjectSample`. `xxx` 表示训练样本的索引，`x` 表示实例在当前样本中的索引。
+- `kitti_format/waymo_infos_train.pkl`. 训练数据集，该字典包含了两个键值：`metainfo` 和 `data_list`。`metainfo` 包含数据集的基本信息，例如 `dataset`、`version` 和 `info_version`。`data_list` 是由字典组成的列表，每个字典（以下简称 `info`）包含了单个样本的所有详细信息。:
+  - info\['sample_idx'\]: 样本在整个数据集的索引。
+  - info\['ego2global'\]: 自车到全局坐标的变换矩阵。（4x4 列表）
+  - info\['timestamp'\]：样本数据时间戳。
+  - info\['context_name'\]: 语境名，表示样本从哪个 `*.tfrecord` 片段中提取的。
+  - info\['lidar_points'\]: 是一个字典，包含了所有与激光雷达点相关的信息。
+    - info\['lidar_points'\]\['lidar_path'\]: 激光雷达点云数据的文件名。
+    - info\['lidar_points'\]\['num_pts_feats'\]: 点的特征维度。
+  - info\['lidar_sweeps'\]: 是一个列表，包含了历史帧信息。
+    - info\['lidar_sweeps'\]\[i\]\['lidar_points'\]\['lidar_path'\]: 第 i 帧的激光雷达数据的文件路径。
+    - info\['lidar_sweeps'\]\[i\]\['ego2global'\]: 第 i 帧的激光雷达传感器到自车的变换矩阵。（4x4 列表）
+    - info\['lidar_sweeps'\]\[i\]\['timestamp'\]: 第 i 帧的样本数据时间戳。
+  - info\['images'\]: 是一个字典，包含与每个相机对应的六个键值：`'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_SIDE_LEFT'`, `'CAM_SIDE_RIGHT'`。每个字典包含了对应相机的所有数据信息。
+    - info\['images'\]\['CAM_XXX'\]\['img_path'\]: 图像的文件名。
+    - info\['images'\]\['CAM_XXX'\]\['height'\]: 图像的高
+    - info\['images'\]\['CAM_XXX'\]\['width'\]: 图像的宽
+    - info\['images'\]\['CAM_XXX'\]\['cam2img'\]: 当 3D 点投影到图像平面时需要的内参信息相关的变换矩阵。（3x3 列表）
+    - info\['images'\]\['CAM_XXX'\]\['lidar2cam'\]: 激光雷达传感器到该相机的变换矩阵。（4x4 列表）
+    - info\['images'\]\['CAM_XXX'\]\['lidar2img'\]: 激光雷达传感器到图像平面的变换矩阵。（4x4 列表）
+  - info\['image_sweeps'\]: 是一个列表，包含了历史帧信息。
+    - info\['image_sweeps'\]\[i\]\['images'\]\['CAM_XXX'\]\['img_path'\]: 第i帧的图像的文件名.
+    - info\['image_sweeps'\]\[i\]\['ego2global'\]: 第 i 帧的自车到全局坐标的变换矩阵。（4x4 列表）
+    - info\['image_sweeps'\]\[i\]\['timestamp'\]: 第 i 帧的样本数据时间戳。
+  - info\['instances'\]: 是一个字典组成的列表。每个字典包含单个实例的所有标注信息。对于其中的第 i 个实例，我们有：
+    - info\['instances'\]\[i\]\['bbox_3d'\]: 长度为 7 的列表，以 (x, y, z, l, w, h, yaw) 的顺序表示实例的 3D 边界框。
+    - info\['instances'\]\[i\]\['bbox'\]: 2D 边界框标注（，顺序为 \[x1, y1, x2, y2\] 的列表。有些实例可能没有对应的 2D 边界框标注。
+    - info\['instances'\]\[i\]\['bbox_label_3d'\]: 整数表示实例的标签，-1 代表忽略。
+    - info\['instances'\]\[i\]\['bbox_label'\]: 整数表示实例的标签，-1 代表忽略。
+    - info\['instances'\]\[i\]\['num_lidar_pts'\]: 每个 3D 边界框内包含的激光雷达点数。
+    - info\['instances'\]\[i\]\['camera_id'\]: 当前实例最可见相机的索引。
+    - info\['instances'\]\[i\]\['group_id'\]: 当前实例在当前样本中的索引。
+  - info\['cam_sync_instances'\]: 是一个字典组成的列表。每个字典包含单个实例的所有标注信息。它的形式与 \['instances'\]相同. 但是, \['cam_sync_instances'\] 专门用于基于多视角相机的三维目标检测任务。
+  - info\['cam_instances'\]: 是一个字典，包含以下键值： `'CAM_FRONT'`, `'CAM_FRONT_RIGHT'`, `'CAM_FRONT_LEFT'`, `'CAM_SIDE_LEFT'`, `'CAM_SIDE_RIGHT'`. 对于基于视觉的 3D 目标检测任务，我们将整个场景的 3D 标注划分至它们所属于的相应相机中。对于其中的第 i 个实例，我们有：
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_3d'\]: 长度为 7 的列表，以 (x, y, z, l, h, w, yaw) 的顺序表示实例的 3D 边界框。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox'\]: 2D 边界框标注（3D 框投影的矩形框），顺序为 \[x1, y1, x2, y2\] 的列表。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label_3d'\]: 实例标签。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['bbox_label'\]: 实例标签。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['center_2d'\]: 3D 框投影到图像上的中心点，大小为 (2, ) 的列表。
+    - info\['cam_instances'\]\['CAM_XXX'\]\[i\]\['depth'\]: 3D 框投影中心的深度。
 
 ## 训练
 

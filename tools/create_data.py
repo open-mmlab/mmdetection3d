@@ -2,6 +2,8 @@
 import argparse
 from os import path as osp
 
+from mmengine import print_log
+
 from tools.dataset_converters import indoor_converter as indoor
 from tools.dataset_converters import kitti_converter as kitti
 from tools.dataset_converters import lyft_converter as lyft_converter
@@ -171,8 +173,19 @@ def waymo_data_prep(root_path,
                     version,
                     out_dir,
                     workers,
-                    max_sweeps=5):
-    """Prepare the info file for waymo dataset.
+                    max_sweeps=10,
+                    only_gt_database=False,
+                    save_senor_data=False,
+                    skip_cam_instances_infos=False):
+    """Prepare waymo dataset. There are 3 steps as follows:
+
+    Step 1. Extract camera images and lidar point clouds from waymo raw
+        data in '*.tfreord' and save as kitti format.
+    Step 2. Generate waymo train/val/test infos and save as pickle file.
+    Step 3. Generate waymo ground truth database (point clouds within
+        each 3D bounding box) for data augmentation in training.
+    Steps 1 and 2 will be done in Waymo2KITTI, and step 3 will be done in
+    GTDatabaseCreater.
 
     Args:
         root_path (str): Path of dataset root.
@@ -180,44 +193,55 @@ def waymo_data_prep(root_path,
         out_dir (str): Output directory of the generated info file.
         workers (int): Number of threads to be used.
         max_sweeps (int, optional): Number of input consecutive frames.
-            Default: 5. Here we store pose information of these frames
-            for later use.
+            Default to 10. Here we store ego2global information of these
+            frames for later use.
+        only_gt_database (bool, optional): Whether to only generate ground
+            truth database. Default to False.
+        save_senor_data (bool, optional): Whether to skip saving
+            image and lidar. Default to False.
+        skip_cam_instances_infos (bool, optional): Whether to skip
+            gathering cam_instances infos in Step 2. Default to False.
     """
     from tools.dataset_converters import waymo_converter as waymo
 
-    splits = [
-        'training', 'validation', 'testing', 'testing_3d_camera_only_detection'
-    ]
-    for i, split in enumerate(splits):
-        load_dir = osp.join(root_path, 'waymo_format', split)
-        if split == 'validation':
-            save_dir = osp.join(out_dir, 'kitti_format', 'training')
-        else:
-            save_dir = osp.join(out_dir, 'kitti_format', split)
-        converter = waymo.Waymo2KITTI(
-            load_dir,
-            save_dir,
-            prefix=str(i),
-            workers=workers,
-            test_mode=(split
-                       in ['testing', 'testing_3d_camera_only_detection']))
-        converter.convert()
-
-    from tools.dataset_converters.waymo_converter import \
-        create_ImageSets_img_ids
-    create_ImageSets_img_ids(osp.join(out_dir, 'kitti_format'), splits)
-    # Generate waymo infos
+    if version == 'v1.4':
+        splits = [
+            'training', 'validation', 'testing',
+            'testing_3d_camera_only_detection'
+        ]
+    elif version == 'v1.4-mini':
+        splits = ['training', 'validation']
+    else:
+        raise NotImplementedError(f'Unsupported Waymo version {version}!')
     out_dir = osp.join(out_dir, 'kitti_format')
-    kitti.create_waymo_info_file(
-        out_dir, info_prefix, max_sweeps=max_sweeps, workers=workers)
-    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
-    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
-    info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
-    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
-    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_train_path)
-    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_val_path)
-    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_trainval_path)
-    update_pkl_infos('waymo', out_dir=out_dir, pkl_path=info_test_path)
+
+    if not only_gt_database:
+        for i, split in enumerate(splits):
+            load_dir = osp.join(root_path, 'waymo_format', split)
+            if split == 'validation':
+                save_dir = osp.join(out_dir, 'training')
+            else:
+                save_dir = osp.join(out_dir, split)
+            converter = waymo.Waymo2KITTI(
+                load_dir,
+                save_dir,
+                prefix=str(i),
+                workers=workers,
+                test_mode=(split
+                           in ['testing', 'testing_3d_camera_only_detection']),
+                info_prefix=info_prefix,
+                max_sweeps=max_sweeps,
+                split=split,
+                save_senor_data=save_senor_data,
+                save_cam_instances=not skip_cam_instances_infos)
+            converter.convert()
+            if split == 'validation':
+                converter.merge_trainval_infos()
+
+        from tools.dataset_converters.waymo_converter import \
+            create_ImageSets_img_ids
+        create_ImageSets_img_ids(out_dir, splits)
+
     GTDatabaseCreater(
         'WaymoDataset',
         out_dir,
@@ -226,6 +250,8 @@ def waymo_data_prep(root_path,
         relative_path=False,
         with_mask=False,
         num_worker=workers).create()
+
+    print_log('Successfully preparing Waymo Open Dataset')
 
 
 def semantickitti_data_prep(info_prefix, out_dir):
@@ -274,12 +300,23 @@ parser.add_argument(
 parser.add_argument(
     '--only-gt-database',
     action='store_true',
-    help='Whether to only generate ground truth database.')
+    help='''Whether to only generate ground truth database.
+        Only used when dataset is NuScenes or Waymo!''')
+parser.add_argument(
+    '--skip-cam_instances-infos',
+    action='store_true',
+    help='''Whether to skip gathering cam_instances infos.
+        Only used when dataset is Waymo!''')
+parser.add_argument(
+    '--skip-saving-sensor-data',
+    action='store_true',
+    help='''Whether to skip saving image and lidar.
+        Only used when dataset is Waymo!''')
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    from mmdet3d.utils import register_all_modules
-    register_all_modules()
+    from mmengine.registry import init_default_scope
+    init_default_scope('mmdet3d')
 
     if args.dataset == 'kitti':
         if args.only_gt_database:
@@ -334,6 +371,17 @@ if __name__ == '__main__':
                 dataset_name='NuScenesDataset',
                 out_dir=args.out_dir,
                 max_sweeps=args.max_sweeps)
+    elif args.dataset == 'waymo':
+        waymo_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            version=args.version,
+            out_dir=args.out_dir,
+            workers=args.workers,
+            max_sweeps=args.max_sweeps,
+            only_gt_database=args.only_gt_database,
+            save_senor_data=not args.skip_saving_sensor_data,
+            skip_cam_instances_infos=args.skip_cam_instances_infos)
     elif args.dataset == 'lyft':
         train_version = f'{args.version}-train'
         lyft_data_prep(
@@ -346,14 +394,6 @@ if __name__ == '__main__':
             root_path=args.root_path,
             info_prefix=args.extra_tag,
             version=test_version,
-            max_sweeps=args.max_sweeps)
-    elif args.dataset == 'waymo':
-        waymo_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=args.version,
-            out_dir=args.out_dir,
-            workers=args.workers,
             max_sweeps=args.max_sweeps)
     elif args.dataset == 'scannet':
         scannet_data_prep(

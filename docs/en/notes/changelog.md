@@ -1,5 +1,72 @@
 # Changelog of v1.1
 
+### v1.4.0 (8/1/2024)
+
+#### Highlights
+
+- Refactor Waymo dataset (#2836)
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
+
+#### New Features
+
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
+- Support [MV-FCOS3D++](https://arxiv.org/abs/2207.12716)
+- Refactor Waymo dataset (#2836)
+
+#### Improvements
+
+- Support [PGD](https://arxiv.org/abs/2107.14160)) (front-of-view / multi-view) on Waymo dataset (#2835)
+- Release new [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) for verify some methods or debug quickly (#2835)
+
+#### Bug Fixes
+
+- Fix MinkUNet and SPVCNN some wrong configs (#2854)
+- Fix incorrect number of arguments in PETR (#2800)
+- Delete unused files in `mmdet3d/configs` (#2773)
+
+#### Contributors
+
+A total of 5 developers contributed to this release.
+
+@sunjiahao1999, @WendellZ524, @Yanyirong, @JingweiZhang12, @Tai-Wang
+
+### v1.3.0 (18/10/2023)
+
+#### Highlights
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+- Enhance demos with new 3D inferencers (#2763)
+
+#### New Features
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+
+#### Improvements
+
+- Enhance demos with new 3D inferencers (#2763)
+- Add BEV-based detection pipeline in nuScenes dataset tutorial (#2672)
+- Add the new config type of Cylinder3D in `mmdet3d/configs` (#2681)
+- Update [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) (#2655)
+- Update the QR code in README.md (#2703)
+
+#### Bug Fixes
+
+- Fix the download script of nuScenes dataset (#2660)
+- Fix circleCI and GitHub workflow configuration (#2652)
+- Fix the version of Open3D in requirements (#2633)
+- Fix unused files in `mmdet3d/configs` (#2773)
+- Fix support devices in FreeAnchor3DHead (#2769)
+- Fix readthedocs building and link (#2739, #2650)
+- Fix the pitch angle bug in LaserMix (#2710)
+
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @ZhaoCake, @LRJKD, @crazysteeaam, @wep21, @zhiqwang
+
 ### v1.2.0 (4/7/2023)
 
 #### Highlights

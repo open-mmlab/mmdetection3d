@@ -85,16 +85,22 @@ jobs:
         type: string
       cuda:
         type: enum
-        enum: ["10.1", "10.2", "11.1", "11.7"]
+        enum: ["10.2", "11.7"]
       cudnn:
         type: integer
-        default: 7
+        default: 8
     machine:
-      image: ubuntu-2004-cuda-11.4:202110-01
+      image: linux-cuda-11:default
       # docker_layer_caching: true
-    resource_class: gpu.nvidia.small
+    resource_class: gpu.nvidia.small.multi
     steps:
       - checkout
+      - run:
+          name: Install nvidia-container-toolkit and Restart Docker
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y nvidia-container-toolkit
+            sudo systemctl restart docker
       - run:
           # Cloning repos in VM since Docker doesn't have access to the private key
           name: Clone Repos
@@ -168,6 +174,7 @@ workflows:
           # Use double quotation mark to explicitly specify its type
           # as string instead of number
           cuda: "10.2"
+          cudnn: 7
           requires:
             - hold
       - build_cuda:
@@ -185,6 +192,7 @@ workflows:
           name: minimum_version_gpu
           torch: 1.8.1
           cuda: "10.2"
+          cudnn: 7
           filters:
             branches:
               only:

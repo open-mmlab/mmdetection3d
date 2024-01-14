@@ -1,55 +1,85 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import logging
+import os
 from argparse import ArgumentParser
 
-from mmdet3d.apis import inference_segmentor, init_model
-from mmdet3d.registry import VISUALIZERS
+from mmengine.logging import print_log
+
+from mmdet3d.apis import LidarSeg3DInferencer
 
 
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('pcd', help='Point cloud file')
-    parser.add_argument('config', help='Config file')
-    parser.add_argument('checkpoint', help='Checkpoint file')
+    parser.add_argument('model', help='Config file')
+    parser.add_argument('weights', help='Checkpoint file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--out-dir', type=str, default='demo', help='dir to save results')
+        '--out-dir',
+        type=str,
+        default='outputs',
+        help='Output directory of prediction and visualization results.')
     parser.add_argument(
         '--show',
         action='store_true',
-        help='show online visualization results')
+        help='Show online visualization results')
     parser.add_argument(
-        '--snapshot',
+        '--wait-time',
+        type=float,
+        default=-1,
+        help='The interval of show (s). Demo will be blocked in showing'
+        'results, if wait_time is -1. Defaults to -1.')
+    parser.add_argument(
+        '--no-save-vis',
         action='store_true',
-        help='whether to save online visualization results')
-    args = parser.parse_args()
-    return args
+        help='Do not save detection visualization results')
+    parser.add_argument(
+        '--no-save-pred',
+        action='store_true',
+        help='Do not save detection prediction results')
+    parser.add_argument(
+        '--print-result',
+        action='store_true',
+        help='Whether to print the results.')
+    call_args = vars(parser.parse_args())
+
+    call_args['inputs'] = dict(points=call_args.pop('pcd'))
+
+    if call_args['no_save_vis'] and call_args['no_save_pred']:
+        call_args['out_dir'] = ''
+
+    init_kws = ['model', 'weights', 'device']
+    init_args = {}
+    for init_kw in init_kws:
+        init_args[init_kw] = call_args.pop(init_kw)
+
+    # NOTE: If your operating environment does not have a display device,
+    # (e.g. a remote server), you can save the predictions and visualize
+    # them in local devices.
+    if os.environ.get('DISPLAY') is None and call_args['show']:
+        print_log(
+            'Display device not found. `--show` is forced to False',
+            logger='current',
+            level=logging.WARNING)
+        call_args['show'] = False
+
+    return init_args, call_args
 
 
-def main(args):
-    # build the model from a config file and a checkpoint file
-    model = init_model(args.config, args.checkpoint, device=args.device)
+def main():
+    # TODO: Support inference of point cloud numpy file.
+    init_args, call_args = parse_args()
 
-    # init visualizer
-    visualizer = VISUALIZERS.build(model.cfg.visualizer)
-    visualizer.dataset_meta = model.dataset_meta
+    inferencer = LidarSeg3DInferencer(**init_args)
+    inferencer(**call_args)
 
-    # test a single point cloud sample
-    result, data = inference_segmentor(model, args.pcd)
-    points = data['inputs']['points']
-    data_input = dict(points=points)
-    # show the results
-    visualizer.add_datasample(
-        'result',
-        data_input,
-        data_sample=result,
-        draw_gt=False,
-        show=args.show,
-        wait_time=-1,
-        out_file=args.out_dir,
-        vis_task='lidar_seg')
+    if call_args['out_dir'] != '' and not (call_args['no_save_vis']
+                                           and call_args['no_save_pred']):
+        print_log(
+            f'results have been saved at {call_args["out_dir"]}',
+            logger='current')
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    main(args)
+    main()

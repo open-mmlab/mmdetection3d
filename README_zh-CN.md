@@ -104,13 +104,24 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 ### 亮点
 
-**我们将 `1.1` 分支重命名为 `main` 并将默认分支从 `master` 切换到 `main`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](docs/en/migration.md)以了解更多细节。**
+在1.4版本中，MMDetecion3D 重构了 Waymo 数据集, 加速了 Waymo 数据集的预处理、训练/测试启动、验证的速度。并且在 Waymo 上拓展了对 单目/BEV 等基于相机的三维目标检测模型的支持。在[这里](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html)提供了对 Waymo 数据信息的详细解读。
 
-我们在 SemanticKITTI 上构建了一个全面的点云语义分割基准，包括 Cylinder3D 、MinkUNet 和 SPVCNN 方法。其中，改进后的 MinkUNetv2 在验证集上可以达到 70.3 mIoU。我们还在 `projects` 中支持了 BEVFusion 的训练和全新的 3D 占有网格预测网络 TPVFormer。更多关于 3D 感知的新功能正在进行中。请继续关注！
+此外，在1.4版本中，MMDetection3D 提供了 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) 来帮助社区用户上手 Waymo 并用于快速迭代开发。
+
+**v1.4.0** 版本已经在 2024.1.8 发布：
+
+- 在 `projects` 中支持了 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的训练
+- 在 `projects` 中支持了 [Nerf-Det](https://arxiv.org/abs/2307.14620)
+- 重构了 Waymo 数据集
+
+**v1.3.0** 版本已经在 2023.10.18 发布：
+
+- 在 `projects` 中支持 [CENet](https://arxiv.org/abs/2207.12691)
+- 使用新的 3D inferencers 增强演示代码效果
 
 **v1.2.0** 版本已经在 2023.7.4 发布：
 
-- 在 `mmdet3d/config`中支持 [新Config样式](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta)
+- 在 `mmdet3d/configs`中支持 [新Config样式](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta)
 - 在 `projects` 中支持 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的推理
 - 支持通过 `mim` 从 [OpenDataLab](https://opendatalab.com/) 下载数据集
 
@@ -163,8 +174,6 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
   - [自定义运行时配置](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_runtime.html)
 
 </details>
-
-## 基准测试和模型库
 
 ## 基准测试和模型库
 
@@ -400,10 +409,10 @@ MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与
 
 ## 欢迎加入 OpenMMLab 社区
 
-扫描下方的二维码可关注 OpenMMLab 团队的[知乎官方账号](https://www.zhihu.com/people/openmmlab)，加入 OpenMMLab 团队的[官方交流 QQ 群](https://jq.qq.com/?_wv=1027&k=K0QI8ByU)，或通过添加微信“Open小喵Lab”加入官方交流微信群。
+扫描下方的二维码可关注 OpenMMLab 团队的 [知乎官方账号](https://www.zhihu.com/people/openmmlab)，扫描下方微信二维码添加喵喵好友，进入 MMDetection3D 微信交流社群。【加好友申请格式：研究方向+地区+学校/公司+姓名】
 
 <div align="center">
-<img src="https://user-images.githubusercontent.com/58739961/187154320-f3312cdf-31f2-4316-9dbb-8d7b0e1b7e08.jpg" height="400" />  <img src="https://user-images.githubusercontent.com/25839884/203904835-62392033-02d4-4c73-a68c-c9e4c1e2b07f.jpg" height="400" />  <img src="https://user-images.githubusercontent.com/58739961/187151778-d17c1368-125f-4fde-adbe-38cc6eb3be98.jpg" height="400" />
+<img src="https://user-images.githubusercontent.com/58739961/187154320-f3312cdf-31f2-4316-9dbb-8d7b0e1b7e08.jpg" height="400" />  <img src="https://github.com/open-mmlab/mmdetection3d/assets/62195058/dfb3f6a9-25c6-47a5-936b-3f1d7347a42b" height="400" />
 </div>
 
 我们会在 OpenMMLab 社区为大家
