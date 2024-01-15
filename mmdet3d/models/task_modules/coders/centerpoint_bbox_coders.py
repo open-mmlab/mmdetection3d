@@ -127,7 +127,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
                rot_cosine: Tensor,
                hei: Tensor,
                dim: Tensor,
-               vel: Tensor,
+               vel: Optional[Tensor],
                reg: Optional[Tensor] = None,
                task_id: int = -1) -> List[Dict[str, Tensor]]:
         """Decode bboxes.
@@ -141,8 +141,8 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             hei (torch.Tensor): Height of the boxes with the shape
                 of [B, 1, W, H].
             dim (torch.Tensor): Dim of the boxes with the shape of
-                [B, 1, W, H].
-            vel (torch.Tensor): Velocity with the shape of [B, 1, W, H].
+                [B, 3, W, H].
+            vel (torch.Tensor): Velocity with the shape of [B, 2, W, H].
             reg (torch.Tensor, optional): Regression value of the boxes in
                 2D with the shape of [B, 2, W, H]. Default: None.
             task_id (int, optional): Index of task. Default: -1.
