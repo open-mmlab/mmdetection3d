@@ -8,6 +8,7 @@ import numpy as np
 import pyquaternion
 import torch
 from mmengine import Config, load
+from mmengine.device import get_device
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
 from nuscenes.eval.detection.config import config_factory
@@ -767,6 +768,7 @@ def nusc_box_to_cam_box3d(
         Tuple[:obj:`CameraInstance3DBoxes`, torch.Tensor, torch.Tensor]:
         Converted 3D bounding boxes, scores and labels.
     """
+    device = get_device()
     locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)
     dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
     rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
@@ -777,11 +779,11 @@ def nusc_box_to_cam_box3d(
     dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
     rots = -rots
 
-    boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
+    boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).to(device=device)
     cam_boxes3d = CameraInstance3DBoxes(
         boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
-    scores = torch.Tensor([b.score for b in boxes]).cuda()
-    labels = torch.LongTensor([b.label for b in boxes]).cuda()
+    scores = torch.Tensor([b.score for b in boxes]).to(device=device)
+    labels = torch.LongTensor([b.label for b in boxes]).to(device=device)
     nms_scores = scores.new_zeros(scores.shape[0], 10 + 1)
     indices = labels.new_tensor(list(range(scores.shape[0])))
     nms_scores[indices, labels] = scores
