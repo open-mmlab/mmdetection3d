@@ -1,40 +1,54 @@
+from mmdet.models.losses import CrossEntropyLoss, FocalLoss, SmoothL1Loss
+
+from mmdet3d.models import VoxelNet
+from mmdet3d.models.backbones import SECOND
+from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
+from mmdet3d.models.dense_heads import Anchor3DHead
+from mmdet3d.models.middle_encoders import SparseEncoder
+from mmdet3d.models.necks import SECONDFPN
+from mmdet3d.models.task_modules import (Anchor3DRangeGenerator,
+                                         DeltaXYZWLHRBBoxCoder,
+                                         Max3DIoUAssigner)
+from mmdet3d.models.voxel_encoders import HardSimpleVFE
+from mmdet3d.structures import BboxOverlapsNearest3D
+
 voxel_size = [0.05, 0.05, 0.1]
 
 model = dict(
-    type='VoxelNet',
+    type=VoxelNet,
     data_preprocessor=dict(
-        type='Det3DDataPreprocessor',
+        type=Det3DDataPreprocessor,
         voxel=True,
         voxel_layer=dict(
             max_num_points=5,
             point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
-    voxel_encoder=dict(type='HardSimpleVFE'),
+    voxel_encoder=dict(type=HardSimpleVFE),
     middle_encoder=dict(
-        type='SparseEncoder',
+        type=SparseEncoder,
         in_channels=4,
         sparse_shape=[41, 1600, 1408],
         order=('conv', 'norm', 'act')),
     backbone=dict(
-        type='SECOND',
+        type=SECOND,
         in_channels=256,
         layer_nums=[5, 5],
         layer_strides=[1, 2],
         out_channels=[128, 256]),
     neck=dict(
-        type='SECONDFPN',
+        type=SECONDFPN,
         in_channels=[128, 256],
         upsample_strides=[1, 2],
         out_channels=[256, 256]),
     bbox_head=dict(
-        type='Anchor3DHead',
+        type=Anchor3DHead,
         num_classes=3,
         in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
         anchor_generator=dict(
-            type='Anchor3DRangeGenerator',
+            type=Anchor3DRangeGenerator,
             ranges=[
                 [0, -40.0, -0.6, 70.4, 40.0, -0.6],
                 [0, -40.0, -0.6, 70.4, 40.0, -0.6],
@@ -44,38 +58,37 @@ model = dict(
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
+        bbox_coder=dict(type=DeltaXYZWLHRBBoxCoder),
         loss_cls=dict(
-            type='mmdet.FocalLoss',
+            type=FocalLoss,
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(
-            type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+        loss_bbox=dict(type=SmoothL1Loss, beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='mmdet.CrossEntropyLoss', use_sigmoid=False,
-            loss_weight=0.2)),
+            type=CrossEntropyLoss, use_sigmoid=False, loss_weight=0.2)),
+
     # model training and testing settings
     train_cfg=dict(
         assigner=[
             dict(  # for Pedestrian
-                type='Max3DIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                type=Max3DIoUAssigner,
+                iou_calculator=dict(type=BboxOverlapsNearest3D),
                 pos_iou_thr=0.35,
                 neg_iou_thr=0.2,
                 min_pos_iou=0.2,
                 ignore_iof_thr=-1),
             dict(  # for Cyclist
-                type='Max3DIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                type=Max3DIoUAssigner,
+                iou_calculator=dict(type=BboxOverlapsNearest3D),
                 pos_iou_thr=0.35,
                 neg_iou_thr=0.2,
                 min_pos_iou=0.2,
                 ignore_iof_thr=-1),
             dict(  # for Car
-                type='Max3DIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                type=Max3DIoUAssigner,
+                iou_calculator=dict(type=BboxOverlapsNearest3D),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
                 min_pos_iou=0.45,
