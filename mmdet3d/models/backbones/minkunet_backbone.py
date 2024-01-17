@@ -6,7 +6,7 @@ from typing import List
 import torch
 from mmengine.model import BaseModule
 from mmengine.registry import MODELS
-from torch import Tensor, nn
+from torch import nn
 
 from mmdet3d.models.layers.minkowski_engine_block import (
     IS_MINKOWSKI_ENGINE_AVAILABLE, MinkowskiBasicBlock, MinkowskiBottleneck,
@@ -55,8 +55,8 @@ class MinkUNetBackbone(BaseModule):
         decoder_blocks (List[int]): Number of blocks in each decode layer.
         block_type (str): Type of block in encoder and decoder.
         sparseconv_backend (str): Sparse convolutional backend.
-        init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`]
-            , optional): Initialization config dict.
+        init_cfg (dict or :obj:`ConfigDict` or List[dict or :obj:`ConfigDict`],
+            optional): Initialization config dict.
     """
 
     def __init__(self,
@@ -196,17 +196,17 @@ class MinkUNetBackbone(BaseModule):
                     [decoder_layer[0],
                      nn.Sequential(*decoder_layer[1:])]))
 
-    def forward(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
+    def forward(self, voxel_dict: dict) -> dict:
         """Forward function.
 
         Args:
-            voxel_features (Tensor): Voxel features in shape (N, C).
-            coors (Tensor): Coordinates in shape (N, 4),
-                the columns in the order of (x_idx, y_idx, z_idx, batch_idx).
+            voxel_dict (dict): Dict containing voxel features.
 
         Returns:
-            Tensor: Backbone features.
+            dict: Backbone features.
         """
+        voxel_features = voxel_dict['voxels']
+        coors = voxel_dict['coors']
         if self.sparseconv_backend == 'torchsparse':
             x = torchsparse.SparseTensor(voxel_features, coors)
         elif self.sparseconv_backend == 'spconv':
@@ -240,6 +240,8 @@ class MinkUNetBackbone(BaseModule):
             decoder_outs.append(x)
 
         if self.sparseconv_backend == 'spconv':
-            return decoder_outs[-1].features
+            voxel_dict['voxel_feats'] = decoder_outs[-1].features
         else:
-            return decoder_outs[-1].F
+            voxel_dict['voxel_feats'] = decoder_outs[-1].F
+
+        return voxel_dict

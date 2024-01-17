@@ -1,12 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List
 
 import torch
-from mmcv.ops import SparseConvTensor, SparseModule, SubMConv3d
+import torch.nn.functional as F
+from mmcv.ops import SparseModule, SubMConv3d
+from torch import Tensor
 
+from mmdet3d.models.data_preprocessors.voxelize import dynamic_scatter_3d
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import OptMultiConfig
-from mmdet3d.utils.typing_utils import ConfigType
+from mmdet3d.utils import ConfigType, OptConfigType
 from .decode_head import Base3DDecodeHead
 
 
@@ -19,61 +22,17 @@ class Cylinder3DHead(Base3DDecodeHead):
     `official code <https://https://github.com/xinge008/Cylinder3D>`_.
 
     Args:
-        channels (int): Channels after modules, before conv_seg.
-        num_classes (int): Number of classes.
-        dropout_ratio (float): Ratio of dropout layer. Defaults to 0.
-        conv_cfg (dict or :obj:`ConfigDict`): Config of conv layers.
-            Defaults to dict(type='Conv1d').
-        norm_cfg (dict or :obj:`ConfigDict`): Config of norm layers.
-            Defaults to dict(type='BN1d').
-        act_cfg (dict or :obj:`ConfigDict`): Config of activation layers.
-            Defaults to dict(type='ReLU').
-        loss_ce (dict or :obj:`ConfigDict`): Config of CrossEntropy loss.
-            Defaults to dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=False,
-                     class_weight=None,
-                     loss_weight=1.0).
-        loss_lovasz (dict or :obj:`ConfigDict`): Config of Lovasz loss.
-            Defaults to dict(type='LovaszLoss', loss_weight=1.0).
-        conv_seg_kernel_size (int): The kernel size used in conv_seg.
-            Defaults to 3.
-        ignore_index (int): The label index to be ignored. When using masked
-            BCE loss, ignore_index should be set to None. Defaults to 19.
-        init_cfg (dict or :obj:`ConfigDict` or list[dict or :obj:`ConfigDict`],
-            optional): Initialization config dict. Defaults to None.
+        loss_lovasz (dict or :obj:`ConfigDict`, optional): Config of Lovasz
+            loss. Defaults to None. dict(type='LovaszLoss', loss_weight=1.0).
     """
 
-    def __init__(self,
-                 channels: int,
-                 num_classes: int,
-                 dropout_ratio: float = 0,
-                 conv_cfg: ConfigType = dict(type='Conv1d'),
-                 norm_cfg: ConfigType = dict(type='BN1d'),
-                 act_cfg: ConfigType = dict(type='ReLU'),
-                 loss_ce: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=False,
-                     class_weight=None,
-                     loss_weight=1.0),
-                 loss_lovasz: ConfigType = dict(
-                     type='LovaszLoss', loss_weight=1.0),
-                 conv_seg_kernel_size: int = 3,
-                 ignore_index: int = 19,
-                 init_cfg: OptMultiConfig = None) -> None:
-        super(Cylinder3DHead, self).__init__(
-            channels=channels,
-            num_classes=num_classes,
-            dropout_ratio=dropout_ratio,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg,
-            conv_seg_kernel_size=conv_seg_kernel_size,
-            init_cfg=init_cfg)
+    def __init__(self, loss_lovasz: OptConfigType = None, **kwargs) -> None:
+        super(Cylinder3DHead, self).__init__(**kwargs)
 
-        self.loss_lovasz = MODELS.build(loss_lovasz)
-        self.loss_ce = MODELS.build(loss_ce)
-        self.ignore_index = ignore_index
+        if loss_lovasz is not None:
+            self.loss_lovasz = MODELS.build(loss_lovasz)
+        else:
+            self.loss_lovasz = None
 
     def build_conv_seg(self, channels: int, num_classes: int,
                        kernel_size: int) -> SparseModule:
@@ -86,72 +45,87 @@ class Cylinder3DHead(Base3DDecodeHead):
             padding=1,
             bias=True)
 
-    def forward(self, sparse_voxels: SparseConvTensor) -> SparseConvTensor:
+    def forward(self, voxel_dict: dict) -> dict:
         """Forward function."""
-        sparse_logits = self.cls_seg(sparse_voxels)
-        return sparse_logits
+        sparse_logits = self.cls_seg(voxel_dict['voxel_feats'])
+        voxel_dict['logits'] = sparse_logits.features
+        return voxel_dict
 
-    def loss_by_feat(self, seg_logit: SparseConvTensor,
-                     batch_data_samples: SampleList) -> dict:
+    def loss_by_feat(self, voxel_dict: dict,
+                     batch_data_samples: SampleList) -> Dict[str, Tensor]:
         """Compute semantic segmentation loss.
 
         Args:
-            seg_logit (SparseConvTensor): Predicted per-voxel
-                segmentation logits of shape [num_voxels, num_classes]
-                stored in SparseConvTensor.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
-                data samples. It usually includes information such
-                as `metainfo` and `gt_pts_seg`.
+            voxel_dict (dict): The dict may contain `logits`,
+                `point2voxel_map`.
+            batch_data_samples (List[:obj:`Det3DDataSample`]): The seg data
+                samples. It usually includes information such as `metainfo` and
+                `gt_pts_seg`.
 
         Returns:
             Dict[str, Tensor]: A dictionary of loss components.
         """
 
-        gt_semantic_segs = [
-            data_sample.gt_pts_seg.voxel_semantic_mask
-            for data_sample in batch_data_samples
-        ]
-        seg_label = torch.cat(gt_semantic_segs)
-        seg_logit_feat = seg_logit.features
+        voxel_semantic_segs = []
+        coors = voxel_dict['coors']
+        for batch_idx, data_sample in enumerate(batch_data_samples):
+            pts_semantic_mask = data_sample.gt_pts_seg.pts_semantic_mask
+            batch_mask = coors[:, 0] == batch_idx
+            this_coors = coors[batch_mask, 1:]
+            voxel_semantic_mask, _, _ = dynamic_scatter_3d(
+                F.one_hot(pts_semantic_mask.long()).float(), this_coors,
+                'mean')
+            voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
+            voxel_semantic_segs.append(voxel_semantic_mask)
+        seg_label = torch.cat(voxel_semantic_segs)
+        seg_logit_feat = voxel_dict['logits']
         loss = dict()
         loss['loss_ce'] = self.loss_ce(
             seg_logit_feat, seg_label, ignore_index=self.ignore_index)
-        loss['loss_lovasz'] = self.loss_lovasz(
-            seg_logit_feat, seg_label, ignore_index=self.ignore_index)
+        if self.loss_lovasz is not None:
+            loss['loss_lovasz'] = self.loss_lovasz(
+                seg_logit_feat, seg_label, ignore_index=self.ignore_index)
 
         return loss
 
-    def predict(
-        self,
-        inputs: SparseConvTensor,
-        batch_inputs_dict: dict,
-        batch_data_samples: SampleList,
-    ) -> torch.Tensor:
+    def predict(self, voxel_dict: dict, batch_input_metas: List[dict],
+                test_cfg: ConfigType) -> List[Tensor]:
         """Forward function for testing.
 
         Args:
-            inputs (SparseConvTensor): Feature from backbone.
-            batch_inputs_dict (dict): Input sample dict which includes 'points'
-                and 'voxels' keys.
-
-                - points (List[Tensor]): Point cloud of each sample.
-                - voxels (dict): Dict of voxelized voxels and the corresponding
-                coordinates.
-            batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
-                samples. It usually includes information such as `metainfo` and
-                `gt_pts_seg`. We use `point2voxel_map` in this function.
+            voxel_dict (dict): Features from backbone.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
+            test_cfg (dict or :obj:`ConfigDict`): The testing config.
 
         Returns:
-            List[torch.Tensor]: List of point-wise segmentation logits.
+            List[Tensor]: List of point-wise segmentation logits.
         """
-        seg_logits = self.forward(inputs).features
+        voxel_dict = self.forward(voxel_dict)
+        seg_pred_list = self.predict_by_feat(voxel_dict, batch_input_metas)
+        return seg_pred_list
+
+    def predict_by_feat(self, voxel_dict: dict,
+                        batch_input_metas: List[dict]) -> Tensor:
+        """Predict function.
+
+        Args:
+            voxel_dict (dict): The dict may contain `logits`,
+                `point2voxel_map`.
+            batch_input_metas (List[dict]): Meta information of a batch of
+                samples.
+
+        Returns:
+            List[Tensor]: List of point-wise segmentation logits.
+        """
+        seg_logits = voxel_dict['logits']
 
         seg_pred_list = []
-        coors = batch_inputs_dict['voxels']['voxel_coors']
-        for batch_idx in range(len(batch_data_samples)):
-            seg_logits_sample = seg_logits[coors[:, 0] == batch_idx]
-            point2voxel_map = batch_data_samples[
-                batch_idx].point2voxel_map.long()
+        coors = voxel_dict['voxel_coors']
+        for batch_idx in range(len(batch_input_metas)):
+            batch_mask = coors[:, 0] == batch_idx
+            seg_logits_sample = seg_logits[batch_mask]
+            point2voxel_map = voxel_dict['point2voxel_maps'][batch_idx].long()
             point_seg_predicts = seg_logits_sample[point2voxel_map]
             seg_pred_list.append(point_seg_predicts)
 

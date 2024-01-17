@@ -15,32 +15,20 @@ class RangeImageHead(Base3DDecodeHead):
     """RangeImage decoder head.
 
     Args:
-        loss_ce (dict or :obj:`ConfigDict`): Config of CrossEntropy loss.
-            Defaults to dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=False,
-                     class_weight=None,
-                     loss_weight=1.0).
         loss_lovasz (dict or :obj:`ConfigDict`, optional): Config of Lovasz
             loss. Defaults to None.
-        lpss_boundary (dict or :obj:`ConfigDict`, optional): Config of boundary
+        loss_boundary (dict or :obj:`ConfigDict`, optional): Config of boundary
             loss. Defaults to None.
         indices (int): The indice of features to use. Defaults to 0.
     """
 
     def __init__(self,
-                 loss_ce: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=False,
-                     class_weight=None,
-                     loss_weight=1.0),
                  loss_lovasz: OptConfigType = None,
                  loss_boundary: OptConfigType = None,
                  indices: int = 0,
                  **kwargs) -> None:
         super(RangeImageHead, self).__init__(**kwargs)
 
-        self.loss_ce = MODELS.build(loss_ce)
         if loss_lovasz is not None:
             self.loss_lovasz = MODELS.build(loss_lovasz)
         else:

@@ -26,8 +26,7 @@ def test_seg_VFE():
         feat_channels=[64, 128, 256, 256],
         grid_shape=[480, 360, 32],
         with_voxel_center=True,
-        feat_compression=16,
-        return_point_feats=True)
+        feat_compression=16)
     seg_VFE = MODELS.build(seg_VFE_cfg)
     seg_VFE = seg_VFE.cuda()
     features = torch.rand([240000, 6]).cuda()
@@ -37,10 +36,13 @@ def test_seg_VFE():
         coor = F.pad(coor, (1, 0), mode='constant', value=i)
         coors.append(coor)
     coors = torch.cat(coors, dim=0).cuda()
-    out_features, out_coors, out_point_features = seg_VFE(features, coors)
-    assert out_features.shape[0] == out_coors.shape[0]
-    assert len(out_point_features) == 4
-    assert out_point_features[0].shape == torch.Size([240000, 64])
-    assert out_point_features[1].shape == torch.Size([240000, 128])
-    assert out_point_features[2].shape == torch.Size([240000, 256])
-    assert out_point_features[3].shape == torch.Size([240000, 256])
+    voxel_dict = dict(voxels=features, coors=coors)
+    voxel_dict = seg_VFE(voxel_dict)
+    assert voxel_dict['voxel_feats'].shape[0] == voxel_dict[
+        'voxel_coors'].shape[0]
+    assert len(voxel_dict['point_feats']) == 4
+    assert voxel_dict['point_feats'][0].shape == torch.Size([240000, 64])
+    assert voxel_dict['point_feats'][1].shape == torch.Size([240000, 128])
+    assert voxel_dict['point_feats'][2].shape == torch.Size([240000, 256])
+    assert voxel_dict['point_feats'][3].shape == torch.Size([240000, 256])
+    assert len(voxel_dict['point2voxel_maps']) == 4

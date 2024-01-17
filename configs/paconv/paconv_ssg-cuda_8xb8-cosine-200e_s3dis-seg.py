@@ -7,7 +7,7 @@ _base_ = [
 model = dict(
     decode_head=dict(
         num_classes=13, ignore_index=13,
-        loss_decode=dict(class_weight=None)),  # S3DIS doesn't use class_weight
+        loss_ce=dict(class_weight=None)),  # S3DIS doesn't use class_weight
     test_cfg=dict(
         num_points=4096,
         block_size=1.0,
