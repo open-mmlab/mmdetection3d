@@ -1,20 +1,23 @@
 _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
-    imports=['projects.BEVFusion.bevfusion'], allow_failed_imports=False)
-
-# model settings
-# Voxel size for voxel encoder
-# Usually voxel size is changed consistently with the point cloud range
-# If point cloud range is modified, do remember to change all related
-# keys in the config.
-voxel_size = [0.075, 0.075, 0.2]
-point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
+    imports=['projects.TransFusion.transfusion'], allow_failed_imports=False)
+point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 class_names = [
-    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
-    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+    'car',
+    'truck',
+    'construction_vehicle',
+    'bus',
+    'trailer',
+    'barrier',
+    'motorcycle',
+    'bicycle',
+    'pedestrian',
+    'traffic_cone',
 ]
-
 metainfo = dict(classes=class_names)
+voxel_size = [0.2, 0.2, 8]
+out_size_factor = 4
+evaluation = dict(interval=1)
 dataset_type = 'NuScenesDataset'
 data_root = 'data/nuscenes/'
 data_prefix = dict(
@@ -26,66 +29,60 @@ data_prefix = dict(
     CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
-input_modality = dict(use_lidar=True, use_camera=False)
-# backend_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/nuscenes/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         'data/nuscenes/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         './data/nuscenes_mini/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         'data/nuscenes_mini/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/'
-#     }))
+input_modality = dict(
+    use_lidar=True,
+    use_camera=False,
+    use_radar=False,
+    use_map=False,
+    use_external=False)
 backend_args = None
 
 model = dict(
-    type='BEVFusion',
+    type='TransFusion',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
-        pad_size_divisor=32,
-        voxelize_cfg=dict(
-            max_num_points=10,
-            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
-            voxel_size=[0.075, 0.075, 0.2],
-            max_voxels=[120000, 160000],
-            voxelize_reduce=True)),
-    pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=5),
-    pts_middle_encoder=dict(
-        type='BEVFusionSparseEncoder',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=20,
+            point_cloud_range=point_cloud_range,
+            voxel_size=voxel_size,
+            max_voxels=(30000, 60000))),
+    pts_voxel_encoder=dict(
+        type='PillarFeatureNet',
         in_channels=5,
-        sparse_shape=[1440, 1440, 41],
-        order=('conv', 'norm', 'act'),
+        feat_channels=[64],
+        with_distance=False,
+        voxel_size=voxel_size,
         norm_cfg=dict(type='BN1d', eps=0.001, momentum=0.01),
-        encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
-                                                                      128)),
-        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (1, 1, 0)), (0, 0)),
-        block_type='basicblock'),
+        point_cloud_range=point_cloud_range,
+    ),
+    pts_middle_encoder=dict(
+        type='PointPillarsScatter', in_channels=64, output_shape=(512, 512)),
     pts_backbone=dict(
         type='SECOND',
-        in_channels=256,
-        out_channels=[128, 256],
-        layer_nums=[5, 5],
-        layer_strides=[1, 2],
+        in_channels=64,
+        out_channels=[64, 128, 256],
+        layer_nums=[3, 5, 5],
+        layer_strides=[2, 2, 2],
         norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
-        conv_cfg=dict(type='Conv2d', bias=False)),
+        conv_cfg=dict(type='Conv2d', bias=False),
+    ),
     pts_neck=dict(
         type='SECONDFPN',
-        in_channels=[128, 256],
-        out_channels=[256, 256],
-        upsample_strides=[1, 2],
+        in_channels=[64, 128, 256],
+        out_channels=[128, 128, 128],
+        upsample_strides=[0.5, 1, 2],
         norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
         upsample_cfg=dict(type='deconv', bias=False),
-        use_conv_for_no_stride=True),
-    bbox_head=dict(
-        type='BEVFusionHead',
+        use_conv_for_no_stride=True,
+    ),
+    pts_bbox_head=dict(
+        type='TransFusionHead',
         num_proposals=200,
         auxiliary=True,
-        in_channels=512,
+        in_channels=128 * 3,
         hidden_channel=128,
-        num_classes=10,
+        num_classes=len(class_names),
         nms_kernel_size=3,
         bn_momentum=0.1,
         num_decoder_layers=1,
@@ -102,90 +99,63 @@ model = dict(
             ),
             norm_cfg=dict(type='LN'),
             pos_encoding_cfg=dict(input_channel=2, num_pos_feats=128)),
-        train_cfg=dict(
+        common_heads=dict(
+            center=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), vel=(2, 2)),
+        bbox_coder=dict(
+            type='TransFusionBBoxCoder',
+            pc_range=point_cloud_range[:2],
+            voxel_size=voxel_size[:2],
+            out_size_factor=out_size_factor,
+            post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+            score_threshold=0.0,
+            code_size=10,
+        ),
+        loss_cls=dict(
+            type='mmdet.FocalLoss',
+            use_sigmoid=True,
+            gamma=2,
+            alpha=0.25,
+            reduction='mean',
+            loss_weight=1.0,
+        ),
+        loss_bbox=dict(
+            type='mmdet.L1Loss', reduction='mean', loss_weight=0.25),
+        loss_heatmap=dict(
+            type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
+    ),
+    train_cfg=dict(
+        pts=dict(
             dataset='nuScenes',
-            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
-            grid_size=[1440, 1440, 41],
-            voxel_size=[0.075, 0.075, 0.2],
-            out_size_factor=8,
-            gaussian_overlap=0.1,
-            min_radius=2,
-            pos_weight=-1,
-            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
             assigner=dict(
                 type='HungarianAssigner3D',
                 iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
                 cls_cost=dict(
                     type='mmdet.FocalLossCost',
-                    gamma=2.0,
+                    gamma=2,
                     alpha=0.25,
                     weight=0.15),
                 reg_cost=dict(type='BBoxBEVL1Cost', weight=0.25),
-                iou_cost=dict(type='IoU3DCost', weight=0.25))),
-        test_cfg=dict(
+                iou_cost=dict(type='IoU3DCost', weight=0.25),
+            ),
+            pos_weight=-1,
+            gaussian_overlap=0.1,
+            min_radius=2,
+            grid_size=[512, 512, 1],  # [x_len, y_len, 1]
+            voxel_size=voxel_size,
+            out_size_factor=out_size_factor,
+            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
+            point_cloud_range=point_cloud_range,
+        )),
+    test_cfg=dict(
+        pts=dict(
             dataset='nuScenes',
-            grid_size=[1440, 1440, 41],
-            out_size_factor=8,
-            voxel_size=[0.075, 0.075],
-            pc_range=[-54.0, -54.0],
-            nms_type=None),
-        common_heads=dict(
-            center=[2, 2], height=[1, 2], dim=[3, 2], rot=[2, 2], vel=[2, 2]),
-        bbox_coder=dict(
-            type='TransFusionBBoxCoder',
-            pc_range=[-54.0, -54.0],
-            post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-            score_threshold=0.0,
-            out_size_factor=8,
-            voxel_size=[0.075, 0.075],
-            code_size=10),
-        loss_cls=dict(
-            type='mmdet.FocalLoss',
-            use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
-            reduction='mean',
-            loss_weight=1.0),
-        loss_heatmap=dict(
-            type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
-        loss_bbox=dict(
-            type='mmdet.L1Loss', reduction='mean', loss_weight=0.25)))
-
-db_sampler = dict(
-    data_root=data_root,
-    info_path=data_root + 'nuscenes_dbinfos_train.pkl',
-    rate=1.0,
-    prepare=dict(
-        filter_by_difficulty=[-1],
-        filter_by_min_points=dict(
-            car=5,
-            truck=5,
-            bus=5,
-            trailer=5,
-            construction_vehicle=5,
-            traffic_cone=5,
-            barrier=5,
-            motorcycle=5,
-            bicycle=5,
-            pedestrian=5)),
-    classes=class_names,
-    sample_groups=dict(
-        car=2,
-        truck=3,
-        construction_vehicle=7,
-        bus=4,
-        trailer=6,
-        barrier=2,
-        motorcycle=6,
-        bicycle=6,
-        pedestrian=2,
-        traffic_cone=2),
-    points_loader=dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=[0, 1, 2, 3, 4],
-        backend_args=backend_args))
+            grid_size=[512, 512, 1],
+            out_size_factor=out_size_factor,
+            pc_range=point_cloud_range[0:2],
+            voxel_size=voxel_size[:2],
+            nms_type=None,
+        )),
+)
 
 train_pipeline = [
     dict(
@@ -202,26 +172,64 @@ train_pipeline = [
         pad_empty_sweeps=True,
         remove_close=True,
         backend_args=backend_args),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_attr_label=False),
-    dict(type='ObjectSample', db_sampler=db_sampler),
+        type='ObjectSample',
+        db_sampler=dict(
+            data_root=data_root,
+            info_path=data_root + 'nuscenes_dbinfos_train.pkl',
+            rate=1.0,
+            prepare=dict(
+                filter_by_difficulty=[-1],
+                filter_by_min_points=dict(
+                    car=5,
+                    truck=5,
+                    bus=5,
+                    trailer=5,
+                    construction_vehicle=5,
+                    traffic_cone=5,
+                    barrier=5,
+                    motorcycle=5,
+                    bicycle=5,
+                    pedestrian=5,
+                ),
+            ),
+            classes=class_names,
+            sample_groups=dict(
+                car=2,
+                truck=3,
+                construction_vehicle=7,
+                bus=4,
+                trailer=6,
+                barrier=2,
+                motorcycle=6,
+                bicycle=6,
+                pedestrian=2,
+                traffic_cone=2,
+            ),
+            points_loader=dict(
+                type='LoadPointsFromFile',
+                coord_type='LIDAR',
+                load_dim=5,
+                use_dim=[0, 1, 2, 3, 4],
+                backend_args=backend_args),
+        ),
+    ),
     dict(
         type='GlobalRotScaleTrans',
+        rot_range=[-0.3925 * 2, 0.3925 * 2],
         scale_ratio_range=[0.9, 1.1],
-        rot_range=[-0.78539816, 0.78539816],
-        translation_std=0.5),
-    dict(type='BEVFusionRandomFlip3D'),
+        translation_std=[0.5, 0.5, 0.5],
+    ),
+    dict(
+        type='RandomFlip3D',
+        sync_2d=False,
+        flip_ratio_bev_horizontal=0.5,
+        flip_ratio_bev_vertical=0.5,
+    ),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(
-        type='ObjectNameFilter',
-        classes=[
-            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
-            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
-        ]),
+    dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -254,21 +262,26 @@ test_pipeline = [
         remove_close=True,
         backend_args=backend_args),
     dict(
-        type='PointsRangeFilter',
-        point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]),
-    dict(
-        type='Pack3DDetInputs',
-        keys=['img', 'points', 'gt_bboxes_3d', 'gt_labels_3d'],
-        meta_keys=[
-            'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
-            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
-            'lidar_path', 'img_path', 'num_pts_feats', 'num_views'
-        ])
+        type='MultiScaleFlipAug3D',
+        img_scale=(1333, 800),
+        pts_scale_ratio=1,
+        flip=False,
+        transforms=[
+            dict(
+                type='GlobalRotScaleTrans',
+                rot_range=[0, 0],
+                scale_ratio_range=[1.0, 1.0],
+                translation_std=[0, 0, 0],
+            ),
+            dict(type='RandomFlip3D'),
+        ],
+    ),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
-    batch_size=4,
-    num_workers=4,
+    batch_size=2,
+    num_workers=6,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -283,15 +296,15 @@ train_dataloader = dict(
             test_mode=False,
             data_prefix=data_prefix,
             use_valid_flag=True,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')))
+            box_type_3d='LiDAR',
+        ),
+    ),
+)
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=4,
+    batch_size=2,
+    num_workers=6,
     persistent_workers=True,
-    drop_last=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
+    sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
@@ -302,7 +315,8 @@ val_dataloader = dict(
         data_prefix=data_prefix,
         test_mode=True,
         box_type_3d='LiDAR',
-        backend_args=backend_args))
+        backend_args=backend_args),
+)
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
@@ -361,7 +375,6 @@ param_scheduler = [
         convert_to_iter_based=True)
 ]
 
-# runtime settings
 train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=5)
 val_cfg = dict()
 test_cfg = dict()
@@ -374,8 +387,8 @@ optim_wrapper = dict(
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=32)
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=16)
 log_processor = dict(window_size=50)
 
 default_hooks = dict(
