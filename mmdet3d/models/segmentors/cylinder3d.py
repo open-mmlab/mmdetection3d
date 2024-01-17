@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from copy import deepcopy
 from typing import Dict
 
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
-from ...structures.det3d_data_sample import SampleList
+from ...structures.det3d_data_sample import OptSampleList, SampleList
 from .encoder_decoder import EncoderDecoder3D
 
 
@@ -67,16 +68,16 @@ class Cylinder3D(EncoderDecoder3D):
 
         self.voxel_encoder = MODELS.build(voxel_encoder)
 
-    def extract_feat(self, batch_inputs: dict) -> Tensor:
+    def extract_feat(self, batch_inputs_dict: dict) -> dict:
         """Extract features from points."""
-        encoded_feats = self.voxel_encoder(batch_inputs['voxels']['voxels'],
-                                           batch_inputs['voxels']['coors'])
-        batch_inputs['voxels']['voxel_coors'] = encoded_feats[1]
-        x = self.backbone(encoded_feats[0], encoded_feats[1],
-                          len(batch_inputs['points']))
+        feat_dict = deepcopy(batch_inputs_dict['voxels'])
+        feat_dict = self.voxel_encoder(feat_dict)
+        x = self.backbone(feat_dict['voxel_feats'], feat_dict['voxel_coors'],
+                          len(batch_inputs_dict['points']))
         if self.with_neck:
             x = self.neck(x)
-        return x
+        feat_dict['voxel_feats'] = x
+        return feat_dict
 
     def loss(self, batch_inputs_dict: dict,
              batch_data_samples: SampleList) -> Dict[str, Tensor]:
@@ -97,10 +98,16 @@ class Cylinder3D(EncoderDecoder3D):
         """
 
         # extract features using backbone
-        x = self.extract_feat(batch_inputs_dict)
+        voxel_dict = self.extract_feat(batch_inputs_dict)
         losses = dict()
-        loss_decode = self._decode_head_forward_train(x, batch_data_samples)
+        loss_decode = self._decode_head_forward_train(voxel_dict,
+                                                      batch_data_samples)
         losses.update(loss_decode)
+
+        if self.with_auxiliary_head:
+            loss_aux = self._auxiliary_head_forward_train(
+                voxel_dict, batch_data_samples)
+            losses.update(loss_aux)
 
         return losses
 
@@ -135,10 +142,32 @@ class Cylinder3D(EncoderDecoder3D):
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
-        x = self.extract_feat(batch_inputs_dict)
-        seg_logits_list = self.decode_head.predict(x, batch_inputs_dict,
+        voxel_dict = self.extract_feat(batch_inputs_dict)
+        seg_logits_list = self.decode_head.predict(voxel_dict,
                                                    batch_data_samples)
         for i in range(len(seg_logits_list)):
             seg_logits_list[i] = seg_logits_list[i].transpose(0, 1)
 
         return self.postprocess_result(seg_logits_list, batch_data_samples)
+
+    def _forward(self,
+                 batch_inputs_dict: dict,
+                 batch_data_samples: OptSampleList = None) -> dict:
+        """Network forward process.
+
+        Args:
+            batch_inputs_dict (dict): Input sample dict which includes 'points'
+                and 'imgs' keys.
+
+                - points (List[Tensor]): Point cloud of each sample.
+                - imgs (Tensor, optional): Image tensor has shape (B, C, H, W).
+            batch_data_samples (List[:obj:`Det3DDataSample`], optional): The
+                det3d data samples. It usually includes information such as
+                `metainfo` and `gt_pts_seg`. Defaults to None.
+
+        Returns:
+            dict: The dict containing forward output of model without any
+            post-processes.
+        """
+        voxel_dict = self.extract_feat(batch_inputs_dict)
+        return self.decode_head.forward(voxel_dict)

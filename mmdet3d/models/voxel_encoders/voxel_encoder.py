@@ -6,7 +6,9 @@ from mmcv.cnn import build_norm_layer
 from mmcv.ops import DynamicScatter
 from torch import Tensor, nn
 
+from mmdet3d.models.data_preprocessors.voxelize import DynamicScatter3D
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType
 from .utils import VFELayer, get_paddings_indicator
 
 
@@ -498,41 +500,40 @@ class SegVFE(nn.Module):
 
     Args:
         in_channels (int): Input channels of VFE. Defaults to 6.
-        feat_channels (list(int)): Channels of features in VFE.
-        with_voxel_center (bool): Whether to use the distance
-            to center of voxel for each points inside a voxel.
-            Defaults to False.
-        voxel_size (tuple[float]): Size of a single voxel (rho, phi, z).
-            Defaults to None.
-        grid_shape (tuple[float]): The grid shape of voxelization.
+        feat_channels (Sequence[int]): Channels of features in VFE.
+            Defaults to [64, 128, 256].
+        with_voxel_center (bool): Whether to use the distance to center of
+            voxel for each points inside a voxel. Defaults to False.
+        voxel_size (Sequence[float], optional): Size of a single voxel
+            (rho, phi, z). Defaults to None.
+        grid_shape (Sequence[int]): The grid shape of voxelization.
             Defaults to (480, 360, 32).
-        point_cloud_range (tuple[float]): The range of points or voxels.
+        point_cloud_range (Sequence[float]): The range of points or voxels.
             Defaults to (0, -3.14159265359, -4, 50, 3.14159265359, 2).
-        norm_cfg (dict): Config dict of normalization layers.
+        norm_cfg (dict or :obj:`ConfigDict`): Config dict of normalization
+            layers. Defaults to dict(type='BN1d', eps=1e-5, momentum=0.1).
         mode (str): The mode when pooling features of points
             inside a voxel. Available options include 'max' and 'avg'.
             Defaults to 'max'.
         with_pre_norm (bool): Whether to use the norm layer before
-            input vfe layer.
+            input vfe layer. Defaults to True.
         feat_compression (int, optional): The voxel feature compression
-            channels, Defaults to None
-        return_point_feats (bool): Whether to return the features
-            of each points. Defaults to False.
+            channels, Defaults to None.
     """
 
     def __init__(self,
                  in_channels: int = 6,
-                 feat_channels: Sequence[int] = [],
+                 feat_channels: Sequence[int] = [64, 128, 256],
                  with_voxel_center: bool = False,
                  voxel_size: Optional[Sequence[float]] = None,
-                 grid_shape: Sequence[float] = (480, 360, 32),
+                 grid_shape: Sequence[int] = (480, 360, 32),
                  point_cloud_range: Sequence[float] = (0, -3.14159265359, -4,
                                                        50, 3.14159265359, 2),
-                 norm_cfg: dict = dict(type='BN1d', eps=1e-5, momentum=0.1),
-                 mode: bool = 'max',
+                 norm_cfg: ConfigType = dict(
+                     type='BN1d', eps=1e-5, momentum=0.1),
+                 mode: str = 'max',
                  with_pre_norm: bool = True,
-                 feat_compression: Optional[int] = None,
-                 return_point_feats: bool = False) -> None:
+                 feat_compression: Optional[int] = None) -> None:
         super(SegVFE, self).__init__()
         assert mode in ['avg', 'max']
         assert len(feat_channels) > 0
@@ -542,7 +543,6 @@ class SegVFE(nn.Module):
             in_channels += 3
         self.in_channels = in_channels
         self._with_voxel_center = with_voxel_center
-        self.return_point_feats = return_point_feats
 
         self.point_cloud_range = point_cloud_range
         point_cloud_range = torch.tensor(
@@ -587,27 +587,27 @@ class SegVFE(nn.Module):
                         nn.Linear(in_filters, out_filters), norm_layer,
                         nn.ReLU(inplace=True)))
         self.vfe_layers = nn.ModuleList(vfe_layers)
-        self.vfe_scatter = DynamicScatter(self.voxel_size,
-                                          self.point_cloud_range,
-                                          (mode != 'max'))
+        self.vfe_scatter = DynamicScatter3D(self.voxel_size,
+                                            self.point_cloud_range,
+                                            (mode != 'max'))
         self.compression_layers = None
         if feat_compression is not None:
             self.compression_layers = nn.Sequential(
                 nn.Linear(feat_channels[-1], feat_compression), nn.ReLU())
 
-    def forward(self, features: Tensor, coors: Tensor, *args,
-                **kwargs) -> Tuple[Tensor]:
+    def forward(self, feat_dict: dict) -> dict:
         """Forward functions.
 
         Args:
-            features (Tensor): Features of voxels, shape is NxC.
-            coors (Tensor): Coordinates of voxels, shape is  Nx(1+NDim).
+            feat_dict (dict): The dict will contain features of both voxels and
+                points.
 
         Returns:
-            tuple: If `return_point_feats` is False, returns voxel features and
-                its coordinates. If `return_point_feats` is True, returns
-                feature of each points inside voxels additionally.
+            dict: The dict of returned voxel features and its coordinates,
+            point2voxel_maps, and point features extracted after voxel_encoder.
         """
+        features = feat_dict['voxels']
+        coors = feat_dict['coors']
         features_ls = [features]
 
         # Find distance of x, y, and z from voxel center
@@ -630,11 +630,14 @@ class SegVFE(nn.Module):
         for vfe in self.vfe_layers:
             features = vfe(features)
             point_feats.append(features)
-        voxel_feats, voxel_coors = self.vfe_scatter(features, coors)
+        voxel_feats, voxel_coors, point2voxel_maps = self.vfe_scatter(
+            features, coors)
 
         if self.compression_layers is not None:
             voxel_feats = self.compression_layers(voxel_feats)
 
-        if self.return_point_feats:
-            return voxel_feats, voxel_coors, point_feats
-        return voxel_feats, voxel_coors
+        feat_dict['voxel_feats'] = voxel_feats
+        feat_dict['voxel_coors'] = voxel_coors
+        feat_dict['point2voxel_maps'] = point2voxel_maps
+        feat_dict['point_feats'] = point_feats
+        return feat_dict

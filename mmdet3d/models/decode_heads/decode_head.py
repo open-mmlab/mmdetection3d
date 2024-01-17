@@ -48,7 +48,7 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
             Defaults to dict(type='BN1d').
         act_cfg (dict or :obj:`ConfigDict`): Config of activation layers.
             Defaults to dict(type='ReLU').
-        loss_decode (dict or :obj:`ConfigDict`): Config of decode loss.
+        loss_ce (dict or :obj:`ConfigDict`): Config of decode loss.
             Defaults to dict(type='mmdet.CrossEntropyLoss', use_sigmoid=False,
             class_weight=None, loss_weight=1.0).
         conv_seg_kernel_size (int): The kernel size used in conv_seg.
@@ -66,7 +66,7 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
                  conv_cfg: ConfigType = dict(type='Conv1d'),
                  norm_cfg: ConfigType = dict(type='BN1d'),
                  act_cfg: ConfigType = dict(type='ReLU'),
-                 loss_decode: ConfigType = dict(
+                 loss_ce: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=False,
                      class_weight=None,
@@ -81,7 +81,7 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
-        self.loss_decode = MODELS.build(loss_decode)
+        self.loss_ce = MODELS.build(loss_ce)
         self.ignore_index = ignore_index
 
         self.conv_seg = self.build_conv_seg(
@@ -173,6 +173,6 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         """
         seg_label = self._stack_batch_gt(batch_data_samples)
         loss = dict()
-        loss['loss_sem_seg'] = self.loss_decode(
+        loss['loss_sem_seg'] = self.loss_ce(
             seg_logit, seg_label, ignore_index=self.ignore_index)
         return loss
