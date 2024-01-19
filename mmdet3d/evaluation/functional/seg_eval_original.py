@@ -2,7 +2,6 @@
 import numpy as np
 from mmengine.logging import print_log
 from terminaltables import AsciiTable
-import torch
 
 
 def fast_hist(preds, labels, num_classes):
@@ -18,11 +17,8 @@ def fast_hist(preds, labels, num_classes):
     Returns:
         np.ndarray: Calculated confusion matrix.
     """
-    # TODO (chris)
-    preds = preds.squeeze() 
-    # k = (labels >= 0) & (labels <= num_classes)
-    k = (labels > 0) & (labels < num_classes)
-    # k = (labels >= 0) & (labels < num_classes)
+
+    k = (labels >= 0) & (labels < num_classes)
     bin_count = np.bincount(
         num_classes * labels[k].astype(int) + preds[k],
         minlength=num_classes**2)
@@ -87,10 +83,8 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
     Returns:
         dict[str, float]: Dict of results.
     """
-    label2cat[17] = 'air' # TODO gp
     assert len(seg_preds) == len(gt_labels)
-    import numpy as np
-    num_classes = len(label2cat) 
+    num_classes = len(label2cat)
 
     hist_list = []
     for i in range(len(gt_labels)):
@@ -101,15 +95,9 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
         pred_seg[gt_seg == ignore_index] = -1
         gt_seg[gt_seg == ignore_index] = -1
 
-        remove_noise_metric = fast_hist(pred_seg, gt_seg, num_classes)
         # calculate one instance result
-        # remove_noise_metric = fast_hist(pred_seg, gt_seg, num_classes)[1:, 1:]
-        hist_list.append(remove_noise_metric) 
-   
-    target = gt_labels
-    total_seen = torch.zeros(num_classes)
-    total_correct = torch.zeros(num_classes)
-    total_positive = torch.zeros(num_classes)
+        hist_list.append(fast_hist(pred_seg, gt_seg, num_classes))
+
     iou = per_class_iou(sum(hist_list))
     # if ignore_index is in iou, replace it with nan
     if ignore_index < len(iou):
