@@ -329,6 +329,18 @@ class NuScenesSegDataset(Seg3DDataset):
             **kwargs)
 
     def get_seg_label_mapping(self, metainfo: dict) -> np.ndarray:
+        """Get segmentation label mapping.
+
+        The ``seg_label_mapping`` is an array, its indices are the old label
+        ids and its values are the new label ids, and is specifically used for
+        changing point labels in PointSegClassMapping.
+
+        Args:
+            metainfo (dict): Meta information to set seg_label_mapping.
+
+        Returns:
+            np.ndarray: The mapping from old classes to new classes.
+        """
         seg_label_mapping = np.zeros(metainfo['max_label'] + 1, dtype=np.int64)
         for idx in metainfo['seg_label_mapping']:
             seg_label_mapping[idx] = metainfo['seg_label_mapping'][idx]
