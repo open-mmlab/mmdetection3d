@@ -319,7 +319,6 @@ class Seg3DDataset(BaseDataset):
         if scene_idxs is None:
             scene_idxs = np.arange(len(self))
         if isinstance(scene_idxs, str):
-            scene_idxs = osp.join(self.data_root, scene_idxs)
             with get_local_path(
                     scene_idxs, backend_args=self.backend_args) as local_path:
                 scene_idxs = np.load(local_path)
