@@ -175,7 +175,6 @@ val_evaluator = dict(
     waymo_bin_file='./data/waymo/waymo_format/cam_gt.bin',
     metric='LET_mAP',
     load_type='mv_image_based',
-    result_prefix='./pgd_mv_pred',
     nms_cfg=dict(
         use_rotate_nms=True,
         nms_across_levels=False,

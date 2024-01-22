@@ -175,8 +175,7 @@ val_evaluator = dict(
     type='WaymoMetric',
     waymo_bin_file='./data/waymo/waymo_format/fov_gt.bin',
     metric='LET_mAP',
-    load_type='fov_image_based',
-    result_prefix='./pgd_fov_pred')
+    load_type='fov_image_based')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
