@@ -114,18 +114,19 @@ class MonoDet3DInferencer(Base3DInferencer):
                         f'the info file of {img_path} is not provided.')
                 cam2img = np.asarray(
                     data_info['images'][cam_type]['cam2img'], dtype=np.float32)
-                lidar2cam = np.asarray(
-                    data_info['images'][cam_type]['lidar2cam'],
-                    dtype=np.float32)
-                if 'lidar2img' in data_info['images'][cam_type]:
-                    lidar2img = np.asarray(
-                        data_info['images'][cam_type]['lidar2img'],
+                if 'lidar2cam' in data_info['images'][cam_type]:
+                    lidar2cam = np.asarray(
+                        data_info['images'][cam_type]['lidar2cam'],
                         dtype=np.float32)
-                else:
-                    lidar2img = cam2img @ lidar2cam
+                    if 'lidar2img' in data_info['images'][cam_type]:
+                        lidar2img = np.asarray(
+                            data_info['images'][cam_type]['lidar2img'],
+                            dtype=np.float32)
+                    else:
+                        lidar2img = cam2img @ lidar2cam
+                    input['lidar2cam'] = lidar2cam
+                    input['lidar2img'] = lidar2img
                 input['cam2img'] = cam2img
-                input['lidar2cam'] = lidar2cam
-                input['lidar2img'] = lidar2img
         elif isinstance(inputs, (list, tuple)):
             # get cam2img, lidar2cam and lidar2img from infos
             for input in inputs:
@@ -142,18 +143,20 @@ class MonoDet3DInferencer(Base3DInferencer):
                         f'the info file of {img_path} is not provided.')
                 cam2img = np.asarray(
                     data_info['images'][cam_type]['cam2img'], dtype=np.float32)
-                lidar2cam = np.asarray(
-                    data_info['images'][cam_type]['lidar2cam'],
-                    dtype=np.float32)
-                if 'lidar2img' in data_info['images'][cam_type]:
-                    lidar2img = np.asarray(
-                        data_info['images'][cam_type]['lidar2img'],
+                if 'lidar2cam' in data_info['images'][cam_type]:
+                    lidar2cam = np.asarray(
+                        data_info['images'][cam_type]['lidar2cam'],
                         dtype=np.float32)
-                else:
-                    lidar2img = cam2img @ lidar2cam
+                    if 'lidar2img' in data_info['images'][cam_type]:
+                        lidar2img = np.asarray(
+                            data_info['images'][cam_type]['lidar2img'],
+                            dtype=np.float32)
+                    else:
+                        lidar2img = cam2img @ lidar2cam
+
+                    input['lidar2cam'] = lidar2cam
+                    input['lidar2img'] = lidar2img
                 input['cam2img'] = cam2img
-                input['lidar2cam'] = lidar2cam
-                input['lidar2img'] = lidar2img
 
         return list(inputs)
 
