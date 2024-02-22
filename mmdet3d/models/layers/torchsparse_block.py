@@ -37,6 +37,7 @@ class TorchSparseConvModule(BaseModule):
                  out_channels: int,
                  kernel_size: Union[int, Sequence[int]],
                  stride: Union[int, Sequence[int]] = 1,
+                 padding: Union[int, Sequence[int]] = 0,
                  dilation: int = 1,
                  bias: bool = False,
                  transposed: bool = False,
@@ -47,8 +48,15 @@ class TorchSparseConvModule(BaseModule):
                  **kwargs) -> None:
         super().__init__(init_cfg)
         layers = [
-            spnn.Conv3d(in_channels, out_channels, kernel_size, stride,
-                        dilation, bias, transposed)
+            spnn.Conv3d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                dilation=dilation,
+                bias=bias,
+                transposed=transposed)
         ]
         if norm_cfg is not None:
             _, norm = build_norm_layer(norm_cfg, out_channels)
@@ -93,8 +101,13 @@ class TorchSparseBasicBlock(BaseModule):
         _, norm2 = build_norm_layer(norm_cfg, out_channels)
 
         self.net = nn.Sequential(
-            spnn.Conv3d(in_channels, out_channels, kernel_size, stride,
-                        dilation, bias), norm1, spnn.ReLU(inplace=True),
+            spnn.Conv3d(
+                in_channels,
+                out_channels,
+                kernel_size,
+                stride,
+                dilation=dilation,
+                bias=bias), norm1, spnn.ReLU(inplace=True),
             spnn.Conv3d(
                 out_channels,
                 out_channels,

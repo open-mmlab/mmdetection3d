@@ -141,6 +141,7 @@ class MinkUNetBackbone(BaseModule):
                     encoder_channels[i],
                     kernel_size=2,
                     stride=2,
+                    padding=1,
                     indice_key=f'spconv{i+1}')
             ]
             for j in range(encoder_blocks[i]):
