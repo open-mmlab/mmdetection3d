@@ -271,8 +271,15 @@ class HungarianAssigner3D(BaseAssigner):
             if num_gts == 0:
                 # No ground truth, assign all to background
                 assigned_gt_inds[:] = 0
+            max_overlaps = torch.zeros(
+                max(num_gts, num_bboxes),
+                device=bboxes.device,
+                dtype=torch.float32)
             return AssignResult(
-                num_gts, assigned_gt_inds, None, labels=assigned_labels)
+                num_gts,
+                assigned_gt_inds,
+                max_overlaps,
+                labels=assigned_labels)
 
         # 2. compute the weighted costs
         # Hard code here to be compatible with the interface of
