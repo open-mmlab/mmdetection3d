@@ -280,7 +280,7 @@ class DataBaseSampler(object):
                 s_points_list.append(s_points)
 
             gt_labels = np.array([self.cat2label[s['name']] for s in sampled],
-                                 dtype=np.long)
+                                 dtype=np.int64)
 
             if ground_plane is not None:
                 xyz = sampled_gt_bboxes[:, :3]
