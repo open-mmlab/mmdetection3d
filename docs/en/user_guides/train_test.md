@@ -89,7 +89,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/second/second_hv_secfpn_8xb6-80e_kitti-3d-3class.py \
        checkpoints/hv_second_secfpn_6x8_80e_kitti-3d-3class_20200620_230238-9208083a.pth \
-       --cfg-options 'test_evaluator.pklfile_prefix=./second_kitti_results' 'submission_prefix=./second_kitti_results'
+       --cfg-options 'test_evaluator.pklfile_prefix=./second_kitti_results' 'test_evaluator.submission_prefix=./second_kitti_results'
    ```
 
    The generated results be under `./second_kitti_results` directory.
@@ -117,7 +117,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        'test_evaluator.submission_prefix=results/waymo-car/kitti_results'
    ```
 
-   **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the `--eval-options` for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evaluation, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
+   **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/docs/quick_start.md) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into `mmdet3d/core/evaluation/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the `--eval-options` for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evaluation, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
 
 9. Test PointPillars on waymo with 8 GPUs, generate the bin files and make a submission to the leaderboard.
 
@@ -128,7 +128,7 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
        'test_evaluator.submission_prefix=results/waymo-car/kitti_results'
    ```
 
-   **Notice**: After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md/). For evaluation on the validation set with the eval server, you can also use the same way to generate a submission.
+   **Notice**: After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/docs/quick_start.md). For evaluation on the validation set with the eval server, you can also use the same way to generate a submission.
 
 ## Train predefined models on standard datasets
 
