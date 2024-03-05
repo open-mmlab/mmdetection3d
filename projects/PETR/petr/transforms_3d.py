@@ -175,35 +175,33 @@ class GlobalRotScaleTransImage(BaseTransform):
         return results
 
     def rotate_bev_along_z(self, results, angle):
-        rot_cos = torch.cos(torch.tensor(angle))
-        rot_sin = torch.sin(torch.tensor(angle))
+        rot_cos = np.cos(angle)
+        rot_sin = np.sin(angle)
 
-        rot_mat = torch.tensor([[rot_cos, -rot_sin, 0, 0],
-                                [rot_sin, rot_cos, 0, 0], [0, 0, 1, 0],
-                                [0, 0, 0, 1]])
-        rot_mat_inv = torch.inverse(rot_mat)
+        rot_mat = np.array([[rot_cos, rot_sin, 0, 0],
+                            [-rot_sin, rot_cos, 0, 0], [0, 0, 1, 0],
+                            [0, 0, 0, 1]])
+        rot_mat_inv = np.linalg.inverse(rot_mat)
         num_view = len(results['lidar2cam'])
         for view in range(num_view):
             results['lidar2cam'][view] = (
-                torch.tensor(np.array(results['lidar2cam'][view]).T).float()
-                @ rot_mat_inv).T.numpy()
+                results['lidar2cam'][view] @ rot_mat_inv)
 
         return
 
     def scale_xyz(self, results, scale_ratio):
-        rot_mat = torch.tensor([
+        scale_mat = np.array([
             [scale_ratio, 0, 0, 0],
             [0, scale_ratio, 0, 0],
             [0, 0, scale_ratio, 0],
             [0, 0, 0, 1],
         ])
 
-        rot_mat_inv = torch.inverse(rot_mat)
+        scale_mat_inv = np.linalg.inverse(scale_mat)
 
         num_view = len(results['lidar2cam'])
         for view in range(num_view):
-            results['lidar2cam'][view] = (torch.tensor(
-                rot_mat_inv.T
-                @ results['lidar2cam'][view].T).float()).T.numpy()
+            results['lidar2cam'][view] = (
+                scale_mat_inv @ results['lidar2cam'][view])
 
         return
