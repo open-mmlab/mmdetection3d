@@ -14,17 +14,19 @@ def normalize_bbox(bboxes, pc_range):
     width = bboxes[..., 4:5].log()
     height = bboxes[..., 5:6].log()
 
+    # normalize boxes to match the old checkpoints trained prior to
+    # coordinate system refactoring (<v1.0.0)
     rot = -bboxes[..., 6:7] - np.pi / 2
     rot = limit_period(rot, period=np.pi * 2)
     if bboxes.size(-1) > 7:
         vx = bboxes[..., 7:8]
         vy = bboxes[..., 8:9]
         normalized_bboxes = torch.cat(
-            (cx, cy, length, width, cz, height, rot.sin(), rot.cos(), vx, vy),
+            (cx, cy, width, length, cz, height, rot.sin(), rot.cos(), vx, vy),
             dim=-1)
     else:
         normalized_bboxes = torch.cat(
-            (cx, cy, length, width, cz, height, rot.sin(), rot.cos()), dim=-1)
+            (cx, cy, width, length, cz, height, rot.sin(), rot.cos()), dim=-1)
     return normalized_bboxes
 
 
@@ -42,9 +44,11 @@ def denormalize_bbox(normalized_bboxes, pc_range):
     cy = normalized_bboxes[..., 1:2]
     cz = normalized_bboxes[..., 4:5]
 
+    # boxes are expected to match the format from old checkpoints,
+    # denormalize them to match the new format
     # size
-    length = normalized_bboxes[..., 2:3]
-    width = normalized_bboxes[..., 3:4]
+    width = normalized_bboxes[..., 2:3]
+    length = normalized_bboxes[..., 3:4]
     height = normalized_bboxes[..., 5:6]
 
     width = width.exp()
