@@ -111,7 +111,8 @@ def proj_lidar_bbox3d_to_img(bboxes_3d: LiDARInstance3DBoxes,
     pts_2d[:, 0] /= pts_2d[:, 2]
     pts_2d[:, 1] /= pts_2d[:, 2]
     imgfov_pts_2d = pts_2d[..., :2].reshape(num_bbox, 8, 2)
-
+    scale_factor = np.array(input_meta['scale_factor'])
+    imgfov_pts_2d = imgfov_pts_2d * scale_factor
     return imgfov_pts_2d
 
 
@@ -142,7 +143,8 @@ def proj_depth_bbox3d_to_img(bboxes_3d: DepthInstance3DBoxes,
                                xyz_depth.new_tensor(input_meta['depth2img']))
     uv_origin = (uv_origin - 1).round()
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
-
+    scale_factor = np.array(input_meta['scale_factor'])
+    imgfov_pts_2d = imgfov_pts_2d * scale_factor
     return imgfov_pts_2d
 
 
@@ -173,5 +175,6 @@ def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
     uv_origin = points_cam2img(points_3d, cam2img)
     uv_origin = (uv_origin - 1).round()
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
-
+    scale_factor = np.array(input_meta['scale_factor'])
+    imgfov_pts_2d = imgfov_pts_2d * scale_factor
     return imgfov_pts_2d
