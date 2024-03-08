@@ -112,8 +112,8 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py  \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth \
-       --cfg-options 'test_evaluator.pklfile_prefix=results/waymo-car/kitti_results' \
-       'test_evaluator.submission_prefix=results/waymo-car/kitti_results'
+       --cfg-options 'test_evaluator.result_prefix=results/waymo-car/kitti_results' \
+       'test_evaluator.format_only=True'
    ```
 
    **注意**：对于 waymo 数据集上的评估，请根据[说明](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/docs/quick_start.md)或[教程](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/tutorial/tutorial.ipynb)构建二进制文件 `compute_detection_metrics_main` 来做度量计算，并把它放在本工程 `mmdet3d/evaluation/functional/waymo_utils/`下。（在使用 bazel 构建  `compute_detection_metrics_main` 时，有时会出现 `'round' is not a member of 'std'` 的错误，我们只需要把那个文件中 `round` 前的 `std::` 去掉。）二进制文件生成时需要在 `--eval-options` 中给定 `pklfile_prefix`。对于度量方法，`waymo` 是推荐的官方评估策略，目前 `kitti` 评估是依照 KITTI 而来的，每个难度的结果和 KITTI 的定义并不完全一致。目前大多数物体都被标记为0难度，会在未来修复。它的不稳定原因包括评估的计算大、转换后的数据缺乏遮挡和截断、难度的定义不同以及平均精度的计算方法不同。
@@ -123,8 +123,8 @@ python tools/test.py ${CONFIG_FILE} ${CHECKPOINT_FILE} [--out ${RESULT_FILE}] [-
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py  \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth \
-       --cfg-options 'test_evaluator.pklfile_prefix=results/waymo-car/kitti_results' \
-       'test_evaluator.submission_prefix=results/waymo-car/kitti_results'
+       --cfg-options 'test_evaluator.result_prefix=results/waymo-car/kitti_results' \
+       'test_evaluator.format_only=True'
    ```
 
    **注意**：生成 bin 文件后，你可以简单地构建二进制文件  `create_submission`，并根据[说明](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/docs/quick_start.md)创建提交的文件。要在验证服务器上评测验证数据集，你也可以用同样的方式生成提交的文件。
