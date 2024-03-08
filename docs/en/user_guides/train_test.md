@@ -113,8 +113,8 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py  \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth \
-       --cfg-options 'test_evaluator.pklfile_prefix=results/waymo-car/kitti_results' \
-       'test_evaluator.submission_prefix=results/waymo-car/kitti_results'
+       --cfg-options 'test_evaluator.result_prefix=results/waymo-car/kitti_results' \
+       'test_evaluator.format_only=True'
    ```
 
    **Notice**: For evaluation on waymo, please follow the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/docs/quick_start.md) or the [tutorial](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/tutorial/tutorial.ipynb) to build the binary file `compute_detection_metrics_main` for metrics computation and put it into this project's `mmdet3d/evaluation/functional/waymo_utils/`.(Sometimes when using bazel to build `compute_detection_metrics_main`, an error `'round' is not a member of 'std'` may appear. We just need to remove the `std::` before `round` in that file.) `pklfile_prefix` should be given in the `--eval-options` for the bin file generation. For metrics, `waymo` is the recommended official evaluation prototype. Currently, evaluating with choice `kitti` is adapted from KITTI and the results for each difficulty are not exactly the same as the definition of KITTI. Instead, most of objects are marked with difficulty 0 currently, which will be fixed in the future. The reasons of its instability include the large computation for evaluation, the lack of occlusion and truncation in the converted data, different definition of difficulty and different methods of computing average precision.
@@ -124,8 +124,8 @@ Assume that you have already downloaded the checkpoints to the directory `checkp
    ```shell
    ./tools/slurm_test.sh ${PARTITION} ${JOB_NAME} configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py  \
        checkpoints/hv_pointpillars_secfpn_sbn-2x16_2x_waymo-3d-car_latest.pth \
-       --cfg-options 'test_evaluator.pklfile_prefix=results/waymo-car/kitti_results' \
-       'test_evaluator.submission_prefix=results/waymo-car/kitti_results'
+       --cfg-options 'test_evaluator.result_prefix=results/waymo-car/kitti_results' \
+       'test_evaluator.format_only=True'
    ```
 
    **Notice**: After generating the bin file, you can simply build the binary file `create_submission` and use them to create a submission file by following the [instruction](https://github.com/waymo-research/waymo-open-dataset/blob/v1.5.0/docs/quick_start.md). For evaluation on the validation set with the eval server, you can also use the same way to generate a submission.
