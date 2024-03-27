@@ -23,7 +23,7 @@ def process_checkpoint(in_file, out_file):
     # add the code here.
     torch.save(checkpoint, out_file)
     sha = subprocess.check_output(['sha256sum', out_file]).decode()
-    final_file = out_file.rstrip('.pth') + '-{}.pth'.format(sha[:8])
+    final_file = out_file.removesuffix('.pth') + '-{}.pth'.format(sha[:8])
     subprocess.Popen(['mv', out_file, final_file])
 
 
