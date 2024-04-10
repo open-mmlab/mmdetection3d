@@ -11,7 +11,7 @@ from .nostem_regnet import NoStemRegNet
 from .pointnet2_sa_msg import PointNet2SAMSG
 from .pointnet2_sa_ssg import PointNet2SASSG
 from .second import SECOND
-from .spvcnn_backone import MinkUNetBackboneV2, SPVCNNBackbone
+from .spvcnn_backbone import MinkUNetBackboneV2, SPVCNNBackbone
 
 __all__ = [
     'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet', 'NoStemRegNet',
