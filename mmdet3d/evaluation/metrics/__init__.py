@@ -7,8 +7,10 @@ from .nuscenes_metric import NuScenesMetric  # noqa: F401,F403
 from .panoptic_seg_metric import PanopticSegMetric  # noqa: F401,F403
 from .seg_metric import SegMetric  # noqa: F401,F403
 from .waymo_metric import WaymoMetric  # noqa: F401,F403
+from .fern_dynamic_metric import FernDynamicMetric # noqa: F401,F403
+
 
 __all__ = [
     'KittiMetric', 'NuScenesMetric', 'IndoorMetric', 'LyftMetric', 'SegMetric',
-    'InstanceSegMetric', 'WaymoMetric', 'PanopticSegMetric'
+    'InstanceSegMetric', 'WaymoMetric', 'PanopticSegMetric', 'FernDynamicMetric'
 ]
