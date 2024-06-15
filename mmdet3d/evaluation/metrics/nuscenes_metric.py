@@ -160,6 +160,7 @@ class NuScenesMetric(BaseMetric):
 
         classes = self.dataset_meta['classes']
         self.version = self.dataset_meta['version']
+        self.version = 'v1.0-mini'
         # load annotations
         self.data_infos = load(
             self.ann_file, backend_args=self.backend_args)['data_list']
