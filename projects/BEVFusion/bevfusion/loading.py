@@ -147,7 +147,7 @@ class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
 
             cam2img_array = np.eye(4).astype(np.float32)
             cam2img_array[:3, :3] = np.array(cam_item['cam2img']).astype(
-                np.float32)
+                np.float32)[:3,:3]
             cam2img.append(cam2img_array)
             lidar2img.append(cam2img_array @ lidar2cam_array)
 

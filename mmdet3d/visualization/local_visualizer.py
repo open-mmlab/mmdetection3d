@@ -673,9 +673,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             img = data_input['img']
             if isinstance(img, list) or (isinstance(img, (np.ndarray, Tensor))
                                          and len(img.shape) == 4):
-                # show multi-view images
-                img_size = img[0].shape[:2] if isinstance(
-                    img, list) else img.shape[-2:]  # noqa: E501
+                # show multi-view images       
+                # when multi-view images are not in the same size, choose the max (h,w) as the img_size.
+                if isinstance(img, list):
+                    all_size_array = np.stack([im.shape[:2] for im in img], axis=0)
+                    img_size = tuple(np.max(all_size_array,axis=0))
+                else:
+                    img.shape[-2:]
+                
                 img_col = self.multi_imgs_col
                 img_row = math.ceil(len(img) / img_col)
                 composed_img = np.zeros(
@@ -688,6 +693,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         single_img = single_img.permute(1, 2, 0).numpy()
                         single_img = single_img[..., [2, 1, 0]]  # bgr to rgb
                     self.set_image(single_img)
+                    single_img_size = single_img.shape[:2]
                     single_img_meta = dict()
                     for key, meta in input_meta.items():
                         if isinstance(meta,
@@ -714,10 +720,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                         centers_2d = instances.centers_2d
                         self.draw_points(centers_2d)
                     composed_img[(i // img_col) *
-                                 img_size[0]:(i // img_col + 1) * img_size[0],
+                                 img_size[0]:(i // img_col)*img_size[0] + single_img_size[0],
                                  (i % img_col) *
-                                 img_size[1]:(i % img_col + 1) *
-                                 img_size[1]] = self.get_image()
+                                 img_size[1]:(i % img_col)*img_size[1]+
+                                 single_img_size[1]] = self.get_image()
                 data_3d['img'] = composed_img
             else:
                 # show single-view image
