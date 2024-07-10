@@ -440,9 +440,10 @@ class LoadPointsFromMultiSweeps(BaseTransform):
                 # bc-breaking: Timestamp has divided 1e6 in pkl infos.
                 sweep_ts = sweep['timestamp']
                 lidar2sensor = np.array(sweep['lidar_points']['lidar2sensor'])
+                #Perform inverse transform 
+                points_sweep[:, :3] -= lidar2sensor[:3, 3]
                 points_sweep[:, :
                              3] = points_sweep[:, :3] @ lidar2sensor[:3, :3]
-                points_sweep[:, :3] -= lidar2sensor[:3, 3]
                 points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
