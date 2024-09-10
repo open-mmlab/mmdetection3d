@@ -25,7 +25,7 @@
 
 ### 为了计算速度所做的修改
 
-- __MMDetection3D__：我们尝试使用与其他代码库中尽可能相同的配置，具体配置细节见 [基准测试配置](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark)。
+- __MMDetection3D__：我们尝试使用与其他代码库中尽可能相同的配置，具体配置细节见 [基准测试配置](https://github.com/open-mmlab/MMDetection3D/blob/main/configs/benchmark)。
 
 - __Det3D__：为了与 Det3D 进行比较，我们使用了 commit [519251e](https://github.com/poodarchu/Det3D/tree/519251e72a5c1fdd58972eabeac67808676b9bb7) 所对应的代码版本。
 

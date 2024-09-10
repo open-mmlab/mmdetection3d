@@ -35,7 +35,7 @@ model = dict(
         type='AlignedAnchor3DRangeGenerator',
         ranges=[[-35.0, -75.0, -2, 75.0, 75.0, 4]],
         rotations=[.0]),
-    bbox_head=dict(
+    bbox_head_3d=dict(
         type='Anchor3DHead',
         num_classes=3,
         in_channels=256,
@@ -43,13 +43,13 @@ model = dict(
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
-            ranges=[[-35.0, -75.0, -0.0345, 75.0, 75.0, -0.0345],
-                    [-35.0, -75.0, 0, 75.0, 75.0, 0],
-                    [-35.0, -75.0, -0.1188, 75.0, 75.0, -0.1188]],
+            ranges=[[-35.0, -75.0, 0, 75.0, 75.0, 0],
+                    [-35.0, -75.0, -0.1188, 75.0, 75.0, -0.1188],
+                    [-35.0, -75.0, -0.0345, 75.0, 75.0, -0.0345]],
             sizes=[
-                [4.73, 2.08, 1.77],  # car
                 [0.91, 0.84, 1.74],  # pedestrian
                 [1.81, 0.84, 1.77],  # cyclist
+                [4.73, 2.08, 1.77],  # car
             ],
             rotations=[0, 1.57],
             reshape_out=False),
@@ -69,13 +69,6 @@ model = dict(
             loss_weight=0.2)),
     train_cfg=dict(
         assigner=[
-            dict(  # for Car
-                type='Max3DIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
-                ignore_iof_thr=-1),
             dict(  # for Pedestrian
                 type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
@@ -90,6 +83,13 @@ model = dict(
                 neg_iou_thr=0.35,
                 min_pos_iou=0.35,
                 ignore_iof_thr=-1),
+            dict(  # for Car
+                type='Max3DIoUAssigner',
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                pos_iou_thr=0.6,
+                neg_iou_thr=0.45,
+                min_pos_iou=0.45,
+                ignore_iof_thr=-1)
         ],
         allowed_border=0,
         pos_weight=-1,
@@ -100,5 +100,5 @@ model = dict(
         nms_thr=0.05,
         score_thr=0.001,
         min_bbox_size=0,
-        nms_pre=500,
-        max_num=100))
+        nms_pre=4096,
+        max_num=500))

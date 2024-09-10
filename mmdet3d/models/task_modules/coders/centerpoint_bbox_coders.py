@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict, List, Optional, Tuple
+
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
 
@@ -22,13 +25,13 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
     """
 
     def __init__(self,
-                 pc_range,
-                 out_size_factor,
-                 voxel_size,
-                 post_center_range=None,
-                 max_num=100,
-                 score_threshold=None,
-                 code_size=9):
+                 pc_range: List[float],
+                 out_size_factor: int,
+                 voxel_size: List[float],
+                 post_center_range: Optional[List[float]] = None,
+                 max_num: int = 100,
+                 score_threshold: Optional[float] = None,
+                 code_size: int = 9) -> None:
 
         self.pc_range = pc_range
         self.out_size_factor = out_size_factor
@@ -38,7 +41,10 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         self.score_threshold = score_threshold
         self.code_size = code_size
 
-    def _gather_feat(self, feats, inds, feat_masks=None):
+    def _gather_feat(self,
+                     feats: Tensor,
+                     inds: Tensor,
+                     feat_masks: Optional[Tensor] = None) -> Tensor:
         """Given feats and indexes, returns the gathered feats.
 
         Args:
@@ -60,7 +66,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
             feats = feats.view(-1, dim)
         return feats
 
-    def _topk(self, scores, K=80):
+    def _topk(self, scores: Tensor, K: int = 80) -> Tuple[Tensor]:
         """Get indexes based on scores.
 
         Args:
@@ -95,7 +101,7 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
 
         return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
-    def _transpose_and_gather_feat(self, feat, ind):
+    def _transpose_and_gather_feat(self, feat: Tensor, ind: Tensor) -> Tensor:
         """Given feats and indexes, returns the transposed and gathered feats.
 
         Args:
@@ -115,14 +121,14 @@ class CenterPointBBoxCoder(BaseBBoxCoder):
         pass
 
     def decode(self,
-               heat,
-               rot_sine,
-               rot_cosine,
-               hei,
-               dim,
-               vel,
-               reg=None,
-               task_id=-1):
+               heat: Tensor,
+               rot_sine: Tensor,
+               rot_cosine: Tensor,
+               hei: Tensor,
+               dim: Tensor,
+               vel: Tensor,
+               reg: Optional[Tensor] = None,
+               task_id: int = -1) -> List[Dict[str, Tensor]]:
         """Decode bboxes.
 
         Args:

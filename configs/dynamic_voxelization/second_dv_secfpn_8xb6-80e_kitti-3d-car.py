@@ -1,4 +1,4 @@
-_base_ = '../second/hv_second_secfpn_6x8_80e_kitti-3d-car.py'
+_base_ = '../second/second_hv_secfpn_8xb6-80e_kitti-3d-car.py'
 
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 voxel_size = [0.05, 0.05, 0.1]

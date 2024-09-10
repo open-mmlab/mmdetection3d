@@ -1,6 +1,6 @@
 _base_ = [
     # 'mmdet3d::_base_/datasets/nus-3d.py',
-    'mmdet3d::_base_/default_runtime.py'
+    '../../../configs/_base_/default_runtime.py'
 ]
 
 custom_imports = dict(imports=['projects.DETR3D.detr3d'])

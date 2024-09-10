@@ -44,7 +44,10 @@ class LyftDataset(Det3DDataset):
     METAINFO = {
         'classes':
         ('car', 'truck', 'bus', 'emergency_vehicle', 'other_vehicle',
-         'motorcycle', 'bicycle', 'pedestrian', 'animal')
+         'motorcycle', 'bicycle', 'pedestrian', 'animal'),
+        'palette': [(106, 0, 228), (119, 11, 32), (165, 42, 42), (0, 0, 192),
+                    (197, 226, 255), (0, 60, 100), (0, 0, 142), (255, 77, 255),
+                    (153, 69, 1)]
     }
 
     def __init__(self,

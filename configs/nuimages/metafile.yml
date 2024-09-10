@@ -23,9 +23,9 @@ Collections:
       Version: v2.0.0
 
 Models:
-  - Name: mask_rcnn_r50_fpn_1x_nuim
+  - Name: mask-rcnn_r50_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_r50_fpn_1x_nuim.py
+    Config: configs/nuimages/mask-rcnn_r50_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 7.4
       Training Resources: 8x TITAN Xp
@@ -40,9 +40,9 @@ Models:
           Mask AP: 38.4
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_fpn_1x_nuim/mask_rcnn_r50_fpn_1x_nuim_20201008_195238-e99f5182.pth
 
-  - Name: mask_rcnn_r50_fpn_coco-2x_1x_nuim
+  - Name: mask-rcnn_r50_fpn_coco-2x_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_r50_fpn_coco-2x_1x_nuim.py
+    Config: configs/nuimages/mask-rcnn_r50_fpn_coco-2x_1x_nuim.py
     Metadata:
       Training Memory (GB): 7.4
       Training Resources: 8x TITAN Xp
@@ -57,9 +57,9 @@ Models:
           Mask AP: 40.5
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_fpn_coco-2x_1x_nuim/mask_rcnn_r50_fpn_coco-2x_1x_nuim_20201008_195238-b1742a60.pth
 
-  - Name: mask_rcnn_r50_caffe_fpn_1x_nuim
+  - Name: mask-rcnn_r50_caffe_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_r50_caffe_fpn_1x_nuim.py
+    Config: configs/nuimages/mask-rcnn_r50_caffe_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 7.0
       Training Resources: 8x TITAN Xp
@@ -74,9 +74,9 @@ Models:
           Mask AP: 38.2
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_1x_nuim/
 
-  - Name: mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim
+  - Name: mask-rcnn_r50_caffe_fpn_coco-3x_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim.py
+    Config: configs/nuimages/mask-rcnn_r50_caffe_fpn_coco-3x_1x_nuim.py
     Metadata:
       Training Memory (GB): 7.0
       Training Resources: 8x TITAN Xp
@@ -91,9 +91,9 @@ Models:
           Mask AP: 40.8
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim/mask_rcnn_r50_caffe_fpn_coco-3x_1x_nuim_20201008_195305-661a992e.pth
 
-  - Name: mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim
+  - Name: mask-rcnn_r50_caffe_fpn_coco-3x_20e_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim.py
+    Config: configs/nuimages/mask-rcnn_r50_caffe_fpn_coco-3x_20e_nuim.py
     Metadata:
       Training Memory (GB): 7.0
       Training Resources: 8x TITAN Xp
@@ -108,7 +108,7 @@ Models:
           Mask AP: 41.3
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim/mask_rcnn_r50_caffe_fpn_coco-3x_20e_nuim_20201009_125002-5529442c.pth
 
-  - Name: mask_rcnn_r101_fpn_1x_nuim
+  - Name: mask-rcnn_r101_fpn_1x_nuim
     In Collection: Mask R-CNN
     Config: configs/nuimages/mask-rcnn_r101_fpn_1x_nuim.py
     Metadata:
@@ -125,7 +125,7 @@ Models:
           Mask AP: 39.1
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_r101_fpn_1x_nuim/mask_rcnn_r101_fpn_1x_nuim_20201024_134803-65c7623a.pth
 
-  - Name: mask_rcnn_x101_32x4d_fpn_1x_nuim
+  - Name: mask-rcnn_x101_32x4d_fpn_1x_nuim
     In Collection: Mask R-CNN
     Config: configs/nuimages/mask-rcnn_x101_32x4d_fpn_1x_nuim.py
     Metadata:
@@ -142,9 +142,9 @@ Models:
           Mask AP: 40.5
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/mask_rcnn_x101_32x4d_fpn_1x_nuim/mask_rcnn_x101_32x4d_fpn_1x_nuim_20201024_135741-b699ab37.pth
 
-  - Name: cascade_mask_rcnn_r50_fpn_1x_nuim
+  - Name: cascade-mask-rcnn_r50_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_1x_nuim.py
+    Config: configs/nuimages/cascade-mask-rcnn_r50_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 8.9
       Training Resources: 8x TITAN Xp
@@ -159,9 +159,9 @@ Models:
           Mask AP: 40.4
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_1x_nuim/cascade_mask_rcnn_r50_fpn_1x_nuim_20201008_195342-1147c036.pth
 
-  - Name: cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim
+  - Name: cascade-mask-rcnn_r50_fpn_coco-20e_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim.py
+    Config: configs/nuimages/cascade-mask-rcnn_r50_fpn_coco-20e_1x_nuim.py
     Metadata:
       Training Memory (GB): 8.9
       Training Resources: 8x TITAN Xp
@@ -176,9 +176,9 @@ Models:
           Mask AP: 42.2
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_1x_nuim_20201009_124158-ad0540e3.pth
 
-  - Name: cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim
+  - Name: cascade-mask-rcnn_r50_fpn_coco-20e_20e_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim.py
+    Config: configs/nuimages/cascade-mask-rcnn_r50_fpn_coco-20e_20e_nuim.py
     Metadata:
       Training Memory (GB): 8.9
       Training Resources: 8x TITAN Xp
@@ -193,9 +193,9 @@ Models:
           Mask AP: 42.2
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth
 
-  - Name: cascade_mask_rcnn_r101_fpn_1x_nuim
+  - Name: cascade-mask-rcnn_r101_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/cascade_mask_rcnn_r101_fpn_1x_nuim.py
+    Config: configs/nuimages/cascade-mask-rcnn_r101_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 12.5
       Training Resources: 8x TITAN Xp
@@ -210,9 +210,9 @@ Models:
           Mask AP: 40.7
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/nuimages_semseg/cascade_mask_rcnn_r101_fpn_1x_nuim/cascade_mask_rcnn_r101_fpn_1x_nuim_20201024_134804-45215b1e.pth
 
-  - Name: cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim
+  - Name: cascade-mask-rcnn_x101_32x4d_fpn_1x_nuim
     In Collection: Mask R-CNN
-    Config: configs/nuimages/cascade_mask_rcnn_x101_32x4d_fpn_1x_nuim.py
+    Config: configs/nuimages/cascade-mask-rcnn_x101_32x4d_fpn_1x_nuim.py
     Metadata:
       Training Memory (GB): 14.9
       Training Resources: 8x TITAN Xp

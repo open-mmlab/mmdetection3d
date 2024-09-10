@@ -48,7 +48,7 @@ Despite the variety of datasets and equipment, by summarizing the line of works 
   left ------ 0 ------> x right
   ```
 
-The definition of coordinate systems in this tutorial is actually **more than just defining the three axes**. For a box in the form of `` $$`(x, y, z, dx, dy, dz, r)`$$ ``, our coordinate systems also define how to interpret the box dimensions `` $$`(dx, dy, dz)`$$ `` and the yaw angle `` $$`r`$$ ``.
+The definition of coordinate systems in this tutorial is actually **more than just defining the three axes**. For a box in the form of $(x, y, z, dx, dy, dz, r)$, our coordinate systems also define how to interpret the box dimensions $(dx, dy, dz)$ and the yaw angle $r$.
 
 The illustration of the three coordinate systems is shown below:
 
@@ -60,13 +60,13 @@ We will stick to the three coordinate systems defined in this tutorial in the fu
 
 ## Definition of the yaw angle
 
-Please refer to [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) for the standard definition of the yaw angle. In object detection, we choose an axis as the gravity axis, and a reference direction on the plane `` $$`\Pi`$$ `` perpendicular to the gravity axis, then the reference direction has a yaw angle of 0, and other directions on `` $$`\Pi`$$ `` have non-zero yaw angles depending on its angle with the reference direction.
+Please refer to [wikipedia](https://en.wikipedia.org/wiki/Euler_angles#Tait%E2%80%93Bryan_angles) for the standard definition of the yaw angle. In object detection, we choose an axis as the gravity axis, and a reference direction on the plane $\\Pi$ perpendicular to the gravity axis, then the reference direction has a yaw angle of 0, and other directions on $\\Pi$ have non-zero yaw angles depending on its angle with the reference direction.
 
 Currently, for all supported datasets, annotations do not include pitch angle and roll angle, which means we need only consider the yaw angle when predicting boxes and calculating overlap between boxes.
 
 In MMDetection3D, all three coordinate systems are right-handed coordinate systems, which means the ascending direction of the yaw angle is counter-clockwise if viewed from the negative direction of the gravity axis (the axis is pointing at one's eyes).
 
-The figure below shows that, in this right-handed coordinate system, if we set the positive direction of the x-axis as a reference direction, then the positive direction of the y-axis has a yaw angle of `` $$`\frac{\pi}{2}`$$ ``.
+The figure below shows that, in this right-handed coordinate system, if we set the positive direction of the x-axis as a reference direction, then the positive direction of the y-axis has a yaw angle of $\\frac{\\pi}{2}$.
 
 ```
                      z up  y front (yaw=0.5*pi)
@@ -97,9 +97,9 @@ __|____|____|____|______\ x right
 
 ## Definition of the box dimensions
 
-The definition of the box dimensions cannot be disentangled with the definition of the yaw angle. In the previous section, we said that the direction of a box is defined to be parallel with the x-axis if its yaw angle is 0. Then naturally, the dimension of a box which corresponds to the x-axis should be `` $$`dx`$$ ``. However, this is not always the case in some datasets (we will address that later).
+The definition of the box dimensions cannot be disentangled with the definition of the yaw angle. In the previous section, we said that the direction of a box is defined to be parallel with the x-axis if its yaw angle is 0. Then naturally, the dimension of a box which corresponds to the x-axis should be $dx$. However, this is not always the case in some datasets (we will address that later).
 
-The following figures show the meaning of the correspondence between the x-axis and `` $$`dx`$$ ``, and between the y-axis and `` $$`dy`$$ ``.
+The following figures show the meaning of the correspondence between the x-axis and $dx$, and between the y-axis and $dy$.
 
 ```
 y front
@@ -116,7 +116,7 @@ __|____|____|____|______\ x right
   |         dy
 ```
 
-Note that the box direction is always parallel with the edge `` $$`dx`$$ ``.
+Note that the box direction is always parallel with the edge $dx$.
 
 ```
 y front
@@ -143,12 +143,12 @@ In SECOND, the LiDAR coordinate system for a box is defined as follows (a bird's
 
 ![](https://raw.githubusercontent.com/traveller59/second.pytorch/master/images/kittibox.png)
 
-For each box, the dimensions are `` $$`(w, l, h)`$$ ``, and the reference direction for the yaw angle is the positive direction of the y axis. For more details, refer to the [repo](https://github.com/traveller59/second.pytorch#concepts).
+For each box, the dimensions are $(w, l, h)$, and the reference direction for the yaw angle is the positive direction of the y axis. For more details, refer to the [repo](https://github.com/traveller59/second.pytorch#concepts).
 
 Our LiDAR coordinate system has two changes:
 
 - The yaw angle is defined to be right-handed instead of left-handed for consistency;
-- The box dimensions are `` $$`(l, w, h)`$$ `` instead of `` $$`(w, l, h)`$$ ``, since `` $$`w`$$ `` corresponds to `` $$`dy`$$ `` and `` $$`l`$$ `` corresponds to `` $$`dx`$$ `` in KITTI.
+- The box dimensions are $(l, w, h)$ instead of $(w, l, h)$, since $w$ corresponds to $dy$ and $l$ corresponds to $dx$ in KITTI.
 
 ### Waymo
 
@@ -156,7 +156,7 @@ We use the KITTI-format data of Waymo dataset. Therefore, KITTI and Waymo also s
 
 ### NuScenes
 
-NuScenes provides a toolkit for evaluation, in which each box is wrapped into a `Box` instance. The coordinate system of `Box` is different from our LiDAR coordinate system in that the first two elements of the box dimension correspond to `` $$`(dy, dx)`$$ ``, or `` $$`(w, l)`$$ ``, respectively, instead of the reverse. For more details, please refer to the NuScenes [tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/nuscenes_det.md#notes).
+NuScenes provides a toolkit for evaluation, in which each box is wrapped into a `Box` instance. The coordinate system of `Box` is different from our LiDAR coordinate system in that the first two elements of the box dimension correspond to $(dy, dx)$, or $(w, l)$, respectively, instead of the reverse. For more details, please refer to the NuScenes [tutorial](https://github.com/open-mmlab/mmdetection3d/blob/master/docs/en/datasets/nuscenes_det.md#notes).
 
 Readers may refer to the [NuScenes development kit](https://github.com/nutonomy/nuscenes-devkit/tree/master/python-sdk/nuscenes/eval/detection) for the definition of a [NuScenes box](https://github.com/nutonomy/nuscenes-devkit/blob/2c6a752319f23910d5f55cc995abc547a9e54142/python-sdk/nuscenes/utils/data_classes.py#L457) and implementation of [NuScenes evaluation](https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/eval/detection/evaluate.py).
 
@@ -188,25 +188,25 @@ Take the conversion between our Camera coordinate system and LiDAR coordinate sy
 
 First, for points and box centers, the coordinates before and after the conversion satisfy the following relationship:
 
-- `` $$`x_{LiDAR}=z_{camera}`$$ ``
-- `` $$`y_{LiDAR}=-x_{camera}`$$ ``
-- `` $$`z_{LiDAR}=-y_{camera}`$$ ``
+- $x\_{LiDAR}=z\_{camera}$
+- $y\_{LiDAR}=-x\_{camera}$
+- $z\_{LiDAR}=-y\_{camera}$
 
 Then, the box dimensions before and after the conversion satisfy the following relationship:
 
-- `` $$`dx_{LiDAR}=dx_{camera}`$$ ``
-- `` $$`dy_{LiDAR}=dz_{camera}`$$ ``
-- `` $$`dz_{LiDAR}=dy_{camera}`$$ ``
+- $dx\_{LiDAR}=dx\_{camera}$
+- $dy\_{LiDAR}=dz\_{camera}$
+- $dz\_{LiDAR}=dy\_{camera}$
 
 Finally, the yaw angle should also be converted:
 
-- `` $$`r_{LiDAR}=-\frac{\pi}{2}-r_{camera}`$$ ``
+- $r\_{LiDAR}=-\\frac{\\pi}{2}-r\_{camera}$
 
 See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/box_3d_mode.py) for more details.
 
 ### Bird's Eye View
 
-The BEV of a camera coordinate system box is `` $$`(x, z, dx, dz, -r)`$$ `` if the 3D box is `` $$`(x, y, z, dx, dy, dz, r)`$$ ``. The inversion of the sign of the yaw angle is because the positive direction of the gravity axis of the Camera coordinate system points to the ground.
+The BEV of a camera coordinate system box is $(x, z, dx, dz, -r)$ if the 3D box is $(x, y, z, dx, dy, dz, r)$. The inversion of the sign of the yaw angle is because the positive direction of the gravity axis of the Camera coordinate system points to the ground.
 
 See the code [here](https://github.com/open-mmlab/mmdetection3d/blob/master/mmdet3d/core/bbox/structures/cam_box3d.py) for more details.
 
@@ -228,18 +228,18 @@ For each box related op, we have marked the type of boxes to which we can apply 
 
 No. For example, in KITTI, we need a calibration matrix when converting from Camera coordinate system to LiDAR coordinate system.
 
-#### Q3: How does a phase difference of `` $$`2\pi`$$ `` in the yaw angle of a box affect evaluation?
+#### Q3: How does a phase difference of $2\\pi$ in the yaw angle of a box affect evaluation?
 
-For IoU calculation, a phase difference of `` $$`2\pi`$$ `` in the yaw angle will result in the same box, thus not affecting evaluation.
+For IoU calculation, a phase difference of $2\\pi$ in the yaw angle will result in the same box, thus not affecting evaluation.
 
-For angle prediction evaluation such as the NDS metric in NuScenes and the AOS metric in KITTI, the angle of predicted boxes will be first standardized, so the phase difference of `` $$`2\pi`$$ `` will not change the result.
+For angle prediction evaluation such as the NDS metric in NuScenes and the AOS metric in KITTI, the angle of predicted boxes will be first standardized, so the phase difference of $2\\pi$ will not change the result.
 
-#### Q4: How does a phase difference of `` $$`\pi`$$ `` in the yaw angle of a box affect evaluation?
+#### Q4: How does a phase difference of $\\pi$ in the yaw angle of a box affect evaluation?
 
-For IoU calculation, a phase difference of `` $$`\pi`$$ `` in the yaw angle will result in the same box, thus not affecting evaluation.
+For IoU calculation, a phase difference of $\\pi$ in the yaw angle will result in the same box, thus not affecting evaluation.
 
 However, for angle prediction evaluation, this will result in the exact opposite direction.
 
-Just think about a car. The yaw angle is the angle between the direction of the car front and the positive direction of the x-axis. If we add `` $$`\pi`$$ `` to this angle, the car front will become the car rear.
+Just think about a car. The yaw angle is the angle between the direction of the car front and the positive direction of the x-axis. If we add $\\pi$ to this angle, the car front will become the car rear.
 
-For categories such as barrier, the front and the rear have no difference, therefore a phase difference of `` $$`\pi`$$ `` will not affect the angle prediction score.
+For categories such as barrier, the front and the rear have no difference, therefore a phase difference of $\\pi$ will not affect the angle prediction score.

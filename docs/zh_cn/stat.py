@@ -6,28 +6,28 @@ from os import path as osp
 
 import numpy as np
 
-url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/master/'
+url_prefix = 'https://github.com/open-mmlab/mmdetection3d/blob/main/'
 
-files = sorted(glob.glob('../configs/*/README.md'))
+files = sorted(glob.glob('../../configs/*/README.md'))
 
 stats = []
 titles = []
 num_ckpts = 0
 
 for f in files:
-    url = osp.dirname(f.replace('../', url_prefix))
+    url = osp.dirname(f.replace('../../', url_prefix))
 
     with open(f, 'r') as content_file:
         content = content_file.read()
 
-    title = content.split('\n')[0].replace('#', '').strip()
+    title = content.split('\n')[0].replace('# ', '').strip()
     ckpts = set(x.lower().strip()
-                for x in re.findall(r'https?://download.*\.pth', content)
-                if 'mmdetection3d' in x)
+                for x in re.findall(r'\[model\]\((https?.*)\)', content))
+
     if len(ckpts) == 0:
         continue
 
-    _papertype = [x for x in re.findall(r'<!-- \[([A-Z]+)\] -->', content)]
+    _papertype = [x for x in re.findall(r'\[([A-Z]+)\]', content)]
     assert len(_papertype) > 0
     papertype = _papertype[0]
 
@@ -35,6 +35,7 @@ for f in files:
 
     titles.append(title)
     num_ckpts += len(ckpts)
+
     statsmsg = f"""
 \t* [{papertype}] [{title}]({url}) ({len(ckpts)} ckpts)
 """
@@ -49,14 +50,15 @@ countstr = '\n'.join(
     [f'   - {t}: {c}' for t, c in zip(papertypes, papercounts)])
 
 modelzoo = f"""
-\n## Model Zoo Statistics
+# Model Zoo Statistics
 
 * Number of papers: {len(set(titles))}
 {countstr}
 
 * Number of checkpoints: {num_ckpts}
+
 {msglist}
 """
 
-with open('model_zoo.md', 'a') as f:
+with open('modelzoo_statistics.md', 'w') as f:
     f.write(modelzoo)

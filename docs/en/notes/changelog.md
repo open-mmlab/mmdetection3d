@@ -1,5 +1,155 @@
 # Changelog of v1.1
 
+### v1.4.0 (8/1/2024)
+
+#### Highlights
+
+- Refactor Waymo dataset (#2836)
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
+
+#### New Features
+
+- Support the training of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects` (#2738)
+- Support [Nerf-Det](https://arxiv.org/abs/2307.14620) in `projects` (#2732)
+- Support [MV-FCOS3D++](https://arxiv.org/abs/2207.12716)
+- Refactor Waymo dataset (#2836)
+
+#### Improvements
+
+- Support [PGD](https://arxiv.org/abs/2107.14160)) (front-of-view / multi-view) on Waymo dataset (#2835)
+- Release new [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) for verify some methods or debug quickly (#2835)
+
+#### Bug Fixes
+
+- Fix MinkUNet and SPVCNN some wrong configs (#2854)
+- Fix incorrect number of arguments in PETR (#2800)
+- Delete unused files in `mmdet3d/configs` (#2773)
+
+#### Contributors
+
+A total of 5 developers contributed to this release.
+
+@sunjiahao1999, @WendellZ524, @Yanyirong, @JingweiZhang12, @Tai-Wang
+
+### v1.3.0 (18/10/2023)
+
+#### Highlights
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+- Enhance demos with new 3D inferencers (#2763)
+
+#### New Features
+
+- Support [CENet](https://arxiv.org/abs/2207.12691) in `projects` (#2619)
+
+#### Improvements
+
+- Enhance demos with new 3D inferencers (#2763)
+- Add BEV-based detection pipeline in nuScenes dataset tutorial (#2672)
+- Add the new config type of Cylinder3D in `mmdet3d/configs` (#2681)
+- Update [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) (#2655)
+- Update the QR code in README.md (#2703)
+
+#### Bug Fixes
+
+- Fix the download script of nuScenes dataset (#2660)
+- Fix circleCI and GitHub workflow configuration (#2652)
+- Fix the version of Open3D in requirements (#2633)
+- Fix unused files in `mmdet3d/configs` (#2773)
+- Fix support devices in FreeAnchor3DHead (#2769)
+- Fix readthedocs building and link (#2739, #2650)
+- Fix the pitch angle bug in LaserMix (#2710)
+
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @ZhaoCake, @LRJKD, @crazysteeaam, @wep21, @zhiqwang
+
+### v1.2.0 (4/7/2023)
+
+#### Highlights
+
+- Support [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) in `mmdet3d/config`  (#2608)
+- Support the inference of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`  (#2606)
+- Support downloading datasets from [OpenDataLab](https://opendatalab.com/) using `mim`  (#2593)
+
+#### New Features
+
+- Support [New Config Type](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta) in `mmdet3d/config`  (#2608)
+- Support the inference of [DSVT](<(https://arxiv.org/abs/2301.06051)>) in `projects`  (#2606)
+- Support downloading datasets from [OpenDataLab](https://opendatalab.com/) using `mim`  (#2593)
+
+#### Improvements
+
+- Enhanced visualization in interactive form (#2611)
+- Update README.md and Model Zoo (#2599, #2600)
+- Speed up S3DIS data preparation (#2585)
+
+#### Bug Fixes
+
+- Remove PointRCNN in benchmark training (#2610)
+- Fix wrong indoor detection visualization (#2625)
+- Fix MinkUNet download link (#2590)
+- Fix the formula in the `readthedocs` (#2580)
+
+#### Contributors
+
+A total of 5 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @JingweiZhang12, @col14m, @zhulf0804
+
+### v1.1.1 (30/5/2023)
+
+#### Highlights
+
+- Support [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf) in `projects` (#2399, #2517, #2535)
+- Support the training of BEVFusion in `projects` (#2546)
+- Support lidar-based 3D semantic segmentation benchmark (#2530, #2559)
+
+#### New Features
+
+- Support [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf) in `projects` (#2399, #2517, #2535)
+- Support the training of \[BEVFusion\] in `projects` (#2558)
+- Support lidar-based 3D Semantic Segmentation Benchmark (#2530, #2559)
+- Support test-time augmentation for Segmentor (#2382)
+- Support `Minkowski ConvModule` and `Residual` Block (#2528)
+- Support the visualization of multi-view images in multi-modal methods (#2453)
+
+#### Improvements
+
+- Upload checkpoints and training log of PETR (#2555)
+- Replace `np.float` by default `float` in segmentation evaluation (#2527)
+- Add docs of converting SemanticKITTI datasets (#2515)
+- Support different colors for different classes in visualization (#2500)
+- Support tensor-like operations for `BaseInstance3DBoxes` and `BasePoint`
+- Add information of LiDAR Segmentation in NuScenes annotation files
+- Provide annotation files of datasets generated offline (#2457)
+- Refactor document structure (#2429)
+- Complete typehints and docstring (#2396, #2457, #2468, #2464, #2485)
+
+#### Bug Fixes
+
+- Fix the bug of abnormal loss when training SECOND in Automatic mixed precision(AMP) mode (#2452)
+- Add a warning in function `post_process_coords` in mmdet3d/dataset/convert_utils.py (#2557)
+- Fix invalid configs (#2477, #2536)
+- Fix bugs of unit test (#2466)
+- Update `local-rank` argument in test.py for pytorch 2.0 (#2469)
+- Fix docker file (#2451)
+- Fix demo and visualization (#2453)
+- Fix SUN RGB-D data converter (#2440)
+- Fix readthedocs building (#2459, #2419, #2505, #2396)
+- Fix CI #(2445)
+- Fix the version error of `torch` in github merge stage test (#2424)
+- Loose the version restriction of `numba` (#2416)
+
+#### Contributors
+
+A total of 10 developers contributed to this release.
+
+@sunjiahao1999, @Xiangxu-0103, @JingweiZhang12, @chriscarving, @jaan1729, @pd-michaelstanley, @filaPro, @kabouzeid, @A-new-b, @lbin
+
 ### v1.1.0 (6/4/2023)
 
 #### Highlights

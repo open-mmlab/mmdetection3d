@@ -1,8 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Dict
+
 import numpy as np
 import torch
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures import BaseInstance3DBoxes
 from .partial_bin_based_bbox_coder import PartialBinBasedBBoxCoder
 
 
@@ -15,13 +19,14 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         with_rot (bool): Whether the bbox is with rotation.
     """
 
-    def __init__(self, num_dir_bins, with_rot=True):
+    def __init__(self, num_dir_bins: int, with_rot: bool = True) -> None:
         super(AnchorFreeBBoxCoder, self).__init__(
             num_dir_bins, 0, [], with_rot=with_rot)
         self.num_dir_bins = num_dir_bins
         self.with_rot = with_rot
 
-    def encode(self, gt_bboxes_3d, gt_labels_3d):
+    def encode(self, gt_bboxes_3d: BaseInstance3DBoxes,
+               gt_labels_3d: Tensor) -> tuple:
         """Encode ground truth to prediction targets.
 
         Args:
@@ -51,7 +56,7 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         return (center_target, size_res_target, dir_class_target,
                 dir_res_target)
 
-    def decode(self, bbox_out):
+    def decode(self, bbox_out: dict) -> Tensor:
         """Decode predicted parts to bbox3d.
 
         Args:
@@ -85,7 +90,8 @@ class AnchorFreeBBoxCoder(PartialBinBasedBBoxCoder):
         bbox3d = torch.cat([center, bbox_size, dir_angle], dim=-1)
         return bbox3d
 
-    def split_pred(self, cls_preds, reg_preds, base_xyz):
+    def split_pred(self, cls_preds: Tensor, reg_preds: Tensor,
+                   base_xyz: Tensor) -> Dict[str, Tensor]:
         """Split predicted features to specific parts.
 
         Args:

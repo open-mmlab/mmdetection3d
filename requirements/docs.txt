@@ -1,8 +1,10 @@
 docutils==0.16.0
-m2r==0.2.1
-mistune==0.8.4
+markdown>=3.4.0
 myst-parser
 -e git+https://github.com/open-mmlab/pytorch_sphinx_theme.git#egg=pytorch_sphinx_theme
 sphinx==4.0.2
-sphinx-copybutton
-sphinx_markdown_tables
+sphinx-tabs
+sphinx_copybutton
+sphinx_markdown_tables>=0.0.16
+tabulate
+urllib3<2.0.0

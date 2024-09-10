@@ -5,6 +5,8 @@ from typing import List, Tuple
 import numpy as np
 import torch
 from mmdet.models.utils import multi_apply
+from mmdet.utils.memory import cast_tensor_type
+from mmengine.runner import amp
 from torch import Tensor
 from torch import nn as nn
 
@@ -92,7 +94,6 @@ class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
         warnings.warn(
             'dir_offset and dir_limit_offset will be depressed and be '
             'incorporated into box coder in the future')
-        self.fp16_enabled = False
 
         # build anchor generator
         self.prior_generator = TASK_UTILS.build(anchor_generator)
@@ -112,7 +113,6 @@ class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
         self.loss_cls = MODELS.build(loss_cls)
         self.loss_bbox = MODELS.build(loss_bbox)
         self.loss_dir = MODELS.build(loss_dir)
-        self.fp16_enabled = False
 
         self._init_layers()
         self._init_assigner_sampler()
@@ -411,17 +411,18 @@ class Anchor3DHead(Base3DDenseHead, AnchorTrainMixin):
             num_total_pos + num_total_neg if self.sampling else num_total_pos)
 
         # num_total_samples = None
-        losses_cls, losses_bbox, losses_dir = multi_apply(
-            self._loss_by_feat_single,
-            cls_scores,
-            bbox_preds,
-            dir_cls_preds,
-            labels_list,
-            label_weights_list,
-            bbox_targets_list,
-            bbox_weights_list,
-            dir_targets_list,
-            dir_weights_list,
-            num_total_samples=num_total_samples)
+        with amp.autocast(enabled=False):
+            losses_cls, losses_bbox, losses_dir = multi_apply(
+                self._loss_by_feat_single,
+                cast_tensor_type(cls_scores, dst_type=torch.float32),
+                cast_tensor_type(bbox_preds, dst_type=torch.float32),
+                cast_tensor_type(dir_cls_preds, dst_type=torch.float32),
+                labels_list,
+                label_weights_list,
+                bbox_targets_list,
+                bbox_weights_list,
+                dir_targets_list,
+                dir_weights_list,
+                num_total_samples=num_total_samples)
         return dict(
             loss_cls=losses_cls, loss_bbox=losses_bbox, loss_dir=losses_dir)

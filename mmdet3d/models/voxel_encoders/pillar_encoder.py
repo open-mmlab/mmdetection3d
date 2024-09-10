@@ -1,8 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Tuple
+
 import torch
 from mmcv.cnn import build_norm_layer
 from mmcv.ops import DynamicScatter
-from torch import nn
+from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
 from .utils import PFNLayer, get_paddings_indicator
@@ -37,16 +39,18 @@ class PillarFeatureNet(nn.Module):
     """
 
     def __init__(self,
-                 in_channels=4,
-                 feat_channels=(64, ),
-                 with_distance=False,
-                 with_cluster_center=True,
-                 with_voxel_center=True,
-                 voxel_size=(0.2, 0.2, 4),
-                 point_cloud_range=(0, -40, -3, 70.4, 40, 1),
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 mode='max',
-                 legacy=True):
+                 in_channels: Optional[int] = 4,
+                 feat_channels: Optional[tuple] = (64, ),
+                 with_distance: Optional[bool] = False,
+                 with_cluster_center: Optional[bool] = True,
+                 with_voxel_center: Optional[bool] = True,
+                 voxel_size: Optional[Tuple[float]] = (0.2, 0.2, 4),
+                 point_cloud_range: Optional[Tuple[float]] = (0, -40, -3, 70.4,
+                                                              40, 1),
+                 norm_cfg: Optional[dict] = dict(
+                     type='BN1d', eps=1e-3, momentum=0.01),
+                 mode: Optional[str] = 'max',
+                 legacy: Optional[bool] = True):
         super(PillarFeatureNet, self).__init__()
         assert len(feat_channels) > 0
         self.legacy = legacy
@@ -59,7 +63,6 @@ class PillarFeatureNet(nn.Module):
         self._with_distance = with_distance
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
-        self.fp16_enabled = False
         # Create PillarFeatureNet layers
         self.in_channels = in_channels
         feat_channels = [in_channels] + list(feat_channels)
@@ -89,7 +92,8 @@ class PillarFeatureNet(nn.Module):
         self.z_offset = self.vz / 2 + point_cloud_range[2]
         self.point_cloud_range = point_cloud_range
 
-    def forward(self, features, num_points, coors, *args, **kwargs):
+    def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
+                *args, **kwargs) -> Tensor:
         """Forward function.
 
         Args:
@@ -188,16 +192,18 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
     """
 
     def __init__(self,
-                 in_channels=4,
-                 feat_channels=(64, ),
-                 with_distance=False,
-                 with_cluster_center=True,
-                 with_voxel_center=True,
-                 voxel_size=(0.2, 0.2, 4),
-                 point_cloud_range=(0, -40, -3, 70.4, 40, 1),
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 mode='max',
-                 legacy=True):
+                 in_channels: Optional[int] = 4,
+                 feat_channels: Optional[tuple] = (64, ),
+                 with_distance: Optional[bool] = False,
+                 with_cluster_center: Optional[bool] = True,
+                 with_voxel_center: Optional[bool] = True,
+                 voxel_size: Optional[Tuple[float]] = (0.2, 0.2, 4),
+                 point_cloud_range: Optional[Tuple[float]] = (0, -40, -3, 70.4,
+                                                              40, 1),
+                 norm_cfg: Optional[dict] = dict(
+                     type='BN1d', eps=1e-3, momentum=0.01),
+                 mode: Optional[str] = 'max',
+                 legacy: Optional[bool] = True):
         super(DynamicPillarFeatureNet, self).__init__(
             in_channels,
             feat_channels,
@@ -209,7 +215,6 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
             norm_cfg=norm_cfg,
             mode=mode,
             legacy=legacy)
-        self.fp16_enabled = False
         feat_channels = [self.in_channels] + list(feat_channels)
         pfn_layers = []
         # TODO: currently only support one PFNLayer
@@ -231,7 +236,8 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         self.cluster_scatter = DynamicScatter(
             voxel_size, point_cloud_range, average_points=True)
 
-    def map_voxel_center_to_point(self, pts_coors, voxel_mean, voxel_coors):
+    def map_voxel_center_to_point(self, pts_coors: Tensor, voxel_mean: Tensor,
+                                  voxel_coors: Tensor) -> Tensor:
         """Map the centers of voxels to its corresponding points.
 
         Args:
@@ -270,7 +276,7 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
         center_per_point = canvas[:, voxel_index.long()].t()
         return center_per_point
 
-    def forward(self, features, coors):
+    def forward(self, features: Tensor, coors: Tensor) -> Tensor:
         """Forward function.
 
         Args:

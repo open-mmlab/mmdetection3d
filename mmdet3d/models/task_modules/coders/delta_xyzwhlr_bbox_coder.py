@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
 
@@ -13,12 +14,12 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
         code_size (int): The dimension of boxes to be encoded.
     """
 
-    def __init__(self, code_size=7):
+    def __init__(self, code_size: int = 7) -> None:
         super(DeltaXYZWLHRBBoxCoder, self).__init__()
         self.code_size = code_size
 
     @staticmethod
-    def encode(src_boxes, dst_boxes):
+    def encode(src_boxes: Tensor, dst_boxes: Tensor) -> Tensor:
         """Get box regression transformation deltas (dx, dy, dz, dx_size,
         dy_size, dz_size, dr, dv*) that can be used to transform the
         `src_boxes` into the `target_boxes`.
@@ -55,7 +56,7 @@ class DeltaXYZWLHRBBoxCoder(BaseBBoxCoder):
         return torch.cat([xt, yt, zt, wt, lt, ht, rt, *cts], dim=-1)
 
     @staticmethod
-    def decode(anchors, deltas):
+    def decode(anchors: Tensor, deltas: Tensor) -> Tensor:
         """Apply transformation `deltas` (dx, dy, dz, dx_size, dy_size,
         dz_size, dr, dv*) to `boxes`.
 

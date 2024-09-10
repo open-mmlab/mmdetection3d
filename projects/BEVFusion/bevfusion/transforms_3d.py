@@ -6,6 +6,7 @@ import torch
 from mmcv.transforms import BaseTransform
 from PIL import Image
 
+from mmdet3d.datasets import GlobalRotScaleTrans
 from mmdet3d.registry import TRANSFORMS
 
 
@@ -105,6 +106,84 @@ class ImageAug3D(BaseTransform):
         # update the calibration matrices
         data['img_aug_matrix'] = transforms
         return data
+
+
+@TRANSFORMS.register_module()
+class BEVFusionRandomFlip3D:
+    """Compared with `RandomFlip3D`, this class directly records the lidar
+    augmentation matrix in the `data`."""
+
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        flip_horizontal = np.random.choice([0, 1])
+        flip_vertical = np.random.choice([0, 1])
+
+        rotation = np.eye(3)
+        if flip_horizontal:
+            rotation = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]]) @ rotation
+            if 'points' in data:
+                data['points'].flip('horizontal')
+            if 'gt_bboxes_3d' in data:
+                data['gt_bboxes_3d'].flip('horizontal')
+            if 'gt_masks_bev' in data:
+                data['gt_masks_bev'] = data['gt_masks_bev'][:, :, ::-1].copy()
+
+        if flip_vertical:
+            rotation = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]]) @ rotation
+            if 'points' in data:
+                data['points'].flip('vertical')
+            if 'gt_bboxes_3d' in data:
+                data['gt_bboxes_3d'].flip('vertical')
+            if 'gt_masks_bev' in data:
+                data['gt_masks_bev'] = data['gt_masks_bev'][:, ::-1, :].copy()
+
+        if 'lidar_aug_matrix' not in data:
+            data['lidar_aug_matrix'] = np.eye(4)
+        data['lidar_aug_matrix'][:3, :] = rotation @ data[
+            'lidar_aug_matrix'][:3, :]
+        return data
+
+
+@TRANSFORMS.register_module()
+class BEVFusionGlobalRotScaleTrans(GlobalRotScaleTrans):
+    """Compared with `GlobalRotScaleTrans`, the augmentation order in this
+    class is rotation, translation and scaling (RTS)."""
+
+    def transform(self, input_dict: dict) -> dict:
+        """Private function to rotate, scale and translate bounding boxes and
+        points.
+
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Results after scaling, 'points', 'pcd_rotation',
+            'pcd_scale_factor', 'pcd_trans' and `gt_bboxes_3d` are updated
+            in the result dict.
+        """
+        if 'transformation_3d_flow' not in input_dict:
+            input_dict['transformation_3d_flow'] = []
+
+        self._rot_bbox_points(input_dict)
+
+        if 'pcd_scale_factor' not in input_dict:
+            self._random_scale(input_dict)
+        self._trans_bbox_points(input_dict)
+        self._scale_bbox_points(input_dict)
+
+        input_dict['transformation_3d_flow'].extend(['R', 'T', 'S'])
+
+        lidar_augs = np.eye(4)
+        lidar_augs[:3, :3] = input_dict['pcd_rotation'].T * input_dict[
+            'pcd_scale_factor']
+        lidar_augs[:3, 3] = input_dict['pcd_trans'] * \
+            input_dict['pcd_scale_factor']
+
+        if 'lidar_aug_matrix' not in input_dict:
+            input_dict['lidar_aug_matrix'] = np.eye(4)
+        input_dict[
+            'lidar_aug_matrix'] = lidar_augs @ input_dict['lidar_aug_matrix']
+
+        return input_dict
 
 
 @TRANSFORMS.register_module()

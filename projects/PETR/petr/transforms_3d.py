@@ -167,7 +167,7 @@ class GlobalRotScaleTransImage(BaseTransform):
 
         # TODO: support translation
         if not self.reverse_angle:
-            gt_bboxes_3d = results['gt_bboxes_3d'].tensor.numpy()
+            gt_bboxes_3d = results['gt_bboxes_3d'].numpy()
             gt_bboxes_3d[:, 6] -= 2 * rot_angle
             results['gt_bboxes_3d'] = LiDARInstance3DBoxes(
                 gt_bboxes_3d, box_dim=9)

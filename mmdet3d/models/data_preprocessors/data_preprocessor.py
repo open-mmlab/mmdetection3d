@@ -1,13 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
 from numbers import Number
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from mmdet.models import DetDataPreprocessor
+from mmdet.models.utils.misc import samplelist_boxtype2tensor
 from mmengine.model import stack_batch
-from mmengine.utils import is_list_of
+from mmengine.utils import is_seq_of
+from torch import Tensor
 from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
@@ -27,48 +29,56 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
     - Collate and move image and point cloud data to the target device.
 
     - 1) For image data:
-    - Pad images in inputs to the maximum size of current batch with defined
-      ``pad_value``. The padding size can be divisible by a defined
-      ``pad_size_divisor``.
-    - Stack images in inputs to batch_imgs.
-    - Convert images in inputs from bgr to rgb if the shape of input is
-      (3, H, W).
-    - Normalize images in inputs with defined std and mean.
-    - Do batch augmentations during training.
+
+      - Pad images in inputs to the maximum size of current batch with defined
+        ``pad_value``. The padding size can be divisible by a defined
+        ``pad_size_divisor``.
+      - Stack images in inputs to batch_imgs.
+      - Convert images in inputs from bgr to rgb if the shape of input is
+        (3, H, W).
+      - Normalize images in inputs with defined std and mean.
+      - Do batch augmentations during training.
 
     - 2) For point cloud data:
-    - If no voxelization, directly return list of point cloud data.
-    - If voxelization is applied, voxelize point cloud according to
-      ``voxel_type`` and obtain ``voxels``.
+
+      - If no voxelization, directly return list of point cloud data.
+      - If voxelization is applied, voxelize point cloud according to
+        ``voxel_type`` and obtain ``voxels``.
 
     Args:
         voxel (bool): Whether to apply voxelization to point cloud.
             Defaults to False.
         voxel_type (str): Voxelization type. Two voxelization types are
-            provided: 'hard' and 'dynamic', respectively for hard
-            voxelization and dynamic voxelization. Defaults to 'hard'.
+            provided: 'hard' and 'dynamic', respectively for hard voxelization
+            and dynamic voxelization. Defaults to 'hard'.
         voxel_layer (dict or :obj:`ConfigDict`, optional): Voxelization layer
             config. Defaults to None.
+        batch_first (bool): Whether to put the batch dimension to the first
+            dimension when getting voxel coordinates. Defaults to True.
+        max_voxels (int, optional): Maximum number of voxels in each voxel
+            grid. Defaults to None.
         mean (Sequence[Number], optional): The pixel mean of R, G, B channels.
             Defaults to None.
         std (Sequence[Number], optional): The pixel standard deviation of
             R, G, B channels. Defaults to None.
-        pad_size_divisor (int): The size of padded image should be
-            divisible by ``pad_size_divisor``. Defaults to 1.
-        pad_value (Number): The padded pixel value. Defaults to 0.
+        pad_size_divisor (int): The size of padded image should be divisible by
+            ``pad_size_divisor``. Defaults to 1.
+        pad_value (float or int): The padded pixel value. Defaults to 0.
         pad_mask (bool): Whether to pad instance masks. Defaults to False.
         mask_pad_value (int): The padded pixel value for instance masks.
             Defaults to 0.
         pad_seg (bool): Whether to pad semantic segmentation maps.
             Defaults to False.
-        seg_pad_value (int): The padded pixel value for semantic
-            segmentation maps. Defaults to 255.
+        seg_pad_value (int): The padded pixel value for semantic segmentation
+            maps. Defaults to 255.
         bgr_to_rgb (bool): Whether to convert image from BGR to RGB.
             Defaults to False.
         rgb_to_bgr (bool): Whether to convert image from RGB to BGR.
             Defaults to False.
-        boxtype2tensor (bool): Whether to keep the ``BaseBoxes`` type of
-            bboxes data or not. Defaults to True.
+        boxtype2tensor (bool): Whether to convert the ``BaseBoxes`` type of
+            bboxes data to ``Tensor`` type. Defaults to True.
+        non_blocking (bool): Whether to block current process when transferring
+            data to device. Defaults to False.
         batch_augments (List[dict], optional): Batch-level augmentations.
             Defaults to None.
     """
@@ -77,6 +87,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  voxel: bool = False,
                  voxel_type: str = 'hard',
                  voxel_layer: OptConfigType = None,
+                 batch_first: bool = True,
+                 max_voxels: Optional[int] = None,
                  mean: Sequence[Number] = None,
                  std: Sequence[Number] = None,
                  pad_size_divisor: int = 1,
@@ -88,6 +100,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                  bgr_to_rgb: bool = False,
                  rgb_to_bgr: bool = False,
                  boxtype2tensor: bool = True,
+                 non_blocking: bool = False,
                  batch_augments: Optional[List[dict]] = None) -> None:
         super(Det3DDataPreprocessor, self).__init__(
             mean=mean,
@@ -100,9 +113,13 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             seg_pad_value=seg_pad_value,
             bgr_to_rgb=bgr_to_rgb,
             rgb_to_bgr=rgb_to_bgr,
+            boxtype2tensor=boxtype2tensor,
+            non_blocking=non_blocking,
             batch_augments=batch_augments)
         self.voxel = voxel
         self.voxel_type = voxel_type
+        self.batch_first = batch_first
+        self.max_voxels = max_voxels
         if voxel:
             self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
 
@@ -113,9 +130,9 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         ``BaseDataPreprocessor``.
 
         Args:
-            data (dict or List[dict]): Data from dataloader.
-                The dict contains the whole batch data, when it is
-                a list[dict], the list indicate test time augmentation.
+            data (dict or List[dict]): Data from dataloader. The dict contains
+                the whole batch data, when it is a list[dict], the list
+                indicates test time augmentation.
             training (bool): Whether to enable training time augmentation.
                 Defaults to False.
 
@@ -176,17 +193,10 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                         'pad_shape': pad_shape
                     })
 
-                if hasattr(self, 'boxtype2tensor') and self.boxtype2tensor:
-                    from mmdet.models.utils.misc import \
-                        samplelist_boxtype2tensor
+                if self.boxtype2tensor:
                     samplelist_boxtype2tensor(data_samples)
-                elif hasattr(self, 'boxlist2tensor') and self.boxlist2tensor:
-                    from mmdet.models.utils.misc import \
-                        samplelist_boxlist2tensor
-                    samplelist_boxlist2tensor(data_samples)
                 if self.pad_mask:
                     self.pad_gt_masks(data_samples)
-
                 if self.pad_seg:
                     self.pad_gt_sem_seg(data_samples)
 
@@ -197,7 +207,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         return {'inputs': batch_inputs, 'data_samples': data_samples}
 
-    def preprocess_img(self, _batch_img: torch.Tensor) -> torch.Tensor:
+    def preprocess_img(self, _batch_img: Tensor) -> Tensor:
         # channel transform
         if self._channel_conversion:
             _batch_img = _batch_img[[2, 1, 0], ...]
@@ -215,12 +225,11 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         return _batch_img
 
     def collate_data(self, data: dict) -> dict:
-        """Copying data to the target device and Performs normalization,
-        padding and bgr2rgb conversion and stack based on
-        ``BaseDataPreprocessor``.
+        """Copy data to the target device and perform normalization, padding
+        and bgr2rgb conversion and stack based on ``BaseDataPreprocessor``.
 
-        Collates the data sampled from dataloader into a list of dict and
-        list of labels, and then copies tensor to the target device.
+        Collates the data sampled from dataloader into a list of dict and list
+        of labels, and then copies tensor to the target device.
 
         Args:
             data (dict): Data sampled from dataloader.
@@ -233,7 +242,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         if 'img' in data['inputs']:
             _batch_imgs = data['inputs']['img']
             # Process data with `pseudo_collate`.
-            if is_list_of(_batch_imgs, torch.Tensor):
+            if is_seq_of(_batch_imgs, torch.Tensor):
                 batch_imgs = []
                 img_dim = _batch_imgs[0].dim()
                 for _batch_img in _batch_imgs:
@@ -281,7 +290,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             else:
                 raise TypeError(
                     'Output of `cast_data` should be a list of dict '
-                    'or a tuple with inputs and data_samples, but got'
+                    'or a tuple with inputs and data_samples, but got '
                     f'{type(data)}: {data}')
 
             data['inputs']['imgs'] = batch_imgs
@@ -290,13 +299,13 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         return data
 
-    def _get_pad_shape(self, data: dict) -> List[tuple]:
+    def _get_pad_shape(self, data: dict) -> List[Tuple[int, int]]:
         """Get the pad_shape of each image based on data and
         pad_size_divisor."""
         # rewrite `_get_pad_shape` for obtaining image inputs.
         _batch_inputs = data['inputs']['img']
         # Process data with `pseudo_collate`.
-        if is_list_of(_batch_inputs, torch.Tensor):
+        if is_seq_of(_batch_inputs, torch.Tensor):
             batch_pad_shape = []
             for ori_input in _batch_inputs:
                 if ori_input.dim() == 4:
@@ -330,8 +339,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         return batch_pad_shape
 
     @torch.no_grad()
-    def voxelize(self, points: List[torch.Tensor],
-                 data_samples: SampleList) -> Dict[str, torch.Tensor]:
+    def voxelize(self, points: List[Tensor],
+                 data_samples: SampleList) -> Dict[str, Tensor]:
         """Apply voxelization to point cloud.
 
         Args:
@@ -423,20 +432,28 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 res_coors -= res_coors.min(0)[0]
 
                 res_coors_numpy = res_coors.cpu().numpy()
-                inds, voxel2point_map = self.sparse_quantize(
+                inds, point2voxel_map = self.sparse_quantize(
                     res_coors_numpy, return_index=True, return_inverse=True)
-                voxel2point_map = torch.from_numpy(voxel2point_map).cuda()
-                if self.training:
-                    if len(inds) > 80000:
-                        inds = np.random.choice(inds, 80000, replace=False)
+                point2voxel_map = torch.from_numpy(point2voxel_map).cuda()
+                if self.training and self.max_voxels is not None:
+                    if len(inds) > self.max_voxels:
+                        inds = np.random.choice(
+                            inds, self.max_voxels, replace=False)
                 inds = torch.from_numpy(inds).cuda()
-                data_sample.gt_pts_seg.voxel_semantic_mask \
-                    = data_sample.gt_pts_seg.pts_semantic_mask[inds]
+                if hasattr(data_sample.gt_pts_seg, 'pts_semantic_mask'):
+                    data_sample.gt_pts_seg.voxel_semantic_mask \
+                        = data_sample.gt_pts_seg.pts_semantic_mask[inds]
                 res_voxel_coors = res_coors[inds]
                 res_voxels = res[inds]
-                res_voxel_coors = F.pad(
-                    res_voxel_coors, (0, 1), mode='constant', value=i)
-                data_sample.voxel2point_map = voxel2point_map.long()
+                if self.batch_first:
+                    res_voxel_coors = F.pad(
+                        res_voxel_coors, (1, 0), mode='constant', value=i)
+                    data_sample.batch_idx = res_voxel_coors[:, 0]
+                else:
+                    res_voxel_coors = F.pad(
+                        res_voxel_coors, (0, 1), mode='constant', value=i)
+                    data_sample.batch_idx = res_voxel_coors[:, -1]
+                data_sample.point2voxel_map = point2voxel_map.long()
                 voxels.append(res_voxels)
                 coors.append(res_voxel_coors)
             voxels = torch.cat(voxels, dim=0)
@@ -450,7 +467,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         return voxel_dict
 
-    def get_voxel_seg(self, res_coors: torch.Tensor, data_sample: SampleList):
+    def get_voxel_seg(self, res_coors: Tensor,
+                      data_sample: SampleList) -> None:
         """Get voxel-wise segmentation label and point2voxel map.
 
         Args:
@@ -466,15 +484,15 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 True)
             voxel_semantic_mask = torch.argmax(voxel_semantic_mask, dim=-1)
             data_sample.gt_pts_seg.voxel_semantic_mask = voxel_semantic_mask
-            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+            data_sample.point2voxel_map = point2voxel_map
         else:
             pseudo_tensor = res_coors.new_ones([res_coors.shape[0], 1]).float()
             _, _, point2voxel_map = dynamic_scatter_3d(pseudo_tensor,
                                                        res_coors, 'mean', True)
-            data_sample.gt_pts_seg.point2voxel_map = point2voxel_map
+            data_sample.point2voxel_map = point2voxel_map
 
     def ravel_hash(self, x: np.ndarray) -> np.ndarray:
-        """Get voxel coordinates hash for np.unique().
+        """Get voxel coordinates hash for np.unique.
 
         Args:
             x (np.ndarray): The voxel coordinates of points, Nx3.
@@ -503,14 +521,14 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
 
         Args:
             coords (np.ndarray): The voxel coordinates of points, Nx3.
-            return_index (bool): Whether to return the indices of the
-                unique coords, shape (M,).
+            return_index (bool): Whether to return the indices of the unique
+                coords, shape (M,).
             return_inverse (bool): Whether to return the indices of the
-                original coords shape (N,).
+                original coords, shape (N,).
 
         Returns:
-            List[np.ndarray] or None: Return index and inverse map if
-            return_index and return_inverse is True.
+            List[np.ndarray]: Return index and inverse map if return_index and
+            return_inverse is True.
         """
         _, indices, inverse_indices = np.unique(
             self.ravel_hash(coords), return_index=True, return_inverse=True)

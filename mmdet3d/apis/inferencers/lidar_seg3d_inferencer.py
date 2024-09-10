@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Sequence, Union
 import mmengine
 import numpy as np
 from mmengine.dataset import Compose
+from mmengine.fileio import (get_file_backend, isdir, join_path,
+                             list_dir_or_file)
 from mmengine.infer.infer import ModelType
 from mmengine.structures import InstanceData
 
@@ -43,16 +45,6 @@ class LidarSeg3DInferencer(Base3DInferencer):
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
 
-    preprocess_kwargs: set = set()
-    forward_kwargs: set = set()
-    visualize_kwargs: set = {
-        'return_vis', 'show', 'wait_time', 'draw_pred', 'pred_score_thr',
-        'img_out_dir'
-    }
-    postprocess_kwargs: set = {
-        'print_result', 'pred_out_file', 'return_datasample'
-    }
-
     def __init__(self,
                  model: Union[ModelType, str, None] = None,
                  weights: Optional[str] = None,
@@ -69,7 +61,7 @@ class LidarSeg3DInferencer(Base3DInferencer):
             scope=scope,
             palette=palette)
 
-    def _inputs_to_list(self, inputs: Union[dict, list]) -> list:
+    def _inputs_to_list(self, inputs: Union[dict, list], **kwargs) -> list:
         """Preprocess the inputs to a list.
 
         Preprocess inputs to a list according to its type:
@@ -87,7 +79,22 @@ class LidarSeg3DInferencer(Base3DInferencer):
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
-        return super()._inputs_to_list(inputs, modality_key='points')
+        if isinstance(inputs, dict) and isinstance(inputs['points'], str):
+            pcd = inputs['points']
+            backend = get_file_backend(pcd)
+            if hasattr(backend, 'isdir') and isdir(pcd):
+                # Backends like HttpsBackend do not implement `isdir`, so
+                # only those backends that implement `isdir` could accept
+                # the inputs as a directory
+                filename_list = list_dir_or_file(pcd, list_dir=False)
+                inputs = [{
+                    'points': join_path(pcd, filename)
+                } for filename in filename_list]
+
+        if not isinstance(inputs, (list, tuple)):
+            inputs = [inputs]
+
+        return list(inputs)
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
@@ -124,6 +131,7 @@ class LidarSeg3DInferencer(Base3DInferencer):
                   wait_time: int = 0,
                   draw_pred: bool = True,
                   pred_score_thr: float = 0.3,
+                  no_save_vis: bool = False,
                   img_out_dir: str = '') -> Union[List[np.ndarray], None]:
         """Visualize predictions.
 
@@ -139,6 +147,7 @@ class LidarSeg3DInferencer(Base3DInferencer):
                 Defaults to True.
             pred_score_thr (float): Minimum score of bboxes to draw.
                 Defaults to 0.3.
+            no_save_vis (bool): Whether to save visualization results.
             img_out_dir (str): Output directory of visualization results.
                 If left as empty, no file will be saved. Defaults to ''.
 
@@ -146,8 +155,10 @@ class LidarSeg3DInferencer(Base3DInferencer):
             List[np.ndarray] or None: Returns visualization results only if
             applicable.
         """
-        if self.visualizer is None or (not show and img_out_dir == ''
-                                       and not return_vis):
+        if no_save_vis is True:
+            img_out_dir = ''
+
+        if not show and img_out_dir == '' and not return_vis:
             return None
 
         if getattr(self, 'visualizer') is None:
@@ -168,13 +179,16 @@ class LidarSeg3DInferencer(Base3DInferencer):
             elif isinstance(single_input, np.ndarray):
                 points = single_input.copy()
                 pc_num = str(self.num_visualized_frames).zfill(8)
-                pc_name = f'pc_{pc_num}.png'
+                pc_name = f'{pc_num}.png'
             else:
                 raise ValueError('Unsupported input type: '
                                  f'{type(single_input)}')
 
-            o3d_save_path = osp.join(img_out_dir, pc_name) \
-                if img_out_dir != '' else None
+            if img_out_dir != '' and show:
+                o3d_save_path = osp.join(img_out_dir, 'vis_lidar', pc_name)
+                mmengine.mkdir_or_exist(osp.dirname(o3d_save_path))
+            else:
+                o3d_save_path = None
 
             data_input = dict(points=points)
             self.visualizer.add_datasample(

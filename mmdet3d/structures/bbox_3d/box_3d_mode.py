@@ -1,8 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from enum import IntEnum, unique
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import torch
+from torch import Tensor
 
 from .base_box3d import BaseInstance3DBoxes
 from .cam_box3d import CameraInstance3DBoxes
@@ -13,7 +15,7 @@ from .utils import limit_period
 
 @unique
 class Box3DMode(IntEnum):
-    r"""Enum of different ways to represent a box.
+    """Enum of different ways to represent a box.
 
     Coordinates in LiDAR:
 
@@ -28,7 +30,7 @@ class Box3DMode(IntEnum):
     The relative coordinate of bottom center in a LiDAR box is (0.5, 0.5, 0),
     and the yaw is around the z axis, thus the rotation axis=2.
 
-    Coordinates in camera:
+    Coordinates in Camera:
 
     .. code-block:: none
 
@@ -44,7 +46,7 @@ class Box3DMode(IntEnum):
     The relative coordinate of bottom center in a CAM box is (0.5, 1.0, 0.5),
     and the yaw is around the y axis, thus the rotation axis=1.
 
-    Coordinates in Depth mode:
+    Coordinates in Depth:
 
     .. code-block:: none
 
@@ -63,30 +65,37 @@ class Box3DMode(IntEnum):
     DEPTH = 2
 
     @staticmethod
-    def convert(box, src, dst, rt_mat=None, with_yaw=True, correct_yaw=False):
-        """Convert boxes from `src` mode to `dst` mode.
+    def convert(
+        box: Union[Sequence[float], np.ndarray, Tensor, BaseInstance3DBoxes],
+        src: 'Box3DMode',
+        dst: 'Box3DMode',
+        rt_mat: Optional[Union[np.ndarray, Tensor]] = None,
+        with_yaw: bool = True,
+        correct_yaw: bool = False
+    ) -> Union[Sequence[float], np.ndarray, Tensor, BaseInstance3DBoxes]:
+        """Convert boxes from ``src`` mode to ``dst`` mode.
 
         Args:
-            box (tuple | list | np.ndarray |
-                torch.Tensor | :obj:`BaseInstance3DBoxes`):
-                Can be a k-tuple, k-list or an Nxk array/tensor, where k = 7.
-            src (:obj:`Box3DMode`): The src Box mode.
-            dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            box (Sequence[float] or np.ndarray or Tensor or
+                :obj:`BaseInstance3DBoxes`): Can be a k-tuple, k-list or an Nxk
+                array/tensor.
+            src (:obj:`Box3DMode`): The source box mode.
+            dst (:obj:`Box3DMode`): The target box mode.
+            rt_mat (np.ndarray or Tensor, optional): The rotation and
                 translation matrix between different coordinates.
-                Defaults to None.
-                The conversion from `src` coordinates to `dst` coordinates
-                usually comes along the change of sensors, e.g., from camera
-                to LiDAR. This requires a transformation matrix.
-            with_yaw (bool, optional): If `box` is an instance of
+                Defaults to None. The conversion from ``src`` coordinates to
+                ``dst`` coordinates usually comes along the change of sensors,
+                e.g., from camera to LiDAR. This requires a transformation
+                matrix.
+            with_yaw (bool): If ``box`` is an instance of
                 :obj:`BaseInstance3DBoxes`, whether or not it has a yaw angle.
                 Defaults to True.
             correct_yaw (bool): If the yaw is rotated by rt_mat.
+                Defaults to False.
 
         Returns:
-            (tuple | list | np.ndarray | torch.Tensor |
-                :obj:`BaseInstance3DBoxes`):
-                The converted box of the same type.
+            Sequence[float] or np.ndarray or Tensor or
+            :obj:`BaseInstance3DBoxes`: The converted box of the same type.
         """
         if src == dst:
             return box
@@ -208,7 +217,7 @@ class Box3DMode(IntEnum):
                 f'Conversion from Box3DMode {src} to {dst} '
                 'is not supported yet')
 
-        if not isinstance(rt_mat, torch.Tensor):
+        if not isinstance(rt_mat, Tensor):
             rt_mat = arr.new_tensor(rt_mat)
         if rt_mat.size(1) == 4:
             extended_xyz = torch.cat(
@@ -251,8 +260,8 @@ class Box3DMode(IntEnum):
                 target_type = DepthInstance3DBoxes
             else:
                 raise NotImplementedError(
-                    f'Conversion to {dst} through {original_type}'
-                    ' is not supported yet')
+                    f'Conversion to {dst} through {original_type} '
+                    'is not supported yet')
             return target_type(arr, box_dim=arr.size(-1), with_yaw=with_yaw)
         else:
             return arr

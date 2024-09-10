@@ -75,7 +75,8 @@ class Pack3DDetInputs(BaseTransform):
                             'affine_aug', 'sweep_img_metas', 'ori_cam2img',
                             'cam2global', 'crop_offset', 'img_crop_offset',
                             'resize_img_shape', 'lidar2cam', 'ori_lidar2img',
-                            'num_ref_frames', 'num_views', 'ego2global')
+                            'num_ref_frames', 'num_views', 'ego2global',
+                            'axis_align_matrix')
     ) -> None:
         self.keys = keys
         self.meta_keys = meta_keys
@@ -195,11 +196,29 @@ class Pack3DDetInputs(BaseTransform):
         gt_instances = InstanceData()
         gt_pts_seg = PointData()
 
-        img_metas = {}
+        data_metas = {}
         for key in self.meta_keys:
             if key in results:
-                img_metas[key] = results[key]
-        data_sample.set_metainfo(img_metas)
+                data_metas[key] = results[key]
+            elif 'images' in results:
+                if len(results['images'].keys()) == 1:
+                    cam_type = list(results['images'].keys())[0]
+                    # single-view image
+                    if key in results['images'][cam_type]:
+                        data_metas[key] = results['images'][cam_type][key]
+                else:
+                    # multi-view image
+                    img_metas = []
+                    cam_types = list(results['images'].keys())
+                    for cam_type in cam_types:
+                        if key in results['images'][cam_type]:
+                            img_metas.append(results['images'][cam_type][key])
+                    if len(img_metas) > 0:
+                        data_metas[key] = img_metas
+            elif 'lidar_points' in results:
+                if key in results['lidar_points']:
+                    data_metas[key] = results['lidar_points'][key]
+        data_sample.set_metainfo(data_metas)
 
         inputs = {}
         for key in self.keys:

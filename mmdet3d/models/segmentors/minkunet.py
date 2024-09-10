@@ -1,15 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from torch import Tensor
 
-from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import OptSampleList, SampleList
 from .encoder_decoder import EncoderDecoder3D
-
-if IS_TORCHSPARSE_AVAILABLE:
-    from torchsparse import SparseTensor
-else:
-    SparseTensor = None
 
 
 @MODELS.register_module()
@@ -25,9 +19,6 @@ class MinkUNet(EncoderDecoder3D):
     """
 
     def __init__(self, **kwargs) -> None:
-        if not IS_TORCHSPARSE_AVAILABLE:
-            raise ImportError(
-                'Please follow `get_started.md` to install Torchsparse.`')
         super().__init__(**kwargs)
 
     def loss(self, inputs: dict, data_samples: SampleList):
@@ -50,7 +41,8 @@ class MinkUNet(EncoderDecoder3D):
         losses = self.decode_head.loss(x, data_samples, self.train_cfg)
         return losses
 
-    def predict(self, inputs: dict, data_samples: SampleList) -> SampleList:
+    def predict(self, inputs: dict,
+                batch_data_samples: SampleList) -> SampleList:
         """Simple test with single scene.
 
         Args:
@@ -67,14 +59,17 @@ class MinkUNet(EncoderDecoder3D):
             List[:obj:`Det3DDataSample`]: Segmentation results of the input
             points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+            - ``pred_pts_seg`` (PointData): Prediction of 3D semantic
               segmentation.
+            - ``pts_seg_logits`` (PointData): Predicted logits of 3D semantic
+              segmentation before normalization.
         """
         x = self.extract_feat(inputs)
-        seg_logits = self.decode_head.predict(x, data_samples)
-        seg_preds = [seg_logit.argmax(dim=1) for seg_logit in seg_logits]
+        seg_logits_list = self.decode_head.predict(x, batch_data_samples)
+        for i in range(len(seg_logits_list)):
+            seg_logits_list[i] = seg_logits_list[i].transpose(0, 1)
 
-        return self.postprocess_result(seg_preds, data_samples)
+        return self.postprocess_result(seg_logits_list, batch_data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,
@@ -97,7 +92,7 @@ class MinkUNet(EncoderDecoder3D):
         x = self.extract_feat(batch_inputs_dict)
         return self.decode_head.forward(x)
 
-    def extract_feat(self, batch_inputs_dict: dict) -> SparseTensor:
+    def extract_feat(self, batch_inputs_dict: dict) -> Tensor:
         """Extract features from voxels.
 
         Args:

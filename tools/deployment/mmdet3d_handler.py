@@ -105,10 +105,10 @@ class MMdet3dHandler(BaseHandler):
         for pts_index, result in enumerate(data):
             output.append([])
             if 'pts_bbox' in result.keys():
-                pred_bboxes = result['pts_bbox']['boxes_3d'].tensor.numpy()
+                pred_bboxes = result['pts_bbox']['boxes_3d'].numpy()
                 pred_scores = result['pts_bbox']['scores_3d'].numpy()
             else:
-                pred_bboxes = result['boxes_3d'].tensor.numpy()
+                pred_bboxes = result['boxes_3d'].numpy()
                 pred_scores = result['scores_3d'].numpy()
 
             index = pred_scores > self.threshold

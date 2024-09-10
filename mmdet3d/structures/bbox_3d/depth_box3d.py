@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Tuple, Union
+
 import numpy as np
 import torch
+from torch import Tensor
 
 from mmdet3d.structures.points import BasePoints
 from .base_box3d import BaseInstance3DBoxes
@@ -8,68 +11,54 @@ from .utils import rotation_3d_in_axis
 
 
 class DepthInstance3DBoxes(BaseInstance3DBoxes):
-    """3D boxes of instances in Depth coordinates.
+    """3D boxes of instances in DEPTH coordinates.
 
     Coordinates in Depth:
 
     .. code-block:: none
 
-                    up z    y front (yaw=0.5*pi)
-                       ^   ^
-                       |  /
-                       | /
-                       0 ------> x right (yaw=0)
+        up z    y front (yaw=0.5*pi)
+           ^   ^
+           |  /
+           | /
+           0 ------> x right (yaw=0)
 
     The relative coordinate of bottom center in a Depth box is (0.5, 0.5, 0),
-    and the yaw is around the z axis, thus the rotation axis=2.
-    The yaw is 0 at the positive direction of x axis, and decreases from
-    the positive direction of x to the positive direction of y.
-    Also note that rotation of DepthInstance3DBoxes is counterclockwise,
-    which is reverse to the definition of the yaw angle (clockwise).
-
-    A refactor is ongoing to make the three coordinate systems
-    easier to understand and convert between each other.
+    and the yaw is around the z axis, thus the rotation axis=2. The yaw is 0 at
+    the positive direction of x axis, and increases from the positive direction
+    of x to the positive direction of y.
 
     Attributes:
-        tensor (torch.Tensor): Float matrix of N x box_dim.
-        box_dim (int): Integer indicates the dimension of a box
-            Each row is (x, y, z, x_size, y_size, z_size, yaw, ...).
+        tensor (Tensor): Float matrix with shape (N, box_dim).
+        box_dim (int): Integer indicating the dimension of a box. Each row is
+            (x, y, z, x_size, y_size, z_size, yaw, ...).
         with_yaw (bool): If True, the value of yaw will be set to 0 as minmax
             boxes.
     """
     YAW_AXIS = 2
 
     @property
-    def gravity_center(self):
-        """torch.Tensor: A tensor with center of each box in shape (N, 3)."""
-        bottom_center = self.bottom_center
-        gravity_center = torch.zeros_like(bottom_center)
-        gravity_center[:, :2] = bottom_center[:, :2]
-        gravity_center[:, 2] = bottom_center[:, 2] + self.tensor[:, 5] * 0.5
-        return gravity_center
-
-    @property
-    def corners(self):
-        """torch.Tensor: Coordinates of corners of all the boxes
-        in shape (N, 8, 3).
-
-        Convert the boxes to corners in clockwise order, in form of
-        ``(x0y0z0, x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0)``
+    def corners(self) -> Tensor:
+        """Convert boxes to corners in clockwise order, in the form of (x0y0z0,
+        x0y0z1, x0y1z1, x0y1z0, x1y0z0, x1y0z1, x1y1z1, x1y1z0).
 
         .. code-block:: none
 
-                                           up z
-                            front y           ^
-                                 /            |
-                                /             |
-                  (x0, y1, z1) + -----------  + (x1, y1, z1)
-                              /|            / |
-                             / |           /  |
-               (x0, y0, z1) + ----------- +   + (x1, y1, z0)
-                            |  /      .   |  /
-                            | / origin    | /
-               (x0, y0, z0) + ----------- + --------> right x
-                                          (x1, y0, z0)
+                                        up z
+                         front y           ^
+                              /            |
+                             /             |
+               (x0, y1, z1) + -----------  + (x1, y1, z1)
+                           /|            / |
+                          / |           /  |
+            (x0, y0, z1) + ----------- +   + (x1, y1, z0)
+                         |  /      .   |  /
+                         | / origin    | /
+            (x0, y0, z0) + ----------- + --------> right x
+                                       (x1, y0, z0)
+
+        Returns:
+            Tensor: A tensor with 8 corners of each box in shape (N, 8, 3).
         """
         if self.tensor.numel() == 0:
             return torch.empty([0, 8, 3], device=self.tensor.device)
@@ -90,22 +79,27 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         corners += self.tensor[:, :3].view(-1, 1, 3)
         return corners
 
-    def rotate(self, angle, points=None):
+    def rotate(
+        self,
+        angle: Union[Tensor, np.ndarray, float],
+        points: Optional[Union[Tensor, np.ndarray, BasePoints]] = None
+    ) -> Union[Tuple[Tensor, Tensor], Tuple[np.ndarray, np.ndarray], Tuple[
+            BasePoints, Tensor], None]:
         """Rotate boxes with points (optional) with the given angle or rotation
         matrix.
 
         Args:
-            angle (float | torch.Tensor | np.ndarray):
-                Rotation angle or rotation matrix.
-            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
+            angle (Tensor or np.ndarray or float): Rotation angle or rotation
+                matrix.
+            points (Tensor or np.ndarray or :obj:`BasePoints`, optional):
                 Points to rotate. Defaults to None.
 
         Returns:
-            tuple or None: When ``points`` is None, the function returns
-                None, otherwise it returns the rotated points and the
-                rotation matrix ``rot_mat_T``.
+            tuple or None: When ``points`` is None, the function returns None,
+            otherwise it returns the rotated points and the rotation matrix
+            ``rot_mat_T``.
         """
-        if not isinstance(angle, torch.Tensor):
+        if not isinstance(angle, Tensor):
             angle = self.tensor.new_tensor(angle)
 
         assert angle.shape == torch.Size([3, 3]) or angle.numel() == 1, \
@@ -139,7 +133,7 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
             self.tensor[:, 3:5] = torch.cat((new_x_size, new_y_size), dim=-1)
 
         if points is not None:
-            if isinstance(points, torch.Tensor):
+            if isinstance(points, Tensor):
                 points[:, :3] = points[:, :3] @ rot_mat_T
             elif isinstance(points, np.ndarray):
                 rot_mat_T = rot_mat_T.cpu().numpy()
@@ -150,19 +144,25 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 raise ValueError
             return points, rot_mat_T
 
-    def flip(self, bev_direction='horizontal', points=None):
+    def flip(
+        self,
+        bev_direction: str = 'horizontal',
+        points: Optional[Union[Tensor, np.ndarray, BasePoints]] = None
+    ) -> Union[Tensor, np.ndarray, BasePoints, None]:
         """Flip the boxes in BEV along given BEV direction.
 
-        In Depth coordinates, it flips x (horizontal) or y (vertical) axis.
+        In Depth coordinates, it flips the x (horizontal) or y (vertical) axis.
 
         Args:
-            bev_direction (str, optional): Flip direction
-                (horizontal or vertical). Defaults to 'horizontal'.
-            points (torch.Tensor | np.ndarray | :obj:`BasePoints`, optional):
+            bev_direction (str): Direction by which to flip. Can be chosen from
+                'horizontal' and 'vertical'. Defaults to 'horizontal'.
+            points (Tensor or np.ndarray or :obj:`BasePoints`, optional):
                 Points to flip. Defaults to None.
 
         Returns:
-            torch.Tensor, numpy.ndarray or None: Flipped points.
+            Tensor or np.ndarray or :obj:`BasePoints` or None: When ``points``
+            is None, the function returns None, otherwise it returns the
+            flipped points.
         """
         assert bev_direction in ('horizontal', 'vertical')
         if bev_direction == 'horizontal':
@@ -175,8 +175,8 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 self.tensor[:, 6] = -self.tensor[:, 6]
 
         if points is not None:
-            assert isinstance(points, (torch.Tensor, np.ndarray, BasePoints))
-            if isinstance(points, (torch.Tensor, np.ndarray)):
+            assert isinstance(points, (Tensor, np.ndarray, BasePoints))
+            if isinstance(points, (Tensor, np.ndarray)):
                 if bev_direction == 'horizontal':
                     points[:, 0] = -points[:, 0]
                 elif bev_direction == 'vertical':
@@ -185,31 +185,41 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
                 points.flip(bev_direction)
             return points
 
-    def convert_to(self, dst, rt_mat=None):
+    def convert_to(self,
+                   dst: int,
+                   rt_mat: Optional[Union[Tensor, np.ndarray]] = None,
+                   correct_yaw: bool = False) -> 'BaseInstance3DBoxes':
         """Convert self to ``dst`` mode.
 
         Args:
-            dst (:obj:`Box3DMode`): The target Box mode.
-            rt_mat (np.ndarray | torch.Tensor, optional): The rotation and
+            dst (int): The target Box mode.
+            rt_mat (Tensor or np.ndarray, optional): The rotation and
                 translation matrix between different coordinates.
-                Defaults to None.
-                The conversion from ``src`` coordinates to ``dst`` coordinates
-                usually comes along the change of sensors, e.g., from camera
-                to LiDAR. This requires a transformation matrix.
+                Defaults to None. The conversion from ``src`` coordinates to
+                ``dst`` coordinates usually comes along the change of sensors,
+                e.g., from camera to LiDAR. This requires a transformation
+                matrix.
+            correct_yaw (bool): Whether to convert the yaw angle to the target
+                coordinate. Defaults to False.
 
         Returns:
-            :obj:`DepthInstance3DBoxes`:
-                The converted box of the same type in the ``dst`` mode.
+            :obj:`BaseInstance3DBoxes`: The converted box of the same type in
+            the ``dst`` mode.
         """
         from .box_3d_mode import Box3DMode
         return Box3DMode.convert(
-            box=self, src=Box3DMode.DEPTH, dst=dst, rt_mat=rt_mat)
+            box=self,
+            src=Box3DMode.DEPTH,
+            dst=dst,
+            rt_mat=rt_mat,
+            correct_yaw=correct_yaw)
 
-    def enlarged_box(self, extra_width):
-        """Enlarge the length, width and height boxes.
+    def enlarged_box(
+            self, extra_width: Union[float, Tensor]) -> 'DepthInstance3DBoxes':
+        """Enlarge the length, width and height of boxes.
 
         Args:
-            extra_width (float | torch.Tensor): Extra width to enlarge the box.
+            extra_width (float or Tensor): Extra width to enlarge the box.
 
         Returns:
             :obj:`DepthInstance3DBoxes`: Enlarged boxes.
@@ -220,11 +230,11 @@ class DepthInstance3DBoxes(BaseInstance3DBoxes):
         enlarged_boxes[:, 2] -= extra_width
         return self.new_box(enlarged_boxes)
 
-    def get_surface_line_center(self):
+    def get_surface_line_center(self) -> Tuple[Tensor, Tensor]:
         """Compute surface and line center of bounding boxes.
 
         Returns:
-            torch.Tensor: Surface and line center of bounding boxes.
+            Tuple[Tensor, Tensor]: Surface and line center of bounding boxes.
         """
         obj_size = self.dims
         center = self.gravity_center.view(-1, 1, 3)

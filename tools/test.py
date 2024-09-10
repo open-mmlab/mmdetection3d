@@ -3,7 +3,7 @@ import argparse
 import os
 import os.path as osp
 
-from mmengine.config import Config, DictAction
+from mmengine.config import Config, ConfigDict, DictAction
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
 
@@ -29,6 +29,8 @@ def parse_args():
         'If specified, it will be automatically saved '
         'to the work_dir/timestamp/show_dir')
     parser.add_argument(
+        '--score-thr', type=float, default=0.1, help='bbox score threshold')
+    parser.add_argument(
         '--task',
         type=str,
         choices=[
@@ -53,7 +55,12 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument(
+        '--tta', action='store_true', help='Test time augmentation')
+    # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
+    # will pass the `--local-rank` parameter to `tools/test.py` instead
+    # of `--local_rank`.
+    parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -71,7 +78,15 @@ def trigger_visualization_hook(cfg, args):
             visualization_hook['wait_time'] = args.wait_time
         if args.show_dir:
             visualization_hook['test_out_dir'] = args.show_dir
+        all_task_choices = [
+            'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
+            'multi-modality_det'
+        ]
+        assert args.task in all_task_choices, 'You must set '\
+            f"'--task' in {all_task_choices} in the command " \
+            'if you want to use visualization hook'
         visualization_hook['vis_task'] = args.task
+        visualization_hook['score_thr'] = args.score_thr
     else:
         raise RuntimeError(
             'VisualizationHook must be included in default_hooks.'
@@ -108,6 +123,14 @@ def main():
 
     if args.show or args.show_dir:
         cfg = trigger_visualization_hook(cfg, args)
+
+    if args.tta:
+        # Currently, we only support tta for 3D segmentation
+        # TODO: Support tta for 3D detection
+        assert 'tta_model' in cfg, 'Cannot find ``tta_model`` in config.'
+        assert 'tta_pipeline' in cfg, 'Cannot find ``tta_pipeline`` in config.'
+        cfg.test_dataloader.dataset.pipeline = cfg.tta_pipeline
+        cfg.model = ConfigDict(**cfg.tta_model, module=cfg.model)
 
     # build the runner from config
     if 'runner_type' not in cfg:

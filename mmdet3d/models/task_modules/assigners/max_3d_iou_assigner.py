@@ -42,16 +42,18 @@ class Max3DIoUAssigner(MaxIoUAssigner):
         iou_calculator (dict): Config of overlaps Calculator.
     """
 
-    def __init__(self,
-                 pos_iou_thr: float,
-                 neg_iou_thr: Union[float, tuple],
-                 min_pos_iou: float = .0,
-                 gt_max_assign_all: bool = True,
-                 ignore_iof_thr: float = -1,
-                 ignore_wrt_candidates: bool = True,
-                 match_low_quality: bool = True,
-                 gpu_assign_thr: float = -1,
-                 iou_calculator: dict = dict(type='BboxOverlaps2D')):
+    def __init__(
+        self,
+        pos_iou_thr: float,
+        neg_iou_thr: Union[float, tuple],
+        min_pos_iou: float = .0,
+        gt_max_assign_all: bool = True,
+        ignore_iof_thr: float = -1,
+        ignore_wrt_candidates: bool = True,
+        match_low_quality: bool = True,
+        gpu_assign_thr: float = -1,
+        iou_calculator: dict = dict(type='BboxOverlaps2D')
+    ) -> None:
         self.pos_iou_thr = pos_iou_thr
         self.neg_iou_thr = neg_iou_thr
         self.min_pos_iou = min_pos_iou

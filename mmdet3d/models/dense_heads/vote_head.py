@@ -99,7 +99,6 @@ class VoteHead(BaseModule):
 
         self.vote_module = VoteModule(**vote_module_cfg)
         self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
-        self.fp16_enabled = False
 
         # Bbox classification and regression
         self.conv_pred = BaseConvBboxHead(

@@ -1,5 +1,5 @@
 _base_ = \
-    './hv_pointpillars_regnet-400mf_fpn_sbn-all_range100_2x8_2x_lyft-3d.py'
+    './pointpillars_hv_regnet-400mf_fpn_sbn-all_range100_8xb2-2x_lyft-3d.py'
 # model settings
 model = dict(
     pts_neck=dict(

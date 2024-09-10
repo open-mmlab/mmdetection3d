@@ -68,9 +68,9 @@ model = dict(
             type='PGDBBoxCoder',
             base_depths=((41.01, 18.44), ),
             base_dims=(
-                (4.73, 1.77, 2.08),
-                (0.91, 1.74, 0.84),
-                (1.81, 1.77, 0.84),
+                (4.73, 1.77, 2.08),  # Car
+                (0.91, 1.74, 0.84),  # Pedestrian
+                (1.81, 1.77, 0.84),  # Cyclist
             ),
             code_size=7)),
     # set weight 1.0 for base 7 dims (offset, depth, size, rot)

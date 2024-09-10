@@ -25,7 +25,7 @@ class PseudoSampler(BaseSampler):
         raise NotImplementedError
 
     def sample(self, assign_result: AssignResult, pred_instances: InstanceData,
-               gt_instances: InstanceData, *args, **kwargs):
+               gt_instances: InstanceData, *args, **kwargs) -> SamplingResult:
         """Directly returns the positive and negative indices  of samples.
 
         Args:

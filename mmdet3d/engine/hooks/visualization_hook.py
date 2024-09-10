@@ -7,6 +7,7 @@ import mmcv
 import numpy as np
 from mmengine.fileio import get
 from mmengine.hooks import Hook
+from mmengine.logging import print_log
 from mmengine.runner import Runner
 from mmengine.utils import mkdir_or_exist
 from mmengine.visualization import Visualizer
@@ -42,6 +43,10 @@ class Det3DVisualizationHook(Hook):
         show (bool): Whether to display the drawn image. Default to False.
         vis_task (str): Visualization task. Defaults to 'mono_det'.
         wait_time (float): The interval of show (s). Defaults to 0.
+        draw_gt (bool): Whether to draw ground truth. Defaults to True.
+        draw_pred (bool): Whether to draw prediction. Defaults to True.
+        show_pcd_rgb (bool): Whether to show RGB point cloud. Defaults to
+            False.
         test_out_dir (str, optional): directory where painted images
             will be saved in testing process.
         backend_args (dict, optional): Arguments to instantiate the
@@ -56,6 +61,9 @@ class Det3DVisualizationHook(Hook):
                  vis_task: str = 'mono_det',
                  wait_time: float = 0.,
                  test_out_dir: Optional[str] = None,
+                 draw_gt: bool = False,
+                 draw_pred: bool = True,
+                 show_pcd_rgb: bool = False,
                  backend_args: Optional[dict] = None):
         self._visualizer: Visualizer = Visualizer.get_current_instance()
         self.interval = interval
@@ -70,11 +78,21 @@ class Det3DVisualizationHook(Hook):
                           'needs to be excluded.')
         self.vis_task = vis_task
 
+        if show and wait_time == -1:
+            print_log(
+                'Manual control mode, press [Right] to next sample.',
+                logger='current')
+        elif show:
+            print_log(
+                'Autoplay mode, press [SPACE] to pause.', logger='current')
         self.wait_time = wait_time
         self.backend_args = backend_args
         self.draw = draw
         self.test_out_dir = test_out_dir
         self._test_index = 0
+        self.draw_gt = draw_gt
+        self.draw_pred = draw_pred
+        self.show_pcd_rgb = show_pcd_rgb
 
     def after_val_iter(self, runner: Runner, batch_idx: int, data_batch: dict,
                        outputs: Sequence[Det3DDataSample]) -> None:
@@ -97,13 +115,27 @@ class Det3DVisualizationHook(Hook):
         data_input = dict()
 
         # Visualize only the first data
-        if 'img_path' in outputs[0]:
+        if self.vis_task in [
+                'mono_det', 'multi-view_det', 'multi-modality_det'
+        ]:
+            assert 'img_path' in outputs[0], 'img_path is not in outputs[0]'
             img_path = outputs[0].img_path
-            img_bytes = get(img_path, backend_args=self.backend_args)
-            img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+            if isinstance(img_path, list):
+                img = []
+                for single_img_path in img_path:
+                    img_bytes = get(
+                        single_img_path, backend_args=self.backend_args)
+                    single_img = mmcv.imfrombytes(
+                        img_bytes, channel_order='rgb')
+                    img.append(single_img)
+            else:
+                img_bytes = get(img_path, backend_args=self.backend_args)
+                img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
             data_input['img'] = img
 
-        if 'lidar_path' in outputs[0]:
+        if self.vis_task in ['lidar_det', 'multi-modality_det', 'lidar_seg']:
+            assert 'lidar_path' in outputs[
+                0], 'lidar_path is not in outputs[0]'
             lidar_path = outputs[0].lidar_path
             num_pts_feats = outputs[0].num_pts_feats
             pts_bytes = get(lidar_path, backend_args=self.backend_args)
@@ -116,11 +148,14 @@ class Det3DVisualizationHook(Hook):
                 'val sample',
                 data_input,
                 data_sample=outputs[0],
+                draw_gt=self.draw_gt,
+                draw_pred=self.draw_pred,
                 show=self.show,
                 vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
-                step=total_curr_iter)
+                step=total_curr_iter,
+                show_pcd_rgb=self.show_pcd_rgb)
 
     def after_test_iter(self, runner: Runner, batch_idx: int, data_batch: dict,
                         outputs: Sequence[Det3DDataSample]) -> None:
@@ -145,32 +180,62 @@ class Det3DVisualizationHook(Hook):
             self._test_index += 1
 
             data_input = dict()
-            if 'img_path' in data_sample:
-                img_path = data_sample.img_path
-                img_bytes = get(img_path, backend_args=self.backend_args)
-                img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
-                data_input['img'] = img
+            assert 'img_path' in data_sample or 'lidar_path' in data_sample, \
+                "'data_sample' must contain 'img_path' or 'lidar_path'"
 
-            if 'lidar_path' in data_sample:
+            out_file = o3d_save_path = None
+
+            if self.vis_task in [
+                    'mono_det', 'multi-view_det', 'multi-modality_det'
+            ]:
+                assert 'img_path' in data_sample, \
+                    'img_path is not in data_sample'
+                img_path = data_sample.img_path
+                if isinstance(img_path, list):
+                    img = []
+                    for single_img_path in img_path:
+                        img_bytes = get(
+                            single_img_path, backend_args=self.backend_args)
+                        single_img = mmcv.imfrombytes(
+                            img_bytes, channel_order='rgb')
+                        img.append(single_img)
+                else:
+                    img_bytes = get(img_path, backend_args=self.backend_args)
+                    img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+                data_input['img'] = img
+                if self.test_out_dir is not None:
+                    if isinstance(img_path, list):
+                        img_path = img_path[0]
+                    out_file = osp.basename(img_path)
+                    out_file = osp.join(self.test_out_dir, out_file)
+
+            if self.vis_task in [
+                    'lidar_det', 'multi-modality_det', 'lidar_seg'
+            ]:
+                assert 'lidar_path' in data_sample, \
+                    'lidar_path is not in data_sample'
                 lidar_path = data_sample.lidar_path
                 num_pts_feats = data_sample.num_pts_feats
                 pts_bytes = get(lidar_path, backend_args=self.backend_args)
                 points = np.frombuffer(pts_bytes, dtype=np.float32)
                 points = points.reshape(-1, num_pts_feats)
                 data_input['points'] = points
-
-            out_file = None
-            if self.test_out_dir is not None:
-                out_file = osp.basename(img_path)
-                out_file = osp.join(self.test_out_dir, out_file)
+                if self.test_out_dir is not None:
+                    o3d_save_path = osp.basename(lidar_path).split(
+                        '.')[0] + '.png'
+                    o3d_save_path = osp.join(self.test_out_dir, o3d_save_path)
 
             self._visualizer.add_datasample(
                 'test sample',
                 data_input,
                 data_sample=data_sample,
+                draw_gt=self.draw_gt,
+                draw_pred=self.draw_pred,
                 show=self.show,
                 vis_task=self.vis_task,
                 wait_time=self.wait_time,
                 pred_score_thr=self.score_thr,
                 out_file=out_file,
-                step=self._test_index)
+                o3d_save_path=o3d_save_path,
+                step=self._test_index,
+                show_pcd_rgb=self.show_pcd_rgb)

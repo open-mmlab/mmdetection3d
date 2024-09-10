@@ -56,7 +56,7 @@ class Det3DDataSample(DetDataSample):
         >>> from mmengine.structures import InstanceData
 
         >>> from mmdet3d.structures import Det3DDataSample
-        >>> from mmdet3d.structures import BaseInstance3DBoxes
+        >>> from mmdet3d.structures.bbox_3d import BaseInstance3DBoxes
 
         >>> data_sample = Det3DDataSample()
         >>> meta_info = dict(
@@ -80,15 +80,15 @@ class Det3DDataSample(DetDataSample):
                     DATA FIELDS
                     labels_3d: tensor([1, 0, 2, 0, 1])
                     bboxes_3d: BaseInstance3DBoxes(
-                            tensor([[1.9115e-01, 3.6061e-01, 6.7707e-01, 5.2902e-01, 8.0736e-01, 8.2759e-01,  # noqa E501
+                            tensor([[1.9115e-01, 3.6061e-01, 6.7707e-01, 5.2902e-01, 8.0736e-01, 8.2759e-01,
                                 2.4328e-01],
-                                [5.6272e-01, 2.7508e-01, 5.7966e-01, 9.2410e-01, 3.0456e-01, 1.8912e-01,  # noqa E501
+                                [5.6272e-01, 2.7508e-01, 5.7966e-01, 9.2410e-01, 3.0456e-01, 1.8912e-01,
                                 3.3176e-01],
-                                [8.1069e-01, 2.8684e-01, 7.7689e-01, 9.2397e-02, 5.5849e-01, 3.8007e-01,  # noqa E501
+                                [8.1069e-01, 2.8684e-01, 7.7689e-01, 9.2397e-02, 5.5849e-01, 3.8007e-01,
                                 4.6719e-01],
-                                [6.6346e-01, 4.8005e-01, 5.2318e-02, 4.4137e-01, 4.1163e-01, 8.9339e-01,  # noqa E501
+                                [6.6346e-01, 4.8005e-01, 5.2318e-02, 4.4137e-01, 4.1163e-01, 8.9339e-01,
                                 7.2847e-01],
-                                [2.4800e-01, 7.1944e-01, 3.4766e-01, 7.8583e-01, 8.5507e-01, 6.3729e-02,  # noqa E501
+                                [2.4800e-01, 7.1944e-01, 3.4766e-01, 7.8583e-01, 8.5507e-01, 6.3729e-02,
                                 7.5161e-05]]))
                 ) at 0x7f7e29de3a00>
         ) at 0x7f7e2a0e8640>
@@ -108,8 +108,8 @@ class Det3DDataSample(DetDataSample):
 
         >>> data_sample = Det3DDataSample()
         >>> gt_instances_3d_data = dict(
-        ...    bboxes_3d=BaseInstance3DBoxes(torch.rand((2, 7))),
-        ...    labels_3d=torch.rand(2))
+        ...     bboxes_3d=BaseInstance3DBoxes(torch.rand((2, 7))),
+        ...     labels_3d=torch.rand(2))
         >>> gt_instances_3d = InstanceData(**gt_instances_3d_data)
         >>> data_sample.gt_instances_3d = gt_instances_3d
         >>> assert 'gt_instances_3d' in data_sample
@@ -118,8 +118,8 @@ class Det3DDataSample(DetDataSample):
         >>> from mmdet3d.structures import PointData
         >>> data_sample = Det3DDataSample()
         >>> gt_pts_seg_data = dict(
-        ...    pts_instance_mask=torch.rand(2),
-        ...    pts_semantic_mask=torch.rand(2))
+        ...     pts_instance_mask=torch.rand(2),
+        ...     pts_semantic_mask=torch.rand(2))
         >>> data_sample.gt_pts_seg = PointData(**gt_pts_seg_data)
         >>> print(data_sample)
         <Det3DDataSample(
@@ -132,7 +132,7 @@ class Det3DDataSample(DetDataSample):
                     pts_instance_mask: tensor([0.7363, 0.8096])
                 ) at 0x7f7e2962cc40>
         ) at 0x7f7e29ff0d60>
-    """
+    """  # noqa: E501
 
     @property
     def gt_instances_3d(self) -> InstanceData:

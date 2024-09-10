@@ -1,4 +1,4 @@
-## 开始你的第一步
+# 开始你的第一步
 
 ## 依赖
 
@@ -92,6 +92,8 @@ mim install "mmdet3d>=1.1.0rc0"
 
    ```shell
    conda install openblas-devel -c anaconda
+   export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH:${YOUR_CONDA_ENVS_DIR}/include
+   # replace ${YOUR_CONDA_ENVS_DIR} to your anaconda environment path e.g. `/home/username/anaconda3/envs/openmmlab`.
    pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --install-option="--blas_include_dirs=/opt/conda/include" --install-option="--blas=openblas"
    ```
 
@@ -107,6 +109,7 @@ mim install "mmdet3d>=1.1.0rc0"
    ```shell
    conda install -c bioconda sparsehash
    export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH:${YOUR_CONDA_ENVS_DIR}/include
+    # replace ${YOUR_CONDA_ENVS_DIR} to your anaconda environment path e.g. `/home/username/anaconda3/envs/openmmlab`.
    pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git@v1.4.0
    ```
 
@@ -133,6 +136,10 @@ python demo/pcd_demo.py demo/data/kitti/000008.bin pointpillars_hv_secfpn_8xb6-1
 ```
 
 您会看到一个带有点云的可视化界面，其中包含有在汽车上绘制的检测框。
+
+**注意**：
+
+如果你在没有显示设备的服务器上安装 MMDetection3D ，你可以忽略 `--show` 参数。Demo 仍会将预测结果保存到 `outputs/pred/000008.json` 文件中。
 
 **注意**：
 

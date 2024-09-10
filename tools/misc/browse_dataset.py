@@ -67,6 +67,9 @@ def build_data_cfg(config_path, aug, cfg_options):
     # use only first dataset for `ConcatDataset`
     if cfg.train_dataloader.dataset['type'] == 'ConcatDataset':
         cfg.train_dataloader.dataset = cfg.train_dataloader.dataset.datasets[0]
+    if cfg.train_dataloader.dataset['type'] == 'CBGSDataset':
+        cfg.train_dataloader.dataset = cfg.train_dataloader.dataset.dataset
+
     train_data_cfg = cfg.train_dataloader.dataset
 
     if aug:

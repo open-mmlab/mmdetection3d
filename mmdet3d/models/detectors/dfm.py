@@ -13,6 +13,9 @@ class DfM(BaseDetector):
         <https://arxiv.org/abs/2207.12988>`_.
 
     Args:
+        data_preprocessor (:obj:`ConfigDict` or dict): The pre-process
+            config of :class:`BaseDataPreprocessor`. it usually includes,
+            ``pad_size_divisor``, ``pad_value``, ``mean`` and ``std``.
         backbone (:obj:`ConfigDict` or dict): The backbone config.
         neck (:obj:`ConfigDict` or dict): The neck config.
         backbone_stereo (:obj:`ConfigDict` or dict): The stereo backbone
@@ -39,6 +42,7 @@ class DfM(BaseDetector):
     """
 
     def __init__(self,
+                 data_preprocessor: ConfigType,
                  backbone: ConfigType,
                  neck: ConfigType,
                  backbone_stereo: ConfigType,
@@ -53,7 +57,8 @@ class DfM(BaseDetector):
                  test_cfg=None,
                  pretrained=None,
                  init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
+        super().__init__(
+            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
         self.backbone = MODELS.build(backbone)
         self.neck = MODELS.build(neck)
         if backbone_stereo is not None:

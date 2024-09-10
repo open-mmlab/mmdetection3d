@@ -1,6 +1,7 @@
 _base_ = [
-    'mmdet3d::_base_/datasets/nus-3d.py', 'mmdet3d::_base_/default_runtime.py',
-    'mmdet3d::_base_/schedules/cyclic-20e.py'
+    '../../../configs/_base_/datasets/nus-3d.py',
+    '../../../configs/_base_/default_runtime.py',
+    '../../../configs/_base_/schedules/cyclic-20e.py'
 ]
 backbone_norm_cfg = dict(type='LN', requires_grad=True)
 custom_imports = dict(imports=['projects.PETR.petr'])

@@ -26,7 +26,7 @@ We compare the training speed (samples/s) with other codebases if they implement
 
 ### Modification for Calculating Speed
 
-- __MMDetection3D__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/master/configs/benchmark).
+- __MMDetection3D__: We try to use as similar settings as those of other codebases as possible using [benchmark configs](https://github.com/open-mmlab/MMDetection3D/blob/main/configs/benchmark).
 
 - __Det3D__: For comparison with Det3D, we use the commit [519251e](https://github.com/poodarchu/Det3D/tree/519251e72a5c1fdd58972eabeac67808676b9bb7).
 

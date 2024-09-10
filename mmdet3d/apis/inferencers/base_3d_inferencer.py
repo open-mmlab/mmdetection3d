@@ -1,18 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import logging
+import os.path as osp
+from copy import deepcopy
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-import mmengine
 import numpy as np
 import torch.nn as nn
-from mmengine.fileio import (get_file_backend, isdir, join_path,
-                             list_dir_or_file)
+from mmengine import dump, print_log
 from mmengine.infer.infer import BaseInferencer, ModelType
+from mmengine.model.utils import revert_sync_batchnorm
 from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer
+from rich.progress import track
 
-from mmdet3d.registry import MODELS
+from mmdet3d.registry import DATASETS, MODELS
+from mmdet3d.structures import Box3DMode, Det3DDataSample
 from mmdet3d.utils import ConfigType
 
 InstanceList = List[InstanceData]
@@ -44,14 +48,14 @@ class Base3DInferencer(BaseInferencer):
             priority is palette -> config -> checkpoint. Defaults to 'none'.
     """
 
-    preprocess_kwargs: set = set()
+    preprocess_kwargs: set = {'cam_type'}
     forward_kwargs: set = set()
     visualize_kwargs: set = {
         'return_vis', 'show', 'wait_time', 'draw_pred', 'pred_score_thr',
-        'img_out_dir'
+        'img_out_dir', 'no_save_vis', 'cam_type_dir'
     }
     postprocess_kwargs: set = {
-        'print_result', 'pred_out_file', 'return_datasample'
+        'print_result', 'pred_out_dir', 'return_datasample', 'no_save_pred'
     }
 
     def __init__(self,
@@ -60,10 +64,14 @@ class Base3DInferencer(BaseInferencer):
                  device: Optional[str] = None,
                  scope: str = 'mmdet3d',
                  palette: str = 'none') -> None:
+        # A global counter tracking the number of frames processed, for
+        # naming of the output results
+        self.num_predicted_frames = 0
         self.palette = palette
         init_default_scope(scope)
         super().__init__(
             model=model, weights=weights, device=device, scope=scope)
+        self.model = revert_sync_batchnorm(self.model)
 
     def _convert_syncbn(self, cfg: ConfigType):
         """Convert config's naiveSyncBN to BN.
@@ -108,55 +116,18 @@ class Base3DInferencer(BaseInferencer):
             if 'PALETTE' in checkpoint.get('meta', {}):  # 3D Segmentor
                 model.dataset_meta['palette'] = checkpoint['meta']['PALETTE']
 
+        test_dataset_cfg = deepcopy(cfg.test_dataloader.dataset)
+        # lazy init. We only need the metainfo.
+        test_dataset_cfg['lazy_init'] = True
+        metainfo = DATASETS.build(test_dataset_cfg).metainfo
+        cfg_palette = metainfo.get('palette', None)
+        if cfg_palette is not None:
+            model.dataset_meta['palette'] = cfg_palette
+
         model.cfg = cfg  # save the config in the model for convenience
         model.to(device)
         model.eval()
         return model
-
-    def _inputs_to_list(
-            self,
-            inputs: Union[dict, list],
-            modality_key: Union[str, List[str]] = 'points') -> list:
-        """Preprocess the inputs to a list.
-
-        Preprocess inputs to a list according to its type:
-
-        - list or tuple: return inputs
-        - dict: the value of key 'points'/`img` is
-            - Directory path: return all files in the directory
-            - other cases: return a list containing the string. The string
-              could be a path to file, a url or other types of string according
-              to the task.
-
-        Args:
-            inputs (Union[dict, list]): Inputs for the inferencer.
-            modality_key (Union[str, List[str]]): The key of the modality.
-                Defaults to 'points'.
-
-        Returns:
-            list: List of input for the :meth:`preprocess`.
-        """
-        if isinstance(modality_key, str):
-            modality_key = [modality_key]
-        assert set(modality_key).issubset({'points', 'img'})
-
-        for key in modality_key:
-            if isinstance(inputs, dict) and isinstance(inputs[key], str):
-                img = inputs[key]
-                backend = get_file_backend(img)
-                if hasattr(backend, 'isdir') and isdir(img):
-                    # Backends like HttpsBackend do not implement `isdir`, so
-                    # only those backends that implement `isdir` could accept
-                    # the inputs as a directory
-                    filename_list = list_dir_or_file(img, list_dir=False)
-                    inputs = [{
-                        f'{key}': join_path(img, filename)
-                    } for filename in filename_list]
-
-        if not isinstance(inputs, (list, tuple)):
-            inputs = [inputs]
-
-        return list(inputs)
 
     def _get_transform_idx(self, pipeline_cfg: ConfigType, name: str) -> int:
         """Returns the index of the transform in a pipeline.
@@ -173,64 +144,81 @@ class Base3DInferencer(BaseInferencer):
         visualizer.dataset_meta = self.model.dataset_meta
         return visualizer
 
-    def __call__(self,
-                 inputs: InputsType,
-                 return_datasamples: bool = False,
-                 batch_size: int = 1,
-                 return_vis: bool = False,
-                 show: bool = False,
-                 wait_time: int = 0,
-                 draw_pred: bool = True,
-                 pred_score_thr: float = 0.3,
-                 img_out_dir: str = '',
-                 print_result: bool = False,
-                 pred_out_file: str = '',
-                 **kwargs) -> dict:
-        """Call the inferencer.
+    def _dispatch_kwargs(self,
+                         out_dir: str = '',
+                         cam_type: str = '',
+                         **kwargs) -> Tuple[Dict, Dict, Dict, Dict]:
+        """Dispatch kwargs to preprocess(), forward(), visualize() and
+        postprocess() according to the actual demands.
 
         Args:
-            inputs (InputsType): Inputs for the inferencer.
-            return_datasamples (bool): Whether to return results as
-                :obj:`BaseDataElement`. Defaults to False.
-            batch_size (int): Inference batch size. Defaults to 1.
-            return_vis (bool): Whether to return the visualization result.
-                Defaults to False.
-            show (bool): Whether to display the visualization results in a
-                popup window. Defaults to False.
-            wait_time (float): The interval of show (s). Defaults to 0.
-            draw_pred (bool): Whether to draw predicted bounding boxes.
-                Defaults to True.
-            pred_score_thr (float): Minimum score of bboxes to draw.
-                Defaults to 0.3.
-            img_out_dir (str): Output directory of visualization results.
-                If left as empty, no file will be saved. Defaults to ''.
-            print_result (bool): Whether to print the inference result w/o
-                visualization to the console. Defaults to False.
-            pred_out_file (str): File to save the inference results w/o
-                visualization. If left as empty, no file will be saved.
-                Defaults to ''.
-            **kwargs: Other keyword arguments passed to :meth:`preprocess`,
+            out_dir (str): Dir to save the inference results.
+            cam_type (str): Camera type. Defaults to ''.
+            **kwargs (dict): Key words arguments passed to :meth:`preprocess`,
                 :meth:`forward`, :meth:`visualize` and :meth:`postprocess`.
                 Each key in kwargs should be in the corresponding set of
                 ``preprocess_kwargs``, ``forward_kwargs``, ``visualize_kwargs``
                 and ``postprocess_kwargs``.
 
         Returns:
+            Tuple[Dict, Dict, Dict, Dict]: kwargs passed to preprocess,
+            forward, visualize and postprocess respectively.
+        """
+        kwargs['img_out_dir'] = out_dir
+        kwargs['pred_out_dir'] = out_dir
+        if cam_type != '':
+            kwargs['cam_type_dir'] = cam_type
+        return super()._dispatch_kwargs(**kwargs)
+
+    def __call__(self,
+                 inputs: InputsType,
+                 batch_size: int = 1,
+                 return_datasamples: bool = False,
+                 **kwargs) -> Optional[dict]:
+        """Call the inferencer.
+
+        Args:
+            inputs (InputsType): Inputs for the inferencer.
+            batch_size (int): Batch size. Defaults to 1.
+            return_datasamples (bool): Whether to return results as
+                :obj:`BaseDataElement`. Defaults to False.
+            **kwargs: Key words arguments passed to :meth:`preprocess`,
+                :meth:`forward`, :meth:`visualize` and :meth:`postprocess`.
+                Each key in kwargs should be in the corresponding set of
+                ``preprocess_kwargs``, ``forward_kwargs``, ``visualize_kwargs``
+                and ``postprocess_kwargs``.
+
+
+        Returns:
             dict: Inference and visualization results.
         """
-        return super().__call__(
-            inputs,
-            return_datasamples,
-            batch_size,
-            return_vis=return_vis,
-            show=show,
-            wait_time=wait_time,
-            draw_pred=draw_pred,
-            pred_score_thr=pred_score_thr,
-            img_out_dir=img_out_dir,
-            print_result=print_result,
-            pred_out_file=pred_out_file,
-            **kwargs)
+
+        (
+            preprocess_kwargs,
+            forward_kwargs,
+            visualize_kwargs,
+            postprocess_kwargs,
+        ) = self._dispatch_kwargs(**kwargs)
+
+        cam_type = preprocess_kwargs.pop('cam_type', 'CAM2')
+        ori_inputs = self._inputs_to_list(inputs, cam_type=cam_type)
+        inputs = self.preprocess(
+            ori_inputs, batch_size=batch_size, **preprocess_kwargs)
+        preds = []
+
+        results_dict = {'predictions': [], 'visualization': []}
+        for data in (track(inputs, description='Inference')
+                     if self.show_progress else inputs):
+            preds.extend(self.forward(data, **forward_kwargs))
+            visualization = self.visualize(ori_inputs, preds,
+                                           **visualize_kwargs)
+            results = self.postprocess(preds, visualization,
+                                       return_datasamples,
+                                       **postprocess_kwargs)
+            results_dict['predictions'].extend(results['predictions'])
+            if results['visualization'] is not None:
+                results_dict['visualization'].extend(results['visualization'])
+        return results_dict
 
     def postprocess(
         self,
@@ -238,7 +226,8 @@ class Base3DInferencer(BaseInferencer):
         visualization: Optional[List[np.ndarray]] = None,
         return_datasample: bool = False,
         print_result: bool = False,
-        pred_out_file: str = '',
+        no_save_pred: bool = False,
+        pred_out_dir: str = '',
     ) -> Union[ResType, Tuple[ResType, np.ndarray]]:
         """Process the predictions and visualization results from ``forward``
         and ``visualize``.
@@ -258,7 +247,7 @@ class Base3DInferencer(BaseInferencer):
                 Defaults to False.
             print_result (bool): Whether to print the inference result w/o
                 visualization to the console. Defaults to False.
-            pred_out_file (str): File to save the inference results w/o
+            pred_out_dir (str): Directory to save the inference results w/o
                 visualization. If left as empty, no file will be saved.
                 Defaults to ''.
 
@@ -273,40 +262,85 @@ class Base3DInferencer(BaseInferencer):
               json-serializable dict containing only basic data elements such
               as strings and numbers.
         """
+        if no_save_pred is True:
+            pred_out_dir = ''
+
         result_dict = {}
         results = preds
         if not return_datasample:
             results = []
             for pred in preds:
-                result = self.pred2dict(pred)
+                result = self.pred2dict(pred, pred_out_dir)
                 results.append(result)
+        elif pred_out_dir != '':
+            print_log(
+                'Currently does not support saving datasample '
+                'when return_datasample is set to True. '
+                'Prediction results are not saved!',
+                level=logging.WARNING)
+        # Add img to the results after printing and dumping
         result_dict['predictions'] = results
         if print_result:
             print(result_dict)
-        if pred_out_file != '':
-            mmengine.dump(result_dict, pred_out_file)
         result_dict['visualization'] = visualization
         return result_dict
 
-    def pred2dict(self, data_sample: InstanceData) -> Dict:
+    # TODO: The data format and fields saved in json need further discussion.
+    #  Maybe should include model name, timestamp, filename, image info etc.
+    def pred2dict(self,
+                  data_sample: Det3DDataSample,
+                  pred_out_dir: str = '') -> Dict:
         """Extract elements necessary to represent a prediction into a
         dictionary.
 
         It's better to contain only basic data elements such as strings and
         numbers in order to guarantee it's json-serializable.
+
+        Args:
+            data_sample (:obj:`DetDataSample`): Predictions of the model.
+            pred_out_dir: Dir to save the inference results w/o
+                visualization. If left as empty, no file will be saved.
+                Defaults to ''.
+
+        Returns:
+            dict: Prediction results.
         """
         result = {}
         if 'pred_instances_3d' in data_sample:
             pred_instances_3d = data_sample.pred_instances_3d.numpy()
             result = {
-                'bboxes_3d': pred_instances_3d.bboxes_3d.tensor.cpu().tolist(),
                 'labels_3d': pred_instances_3d.labels_3d.tolist(),
-                'scores_3d': pred_instances_3d.scores_3d.tolist()
+                'scores_3d': pred_instances_3d.scores_3d.tolist(),
+                'bboxes_3d': pred_instances_3d.bboxes_3d.tensor.cpu().tolist()
             }
 
         if 'pred_pts_seg' in data_sample:
             pred_pts_seg = data_sample.pred_pts_seg.numpy()
             result['pts_semantic_mask'] = \
                 pred_pts_seg.pts_semantic_mask.tolist()
+
+        if data_sample.box_mode_3d == Box3DMode.LIDAR:
+            result['box_type_3d'] = 'LiDAR'
+        elif data_sample.box_mode_3d == Box3DMode.CAM:
+            result['box_type_3d'] = 'Camera'
+        elif data_sample.box_mode_3d == Box3DMode.DEPTH:
+            result['box_type_3d'] = 'Depth'
+
+        if pred_out_dir != '':
+            if 'lidar_path' in data_sample:
+                lidar_path = osp.basename(data_sample.lidar_path)
+                lidar_path = osp.splitext(lidar_path)[0]
+                out_json_path = osp.join(pred_out_dir, 'preds',
+                                         lidar_path + '.json')
+            elif 'img_path' in data_sample:
+                img_path = osp.basename(data_sample.img_path)
+                img_path = osp.splitext(img_path)[0]
+                out_json_path = osp.join(pred_out_dir, 'preds',
+                                         img_path + '.json')
+            else:
+                out_json_path = osp.join(
+                    pred_out_dir, 'preds',
+                    f'{str(self.num_visualized_imgs).zfill(8)}.json')
+            dump(result, out_json_path)
 
         return result

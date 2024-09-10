@@ -32,6 +32,8 @@ model = dict(
         type='mmdet.FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
+        # make the image features more stable numerically to avoid loss nan
+        norm_cfg=dict(type='BN', requires_grad=False),
         num_outs=5),
     pts_voxel_encoder=dict(
         type='DynamicVFE',

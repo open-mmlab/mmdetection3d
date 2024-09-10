@@ -65,13 +65,13 @@ mmdetection3d
 此外，在训练完成后你也可以评估特定的模型权重文件。你可以简单地执行以下脚本：
 
 ```
-./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet_seg-3d-20class.py work_dirs/pointnet2_ssg/latest.pth 8
+./tools/dist_test.sh configs/pointnet2/pointnet2_ssg_16x2_cosine_200e_scannet-seg.py work_dirs/pointnet2_ssg/latest.pth 8
 ```
 
 ## 测试与提交
 
 如果你只想在在线基准上进行推理或测试模型性能，你需要在配置文件中的 `test_evalutor` 字段增加 `submission_prefix`， 例如配置文件增加 `test_evaluator = dict(type='SegMetric',submission_prefix=work_dirs/pointnet2_ssg/test_submission`)。
-并将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/scannet_seg-3d-20class.py#L129)中的 `ann_file=scannet_infos_val.pkl` 变成 `ann_file=scannet_infos_test.pkl`。在生成结果后，你可以压缩文件夹并上传至 [ScanNet 评估服务器](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d)上。
+并将 ScanNet 数据集[配置文件](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/scannet-seg.py#L129)中的 `ann_file=scannet_infos_val.pkl` 变成 `ann_file=scannet_infos_test.pkl`。在生成结果后，你可以压缩文件夹并上传至 [ScanNet 评估服务器](http://kaldir.vc.in.tum.de/scannet_benchmark/semantic_label_3d)上。
 
 ## 定性评估
 

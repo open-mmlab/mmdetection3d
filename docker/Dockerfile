@@ -34,7 +34,7 @@ RUN pip install openmim && \
 # Install MMDetection3D
 RUN conda clean --all \
     && git clone https://github.com/open-mmlab/mmdetection3d.git -b dev-1.x /mmdetection3d \
-    && cd /mmdetection \
+    && cd /mmdetection3d \
     && pip install --no-cache-dir -e .
 
 WORKDIR /mmdetection3d

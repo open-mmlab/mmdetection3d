@@ -13,6 +13,7 @@ from mmcv.cnn import build_activation_layer, build_norm_layer
 from mmcv.ops import (SparseConv3d, SparseConvTensor, SparseInverseConv3d,
                       SubMConv3d)
 from mmengine.model import BaseModule
+from torch import Tensor
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType
@@ -456,7 +457,7 @@ class Asymm3DSpconv(BaseModule):
             indice_key='ddcm',
             norm_cfg=norm_cfg)
 
-    def forward(self, voxel_features: torch.Tensor, coors: torch.Tensor,
+    def forward(self, voxel_features: Tensor, coors: Tensor,
                 batch_size: int) -> SparseConvTensor:
         """Forward pass."""
         coors = coors.int()

@@ -42,13 +42,13 @@ class TestMonoDet3DInferencer(TestCase):
     def test_call(self, model):
         # single img
         img_path = 'demo/data/kitti/000008.png'
-        calib_path = 'demo/data/kitti/000008.txt'
+        infos_path = 'demo/data/kitti/000008.pkl'
         inferencer = MonoDet3DInferencer(model)
-        inputs = dict(img=img_path, calib=calib_path)
+        inputs = dict(img=img_path, infos=infos_path)
         res_path = inferencer(inputs, return_vis=True)
         # ndarray
         img = mmcv.imread(img_path)
-        inputs = dict(img=img, calib=calib_path)
+        inputs = dict(img=img, infos=infos_path)
         res_ndarray = inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
@@ -59,16 +59,18 @@ class TestMonoDet3DInferencer(TestCase):
         inputs = [
             dict(
                 img='demo/data/kitti/000008.png',
-                calib='demo/data/kitti/000008.txt'),
+                infos='demo/data/kitti/000008.pkl'),
             dict(
                 img='demo/data/kitti/000008.png',
-                calib='demo/data/kitti/000008.txt')
+                infos='demo/data/kitti/000008.pkl')
         ]
         res_path = inferencer(inputs, return_vis=True)
         # list of ndarray
         imgs = [mmcv.imread(p['img']) for p in inputs]
-        inputs[0]['img'] = imgs[0]
-        inputs[1]['img'] = imgs[1]
+        inputs = [
+            dict(img=imgs[0], infos='demo/data/kitti/000008.pkl'),
+            dict(img=imgs[1], infos='demo/data/kitti/000008.pkl')
+        ]
         res_ndarray = inferencer(inputs, return_vis=True)
         self.assert_predictions_equal(res_path['predictions'],
                                       res_ndarray['predictions'])
@@ -77,36 +79,30 @@ class TestMonoDet3DInferencer(TestCase):
 
     @parameterized.expand(['pgd_kitti'])
     def test_visualize(self, model):
-        inputs = [
-            dict(
-                img='demo/data/kitti/000008.png',
-                calib='demo/data/kitti/000008.txt'),
-            dict(
-                img='demo/data/kitti/000008.png',
-                calib='demo/data/kitti/000008.txt')
-        ]
+        inputs = dict(
+            img='demo/data/kitti/000008.png',
+            infos='demo/data/kitti/000008.pkl')
         inferencer = MonoDet3DInferencer(model)
         # img_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            inferencer(inputs, img_out_dir=tmp_dir)
-            for img_dir in ['000008.png', '000008.png']:
-                self.assertTrue(osp.exists(osp.join(tmp_dir, img_dir)))
+            inferencer(inputs, out_dir=tmp_dir)
+            self.assertTrue(
+                osp.exists(osp.join(tmp_dir, 'vis_camera/CAM2/000008.png')))
 
     @parameterized.expand(['pgd_kitti'])
     def test_postprocess(self, model):
         # return_datasample
         img_path = 'demo/data/kitti/000008.png'
-        calib_path = 'demo/data/kitti/000008.txt'
-        inputs = dict(img=img_path, calib=calib_path)
+        infos_path = 'demo/data/kitti/000008.pkl'
+        inputs = dict(img=img_path, infos=infos_path)
         inferencer = MonoDet3DInferencer(model)
         res = inferencer(inputs, return_datasamples=True)
         self.assertTrue(is_list_of(res['predictions'], Det3DDataSample))
 
-        # pred_out_file
+        # pred_out_dir
         with tempfile.TemporaryDirectory() as tmp_dir:
-            pred_out_file = osp.join(tmp_dir, 'tmp.json')
-            res = inferencer(
-                inputs, print_result=True, pred_out_file=pred_out_file)
-            dumped_res = mmengine.load(pred_out_file)
-            self.assert_predictions_equal(res['predictions'],
-                                          dumped_res['predictions'])
+            inputs = dict(img=img_path, infos=infos_path)
+            res = inferencer(inputs, print_result=True, out_dir=tmp_dir)
+            dumped_res = mmengine.load(
+                osp.join(tmp_dir, 'preds', '000008.json'))
+            self.assertEqual(res['predictions'][0], dumped_res)

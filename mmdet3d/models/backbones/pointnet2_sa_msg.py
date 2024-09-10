@@ -3,7 +3,7 @@ from typing import Tuple
 
 import torch
 from mmcv.cnn import ConvModule
-from torch import nn as nn
+from torch import Tensor, nn
 
 from mmdet3d.models.layers.pointnet_modules import build_sa_module
 from mmdet3d.registry import MODELS
@@ -141,7 +141,7 @@ class PointNet2SAMSG(BasePointNet):
                         bias=True))
                 sa_in_channel = cur_aggregation_channel
 
-    def forward(self, points: torch.Tensor):
+    def forward(self, points: Tensor):
         """Forward pass.
 
         Args:

@@ -58,7 +58,7 @@ mmdetection3d
 ./tools/dist_train.sh fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py 8
 ```
 
-通过先前的脚本训练好一个基准模型后，请记得相应的修改[此处](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py#L8)的路径。
+通过先前的脚本训练好一个基准模型后，请记得相应的修改[此处](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune.py#L8)的路径。
 
 ## 定量评估
 
@@ -101,7 +101,7 @@ barrier 0.466   0.581   0.269   0.169   nan     nan
 
 ## 测试与提交
 
-如果你只想在在线基准上进行推理或测试模型性能，你需要将之前评估脚本中的 `--eval mAP` 替换成 `--format-only`，并在需要的情况下指定 `jsonfile_prefix`，例如，添加选项 `--eval-options jsonfile_prefix=work_dirs/fcos3d/test_submission`。请确保配置文件中的[测试信息](https://github.com/open-mmlab/mmdetection3d/blob/master/configs/_base_/datasets/nus-mono3d.py#L93)由验证集相应地改为测试集。
+如果你只想在在线基准上进行推理或测试模型性能，你需要将之前评估脚本中的 `--eval mAP` 替换成 `--format-only`，并在需要的情况下指定 `jsonfile_prefix`，例如，添加选项 `--eval-options jsonfile_prefix=work_dirs/fcos3d/test_submission`。请确保配置文件中的[测试信息](https://github.com/open-mmlab/mmdetection3d/blob/main/configs/_base_/datasets/nus-mono3d.py#L93)由验证集相应地改为测试集。
 
 在生成结果后，你可以压缩文件夹并上传至 nuScenes 3D 检测挑战的 evalAI 评估服务器上。
 

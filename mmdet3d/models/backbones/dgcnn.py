@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Sequence, Union
+
 from mmengine.model import BaseModule
+from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.models.layers import DGCNNFAModule, DGCNNGFModule
 from mmdet3d.registry import MODELS
+from mmdet3d.utils import ConfigType, OptMultiConfig
 
 
 @MODELS.register_module()
@@ -30,14 +34,15 @@ class DGCNNBackbone(BaseModule):
     """
 
     def __init__(self,
-                 in_channels,
-                 num_samples=(20, 20, 20),
-                 knn_modes=('D-KNN', 'F-KNN', 'F-KNN'),
-                 radius=(None, None, None),
-                 gf_channels=((64, 64), (64, 64), (64, )),
-                 fa_channels=(1024, ),
-                 act_cfg=dict(type='ReLU'),
-                 init_cfg=None):
+                 in_channels: int,
+                 num_samples: Sequence[int] = (20, 20, 20),
+                 knn_modes: Sequence[str] = ('D-KNN', 'F-KNN', 'F-KNN'),
+                 radius: Sequence[Union[float, None]] = (None, None, None),
+                 gf_channels: Sequence[Sequence[int]] = ((64, 64), (64, 64),
+                                                         (64, )),
+                 fa_channels: Sequence[int] = (1024, ),
+                 act_cfg: ConfigType = dict(type='ReLU'),
+                 init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
         self.num_gf = len(gf_channels)
 
@@ -71,7 +76,7 @@ class DGCNNBackbone(BaseModule):
         self.FA_module = DGCNNFAModule(
             mlp_channels=cur_fa_mlps, act_cfg=act_cfg)
 
-    def forward(self, points):
+    def forward(self, points: Tensor) -> dict:
         """Forward pass.
 
         Args:

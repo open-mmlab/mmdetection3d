@@ -7,12 +7,13 @@ import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmcv.ops.furthest_point_sample import furthest_point_sample
 from mmengine.model import BaseModule
+from torch import Tensor
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import InstanceList
 
 
-def bilinear_interpolate_torch(inputs, x, y):
+def bilinear_interpolate_torch(inputs: Tensor, x: Tensor, y: Tensor) -> Tensor:
     """Bilinear interpolate for inputs."""
     x0 = torch.floor(x).long()
     x1 = x0 + 1

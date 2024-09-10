@@ -3,41 +3,39 @@ from typing import List, Union
 
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 
 
-def multiview_img_stack_batch(
-        tensor_list: List[torch.Tensor],
-        pad_size_divisor: int = 1,
-        pad_value: Union[int, float] = 0) -> torch.Tensor:
-    """
-    Compared to the stack_batch in mmengine.model.utils,
+def multiview_img_stack_batch(tensor_list: List[Tensor],
+                              pad_size_divisor: int = 1,
+                              pad_value: Union[int, float] = 0) -> Tensor:
+    """Compared to the ``stack_batch`` in `mmengine.model.utils`,
     multiview_img_stack_batch further handle the multiview images.
-    see diff of padded_sizes[:, :-2] = 0 vs padded_sizes[:, 0] = 0 in line 47
-    Stack multiple tensors to form a batch and pad the tensor to the max
-    shape use the right bottom padding mode in these images. If
+
+    See diff of padded_sizes[:, :-2] = 0 vs padded_sizes[:, 0] = 0 in line 47.
+
+    Stack multiple tensors to form a batch and pad the tensor to the max shape
+    use the right bottom padding mode in these images. If
     ``pad_size_divisor > 0``, add padding to ensure the shape of each dim is
     divisible by ``pad_size_divisor``.
 
     Args:
         tensor_list (List[Tensor]): A list of tensors with the same dim.
-        pad_size_divisor (int): If ``pad_size_divisor > 0``, add padding
-            to ensure the shape of each dim is divisible by
-            ``pad_size_divisor``. This depends on the model, and many
-            models need to be divisible by 32. Defaults to 1.
+        pad_size_divisor (int): If ``pad_size_divisor > 0``, add padding to
+            ensure the shape of each dim is divisible by ``pad_size_divisor``.
+            This depends on the model, and many models need to be divisible by
+            32. Defaults to 1.
         pad_value (int or float): The padding value. Defaults to 0.
 
     Returns:
         Tensor: The n dim tensor.
     """
-    assert isinstance(
-        tensor_list,
-        list), f'Expected input type to be list, but got {type(tensor_list)}'
+    assert isinstance(tensor_list, list), \
+        f'Expected input type to be list, but got {type(tensor_list)}'
     assert tensor_list, '`tensor_list` could not be an empty list'
-    assert len({
-        tensor.ndim
-        for tensor in tensor_list
-    }) == 1, ('Expected the dimensions of all tensors must be the same, '
-              f'but got {[tensor.ndim for tensor in tensor_list]}')
+    assert len({tensor.ndim for tensor in tensor_list}) == 1, \
+        'Expected the dimensions of all tensors must be the same, ' \
+        f'but got {[tensor.ndim for tensor in tensor_list]}'
 
     dim = tensor_list[0].dim()
     num_img = len(tensor_list)

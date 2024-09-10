@@ -23,7 +23,6 @@ class HardSimpleVFE(nn.Module):
     def __init__(self, num_features: int = 4) -> None:
         super(HardSimpleVFE, self).__init__()
         self.num_features = num_features
-        self.fp16_enabled = False
 
     def forward(self, features: Tensor, num_points: Tensor, coors: Tensor,
                 *args, **kwargs) -> Tensor:
@@ -58,14 +57,14 @@ class DynamicSimpleVFE(nn.Module):
     """
 
     def __init__(self,
-                 voxel_size=(0.2, 0.2, 4),
-                 point_cloud_range=(0, -40, -3, 70.4, 40, 1)):
+                 voxel_size: Tuple[float] = (0.2, 0.2, 4),
+                 point_cloud_range: Tuple[float] = (0, -40, -3, 70.4, 40, 1)):
         super(DynamicSimpleVFE, self).__init__()
         self.scatter = DynamicScatter(voxel_size, point_cloud_range, True)
-        self.fp16_enabled = False
 
     @torch.no_grad()
-    def forward(self, features, coors, *args, **kwargs):
+    def forward(self, features: Tensor, coors: Tensor, *args,
+                **kwargs) -> Tensor:
         """Forward function.
 
         Args:
@@ -116,17 +115,17 @@ class DynamicVFE(nn.Module):
     """
 
     def __init__(self,
-                 in_channels=4,
-                 feat_channels=[],
-                 with_distance=False,
-                 with_cluster_center=False,
-                 with_voxel_center=False,
-                 voxel_size=(0.2, 0.2, 4),
-                 point_cloud_range=(0, -40, -3, 70.4, 40, 1),
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 mode='max',
-                 fusion_layer=None,
-                 return_point_feats=False):
+                 in_channels: int = 4,
+                 feat_channels: list = [],
+                 with_distance: bool = False,
+                 with_cluster_center: bool = False,
+                 with_voxel_center: bool = False,
+                 voxel_size: Tuple[float] = (0.2, 0.2, 4),
+                 point_cloud_range: Tuple[float] = (0, -40, -3, 70.4, 40, 1),
+                 norm_cfg: dict = dict(type='BN1d', eps=1e-3, momentum=0.01),
+                 mode: str = 'max',
+                 fusion_layer: dict = None,
+                 return_point_feats: bool = False):
         super(DynamicVFE, self).__init__()
         assert mode in ['avg', 'max']
         assert len(feat_channels) > 0
@@ -141,7 +140,6 @@ class DynamicVFE(nn.Module):
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
         self.return_point_feats = return_point_feats
-        self.fp16_enabled = False
 
         # Need pillar (voxel) size and x/y offset in order to calculate offset
         self.vx = voxel_size[0]
@@ -174,7 +172,8 @@ class DynamicVFE(nn.Module):
         if fusion_layer is not None:
             self.fusion_layer = MODELS.build(fusion_layer)
 
-    def map_voxel_center_to_point(self, pts_coors, voxel_mean, voxel_coors):
+    def map_voxel_center_to_point(self, pts_coors: Tensor, voxel_mean: Tensor,
+                                  voxel_coors: Tensor) -> Tensor:
         """Map voxel features to its corresponding points.
 
         Args:
@@ -217,13 +216,13 @@ class DynamicVFE(nn.Module):
         return center_per_point
 
     def forward(self,
-                features,
-                coors,
-                points=None,
-                img_feats=None,
-                img_metas=None,
+                features: Tensor,
+                coors: Tensor,
+                points: Optional[Sequence[Tensor]] = None,
+                img_feats: Optional[Sequence[Tensor]] = None,
+                img_metas: Optional[dict] = None,
                 *args,
-                **kwargs):
+                **kwargs) -> tuple:
         """Forward functions.
 
         Args:
@@ -316,17 +315,17 @@ class HardVFE(nn.Module):
     """
 
     def __init__(self,
-                 in_channels=4,
-                 feat_channels=[],
-                 with_distance=False,
-                 with_cluster_center=False,
-                 with_voxel_center=False,
-                 voxel_size=(0.2, 0.2, 4),
-                 point_cloud_range=(0, -40, -3, 70.4, 40, 1),
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 mode='max',
-                 fusion_layer=None,
-                 return_point_feats=False):
+                 in_channels: int = 4,
+                 feat_channels: list = [],
+                 with_distance: bool = False,
+                 with_cluster_center: bool = False,
+                 with_voxel_center: bool = False,
+                 voxel_size: Tuple[float] = (0.2, 0.2, 4),
+                 point_cloud_range: Tuple[float] = (0, -40, -3, 70.4, 40, 1),
+                 norm_cfg: dict = dict(type='BN1d', eps=1e-3, momentum=0.01),
+                 mode: str = 'max',
+                 fusion_layer: dict = None,
+                 return_point_feats: bool = False):
         super(HardVFE, self).__init__()
         assert len(feat_channels) > 0
         if with_cluster_center:
@@ -340,7 +339,6 @@ class HardVFE(nn.Module):
         self._with_cluster_center = with_cluster_center
         self._with_voxel_center = with_voxel_center
         self.return_point_feats = return_point_feats
-        self.fp16_enabled = False
 
         # Need pillar (voxel) size and x/y offset to calculate pillar offset
         self.vx = voxel_size[0]
@@ -383,13 +381,13 @@ class HardVFE(nn.Module):
             self.fusion_layer = MODELS.build(fusion_layer)
 
     def forward(self,
-                features,
-                num_points,
-                coors,
-                img_feats=None,
-                img_metas=None,
+                features: Tensor,
+                num_points: Tensor,
+                coors: Tensor,
+                img_feats: Optional[Sequence[Tensor]] = None,
+                img_metas: Optional[dict] = None,
                 *args,
-                **kwargs):
+                **kwargs) -> tuple:
         """Forward functions.
 
         Args:
@@ -452,8 +450,10 @@ class HardVFE(nn.Module):
 
         return voxel_feats
 
-    def fusion_with_mask(self, features, mask, voxel_feats, coors, img_feats,
-                         img_metas):
+    def fusion_with_mask(self, features: Tensor, mask: Tensor,
+                         voxel_feats: Tensor, coors: Tensor,
+                         img_feats: Sequence[Tensor],
+                         img_metas: Sequence[dict]) -> Tensor:
         """Fuse image and point features with mask.
 
         Args:

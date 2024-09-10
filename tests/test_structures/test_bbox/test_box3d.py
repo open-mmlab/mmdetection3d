@@ -347,7 +347,7 @@ def test_lidar_boxes3d():
     points_np, rot_mat_T_np = boxes.rotate(0.13603681398218053, points_np)
     lidar_points = LiDARPoints(points_np)
     lidar_points, rot_mat_T_np = boxes.rotate(rot_mat, lidar_points)
-    points_np = lidar_points.tensor.numpy()
+    points_np = lidar_points.numpy()
 
     assert np.allclose(points_np, expected_points_np, 1e-3)
     assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
@@ -667,8 +667,8 @@ def test_boxes_conversion():
     assert torch.allclose(lidar_to_cam_box, camera_boxes.tensor)
 
     # test numpy convert
-    cam_to_lidar_box = Box3DMode.convert(camera_boxes.tensor.numpy(),
-                                         Box3DMode.CAM, Box3DMode.LIDAR,
+    cam_to_lidar_box = Box3DMode.convert(camera_boxes.numpy(), Box3DMode.CAM,
+                                         Box3DMode.LIDAR,
                                          rt_mat.inverse().numpy())
     assert np.allclose(cam_to_lidar_box, expected_tensor.numpy())
 
@@ -931,7 +931,7 @@ def test_camera_boxes3d():
         torch.tensor(-0.13603681398218053), points_np)
     camera_points = CameraPoints(points_np, points_dim=4)
     camera_points, rot_mat_T_np = boxes.rotate(rot_mat, camera_points)
-    points_np = camera_points.tensor.numpy()
+    points_np = camera_points.numpy()
     assert np.allclose(points_np, expected_points_np, 1e-3)
     assert np.allclose(rot_mat_T_np, expected_rot_mat_T_np, 1e-3)
 
@@ -1338,7 +1338,7 @@ def test_depth_boxes3d():
     points_np, rot_mat_T_np = boxes.rotate(-0.022998953275003075, points_np)
     depth_points = DepthPoints(points_np, points_dim=4)
     depth_points, rot_mat_T_np = boxes.rotate(rot_mat, depth_points)
-    points_np = depth_points.tensor.numpy()
+    points_np = depth_points.numpy()
     expected_rot_mat_T_np = expected_rot_mat_T_np.T
     assert torch.allclose(boxes.tensor, expected_tensor, 1e-3)
     assert np.allclose(points_np, expected_points_np, 1e-3)
@@ -1772,10 +1772,10 @@ def test_points_in_boxes():
          [1, 0, 1, 1, 1, 1], [1, 0, 1, 1, 1, 1], [0, 1, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 1, 0, 1], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
-         [0, 0, 1, 1, 1, 1], [0, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 1],
-         [0, 0, 1, 1, 1, 0], [0, 0, 1, 1, 1, 1], [0, 0, 0, 1, 0, 0],
-         [1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0]],
+         [0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0],
+         [0, 0, 1, 0, 1, 1], [0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 1, 0],
+         [0, 0, 0, 0, 0, 1], [0, 0, 1, 0, 1, 1], [0, 0, 0, 0, 0, 0],
+         [1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0]],
         dtype=torch.int32).cuda()
     assert point_indices.shape == torch.Size([23, 6])
     assert (point_indices == expected_point_indices).all()
@@ -1785,8 +1785,8 @@ def test_points_in_boxes():
 
     point_indices = cam_boxes.points_in_boxes_part(cam_pts)
     expected_point_indices = torch.tensor([
-        0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, 3, -1, -1, 2, 3, 3, 2, 2, 3,
-        0, 0
+        0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, 2, -1, -1, 2, -1, 2, 5, 2,
+        -1, 0, 0
     ],
                                           dtype=torch.int32).cuda()
     assert point_indices.shape == torch.Size([23])

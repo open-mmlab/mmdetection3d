@@ -37,10 +37,10 @@ def main(args):
     model_result, _ = inference_detector(model, args.pcd)
     # filter the 3d bboxes whose scores > 0.5
     if 'pts_bbox' in model_result[0].keys():
-        pred_bboxes = model_result[0]['pts_bbox']['boxes_3d'].tensor.numpy()
+        pred_bboxes = model_result[0]['pts_bbox']['boxes_3d'].numpy()
         pred_scores = model_result[0]['pts_bbox']['scores_3d'].numpy()
     else:
-        pred_bboxes = model_result[0]['boxes_3d'].tensor.numpy()
+        pred_bboxes = model_result[0]['boxes_3d'].numpy()
         pred_scores = model_result[0]['scores_3d'].numpy()
     model_result = pred_bboxes[pred_scores > 0.5]
 

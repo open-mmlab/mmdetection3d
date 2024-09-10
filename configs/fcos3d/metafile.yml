@@ -16,7 +16,7 @@ Collections:
       Version: v0.13.0
 
 Models:
-  - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d
+  - Name: fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune
     In Collection: FCOS3D
     Config: configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py
     Metadata:
@@ -29,7 +29,7 @@ Models:
           NDS: 37.3
     Weights: https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_20210715_235813-4bed5239.pth
 
-  - Name: fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_finetune
+  - Name: fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune
     In Collection: FCOS3D
     Config: configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d_finetune.py
     Metadata:

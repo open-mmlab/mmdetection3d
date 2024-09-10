@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List
+
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 from mmdet3d.registry import MODELS
 
@@ -16,15 +18,17 @@ class PointPillarsScatter(nn.Module):
         output_shape (list[int]): Required output shape of features.
     """
 
-    def __init__(self, in_channels, output_shape):
+    def __init__(self, in_channels: int, output_shape: List[int]):
         super().__init__()
         self.output_shape = output_shape
         self.ny = output_shape[0]
         self.nx = output_shape[1]
         self.in_channels = in_channels
-        self.fp16_enabled = False
 
-    def forward(self, voxel_features, coors, batch_size=None):
+    def forward(self,
+                voxel_features: Tensor,
+                coors: Tensor,
+                batch_size: int = None) -> Tensor:
         """Foraward function to scatter features."""
         # TODO: rewrite the function in a batch manner
         # no need to deal with different batch cases
@@ -33,7 +37,7 @@ class PointPillarsScatter(nn.Module):
         else:
             return self.forward_single(voxel_features, coors)
 
-    def forward_single(self, voxel_features, coors):
+    def forward_single(self, voxel_features: Tensor, coors: Tensor) -> Tensor:
         """Scatter features of single sample.
 
         Args:
@@ -57,7 +61,8 @@ class PointPillarsScatter(nn.Module):
         canvas = canvas.view(1, self.in_channels, self.ny, self.nx)
         return canvas
 
-    def forward_batch(self, voxel_features, coors, batch_size):
+    def forward_batch(self, voxel_features: Tensor, coors: Tensor,
+                      batch_size: int) -> Tensor:
         """Scatter features of single sample.
 
         Args:

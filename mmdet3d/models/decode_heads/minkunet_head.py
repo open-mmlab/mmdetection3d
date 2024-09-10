@@ -5,15 +5,9 @@ import torch
 from torch import Tensor
 from torch import nn as nn
 
-from mmdet3d.models.layers.torchsparse import IS_TORCHSPARSE_AVAILABLE
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from .decode_head import Base3DDecodeHead
-
-if IS_TORCHSPARSE_AVAILABLE:
-    from torchsparse import SparseTensor
-else:
-    SparseTensor = None
 
 
 @MODELS.register_module()
@@ -43,12 +37,12 @@ class MinkUNetHead(Base3DDecodeHead):
         ]
         return torch.cat(gt_semantic_segs)
 
-    def predict(self, inputs: SparseTensor,
+    def predict(self, inputs: Tensor,
                 batch_data_samples: SampleList) -> List[Tensor]:
         """Forward function for testing.
 
         Args:
-            inputs (SparseTensor): Features from backone.
+            inputs (Tensor): Features from backone.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The seg
                 data samples.
 
@@ -57,24 +51,24 @@ class MinkUNetHead(Base3DDecodeHead):
         """
         seg_logits = self.forward(inputs)
 
-        batch_idx = inputs.C[:, -1]
+        batch_idx = torch.cat(
+            [data_samples.batch_idx for data_samples in batch_data_samples])
         seg_logit_list = []
         for i, data_sample in enumerate(batch_data_samples):
             seg_logit = seg_logits[batch_idx == i]
-            seg_logit = seg_logit[data_sample.voxel2point_map]
+            seg_logit = seg_logit[data_sample.point2voxel_map]
             seg_logit_list.append(seg_logit)
 
         return seg_logit_list
 
-    def forward(self, x: SparseTensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward function.
 
         Args:
-            x (SparseTensor): Features from backbone.
+            x (Tensor): Features from backbone.
 
         Returns:
             Tensor: Segmentation map of shape [N, C].
                 Note that output contains all points from each batch.
         """
-        output = self.cls_seg(x.F)
-        return output
+        return self.cls_seg(x)

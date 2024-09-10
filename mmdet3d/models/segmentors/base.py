@@ -132,17 +132,12 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
-    def aug_test(self, batch_inputs, batch_data_samples):
-        """Placeholder for augmentation test."""
-        pass
-
-    def postprocess_result(self, seg_pred_list: List[dict],
+    def postprocess_result(self, seg_logits_list: List[Tensor],
                            batch_data_samples: SampleList) -> SampleList:
         """Convert results list to `Det3DDataSample`.
 
         Args:
-            seg_logits_list (List[dict]): List of segmentation results,
+            seg_logits_list (List[Tensor]): List of segmentation results,
                 seg_logits from model of each input point clouds sample.
             batch_data_samples (List[:obj:`Det3DDataSample`]): The det3d data
                 samples. It usually includes information such as `metainfo` and
@@ -152,12 +147,19 @@ class Base3DSegmentor(BaseModel, metaclass=ABCMeta):
             List[:obj:`Det3DDataSample`]: Segmentation results of the input
             points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+            - ``pred_pts_seg`` (PointData): Prediction of 3D semantic
               segmentation.
+            - ``pts_seg_logits`` (PointData): Predicted logits of 3D semantic
+              segmentation before normalization.
         """
 
-        for i in range(len(seg_pred_list)):
-            seg_pred = seg_pred_list[i]
-            batch_data_samples[i].set_data(
-                {'pred_pts_seg': PointData(**{'pts_semantic_mask': seg_pred})})
+        for i in range(len(seg_logits_list)):
+            seg_logits = seg_logits_list[i]
+            seg_pred = seg_logits.argmax(dim=0)
+            batch_data_samples[i].set_data({
+                'pts_seg_logits':
+                PointData(**{'pts_seg_logits': seg_logits}),
+                'pred_pts_seg':
+                PointData(**{'pts_semantic_mask': seg_pred})
+            })
         return batch_data_samples

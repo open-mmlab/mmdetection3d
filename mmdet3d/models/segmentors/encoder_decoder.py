@@ -5,7 +5,6 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch import nn as nn
-from torch.nn import functional as F
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
@@ -477,8 +476,7 @@ class EncoderDecoder3D(Base3DSegmentor):
         else:
             seg_logit = self.whole_inference(points, batch_input_metas,
                                              rescale)
-        output = F.softmax(seg_logit, dim=1)
-        return output
+        return seg_logit
 
     def predict(self,
                 batch_inputs_dict: dict,
@@ -503,27 +501,26 @@ class EncoderDecoder3D(Base3DSegmentor):
             List[:obj:`Det3DDataSample`]: Segmentation results of the input
             points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+            - ``pred_pts_seg`` (PointData): Prediction of 3D semantic
               segmentation.
+            - ``pts_seg_logits`` (PointData): Predicted logits of 3D semantic
+              segmentation before normalization.
         """
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
-        seg_pred_list = []
+        seg_logits_list = []
         batch_input_metas = []
         for data_sample in batch_data_samples:
             batch_input_metas.append(data_sample.metainfo)
 
         points = batch_inputs_dict['points']
         for point, input_meta in zip(points, batch_input_metas):
-            seg_prob = self.inference(
+            seg_logits = self.inference(
                 point.unsqueeze(0), [input_meta], rescale)[0]
-            seg_map = seg_prob.argmax(0)  # [N]
-            # to cpu tensor for consistency with det3d
-            seg_map = seg_map.cpu()
-            seg_pred_list.append(seg_map)
+            seg_logits_list.append(seg_logits)
 
-        return self.postprocess_result(seg_pred_list, batch_data_samples)
+        return self.postprocess_result(seg_logits_list, batch_data_samples)
 
     def _forward(self,
                  batch_inputs_dict: dict,
@@ -546,7 +543,3 @@ class EncoderDecoder3D(Base3DSegmentor):
         points = torch.stack(batch_inputs_dict['points'])
         x = self.extract_feat(points)
         return self.decode_head.forward(x)
-
-    def aug_test(self, batch_inputs, batch_img_metas):
-        """Placeholder for augmentation test."""
-        pass

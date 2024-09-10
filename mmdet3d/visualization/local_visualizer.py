@@ -1,6 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-from typing import List, Optional, Tuple, Union
+import math
+import os
+import sys
+import time
+from typing import List, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mmcv
@@ -8,19 +12,21 @@ import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from mmdet.visualization import DetLocalVisualizer
+from mmdet.visualization import DetLocalVisualizer, get_palette
 from mmengine.dist import master_only
+from mmengine.logging import print_log
 from mmengine.structures import InstanceData
 from mmengine.visualization import Visualizer as MMENGINE_Visualizer
-from mmengine.visualization.utils import check_type, tensor2ndarray
+from mmengine.visualization.utils import (check_type, color_val_matplotlib,
+                                          tensor2ndarray)
 from torch import Tensor
 
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
                                 CameraInstance3DBoxes, Coord3DMode,
-                                DepthInstance3DBoxes, Det3DDataSample,
-                                LiDARInstance3DBoxes, PointData,
-                                points_cam2img)
+                                DepthInstance3DBoxes, DepthPoints,
+                                Det3DDataSample, LiDARInstance3DBoxes,
+                                PointData, points_cam2img)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode)
 
@@ -67,6 +73,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             Defaults to dict(size=1, origin=[0, 0, 0]).
         alpha (int or float): The transparency of bboxes or mask.
             Defaults to 0.8.
+        multi_imgs_col (int): The number of columns in arrangement when showing
+            multi-view images.
 
     Examples:
         >>> import numpy as np
@@ -102,19 +110,23 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ...                                       vis_task='lidar_seg')
     """
 
-    def __init__(self,
-                 name: str = 'visualizer',
-                 points: Optional[np.ndarray] = None,
-                 image: Optional[np.ndarray] = None,
-                 pcd_mode: int = 0,
-                 vis_backends: Optional[List[dict]] = None,
-                 save_dir: Optional[str] = None,
-                 bbox_color: Optional[Union[str, Tuple[int]]] = None,
-                 text_color: Union[str, Tuple[int]] = (200, 200, 200),
-                 mask_color: Optional[Union[str, Tuple[int]]] = None,
-                 line_width: Union[int, float] = 3,
-                 frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                 alpha: Union[int, float] = 0.8) -> None:
+    def __init__(
+        self,
+        name: str = 'visualizer',
+        points: Optional[np.ndarray] = None,
+        image: Optional[np.ndarray] = None,
+        pcd_mode: int = 0,
+        vis_backends: Optional[List[dict]] = None,
+        save_dir: Optional[str] = None,
+        bbox_color: Optional[Union[str, Tuple[int]]] = None,
+        text_color: Union[str, Tuple[int]] = (200, 200, 200),
+        mask_color: Optional[Union[str, Tuple[int]]] = None,
+        line_width: Union[int, float] = 3,
+        frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
+        alpha: Union[int, float] = 0.8,
+        multi_imgs_col: int = 3,
+        fig_show_cfg: dict = dict(figsize=(18, 12))
+    ) -> None:
         super().__init__(
             name=name,
             image=image,
@@ -127,17 +139,24 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             alpha=alpha)
         if points is not None:
             self.set_points(points, pcd_mode=pcd_mode, frame_cfg=frame_cfg)
-        self.pts_seg_num = 0
+        self.multi_imgs_col = multi_imgs_col
+        self.fig_show_cfg.update(fig_show_cfg)
+
+        self.flag_pause = False
+        self.flag_next = False
+        self.flag_exit = False
 
     def _clear_o3d_vis(self) -> None:
         """Clear open3d vis."""
 
         if hasattr(self, 'o3d_vis'):
             del self.o3d_vis
-            del self.pcd
             del self.points_colors
+            del self.view_control
+            if hasattr(self, 'pcd'):
+                del self.pcd
 
-    def _initialize_o3d_vis(self, frame_cfg: dict) -> Visualizer:
+    def _initialize_o3d_vis(self, show=True) -> Visualizer:
         """Initialize open3d vis according to frame_cfg.
 
         Args:
@@ -150,11 +169,17 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if o3d is None or geometry is None:
             raise ImportError(
                 'Please run "pip install open3d" to install open3d first.')
-        o3d_vis = o3d.visualization.Visualizer()
-        o3d_vis.create_window()
-        # create coordinate frame
-        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(**frame_cfg)
-        o3d_vis.add_geometry(mesh_frame)
+        glfw_key_escape = 256  # Esc
+        glfw_key_space = 32  # Space
+        glfw_key_right = 262  # Right
+        o3d_vis = o3d.visualization.VisualizerWithKeyCallback()
+        o3d_vis.register_key_callback(glfw_key_escape, self.escape_callback)
+        o3d_vis.register_key_action_callback(glfw_key_space,
+                                             self.space_action_callback)
+        o3d_vis.register_key_callback(glfw_key_right, self.right_callback)
+        if os.environ.get('DISPLAY', None) is not None and show:
+            o3d_vis.create_window()
+            self.view_control = o3d_vis.get_view_control()
         return o3d_vis
 
     @master_only
@@ -163,7 +188,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                    pcd_mode: int = 0,
                    vis_mode: str = 'replace',
                    frame_cfg: dict = dict(size=1, origin=[0, 0, 0]),
-                   points_color: Tuple[float] = (0.5, 0.5, 0.5),
+                   points_color: Tuple[float] = (0.8, 0.8, 0.8),
                    points_size: int = 2,
                    mode: str = 'xyz') -> None:
         """Set the point cloud to draw.
@@ -183,7 +208,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 visualization initialization.
                 Defaults to dict(size=1, origin=[0, 0, 0]).
             points_color (Tuple[float]): The color of points.
-                Defaults to (0.5, 0.5, 0.5).
+                Defaults to (1, 1, 1).
             points_size (int): The size of points to show on visualizer.
                 Defaults to 2.
             mode (str): Indicate type of the input points, available mode
@@ -194,7 +219,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         check_type('points', points, np.ndarray)
 
         if not hasattr(self, 'o3d_vis'):
-            self.o3d_vis = self._initialize_o3d_vis(frame_cfg)
+            self.o3d_vis = self._initialize_o3d_vis()
 
         # for now we convert points into depth mode for visualization
         if pcd_mode != Coord3DMode.DEPTH:
@@ -204,7 +229,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.o3d_vis.remove_geometry(self.pcd)
 
         # set points size in Open3D
-        self.o3d_vis.get_render_option().point_size = points_size
+        render_option = self.o3d_vis.get_render_option()
+        if render_option is not None:
+            render_option.point_size = points_size
+            render_option.background_color = np.asarray([0, 0, 0])
 
         points = points.copy()
         pcd = geometry.PointCloud()
@@ -220,6 +248,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 points_colors /= 255.0
         else:
             raise NotImplementedError
+
+        # create coordinate frame
+        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(**frame_cfg)
+        self.o3d_vis.add_geometry(mesh_frame)
 
         pcd.colors = o3d.utility.Vector3dVector(points_colors)
         self.o3d_vis.add_geometry(pcd)
@@ -263,7 +295,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # convert bboxes to numpy dtype
         bboxes_3d = tensor2ndarray(bboxes_3d.tensor)
 
-        in_box_color = np.array(points_in_box_color)
+        # in_box_color = np.array(points_in_box_color)
 
         for i in range(len(bboxes_3d)):
             center = bboxes_3d[i, 0:3]
@@ -282,7 +314,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
             line_set = geometry.LineSet.create_from_oriented_bounding_box(
                 box3d)
-            line_set.paint_uniform_color(bbox_color)
+            line_set.paint_uniform_color(np.array(bbox_color[i]) / 255.)
             # draw bboxes on visualizer
             self.o3d_vis.add_geometry(line_set)
 
@@ -290,7 +322,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if self.pcd is not None and mode == 'xyz':
                 indices = box3d.get_point_indices_within_bounding_box(
                     self.pcd.points)
-                self.points_colors[indices] = in_box_color
+                self.points_colors[indices] = np.array(bbox_color[i]) / 255.
 
         # update points colors
         if self.pcd is not None:
@@ -411,7 +443,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
     def draw_points_on_image(self,
                              points: Union[np.ndarray, Tensor],
                              pts2img: np.ndarray,
-                             sizes: Union[np.ndarray, int] = 10) -> None:
+                             sizes: Union[np.ndarray, int] = 3,
+                             max_depth: Optional[float] = None) -> None:
         """Draw projected points on the image.
 
         Args:
@@ -419,13 +452,18 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             pts2img (np.ndarray): The transformation matrix from the coordinate
                 of point cloud to image plane.
             sizes (np.ndarray or int): The marker size. Defaults to 10.
+            max_depth (float): The max depth in the color map. Defaults to
+                None.
         """
         check_type('points', points, (np.ndarray, Tensor))
         points = tensor2ndarray(points)
         assert self._image is not None, 'Please set image using `set_image`'
         projected_points = points_cam2img(points, pts2img, with_depth=True)
         depths = projected_points[:, 2]
-        colors = (depths % 20) / 20
+        # Show depth adaptively consideing different scenes
+        if max_depth is None:
+            max_depth = depths.max()
+        colors = (depths % max_depth) / max_depth
         # use colormap to obtain the render color
         color_map = plt.get_cmap('jet')
         self.ax_save.scatter(
@@ -434,7 +472,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             c=colors,
             cmap=color_map,
             s=sizes,
-            alpha=0.5,
+            alpha=0.7,
             edgecolors='none')
 
     # TODO: set bbox color according to palette
@@ -449,7 +487,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             line_widths: Union[int, float, List[Union[int, float]]] = 2,
             face_colors: Union[str, Tuple[int],
                                List[Union[str, Tuple[int]]]] = 'royalblue',
-            alpha: Union[int, float] = 0.4):
+            alpha: Union[int, float] = 0.4,
+            img_size: Optional[Tuple] = None):
         """Draw projected 3D boxes on the image.
 
         Args:
@@ -475,6 +514,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             face_colors (str or Tuple[int] or List[str or Tuple[int]]):
                 The face colors. Defaults to 'royalblue'.
             alpha (int or float): The transparency of bboxes. Defaults to 0.4.
+            img_size (tuple, optional): The size (w, h) of the image.
         """
 
         check_type('bboxes', bboxes_3d, BaseInstance3DBoxes)
@@ -488,7 +528,25 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         else:
             raise NotImplementedError('unsupported box type!')
 
+        edge_colors_norm = color_val_matplotlib(edge_colors)
+
         corners_2d = proj_bbox3d_to_img(bboxes_3d, input_meta)
+        if img_size is not None:
+            # Filter out the bbox where half of stuff is outside the image.
+            # This is for the visualization of multi-view image.
+            valid_point_idx = (corners_2d[..., 0] >= 0) & \
+                        (corners_2d[..., 0] <= img_size[0]) & \
+                        (corners_2d[..., 1] >= 0) & (corners_2d[..., 1] <= img_size[1])  # noqa: E501
+            valid_bbox_idx = valid_point_idx.sum(axis=-1) >= 4
+            corners_2d = corners_2d[valid_bbox_idx]
+            filter_edge_colors = []
+            filter_edge_colors_norm = []
+            for i, color in enumerate(edge_colors):
+                if valid_bbox_idx[i]:
+                    filter_edge_colors.append(color)
+                    filter_edge_colors_norm.append(edge_colors_norm[i])
+            edge_colors = filter_edge_colors
+            edge_colors_norm = filter_edge_colors_norm
 
         lines_verts_idx = [0, 1, 2, 3, 7, 6, 5, 4, 0, 3, 7, 4, 5, 1, 2, 6]
         lines_verts = corners_2d[:, lines_verts_idx, :]
@@ -504,7 +562,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         p = PatchCollection(
             pathpatches,
             facecolors='none',
-            edgecolors=edge_colors,
+            edgecolors=edge_colors_norm,
             linewidths=line_widths,
             linestyles=line_styles)
 
@@ -518,7 +576,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             edge_colors=edge_colors,
             line_styles=line_styles,
             line_widths=line_widths,
-            face_colors=face_colors)
+            face_colors=edge_colors)
 
     @master_only
     def draw_seg_mask(self, seg_mask_colors: np.ndarray) -> None:
@@ -532,12 +590,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # we can't draw the colors on existing points
         # in case gt and pred mask would overlap
         # instead we set a large offset along x-axis for each seg mask
-        self.pts_seg_num += 1
-        offset = (np.array(self.pcd.points).max(0) -
-                  np.array(self.pcd.points).min(0))[0] * 1.2 * self.pts_seg_num
-        mesh_frame = geometry.TriangleMesh.create_coordinate_frame(
-            size=1, origin=[offset, 0, 0])  # create coordinate frame for seg
-        self.o3d_vis.add_geometry(mesh_frame)
+        if hasattr(self, 'pcd'):
+            offset = (np.array(self.pcd.points).max(0) -
+                      np.array(self.pcd.points).min(0))[0] * 1.2
+            mesh_frame = geometry.TriangleMesh.create_coordinate_frame(
+                size=1, origin=[offset, 0,
+                                0])  # create coordinate frame for seg
+            self.o3d_vis.add_geometry(mesh_frame)
+        else:
+            offset = 0
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
         self.set_points(seg_points, pcd_mode=2, vis_mode='add', mode='xyzrgb')
@@ -547,6 +608,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                            instances: InstanceData,
                            input_meta: dict,
                            vis_task: str,
+                           show_pcd_rgb: bool = False,
                            palette: Optional[List[tuple]] = None) -> dict:
         """Draw 3D instances of GT or prediction.
 
@@ -557,6 +619,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             input_meta (dict): Meta information.
             vis_task (str): Visualization task, it includes: 'lidar_det',
                 'multi-modality_det', 'mono_det'.
+            show_pcd_rgb (bool): Whether to show RGB point cloud.
             palette (List[tuple], optional): Palette information corresponding
                 to the category. Defaults to None.
 
@@ -569,6 +632,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             return None
 
         bboxes_3d = instances.bboxes_3d  # BaseInstance3DBoxes
+        labels_3d = instances.labels_3d
 
         data_3d = dict()
 
@@ -583,8 +647,23 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             else:
                 bboxes_3d_depth = bboxes_3d.clone()
 
-            self.set_points(points, pcd_mode=2)
-            self.draw_bboxes_3d(bboxes_3d_depth)
+            if 'axis_align_matrix' in input_meta:
+                points = DepthPoints(points, points_dim=points.shape[1])
+                rot_mat = input_meta['axis_align_matrix'][:3, :3]
+                trans_vec = input_meta['axis_align_matrix'][:3, -1]
+                points.rotate(rot_mat.T)
+                points.translate(trans_vec)
+                points = tensor2ndarray(points.tensor)
+
+            max_label = int(max(labels_3d) if len(labels_3d) > 0 else 0)
+            bbox_color = palette if self.bbox_color is None \
+                else self.bbox_color
+            bbox_palette = get_palette(bbox_color, max_label + 1)
+            colors = [bbox_palette[label] for label in labels_3d]
+
+            self.set_points(
+                points, pcd_mode=2, mode='xyzrgb' if show_pcd_rgb else 'xyz')
+            self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
             data_3d['points'] = points
@@ -592,16 +671,76 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if vis_task in ['mono_det', 'multi-modality_det']:
             assert 'img' in data_input
             img = data_input['img']
-            if isinstance(data_input['img'], Tensor):
-                img = img.permute(1, 2, 0).numpy()
-                img = img[..., [2, 1, 0]]  # bgr to rgb
-            self.set_image(img)
-            self.draw_proj_bboxes_3d(bboxes_3d, input_meta)
-            if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
-                centers_2d = instances.centers_2d
-                self.draw_points(centers_2d)
-            drawn_img = self.get_image()
-            data_3d['img'] = drawn_img
+            if isinstance(img, list) or (isinstance(img, (np.ndarray, Tensor))
+                                         and len(img.shape) == 4):
+                # show multi-view images
+                img_size = img[0].shape[:2] if isinstance(
+                    img, list) else img.shape[-2:]  # noqa: E501
+                img_col = self.multi_imgs_col
+                img_row = math.ceil(len(img) / img_col)
+                composed_img = np.zeros(
+                    (img_size[0] * img_row, img_size[1] * img_col, 3),
+                    dtype=np.uint8)
+                for i, single_img in enumerate(img):
+                    # Note that we should keep the same order of elements both
+                    # in `img` and `input_meta`
+                    if isinstance(single_img, Tensor):
+                        single_img = single_img.permute(1, 2, 0).numpy()
+                        single_img = single_img[..., [2, 1, 0]]  # bgr to rgb
+                    self.set_image(single_img)
+                    single_img_meta = dict()
+                    for key, meta in input_meta.items():
+                        if isinstance(meta,
+                                      (Sequence, np.ndarray,
+                                       Tensor)) and len(meta) == len(img):
+                            single_img_meta[key] = meta[i]
+                        else:
+                            single_img_meta[key] = meta
+
+                    max_label = int(
+                        max(labels_3d) if len(labels_3d) > 0 else 0)
+                    bbox_color = palette if self.bbox_color is None \
+                        else self.bbox_color
+                    bbox_palette = get_palette(bbox_color, max_label + 1)
+                    colors = [bbox_palette[label] for label in labels_3d]
+
+                    self.draw_proj_bboxes_3d(
+                        bboxes_3d,
+                        single_img_meta,
+                        img_size=single_img.shape[:2][::-1],
+                        edge_colors=colors)
+                    if vis_task == 'mono_det' and hasattr(
+                            instances, 'centers_2d'):
+                        centers_2d = instances.centers_2d
+                        self.draw_points(centers_2d)
+                    composed_img[(i // img_col) *
+                                 img_size[0]:(i // img_col + 1) * img_size[0],
+                                 (i % img_col) *
+                                 img_size[1]:(i % img_col + 1) *
+                                 img_size[1]] = self.get_image()
+                data_3d['img'] = composed_img
+            else:
+                # show single-view image
+                # TODO: Solve the problem: some line segments of 3d bboxes are
+                # out of image by a large margin
+                if isinstance(data_input['img'], Tensor):
+                    img = img.permute(1, 2, 0).numpy()
+                    img = img[..., [2, 1, 0]]  # bgr to rgb
+                self.set_image(img)
+
+                max_label = int(max(labels_3d) if len(labels_3d) > 0 else 0)
+                bbox_color = palette if self.bbox_color is None \
+                    else self.bbox_color
+                bbox_palette = get_palette(bbox_color, max_label + 1)
+                colors = [bbox_palette[label] for label in labels_3d]
+
+                self.draw_proj_bboxes_3d(
+                    bboxes_3d, input_meta, edge_colors=colors)
+                if vis_task == 'mono_det' and hasattr(instances, 'centers_2d'):
+                    centers_2d = instances.centers_2d
+                    self.draw_points(centers_2d)
+                drawn_img = self.get_image()
+                data_3d['img'] = drawn_img
 
         return data_3d
 
@@ -609,7 +748,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                           points: Union[Tensor, np.ndarray],
                           pts_seg: PointData,
                           palette: Optional[List[tuple]] = None,
-                          ignore_index: Optional[int] = None) -> None:
+                          keep_index: Optional[int] = None) -> None:
         """Draw 3D semantic mask of GT or prediction.
 
         Args:
@@ -626,14 +765,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pts_sem_seg = tensor2ndarray(pts_seg.pts_semantic_mask)
         palette = np.array(palette)
 
-        if ignore_index is not None:
-            points = points[pts_sem_seg != ignore_index]
-            pts_sem_seg = pts_sem_seg[pts_sem_seg != ignore_index]
+        if keep_index is not None:
+            keep_index = tensor2ndarray(keep_index)
+            points = points[keep_index]
+            pts_sem_seg = pts_sem_seg[keep_index]
 
         pts_color = palette[pts_sem_seg]
         seg_color = np.concatenate([points[:, :3], pts_color], axis=1)
 
-        self.set_points(points, pcd_mode=2, vis_mode='add')
         self.draw_seg_mask(seg_color)
 
     @master_only
@@ -642,8 +781,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
              drawn_img_3d: Optional[np.ndarray] = None,
              drawn_img: Optional[np.ndarray] = None,
              win_name: str = 'image',
-             wait_time: int = 0,
-             continue_key: str = ' ') -> None:
+             wait_time: int = -1,
+             continue_key: str = 'right',
+             vis_task: str = 'lidar_det') -> None:
         """Show the drawn point cloud/image.
 
         Args:
@@ -660,18 +800,129 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 means "forever". Defaults to 0.
             continue_key (str): The key for users to continue. Defaults to ' '.
         """
-        if hasattr(self, 'o3d_vis'):
-            self.o3d_vis.run()
-            if save_path is not None:
-                self.o3d_vis.capture_screen_image(save_path)
-            self.o3d_vis.destroy_window()
-            self._clear_o3d_vis()
 
+        # In order to show multi-modal results at the same time, we show image
+        # firstly and then show point cloud since the running of
+        # Open3D will block the process
         if hasattr(self, '_image'):
-            if drawn_img_3d is not None:
-                super().show(drawn_img_3d, win_name, wait_time, continue_key)
-            if drawn_img is not None:
-                super().show(drawn_img, win_name, wait_time, continue_key)
+            if drawn_img is None and drawn_img_3d is None:
+                # use the image got by Visualizer.get_image()
+                if vis_task == 'multi-modality_det':
+                    import matplotlib.pyplot as plt
+                    is_inline = 'inline' in plt.get_backend()
+                    img = self.get_image() if drawn_img is None else drawn_img
+                    self._init_manager(win_name)
+                    fig = self.manager.canvas.figure
+                    # remove white edges by set subplot margin
+                    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+                    fig.clear()
+                    ax = fig.add_subplot()
+                    ax.axis(False)
+                    ax.imshow(img)
+                    self.manager.canvas.draw()
+                    if is_inline:
+                        return fig
+                    else:
+                        fig.show()
+                    self.manager.canvas.flush_events()
+                else:
+                    super().show(drawn_img_3d, win_name, wait_time,
+                                 continue_key)
+            else:
+                if vis_task == 'multi-modality_det':
+                    import matplotlib.pyplot as plt
+                    is_inline = 'inline' in plt.get_backend()
+                    img = drawn_img if drawn_img_3d is None else drawn_img_3d
+                    self._init_manager(win_name)
+                    fig = self.manager.canvas.figure
+                    # remove white edges by set subplot margin
+                    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+                    fig.clear()
+                    ax = fig.add_subplot()
+                    ax.axis(False)
+                    ax.imshow(img)
+                    self.manager.canvas.draw()
+                    if is_inline:
+                        return fig
+                    else:
+                        fig.show()
+                    self.manager.canvas.flush_events()
+                else:
+                    if drawn_img_3d is not None:
+                        super().show(drawn_img_3d, win_name, wait_time,
+                                     continue_key)
+                    if drawn_img is not None:
+                        super().show(drawn_img, win_name, wait_time,
+                                     continue_key)
+
+        if hasattr(self, 'o3d_vis'):
+            if hasattr(self, 'view_port'):
+                self.view_control.convert_from_pinhole_camera_parameters(
+                    self.view_port)
+            self.flag_exit = not self.o3d_vis.poll_events()
+            self.o3d_vis.update_renderer()
+            # if not hasattr(self, 'view_control'):
+            #     self.o3d_vis.create_window()
+            #     self.view_control = self.o3d_vis.get_view_control()
+            self.view_port = \
+                self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+            if wait_time != -1:
+                self.last_time = time.time()
+                while time.time(
+                ) - self.last_time < wait_time and self.o3d_vis.poll_events():
+                    self.o3d_vis.update_renderer()
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                while self.flag_pause and self.o3d_vis.poll_events():
+                    self.o3d_vis.update_renderer()
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+
+            else:
+                while not self.flag_next and self.o3d_vis.poll_events():
+                    self.o3d_vis.update_renderer()
+                    self.view_port = \
+                        self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+                self.flag_next = False
+            self.o3d_vis.clear_geometries()
+            try:
+                del self.pcd
+            except (KeyError, AttributeError):
+                pass
+            if save_path is not None:
+                if not (save_path.endswith('.png')
+                        or save_path.endswith('.jpg')):
+                    save_path += '.png'
+                self.o3d_vis.capture_screen_image(save_path)
+            if self.flag_exit:
+                self.o3d_vis.destroy_window()
+                self.o3d_vis.close()
+                self._clear_o3d_vis()
+                sys.exit(0)
+
+    def escape_callback(self, vis):
+        self.o3d_vis.clear_geometries()
+        self.o3d_vis.destroy_window()
+        self.o3d_vis.close()
+        self._clear_o3d_vis()
+        sys.exit(0)
+
+    def space_action_callback(self, vis, action, mods):
+        if action == 1:
+            if self.flag_pause:
+                print_log(
+                    'Playback continued, press [SPACE] to pause.',
+                    logger='current')
+            else:
+                print_log(
+                    'Playback paused, press [SPACE] to continue.',
+                    logger='current')
+            self.flag_pause = not self.flag_pause
+        return True
+
+    def right_callback(self, vis):
+        self.flag_next = True
+        return False
 
     # TODO: Support Visualize the 3D results from image and point cloud
     # respectively
@@ -688,7 +939,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        o3d_save_path: Optional[str] = None,
                        vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
-                       step: int = 0) -> None:
+                       step: int = 0,
+                       show_pcd_rgb: bool = False) -> None:
         """Draw datasample and save to all backends.
 
         - If GT and prediction are plotted at the same time, they are displayed
@@ -719,6 +971,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             pred_score_thr (float): The threshold to visualize the bboxes
                 and masks. Defaults to 0.3.
             step (int): Global step value to record. Defaults to 0.
+            show_pcd_rgb (bool): Whether to show RGB point cloud. Defaults to
+                False.
         """
         assert vis_task in (
             'mono_det', 'multi-view_det', 'lidar_det', 'lidar_seg',
@@ -727,17 +981,27 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         # For object detection datasets, no palette is saved
         palette = self.dataset_meta.get('palette', None)
         ignore_index = self.dataset_meta.get('ignore_index', None)
+        if vis_task == 'lidar_seg' and ignore_index is not None and 'pts_semantic_mask' in data_sample.gt_pts_seg:  # noqa: E501
+            keep_index = data_sample.gt_pts_seg.pts_semantic_mask != ignore_index  # noqa: E501
+        else:
+            keep_index = None
 
         gt_data_3d = None
         pred_data_3d = None
         gt_img_data = None
         pred_img_data = None
 
+        if not hasattr(self, 'o3d_vis') and vis_task in [
+                'multi-view_det', 'lidar_det', 'lidar_seg',
+                'multi-modality_det'
+        ]:
+            self.o3d_vis = self._initialize_o3d_vis(show=show)
+
         if draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
                     data_input, data_sample.gt_instances_3d,
-                    data_sample.metainfo, vis_task, palette)
+                    data_sample.metainfo, vis_task, show_pcd_rgb, palette)
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -755,7 +1019,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 self._draw_pts_sem_seg(data_input['points'],
                                        data_sample.gt_pts_seg, palette,
-                                       ignore_index)
+                                       keep_index)
 
         if draw_pred and data_sample is not None:
             if 'pred_instances_3d' in data_sample:
@@ -767,7 +1031,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 pred_data_3d = self._draw_instances_3d(data_input,
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
-                                                       vis_task, palette)
+                                                       vis_task, show_pcd_rgb,
+                                                       palette)
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
@@ -787,7 +1052,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 assert 'points' in data_input
                 self._draw_pts_sem_seg(data_input['points'],
                                        data_sample.pred_pts_seg, palette,
-                                       ignore_index)
+                                       keep_index)
 
         # monocular 3d object detection image
         if vis_task in ['mono_det', 'multi-modality_det']:
@@ -819,7 +1084,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 drawn_img_3d,
                 drawn_img,
                 win_name=name,
-                wait_time=wait_time)
+                wait_time=wait_time,
+                vis_task=vis_task)
 
         if out_file is not None:
             # check the suffix of the name of image file
@@ -828,6 +1094,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if drawn_img_3d is not None:
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
-                mmcv.imwrite(drawn_img[..., ::-1], out_file)
+                mmcv.imwrite(drawn_img[..., ::-1],
+                             out_file[:-4] + '_2d' + out_file[-4:])
         else:
             self.add_image(name, drawn_img_3d, step)

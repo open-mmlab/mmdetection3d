@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple, Union
+
 import mmengine
 import torch
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
 
@@ -37,13 +40,13 @@ class Anchor3DRangeGenerator(object):
     """
 
     def __init__(self,
-                 ranges,
-                 sizes=[[3.9, 1.6, 1.56]],
-                 scales=[1],
-                 rotations=[0, 1.5707963],
-                 custom_values=(),
-                 reshape_out=True,
-                 size_per_range=True):
+                 ranges: List[List[float]],
+                 sizes: List[List[float]] = [[3.9, 1.6, 1.56]],
+                 scales: List[int] = [1],
+                 rotations: List[float] = [0, 1.5707963],
+                 custom_values: Tuple[float] = (),
+                 reshape_out: bool = True,
+                 size_per_range: bool = True) -> None:
         assert mmengine.is_list_of(ranges, list)
         if size_per_range:
             if len(sizes) != len(ranges):
@@ -64,7 +67,7 @@ class Anchor3DRangeGenerator(object):
         self.reshape_out = reshape_out
         self.size_per_range = size_per_range
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         s = self.__class__.__name__ + '('
         s += f'anchor_range={self.ranges},\n'
         s += f'scales={self.scales},\n'
@@ -75,18 +78,21 @@ class Anchor3DRangeGenerator(object):
         return s
 
     @property
-    def num_base_anchors(self):
-        """list[int]: Total number of base anchors in a feature grid."""
+    def num_base_anchors(self) -> int:
+        """int: Total number of base anchors in a feature grid."""
         num_rot = len(self.rotations)
         num_size = torch.tensor(self.sizes).reshape(-1, 3).size(0)
         return num_rot * num_size
 
     @property
-    def num_levels(self):
+    def num_levels(self) -> int:
         """int: Number of feature levels that the generator is applied to."""
         return len(self.scales)
 
-    def grid_anchors(self, featmap_sizes, device='cuda'):
+    def grid_anchors(
+            self,
+            featmap_sizes: List[Tuple[int]],
+            device: Union[str, torch.device] = 'cuda') -> List[Tensor]:
         """Generate grid anchors in multiple feature levels.
 
         Args:
@@ -112,7 +118,11 @@ class Anchor3DRangeGenerator(object):
             multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def single_level_grid_anchors(self, featmap_size, scale, device='cuda'):
+    def single_level_grid_anchors(
+            self,
+            featmap_size: Tuple[int],
+            scale: int,
+            device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate grid anchors of a single level feature map.
 
         This function is usually called by method ``self.grid_anchors``.
@@ -152,13 +162,14 @@ class Anchor3DRangeGenerator(object):
         mr_anchors = torch.cat(mr_anchors, dim=-3)
         return mr_anchors
 
-    def anchors_single_range(self,
-                             feature_size,
-                             anchor_range,
-                             scale=1,
-                             sizes=[[3.9, 1.6, 1.56]],
-                             rotations=[0, 1.5707963],
-                             device='cuda'):
+    def anchors_single_range(
+            self,
+            feature_size: Tuple[int],
+            anchor_range: Union[Tensor, List[float]],
+            scale: int = 1,
+            sizes: Union[List[List[float]], List[float]] = [[3.9, 1.6, 1.56]],
+            rotations: List[float] = [0, 1.5707963],
+            device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate anchors in a single range.
 
         Args:
@@ -248,17 +259,18 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             center of the corresponding greature grid. Defaults to False.
     """
 
-    def __init__(self, align_corner=False, **kwargs):
+    def __init__(self, align_corner: bool = False, **kwargs) -> None:
         super(AlignedAnchor3DRangeGenerator, self).__init__(**kwargs)
         self.align_corner = align_corner
 
-    def anchors_single_range(self,
-                             feature_size,
-                             anchor_range,
-                             scale,
-                             sizes=[[3.9, 1.6, 1.56]],
-                             rotations=[0, 1.5707963],
-                             device='cuda'):
+    def anchors_single_range(
+            self,
+            feature_size: List[int],
+            anchor_range: List[float],
+            scale: int,
+            sizes: Union[List[List[float]], List[float]] = [[3.9, 1.6, 1.56]],
+            rotations: List[float] = [0, 1.5707963],
+            device: Union[str, torch.device] = 'cuda') -> Tensor:
         """Generate anchors in a single range.
 
         Args:
@@ -352,12 +364,15 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
             :class:`AlignedAnchor3DRangeGenerator`.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super(AlignedAnchor3DRangeGeneratorPerCls, self).__init__(**kwargs)
         assert len(self.scales) == 1, 'Multi-scale feature map levels are' + \
             ' not supported currently in this kind of anchor generator.'
 
-    def grid_anchors(self, featmap_sizes, device='cuda'):
+    def grid_anchors(
+            self,
+            featmap_sizes: List[Tuple[int]],
+            device: Union[str, torch.device] = 'cuda') -> List[List[Tensor]]:
         """Generate grid anchors in multiple feature levels.
 
         Args:
@@ -379,7 +394,11 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
         multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def multi_cls_grid_anchors(self, featmap_sizes, scale, device='cuda'):
+    def multi_cls_grid_anchors(
+            self,
+            featmap_sizes: List[Tuple[int]],
+            scale: int,
+            device: Union[str, torch.device] = 'cuda') -> List[Tensor]:
         """Generate grid anchors of a single level feature map for multi-class
         with different feature map sizes.
 

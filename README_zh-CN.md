@@ -18,10 +18,26 @@
   </div>
   <div>&nbsp;</div>
 
+[![PyPI](https://img.shields.io/pypi/v/mmdet3d)](https://pypi.org/project/mmdet3d)
 [![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection3d.readthedocs.io/zh_CN/latest/)
 [![badge](https://github.com/open-mmlab/mmdetection3d/workflows/build/badge.svg)](https://github.com/open-mmlab/mmdetection3d/actions)
-[![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
-[![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/open-mmlab/mmdetection3d/branch/main/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection3d)
+[![license](https://img.shields.io/github/license/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/blob/main/LICENSE)
+[![open issues](https://isitmaintained.com/badge/open/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/issues)
+[![issue resolution](https://isitmaintained.com/badge/resolution/open-mmlab/mmdetection3d.svg)](https://github.com/open-mmlab/mmdetection3d/issues)
+
+[📘使用文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/) |
+[🛠️安装教程](https://mmdetection3d.readthedocs.io/zh_CN/latest/get_started.html) |
+[👀模型库](https://mmdetection3d.readthedocs.io/zh_CN/latest/model_zoo.html) |
+[🆕更新日志](https://mmdetection3d.readthedocs.io/en/latest/notes/changelog.html) |
+[🚀进行中的项目](https://github.com/open-mmlab/mmdetection3d/projects) |
+[🤔报告问题](https://github.com/open-mmlab/mmdetection3d/issues/new/choose)
+
+</div>
+
+<div align="center">
+
+[English](README.md) | 简体中文
 
 </div>
 
@@ -45,31 +61,16 @@
     <img src="https://user-images.githubusercontent.com/25839884/219026120-ba71e48b-6e94-4bd4-b4e9-b7d175b5e362.png" width="3%" alt="" /></a>
 </div>
 
-**新闻**：
-
-**我们将 `1.1` 分支重命名为 `main` 并将默认分支从 `master` 切换到 `main`。我们鼓励用户迁移到最新版本，请参考 [迁移指南](docs/en/migration.md) 以了解更多细节。**
-
-**v1.1.0** 版本已经在 2023.4.6 发布。
-
-我们已经支持了更多基于 LiDAR 的 3D 分割算法。更多关于 3D 感知的新特性正在开发中，请拭目以待！
-
-**v1.1.0rc3** 版本已经在 2023.1.7 发布。
-
-由于坐标系的统一和简化，模型的兼容性会受到影响。目前，大多数模型都以类似的性能对齐了精度，但仍有少数模型在进行基准测试。在接下来的版本中，我们将更新所有的模型权重文件和基准。您可以在[变更日志](docs/zh_cn/notes/changelog.md)和 [v1.0.x 版本变更日志](docs/zh_cn/notes/changelog_v1.0.x.md)中查看更多详细信息。
-
-文档：https://mmdetection3d.readthedocs.io/
-
 ## 简介
 
-[English](README.md) | 简体中文
+MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代面向 3D 检测的平台。它是 [OpenMMlab](https://openmmlab.com/) 项目的一部分。
 
-主分支代码目前支持 PyTorch 1.6 以上的版本。
-
-MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代面向 3D 检测的平台。它是 OpenMMlab 项目的一部分，这个项目由香港中文大学多媒体实验室和商汤科技联合发起。
+主分支代码目前支持 PyTorch 1.8 以上的版本。
 
 ![demo image](resources/mmdet3d_outdoor_demo.gif)
 
-### 主要特性
+<details open>
+<summary>主要特性</summary>
 
 - **支持多模态/单模态的检测器**
 
@@ -77,8 +78,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 
 - **支持户内/户外的数据集**
 
-  支持室内/室外的 3D 检测数据集，包括 ScanNet，SUNRGB-D，Waymo，nuScenes，Lyft，KITTI。
-  对于 nuScenes 数据集，我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/latest/configs/nuimages)。
+  支持室内/室外的 3D 检测数据集，包括 ScanNet，SUNRGB-D，Waymo，nuScenes，Lyft，KITTI。对于 nuScenes 数据集，我们也支持 [nuImages 数据集](https://github.com/open-mmlab/mmdetection3d/tree/main/configs/nuimages)。
 
 - **与 2D 检测器的自然整合**
 
@@ -96,17 +96,84 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
   |       SECOND        |      40       |                          30                          |                           ✗                            |                      ✗                      |
   |       Part-A2       |      17       |                          14                          |                           ✗                            |                      ✗                      |
 
+</details>
+
 和 [MMDetection](https://github.com/open-mmlab/mmdetection)，[MMCV](https://github.com/open-mmlab/mmcv) 一样，MMDetection3D 也可以作为一个库去支持各式各样的项目。
 
-## 开源许可证
+## 最新进展
 
-该项目采用 [Apache 2.0 开源许可证](LICENSE)。
+### 亮点
 
-## 更新日志
+在1.4版本中，MMDetecion3D 重构了 Waymo 数据集, 加速了 Waymo 数据集的预处理、训练/测试启动、验证的速度。并且在 Waymo 上拓展了对 单目/BEV 等基于相机的三维目标检测模型的支持。在[这里](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/waymo.html)提供了对 Waymo 数据信息的详细解读。
 
-我们在 2023.1.7 发布了 **1.1.0rc3** 版本。
+此外，在1.4版本中，MMDetection3D 提供了 [Waymo-mini](https://download.openmmlab.com/mmdetection3d/data/waymo_mmdet3d_after_1x4/waymo_mini.tar.gz) 来帮助社区用户上手 Waymo 并用于快速迭代开发。
 
-更多细节和版本发布历史可以参考 [changelog.md](docs/zh_cn/notes/changelog.md)。
+**v1.4.0** 版本已经在 2024.1.8 发布：
+
+- 在 `projects` 中支持了 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的训练
+- 在 `projects` 中支持了 [Nerf-Det](https://arxiv.org/abs/2307.14620)
+- 重构了 Waymo 数据集
+
+**v1.3.0** 版本已经在 2023.10.18 发布：
+
+- 在 `projects` 中支持 [CENet](https://arxiv.org/abs/2207.12691)
+- 使用新的 3D inferencers 增强演示代码效果
+
+**v1.2.0** 版本已经在 2023.7.4 发布：
+
+- 在 `mmdet3d/configs`中支持 [新Config样式](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html#a-pure-python-style-configuration-file-beta)
+- 在 `projects` 中支持 [DSVT](<(https://arxiv.org/abs/2301.06051)>) 的推理
+- 支持通过 `mim` 从 [OpenDataLab](https://opendatalab.com/) 下载数据集
+
+**v1.1.1** 版本已经在 2023.5.30 发布：
+
+- 在 `projects` 中支持 [TPVFormer](https://arxiv.org/pdf/2302.07817.pdf)
+- 在 `projects` 中支持 BEVFusion 的训练
+- 支持基于激光雷达的 3D 语义分割基准
+
+## 安装
+
+请参考[快速入门文档](https://mmdetection3d.readthedocs.io/zh_CN/latest/get_started.html)进行安装。
+
+## 教程
+
+<details>
+<summary>用户指南</summary>
+
+- [训练 & 测试](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/index.html#train-test)
+  - [学习配置文件](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/config.html)
+  - [坐标系](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/coord_sys_tutorial.html)
+  - [数据预处理](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/dataset_prepare.html)
+  - [自定义数据预处理流程](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/data_pipeline.html)
+  - [在标注数据集上测试和训练](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/train_test.html)
+  - [推理](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/inference.html)
+  - [在自定义数据集上进行训练](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/new_data_model.html)
+- [实用工具](https://mmdetection3d.readthedocs.io/zh_CN/latest/user_guides/index.html#useful-tools)
+
+</details>
+
+<details>
+<summary>进阶教程</summary>
+
+- [数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#datasets)
+  - [KITTI 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/kitti.html)
+  - [NuScenes 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/nuscenes.html)
+  - [Lyft 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/lyft.html)
+  - [Waymo 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/waymo.html)
+  - [SUN RGB-D 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/sunrgbd.html)
+  - [ScanNet 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/scannet.html)
+  - [S3DIS 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/s3dis.html)
+  - [SemanticKITTI 数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/datasets/semantickitti.html)
+- [支持的任务](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#supported-tasks)
+  - [基于激光雷达的 3D 检测](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/lidar_det3d.html)
+  - [基于视觉的 3D 检测](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/vision_det3d.html)
+  - [基于激光雷达的 3D 语义分割](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/supported_tasks/lidar_sem_seg3d.html)
+- [自定义项目](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/index.html#customization)
+  - [自定义数据集](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_dataset.html)
+  - [自定义模型](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_models.html)
+  - [自定义运行时配置](https://mmdetection3d.readthedocs.io/zh_CN/latest/advanced_guides/customize_runtime.html)
+
+</details>
 
 ## 基准测试和模型库
 
@@ -164,10 +231,10 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
   <tbody>
     <tr align="center" valign="middle">
       <td>
-        <b>3D 目标检测</b>
+        <b>激光雷达 3D 目标检测</b>
       </td>
       <td>
-        <b>单目 3D 目标检测</b>
+        <b>相机 3D 目标检测</b>
       </td>
       <td>
         <b>多模态 3D 目标检测</b>
@@ -188,6 +255,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
             <li><a href="configs/point_rcnn">PointRCNN (CVPR'2019)</a></li>
             <li><a href="configs/parta2">Part-A2 (TPAMI'2020)</a></li>
             <li><a href="configs/centerpoint">CenterPoint (CVPR'2021)</a></li>
+            <li><a href="configs/pv_rcnn">PV-RCNN (CVPR'2020)</a></li>
+            <li><a href="projects/CenterFormer">CenterFormer (ECCV'2022)</a></li>
         </ul>
         <li><b>室内</b></li>
         <ul>
@@ -195,6 +264,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
             <li><a href="configs/h3dnet">H3DNet (ECCV'2020)</a></li>
             <li><a href="configs/groupfree3d">Group-Free-3D (ICCV'2021)</a></li>
             <li><a href="configs/fcaf3d">FCAF3D (ECCV'2022)</a></li>
+            <li><a href="projects/TR3D">TR3D (ArXiv'2023)</a></li>
       </ul>
       </td>
       <td>
@@ -205,6 +275,8 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
           <li><a href="configs/fcos3d">FCOS3D (ICCVW'2021)</a></li>
           <li><a href="configs/pgd">PGD (CoRL'2021)</a></li>
           <li><a href="configs/monoflex">MonoFlex (CVPR'2021)</a></li>
+          <li><a href="projects/DETR3D">DETR3D (CoRL'2021)</a></li>
+          <li><a href="projects/PETR">PETR (ECCV'2022)</a></li>
         </ul>
         <li><b>Indoor</b></li>
         <ul>
@@ -215,6 +287,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
         <li><b>室外</b></li>
         <ul>
           <li><a href="configs/mvxnet">MVXNet (ICRA'2019)</a></li>
+          <li><a href="projects/BEVFusion">BEVFusion (ICRA'2023)</a></li>
         </ul>
         <li><b>室内</b></li>
         <ul>
@@ -227,6 +300,7 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
           <li><a href="configs/minkunet">MinkUNet (CVPR'2019)</a></li>
           <li><a href="configs/spvcnn">SPVCNN (ECCV'2020)</a></li>
           <li><a href="configs/cylinder3d">Cylinder3D (CVPR'2021)</a></li>
+          <li><a href="projects/TPVFormer">TPVFormer (CVPR'2023)</a></li>
         </ul>
         <li><b>室内</b></li>
         <ul>
@@ -242,50 +316,58 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
   </tbody>
 </table>
 
-|               | ResNet | PointNet++ | SECOND | DGCNN | RegNetX | DLA | MinkResNet | Cylinder3D | MinkUNet |
-| :-----------: | :----: | :--------: | :----: | :---: | :-----: | :-: | :--------: | :--------: | :------: |
-|    SECOND     |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-| PointPillars  |   ✗    |     ✗      |   ✓    |   ✗   |    ✓    |  ✗  |     ✗      |     ✗      |    ✗     |
-|  FreeAnchor   |   ✗    |     ✗      |   ✗    |   ✗   |    ✓    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    VoteNet    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    H3DNet     |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|     3DSSD     |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    Part-A2    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    MVXNet     |   ✓    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|  CenterPoint  |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|      SSN      |   ✗    |     ✗      |   ✗    |   ✗   |    ✓    |  ✗  |     ✗      |     ✗      |    ✗     |
-|   ImVoteNet   |   ✓    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    FCOS3D     |   ✓    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|  PointNet++   |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-| Group-Free-3D |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|  ImVoxelNet   |   ✓    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    PAConv     |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|     DGCNN     |   ✗    |     ✗      |   ✗    |   ✓   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|     SMOKE     |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✓  |     ✗      |     ✗      |    ✗     |
-|      PGD      |   ✓    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|   MonoFlex    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✓  |     ✗      |     ✗      |    ✗     |
-|    SA-SSD     |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|    FCAF3D     |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✓      |     ✗      |    ✗     |
-|    PV-RCNN    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
-|  Cylinder3D   |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✓      |    ✗     |
-|   MinkUNet    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
-|    SPVCNN     |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
+|               | ResNet | VoVNet | Swin-T | PointNet++ | SECOND | DGCNN | RegNetX | DLA | MinkResNet | Cylinder3D | MinkUNet |
+| :-----------: | :----: | :----: | :----: | :--------: | :----: | :---: | :-----: | :-: | :--------: | :--------: | :------: |
+|    SECOND     |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+| PointPillars  |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✓    |  ✗  |     ✗      |     ✗      |    ✗     |
+|  FreeAnchor   |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✓    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    VoteNet    |   ✗    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    H3DNet     |   ✗    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|     3DSSD     |   ✗    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    Part-A2    |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    MVXNet     |   ✓    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|  CenterPoint  |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|      SSN      |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✓    |  ✗  |     ✗      |     ✗      |    ✗     |
+|   ImVoteNet   |   ✓    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    FCOS3D     |   ✓    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|  PointNet++   |   ✗    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+| Group-Free-3D |   ✗    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|  ImVoxelNet   |   ✓    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    PAConv     |   ✗    |   ✗    |   ✗    |     ✓      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|     DGCNN     |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✓   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|     SMOKE     |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✓  |     ✗      |     ✗      |    ✗     |
+|      PGD      |   ✓    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|   MonoFlex    |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✓  |     ✗      |     ✗      |    ✗     |
+|    SA-SSD     |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|    FCAF3D     |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✓      |     ✗      |    ✗     |
+|    PV-RCNN    |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|  Cylinder3D   |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✓      |    ✗     |
+|   MinkUNet    |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
+|    SPVCNN     |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✓     |
+|   BEVFusion   |   ✗    |   ✗    |   ✓    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+| CenterFormer  |   ✗    |   ✗    |   ✗    |     ✗      |   ✓    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|     TR3D      |   ✗    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✓      |     ✗      |    ✗     |
+|    DETR3D     |   ✓    |   ✓    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|     PETR      |   ✗    |   ✓    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
+|   TPVFormer   |   ✓    |   ✗    |   ✗    |     ✗      |   ✗    |   ✗   |    ✗    |  ✗  |     ✗      |     ✗      |    ✗     |
 
 **注意：**[MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/docs/zh_cn/model_zoo.md) 支持的基于 2D 检测的 **300+ 个模型，40+ 的论文算法**在 MMDetection3D 中都可以被训练或使用。
 
-## 安装
+## 常见问题
 
-请参考[快速入门文档](docs/zh_cn/get_started.md)进行安装。
+请参考 [FAQ](docs/zh_cn/notes/faq.md) 了解其他用户的常见问题。
 
-## 快速入门
+## 贡献指南
 
-请参考[快速入门文档](docs/zh_cn/get_started.md)学习 MMDetection3D 的基本使用。我们为新手提供了分别针对[已有数据集](docs/zh_cn/user_guides/train_test.md)和[新数据集](docs/zh_cn/user_guides/2_new_data_model.md)的使用指南。我们也提供了一些进阶教程，内容覆盖了[学习配置文件](docs/zh_cn/user_guides/config.md)，[增加自定义数据集](docs/zh_cn/advanced_guides/customize_dataset.md)，[设计新的数据预处理流程](docs/zh_cn/user_guides/data_pipeline.md)，[增加自定义模型](docs/zh_cn/advanced_guides/customize_models.md)，[增加自定义的运行时配置](docs/zh_cn/advanced_guides/customize_runtime.md)和 [Waymo 数据集](docs/zh_cn/advanced_guides/datasets/waymo_det.md)。
+我们感谢所有的贡献者为改进和提升 MMDetection3D 所作出的努力。请参考[贡献指南](docs/en/notes/contribution_guides.md)来了解参与项目贡献的相关指引。
 
-请参考 [FAQ](docs/zh_cn/notes/faq.md) 查看一些常见的问题与解答。在升级 MMDetection3D 的版本时，请查看[兼容性文档](docs/zh_cn/notes/compatibility.md)以知晓每个版本引入的不与之前版本兼容的更新。
+## 致谢
+
+MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与贡献的开源项目。我们感谢所有为项目提供算法复现和新功能支持的贡献者，以及提供宝贵反馈的用户。我们希望这个工具箱和基准测试可以为社区提供灵活的代码工具，供用户复现已有算法并开发自己的新的 3D 检测模型。
 
 ## 引用
 
-如果你觉得本项目对你的研究工作有所帮助，请参考如下 bibtex 引用 MMdetection3D
+如果你觉得本项目对你的研究工作有所帮助，请参考如下 bibtex 引用 MMdetection3D：
 
 ```latex
 @misc{mmdet3d2020,
@@ -296,13 +378,9 @@ MMDetection3D 是一个基于 PyTorch 的目标检测开源工具箱，下一代
 }
 ```
 
-## 贡献指南
+## 开源许可证
 
-我们感谢所有的贡献者为改进和提升 MMDetection3D 所作出的努力。请参考[贡献指南](.github/CONTRIBUTING.md)来了解参与项目贡献的相关指引。
-
-## 致谢
-
-MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与贡献的开源项目。我们感谢所有为项目提供算法复现和新功能支持的贡献者，以及提供宝贵反馈的用户。我们希望这个工具箱和基准测试可以为社区提供灵活的代码工具，供用户复现已有算法并开发自己的新的 3D 检测模型。
+该项目采用 [Apache 2.0 开源许可证](LICENSE)。
 
 ## OpenMMLab 的其他项目
 
@@ -310,7 +388,7 @@ MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与
 - [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab 计算机视觉基础库
 - [MMEval](https://github.com/open-mmlab/mmeval): 统一开放的跨框架算法评测库
 - [MIM](https://github.com/open-mmlab/mim): MIM 是 OpenMMlab 项目、算法、模型的统一入口
-- [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab 图像分类工具箱
+- [MMPreTrain](https://github.com/open-mmlab/mmpretrain): OpenMMLab 深度学习预训练工具箱
 - [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab 目标检测工具箱
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab 新一代通用 3D 目标检测平台
 - [MMRotate](https://github.com/open-mmlab/mmrotate): OpenMMLab 旋转框检测工具箱与测试基准
@@ -325,16 +403,16 @@ MMDetection3D 是一款由来自不同高校和企业的研发人员共同参与
 - [MMAction2](https://github.com/open-mmlab/mmaction2): OpenMMLab 新一代视频理解工具箱
 - [MMTracking](https://github.com/open-mmlab/mmtracking): OpenMMLab 一体化视频目标感知平台
 - [MMFlow](https://github.com/open-mmlab/mmflow): OpenMMLab 光流估计工具箱与测试基准
-- [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab 图像视频编辑工具箱
+- [MMagic](https://github.com/open-mmlab/mmagic): OpenMMLab 新一代人工智能内容生成（AIGC）工具箱
 - [MMGeneration](https://github.com/open-mmlab/mmgeneration): OpenMMLab 图片视频生成模型工具箱
 - [MMDeploy](https://github.com/open-mmlab/mmdeploy): OpenMMLab 模型部署框架
 
 ## 欢迎加入 OpenMMLab 社区
 
-扫描下方的二维码可关注 OpenMMLab 团队的 [知乎官方账号](https://www.zhihu.com/people/openmmlab)，加入 OpenMMLab 团队的 [官方交流 QQ 群](https://jq.qq.com/?_wv=1027&k=aCvMxdr3)
+扫描下方的二维码可关注 OpenMMLab 团队的 [知乎官方账号](https://www.zhihu.com/people/openmmlab)，扫描下方微信二维码添加喵喵好友，进入 MMDetection3D 微信交流社群。【加好友申请格式：研究方向+地区+学校/公司+姓名】
 
 <div align="center">
-<img src="https://user-images.githubusercontent.com/25839884/205870927-39f4946d-8751-4219-a4c0-740117558fd7.jpg" height="400" />  <img src="https://user-images.githubusercontent.com/25839884/203904835-62392033-02d4-4c73-a68c-c9e4c1e2b07f.jpg" height="400" />
+<img src="https://user-images.githubusercontent.com/58739961/187154320-f3312cdf-31f2-4316-9dbb-8d7b0e1b7e08.jpg" height="400" />  <img src="https://github.com/open-mmlab/mmdetection3d/assets/62195058/dfb3f6a9-25c6-47a5-936b-3f1d7347a42b" height="400" />
 </div>
 
 我们会在 OpenMMLab 社区为大家

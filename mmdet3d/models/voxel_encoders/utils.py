@@ -1,11 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional
+
 import torch
 from mmcv.cnn import build_norm_layer
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F
 
 
-def get_paddings_indicator(actual_num, max_num, axis=0):
+def get_paddings_indicator(actual_num: Tensor,
+                           max_num: Tensor,
+                           axis: int = 0) -> Tensor:
     """Create boolean mask by actually number of a padded tensor.
 
     Args:
@@ -46,13 +50,13 @@ class VFELayer(nn.Module):
     """
 
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 max_out=True,
-                 cat_max=True):
+                 in_channels: int,
+                 out_channels: int,
+                 norm_cfg: Optional[dict] = dict(
+                     type='BN1d', eps=1e-3, momentum=0.01),
+                 max_out: Optional[bool] = True,
+                 cat_max: Optional[bool] = True):
         super(VFELayer, self).__init__()
-        self.fp16_enabled = False
         self.cat_max = cat_max
         self.max_out = max_out
         # self.units = int(out_channels / 2)
@@ -60,7 +64,7 @@ class VFELayer(nn.Module):
         self.norm = build_norm_layer(norm_cfg, out_channels)[1]
         self.linear = nn.Linear(in_channels, out_channels, bias=False)
 
-    def forward(self, inputs):
+    def forward(self, inputs: Tensor) -> Tensor:
         """Forward function.
 
         Args:
@@ -120,14 +124,14 @@ class PFNLayer(nn.Module):
     """
 
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01),
-                 last_layer=False,
-                 mode='max'):
+                 in_channels: int,
+                 out_channels: int,
+                 norm_cfg: Optional[dict] = dict(
+                     type='BN1d', eps=1e-3, momentum=0.01),
+                 last_layer: Optional[bool] = False,
+                 mode: Optional[str] = 'max'):
 
         super().__init__()
-        self.fp16_enabled = False
         self.name = 'PFNLayer'
         self.last_vfe = last_layer
         if not self.last_vfe:
@@ -140,7 +144,10 @@ class PFNLayer(nn.Module):
         assert mode in ['max', 'avg']
         self.mode = mode
 
-    def forward(self, inputs, num_voxels=None, aligned_distance=None):
+    def forward(self,
+                inputs: Tensor,
+                num_voxels: Optional[Tensor] = None,
+                aligned_distance: Optional[Tensor] = None) -> Tensor:
         """Forward function.
 
         Args:

@@ -32,7 +32,7 @@ class PointRCNN(TwoStage3DDetector):
                  train_cfg: Optional[dict] = None,
                  test_cfg: Optional[dict] = None,
                  init_cfg: Optional[dict] = None,
-                 data_preprocessor: Optional[dict] = None) -> Optional:
+                 data_preprocessor: Optional[dict] = None) -> None:
         super(PointRCNN, self).__init__(
             backbone=backbone,
             neck=neck,

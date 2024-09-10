@@ -127,16 +127,18 @@ class Cylinder3D(EncoderDecoder3D):
             List[:obj:`Det3DDataSample`]: Segmentation results of the input
             points. Each Det3DDataSample usually contains:
 
-            - ``pred_pts_seg`` (PixelData): Prediction of 3D semantic
+            - ``pred_pts_seg`` (PointData): Prediction of 3D semantic
               segmentation.
+            - ``pts_seg_logits`` (PointData): Predicted logits of 3D semantic
+              segmentation before normalization.
         """
         # 3D segmentation requires per-point prediction, so it's impossible
         # to use down-sampling to get a batch of scenes with same num_points
         # therefore, we only support testing one scene every time
         x = self.extract_feat(batch_inputs_dict)
-        seg_pred_list = self.decode_head.predict(x, batch_inputs_dict,
-                                                 batch_data_samples)
-        for i in range(len(seg_pred_list)):
-            seg_pred_list[i] = seg_pred_list[i].argmax(1).cpu()
+        seg_logits_list = self.decode_head.predict(x, batch_inputs_dict,
+                                                   batch_data_samples)
+        for i in range(len(seg_logits_list)):
+            seg_logits_list[i] = seg_logits_list[i].transpose(0, 1)
 
-        return self.postprocess_result(seg_pred_list, batch_data_samples)
+        return self.postprocess_result(seg_logits_list, batch_data_samples)

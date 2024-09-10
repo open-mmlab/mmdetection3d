@@ -151,7 +151,7 @@ class Cylinder3DHead(Base3DDecodeHead):
         for batch_idx in range(len(batch_data_samples)):
             seg_logits_sample = seg_logits[coors[:, 0] == batch_idx]
             point2voxel_map = batch_data_samples[
-                batch_idx].gt_pts_seg.point2voxel_map.long()
+                batch_idx].point2voxel_map.long()
             point_seg_predicts = seg_logits_sample[point2voxel_map]
             seg_pred_list.append(point_seg_predicts)
 

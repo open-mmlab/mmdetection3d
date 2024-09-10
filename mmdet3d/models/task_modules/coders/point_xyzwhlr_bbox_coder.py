@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Optional
+
 import numpy as np
 import torch
 from mmdet.models.task_modules import BaseBBoxCoder
+from torch import Tensor
 
 from mmdet3d.registry import TASK_UTILS
+from mmdet3d.structures import BaseInstance3DBoxes
 
 
 @TASK_UTILS.register_module()
@@ -18,7 +22,10 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
             each class. Defaults to None.
     """
 
-    def __init__(self, code_size=7, use_mean_size=True, mean_size=None):
+    def __init__(self,
+                 code_size: int = 7,
+                 use_mean_size: bool = True,
+                 mean_size: List[List[float]] = None):
         super(PointXYZWHLRBBoxCoder, self).__init__()
         self.code_size = code_size
         self.use_mean_size = use_mean_size
@@ -28,7 +35,10 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
                 f'The min of mean_size should > 0, however currently it is '\
                 f'{self.mean_size.min()}, please check it in your config.'
 
-    def encode(self, gt_bboxes_3d, points, gt_labels_3d=None):
+    def encode(self,
+               gt_bboxes_3d: BaseInstance3DBoxes,
+               points: Tensor,
+               gt_labels_3d: Optional[Tensor] = None) -> Tensor:
         """Encode ground truth to prediction targets.
 
         Args:
@@ -75,7 +85,10 @@ class PointXYZWHLRBBoxCoder(BaseBBoxCoder):
              torch.sin(rg), *cgs],
             dim=-1)
 
-    def decode(self, box_encodings, points, pred_labels_3d=None):
+    def decode(self,
+               box_encodings: Tensor,
+               points: Tensor,
+               pred_labels_3d: Optional[Tensor] = None) -> Tensor:
         """Decode predicted parts and points to bbox3d.
 
         Args:

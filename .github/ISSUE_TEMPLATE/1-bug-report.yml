@@ -1,0 +1,119 @@
+name: "🐞 Bug report"
+description: "Create a report to help us reproduce and fix the bug"
+labels: kind/bug
+title: "[Bug] "
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Note
+        For general usage questions or idea discussions, please post it to our [**Forum**](https://github.com/open-mmlab/mmdetection3d/discussions).
+        If this issue is about installing MMCV, please file an issue at [MMCV](https://github.com/open-mmlab/mmcv/issues/new/choose).
+        If it's anything about model deployment, please raise it to [MMDeploy](https://github.com/open-mmlab/mmdeploy).
+
+        Please fill in as **much** of the following form as you're able to. **The clearer the description, the shorter it will take to solve it.**
+
+  - type: checkboxes
+    attributes:
+      label: Prerequisite
+      description: Please check the following items before creating a new issue.
+      options:
+      - label: I have searched [Issues](https://github.com/open-mmlab/mmdetection3d/issues) and [Discussions](https://github.com/open-mmlab/mmdetection3d/discussions) but cannot get the expected help.
+        required: true
+      - label: I have read the [FAQ documentation](https://mmdetection3d.readthedocs.io/en/latest/notes/faq.html) but cannot get the expected help.
+        required: true
+      - label: The bug has not been fixed in the [latest version (dev-1.x)](https://github.com/open-mmlab/mmdetection3d/tree/dev-1.x) or [latest version (dev-1.0)](https://github.com/open-mmlab/mmdetection3d/tree/dev-1.0).
+        required: true
+
+  - type: dropdown
+    id: task
+    attributes:
+      label: Task
+      description: The problem arises when
+      options:
+        - I'm using the official example scripts/configs for the officially supported tasks/models/datasets.
+        - I have modified the scripts/configs, or I'm working on my own tasks/models/datasets.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: branch
+    attributes:
+      label: Branch
+      description: The problem arises when I'm working on
+      options:
+        - main branch https://github.com/open-mmlab/mmdetection3d
+        - 1.x branch https://github.com/open-mmlab/mmdetection3d/tree/dev-1.x
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Environment
+      description: |
+        Please run `python mmdet3d/utils/collect_env.py` to collect necessary environment information and copy-paste it here.
+        You may add additional information that may be helpful for locating the problem, such as
+          - How you installed PyTorch \[e.g., pip, conda, source\]
+          - Other environment variables that may be related (such as `$PATH`, `$LD_LIBRARY_PATH`, `$PYTHONPATH`, etc.)
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Reproduces the problem - code sample
+      description: |
+        Please provide a code sample that reproduces the problem you ran into. It can be a Colab link or just a code snippet.
+      placeholder: |
+        ```python
+        # Sample code to reproduce the problem
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Reproduces the problem - command or script
+      description: |
+        What command or script did you run?
+      placeholder: |
+        ```shell
+        The command or script you run.
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Reproduces the problem - error message
+      description: |
+        Please provide the error message or logs you got, with the full traceback.
+
+        Tip: You can attach images or log files by dragging them into the text area..
+      placeholder: |
+        ```
+        The error message or logs you got, with the full traceback.
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: |
+        Tell us anything else you think we should know.
+
+        Tip: You can attach images or log files by dragging them into the text area.
+      placeholder: |
+        1. What's your expected result?
+        2. What dataset did you use?
+        3. What do you think might be the reason?
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Acknowledgement
+        Thanks for taking the time to fill out this report.
+
+        If you have already identified the reason, we strongly appreciate you creating a new PR to fix it [**Here**](https://github.com/open-mmlab/mmdetection3d/pulls)!
+        Please refer to [**Contribution Guide**](https://mmdetection3d.readthedocs.io/en/latest/notes/contribution_guides.html) for contributing.
