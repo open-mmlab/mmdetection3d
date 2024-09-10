@@ -114,8 +114,10 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 3. Generate info files by running:
 
 ```bash
-python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
 ```
+
+Note that `--with-plane` is optional, depending on whether you use the `plane` information in `ObjectSample` Augmentation for LiDAR-based detection methods or not.
 
 In an environment using slurm, users may run the following command instead:
 

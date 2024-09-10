@@ -92,8 +92,10 @@ wget -c  https://raw.githubusercontent.com/traveller59/second.pytorch/master/sec
 然后通过运行以下指令生成信息文件：
 
 ```bash
-python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti
+python tools/create_data.py kitti --root-path ./data/kitti --out-dir ./data/kitti --extra-tag kitti --with-plane
 ```
+
+注意，其中 `--with-plane` 是可选参数，取决于你是否在 `ObjectSample` 数据增强中使用 `plane` 地面信息。
 
 在使用 slurm 的环境下，用户需要使用下面的指令：
 
