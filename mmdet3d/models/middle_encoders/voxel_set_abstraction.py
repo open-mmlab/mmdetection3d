@@ -136,7 +136,7 @@ class VoxelSetAbstraction(BaseModule):
 
         Args:
             keypoints (torch.Tensor): Sampled key points with shape
-                (N1 + N2 + ..., NDim).
+                (B, N, NDim).
             bev_features (torch.Tensor): Bev feature map from the first
                 stage with shape (B, C, H, W).
             batch_size (int): Input batch size.
@@ -144,7 +144,7 @@ class VoxelSetAbstraction(BaseModule):
 
         Returns:
             torch.Tensor: Key points features gather from bev feature
-                map with shape (N1 + N2 + ..., C)
+                map with shape (B, N, C)
         """
         x_idxs = (keypoints[..., 0] -
                   self.point_cloud_range[0]) / self.voxel_size[0]
