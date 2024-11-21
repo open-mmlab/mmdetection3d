@@ -884,7 +884,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     self.view_port = \
                         self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
                 self.flag_next = False
-            self.o3d_vis.clear_geometries()
+            # self.o3d_vis.clear_geometries()
             try:
                 del self.pcd
             except (KeyError, AttributeError):
@@ -893,7 +893,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 if not (save_path.endswith('.png')
                         or save_path.endswith('.jpg')):
                     save_path += '.png'
-                self.o3d_vis.capture_screen_image(save_path)
+                self.o3d_vis.capture_screen_image(save_path, do_render=True)
             if self.flag_exit:
                 self.o3d_vis.destroy_window()
                 self.o3d_vis.close()
