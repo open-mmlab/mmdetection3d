@@ -117,6 +117,13 @@ class MonoDet3DInferencer(Base3DInferencer):
                 lidar2cam = np.asarray(
                     data_info['images'][cam_type]['lidar2cam'],
                     dtype=np.float32)
+
+                if cam2img.shape == (3, 3):
+                    cam2img_fixed = np.eye(4)
+                    cam2img_fixed[:3, :3] = cam2img
+                    cam2img = cam2img_fixed
+
+
                 if 'lidar2img' in data_info['images'][cam_type]:
                     lidar2img = np.asarray(
                         data_info['images'][cam_type]['lidar2img'],
