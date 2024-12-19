@@ -74,7 +74,11 @@ def nuscenes_data_prep(root_path,
             Default: 10
     """
     nuscenes_converter.create_nuscenes_infos(
-        root_path, info_prefix, version=version, max_sweeps=max_sweeps)
+        root_path,
+        info_prefix,
+        out_dir,
+        version=version,
+        max_sweeps=max_sweeps)
 
     if version == 'v1.0-test':
         info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
