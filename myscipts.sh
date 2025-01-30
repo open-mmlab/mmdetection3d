@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0,1 bash tools/dist_train.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 2 --cfg-options load_from=/data/otherg/mmdetection3d/ckpts/lidar-only-det.pth model.img_backbone.init_cfg.checkpoint=/data/otherg/mmdetection3d/ckpts/swint-nuimages-pretrained.pth

@@ -3,10 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.ipynb
-
+.*
 # C extensions
 *.so
-
+*.md
 # Distribution / packaging
 .Python
 build/
@@ -25,6 +25,18 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+docker/
+docs/
+LICENSE
+MANIFEST.in
+CITATION.cff
+demo/
+wztcode/*.pkl
+wztcode/*.pth
+wztcode/*.json 
+wztcode/SAM_code
+wztcode/save_ply
+wztcode/SAM_code/save
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -113,7 +125,8 @@ data
 # custom
 *.pkl
 *.pkl.json
-*.log.json
+*.log
+*.json
 work_dirs/
 exps/
 *~

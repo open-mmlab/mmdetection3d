@@ -335,10 +335,7 @@ class TransFusionHead(nn.Module):
         assert len(res) == 1, 'only support one level features.'
         return res
 
-    def predict(self, batch_feats, batch_input_metas):
-        preds_dicts = self(batch_feats, batch_input_metas)
-        res = self.predict_by_feat(preds_dicts, batch_input_metas)
-        return res
+
 
     def predict_by_feat(self,
                         preds_dicts,
@@ -742,6 +739,11 @@ class TransFusionHead(nn.Module):
             heatmap[None],
         )
 
+    def predict(self, batch_feats, batch_input_metas):
+        preds_dicts = self(batch_feats, batch_input_metas)
+        res = self.predict_by_feat(preds_dicts, batch_input_metas)
+        return res
+
     def loss(self, batch_feats, batch_data_samples):
         """Loss function for CenterHead.
 
@@ -758,9 +760,10 @@ class TransFusionHead(nn.Module):
             batch_input_metas.append(data_sample.metainfo)
             batch_gt_instances_3d.append(data_sample.gt_instances_3d)
         preds_dicts = self(batch_feats, batch_input_metas)
+        res = self.predict_by_feat(preds_dicts, batch_input_metas)
         loss = self.loss_by_feat(preds_dicts, batch_gt_instances_3d)
 
-        return loss
+        return loss, res
 
     def loss_by_feat(self, preds_dicts: Tuple[List[dict]],
                      batch_gt_instances_3d: List[InstanceData], *args,

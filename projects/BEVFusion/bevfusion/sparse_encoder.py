@@ -3,7 +3,7 @@ from mmdet3d.models.layers import make_sparse_convmodule
 from mmdet3d.models.layers.spconv import IS_SPCONV2_AVAILABLE
 from mmdet3d.models.middle_encoders import SparseEncoder
 from mmdet3d.registry import MODELS
-
+from projects.BEVFusion.bevfusion.sam_supervised_utils import *
 if IS_SPCONV2_AVAILABLE:
     from spconv.pytorch import SparseConvTensor
 else:
@@ -131,15 +131,26 @@ class BEVFusionSparseEncoder(SparseEncoder):
                                            self.sparse_shape, batch_size)
         x = self.conv_input(input_sp_tensor)
 
+        x_temp = x
+        
+        # save_voxel_centers(x.indices[:,1:4], "/data/otherg/mmdetection3d/wztcode/save_ply/temp1.ply")
         encode_features = []
         for encoder_layer in self.encoder_layers:
             x = encoder_layer(x)
             encode_features.append(x)
 
+        # flag = check_indices_match(x_temp.indices, x.indices)
+        # print("flag:", flag)
+        # print(count_matching_rows(x_temp.indices, x.indices))
+
         # for detection head
         # [200, 176, 5] -> [200, 176, 2]
+
+
+        # save_voxel_centers(encode_features[-1].indices[:,1:4], "/data/otherg/mmdetection3d/wztcode/save_ply/temp2.ply")
+        # return_feature = replace_indices_to_input_coordinates(x.indices, encode_features)
         out = self.conv_out(encode_features[-1])
-        spatial_features = out.dense()
+        spatial_features = out.dense()  #wzt : dense() is used to convert the sparse tensor to dense tensor, Flatten
 
         N, C, H, W, D = spatial_features.shape
         spatial_features = spatial_features.permute(0, 1, 4, 2, 3).contiguous()
@@ -148,4 +159,4 @@ class BEVFusionSparseEncoder(SparseEncoder):
         if self.return_middle_feats:
             return spatial_features, encode_features
         else:
-            return spatial_features
+            return spatial_features, out
