@@ -1,5 +1,65 @@
 import torch
 import numpy as np
+import os
+
+def load_and_concatenate_features(batch_filenames, feature_dir):
+    """
+    根据批次中的图像文件名读取对应的 .pt 文件，并拼接它们的特征，返回具有 batch_size 的特征张量。
+    
+    参数:
+        batch_filenames (list of list): 每个批次中的图像文件名列表。
+        feature_dir (str): 存储 .pt 文件的根目录。
+        
+    返回:
+        batch_features (torch.Tensor): 具有 batch_size 维度的拼接特征张量，形状为 (batch_size, total_feature_dim)。
+    """
+    batch_features = []
+
+    # 遍历每个批次的文件名列表
+    for filenames in batch_filenames:
+        feature_tensors = []
+
+        # 遍历当前批次的每个图像文件名
+        for filename in filenames:
+            pt_file_path = os.path.join(feature_dir, f"{filename}.pt")
+
+            # 检查文件是否存在并加载特征
+            if os.path.exists(pt_file_path):
+                feature = torch.load(pt_file_path)
+                feature_tensors.append(feature)
+            else:
+                print(f"警告: 找不到特征文件 {pt_file_path}")
+
+        # 将当前批次中的特征拼接成一个张量
+        if feature_tensors:
+            concatenated_features = torch.cat(feature_tensors, dim=0)  # 按维度 0 拼接
+            batch_features.append(concatenated_features)
+        else:
+            print("警告: 当前批次没有有效特征，跳过拼接。")
+
+    # 将所有批次的特征堆叠成一个具有 batch_size 维度的张量
+    if batch_features:
+        return torch.stack(batch_features)  # (batch_size, total_feature_dim)
+    else:
+        raise ValueError("未找到有效的特征数据，无法返回张量。")
+
+def extract_filenames_by_batch(img_metas):
+    """
+    提取每个批次中的图像文件名，并保持与 img_metas 中的组织结构一致。
+    
+    参数:
+        img_metas (list): 每个元素包含 'img_path' 键的字典，表示批次中的样本。
+    
+    返回:
+        batch_filenames (list of list): 每个批次中包含图像文件名的列表。
+    """
+    batch_filenames = []
+
+    for meta in img_metas:
+        filenames = [os.path.splitext(os.path.basename(img_path))[0] for img_path in meta['img_path']]
+        batch_filenames.append(filenames)
+
+    return batch_filenames
 
 def count_matching_rows(x_temp_indices, x_indices):
     """

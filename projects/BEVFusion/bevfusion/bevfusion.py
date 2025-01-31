@@ -14,7 +14,7 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 from .ops import Voxelization
-
+from .sam_supervised_utils import *
 
 @MODELS.register_module()
 class BEVFusion(Base3DDetector):
@@ -152,7 +152,22 @@ class BEVFusion(Base3DDetector):
         BN, C, H, W = x.size()
         x = x.view(B, int(BN / B), C, H, W)
 
-        x_sam_feature = torch.zeros_like(x)
+
+        img_file_names = extract_filenames_by_batch(img_metas)
+        feature_dir = '/data/otherg/mmdetection3d/wztcode/SAM_code/save/right_sam_features'
+        sam_feature = load_and_concatenate_features(img_file_names, feature_dir)
+
+        # 1. 改变形状为 (batch_size * 视角数量, channels, height, width)
+        sam_feature_reshaped = sam_feature.view(-1, *sam_feature.shape[2:])  # (6, 256, 64, 64)
+
+        # 2. 动态调整大小
+        new_size = x.shape[-2:]  # 动态获取目标的最后两个维度
+        resized_feature = F.interpolate(sam_feature_reshaped, size=new_size, mode='bilinear', align_corners=False)  # (6, 256, 32, 88)
+
+        # 3. 恢复形状为 (batch_size, 视角数量, channels, height, width)
+        x_sam_feature = resized_feature.view(x.shape[0], x.shape[1], x.shape[2], *new_size)  # (1, 6, 256, 32, 88)
+        x_sam_feature = x_sam_feature.to(x.device)
+        # x_sam_feature = torch.zeros_like(x)
 
         with torch.autocast(device_type='cuda', dtype=torch.float32):
             x = self.view_transform(
