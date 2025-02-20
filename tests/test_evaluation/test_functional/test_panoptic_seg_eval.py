@@ -2,12 +2,13 @@
 import numpy as np
 import pytest
 import torch
+from mmengine.device import is_cuda_available, is_musa_available
 
 from mmdet3d.evaluation.functional.panoptic_seg_eval import panoptic_seg_eval
 
 
 def test_panoptic_seg_eval():
-    if not torch.cuda.is_available():
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
 
     classes = ['unlabeled', 'person', 'dog', 'grass', 'sky']

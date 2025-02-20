@@ -2,15 +2,24 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestImvoteNet(unittest.TestCase):
 
-    def test_imvotenet_only_img(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_imvotenet_only_img(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'ImVoteNet')
@@ -23,8 +32,8 @@ class TestImvoteNet(unittest.TestCase):
         packed_inputs = create_detector_inputs(
             with_points=False, with_img=True, img_size=128)
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        if is_cuda_available() or is_musa_available():
+            model = model.to(device)
             # test simple_test
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, True)
@@ -36,7 +45,10 @@ class TestImvoteNet(unittest.TestCase):
 
             # save the memory
             with torch.no_grad():
-                torch.cuda.empty_cache()
+                if is_musa_available():
+                    torch.musa.empty_cache()
+                else:
+                    torch.cuda.empty_cache()
                 losses = model.forward(**data, mode='loss')
 
             self.assertGreater(sum(losses['loss_rpn_cls']), 0)
@@ -44,7 +56,8 @@ class TestImvoteNet(unittest.TestCase):
             self.assertGreater(losses['loss_cls'], 0)
             self.assertGreater(losses['loss_bbox'], 0)
 
-    def test_imvotenet(self):
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_imvotenet(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'ImVoteNet')
@@ -60,8 +73,8 @@ class TestImvoteNet(unittest.TestCase):
             img_size=128,
             bboxes_3d_type='depth')
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        if is_cuda_available() or is_musa_available():
+            model = model.to(device)
             # test simple_test
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, True)

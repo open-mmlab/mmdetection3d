@@ -5,10 +5,19 @@ from typing import Union
 import numpy as np
 import torch
 from mmengine.structures import BaseDataElement
+from mmengine.device import is_musa_available
 
 IndexType = Union[str, slice, int, list, torch.LongTensor,
                   torch.cuda.LongTensor, torch.BoolTensor,
                   torch.cuda.BoolTensor, np.ndarray]
+
+TensorType = (torch.BoolTensor, torch.cuda.BoolTensor)
+
+if is_musa_available():
+    IndexType = Union[str, slice, int, list, torch.LongTensor,
+    torch.cuda.LongTensor, torch.BoolTensor,
+    torch.cuda.BoolTensor, np.ndarray, torch.musa.LongTensor, torch.musa.BoolTensor]
+    TensorType = (torch.BoolTensor, torch.cuda.BoolTensor, torch.musa.BoolTensor)
 
 
 class PointData(BaseDataElement):
@@ -85,9 +94,7 @@ class PointData(BaseDataElement):
             # Mode details in https://github.com/numpy/numpy/issues/9464
             item = item.astype(np.int64) if item.dtype == np.int32 else item
             item = torch.from_numpy(item)
-        assert isinstance(
-            item, (str, slice, int, torch.LongTensor, torch.cuda.LongTensor,
-                   torch.BoolTensor, torch.cuda.BoolTensor))
+        assert isinstance(item, IndexType)
 
         if isinstance(item, str):
             return getattr(self, item)
@@ -103,7 +110,7 @@ class PointData(BaseDataElement):
         if isinstance(item, torch.Tensor):
             assert item.dim() == 1, 'Only support to get the' \
                                     ' values along the first dimension.'
-            if isinstance(item, (torch.BoolTensor, torch.cuda.BoolTensor)):
+            if isinstance(item, TensorType):
                 assert len(item) == len(self), 'The shape of the ' \
                                                'input(BoolTensor) ' \
                                                f'{len(item)} ' \
@@ -122,8 +129,7 @@ class PointData(BaseDataElement):
                         v, (str, list, tuple)) or (hasattr(v, '__getitem__')
                                                    and hasattr(v, 'cat')):
                     # convert to indexes from BoolTensor
-                    if isinstance(item,
-                                  (torch.BoolTensor, torch.cuda.BoolTensor)):
+                    if isinstance(item, TensorType):
                         indexes = torch.nonzero(item).view(
                             -1).cpu().numpy().tolist()
                     else:

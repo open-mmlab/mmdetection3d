@@ -2,12 +2,30 @@
 import numpy as np
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.registry import MODELS
 
 
-def test_pointnet2_sa_ssg():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_pointnet2_sa_ssg(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
 
     cfg = dict(
@@ -19,7 +37,7 @@ def test_pointnet2_sa_ssg():
         sa_channels=((8, 16), (16, 16)),
         fp_channels=((16, 16), (16, 16)))
     self = MODELS.build(cfg)
-    self.cuda()
+    self.to(device)
     assert self.SA_modules[0].mlps[0].layer0.conv.in_channels == 6
     assert self.SA_modules[0].mlps[0].layer0.conv.out_channels == 8
     assert self.SA_modules[0].mlps[0].layer1.conv.out_channels == 16
@@ -29,7 +47,7 @@ def test_pointnet2_sa_ssg():
     assert self.FP_modules[1].mlps.layer0.conv.in_channels == 19
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
-    xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+    xyz = torch.from_numpy(xyz).view(1, -1, 6).to(device)  # (B, N, 6)
     # test forward
     ret_dict = self(xyz)
     fp_xyz = ret_dict['fp_xyz']
@@ -62,7 +80,7 @@ def test_pointnet2_sa_ssg():
     # test only xyz input without features
     cfg['in_channels'] = 3
     self = MODELS.build(cfg)
-    self.cuda()
+    self.to(device)
     ret_dict = self(xyz[..., :3])
     assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
     assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3

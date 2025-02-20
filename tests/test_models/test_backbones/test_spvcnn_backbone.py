@@ -2,12 +2,30 @@
 import pytest
 import torch
 import torch.nn.functional as F
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.registry import MODELS
 
 
-def test_spvcnn_backbone():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_spvcnn_backbone(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
 
     try:
@@ -22,11 +40,11 @@ def test_spvcnn_backbone():
         coordinates.append(c)
         f = torch.rand(100, 4)
         features.append(f)
-    features = torch.cat(features, dim=0).cuda()
-    coordinates = torch.cat(coordinates, dim=0).cuda()
+    features = torch.cat(features, dim=0).to(device)
+    coordinates = torch.cat(coordinates, dim=0).to(device)
 
     cfg = dict(type='SPVCNNBackbone')
-    self = MODELS.build(cfg).cuda()
+    self = MODELS.build(cfg).to(device)
     self.init_weights()
 
     y = self(features, coordinates)

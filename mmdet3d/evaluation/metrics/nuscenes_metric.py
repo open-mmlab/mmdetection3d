@@ -10,6 +10,7 @@ import torch
 from mmengine import Config, load
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger
+from mmengine.device import is_musa_available
 from nuscenes.eval.detection.config import config_factory
 from nuscenes.eval.detection.data_classes import DetectionConfig
 from nuscenes.utils.data_classes import Box as NuScenesBox
@@ -777,11 +778,18 @@ def nusc_box_to_cam_box3d(
     dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
     rots = -rots
 
-    boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
-    cam_boxes3d = CameraInstance3DBoxes(
-        boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
-    scores = torch.Tensor([b.score for b in boxes]).cuda()
-    labels = torch.LongTensor([b.label for b in boxes]).cuda()
+    if is_musa_available():
+        boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).musa()
+        cam_boxes3d = CameraInstance3DBoxes(
+            boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
+        scores = torch.Tensor([b.score for b in boxes]).musa()
+        labels = torch.LongTensor([b.label for b in boxes]).musa()
+    else:
+        boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
+        cam_boxes3d = CameraInstance3DBoxes(
+            boxes_3d, box_dim=9, origin=(0.5, 0.5, 0.5))
+        scores = torch.Tensor([b.score for b in boxes]).cuda()
+        labels = torch.LongTensor([b.label for b in boxes]).cuda()
     nms_scores = scores.new_zeros(scores.shape[0], 10 + 1)
     indices = labels.new_tensor(list(range(scores.shape[0])))
     nms_scores[indices, labels] = scores

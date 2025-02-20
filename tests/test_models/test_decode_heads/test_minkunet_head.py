@@ -1,27 +1,37 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
+import unittest
 
 import pytest
 import torch
 import torch.nn.functional as F
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.models.decode_heads import MinkUNetHead
 from mmdet3d.structures import Det3DDataSample, PointData
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestMinkUNetHead(TestCase):
 
-    def test_minkunet_head_loss(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_minkunet_head_loss(self, _, device: str):
         """Tests PAConv head loss."""
 
         try:
             import torchsparse
         except ImportError:
             pytest.skip('test requires Torchsparse installation')
-        if torch.cuda.is_available():
+        if i:
             minkunet_head = MinkUNetHead(channels=4, num_classes=19)
 
-            minkunet_head.cuda()
+            minkunet_head.to(device)
             coordinates, features = [], []
             for i in range(2):
                 c = torch.randint(0, 10, (100, 3)).int()
@@ -29,8 +39,8 @@ class TestMinkUNetHead(TestCase):
                 coordinates.append(c)
                 f = torch.rand(100, 4)
                 features.append(f)
-            features = torch.cat(features, dim=0).cuda()
-            coordinates = torch.cat(coordinates, dim=0).cuda()
+            features = torch.cat(features, dim=0).to(device)
+            coordinates = torch.cat(coordinates, dim=0).to(device)
             x = torchsparse.SparseTensor(feats=features, coords=coordinates)
 
             # Test forward
@@ -40,7 +50,7 @@ class TestMinkUNetHead(TestCase):
 
             # When truth is non-empty then losses
             # should be nonzero for random inputs
-            voxel_semantic_mask = torch.randint(0, 19, (100, )).long().cuda()
+            voxel_semantic_mask = torch.randint(0, 19, (100, )).long().to(device)
             gt_pts_seg = PointData(voxel_semantic_mask=voxel_semantic_mask)
 
             datasample = Det3DDataSample()

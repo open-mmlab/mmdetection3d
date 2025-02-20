@@ -2,15 +2,24 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestPVRCNN(unittest.TestCase):
 
-    def test_pvrcnn(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_pvrcnn(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'PointVoxelRCNN')
@@ -38,8 +47,8 @@ class TestPVRCNN(unittest.TestCase):
         #     for batch_id in len(item['data_samples']):
         #         item['data_samples'][batch_id].set_metainfo(metainfo)
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        if is_cuda_available() or is_musa_available():
+            model = model.to(device)
             # test simple_test
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, True)
@@ -53,7 +62,10 @@ class TestPVRCNN(unittest.TestCase):
             # save the memory
             with torch.no_grad():
                 losses = model.forward(**data, mode='loss')
-                torch.cuda.empty_cache()
+                if is_musa_available():
+                    torch.mush.empty_cache()
+                else:
+                    torch.cuda.empty_cache()
             self.assertGreater(losses['loss_rpn_cls'][0], 0)
             self.assertGreaterEqual(losses['loss_rpn_bbox'][0], 0)
             self.assertGreaterEqual(losses['loss_rpn_dir'][0], 0)

@@ -1,11 +1,29 @@
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.registry import MODELS
 
 
-def test_pointnet2_fp_neck():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_pointnet2_fp_neck(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
 
     xyzs = [16384, 4096, 1024, 256, 64]
@@ -25,10 +43,10 @@ def test_pointnet2_fp_neck():
     neck = MODELS.build(neck_cfg)
     neck.init_weights()
 
-    if torch.cuda.is_available():
-        sa_xyz = [x.cuda() for x in sa_xyz]
-        sa_features = [x.cuda() for x in sa_features]
-        neck.cuda()
+    if is_cuda_available() or is_musa_available():
+        sa_xyz = [x.to(device) for x in sa_xyz]
+        sa_features = [x.to(device) for x in sa_features]
+        neck.to(device)
 
     feats_sa = {'sa_xyz': sa_xyz, 'sa_features': sa_features}
     outputs = neck(feats_sa)

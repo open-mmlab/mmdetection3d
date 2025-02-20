@@ -2,10 +2,28 @@
 import numpy as np
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
 
 
-def test_paconv_sa_module_msg():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_paconv_sa_module_msg(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
     from mmdet3d.models.layers import PAConvSAModuleMSG
 
@@ -16,7 +34,7 @@ def test_paconv_sa_module_msg():
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
             mlp_channels=[[12, 16], [12, 32]],
-            paconv_num_kernels=[[4]]).cuda()
+            paconv_num_kernels=[[4]]).to(device)
 
     # paconv_num_kernels inner num should match as mlp_channels
     with pytest.raises(AssertionError):
@@ -25,7 +43,7 @@ def test_paconv_sa_module_msg():
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
             mlp_channels=[[12, 16], [12, 32]],
-            paconv_num_kernels=[[4, 4], [8, 8]]).cuda()
+            paconv_num_kernels=[[4, 4], [8, 8]]).to(device)
 
     self = PAConvSAModuleMSG(
         num_point=16,
@@ -36,7 +54,7 @@ def test_paconv_sa_module_msg():
         norm_cfg=dict(type='BN2d'),
         use_xyz=False,
         pool_mod='max',
-        paconv_kernel_input='w_neighbor').cuda()
+        paconv_kernel_input='w_neighbor').to(device)
 
     assert self.mlps[0].layer0.in_channels == 12 * 2
     assert self.mlps[0].layer0.out_channels == 16
@@ -59,9 +77,9 @@ def test_paconv_sa_module_msg():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
-    xyz = torch.from_numpy(xyz).view(1, -1, 3).cuda()
+    xyz = torch.from_numpy(xyz).view(1, -1, 3).to(device)
     # (B, C, N)
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
 
     # test forward
     new_xyz, new_features, inds = self(xyz, features)
@@ -79,7 +97,7 @@ def test_paconv_sa_module_msg():
         norm_cfg=dict(type='BN2d'),
         use_xyz=False,
         pool_mod='max',
-        paconv_kernel_input='identity').cuda()
+        paconv_kernel_input='identity').to(device)
 
     assert self.mlps[0].layer0.in_channels == 12 * 1
     assert self.mlps[0].layer0.out_channels == 16
@@ -91,9 +109,9 @@ def test_paconv_sa_module_msg():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
-    xyz = torch.from_numpy(xyz).view(1, -1, 3).cuda()
+    xyz = torch.from_numpy(xyz).view(1, -1, 3).to(device)
     # (B, C, N)
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
 
     # test forward
     new_xyz, new_features, inds = self(xyz, features)
@@ -102,8 +120,25 @@ def test_paconv_sa_module_msg():
     assert inds.shape == torch.Size([1, 16])
 
 
-def test_paconv_sa_module():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_paconv_sa_module(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
     from mmdet3d.models.layers import build_sa_module
     sa_cfg = dict(
@@ -117,7 +152,7 @@ def test_paconv_sa_module():
         use_xyz=True,
         pool_mod='max',
         paconv_kernel_input='w_neighbor')
-    self = build_sa_module(sa_cfg).cuda()
+    self = build_sa_module(sa_cfg).to(device)
 
     assert self.mlps[0].layer0.in_channels == 15 * 2
     assert self.mlps[0].layer0.out_channels == 32
@@ -126,9 +161,9 @@ def test_paconv_sa_module():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
-    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).to(device)
     # (B, C, N)
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
 
     # test forward
     new_xyz, new_features, inds = self(xyz, features)
@@ -148,21 +183,38 @@ def test_paconv_sa_module():
         use_xyz=True,
         pool_mod='max',
         paconv_kernel_input='identity')
-    self = build_sa_module(sa_cfg).cuda()
+    self = build_sa_module(sa_cfg).to(device)
     assert self.mlps[0].layer0.in_channels == 15 * 1
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
-    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).to(device)
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
     new_xyz, new_features, inds = self(xyz, features)
     assert new_xyz.shape == torch.Size([1, 16, 3])
     assert new_features.shape == torch.Size([1, 32, 16])
     assert inds.shape == torch.Size([1, 16])
 
 
-def test_paconv_cuda_sa_module_msg():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_paconv_cuda_sa_module_msg(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
     from mmdet3d.models.layers import PAConvCUDASAModuleMSG
 
@@ -173,7 +225,7 @@ def test_paconv_cuda_sa_module_msg():
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
             mlp_channels=[[12, 16], [12, 32]],
-            paconv_num_kernels=[[4]]).cuda()
+            paconv_num_kernels=[[4]]).to(device)
 
     # paconv_num_kernels inner num should match as mlp_channels
     with pytest.raises(AssertionError):
@@ -182,7 +234,7 @@ def test_paconv_cuda_sa_module_msg():
             radii=[0.2, 0.4],
             sample_nums=[4, 8],
             mlp_channels=[[12, 16], [12, 32]],
-            paconv_num_kernels=[[4, 4], [8, 8]]).cuda()
+            paconv_num_kernels=[[4, 4], [8, 8]]).to(device)
 
     self = PAConvCUDASAModuleMSG(
         num_point=16,
@@ -193,7 +245,7 @@ def test_paconv_cuda_sa_module_msg():
         norm_cfg=dict(type='BN2d'),
         use_xyz=False,
         pool_mod='max',
-        paconv_kernel_input='w_neighbor').cuda()
+        paconv_kernel_input='w_neighbor').to(device)
 
     assert self.mlps[0][0].in_channels == 12 * 2
     assert self.mlps[0][0].out_channels == 16
@@ -218,9 +270,9 @@ def test_paconv_cuda_sa_module_msg():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
-    xyz = torch.from_numpy(xyz).view(1, -1, 3).cuda()
+    xyz = torch.from_numpy(xyz).view(1, -1, 3).to(device)
     # (B, C, N)
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
 
     # test forward
     new_xyz, new_features, inds = self(xyz, features)
@@ -239,11 +291,28 @@ def test_paconv_cuda_sa_module_msg():
             norm_cfg=dict(type='BN2d'),
             use_xyz=False,
             pool_mod='max',
-            paconv_kernel_input='identity').cuda()
+            paconv_kernel_input='identity').to(device)
 
 
-def test_paconv_cuda_sa_module():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_paconv_cuda_sa_module(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
     from mmdet3d.models.layers import build_sa_module
     sa_cfg = dict(
@@ -257,7 +326,7 @@ def test_paconv_cuda_sa_module():
         use_xyz=True,
         pool_mod='max',
         paconv_kernel_input='w_neighbor')
-    self = build_sa_module(sa_cfg).cuda()
+    self = build_sa_module(sa_cfg).to(device)
 
     assert self.mlps[0][0].in_channels == 15 * 2
     assert self.mlps[0][0].out_channels == 32
@@ -266,9 +335,9 @@ def test_paconv_cuda_sa_module():
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
     # (B, N, 3)
-    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).to(device)
     # (B, C, N)
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
 
     # test forward
     new_xyz, new_features, inds = self(xyz, features)
@@ -288,12 +357,12 @@ def test_paconv_cuda_sa_module():
         use_xyz=True,
         pool_mod='max',
         paconv_kernel_input='w_neighbor')
-    self = build_sa_module(sa_cfg).cuda()
+    self = build_sa_module(sa_cfg).to(device)
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', np.float32)
 
-    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).cuda()
-    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().cuda()
+    xyz = torch.from_numpy(xyz[..., :3]).view(1, -1, 3).to(device)
+    features = xyz.repeat([1, 1, 4]).transpose(1, 2).contiguous().to(device)
     new_xyz, new_features, inds = self(xyz, features)
     assert new_xyz.shape == torch.Size([1, 16, 3])
     assert new_features.shape == torch.Size([1, 32, 16])

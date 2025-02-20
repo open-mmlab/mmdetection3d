@@ -13,6 +13,7 @@ from mmengine.config import Config
 from mmengine.dataset import Compose, pseudo_collate
 from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
+from mmengine.device import is_musa_available
 
 from mmdet3d.registry import DATASETS, MODELS
 from mmdet3d.structures import Box3DMode, Det3DDataSample, get_box_type
@@ -104,7 +105,10 @@ def init_model(config: Union[str, Path, Config],
 
     model.cfg = config  # save the config in the model for convenience
     if device != 'cpu':
-        torch.cuda.set_device(device)
+        if is_musa_available():
+            torch.musa.set_device(device)
+        else:
+            torch.cuda.set_device(device)
     else:
         warnings.warn('Don\'t suggest using CPU device. '
                       'Some functions are not supported for now.')

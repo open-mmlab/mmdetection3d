@@ -8,6 +8,7 @@ import mmengine
 import numpy as np
 import torch
 from mmengine.utils import is_list_of
+from mmengine.device import is_cuda_available, is_musa_available
 
 from mmdet3d.apis import MultiModalityDet3DInferencer
 from mmdet3d.structures import Det3DDataSample
@@ -42,7 +43,7 @@ class TestMultiModalityDet3DInferencer(TestCase):
                     np.allclose(pred1['labels_3d'], pred2['labels_3d']))
 
     def test_call(self):
-        if not torch.cuda.is_available():
+        if not is_cuda_available() and not is_musa_available():
             return
         infos_path = 'demo/data/kitti/000008.pkl'
         points_path = 'demo/data/kitti/000008.bin'
@@ -86,7 +87,7 @@ class TestMultiModalityDet3DInferencer(TestCase):
         self.assertIn('visualization', res_ndarray)
 
     def test_visualize(self):
-        if not torch.cuda.is_available():
+        if not is_cuda_available() and not is_musa_available():
             return
         inputs = dict(
             points='demo/data/kitti/000008.bin',
@@ -100,7 +101,7 @@ class TestMultiModalityDet3DInferencer(TestCase):
             # self.assertTrue(osp.exists(osp.join(tmp_dir, '000000.png')))
 
     def test_postprocess(self):
-        if not torch.cuda.is_available():
+        if not is_cuda_available() and not is_musa_available():
             return
         # return_datasample
         infos_path = 'demo/data/kitti/000008.pkl'
