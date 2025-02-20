@@ -2,15 +2,24 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestH3D(unittest.TestCase):
 
-    def test_h3dnet(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_h3dnet(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'H3DNet')
@@ -26,8 +35,8 @@ class TestH3D(unittest.TestCase):
             with_pts_semantic_mask=True,
             with_pts_instance_mask=True)
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        if is_cuda_available() or is_musa_available():
+            model = model.to(device)
             # test simple_test
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, True)

@@ -2,15 +2,25 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
+
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestMVXNet(unittest.TestCase):
 
-    def test_mvxnet(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_mvxnet(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'DynamicMVXFasterRCNN')
@@ -25,14 +35,17 @@ class TestMVXNet(unittest.TestCase):
         packed_inputs = create_detector_inputs(
             with_img=False, num_gt_instance=num_gt_instance, points_feat_dim=4)
 
-        if torch.cuda.is_available():
+        if is_cuda_available() or is_musa_available():
 
-            model = model.cuda()
+            model = model.to(device)
             # test simple_test
             data = model.data_preprocessor(packed_inputs, True)
             # save the memory when do the unitest
             with torch.no_grad():
-                torch.cuda.empty_cache()
+                if is_musa_available():
+                    torch.musa.empty_cache()
+                else:
+                    torch.cuda.empty_cache()
                 losses = model.forward(**data, mode='loss')
             assert losses['loss_cls'][0] >= 0
             assert losses['loss_bbox'][0] >= 0

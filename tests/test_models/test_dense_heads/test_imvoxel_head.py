@@ -1,19 +1,29 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
+import unittest
 
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d import *  # noqa
 from mmdet3d.models.dense_heads import ImVoxelHead
 from mmdet3d.testing import create_detector_inputs
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestImVoxelHead(TestCase):
 
-    def test_imvoxel_head_loss(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_imvoxel_head_loss(self, _, device: str):
         """Test imvoxel head loss when truth is empty and non-empty."""
-        if not torch.cuda.is_available():
+        if not is_cuda_available() and not is_musa_available():
             pytest.skip('test requires GPU and torch+cuda')
 
         # build head
@@ -33,13 +43,13 @@ class TestImVoxelHead(TestCase):
             bbox_loss=dict(type='RotatedIoU3DLoss'),
             cls_loss=dict(type='mmdet.FocalLoss'),
         )
-        imvoxel_head = imvoxel_head.cuda()
+        imvoxel_head = imvoxel_head.to(device)
 
         # fake input of head
         # (x, valid_preds)
         x = [
-            torch.randn(1, 32, 10, 10, 4).cuda(),
-            torch.ones(1, 1, 10, 10, 4).cuda()
+            torch.randn(1, 32, 10, 10, 4).to(device),
+            torch.ones(1, 1, 10, 10, 4).to(device)
         ]
 
         # fake annotation
@@ -52,7 +62,7 @@ class TestImVoxelHead(TestCase):
             with_pts_semantic_mask=False,
             with_pts_instance_mask=False)
         data_samples = [
-            sample.cuda() for sample in packed_inputs['data_samples']
+            sample.to(device) for sample in packed_inputs['data_samples']
         ]
 
         losses = imvoxel_head.loss(x, data_samples)

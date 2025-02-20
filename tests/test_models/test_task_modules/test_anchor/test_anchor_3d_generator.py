@@ -7,6 +7,7 @@ CommandLine:
 """
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_cuda_available, is_musa_available
 
 from mmdet3d.registry import TASK_UTILS
 
@@ -19,8 +20,10 @@ def test_anchor_3d_range_generator():
     DefaultScope.get_instance(
         'test_ancho3drange_generator', scope_name='mmdet3d')
 
-    if torch.cuda.is_available():
+    if is_cuda_available():
         device = 'cuda'
+    elif is_musa_available():
+        device = "musa"
     else:
         device = 'cpu'
     anchor_generator_cfg = dict(
@@ -60,8 +63,10 @@ def test_aligned_anchor_generator():
     DefaultScope.get_instance(
         'test_aligned_ancho3drange_generator', scope_name='mmdet3d')
 
-    if torch.cuda.is_available():
+    if is_cuda_available():
         device = 'cuda'
+    elif is_musa_available():
+        device = "musa"
     else:
         device = 'cpu'
 
@@ -209,8 +214,10 @@ def test_aligned_anchor_generator_per_cls():
     DefaultScope.get_instance(
         'test_ancho3drange_generator_percls', scope_name='mmdet3d')
 
-    if torch.cuda.is_available():
+    if is_cuda_available():
         device = 'cuda'
+    elif is_musa_available():
+        device = "musa"
     else:
         device = 'cpu'
 

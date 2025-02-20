@@ -2,15 +2,24 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestFreeAnchor(unittest.TestCase):
 
-    def test_freeanchor(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_freeanchor(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models.dense_heads, 'FreeAnchor3DHead')
@@ -49,12 +58,15 @@ class TestFreeAnchor(unittest.TestCase):
         # for item in aug_data:
         #     item['data_sample'].set_metainfo(metainfo)
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        if is_cuda_available() or is_musa_available():
+            model = model.to(device)
             # test simple_test
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, True)
-                torch.cuda.empty_cache()
+                if is_musa_available():
+                    torch.musa.empty_cache()
+                else:
+                    torch.cuda.empty_cache()
                 results = model.forward(**data, mode='predict')
             self.assertEqual(len(results), 1)
             self.assertIn('bboxes_3d', results[0].pred_instances_3d)

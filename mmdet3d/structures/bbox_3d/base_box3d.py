@@ -457,6 +457,18 @@ class BaseInstance3DBoxes:
             box_dim=self.box_dim,
             with_yaw=self.with_yaw)
 
+    def musa(self, *args, **kwargs) -> 'BaseInstance3DBoxes':
+        """Convert current boxes to cuda device.
+
+        Returns:
+            :obj:`BaseInstance3DBoxes`: A new boxes object on the cuda device.
+        """
+        original_type = type(self)
+        return original_type(
+            self.tensor.musa(*args, **kwargs),
+            box_dim=self.box_dim,
+            with_yaw=self.with_yaw)
+
     def clone(self) -> 'BaseInstance3DBoxes':
         """Clone the boxes.
 

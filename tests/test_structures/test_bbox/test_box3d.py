@@ -13,6 +13,7 @@ from mmdet3d.structures.bbox_3d.utils import (get_box_type, limit_period,
                                               points_cam2img,
                                               rotation_3d_in_axis, xywhr2xyxyr)
 from mmdet3d.structures.points import CameraPoints, DepthPoints, LiDARPoints
+from mmengine.device import is_musa_available, is_cuda_available
 
 
 def test_bbox3d_mapping_back():
@@ -1118,14 +1119,31 @@ def test_camera_boxes3d():
     assert torch.allclose(boxes_origin_given.tensor, expected_tensor)
 
 
-def test_boxes3d_overlaps():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_boxes3d_overlaps(device: str):
     """Test the iou calculation of boxes in different modes.
 
     CommandLine:
         xdoctest tests/test_box3d.py::test_boxes3d_overlaps zero
     """
-    if not torch.cuda.is_available():
-        pytest.skip('test requires GPU and torch+cuda')
+    if not is_cuda_available() and not is_musa_available():
+        pytest.skip('test requires GPU and torch+cuda or torch+musa')
 
     # Test LiDAR boxes 3D overlaps
     boxes1_tensor = torch.tensor(
@@ -1133,20 +1151,20 @@ def test_boxes3d_overlaps():
          [8.9, -2.5, -1.6, 1.54, 4.01, 1.57, -1.5215927],
          [28.3, 0.5, -1.3, 1.47, 2.23, 1.48, -4.7115927],
          [31.3, -8.2, -1.6, 1.74, 3.77, 1.48, -0.35]],
-        device='cuda')
+        device=device)
     boxes1 = LiDARInstance3DBoxes(boxes1_tensor)
 
     boxes2_tensor = torch.tensor([[1.2, -3.0, -1.9, 1.8, 3.4, 1.7, -1.9],
                                   [8.1, -2.9, -1.8, 1.5, 4.1, 1.6, -1.8],
                                   [31.3, -8.2, -1.6, 1.74, 3.77, 1.48, -0.35],
                                   [20.1, -28.5, -1.9, 1.6, 3.5, 1.4, -5.1]],
-                                 device='cuda')
+                                 device=device)
     boxes2 = LiDARInstance3DBoxes(boxes2_tensor)
 
     expected_iou_tensor = torch.tensor(
         [[0.3710, 0.0000, 0.0000, 0.0000], [0.0000, 0.3322, 0.0000, 0.0000],
          [0.0000, 0.0000, 0.0000, 0.0000], [0.0000, 0.0000, 1.0000, 0.0000]],
-        device='cuda')
+        device=device)
     overlaps_3d_iou = boxes1.overlaps(boxes1, boxes2)
     assert torch.allclose(
         expected_iou_tensor, overlaps_3d_iou, rtol=1e-4, atol=1e-7)
@@ -1154,7 +1172,7 @@ def test_boxes3d_overlaps():
     expected_iof_tensor = torch.tensor(
         [[0.5582, 0.0000, 0.0000, 0.0000], [0.0000, 0.5025, 0.0000, 0.0000],
          [0.0000, 0.0000, 0.0000, 0.0000], [0.0000, 0.0000, 1.0000, 0.0000]],
-        device='cuda')
+        device=device)
     overlaps_3d_iof = boxes1.overlaps(boxes1, boxes2, mode='iof')
     assert torch.allclose(
         expected_iof_tensor, overlaps_3d_iof, rtol=1e-4, atol=1e-7)
@@ -1186,7 +1204,24 @@ def test_boxes3d_overlaps():
         boxes1.overlaps(cam_boxes1, boxes1)
 
 
-def test_depth_boxes3d():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_depth_boxes3d(device: str):
     # test empty initialization
     empty_boxes = []
     boxes = DepthInstance3DBoxes(empty_boxes)
@@ -1429,11 +1464,11 @@ def test_depth_boxes3d():
     assert torch.allclose(boxes.corners, expected_tensor, 1e-3)
 
     # test points in boxes
-    if torch.cuda.is_available():
-        box_idxs_of_pts = boxes.points_in_boxes_all(points.cuda())
+    if is_cuda_available() or is_musa_available():
+        box_idxs_of_pts = boxes.points_in_boxes_all(points.to(device))
         expected_idxs_of_pts = torch.tensor(
             [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
-            device='cuda:0',
+            device=device,
             dtype=torch.int32)
         assert torch.all(box_idxs_of_pts == expected_idxs_of_pts)
 
@@ -1679,26 +1714,44 @@ def test_points_cam2img():
     assert torch.allclose(point_2d_res, expected_point_2d_res, 1e-3)
 
 
-def test_points_in_boxes():
-    if not torch.cuda.is_available():
+
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_points_in_boxes(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
     lidar_pts = torch.tensor([[1.0, 4.3, 0.1], [1.0, 4.4,
                                                 0.1], [1.1, 4.3, 0.1],
                               [0.9, 4.3, 0.1], [1.0, -0.3, 0.1],
                               [1.0, -0.4, 0.1], [2.9, 0.1, 6.0],
-                              [-0.9, 3.9, 6.0]]).cuda()
+                              [-0.9, 3.9, 6.0]]).to(device)
     lidar_boxes = torch.tensor([[1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 6],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 2],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, 7 * np.pi / 6],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, -np.pi / 6]],
-                               dtype=torch.float32).cuda()
+                               dtype=torch.float32).to(device)
     lidar_boxes = LiDARInstance3DBoxes(lidar_boxes)
 
     point_indices = lidar_boxes.points_in_boxes_all(lidar_pts)
     expected_point_indices = torch.tensor(
         [[1, 0, 1, 1], [0, 0, 0, 0], [1, 0, 1, 0], [0, 0, 0, 1], [1, 0, 1, 1],
          [0, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
-        dtype=torch.int32).cuda()
+        dtype=torch.int32).to(device)
     assert point_indices.shape == torch.Size([8, 4])
     assert (point_indices == expected_point_indices).all()
 
@@ -1706,23 +1759,23 @@ def test_points_in_boxes():
                                                 0.1], [1.1, 4.3, 0.1],
                               [0.9, 4.3, 0.1], [1.0, -0.3, 0.1],
                               [1.0, -0.4, 0.1], [2.9, 0.1, 6.0],
-                              [-0.9, 3.9, 6.0]]).cuda()
+                              [-0.9, 3.9, 6.0]]).to(device)
     lidar_boxes = torch.tensor([[1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 6],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 2],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, 7 * np.pi / 6],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, -np.pi / 6]],
-                               dtype=torch.float32).cuda()
+                               dtype=torch.float32).to(device)
     lidar_boxes = LiDARInstance3DBoxes(lidar_boxes)
 
     point_indices = lidar_boxes.points_in_boxes_part(lidar_pts)
     expected_point_indices = torch.tensor([0, -1, 0, 3, 0, -1, 1, 1],
-                                          dtype=torch.int32).cuda()
+                                          dtype=torch.int32).to(device)
     assert point_indices.shape == torch.Size([8])
     assert (point_indices == expected_point_indices).all()
 
     depth_boxes = torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0.3],
                                 [-10.0, 23.0, 16.0, 10, 20, 20, 0.5]],
-                               dtype=torch.float32).cuda()
+                               dtype=torch.float32).to(device)
     depth_boxes = DepthInstance3DBoxes(depth_boxes)
     depth_pts = torch.tensor(
         [[[1, 2, 3.3], [1.2, 2.5, 3.0], [0.8, 2.1, 3.5], [1.6, 2.6, 3.6],
@@ -1730,20 +1783,20 @@ def test_points_in_boxes():
           [4.7, 3.5, -12.2], [3.8, 7.6, -2], [-10.6, -12.9, -20], [
               -16, -18, 9
           ], [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4]]],
-        dtype=torch.float32).cuda()
+        dtype=torch.float32).to(device)
 
     point_indices = depth_boxes.points_in_boxes_all(depth_pts)
     expected_point_indices = torch.tensor(
         [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [0, 1], [0, 0], [0, 0],
          [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
-        dtype=torch.int32).cuda()
+        dtype=torch.int32).to(device)
     assert point_indices.shape == torch.Size([15, 2])
     assert (point_indices == expected_point_indices).all()
 
     point_indices = depth_boxes.points_in_boxes_part(depth_pts)
     expected_point_indices = torch.tensor(
         [0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-        dtype=torch.int32).cuda()
+        dtype=torch.int32).to(device)
     assert point_indices.shape == torch.Size([15])
     assert (point_indices == expected_point_indices).all()
 
@@ -1753,7 +1806,7 @@ def test_points_in_boxes():
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, np.pi / 2],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, 7 * np.pi / 6],
                                 [1.0, 2.0, 0.0, 4.0, 4.0, 6.0, -np.pi / 6]],
-                               dtype=torch.float32).cuda()
+                               dtype=torch.float32).to(device)
     cam_boxes = DepthInstance3DBoxes(depth_boxes).convert_to(Box3DMode.CAM)
     depth_pts = torch.tensor(
         [[1, 2, 3.3], [1.2, 2.5, 3.0], [0.8, 2.1, 3.5], [1.6, 2.6, 3.6],
@@ -1762,7 +1815,7 @@ def test_points_in_boxes():
          [-21.3, -52, -5], [0, 0, 0], [6, 7, 8], [-2, -3, -4], [1.0, 4.3, 0.1],
          [1.0, 4.4, 0.1], [1.1, 4.3, 0.1], [0.9, 4.3, 0.1], [1.0, -0.3, 0.1],
          [1.0, -0.4, 0.1], [2.9, 0.1, 6.0], [-0.9, 3.9, 6.0]],
-        dtype=torch.float32).cuda()
+        dtype=torch.float32).to(device)
 
     cam_pts = DepthPoints(depth_pts).convert_to(Coord3DMode.CAM).tensor
 
@@ -1776,7 +1829,7 @@ def test_points_in_boxes():
          [0, 0, 1, 0, 1, 1], [0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 1, 0],
          [0, 0, 0, 0, 0, 1], [0, 0, 1, 0, 1, 1], [0, 0, 0, 0, 0, 0],
          [1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0]],
-        dtype=torch.int32).cuda()
+        dtype=torch.int32).to(device)
     assert point_indices.shape == torch.Size([23, 6])
     assert (point_indices == expected_point_indices).all()
 
@@ -1788,7 +1841,7 @@ def test_points_in_boxes():
         0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, 2, -1, -1, 2, -1, 2, 5, 2,
         -1, 0, 0
     ],
-                                          dtype=torch.int32).cuda()
+                                          dtype=torch.int32).to(device)
     assert point_indices.shape == torch.Size([23])
     assert (point_indices == expected_point_indices).all()
 
