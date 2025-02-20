@@ -1,11 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
+import unittest
 
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.models.data_preprocessors import Det3DDataPreprocessor
 from mmdet3d.structures import Det3DDataSample, PointData
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestDet3DDataPreprocessor(TestCase):
@@ -30,7 +34,13 @@ class TestDet3DDataPreprocessor(TestCase):
         with self.assertRaises(AssertionError):
             Det3DDataPreprocessor(bgr_to_rgb=True, rgb_to_bgr=True)
 
-    def test_forward(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_forward(self, _, device: str):
         processor = Det3DDataPreprocessor(mean=[0, 0, 0], std=[1, 1, 1])
 
         points = torch.randn((5000, 3))
@@ -98,7 +108,7 @@ class TestDet3DDataPreprocessor(TestCase):
             self.assertEqual(data_sample.pad_shape, expected_shape)
 
         # test cylindrical voxelization
-        if not torch.cuda.is_available():
+        if not is_cuda_available() and not is_musa_available():
             pytest.skip('test requires GPU and CUDA')
         point_cloud_range = [0, -180, -4, 50, 180, 2]
         grid_shape = [480, 360, 32]
@@ -109,7 +119,7 @@ class TestDet3DDataPreprocessor(TestCase):
             max_voxels=-1)
         processor = Det3DDataPreprocessor(
             voxel=True, voxel_type='cylindrical',
-            voxel_layer=voxel_layer).cuda()
+            voxel_layer=voxel_layer).to(device)
         num_points = 5000
         xy = torch.rand(num_points, 2) * 140 - 70
         z = torch.rand(num_points, 1) * 9 - 6

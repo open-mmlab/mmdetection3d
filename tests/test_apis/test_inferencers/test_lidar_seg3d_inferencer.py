@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 import torch
 from mmengine.utils import is_list_of
+from mmengine.device import is_cuda_available, is_musa_available
 
 from mmdet3d.apis import LidarSeg3DInferencer
 from mmdet3d.structures import Det3DDataSample
@@ -36,7 +37,9 @@ class TestLiDARSeg3DInferencer(TestCase):
                             pred2['pts_semantic_mask']))
 
     @pytest.mark.skipif(
-        not torch.cuda.is_available(), reason='requires CUDA support')
+        not is_cuda_available(), reason='requires CUDA support')
+    @pytest.mark.skipif(
+        not is_musa_available(), reason='requires MUSA support')
     @pytest.mark.skipif(
         'DISPLAY' not in os.environ, reason='requires DISPLAY device')
     def test_call(self):
@@ -84,7 +87,9 @@ class TestLiDARSeg3DInferencer(TestCase):
         self.assertIn('predictions', res_bs2)
 
     @pytest.mark.skipif(
-        not torch.cuda.is_available(), reason='requires CUDA support')
+        not is_cuda_available(), reason='requires CUDA support')
+    @pytest.mark.skipif(
+        not is_musa_available(), reason='requires MUSA support')
     @pytest.mark.skipif(
         'DISPLAY' not in os.environ, reason='requires DISPLAY device')
     def test_visualizer(self):
@@ -94,7 +99,7 @@ class TestLiDARSeg3DInferencer(TestCase):
             self.inferencer(inputs, out_dir=tmp_dir)
 
     def test_post_processor(self):
-        if not torch.cuda.is_available():
+        if not is_cuda_available() and not is_musa_available():
             return
         # return_datasample
         inputs = dict(points='tests/data/s3dis/points/Area_1_office_2.bin')

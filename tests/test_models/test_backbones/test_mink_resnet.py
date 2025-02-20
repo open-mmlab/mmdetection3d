@@ -2,12 +2,30 @@
 import numpy as np
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.registry import MODELS
 
 
-def test_mink_resnet():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_mink_resnet(device):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
 
     try:
@@ -20,9 +38,9 @@ def test_mink_resnet():
     # batch of 2 point clouds
     for i in range(2):
         c = torch.from_numpy(np.random.rand(500, 3) * 100)
-        coordinates.append(c.float().cuda())
+        coordinates.append(c.float().to(device))
         f = torch.from_numpy(np.random.rand(500, 3))
-        features.append(f.float().cuda())
+        features.append(f.float().to(device))
     tensor_coordinates, tensor_features = ME.utils.sparse_collate(
         coordinates, features)
     x = ME.SparseTensor(
@@ -30,7 +48,7 @@ def test_mink_resnet():
 
     # MinkResNet34 with 4 outputs
     cfg = dict(type='MinkResNet', depth=34, in_channels=3)
-    self = MODELS.build(cfg).cuda()
+    self = MODELS.build(cfg).to(device)
     self.init_weights()
 
     y = self(x)
@@ -47,7 +65,7 @@ def test_mink_resnet():
     # MinkResNet50 with 2 outputs
     cfg = dict(
         type='MinkResNet', depth=34, in_channels=3, num_stages=2, pool=False)
-    self = MODELS.build(cfg).cuda()
+    self = MODELS.build(cfg).to(device)
     self.init_weights()
 
     y = self(x)

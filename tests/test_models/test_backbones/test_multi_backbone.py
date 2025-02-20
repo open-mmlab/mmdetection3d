@@ -2,12 +2,30 @@
 import numpy as np
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.registry import MODELS
 
 
-def test_multi_backbone():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_multi_backbone(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
 
     # test list config
@@ -59,12 +77,12 @@ def test_multi_backbone():
         ])
 
     self = MODELS.build(cfg_list)
-    self.cuda()
+    self.to(device)
 
     assert len(self.backbone_list) == 4
 
     xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
-    xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+    xyz = torch.from_numpy(xyz).view(1, -1, 6).to(device)  # (B, N, 6)
     # test forward
     ret_dict = self(xyz[:, :, :4])
 
@@ -90,7 +108,7 @@ def test_multi_backbone():
             norm_cfg=dict(type='BN2d')))
 
     self = MODELS.build(cfg_dict)
-    self.cuda()
+    self.to(device)
 
     assert len(self.backbone_list) == 2
 

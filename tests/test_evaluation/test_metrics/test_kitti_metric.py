@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import torch
 from mmengine.structures import InstanceData
+from mmengine.device import is_cuda_available, is_musa_available
 
 from mmdet3d.evaluation.metrics import KittiMetric
 from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes
@@ -49,7 +50,7 @@ def _init_multi_modal_evaluate_input():
 
 
 def test_multi_modal_kitti_metric():
-    if not torch.cuda.is_available():
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
     kittimetric = KittiMetric(
         data_root + '/kitti_infos_train.pkl', metric=['mAP'])
@@ -72,7 +73,7 @@ def test_multi_modal_kitti_metric():
 
 
 def test_kitti_metric_mAP():
-    if not torch.cuda.is_available():
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
     kittimetric = KittiMetric(
         data_root + '/kitti_infos_train.pkl', metric=['mAP'])

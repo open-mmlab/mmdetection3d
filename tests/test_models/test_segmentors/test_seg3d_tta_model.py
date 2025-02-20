@@ -1,18 +1,28 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from unittest import TestCase
+import unittest
 
 import torch
 from mmengine import ConfigDict, DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.models import Seg3DTTAModel
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.testing import get_detector_cfg
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestSeg3DTTAModel(TestCase):
 
-    def test_seg3d_tta_model(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_seg3d_tta_model(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'Cylinder3D')
@@ -35,6 +45,6 @@ class TestSeg3DTTAModel(TestCase):
                         pcd_horizontal_flip=pcd_horizontal_flip_list[i],
                         pcd_vertical_flip=pcd_vertical_flip_list[i]))
             ])
-        if torch.cuda.is_available():
-            model.eval().cuda()
+        if is_cuda_available() or is_musa_available():
+            model.eval().to(device)
             model.test_step(dict(inputs=points, data_samples=data_samples))

@@ -2,12 +2,30 @@
 import pytest
 import torch
 import torch.nn.functional as F
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.registry import MODELS
 
 
-def test_hard_simple_VFE():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_hard_simple_VFE(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
     hard_simple_VFE_cfg = dict(type='HardSimpleVFE', num_features=5)
     hard_simple_VFE = MODELS.build(hard_simple_VFE_cfg)
@@ -18,8 +36,25 @@ def test_hard_simple_VFE():
     assert outputs.shape == torch.Size([240000, 5])
 
 
-def test_seg_VFE():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_seg_VFE(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
     seg_VFE_cfg = dict(
         type='SegVFE',
@@ -29,14 +64,14 @@ def test_seg_VFE():
         feat_compression=16,
         return_point_feats=True)
     seg_VFE = MODELS.build(seg_VFE_cfg)
-    seg_VFE = seg_VFE.cuda()
-    features = torch.rand([240000, 6]).cuda()
+    seg_VFE = seg_VFE.to(device)
+    features = torch.rand([240000, 6]).to(device)
     coors = []
     for i in range(4):
         coor = torch.randint(0, 10, (60000, 3))
         coor = F.pad(coor, (1, 0), mode='constant', value=i)
         coors.append(coor)
-    coors = torch.cat(coors, dim=0).cuda()
+    coors = torch.cat(coors, dim=0).to(device)
     out_features, out_coors, out_point_features = seg_VFE(features, coors)
     assert out_features.shape[0] == out_coors.shape[0]
     assert len(out_point_features) == 4

@@ -2,6 +2,7 @@
 import numpy as np
 import pytest
 import torch
+from mmengine.device import is_musa_available, is_cuda_available
 
 
 def test_aligned_3d_nms():
@@ -77,9 +78,24 @@ def test_circle_nms():
 
 
 # copied from tests/test_ops/test_iou3d.py from mmcv<=1.5
-@pytest.mark.skipif(
-    not torch.cuda.is_available(), reason='requires CUDA support')
-def test_nms_bev():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_nms_bev(device: str):
     from mmdet3d.models.layers import nms_bev
 
     np_boxes = np.array(
@@ -90,15 +106,30 @@ def test_nms_bev():
     np_inds = np.array([1, 0, 3])
     boxes = torch.from_numpy(np_boxes)
     scores = torch.from_numpy(np_scores)
-    inds = nms_bev(boxes.cuda(), scores.cuda(), thresh=0.3)
+    inds = nms_bev(boxes.to(device), scores.to(device), thresh=0.3)
 
     assert np.allclose(inds.cpu().numpy(), np_inds)
 
 
 # copied from tests/test_ops/test_iou3d.py from mmcv<=1.5
-@pytest.mark.skipif(
-    not torch.cuda.is_available(), reason='requires CUDA support')
-def test_nms_normal_bev():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_nms_normal_bev(device: str):
     from mmdet3d.models.layers import nms_normal_bev
 
     np_boxes = np.array(
@@ -109,6 +140,6 @@ def test_nms_normal_bev():
     np_inds = np.array([1, 0, 3])
     boxes = torch.from_numpy(np_boxes)
     scores = torch.from_numpy(np_scores)
-    inds = nms_normal_bev(boxes.cuda(), scores.cuda(), thresh=0.3)
+    inds = nms_normal_bev(boxes.to(device), scores.to(device), thresh=0.3)
 
     assert np.allclose(inds.cpu().numpy(), np_inds)

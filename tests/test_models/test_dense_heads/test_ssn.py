@@ -2,15 +2,24 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestSSN(unittest.TestCase):
 
-    def test_ssn(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_ssn(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models.dense_heads, 'ShapeAwareHead')
@@ -48,8 +57,8 @@ class TestSSN(unittest.TestCase):
         # for item in aug_data:
         #     item['data_sample'].set_metainfo(metainfo)
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        if is_cuda_available() or is_musa_available():
+            model = model.to(device)
             # test simple_test
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, True)

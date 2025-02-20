@@ -6,18 +6,34 @@ from os.path import dirname, exists, join
 import numpy as np
 import torch
 from mmengine.structures import InstanceData
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.structures import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                 Det3DDataSample, LiDARInstance3DBoxes,
                                 PointData)
 
 
+AVAILABLE_DEVICES = []
+
+if is_cuda_available():
+    AVAILABLE_DEVICES.append(("cuda", "cuda"))
+
+if is_musa_available():
+    AVAILABLE_DEVICES.append(("musa", "musa"))
+
+
 def setup_seed(seed):
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if is_musa_available():
+        torch.musa.manual_seed_all(seed)
+    else:
+        torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
-    torch.backends.cudnn.deterministic = True
+    if is_musa_available():
+        torch.backends.mudnn.deterministic = True
+    else:
+        torch.backends.cudnn.deterministic = True
 
 
 def _get_config_directory():

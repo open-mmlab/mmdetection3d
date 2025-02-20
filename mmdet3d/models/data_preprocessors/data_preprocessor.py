@@ -9,6 +9,7 @@ from mmdet.models import DetDataPreprocessor
 from mmdet.models.utils.misc import samplelist_boxtype2tensor
 from mmengine.model import stack_batch
 from mmengine.utils import is_seq_of
+from mmengine.device import is_musa_available
 from torch import Tensor
 from torch.nn import functional as F
 
@@ -434,12 +435,18 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 res_coors_numpy = res_coors.cpu().numpy()
                 inds, point2voxel_map = self.sparse_quantize(
                     res_coors_numpy, return_index=True, return_inverse=True)
-                point2voxel_map = torch.from_numpy(point2voxel_map).cuda()
+                if is_musa_available():
+                    point2voxel_map = torch.from_numpy(point2voxel_map).musa()
+                else:
+                    point2voxel_map = torch.from_numpy(point2voxel_map).cuda()
                 if self.training and self.max_voxels is not None:
                     if len(inds) > self.max_voxels:
                         inds = np.random.choice(
                             inds, self.max_voxels, replace=False)
-                inds = torch.from_numpy(inds).cuda()
+                if is_musa_available():
+                    inds = torch.from_numpy(inds).musa()
+                else:
+                    inds = torch.from_numpy(inds).cuda()
                 if hasattr(data_sample.gt_pts_seg, 'pts_semantic_mask'):
                     data_sample.gt_pts_seg.voxel_semantic_mask \
                         = data_sample.gt_pts_seg.pts_semantic_mask[inds]

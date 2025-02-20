@@ -1,12 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import pytest
 import torch
+from mmengine.device import is_cuda_available, is_musa_available
 
 from mmdet3d.registry import MODELS
 
 
 def test_pillar_feature_net():
-    if not torch.cuda.is_available():
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip('test requires GPU and torch+cuda')
     pillar_feature_net_cfg = dict(
         type='PillarFeatureNet',

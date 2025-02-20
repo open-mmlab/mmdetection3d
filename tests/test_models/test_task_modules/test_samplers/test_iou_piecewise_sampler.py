@@ -2,13 +2,31 @@
 import pytest
 import torch
 from mmengine.structures import InstanceData
+from mmengine.device import is_musa_available, is_cuda_available
 
 from mmdet3d.models.task_modules import IoUNegPiecewiseSampler
 from mmdet3d.models.task_modules.assigners import Max3DIoUAssigner
 
 
-def test_iou_piecewise_sampler():
-    if not torch.cuda.is_available():
+@pytest.mark.parametrize(
+    "device",
+    [
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not is_cuda_available(), reason="requires CUDA support"
+            ),
+        ),
+        pytest.param(
+            "musa",
+            marks=pytest.mark.skipif(
+                not is_musa_available(), reason="requires MUSA support"
+            ),
+        ),
+    ],
+)
+def test_iou_piecewise_sampler(device: str):
+    if not is_cuda_available() and not is_musa_available():
         pytest.skip()
     assigner = Max3DIoUAssigner(
         pos_iou_thr=0.55,
@@ -23,11 +41,11 @@ def test_iou_piecewise_sampler():
          [5, 5, 5, 15, 15, 15, 0.7], [5, 5, 5, 15, 15, 15, 0.7],
          [5, 5, 5, 15, 15, 15, 0.7], [32, 32, 16, 8, 38, 42, -0.3],
          [32, 32, 16, 8, 38, 42, -0.3], [32, 32, 16, 8, 38, 42, -0.3]],
-        dtype=torch.float32).cuda()
+        dtype=torch.float32).to(device)
     gt_bboxes = torch.tensor(
         [[0, 0, 0, 10, 10, 9, 0.2], [5, 10, 10, 20, 20, 15, 0.6]],
-        dtype=torch.float32).cuda()
-    gt_labels = torch.tensor([1, 1], dtype=torch.int64).cuda()
+        dtype=torch.float32).to(device)
+    gt_labels = torch.tensor([1, 1], dtype=torch.int64).to(device)
     gt_instanses = InstanceData()
     gt_instanses.bboxes_3d = gt_bboxes
     gt_instanses.labels_3d = gt_labels

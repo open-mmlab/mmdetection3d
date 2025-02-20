@@ -2,15 +2,24 @@ import unittest
 
 import torch
 from mmengine import DefaultScope
+from mmengine.device import is_musa_available, is_cuda_available
+from parameterized import parameterized
 
 from mmdet3d.registry import MODELS
 from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
+from mmdet3d.testing.model_utils import AVAILABLE_DEVICES
 
 
 class TestCenterPoint(unittest.TestCase):
 
-    def test_center_point(self):
+    @classmethod
+    def setUpClass(cls):
+        if not (is_cuda_available() or is_musa_available()):
+            raise unittest.SkipTest("requires CUDA or MUSA support")
+
+    @parameterized.expand(AVAILABLE_DEVICES)
+    def test_center_point(self, _, device: str):
         import mmdet3d.models
 
         assert hasattr(mmdet3d.models, 'CenterPoint')
@@ -32,14 +41,17 @@ class TestCenterPoint(unittest.TestCase):
             det_sample.gt_instances_3d.bboxes_3d = bbox_3d_class(
                 torch.rand(num_instances, 9), box_dim=9)
 
-        if torch.cuda.is_available():
+        if is_cuda_available() or is_musa_available():
 
-            model = model.cuda()
+            model = model.to(device)
             # test simple_test
 
             data = model.data_preprocessor(packed_inputs, True)
             with torch.no_grad():
-                torch.cuda.empty_cache()
+                if is_musa_available():
+                    torch.musa.empty_cache()
+                else:
+                    torch.cuda.empty_cache()
                 losses = model.forward(**data, mode='loss')
             assert losses['task0.loss_heatmap'] >= 0
             assert losses['task0.loss_bbox'] >= 0
