@@ -3,6 +3,7 @@ import argparse
 from os import path as osp
 
 from mmengine import print_log
+from tools.dataset_converters import custom_converter as custom
 
 from tools.dataset_converters import indoor_converter as indoor
 from tools.dataset_converters import kitti_converter as kitti
@@ -12,6 +13,40 @@ from tools.dataset_converters import semantickitti_converter
 from tools.dataset_converters.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
 from tools.dataset_converters.update_infos_to_v2 import update_pkl_infos
+
+def custom_data_prep(root_path,
+                    info_prefix,
+                    dataset_name,
+                    out_dir):
+    """Prepare data related to custom dataset.
+
+    Related data consists of '.pkl' files recording basic infos,
+    2D annotations and groundtruth database.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        version (str): Dataset version.
+        out_dir (str): Output directory of the groundtruth database info.
+        with_plane (bool, optional): Whether to use plane information.
+            Default: False.
+    """
+    custom.create_custom_info_file(root_path, info_prefix)
+    info_train_path = osp.join(out_dir, f'{info_prefix}_infos_train.pkl')
+    info_val_path = osp.join(out_dir, f'{info_prefix}_infos_val.pkl')
+    info_trainval_path = osp.join(out_dir, f'{info_prefix}_infos_trainval.pkl')
+    info_test_path = osp.join(out_dir, f'{info_prefix}_infos_test.pkl')
+    update_pkl_infos('custom', out_dir=out_dir, pkl_path=info_train_path)
+    update_pkl_infos('custom', out_dir=out_dir, pkl_path=info_val_path)
+    # update_pkl_infos('custom', out_dir=out_dir, pkl_path=info_trainval_path)
+    update_pkl_infos('custom', out_dir=out_dir, pkl_path=info_test_path)
+    create_groundtruth_database(
+        'CustomDataset',
+        root_path,
+        info_prefix,
+        f'{info_prefix}_infos_train.pkl',
+        relative_path=True
+        )
 
 
 def kitti_data_prep(root_path,
@@ -318,7 +353,24 @@ if __name__ == '__main__':
     from mmengine.registry import init_default_scope
     init_default_scope('mmdet3d')
 
-    if args.dataset == 'kitti':
+    if args.dataset == 'custom':
+        if args.only_gt_database:
+            create_groundtruth_database(
+                'CustomDataset',
+                args.root_path,
+                args.extra_tag,
+                f'{args.extra_tag}_infos_train.pkl',
+                relative_path=False,
+                mask_anno_path='instances_train.json',
+                with_mask=(args.version == 'mask'))
+        else:
+            custom_data_prep(
+                root_path=args.root_path,
+                info_prefix=args.extra_tag,
+                dataset_name='custom',
+                out_dir=args.out_dir
+            )
+    elif args.dataset == 'kitti':
         if args.only_gt_database:
             create_groundtruth_database(
                 'KittiDataset',
