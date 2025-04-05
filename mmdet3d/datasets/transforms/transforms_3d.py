@@ -399,9 +399,8 @@ class ObjectSample(BaseTransform):
         """
         if self.disabled:
             return input_dict
-
-        gt_bboxes_3d = input_dict['gt_bboxes_3d']
-        gt_labels_3d = input_dict['gt_labels_3d']
+        gt_bboxes_3d = input_dict['ann_info']['gt_bboxes_3d']
+        gt_labels_3d = input_dict['ann_info']['gt_labels_3d']
 
         if self.use_ground_plane:
             ground_plane = input_dict.get('plane', None)

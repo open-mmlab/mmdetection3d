@@ -146,7 +146,29 @@ def create_groundtruth_database(dataset_class_name,
     print(f'Create GT Database of {dataset_class_name}')
     dataset_cfg = dict(
         type=dataset_class_name, data_root=data_path, ann_file=info_path)
-    if dataset_class_name == 'KittiDataset':
+    if dataset_class_name == 'CustomDataset':
+        backend_args = None
+        dataset_cfg.update(
+            modality=dict(
+                use_lidar=True
+            ),
+            data_prefix=dict(
+                pts='training/velodyne'),
+            pipeline=[
+                dict(
+                    type='LoadPointsFromFile',
+                    coord_type='LIDAR',
+                    load_dim=4,
+                    use_dim=4,
+                    backend_args=backend_args),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True,
+                    backend_args=backend_args)
+            ])
+
+    elif dataset_class_name == 'KittiDataset':
         backend_args = None
         dataset_cfg.update(
             modality=dict(
@@ -227,13 +249,13 @@ def create_groundtruth_database(dataset_class_name,
                                      f'{info_prefix}_dbinfos_train.pkl')
     mmengine.mkdir_or_exist(database_save_path)
     all_db_infos = dict()
-    if with_mask:
-        coco = COCO(osp.join(data_path, mask_anno_path))
-        imgIds = coco.getImgIds()
-        file2id = dict()
-        for i in imgIds:
-            info = coco.loadImgs([i])[0]
-            file2id.update({info['file_name']: i})
+    # if with_mask:
+    #     coco = COCO(osp.join(data_path, mask_anno_path))
+    #     imgIds = coco.getImgIds()
+    #     file2id = dict()
+    #     for i in imgIds:
+    #         info = coco.loadImgs([i])[0]
+    #         file2id.update({info['file_name']: i})
 
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
@@ -256,39 +278,39 @@ def create_groundtruth_database(dataset_class_name,
         num_obj = gt_boxes_3d.shape[0]
         point_indices = box_np_ops.points_in_rbbox(points, gt_boxes_3d)
 
-        if with_mask:
-            # prepare masks
-            gt_boxes = annos['gt_bboxes']
-            img_path = osp.split(example['img_info']['filename'])[-1]
-            if img_path not in file2id.keys():
-                print(f'skip image {img_path} for empty mask')
-                continue
-            img_id = file2id[img_path]
-            kins_annIds = coco.getAnnIds(imgIds=img_id)
-            kins_raw_info = coco.loadAnns(kins_annIds)
-            kins_ann_info = _parse_coco_ann_info(kins_raw_info)
-            h, w = annos['img_shape'][:2]
-            gt_masks = [
-                _poly2mask(mask, h, w) for mask in kins_ann_info['masks']
-            ]
-            # get mask inds based on iou mapping
-            bbox_iou = bbox_overlaps(kins_ann_info['bboxes'], gt_boxes)
-            mask_inds = bbox_iou.argmax(axis=0)
-            valid_inds = (bbox_iou.max(axis=0) > 0.5)
-
-            # mask the image
-            # use more precise crop when it is ready
-            # object_img_patches = np.ascontiguousarray(
-            #     np.stack(object_img_patches, axis=0).transpose(0, 3, 1, 2))
-            # crop image patches using roi_align
-            # object_img_patches = crop_image_patch_v2(
-            #     torch.Tensor(gt_boxes),
-            #     torch.Tensor(mask_inds).long(), object_img_patches)
-            object_img_patches, object_masks = crop_image_patch(
-                gt_boxes, gt_masks, mask_inds, annos['img'])
+        # if with_mask:
+        #     # prepare masks
+        #     gt_boxes = annos['gt_bboxes']
+        #     img_path = osp.split(example['img_info']['filename'])[-1]
+        #     if img_path not in file2id.keys():
+        #         print(f'skip image {img_path} for empty mask')
+        #         continue
+        #     img_id = file2id[img_path]
+        #     kins_annIds = coco.getAnnIds(imgIds=img_id)
+        #     kins_raw_info = coco.loadAnns(kins_annIds)
+        #     kins_ann_info = _parse_coco_ann_info(kins_raw_info)
+        #     h, w = annos['img_shape'][:2]
+        #     gt_masks = [
+        #         _poly2mask(mask, h, w) for mask in kins_ann_info['masks']
+        #     ]
+        #     # get mask inds based on iou mapping
+        #     bbox_iou = bbox_overlaps(kins_ann_info['bboxes'], gt_boxes)
+        #     mask_inds = bbox_iou.argmax(axis=0)
+        #     valid_inds = (bbox_iou.max(axis=0) > 0.5)
+        #
+        #     # mask the image
+        #     # use more precise crop when it is ready
+        #     # object_img_patches = np.ascontiguousarray(
+        #     #     np.stack(object_img_patches, axis=0).transpose(0, 3, 1, 2))
+        #     # crop image patches using roi_align
+        #     # object_img_patches = crop_image_patch_v2(
+        #     #     torch.Tensor(gt_boxes),
+        #     #     torch.Tensor(mask_inds).long(), object_img_patches)
+        #     object_img_patches, object_masks = crop_image_patch(
+        #         gt_boxes, gt_masks, mask_inds, annos['img'])
 
         for i in range(num_obj):
-            filename = f'{image_idx}_{names[i]}_{i}.bin'
+            filename = f'{lidar_idx}_{names[i]}_{i}.bin'
             abs_filepath = osp.join(database_save_path, filename)
             rel_filepath = osp.join(f'{info_prefix}_gt_database', filename)
 
@@ -296,14 +318,14 @@ def create_groundtruth_database(dataset_class_name,
             gt_points = points[point_indices[:, i]]
             gt_points[:, :3] -= gt_boxes_3d[i, :3]
 
-            if with_mask:
-                if object_masks[i].sum() == 0 or not valid_inds[i]:
-                    # Skip object for empty or invalid mask
-                    continue
-                img_patch_path = abs_filepath + '.png'
-                mask_patch_path = abs_filepath + '.mask.png'
-                mmcv.imwrite(object_img_patches[i], img_patch_path)
-                mmcv.imwrite(object_masks[i], mask_patch_path)
+            # if with_mask:
+            #     if object_masks[i].sum() == 0 or not valid_inds[i]:
+            #         # Skip object for empty or invalid mask
+            #         continue
+            #     img_patch_path = abs_filepath + '.png'
+            #     mask_patch_path = abs_filepath + '.mask.png'
+            #     mmcv.imwrite(object_img_patches[i], img_patch_path)
+            #     mmcv.imwrite(object_masks[i], mask_patch_path)
 
             with open(abs_filepath, 'w') as f:
                 gt_points.tofile(f)
@@ -312,7 +334,7 @@ def create_groundtruth_database(dataset_class_name,
                 db_info = {
                     'name': names[i],
                     'path': rel_filepath,
-                    'image_idx': image_idx,
+                    'lidar_idx': lidar_idx,
                     'gt_idx': i,
                     'box3d_lidar': gt_boxes_3d[i],
                     'num_points_in_gt': gt_points.shape[0],
@@ -326,8 +348,8 @@ def create_groundtruth_database(dataset_class_name,
                 db_info['group_id'] = group_dict[local_group_id]
                 if 'score' in annos:
                     db_info['score'] = annos['score'][i]
-                if with_mask:
-                    db_info.update({'box2d_camera': gt_boxes[i]})
+                # if with_mask:
+                #     db_info.update({'box2d_camera': gt_boxes[i]})
                 if names[i] in all_db_infos:
                     all_db_infos[names[i]].append(db_info)
                 else:
@@ -423,39 +445,39 @@ class GTDatabaseCreater:
         num_obj = gt_boxes_3d.shape[0]
         point_indices = box_np_ops.points_in_rbbox(points, gt_boxes_3d)
 
-        if self.with_mask:
-            # prepare masks
-            gt_boxes = annos['gt_bboxes']
-            img_path = osp.split(example['img_info']['filename'])[-1]
-            if img_path not in self.file2id.keys():
-                print(f'skip image {img_path} for empty mask')
-                return single_db_infos
-            img_id = self.file2id[img_path]
-            kins_annIds = self.coco.getAnnIds(imgIds=img_id)
-            kins_raw_info = self.coco.loadAnns(kins_annIds)
-            kins_ann_info = _parse_coco_ann_info(kins_raw_info)
-            h, w = annos['img_shape'][:2]
-            gt_masks = [
-                _poly2mask(mask, h, w) for mask in kins_ann_info['masks']
-            ]
-            # get mask inds based on iou mapping
-            bbox_iou = bbox_overlaps(kins_ann_info['bboxes'], gt_boxes)
-            mask_inds = bbox_iou.argmax(axis=0)
-            valid_inds = (bbox_iou.max(axis=0) > 0.5)
-
-            # mask the image
-            # use more precise crop when it is ready
-            # object_img_patches = np.ascontiguousarray(
-            #     np.stack(object_img_patches, axis=0).transpose(0, 3, 1, 2))
-            # crop image patches using roi_align
-            # object_img_patches = crop_image_patch_v2(
-            #     torch.Tensor(gt_boxes),
-            #     torch.Tensor(mask_inds).long(), object_img_patches)
-            object_img_patches, object_masks = crop_image_patch(
-                gt_boxes, gt_masks, mask_inds, annos['img'])
+        # if self.with_mask:
+        #     # prepare masks
+        #     gt_boxes = annos['gt_bboxes']
+        #     img_path = osp.split(example['img_info']['filename'])[-1]
+        #     if img_path not in self.file2id.keys():
+        #         print(f'skip image {img_path} for empty mask')
+        #         return single_db_infos
+        #     img_id = self.file2id[img_path]
+        #     kins_annIds = self.coco.getAnnIds(imgIds=img_id)
+        #     kins_raw_info = self.coco.loadAnns(kins_annIds)
+        #     kins_ann_info = _parse_coco_ann_info(kins_raw_info)
+        #     h, w = annos['img_shape'][:2]
+        #     gt_masks = [
+        #         _poly2mask(mask, h, w) for mask in kins_ann_info['masks']
+        #     ]
+        #     # get mask inds based on iou mapping
+        #     bbox_iou = bbox_overlaps(kins_ann_info['bboxes'], gt_boxes)
+        #     mask_inds = bbox_iou.argmax(axis=0)
+        #     valid_inds = (bbox_iou.max(axis=0) > 0.5)
+        #
+        #     # mask the image
+        #     # use more precise crop when it is ready
+        #     # object_img_patches = np.ascontiguousarray(
+        #     #     np.stack(object_img_patches, axis=0).transpose(0, 3, 1, 2))
+        #     # crop image patches using roi_align
+        #     # object_img_patches = crop_image_patch_v2(
+        #     #     torch.Tensor(gt_boxes),
+        #     #     torch.Tensor(mask_inds).long(), object_img_patches)
+        #     object_img_patches, object_masks = crop_image_patch(
+        #         gt_boxes, gt_masks, mask_inds, annos['img'])
 
         for i in range(num_obj):
-            filename = f'{image_idx}_{names[i]}_{i}.bin'
+            filename = f'{lidar_idx}_{names[i]}_{i}.bin'
             abs_filepath = osp.join(self.database_save_path, filename)
             rel_filepath = osp.join(f'{self.info_prefix}_gt_database',
                                     filename)
@@ -464,14 +486,14 @@ class GTDatabaseCreater:
             gt_points = points[point_indices[:, i]]
             gt_points[:, :3] -= gt_boxes_3d[i, :3]
 
-            if self.with_mask:
-                if object_masks[i].sum() == 0 or not valid_inds[i]:
-                    # Skip object for empty or invalid mask
-                    continue
-                img_patch_path = abs_filepath + '.png'
-                mask_patch_path = abs_filepath + '.mask.png'
-                mmcv.imwrite(object_img_patches[i], img_patch_path)
-                mmcv.imwrite(object_masks[i], mask_patch_path)
+            # if self.with_mask:
+            #     if object_masks[i].sum() == 0 or not valid_inds[i]:
+            #         # Skip object for empty or invalid mask
+            #         continue
+            #     img_patch_path = abs_filepath + '.png'
+            #     mask_patch_path = abs_filepath + '.mask.png'
+            #     mmcv.imwrite(object_img_patches[i], img_patch_path)
+            #     mmcv.imwrite(object_masks[i], mask_patch_path)
 
             with open(abs_filepath, 'w') as f:
                 gt_points.tofile(f)
@@ -480,7 +502,7 @@ class GTDatabaseCreater:
                 db_info = {
                     'name': names[i],
                     'path': rel_filepath,
-                    'image_idx': image_idx,
+                    'lidar_idx': lidar_idx,
                     'gt_idx': i,
                     'box3d_lidar': gt_boxes_3d[i],
                     'num_points_in_gt': gt_points.shape[0],
@@ -494,8 +516,8 @@ class GTDatabaseCreater:
                 db_info['group_id'] = group_dict[local_group_id]
                 if 'score' in annos:
                     db_info['score'] = annos['score'][i]
-                if self.with_mask:
-                    db_info.update({'box2d_camera': gt_boxes[i]})
+                # if self.with_mask:
+                #     db_info.update({'box2d_camera': gt_boxes[i]})
                 if names[i] in single_db_infos:
                     single_db_infos[names[i]].append(db_info)
                 else:

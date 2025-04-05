@@ -3,7 +3,7 @@ import argparse
 import tempfile
 
 import torch
-from mmcv import Config
+from mmengine import Config
 from mmengine.runner import load_state_dict
 
 from mmdet3d.registry import MODELS

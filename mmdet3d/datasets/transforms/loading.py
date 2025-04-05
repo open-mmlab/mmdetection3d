@@ -853,7 +853,7 @@ class LoadAnnotations3D(LoadAnnotations):
             with_seg=with_seg,
             poly2mask=poly2mask,
             backend_args=backend_args)
-        self.with_bbox_3d = with_bbox_3d
+        self.with_bbox_3d = 0
         self.with_bbox_depth = with_bbox_depth
         self.with_label_3d = with_label_3d
         self.with_attr_label = with_attr_label
