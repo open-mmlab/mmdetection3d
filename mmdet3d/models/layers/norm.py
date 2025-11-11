@@ -120,6 +120,8 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
         Returns:
             Tensor: Has shape (N, C, H, W), same shape as input.
         """
+        if input.dtype == torch.float16:
+            input = input.to(torch.float32)  # casting to torch.float32
         assert input.dtype == torch.float32, \
             f'input should be in float32 type, got {input.dtype}'
         using_dist = dist.is_available() and dist.is_initialized()

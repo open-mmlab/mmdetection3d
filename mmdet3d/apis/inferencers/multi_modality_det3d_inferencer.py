@@ -74,95 +74,177 @@ class MultiModalityDet3DInferencer(Base3DInferencer):
         - dict: the value with key 'points' is
             - Directory path: return all files in the directory
             - other cases: return a list containing the string. The string
-              could be a path to file, a url or other types of string according
-              to the task.
+            could be a path to file, a url or other types of string according
+            to the task.
 
         Args:
             inputs (Union[dict, list]): Inputs for the inferencer.
+            cam_type (str): Camera type. Defaults to 'CAM2'.
 
         Returns:
             list: List of input for the :meth:`preprocess`.
         """
+        processed_inputs_list = []
+
         if isinstance(inputs, dict):
-            assert 'infos' in inputs
-            infos = inputs.pop('infos')
+            if 'infos' not in inputs:
+                raise ValueError("Input dictionary must contain an 'infos' key pointing to the .pkl file.")
+            infos_path = inputs.pop('infos')
 
-            if isinstance(inputs['img'], str):
-                img, pcd = inputs['img'], inputs['points']
-                backend = get_file_backend(img)
-                if hasattr(backend, 'isdir') and isdir(img) and isdir(pcd):
-                    # Backends like HttpsBackend do not implement `isdir`, so
-                    # only those backends that implement `isdir` could accept
-                    # the inputs as a directory
+            # Determine the actual list of input samples
+            # This handles cases where 'img' and 'pcd' might be directories
+            current_sample_dicts = []
+            if isinstance(inputs.get('img'), str) and isinstance(inputs.get('points'), str):
+                img_path_input, pcd_path_input = inputs['img'], inputs['points']
+                # Check if these are directories
+                backend = get_file_backend(img_path_input)
+                if hasattr(backend, 'isdir') and isdir(img_path_input) and isdir(pcd_path_input):
                     img_filename_list = list_dir_or_file(
-                        img, list_dir=False, suffix=['.png', '.jpg'])
+                        img_path_input, list_dir=False, suffix=['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG']) # Added more suffixes
                     pcd_filename_list = list_dir_or_file(
-                        pcd, list_dir=False, suffix='.bin')
-                    assert len(img_filename_list) == len(pcd_filename_list)
+                        pcd_path_input, list_dir=False, suffix='.bin')
+                    
+                    if len(img_filename_list) != len(pcd_filename_list):
+                        raise ValueError(
+                            f"Mismatch in number of images ({len(img_filename_list)}) and "
+                            f"point cloud files ({len(pcd_filename_list)}) "
+                            f"in directories '{img_path_input}' and '{pcd_path_input}'.")
 
-                    inputs = [{
-                        'img': join_path(img, img_filename),
-                        'points': join_path(pcd, pcd_filename)
-                    } for pcd_filename, img_filename in zip(
-                        pcd_filename_list, img_filename_list)]
+                    for pcd_filename, img_filename in zip(pcd_filename_list, img_filename_list):
+                        current_sample_dicts.append({
+                            'img': join_path(img_path_input, img_filename),
+                            'points': join_path(pcd_path_input, pcd_filename)
+                        })
+                else: # Assume single file paths if not directories
+                    current_sample_dicts = [inputs.copy()] # Use a copy of the original input dict
+            elif not isinstance(inputs, (list, tuple)): # If inputs['img'] wasn't a string, but inputs itself is a dict.
+                current_sample_dicts = [inputs.copy()]
+            else: # This case should ideally not be hit if input 'inputs' is a dict.
+                raise ValueError("Unexpected structure for 'inputs' dictionary.")
 
-            if not isinstance(inputs, (list, tuple)):
-                inputs = [inputs]
 
-            # get cam2img, lidar2cam and lidar2img from infos
-            info_list = mmengine.load(infos)['data_list']
-            assert len(info_list) == len(inputs)
-            for index, input in enumerate(inputs):
-                data_info = info_list[index]
-                img_path = data_info['images'][cam_type]['img_path']
-                if isinstance(input['img'], str) and \
-                        osp.basename(img_path) != osp.basename(input['img']):
+            all_info_data = mmengine.load(infos_path)['data_list']
+
+            for single_input_sample_dict in current_sample_dicts:
+                if 'img' not in single_input_sample_dict or not isinstance(single_input_sample_dict['img'], str):
+                    raise ValueError(f"Each input sample must have an 'img' key with a string path. Problematic sample: {single_input_sample_dict}")
+
+                input_img_basename = osp.basename(single_input_sample_dict['img'])
+                found_data_info = None
+
+                for data_info_candidate in all_info_data:
+                    if 'images' not in data_info_candidate or \
+                    cam_type not in data_info_candidate['images'] or \
+                    'img_path' not in data_info_candidate['images'][cam_type]:
+                        # Silently skip malformed entries or log a warning
+                        # warnings.warn(f"Skipping malformed info entry: {data_info_candidate.get('sample_idx', 'Unknown sample')}")
+                        continue
+                    
+                    info_img_path = data_info_candidate['images'][cam_type]['img_path']
+                    if osp.basename(info_img_path) == input_img_basename:
+                        found_data_info = data_info_candidate
+                        break
+                
+                if found_data_info is None:
+                    available_img_names = [
+                        osp.basename(info['images'][cam_type]['img_path'])
+                        for info in all_info_data
+                        if 'images' in info and cam_type in info['images'] and 'img_path' in info['images'][cam_type]
+                    ]
+                    example_names = ", ".join(list(set(available_img_names))[:5])
                     raise ValueError(
-                        f'the info file of {img_path} is not provided.')
+                        f"Could not find info for image '{input_img_basename}' (from path: {single_input_sample_dict['img']}) "
+                        f"in '{infos_path}'. Checked {len(all_info_data)} entries. "
+                        f"Example image basenames in info file: {example_names}"
+                    )
+
+                # Add camera parameters from found_data_info to the input sample
                 cam2img = np.asarray(
-                    data_info['images'][cam_type]['cam2img'], dtype=np.float32)
+                    found_data_info['images'][cam_type]['cam2img'], dtype=np.float32)
                 lidar2cam = np.asarray(
-                    data_info['images'][cam_type]['lidar2cam'],
+                    found_data_info['images'][cam_type]['lidar2cam'],
                     dtype=np.float32)
-                if 'lidar2img' in data_info['images'][cam_type]:
+                if 'lidar2img' in found_data_info['images'][cam_type]:
                     lidar2img = np.asarray(
-                        data_info['images'][cam_type]['lidar2img'],
+                        found_data_info['images'][cam_type]['lidar2img'],
                         dtype=np.float32)
                 else:
                     lidar2img = cam2img @ lidar2cam
-                input['cam2img'] = cam2img
-                input['lidar2cam'] = lidar2cam
-                input['lidar2img'] = lidar2img
+                
+                # Create a new dict for the processed input to avoid modifying the original list's dicts
+                processed_sample = single_input_sample_dict.copy()
+                processed_sample['cam2img'] = cam2img
+                processed_sample['lidar2cam'] = lidar2cam
+                processed_sample['lidar2img'] = lidar2img
+                processed_inputs_list.append(processed_sample)
+
         elif isinstance(inputs, (list, tuple)):
-            # get cam2img, lidar2cam and lidar2img from infos
-            for input in inputs:
-                assert 'infos' in input
-                infos = input.pop('infos')
-                info_list = mmengine.load(infos)['data_list']
-                assert len(info_list) == 1, 'Only support single sample' \
-                    'info in `.pkl`, when input is a list.'
-                data_info = info_list[0]
-                img_path = data_info['images'][cam_type]['img_path']
-                if isinstance(input['img'], str) and \
-                        osp.basename(img_path) != osp.basename(input['img']):
+            # This branch handles cases where 'inputs' is already a list of dicts.
+            # The original logic assumes each dict in the list has its own 'infos'
+            # and that this info file contains exactly one entry.
+            # This part is kept similar to original for now, but may need adjustment
+            # if a global info file is to be used for list inputs too.
+            for single_input_item_dict in inputs:
+                if not isinstance(single_input_item_dict, dict) or 'infos' not in single_input_item_dict:
+                    raise ValueError("When inputs is a list, each item must be a dict containing an 'infos' key.")
+                
+                infos_path_item = single_input_item_dict.pop('infos')
+                current_info_list = mmengine.load(infos_path_item)['data_list']
+                
+                # Original code for list inputs expects one info entry per file.
+                # To make it search, you'd adapt the logic from the isinstance(inputs, dict) block above.
+                # For now, sticking to a modified version of the original assertion for clarity.
+                input_img_basename_item = osp.basename(single_input_item_dict['img'])
+                data_info_to_use = None
+                if len(current_info_list) == 1:
+                    # If only one entry, check if it matches, then use it.
+                    candidate = current_info_list[0]
+                    if 'images' in candidate and cam_type in candidate['images'] and \
+                    osp.basename(candidate['images'][cam_type]['img_path']) == input_img_basename_item:
+                        data_info_to_use = candidate
+                    else:
+                        raise ValueError(
+                            f"Single info entry in '{infos_path_item}' does not match input image '{input_img_basename_item}'.")
+                else:
+                    # If multiple entries, search for the right one.
+                    for candidate in current_info_list:
+                        if 'images' in candidate and cam_type in candidate['images'] and \
+                        osp.basename(candidate['images'][cam_type]['img_path']) == input_img_basename_item:
+                            data_info_to_use = candidate
+                            break
+                    if data_info_to_use is None:
+                        raise ValueError(
+                            f"Could not find matching info for image '{input_img_basename_item}' in '{infos_path_item}' "
+                            f"(which has {len(current_info_list)} entries) when inputs is a list.")
+
+                # Consistency check (original)
+                img_path_from_info = data_info_to_use['images'][cam_type]['img_path']
+                if isinstance(single_input_item_dict.get('img'), str) and \
+                osp.basename(img_path_from_info) != osp.basename(single_input_item_dict['img']):
                     raise ValueError(
-                        f'the info file of {img_path} is not provided.')
+                        f"Mismatch: info file '{img_path_from_info}' vs input image '{single_input_item_dict['img']}'.")
+
                 cam2img = np.asarray(
-                    data_info['images'][cam_type]['cam2img'], dtype=np.float32)
+                    data_info_to_use['images'][cam_type]['cam2img'], dtype=np.float32)
                 lidar2cam = np.asarray(
-                    data_info['images'][cam_type]['lidar2cam'],
+                    data_info_to_use['images'][cam_type]['lidar2cam'],
                     dtype=np.float32)
-                if 'lidar2img' in data_info['images'][cam_type]:
+                if 'lidar2img' in data_info_to_use['images'][cam_type]:
                     lidar2img = np.asarray(
-                        data_info['images'][cam_type]['lidar2img'],
+                        data_info_to_use['images'][cam_type]['lidar2img'],
                         dtype=np.float32)
                 else:
                     lidar2img = cam2img @ lidar2cam
-                input['cam2img'] = cam2img
-                input['lidar2cam'] = lidar2cam
-                input['lidar2img'] = lidar2img
+                
+                processed_sample = single_input_item_dict.copy()
+                processed_sample['cam2img'] = cam2img
+                processed_sample['lidar2cam'] = lidar2cam
+                processed_sample['lidar2img'] = lidar2img
+                processed_inputs_list.append(processed_sample)
+        else:
+            raise TypeError(f"Unsupported input type: {type(inputs)}. Expected dict or list.")
 
-        return list(inputs)
+        return processed_inputs_list
 
     def _init_pipeline(self, cfg: ConfigType) -> Compose:
         """Initialize the test pipeline."""
