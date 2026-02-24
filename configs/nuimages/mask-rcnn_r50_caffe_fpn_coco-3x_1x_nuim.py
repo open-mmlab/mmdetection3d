@@ -4,8 +4,12 @@ _base_ = [
     '../_base_/schedules/mmdet-schedule-1x.py', '../_base_/default_runtime.py'
 ]
 model = dict(
-    pretrained='open-mmlab://detectron2/resnet50_caffe',
-    backbone=dict(norm_cfg=dict(requires_grad=False), style='caffe'),
+    backbone=dict(
+        norm_cfg=dict(requires_grad=False),
+        style='caffe',
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='open-mmlab://detectron2/resnet50_caffe')),
     roi_head=dict(
         bbox_head=dict(num_classes=10), mask_head=dict(num_classes=10)))
 backend_args = None

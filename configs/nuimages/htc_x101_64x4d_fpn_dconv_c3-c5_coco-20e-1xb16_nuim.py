@@ -1,6 +1,5 @@
 _base_ = './htc_r50_fpn_1x_nuim.py'
 model = dict(
-    pretrained='open-mmlab://resnext101_64x4d',
     backbone=dict(
         type='ResNeXt',
         depth=101,
@@ -13,7 +12,10 @@ model = dict(
         norm_eval=True,
         style='pytorch',
         dcn=dict(type='DCN', deform_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, True, True, True)))
+        stage_with_dcn=(False, True, True, True),
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='open-mmlab://resnext101_64x4d')))
 
 data = dict(samples_per_gpu=1, workers_per_gpu=1)
 # learning policy
