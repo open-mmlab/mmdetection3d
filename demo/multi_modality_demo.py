@@ -60,7 +60,6 @@ def parse_args():
         points=call_args.pop('pcd'),
         img=call_args.pop('img'),
         infos=call_args.pop('infos'))
-    call_args.pop('cam_type')
 
     if call_args['no_save_vis'] and call_args['no_save_pred']:
         call_args['out_dir'] = ''

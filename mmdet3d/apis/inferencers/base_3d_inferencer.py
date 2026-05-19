@@ -167,6 +167,7 @@ class Base3DInferencer(BaseInferencer):
         kwargs['img_out_dir'] = out_dir
         kwargs['pred_out_dir'] = out_dir
         if cam_type != '':
+            kwargs['cam_type'] = cam_type
             kwargs['cam_type_dir'] = cam_type
         return super()._dispatch_kwargs(**kwargs)
 
