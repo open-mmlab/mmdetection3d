@@ -223,6 +223,7 @@ class SparseEncoder(nn.Module):
                                 out_channels,
                                 out_channels,
                                 norm_cfg=norm_cfg,
+                                indice_key=f'subm{i + 1}',
                                 conv_cfg=conv_cfg))
                 else:
                     blocks_list.append(
