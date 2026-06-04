@@ -122,6 +122,8 @@ class SparseBasicBlock(BasicBlock, SparseModule):
         SparseModule.__init__(self)
         if conv_cfg is None:
             conv_cfg = dict(type='SubMConv3d')
+        else:
+            conv_cfg = conv_cfg.copy()
         conv_cfg.setdefault('indice_key', indice_key)
         if norm_cfg is None:
             norm_cfg = dict(type='BN1d')
