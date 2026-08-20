@@ -63,15 +63,15 @@ jobs:
       - run:
           name: Install mmdet3d dependencies
           command: |
-            pip install git+ssh://git@github.com/open-mmlab/mmengine.git@main
+            pip install 'mmengine >= 0.8.0, < 1.0.0'
             pip install -U openmim
-            mim install 'mmcv >= 2.0.0rc4'
-            pip install git+ssh://git@github.com/open-mmlab/mmdetection.git@dev-3.x
-            pip install -r requirements/tests.txt
+            mim install 'mmcv >= 2.0.0rc4, < 2.2.0'
+            pip install --no-build-isolation git+ssh://git@github.com/open-mmlab/mmdetection.git@dev-3.x
+            pip install -r requirements/runtime.txt -r requirements/tests.txt
       - run:
           name: Build and install
           command: |
-            pip install -e .
+            python setup.py develop --no-deps
       - run:
           name: Run unittests
           command: |
@@ -120,11 +120,11 @@ jobs:
             docker exec mmdet3d pip install -U openmim
             docker exec mmdet3d mim install 'mmcv >= 2.0.0rc4'
             docker exec mmdet3d pip install -e /mmdetection
-            docker exec mmdet3d pip install -r requirements/tests.txt
+            docker exec mmdet3d pip install -r requirements/runtime.txt -r requirements/tests.txt
       - run:
           name: Build and install
           command: |
-            docker exec mmdet3d pip install -e .
+            docker exec mmdet3d python setup.py develop --no-deps
       - run:
           name: Run unittests
           command: |

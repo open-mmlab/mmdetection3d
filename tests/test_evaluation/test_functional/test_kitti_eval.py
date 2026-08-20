@@ -4,6 +4,22 @@ import pytest
 import torch
 
 from mmdet3d.evaluation import do_eval, eval_class, kitti_eval
+from mmdet3d.evaluation.functional.kitti_utils.eval import calculate_iou_partly
+
+
+def test_calculate_iou_partly_without_empty_split():
+    annotation = dict(
+        name=np.array(['Car']),
+        bbox=np.array([[0.0, 0.0, 1.0, 1.0]], dtype=np.float64))
+    annotations = [annotation] * 995
+
+    overlaps, parted_overlaps, total_dt_num, total_gt_num = \
+        calculate_iou_partly(annotations, annotations, metric=0, num_parts=200)
+
+    assert len(overlaps) == 995
+    assert len(parted_overlaps) == 199
+    assert np.all(total_dt_num == 1)
+    assert np.all(total_gt_num == 1)
 
 
 def test_do_eval():

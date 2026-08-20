@@ -285,10 +285,13 @@ def get_split_parts(num, num_part):
     if num % num_part == 0:
         same_part = num // num_part
         return [same_part] * num_part
-    else:
-        same_part = num // (num_part - 1)
-        remain_num = num % (num_part - 1)
-        return [same_part] * (num_part - 1) + [remain_num]
+
+    same_part = num // (num_part - 1)
+    remain_num = num % (num_part - 1)
+    split_parts = [same_part] * (num_part - 1)
+    if remain_num:
+        split_parts.append(remain_num)
+    return split_parts
 
 
 @numba.jit(nopython=True)
