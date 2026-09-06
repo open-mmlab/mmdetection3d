@@ -1,0 +1,8 @@
+# torch.utils.cpp_extension.load is called with build_directory=<this dir>,
+# so the JIT writes its build products back into the source tree on first run.
+*.so
+*.o
+*.cuda.o
+build.ninja
+.ninja_deps
+.ninja_log
